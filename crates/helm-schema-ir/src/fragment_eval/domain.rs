@@ -328,6 +328,10 @@ pub struct SpliceMeta {
     /// keys of a non-empty list lane), and raw-identity consumers must not
     /// read it as the collection's value.
     pub range_key: bool,
+    /// Literal member keys a guard-scoped `omit` may remove from the
+    /// rendered map, with the sound RETAIN guards under which each key
+    /// certainly survives.
+    pub omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::Guard>>,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

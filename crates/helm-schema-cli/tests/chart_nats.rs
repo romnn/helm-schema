@@ -71,6 +71,104 @@ extraResources:
     Ok(())
 }
 
+/// Wrapper RESULT compatibility (F104 remainder): the engine substitutes
+/// the decoded program before consumers read the tree, so a static
+/// `$tplYaml` program whose decoded kind cannot inhabit the node rejects
+/// (an extraResources item must decode to a mapping), and a
+/// `$tplYamlSpread` program can only spread a slice onto a slice or a map
+/// onto a map — a scalar result always aborts, and the values root
+/// refuses the spread wrapper outright. Every polarity below reproduces
+/// under `helm template` on the vendored chart.
+#[test]
+fn nats_wrapper_results_must_be_compatible_with_their_sinks() -> color_eyre::eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+    for (overrides, want) in [
+        // Replace programs at the item node: Helm decodes each rendered
+        // extraResources document as a mapping, so scalar and list
+        // decodings abort even though the wrapper map itself is an object.
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYaml": "true" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYaml": "4333" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYaml": "audit" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYaml": "[a]" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYaml": "{{ .Values.global }}" }] }),
+            true,
+        ),
+        // tpl aborts on a non-string program even where objects are
+        // otherwise acceptable: the engine intercepts every singleton
+        // sentinel map before the node's ordinary domain sees it.
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYaml": true }] }),
+            false,
+        ),
+        // Spread programs: result kind must match the parent collection.
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYamlSpread": "{a: 1}" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYamlSpread": "audit" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "extraResources": [{ "$tplYamlSpread":
+                "- {apiVersion: v1, kind: ConfigMap, metadata: {name: x}}" }] }),
+            true,
+        ),
+        (
+            serde_json::json!({
+                "podTemplate": { "topologySpreadConstraints": { "$tplYamlSpread": "[]" } }
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "podTemplate": { "topologySpreadConstraints": { "$tplYamlSpread": "7" } }
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "podTemplate": { "topologySpreadConstraints": { "$tplYamlSpread": "{a: 1}" } }
+            }),
+            true,
+        ),
+    ] {
+        let instance = chart_instances::with_override("nats", overrides.clone())?;
+        assert!(
+            validator.is_valid(&instance) == want,
+            "wrapper results intersect their sinks: overrides={overrides}; want={want}"
+        );
+    }
+
+    // The engine refuses to spread at the recursion root, so the values
+    // document itself must not be a singleton spread wrapper; the replace
+    // wrapper stays legal there.
+    assert!(
+        !validator.is_valid(&serde_json::json!({ "$tplYamlSpread": "a: 1" })),
+        "a singleton spread wrapper at the values root aborts rendering"
+    );
+    assert!(
+        validator.is_valid(&serde_json::json!({ "$tplYaml": "a: 1" })),
+        "a singleton replace wrapper at the values root is substituted"
+    );
+
+    Ok(())
+}
+
 /// The `$tplYaml` engine substitutes singleton wrapper maps at ANY values
 /// node before consumers read the tree, so a typed node accepts a wrapper
 /// program beside its ordinary domain. The program must be a string

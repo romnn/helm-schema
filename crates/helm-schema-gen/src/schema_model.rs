@@ -136,6 +136,13 @@ pub(crate) fn schema_allows_type(schema: &Value, expected_type: &str) -> bool {
     if let Some(schema_type) = schema_type(schema) {
         return schema_type == expected_type;
     }
+    // A `type` ARRAY allows each named type (the k8s bundles spell
+    // nullable payloads as `"type": ["object", "null"]`).
+    if let Some(Value::Array(names)) = schema.get("type") {
+        return names
+            .iter()
+            .any(|name| name.as_str() == Some(expected_type));
+    }
 
     let Some(object) = schema.as_object() else {
         return false;

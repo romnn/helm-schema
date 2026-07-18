@@ -62,11 +62,6 @@
                     },
                     {
                       "not": {
-                        "pattern": "^(|~|null|Null|NULL)$"
-                      }
-                    },
-                    {
-                      "not": {
                         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                       }
                     },
@@ -168,11 +163,6 @@
       }
     },
     "schema23": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema24": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
@@ -986,7 +976,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema24"
+                  "$ref": "#/$defs/schema23"
                 },
                 {
                   "not": {
@@ -1007,9 +997,6 @@
                   "not": {
                     "pattern": "[\\r\\n]"
                   }
-                },
-                {
-                  "$ref": "#/$defs/schema23"
                 },
                 {
                   "$ref": "#/$defs/schema13"
@@ -1038,7 +1025,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema24"
+                  "$ref": "#/$defs/schema23"
                 },
                 {
                   "not": {
@@ -1059,9 +1046,6 @@
                   "not": {
                     "pattern": "[\\r\\n]"
                   }
-                },
-                {
-                  "$ref": "#/$defs/schema23"
                 },
                 {
                   "$ref": "#/$defs/schema13"
@@ -1086,97 +1070,87 @@
           ]
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "description": "ResourceRequirements describes the compute resource requirements.",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
+          "additionalProperties": false,
+          "description": "ResourceRequirements describes the compute resource requirements.",
+          "properties": {
+            "claims": {
+              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+              "items": {
+                "additionalProperties": false,
+                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                "properties": {
+                  "name": {
+                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
+            },
+            "limits": {
+              "additionalProperties": {
+                "oneOf": [
+                  {
                     "type": [
-                      "object",
+                      "string",
                       "null"
                     ]
                   },
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "additionalProperties": {
-                    "oneOf": [
-                      {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
-                      }
+                  {
+                    "type": [
+                      "number",
+                      "null"
                     ]
-                  },
-                  "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                },
-                "requests": {
-                  "additionalProperties": {
-                    "oneOf": [
-                      {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      {
-                        "type": [
-                          "number",
-                          "null"
-                        ]
-                      }
-                    ]
-                  },
-                  "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-                  "type": [
-                    "object",
-                    "null"
-                  ]
-                }
+                  }
+                ]
               },
-              "type": "object"
+              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+              "type": [
+                "object",
+                "null"
+              ]
             },
-            {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
+            "requests": {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                ]
+              },
+              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+              "type": [
+                "object",
+                "null"
+              ]
             }
+          },
+          "type": [
+            "object",
+            "null"
           ]
         }
       },
@@ -1203,7 +1177,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema24"
+                                "$ref": "#/$defs/schema23"
                               },
                               {
                                 "not": {
@@ -1224,9 +1198,6 @@
                                 "not": {
                                   "pattern": "[\\r\\n]"
                                 }
-                              },
-                              {
-                                "$ref": "#/$defs/schema23"
                               },
                               {
                                 "$ref": "#/$defs/schema13"
@@ -1368,7 +1339,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema24"
+                                "$ref": "#/$defs/schema23"
                               },
                               {
                                 "not": {
@@ -1391,19 +1362,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema23"
-                              },
-                              {
                                 "$ref": "#/$defs/schema13"
-                              },
-                              {
-                                "$ref": "#/$defs/schema6"
-                              },
-                              {
-                                "$ref": "#/$defs/schema15"
-                              },
-                              {
-                                "$ref": "#/$defs/schema19"
                               }
                             ],
                             "type": "string"

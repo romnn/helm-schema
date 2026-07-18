@@ -331,6 +331,10 @@ impl Interpreter<'_> {
                 }
                 | Guard::IntLt {
                     path: guard_path, ..
+                }
+                | Guard::AtMostOneMember { path: guard_path }
+                | Guard::MinMembers {
+                    path: guard_path, ..
                 } => !guard_path.trim().is_empty() && foreign(guard_path),
                 // A type test PARTITIONS its subject: hints observed under
                 // it hold only for the tested types, even on the hinted

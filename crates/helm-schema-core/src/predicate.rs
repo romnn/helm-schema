@@ -183,7 +183,9 @@ impl Predicate {
                 | Guard::Or { .. }
                 | Guard::AnyOf { .. }
                 | Guard::IntGt { .. }
-                | Guard::IntLt { .. },
+                | Guard::IntLt { .. }
+                | Guard::AtMostOneMember { .. }
+                | Guard::MinMembers { .. },
             ) => vec![self],
         }
     }
@@ -291,7 +293,9 @@ impl Predicate {
                 | Guard::Or { .. }
                 | Guard::AnyOf { .. }
                 | Guard::IntGt { .. }
-                | Guard::IntLt { .. },
+                | Guard::IntLt { .. }
+                | Guard::AtMostOneMember { .. }
+                | Guard::MinMembers { .. },
             ) => {}
         }
     }

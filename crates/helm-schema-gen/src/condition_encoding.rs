@@ -205,6 +205,42 @@ fn build_single_condition_fragment(
                 ),
             )
         }
+        // A non-collection value never iterates, so the "at most one
+        // member" bound constrains only maps and lists; both size keywords
+        // are no-ops on other instance types.
+        ConditionalGuard::AtMostOneMember { path } => {
+            let declared_size_at_most_one = match yaml_value_at_path(values_yaml_doc, path) {
+                Some(YamlValue::Mapping(mapping)) => mapping.len() <= 1,
+                Some(YamlValue::Sequence(items)) => items.len() <= 1,
+                _ => true,
+            };
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(serde_json::json!({
+                    "maxProperties": 1,
+                    "maxItems": 1,
+                })),
+                declared_size_at_most_one,
+            )
+        }
+        // Exact: `keys X` aborts rendering for non-maps, so the body runs
+        // only for mappings with enough members.
+        ConditionalGuard::MinMembers { path, bound } => {
+            let declared_matches = matches!(
+                yaml_value_at_path(values_yaml_doc, path),
+                Some(YamlValue::Mapping(mapping)) if mapping.len() as i64 >= *bound
+            );
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(serde_json::json!({
+                    "type": "object",
+                    "minProperties": bound.max(&0),
+                })),
+                declared_matches,
+            )
+        }
         ConditionalGuard::Not(inner) => Some(SchemaNode::not(build_single_condition_fragment(
             inner,
             ancestor_segments,
@@ -413,6 +449,18 @@ fn build_required_condition_fragment(
     } else {
         build_required_condition_fragment(tail, leaf_schema)?
     };
+    // A member wildcard quantifies over EVERY iterated member: the
+    // document-level if-side cannot address "the current member" of a
+    // per-member dispatch, and an arm firing on fewer states than the real
+    // condition is safe here (under a sibling `AtMostOneMember` bound the
+    // universal test is exact — the signoz singleton env lane).
+    if head == "*" {
+        let child = child.into_value();
+        return Some(SchemaNode::foreign(serde_json::json!({
+            "additionalProperties": child,
+            "items": child,
+        })));
+    }
     Some(
         SchemaNode::object()
             .require(head.clone())
@@ -480,6 +528,17 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             yaml_value_at_path(values_yaml_doc, path),
             member,
             value,
+        )),
+        ConditionalGuard::AtMostOneMember { path } => {
+            Some(match yaml_value_at_path(values_yaml_doc, path) {
+                Some(YamlValue::Mapping(mapping)) => mapping.len() <= 1,
+                Some(YamlValue::Sequence(items)) => items.len() <= 1,
+                _ => true,
+            })
+        }
+        ConditionalGuard::MinMembers { path, bound } => Some(matches!(
+            yaml_value_at_path(values_yaml_doc, path),
+            Some(YamlValue::Mapping(mapping)) if mapping.len() as i64 >= *bound
         )),
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)

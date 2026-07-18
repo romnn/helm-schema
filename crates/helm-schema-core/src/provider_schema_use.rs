@@ -22,4 +22,9 @@ pub struct ProviderSchemaUse {
     /// its value: a string-only slot then excludes the integer keys of a
     /// non-empty list lane.
     pub range_key: bool,
+    /// Literal member keys a guard-scoped `omit` may remove from the
+    /// rendered map before the sink reads it: the slot's whole-payload
+    /// typing must exclude them, and each key's member typing is re-added
+    /// only under its RETAIN guards (empty means never).
+    pub omitted_members: std::collections::BTreeMap<String, Vec<crate::ConditionalGuard>>,
 }

@@ -335,7 +335,91 @@ pub(crate) fn collect_conditional_schemas(
     }
 
     append_merge_shadow_arms(&mut conditionals, contract_schema_signals, provider);
+    append_omitted_member_arms(&mut conditionals, contract_schema_signals, provider);
     conditionals
+}
+
+/// Per-key arms for members a guard-scoped `omit` may remove before the
+/// sink reads the map: the whole-payload projection subtracts them, and
+/// each key whose RETAIN guards lowered comes back as
+/// `if retain-guards then map.key matches the provider's member schema`
+/// (external-secrets' `adaptSecurityContext` — `runAsUser` stays
+/// integer-typed exactly where the OpenShift adaptation certainly does
+/// not run). Keys without retain guards stay subtracted: their survival
+/// is undecidable, so their typing abstains.
+fn append_omitted_member_arms(
+    conditionals: &mut Vec<ConditionalResolvedSchema>,
+    contract_schema_signals: &ContractSchemaSignals,
+    provider: &dyn ResourceSchemaOracle,
+) {
+    for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        let mut arms: BTreeSet<(String, Vec<ConditionalGuard>, String)> = BTreeSet::new();
+        // A provider use recorded on a conditional overlay branch fires
+        // only under the branch guards, so its re-add arms must carry them
+        // too (external-secrets renders the adapted context only under
+        // `.enabled` and a member-count gate).
+        let uses_with_guards = evidence
+            .provider_schema_uses
+            .iter()
+            .map(|provider_use| (provider_use, Vec::new()))
+            .chain(evidence.conditional_overlays.iter().flat_map(|overlay| {
+                overlay
+                    .evidence
+                    .provider_schema_uses
+                    .iter()
+                    .map(|provider_use| (provider_use, overlay.guards.clone()))
+            }));
+        for (provider_use, branch_guards) in uses_with_guards {
+            if provider_use.omitted_members.is_empty() {
+                continue;
+            }
+            let Some(fragment) = provider.schema_fragment_for_use(provider_use) else {
+                continue;
+            };
+            let payload = fragment.schema();
+            let definitions = ["$defs", "definitions"]
+                .iter()
+                .find_map(|key| payload.get(*key).and_then(Value::as_object));
+            let Some(properties) = payload.get("properties").and_then(Value::as_object) else {
+                continue;
+            };
+            for (member, retain_guards) in &provider_use.omitted_members {
+                if retain_guards.is_empty() {
+                    continue;
+                }
+                let Some(member_schema) = properties
+                    .get(member)
+                    .and_then(|schema| dereferenced_payload_subschema(schema, definitions, 8))
+                else {
+                    continue;
+                };
+                let mut guards = branch_guards.clone();
+                guards.extend(retain_guards.iter().cloned());
+                guards.sort();
+                guards.dedup();
+                arms.insert((member.clone(), guards, member_schema.to_string()));
+            }
+        }
+        let target_segments = split_value_path(value_path);
+        for (member, guards, member_schema) in arms {
+            let Ok(member_schema) = serde_json::from_str::<Value>(&member_schema) else {
+                continue;
+            };
+            conditionals.push(ConditionalResolvedSchema {
+                target_value_path: value_path.clone(),
+                relative_target_segments: target_segments.clone(),
+                ancestor_segments: Vec::new(),
+                guards,
+                target_schema: serde_json::json!({
+                    "properties": { member: member_schema }
+                }),
+                provider_schema_candidate: None,
+                preserve_base_schema: true,
+                fold_unconditional_object_host_into_base: false,
+                arm_only: true,
+            });
+        }
+    }
 }
 
 /// Per-key arms for SHADOWED merge layers: with destination-first
@@ -539,7 +623,9 @@ fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> 
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
-            | ConditionalGuard::ContainsMemberEquals { .. } => {}
+            | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::AtMostOneMember { .. }
+            | ConditionalGuard::MinMembers { .. } => {}
         }
     }
 
@@ -657,6 +743,7 @@ fn fail_requirement_runtime_types(
                     // Every runtime kind has a Helm-falsy escape spelling.
                     FailValueRequirement::TruthyImpliesSchemaType(_) => true,
                     FailValueRequirement::HelmTruthy => *runtime_type != "null",
+                    FailValueRequirement::FieldHelmFalsy { .. } => true,
                     FailValueRequirement::NotEquals(_) => true,
                     FailValueRequirement::NotSchemaType(rejected) => {
                         *runtime_type != rejected
@@ -852,7 +939,9 @@ fn implication_guards_supported(
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
-            | ConditionalGuard::ContainsMemberEquals { .. } => true,
+            | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::AtMostOneMember { .. }
+            | ConditionalGuard::MinMembers { .. } => true,
             ConditionalGuard::Not(inner) => implication_guards_supported(
                 std::slice::from_ref(inner),
                 target_value_path,
@@ -890,7 +979,9 @@ fn guards_supported_with_self_path(
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
-            | ConditionalGuard::ContainsMemberEquals { .. } => true,
+            | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::AtMostOneMember { .. }
+            | ConditionalGuard::MinMembers { .. } => true,
             ConditionalGuard::Not(inner) => guards_supported_with_self_path(
                 std::slice::from_ref(inner),
                 self_path,
@@ -961,10 +1052,12 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::IntGt { .. }
         | ConditionalGuard::IntLt { .. }
         | ConditionalGuard::HasKey { .. }
-        | ConditionalGuard::ContainsMemberEquals { .. } => false,
+        | ConditionalGuard::ContainsMemberEquals { .. }
+        | ConditionalGuard::MinMembers { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
         ConditionalGuard::NotEq { .. }
         | ConditionalGuard::Absent { .. }
+        | ConditionalGuard::AtMostOneMember { .. }
         | ConditionalGuard::Not(_) => true,
         ConditionalGuard::AllOf(inner) => inner.iter().all(guard_holds_vacuously),
         ConditionalGuard::AnyOf(inner) => inner.iter().any(guard_holds_vacuously),

@@ -106,6 +106,9 @@ impl LowerScope<'_> {
                 split_segment: None,
                 merge_layers: None,
                 range_key: false,
+                omitted_members: helper_meta
+                    .map(|meta| meta.omitted_keys.clone())
+                    .unwrap_or_default(),
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),

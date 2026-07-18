@@ -57,219 +57,6 @@
       ]
     },
     "schema1": {
-      "oneOf": [
-        {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                  }
-                }
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      ]
-    },
-    "schema10": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {
-          "anyOf": [
-            {
-              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "schema12": {
-      "additionalProperties": {},
-      "properties": {
-        "periodSeconds": {
-          "anyOf": [
-            {
-              "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "schema15": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "schema22": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "updateStrategy": {}
-            },
-            "required": [
-              "updateStrategy"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "updateStrategy": {
-              "enum": [
-                "RollingUpdate"
-              ]
-            }
-          },
-          "required": [
-            "updateStrategy"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "schema23": {
-      "not": {
-        "properties": {
-          "cluster": {
-            "properties": {
-              "auth": {
-                "properties": {
-                  "username": {}
-                },
-                "required": [
-                  "username"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "cluster"
-        ],
-        "type": "object"
-      }
-    },
-    "schema24": {
-      "not": {
-        "properties": {
-          "cluster": {
-            "properties": {
-              "auth": {
-                "properties": {
-                  "enabled": {}
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "cluster"
-        ],
-        "type": "object"
-      }
-    },
-    "schema3": {
       "allOf": [
         {
           "not": {
@@ -324,64 +111,35 @@
       ],
       "type": "string"
     },
-    "schema30": {
-      "anyOf": [
-        {
-          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-          "type": "string"
-        },
-        {
-          "type": "boolean"
+    "schema11": {
+      "additionalProperties": {},
+      "properties": {
+        "periodSeconds": {
+          "anyOf": [
+            {
+              "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+              "format": "int32",
+              "type": "null"
+            },
+            {
+              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+              "type": "string"
+            }
+          ]
         }
-      ]
-    },
-    "schema31": {
-      "not": {
-        "properties": {
-          "cluster": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "cluster"
-        ],
-        "type": "object"
       }
     },
-    "schema34": {
+    "schema16": {
       "not": {
-        "properties": {
-          "auth": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "auth"
-        ],
-        "type": "object"
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "schema36": {
-      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-      "type": "string"
-    },
-    "schema39": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-      "type": "string"
-    },
-    "schema4": {
+    "schema2": {
       "additionalProperties": {},
       "properties": {
         "timeoutSeconds": {
@@ -404,56 +162,89 @@
         }
       }
     },
-    "schema40": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "schema42": {
-      "additionalProperties": {},
-      "properties": {
-        "password": {},
-        "permissions": {},
-        "username": {}
-      },
-      "type": "object"
-    },
-    "schema44": {
-      "properties": {
-        "antiAffinity": {
-          "enum": [
-            "hard"
-          ]
+    "schema23": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "updateStrategy": {}
+            },
+            "required": [
+              "updateStrategy"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "updateStrategy": {
+              "enum": [
+                "RollingUpdate"
+              ]
+            }
+          },
+          "required": [
+            "updateStrategy"
+          ],
+          "type": "object"
         }
-      },
-      "required": [
-        "antiAffinity"
-      ],
-      "type": "object"
+      ]
     },
-    "schema46": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
-    },
-    "schema47": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema49": {
+    "schema24": {
       "not": {
         "properties": {
-          "enabled": {}
+          "cluster": {
+            "properties": {
+              "auth": {
+                "properties": {
+                  "username": {}
+                },
+                "required": [
+                  "username"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          }
         },
         "required": [
-          "enabled"
+          "cluster"
         ],
         "type": "object"
       }
     },
-    "schema5": {
+    "schema25": {
+      "not": {
+        "properties": {
+          "cluster": {
+            "properties": {
+              "auth": {
+                "properties": {
+                  "enabled": {}
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "cluster"
+        ],
+        "type": "object"
+      }
+    },
+    "schema3": {
       "additionalProperties": {},
       "properties": {
         "initialDelaySeconds": {
@@ -474,6 +265,129 @@
             }
           ]
         }
+      }
+    },
+    "schema31": {
+      "anyOf": [
+        {
+          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "schema32": {
+      "not": {
+        "properties": {
+          "cluster": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "cluster"
+        ],
+        "type": "object"
+      }
+    },
+    "schema35": {
+      "not": {
+        "properties": {
+          "auth": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "auth"
+        ],
+        "type": "object"
+      }
+    },
+    "schema37": {
+      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+      "type": "string"
+    },
+    "schema4": {
+      "additionalProperties": {},
+      "properties": {
+        "successThreshold": {
+          "anyOf": [
+            {
+              "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+              "format": "int32",
+              "type": "null"
+            },
+            {
+              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "schema40": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
+    },
+    "schema41": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema43": {
+      "additionalProperties": {},
+      "properties": {
+        "password": {},
+        "permissions": {},
+        "username": {}
+      },
+      "type": "object"
+    },
+    "schema45": {
+      "properties": {
+        "antiAffinity": {
+          "enum": [
+            "hard"
+          ]
+        }
+      },
+      "required": [
+        "antiAffinity"
+      ],
+      "type": "object"
+    },
+    "schema47": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "schema49": {
+      "not": {
+        "properties": {
+          "enabled": {}
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
       }
     },
     "schema50": {
@@ -498,12 +412,12 @@
     },
     "schema57": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema58": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "schema59": {
@@ -511,18 +425,88 @@
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema6": {
-      "additionalProperties": {},
-      "properties": {
-        "successThreshold": {
+    "schema62": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "schema7": {
+      "oneOf": [
+        {
           "anyOf": [
             {
-              "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      ]
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "failureThreshold": {
+          "anyOf": [
+            {
+              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
               "format": "int32",
               "type": "integer"
             },
             {
-              "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
               "format": "int32",
               "type": "null"
             },
@@ -532,11 +516,6 @@
             }
           ]
         }
-      }
-    },
-    "schema62": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
       }
     }
   },
@@ -565,7 +544,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -599,7 +578,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -633,7 +612,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -713,7 +692,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -747,7 +726,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -781,7 +760,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -862,7 +841,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -923,7 +902,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -962,13 +941,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema42"
+                          "$ref": "#/$defs/schema43"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema42"
+                          "$ref": "#/$defs/schema43"
                         },
                         "type": "object"
                       },
@@ -991,7 +970,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -1052,7 +1031,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1136,7 +1115,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -1197,7 +1176,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1281,7 +1260,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -1342,7 +1321,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1396,7 +1375,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -1457,7 +1436,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1511,7 +1490,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -1572,7 +1551,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1655,7 +1634,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -1689,7 +1668,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -1719,7 +1698,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -1753,7 +1732,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -1787,7 +1766,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -1817,7 +1796,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -1851,7 +1830,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -1885,7 +1864,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -1944,7 +1923,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -2005,7 +1984,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2035,7 +2014,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -2069,7 +2048,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2097,7 +2076,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -2176,7 +2155,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2204,7 +2183,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -2256,7 +2235,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2313,7 +2292,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2433,7 +2412,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -2461,7 +2440,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2518,7 +2497,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2634,7 +2613,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2691,7 +2670,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2801,7 +2780,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -2835,7 +2814,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -2899,7 +2878,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema58"
+                        "$ref": "#/$defs/schema57"
                       },
                       {
                         "$ref": "#/$defs/schema59"
@@ -2918,16 +2897,13 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema41"
                       },
                       {
-                        "$ref": "#/$defs/schema40"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
-                        "$ref": "#/$defs/schema15"
-                      },
-                      {
-                        "$ref": "#/$defs/schema46"
+                        "$ref": "#/$defs/schema47"
                       },
                       {
                         "$ref": "#/$defs/schema54"
@@ -2959,7 +2935,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -3004,7 +2980,7 @@
               "namespace": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "not": {
@@ -3025,7 +3001,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -3053,7 +3029,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -3133,7 +3109,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -3161,7 +3137,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3218,7 +3194,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3312,7 +3288,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -3340,7 +3316,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3428,7 +3404,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -3462,7 +3438,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3492,7 +3468,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -3526,7 +3502,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema23"
+                        "$ref": "#/$defs/schema24"
                       },
                       {
                         "properties": {
@@ -3560,7 +3536,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3590,7 +3566,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -3624,7 +3600,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema23"
+                        "$ref": "#/$defs/schema24"
                       },
                       {
                         "properties": {
@@ -3658,7 +3634,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3717,7 +3693,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -3778,7 +3754,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3808,7 +3784,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -3842,7 +3818,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3870,7 +3846,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -3929,7 +3905,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/schema32"
                       },
                       {
                         "properties": {
@@ -3957,7 +3933,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -4013,7 +3989,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema44"
+            "$ref": "#/$defs/schema45"
           },
           {
             "allOf": [
@@ -4047,7 +4023,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/schema44"
+                  "$ref": "#/$defs/schema45"
                 }
               }
             ]
@@ -4093,26 +4069,26 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema22"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "rollingUpdateMaxSurge": {
-            "$ref": "#/$defs/schema1"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema22"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "rollingUpdateMaxUnavailable": {
-            "$ref": "#/$defs/schema1"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
@@ -4226,7 +4202,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema34"
+                    "$ref": "#/$defs/schema35"
                   },
                   {
                     "properties": {
@@ -4279,7 +4255,7 @@
                   "enableServiceAccounts": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema39"
+                        "$ref": "#/$defs/schema40"
                       },
                       {
                         "type": "boolean"
@@ -4298,7 +4274,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema34"
+                    "$ref": "#/$defs/schema35"
                   },
                   {
                     "properties": {
@@ -4404,7 +4380,7 @@
                 "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema31"
                   }
                 }
               }
@@ -4438,7 +4414,7 @@
                 "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                 "properties": {
                   "pullPolicy": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4472,7 +4448,7 @@
                 "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                 "properties": {
                   "repository": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4550,7 +4526,7 @@
                 "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                 "properties": {
                   "tag": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4584,7 +4560,7 @@
                 "description": "Prometheus Metrics Exporter",
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema31"
                   }
                 }
               }
@@ -4618,7 +4594,7 @@
                 "description": "Prometheus Metrics Exporter",
                 "properties": {
                   "pullPolicy": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4652,7 +4628,7 @@
                 "description": "Prometheus Metrics Exporter",
                 "properties": {
                   "repository": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4740,7 +4716,7 @@
                     "description": "Prometheus Operator ServiceMonitor config",
                     "properties": {
                       "prometheusInstance": {
-                        "$ref": "#/$defs/schema3"
+                        "$ref": "#/$defs/schema1"
                       }
                     }
                   }
@@ -4776,7 +4752,7 @@
                 "description": "Prometheus Metrics Exporter",
                 "properties": {
                   "tag": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4806,7 +4782,7 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema1"
               }
             }
           }
@@ -4874,7 +4850,7 @@
               "size": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema36"
+                    "$ref": "#/$defs/schema37"
                   },
                   {
                     "type": "integer"
@@ -4934,7 +4910,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "routesSecret": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -4990,7 +4966,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "serverSecret": {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               }
@@ -5022,7 +4998,7 @@
               "version": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema58"
+                    "$ref": "#/$defs/schema57"
                   },
                   {
                     "$ref": "#/$defs/schema59"
@@ -5041,16 +5017,16 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema58"
                   },
                   {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema16"
                   },
                   {
-                    "$ref": "#/$defs/schema46"
+                    "$ref": "#/$defs/schema47"
                   },
                   {
                     "$ref": "#/$defs/schema54"
@@ -5242,7 +5218,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema57"
                 },
                 {
                   "$ref": "#/$defs/schema59"
@@ -5261,16 +5237,13 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema41"
                 },
                 {
-                  "$ref": "#/$defs/schema40"
+                  "$ref": "#/$defs/schema16"
                 },
                 {
-                  "$ref": "#/$defs/schema15"
-                },
-                {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema47"
                 },
                 {
                   "$ref": "#/$defs/schema54"
@@ -5339,7 +5312,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema9"
           }
         },
         {
@@ -5362,7 +5335,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema3"
           }
         },
         {
@@ -5385,30 +5358,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema12"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema6"
+            "$ref": "#/$defs/schema11"
           }
         },
         {
@@ -5432,6 +5382,29 @@
           },
           "then": {
             "$ref": "#/$defs/schema4"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema49"
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/schema2"
           }
         }
       ],
@@ -5460,7 +5433,40 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema3"
+          "allOf": [
+            {
+              "$ref": "#/$defs/schema57"
+            },
+            {
+              "$ref": "#/$defs/schema59"
+            },
+            {
+              "$ref": "#/$defs/schema62"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "$ref": "#/$defs/schema41"
+            },
+            {
+              "$ref": "#/$defs/schema16"
+            },
+            {
+              "$ref": "#/$defs/schema47"
+            },
+            {
+              "$ref": "#/$defs/schema54"
+            }
+          ],
+          "type": "string"
         },
         {
           "not": {
@@ -5498,7 +5504,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema47"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
           "additionalProperties": {
@@ -5529,7 +5538,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema47"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
           "additionalProperties": {
@@ -5593,7 +5605,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema9"
           }
         },
         {
@@ -5616,7 +5628,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema3"
           }
         },
         {
@@ -5639,30 +5651,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema12"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema6"
+            "$ref": "#/$defs/schema11"
           }
         },
         {
@@ -5686,6 +5675,29 @@
           },
           "then": {
             "$ref": "#/$defs/schema4"
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema49"
+              },
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/schema2"
           }
         }
       ],
@@ -5723,102 +5735,94 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema36"
+          "$ref": "#/$defs/schema37"
         }
       ],
       "description": "Set default Replica Count for the Operator"
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "description": "ResourceRequirements describes the compute resource requirements.",
-          "properties": {
-            "claims": {
-              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-              "items": {
-                "additionalProperties": false,
-                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                "properties": {
-                  "name": {
-                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
+      "additionalProperties": false,
+      "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 64Mi",
+      "properties": {
+        "claims": {
+          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+          "items": {
+            "additionalProperties": false,
+            "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+            "properties": {
+              "name": {
+                "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
+        },
+        "limits": {
+          "additionalProperties": {
+            "oneOf": [
+              {
                 "type": [
-                  "object",
+                  "string",
                   "null"
                 ]
               },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            },
-            "limits": {
-              "additionalProperties": {
-                "oneOf": [
-                  {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  }
+              {
+                "type": [
+                  "number",
+                  "null"
                 ]
-              },
-              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "requests": {
-              "additionalProperties": {
-                "oneOf": [
-                  {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  {
-                    "type": [
-                      "number",
-                      "null"
-                    ]
-                  }
-                ]
-              },
-              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
+              }
+            ]
           },
-          "type": "object"
+          "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
         },
-        {
-          "$ref": "#/$defs/schema47"
-        },
-        {
-          "type": "null"
+        "requests": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      ],
-      "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 64Mi"
+      },
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "rollingUpdateMaxSurge": {},
     "rollingUpdateMaxUnavailable": {},
@@ -5861,7 +5865,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema36"
+                    "$ref": "#/$defs/schema37"
                   }
                 ]
               }
@@ -5903,7 +5907,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema36"
+                    "$ref": "#/$defs/schema37"
                   }
                 ]
               }
@@ -5997,7 +6001,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema58"
+              "$ref": "#/$defs/schema57"
             },
             {
               "$ref": "#/$defs/schema59"
@@ -6016,16 +6020,13 @@
               }
             },
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema41"
             },
             {
-              "$ref": "#/$defs/schema40"
+              "$ref": "#/$defs/schema16"
             },
             {
-              "$ref": "#/$defs/schema15"
-            },
-            {
-              "$ref": "#/$defs/schema46"
+              "$ref": "#/$defs/schema47"
             },
             {
               "$ref": "#/$defs/schema54"

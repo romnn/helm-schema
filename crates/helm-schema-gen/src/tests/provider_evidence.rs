@@ -647,6 +647,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        omitted_members: Default::default(),
     }]);
     contract.push_pathless_dependency_fragment("webhook");
 
@@ -689,6 +690,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        omitted_members: Default::default(),
     }];
     let contract = with_type_hints(
         ContractIr::from_contract_uses(uses),
@@ -1021,6 +1023,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: Default::default(),
         },
         ContractUse {
             source_expr: "serviceMonitor.metricRelabelings".to_string(),
@@ -1043,6 +1046,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: Default::default(),
         },
     ];
 
@@ -1107,6 +1111,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: Default::default(),
         },
         ContractUse {
             source_expr: "second".to_string(),
@@ -1120,6 +1125,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: Default::default(),
         },
     ];
     let schema_signals = schema_signals_for(uses);
@@ -1170,6 +1176,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        omitted_members: Default::default(),
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let schema_signals = schema_signals_for(uses);

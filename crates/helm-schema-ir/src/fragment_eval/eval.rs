@@ -534,6 +534,9 @@ pub(super) struct Interpreter<'a> {
     pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
     pub(super) values_root_helper_includes_observed: BTreeSet<String>,
     pub(super) active_predicates: Vec<Predicate>,
+    /// Loop nesting depth of the evaluation point (block and inline range
+    /// bodies): first-iteration reasoning is only sound at depth one.
+    pub(super) loop_depth: usize,
     pub(super) reads: Vec<ValueRead>,
     /// Dedup shadow of `reads` (order lives in the vec).
     reads_seen: HashSet<ValueRead>,
@@ -635,6 +638,7 @@ impl<'a> Interpreter<'a> {
             values_default_sources_observed: BTreeSet::new(),
             values_root_helper_includes_observed: BTreeSet::new(),
             active_predicates: Vec::new(),
+            loop_depth: 0,
             reads: Vec::new(),
             reads_seen: HashSet::new(),
             type_hints: BTreeMap::new(),

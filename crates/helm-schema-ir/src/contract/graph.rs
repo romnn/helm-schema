@@ -264,6 +264,7 @@ impl ContractIr {
             .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
                 scope_path: map(&wrapper.scope_path),
                 key: wrapper.key,
+                spread: wrapper.spread,
             })
             .collect();
         self.fail_conditions = std::mem::take(&mut self.fail_conditions)

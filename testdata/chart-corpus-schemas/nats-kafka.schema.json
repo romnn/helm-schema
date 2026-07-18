@@ -290,11 +290,6 @@
         },
         {
           "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
           }
         },
@@ -342,11 +337,6 @@
         {
           "not": {
             "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
           }
         },
         {
@@ -957,15 +947,10 @@
     },
     "schema63": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema64": {
-      "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema65": {
+    "schema64": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -995,11 +980,6 @@
         {
           "not": {
             "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
           }
         },
         {
@@ -1805,10 +1785,10 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema64"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema64"
                 },
                 {
                   "not": {
@@ -1824,9 +1804,6 @@
                   "not": {
                     "pattern": "[\\r\\n]"
                   }
-                },
-                {
-                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "$ref": "#/$defs/schema49"
@@ -4070,7 +4047,36 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema17"
+                          "allOf": [
+                            {
+                              "$ref": "#/$defs/schema63"
+                            },
+                            {
+                              "$ref": "#/$defs/schema64"
+                            },
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            {
+                              "$ref": "#/$defs/schema49"
+                            },
+                            {
+                              "$ref": "#/$defs/schema60"
+                            }
+                          ],
+                          "type": "string"
                         },
                         {
                           "type": "null"
@@ -4236,56 +4242,48 @@
           "type": "integer"
         },
         "resources": {
-          "anyOf": [
-            {
-              "additionalProperties": false,
-              "description": "ResourceRequirements describes the compute resource requirements.",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
+          "additionalProperties": false,
+          "description": "Resources for nats-kafka container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "properties": {
+            "claims": {
+              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+              "items": {
+                "additionalProperties": false,
+                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                "properties": {
+                  "name": {
+                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                    "type": "string"
+                  }
                 },
-                "limits": {
-                  "$ref": "#/$defs/schema31"
-                },
-                "requests": {
-                  "$ref": "#/$defs/schema21"
-                }
+                "required": [
+                  "name"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
               },
-              "type": "object"
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
             },
-            {
-              "$ref": "#/$defs/schema56"
+            "limits": {
+              "$ref": "#/$defs/schema31"
             },
-            {
-              "type": "null"
+            "requests": {
+              "$ref": "#/$defs/schema21"
             }
-          ],
-          "description": "Resources for nats-kafka container\nref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+          },
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "tolerations": {
           "anyOf": [
@@ -4393,10 +4391,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema64"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema64"
                       },
                       {
                         "not": {
@@ -4412,9 +4410,6 @@
                         "not": {
                           "pattern": "[\\r\\n]"
                         }
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
                       },
                       {
                         "$ref": "#/$defs/schema49"
@@ -4465,10 +4460,10 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema64"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema64"
                 },
                 {
                   "not": {
@@ -4484,9 +4479,6 @@
                   "not": {
                     "pattern": "[\\r\\n]"
                   }
-                },
-                {
-                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "$ref": "#/$defs/schema49"

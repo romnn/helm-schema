@@ -62,6 +62,19 @@ pub enum ConditionalGuard {
         member: String,
         value: GuardValue,
     },
+    /// The collection at `path` has at most one entry — the document-level
+    /// form of "every iteration of this range is the first" (an
+    /// empty-initialized dedup accumulator cannot have shadowed anything).
+    /// A sound subset: it may only scope positive-polarity evidence.
+    AtMostOneMember {
+        path: String,
+    },
+    /// The value at `path` is a mapping with at least `bound` members
+    /// (`gt (keys X | len) N`). Exact: both polarities encode.
+    MinMembers {
+        path: String,
+        bound: i64,
+    },
     Not(Box<ConditionalGuard>),
     AllOf(Vec<ConditionalGuard>),
     AnyOf(Vec<ConditionalGuard>),
@@ -87,7 +100,9 @@ impl ConditionalGuard {
             | Self::IntGt { path, .. }
             | Self::IntLt { path, .. }
             | Self::HasKey { path, .. }
-            | Self::ContainsMemberEquals { path, .. } => {
+            | Self::ContainsMemberEquals { path, .. }
+            | Self::AtMostOneMember { path }
+            | Self::MinMembers { path, .. } => {
                 paths.insert(path.clone());
             }
             Self::Not(inner) => inner.collect_value_paths(paths),
@@ -203,6 +218,11 @@ pub struct ValuesProgramWrapper {
     pub scope_path: String,
     /// The wrapper's sentinel member key (`$tplYaml`).
     pub key: String,
+    /// Whether the engine SPREADS the program result into the parent
+    /// collection instead of replacing the node (`$tplYamlSpread`): the
+    /// result's kind must match the parent's kind (a null result is a
+    /// no-op removal), and the values root itself rejects the wrapper.
+    pub spread: bool,
 }
 
 /// A chart-wide default subtree merged into an effective `.Values` subtree.
@@ -299,6 +319,11 @@ pub enum FailValueRequirement {
     /// The value must be Helm-truthy (sealed-secrets aborts on any falsy
     /// `privateKeyAnnotations` member, including the empty string).
     HelmTruthy,
+    /// The value's field at `path`, when present, must be Helm-FALSY: the
+    /// failing test fired on the field's truthiness (oauth2-proxy aborts
+    /// when a legacy `extraPaths[].backend.serviceName` is set under the
+    /// `networking.k8s.io/v1` Ingress api).
+    FieldHelmFalsy { path: Vec<String> },
     /// The value must not equal this literal (cilium forbids ranged
     /// `extraEnv` names colliding with its own backoff variables).
     NotEquals(GuardValue),

@@ -2146,23 +2146,153 @@ fn external_secrets_pdb_header_member_requires_an_object_host() -> color_eyre::e
     )
 }
 
+/// external-secrets' `renderSecurityContext` removes `fsGroup`,
+/// `runAsUser`, and `runAsGroup` with a guard-scoped `omit` when the
+/// OpenShift adaptation runs (`adaptSecurityContext` "force", or "auto" on
+/// a detected OpenShift cluster). The removed keys' provider typing binds
+/// exactly where the omit certainly does not run — `adaptSecurityContext:
+/// disabled` with a live render gate — while "force" and the
+/// cluster-dependent "auto" accept any value there. Keys the omit never
+/// touches keep their typing in every mode. Each polarity reproduces
+/// under `helm template --skip-schema-validation` + kubeconform.
+#[test]
+fn external_secrets_omitted_security_context_keys_scope_their_typing()
+-> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "external-secrets",
+        vec![
+            SemanticCase::accepted(
+                "force mode removes runAsUser before the sink",
+                json!({
+                    "global": { "compatibility": { "openshift": { "adaptSecurityContext": "force" } } },
+                    "securityContext": { "runAsUser": "audit" },
+                }),
+            ),
+            SemanticCase::accepted(
+                "auto mode is cluster-dependent, so the key stays open",
+                json!({ "securityContext": { "runAsUser": "audit" } }),
+            ),
+            SemanticCase::rejected(
+                "disabled mode keeps the key on the rendered Deployment",
+                "/securityContext/runAsUser",
+                json!({
+                    "global": { "compatibility": { "openshift": { "adaptSecurityContext": "disabled" } } },
+                    "securityContext": { "runAsUser": "audit" },
+                }),
+            ),
+            SemanticCase::accepted(
+                "disabled mode with a valid integer",
+                json!({
+                    "global": { "compatibility": { "openshift": { "adaptSecurityContext": "disabled" } } },
+                    "securityContext": { "runAsUser": 1000 },
+                }),
+            ),
+            SemanticCase::accepted(
+                "a disabled render gate never reaches the provider slot",
+                json!({
+                    "global": { "compatibility": { "openshift": { "adaptSecurityContext": "disabled" } } },
+                    "securityContext": { "enabled": false, "runAsUser": "audit" },
+                }),
+            ),
+            SemanticCase::rejected(
+                "a never-omitted key keeps its typing even under force",
+                "/securityContext/runAsNonRoot",
+                json!({
+                    "global": { "compatibility": { "openshift": { "adaptSecurityContext": "force" } } },
+                    "securityContext": { "runAsNonRoot": "audit" },
+                }),
+            ),
+        ],
+    )
+}
+
+/// oauth2-proxy's `deprecation.yaml` aborts rendering when a legacy
+/// `ingress.extraPaths[].backend.serviceName`/`servicePort` is set while
+/// the capability helper resolves the `networking.k8s.io/v1` Ingress api.
+/// With `kubeVersion` pinned at or above 1.19 the abort is certain; the
+/// old api keeps the legacy format, and without a pinned version the
+/// selection is cluster-dependent, so the schema abstains. Each polarity
+/// reproduces under `helm template`.
+#[test]
+fn oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api() -> color_eyre::eyre::Result<()>
+{
+    assert_chart_cases(
+        "oauth2-proxy",
+        vec![
+            SemanticCase::rejected(
+                "legacy serviceName under a pinned modern kubeVersion",
+                "/ingress/extraPaths",
+                json!({ "kubeVersion": "1.30.0", "ingress": { "enabled": true,
+                    "hosts": ["h.example"], "extraPaths": [
+                        { "path": "/*", "backend": { "serviceName": "ssl-redirect" } }
+                    ] } }),
+            ),
+            SemanticCase::rejected(
+                "legacy servicePort under a pinned modern kubeVersion",
+                "/ingress/extraPaths",
+                json!({ "kubeVersion": "1.30.0", "ingress": { "enabled": true,
+                    "hosts": ["h.example"], "extraPaths": [
+                        { "path": "/*", "backend": { "servicePort": "use-annotation" } }
+                    ] } }),
+            ),
+            SemanticCase::accepted(
+                "legacy format renders on the v1beta1 api",
+                json!({ "kubeVersion": "1.18.0", "ingress": { "enabled": true,
+                    "hosts": ["h.example"], "extraPaths": [
+                        { "path": "/*", "backend": { "serviceName": "ssl-redirect",
+                            "servicePort": "use-annotation" } }
+                    ] } }),
+            ),
+            SemanticCase::accepted(
+                "modern v1 backend",
+                json!({ "kubeVersion": "1.30.0", "ingress": { "enabled": true,
+                    "hosts": ["h.example"], "extraPaths": [
+                        { "path": "/*", "pathType": "ImplementationSpecific",
+                          "backend": { "service": { "name": "ssl-redirect",
+                              "port": { "name": "use-annotation" } } } }
+                    ] } }),
+            ),
+            SemanticCase::accepted(
+                "unpinned kubeVersion leaves the capability selection open",
+                json!({ "ingress": { "enabled": true, "hosts": ["h.example"],
+                    "extraPaths": [
+                        { "path": "/*", "backend": { "serviceName": "ssl-redirect" } }
+                    ] } }),
+            ),
+            SemanticCase::accepted(
+                "checkDeprecation disabled tolerates the legacy format",
+                json!({ "checkDeprecation": false, "kubeVersion": "1.30.0",
+                    "ingress": { "enabled": true, "hosts": ["h.example"],
+                        "extraPaths": [
+                            { "path": "/*", "backend": { "serviceName": "ssl-redirect" } }
+                        ] } }),
+            ),
+        ],
+    )
+}
+
 /// signoz's `renderAdditionalEnv` reads each member through `range keys .
 /// | sortAlpha` + `pluck . $dict | first` — a same-map member projection
 /// the analyzer resolves — but then gates every render on a case-folding
 /// dedup accumulator (`not (hasKey $processedKeys (upper .))`). A member
-/// can therefore be SHADOWED by an earlier case-colliding key and never
-/// render, so a blanket per-member EnvVar constraint would falsely reject
-/// `{audit: {value: 7}, AUDIT: {value: "ok"}}`; the schema soundly keeps
-/// the members open. If a future increment starts rejecting the numeric
-/// case below, it must prove the shadowed-member instance stays accepted.
+/// with case-colliding siblings can therefore be SHADOWED by an earlier
+/// key and never render, so the multi-member map stays open — but a
+/// SINGLETON member cannot be shadowed (the accumulator is provably empty
+/// on the first iteration), so the provider's EnvVar shape binds it under
+/// a `maxProperties: 1` bound.
 #[test]
 fn signoz_additional_env_members_stay_open_under_dedup_shadowing() -> color_eyre::eyre::Result<()> {
     assert_chart_cases(
         "signoz-signoz",
         vec![
-            SemanticCase::accepted(
-                "numeric EnvVar value abstains under the dedup accumulator",
+            SemanticCase::rejected(
+                "a singleton member cannot be shadowed, so the EnvVar shape binds",
+                "/signoz/additionalEnvs",
                 json!({ "signoz": { "additionalEnvs": { "AUDIT": { "value": 7 } } } }),
+            ),
+            SemanticCase::accepted(
+                "a valid singleton EnvVar member",
+                json!({ "signoz": { "additionalEnvs": { "AUDIT": { "value": "ok" } } } }),
             ),
             SemanticCase::accepted(
                 "case-colliding shadowed member renders nothing",

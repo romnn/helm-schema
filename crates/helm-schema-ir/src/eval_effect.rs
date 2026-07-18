@@ -33,6 +33,10 @@ pub(crate) struct Effects {
     /// (`printf`, `quote`, `trunc`, `b64enc`, …): later transform stages
     /// operate on that text, so they claim nothing about the raw path.
     pub(crate) derived_text_paths: BTreeSet<String>,
+    /// Literal keys an `omit` in this expression removed from the map at
+    /// each path: whole-map sink typing must not bind those members
+    /// (external-secrets' OpenShift `adaptSecurityContext` omit).
+    pub(crate) omitted_map_keys: BTreeMap<String, BTreeSet<String>>,
     /// Range keys converted to text by an earlier pipeline stage.
     pub(crate) derived_range_key_paths: BTreeSet<String>,
     /// Paths on which a string-consuming transform (`trunc`, `b64enc`, …)
@@ -235,6 +239,7 @@ impl Effects {
             encoded_paths,
             shape_erased_paths,
             derived_text_paths,
+            omitted_map_keys,
             derived_range_key_paths,
             string_contract_paths,
             range_modes,
@@ -264,6 +269,9 @@ impl Effects {
         self.encoded_paths.extend(encoded_paths);
         self.shape_erased_paths.extend(shape_erased_paths);
         self.derived_text_paths.extend(derived_text_paths);
+        for (path, keys) in omitted_map_keys {
+            self.omitted_map_keys.entry(path).or_default().extend(keys);
+        }
         self.derived_range_key_paths.extend(derived_range_key_paths);
         self.string_contract_paths.extend(string_contract_paths);
         self.range_modes.merge(&range_modes);
@@ -358,6 +366,7 @@ impl Effects {
             encoded_paths,
             shape_erased_paths,
             derived_text_paths,
+            omitted_map_keys: _,
             derived_range_key_paths,
             string_contract_paths,
             range_modes,
@@ -397,6 +406,7 @@ impl Effects {
             encoded_paths,
             shape_erased_paths,
             derived_text_paths,
+            omitted_map_keys: BTreeMap::new(),
             derived_range_key_paths,
             string_contract_paths,
             range_modes,

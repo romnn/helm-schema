@@ -327,6 +327,12 @@ impl Interpreter<'_> {
         // rows merge with the locals' binding-time meta for lowering.
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
+        for (path, keys) in &hole.effects.omitted_map_keys {
+            let meta = hole_meta.entry(path.clone()).or_default();
+            for key in keys {
+                meta.omitted_keys.insert(key.clone(), Vec::new());
+            }
+        }
         // An APPROXIMATELY-lowered enclosing condition gates this hole:
         // its rows' branch keys stand in for a guard the encoding cannot
         // represent, so a string contract riding them would narrow states
@@ -532,6 +538,12 @@ impl Interpreter<'_> {
         // rows merge with the locals' binding-time meta for lowering.
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
+        for (path, keys) in &hole.effects.omitted_map_keys {
+            let meta = hole_meta.entry(path.clone()).or_default();
+            for key in keys {
+                meta.omitted_keys.insert(key.clone(), Vec::new());
+            }
+        }
         // An APPROXIMATELY-lowered enclosing condition gates this hole:
         // its rows' branch keys stand in for a guard the encoding cannot
         // represent, so a string contract riding them would narrow states

@@ -64,6 +64,13 @@ pub struct ContractUse {
     /// its value: the sink constrains the key domain only.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub range_key: bool,
+    /// Literal member keys a guard-scoped `omit` may remove from the
+    /// rendered map before the sink reads it. Each key maps to the sound
+    /// RETAIN guards under which the key certainly survives (the omitting
+    /// arm certainly did not run); an empty guard list means the key's
+    /// survival is undecidable and its sink typing must abstain entirely.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -90,6 +97,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             merge_layers: Option<MergeLayersUse>,
             #[serde(default)]
             range_key: bool,
+            #[serde(default)]
+            omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -105,6 +114,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             split_segment: wire.split_segment,
             merge_layers: wire.merge_layers,
             range_key: wire.range_key,
+            omitted_members: wire.omitted_members,
         })
     }
 }
@@ -159,6 +169,7 @@ impl ContractUse {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: std::collections::BTreeMap::new(),
         }
     }
 

@@ -36,6 +36,7 @@ struct ProviderSchemaLookupKey {
     split_segment: Option<helm_schema_core::SplitSegmentUse>,
     merge_layers: Option<helm_schema_core::MergeLayersUse>,
     range_key: bool,
+    omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::ConditionalGuard>>,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -194,6 +195,7 @@ fn provider_schemas_for_path_evidence(
             split_segment: provider_use.split_segment.clone(),
             merge_layers: provider_use.merge_layers.clone(),
             range_key: provider_use.range_key,
+            omitted_members: provider_use.omitted_members.clone(),
         };
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
@@ -652,6 +654,9 @@ fn requirements_allow_runtime_kind(
         } => schema_type == "string" || *allow_non_string,
         // The requirement constrains rendered CONTENT, not the value's kind.
         FailValueRequirement::QuotedSerializationSafe { .. } => true,
+        // The field constraint applies only to objects carrying the field;
+        // every other kind passes vacuously.
+        FailValueRequirement::FieldHelmFalsy { .. } => true,
     })
 }
 
@@ -692,6 +697,19 @@ fn fail_value_requirement_schema(
                     "#/$defs/{}",
                     crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
                 ) }));
+            }
+            // `properties` constrains only PRESENT keys on objects, which
+            // is exactly the tolerance the negated truthiness test needs:
+            // an absent or falsy field renders, a truthy one aborts.
+            FailValueRequirement::FieldHelmFalsy { path } => {
+                let mut node = serde_json::json!({ "not": { "$ref": format!(
+                    "#/$defs/{}",
+                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
+                ) } });
+                for segment in path.iter().rev() {
+                    node = serde_json::json!({ "properties": { segment: node } });
+                }
+                parts.push(node);
             }
             FailValueRequirement::NotEquals(value) => {
                 let Some(value) = guard_value_to_json(value) else {

@@ -236,12 +236,14 @@ impl Interpreter<'_> {
                 .insert(variable, AbstractValue::RangeKey(path));
         }
         self.dot_stack.push(dot);
+        self.loop_depth += 1;
         let mut arms = Vec::new();
         for (sub_condition, parts) in
             self.inline_body_arms(&children_with_field(node, "body"), text)
         {
             arms.push((and_conditions(condition.clone(), sub_condition), parts));
         }
+        self.loop_depth -= 1;
         self.dot_stack.truncate(entry_dots);
         self.active_predicates.truncate(entry_predicates);
         self.active_direct_ranged_paths.truncate(entry_ranged);
@@ -314,9 +316,10 @@ impl Interpreter<'_> {
             let paths = self
                 .value_path_context()
                 .resolved_values_paths_from_expr(header.expr());
-            predicate = Predicate::approximate(
+            predicate = Predicate::approximate_with_sound_subset(
                 format!("{}:{region_start}:{branch_index}", self.source_offset),
                 paths,
+                self.first_iteration_dedup_sound_subset(header.expr()),
             );
         }
         let guards = predicate.contract_guards();
@@ -374,6 +377,12 @@ impl Interpreter<'_> {
                 };
                 let mut hole_meta = hole.effects.local_output_meta.clone();
                 merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
+                for (path, keys) in &hole.effects.omitted_map_keys {
+                    let meta = hole_meta.entry(path.clone()).or_default();
+                    for key in keys {
+                        meta.omitted_keys.insert(key.clone(), Vec::new());
+                    }
+                }
                 // As at block-scalar sites, string-contract metadata must
                 // abstain under approximately lowered conditions.
                 let no_contracts = std::collections::BTreeSet::new();

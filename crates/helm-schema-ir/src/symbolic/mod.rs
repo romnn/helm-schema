@@ -86,9 +86,10 @@ impl SymbolicIrContext {
                     .analysis_db
                     .program_wrapper_sentinels(name)
                     .into_iter()
-                    .map(|key| helm_schema_core::ValuesProgramWrapper {
+                    .map(|(key, spread)| helm_schema_core::ValuesProgramWrapper {
                         scope_path: String::new(),
                         key,
+                        spread,
                     }),
             );
         }

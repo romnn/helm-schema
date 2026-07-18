@@ -4,7 +4,7 @@
 //! bindings join across branches with the same rules as the symbolic
 //! walker.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
@@ -108,6 +108,9 @@ impl Interpreter<'_> {
             }
 
             self.locals.enter_local_scope();
+            if matches!(arm, ArmSpec::Range { .. }) {
+                self.loop_depth += 1;
+            }
             let mut contributions = match &iterations {
                 Some(plan) => {
                     // Items within one alternative run sequentially. Distinct
@@ -165,6 +168,7 @@ impl Interpreter<'_> {
                 self.eval_deferred(spec.clone(), &mut contributions);
             }
             if matches!(arm, ArmSpec::Range { .. }) {
+                self.loop_depth -= 1;
                 contributions.take_loop_control();
             }
             self.locals.exit_local_scope();
@@ -200,6 +204,7 @@ impl Interpreter<'_> {
                 &arm_header_exprs,
                 region.span.start,
             );
+            self.apply_omission_exclusions(&entry_locals, &mut outcomes, &arm_header_exprs);
         }
         self.locals.join_branch_outcomes(&entry_locals, outcomes);
 
@@ -400,9 +405,16 @@ impl Interpreter<'_> {
         let helper_paths = self.absorb_header_execution_effects(header.expr());
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            predicate = self
-                .value_path_context()
-                .approximate_condition_predicate_expr(header.expr(), &marker);
+            let dedup_subset = self.first_iteration_dedup_sound_subset(header.expr());
+            predicate = if dedup_subset.is_empty() {
+                self.value_path_context()
+                    .approximate_condition_predicate_expr(header.expr(), &marker)
+            } else {
+                let paths = self
+                    .value_path_context()
+                    .resolved_values_paths_from_expr(header.expr());
+                Predicate::approximate_with_sound_subset(marker, paths, dedup_subset)
+            };
         }
         for path in &bound_values {
             self.push_read(path, &[]);
@@ -449,6 +461,62 @@ impl Interpreter<'_> {
             }
         }
         Some(predicate)
+    }
+
+    /// A range-body dedup test — `not (hasKey $acc …)` over an accumulator
+    /// that is PROVABLY an empty dict at this evaluation point — holds on
+    /// the range's first iteration: nothing has been recorded yet. When
+    /// the single enclosing loop ranges a resolvable collection, "the
+    /// collection has at most one member" makes every iteration the first,
+    /// so that size bound is a sound subset of the guard (signoz's
+    /// case-folding `additionalEnvs` dedup). Nested loops abstain: a
+    /// second loop level reruns the test with a grown accumulator.
+    pub(super) fn first_iteration_dedup_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        if function != "not" || args.len() != 1 {
+            return Vec::new();
+        }
+        let TemplateExpr::Call {
+            function: test,
+            args: test_args,
+        } = args[0].deparen()
+        else {
+            return Vec::new();
+        };
+        if test != "hasKey" || test_args.len() != 2 {
+            return Vec::new();
+        }
+        let TemplateExpr::Variable(name) = test_args[0].deparen() else {
+            return Vec::new();
+        };
+        let accumulator_is_empty = self
+            .locals
+            .fragment_values
+            .get(name.trim_start_matches('$'))
+            .is_some_and(|value| {
+                matches!(
+                    value,
+                    crate::abstract_value::AbstractValue::Dict(entries) if entries.is_empty()
+                )
+            });
+        if !accumulator_is_empty || self.loop_depth != 1 {
+            return Vec::new();
+        }
+        let ranged_paths: BTreeSet<&String> = self
+            .active_predicates
+            .iter()
+            .filter_map(|predicate| match predicate {
+                Predicate::Guard(Guard::Range { path }) => Some(path),
+                _ => None,
+            })
+            .collect();
+        let mut ranged_paths = ranged_paths.into_iter();
+        match (ranged_paths.next(), ranged_paths.next()) {
+            (Some(path), None) => vec![Guard::AtMostOneMember { path: path.clone() }],
+            _ => Vec::new(),
+        }
     }
 
     pub(super) fn activate_with(
@@ -1250,8 +1318,39 @@ impl Interpreter<'_> {
         let Some(header) = header else {
             return Predicate::approximate(marker, BTreeSet::new());
         };
+        let paths = self
+            .value_path_context()
+            .resolved_values_paths_from_expr(header);
+        let subset = self.header_negation_sound_subset(header);
+        if subset.is_empty() {
+            Predicate::approximate(marker, paths)
+        } else {
+            Predicate::approximate_with_sound_subset(marker, paths, subset)
+        }
+    }
+
+    /// A sound subset of the NEGATION of a branch header: guards that hold
+    /// only in states where the header certainly does NOT. One negated
+    /// equality conjunct is enough for a conjunction (dropping conjuncts
+    /// weakens it, so negating one fires less often than negating all); a
+    /// DISJUNCTION needs one negated conjunct per disjunct
+    /// (external-secrets' `or (eq … "force") (and (eq … "auto") (include
+    /// …))` OpenShift gate). Empty means no sound negation was found.
+    fn header_negation_sound_subset(&self, header: &TemplateExpr) -> Vec<Guard> {
+        if let TemplateExpr::Call { function, args } = header.deparen()
+            && function == "or"
+        {
+            let mut guards = Vec::new();
+            for disjunct in args {
+                let subset = self.header_negation_sound_subset(disjunct);
+                if subset.is_empty() {
+                    return Vec::new();
+                }
+                guards.extend(subset);
+            }
+            return guards;
+        }
         let context = self.value_path_context();
-        let paths = context.resolved_values_paths_from_expr(header);
         let conjunct_exprs: Vec<&TemplateExpr> = match header.deparen() {
             TemplateExpr::Call { function, args } if function == "and" => args.iter().collect(),
             other => vec![other],
@@ -1269,16 +1368,101 @@ impl Interpreter<'_> {
                     && !path.starts_with('$')
                     && !path.split('.').any(|part| part == "*")
                 {
-                    return Predicate::approximate_with_sound_subset(
-                        marker,
-                        paths,
-                        vec![Guard::NotEq { path, value }],
-                    );
+                    return vec![Guard::NotEq { path, value }];
                 }
             }
         }
-        Predicate::approximate(marker, paths)
+        Vec::new()
     }
+
+    /// Retain guards for keys an arm's `omit` removed from a values-backed
+    /// local. Survival of an omitted key is certain exactly where the
+    /// omitting arm certainly did not run, so every arm's copy of the
+    /// binding carries the key with that negation subset as its RETAIN
+    /// guards — the omitting arm's copy included: under the retain guards
+    /// that arm never ran, so re-typing the member there is vacuous, and
+    /// the uniform map lets the branch join collapse the alternatives.
+    /// Conflicting or undecodable retains degrade to the empty guard list,
+    /// which downstream reads as "subtract the member's typing, never
+    /// re-add it".
+    fn apply_omission_exclusions(
+        &self,
+        entry: &crate::symbolic_local_state::SymbolicLocalState,
+        outcomes: &mut [crate::symbolic_local_state::SymbolicLocalState],
+        header_exprs: &[Option<TemplateExpr>],
+    ) {
+        let mut names: Vec<String> = outcomes
+            .iter()
+            .flat_map(|outcome| outcome.output_meta.keys().cloned())
+            .collect();
+        names.sort();
+        names.dedup();
+        for name in names {
+            let entry_omitted = binding_omitted_keys(entry.output_meta.get(&name));
+            let mut additions: BTreeMap<String, Vec<Guard>> = BTreeMap::new();
+            for (index, outcome) in outcomes.iter().enumerate() {
+                for (key, retain) in binding_omitted_keys(outcome.output_meta.get(&name)) {
+                    if entry_omitted.contains_key(&key) {
+                        continue;
+                    }
+                    let candidate = if retain.is_empty() {
+                        header_exprs
+                            .get(index)
+                            .and_then(Option::as_ref)
+                            .map(|header| self.header_negation_sound_subset(header))
+                            .unwrap_or_default()
+                    } else {
+                        retain
+                    };
+                    additions
+                        .entry(key)
+                        .and_modify(|existing| {
+                            if *existing != candidate {
+                                existing.clear();
+                            }
+                        })
+                        .or_insert(candidate);
+                }
+            }
+            if additions.is_empty() {
+                continue;
+            }
+            // The binding-time meta snapshot the lowering prefers for local
+            // reads predates this join: it carries the omitting arm's
+            // conditions but not the retain guards, and the binding's
+            // identity is branch-independent (only the key set varies).
+            // Every arm's snapshot gets the post-join truth so the render
+            // lowers as one unguarded splice.
+            for outcome in outcomes.iter_mut() {
+                if let Some(metas) = outcome.output_meta.get_mut(&name) {
+                    for meta in metas.values_mut() {
+                        meta.predicates.clear();
+                        meta.omitted_keys.extend(additions.clone());
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The omitted-key map recorded for one binding, unioned over its per-path
+/// metas; disagreeing retain guards degrade to the empty (abstaining) list.
+fn binding_omitted_keys(
+    metas: Option<&BTreeMap<String, crate::helper_meta::HelperOutputMeta>>,
+) -> BTreeMap<String, Vec<Guard>> {
+    let mut out: BTreeMap<String, Vec<Guard>> = BTreeMap::new();
+    for meta in metas.into_iter().flatten().map(|(_, meta)| meta) {
+        for (key, retain) in &meta.omitted_keys {
+            out.entry(key.clone())
+                .and_modify(|existing| {
+                    if existing != retain {
+                        existing.clear();
+                    }
+                })
+                .or_insert_with(|| retain.clone());
+        }
+    }
+    out
 }
 
 fn attach_reassignment_exclusion(

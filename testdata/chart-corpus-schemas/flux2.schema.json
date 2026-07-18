@@ -57,7 +57,7 @@
       ]
     },
     "providerSchema1": {
-      "$ref": "#/$defs/schema145"
+      "$ref": "#/$defs/schema144"
     },
     "providerShared12": {
       "anyOf": [
@@ -312,7 +312,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema75"
           }
         },
         {
@@ -343,7 +343,7 @@
                   "additionalArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema145"
+                        "$ref": "#/$defs/schema144"
                       },
                       {
                         "not": {
@@ -431,7 +431,7 @@
               "imagePullPolicy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema114"
+                    "$ref": "#/$defs/schema118"
                   },
                   {
                     "$ref": "#/$defs/schema263"
@@ -661,7 +661,7 @@
               "resources": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema67"
                   },
                   {
                     "not": {
@@ -862,7 +862,7 @@
               "tolerations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema75"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "not": {
@@ -3384,7 +3384,7 @@
       "x-kubernetes-patch-merge-key": "name",
       "x-kubernetes-patch-strategy": "merge,retainKeys"
     },
-    "schema101": {
+    "schema102": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -3414,11 +3414,6 @@
                 {
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
                   }
                 },
                 {
@@ -3453,7 +3448,7 @@
         }
       }
     },
-    "schema110": {
+    "schema109": {
       "additionalProperties": {
         "items": {
           "additionalProperties": false,
@@ -3485,63 +3480,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "schema114": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "string"
-    },
-    "schema116": {
+    "schema115": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -3602,7 +3541,7 @@
         }
       }
     },
-    "schema125": {
+    "schema118": {
       "allOf": [
         {
           "not": {
@@ -3631,7 +3570,77 @@
         },
         {
           "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "string"
+    },
+    "schema124": {
+      "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
+      "items": {
+        "additionalProperties": false,
+        "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+        "properties": {
+          "name": {
+            "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": [
+          "object",
+          "null"
+        ],
+        "x-kubernetes-map-type": "atomic"
+      },
+      "type": "array",
+      "x-kubernetes-patch-merge-key": "name",
+      "x-kubernetes-patch-strategy": "merge"
+    },
+    "schema128": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
           }
         },
         {
@@ -3658,31 +3667,7 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "schema126": {
-      "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
-      "items": {
-        "additionalProperties": false,
-        "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-        "properties": {
-          "name": {
-            "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "type": [
-          "object",
-          "null"
-        ],
-        "x-kubernetes-map-type": "atomic"
-      },
-      "type": "array",
-      "x-kubernetes-patch-merge-key": "name",
-      "x-kubernetes-patch-strategy": "merge"
-    },
-    "schema138": {
+    "schema137": {
       "additionalProperties": false,
       "description": "keySecret defines the Secret containing the client key file for the targets.",
       "properties": {
@@ -3706,7 +3691,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "schema141": {
+    "schema139": {
       "additionalProperties": false,
       "description": "secret defines the Secret containing data to use for the targets.",
       "properties": {
@@ -3730,7 +3715,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "schema145": {
+    "schema144": {
       "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
       "items": {
         "type": [
@@ -3740,7 +3725,7 @@
       },
       "type": "array"
     },
-    "schema147": {
+    "schema146": {
       "additionalProperties": false,
       "description": "configMap defines the ConfigMap containing data to use for the targets.",
       "properties": {
@@ -7038,7 +7023,64 @@
         "type": "object"
       }
     },
-    "schema35": {
+    "schema351": {
+      "not": {
+        "properties": {
+          "notificationController": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "notificationController"
+        ],
+        "type": "object"
+      }
+    },
+    "schema357": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "schema358": {
+      "not": {
+        "properties": {
+          "kustomizeController": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "kustomizeController"
+        ],
+        "type": "object"
+      }
+    },
+    "schema36": {
       "additionalProperties": {},
       "properties": {
         "paths": {
@@ -7072,11 +7114,6 @@
                       {
                         "not": {
                           "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
                         }
                       },
                       {
@@ -7145,11 +7182,6 @@
                       },
                       {
                         "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
                           "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                         }
                       },
@@ -7181,63 +7213,6 @@
             }
           }
         }
-      }
-    },
-    "schema351": {
-      "not": {
-        "properties": {
-          "notificationController": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "notificationController"
-        ],
-        "type": "object"
-      }
-    },
-    "schema357": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          ]
-        },
-        "secretName": {}
-      },
-      "type": "object"
-    },
-    "schema358": {
-      "not": {
-        "properties": {
-          "kustomizeController": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "kustomizeController"
-        ],
-        "type": "object"
       }
     },
     "schema369": {
@@ -7278,63 +7253,7 @@
         "type": "object"
       }
     },
-    "schema380": {
-      "not": {
-        "properties": {
-          "helmController": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "helmController"
-        ],
-        "type": "object"
-      }
-    },
-    "schema381": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
-    },
-    "schema383": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {}
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "labels": {},
-            "ports": {}
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "schema39": {
+    "schema38": {
       "description": "The list of ports that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "items": {
         "additionalProperties": false,
@@ -7407,6 +7326,62 @@
       "x-kubernetes-list-type": "map",
       "x-kubernetes-patch-merge-key": "port",
       "x-kubernetes-patch-strategy": "merge"
+    },
+    "schema380": {
+      "not": {
+        "properties": {
+          "helmController": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "helmController"
+        ],
+        "type": "object"
+      }
+    },
+    "schema381": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema383": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {}
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "labels": {},
+            "ports": {}
+          },
+          "type": "object"
+        }
+      ]
     },
     "schema397": {
       "properties": {
@@ -8807,12 +8782,12 @@
     },
     "schema542": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema543": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "schema544": {
@@ -8820,153 +8795,17 @@
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema547": {
+    "schema546": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema548": {
+    "schema547": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "schema64": {
-      "additionalProperties": {},
-      "properties": {
-        "container": {
-          "additionalProperties": {},
-          "properties": {
-            "additionalArgs": {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "items": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "schema68": {
+    "schema67": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
       "properties": {
@@ -9047,7 +8886,7 @@
       },
       "type": "object"
     },
-    "schema73": {
+    "schema71": {
       "additionalProperties": false,
       "description": "cert defines the Client certificate to present when doing client-authentication.",
       "properties": {
@@ -9102,7 +8941,7 @@
       },
       "type": "object"
     },
-    "schema74": {
+    "schema72": {
       "additionalProperties": false,
       "description": "ca defines the Certificate authority used when verifying server certificates.",
       "properties": {
@@ -9157,7 +8996,7 @@
       },
       "type": "object"
     },
-    "schema75": {
+    "schema73": {
       "description": "If specified, the pod's tolerations.",
       "items": {
         "additionalProperties": false,
@@ -9206,6 +9045,132 @@
         ]
       },
       "type": "array"
+    },
+    "schema75": {
+      "additionalProperties": {},
+      "properties": {
+        "container": {
+          "additionalProperties": {},
+          "properties": {
+            "additionalArgs": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "items": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     },
     "schema8": {
       "additionalProperties": false,
@@ -9657,11 +9622,6 @@
                 {
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
                   }
                 },
                 {
@@ -10172,7 +10132,7 @@
         "null"
       ]
     },
-    "schema93": {
+    "schema92": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
       "properties": {
@@ -11528,7 +11488,7 @@
           "imagePullSecrets": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema126"
+                "$ref": "#/$defs/schema124"
               },
               {
                 "not": {
@@ -16451,13 +16411,13 @@
                   "name": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema543"
+                        "$ref": "#/$defs/schema542"
                       },
                       {
                         "$ref": "#/$defs/schema544"
                       },
                       {
-                        "$ref": "#/$defs/schema547"
+                        "$ref": "#/$defs/schema546"
                       },
                       {
                         "not": {
@@ -16465,10 +16425,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema548"
+                        "$ref": "#/$defs/schema547"
                       },
                       {
-                        "$ref": "#/$defs/schema542"
+                        "$ref": "#/$defs/schema543"
                       },
                       {
                         "$ref": "#/$defs/schema456"
@@ -17862,7 +17822,7 @@
         "resources": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema67"
             },
             {
               "not": {
@@ -17904,7 +17864,7 @@
         "tolerations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema75"
+              "$ref": "#/$defs/schema73"
             },
             {
               "not": {
@@ -18084,7 +18044,7 @@
                       "resources": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema93"
+                            "$ref": "#/$defs/schema92"
                           },
                           {
                             "not": {
@@ -18170,7 +18130,7 @@
                       "tolerations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema75"
+                            "$ref": "#/$defs/schema73"
                           },
                           {
                             "not": {
@@ -18348,7 +18308,7 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema126"
+          "$ref": "#/$defs/schema124"
         },
         {
           "not": {
@@ -18450,7 +18410,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema75"
           }
         },
         {
@@ -18481,7 +18441,7 @@
                   "additionalArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema145"
+                        "$ref": "#/$defs/schema144"
                       },
                       {
                         "not": {
@@ -18598,7 +18558,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema125"
+                            "$ref": "#/$defs/schema128"
                           },
                           {
                             "$ref": "#/$defs/schema401"
@@ -18711,7 +18671,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema125"
+                            "$ref": "#/$defs/schema128"
                           },
                           {
                             "$ref": "#/$defs/schema401"
@@ -18794,11 +18754,11 @@
             "properties": {
               "extraSecretMounts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema116"
+                  "$ref": "#/$defs/schema115"
                 },
                 "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true",
                 "items": {
-                  "$ref": "#/$defs/schema116"
+                  "$ref": "#/$defs/schema115"
                 }
               }
             }
@@ -18828,11 +18788,11 @@
             "properties": {
               "extraSecretMounts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema101"
+                  "$ref": "#/$defs/schema102"
                 },
                 "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true",
                 "items": {
-                  "$ref": "#/$defs/schema101"
+                  "$ref": "#/$defs/schema102"
                 }
               }
             }
@@ -18893,7 +18853,7 @@
               "imagePullPolicy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema114"
+                    "$ref": "#/$defs/schema118"
                   },
                   {
                     "$ref": "#/$defs/schema263"
@@ -19090,7 +19050,7 @@
               "resources": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "not": {
@@ -19291,7 +19251,7 @@
               "tolerations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema75"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "not": {
@@ -19423,13 +19383,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema543"
+                                "$ref": "#/$defs/schema542"
                               },
                               {
                                 "$ref": "#/$defs/schema544"
                               },
                               {
-                                "$ref": "#/$defs/schema547"
+                                "$ref": "#/$defs/schema546"
                               },
                               {
                                 "not": {
@@ -19437,10 +19397,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema548"
-                              },
-                              {
-                                "$ref": "#/$defs/schema542"
+                                "$ref": "#/$defs/schema547"
                               },
                               {
                                 "$ref": "#/$defs/schema456"
@@ -19457,9 +19414,6 @@
                             ],
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                             "type": "string"
-                          },
-                          {
-                            "const": ""
                           },
                           {
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -19698,7 +19652,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema75"
           }
         },
         {
@@ -19729,7 +19683,7 @@
                   "additionalArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema145"
+                        "$ref": "#/$defs/schema144"
                       },
                       {
                         "not": {
@@ -19817,7 +19771,7 @@
               "imagePullPolicy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema114"
+                    "$ref": "#/$defs/schema118"
                   },
                   {
                     "$ref": "#/$defs/schema263"
@@ -20014,7 +19968,7 @@
               "resources": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "not": {
@@ -20187,7 +20141,7 @@
                   "ports": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema39"
+                        "$ref": "#/$defs/schema38"
                       },
                       {
                         "not": {
@@ -20350,7 +20304,7 @@
               "tolerations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema75"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "not": {
@@ -20654,10 +20608,10 @@
                     "properties": {
                       "hosts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema35"
+                          "$ref": "#/$defs/schema36"
                         },
                         "items": {
-                          "$ref": "#/$defs/schema35"
+                          "$ref": "#/$defs/schema36"
                         }
                       }
                     }
@@ -20953,13 +20907,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema543"
+                                "$ref": "#/$defs/schema542"
                               },
                               {
                                 "$ref": "#/$defs/schema544"
                               },
                               {
-                                "$ref": "#/$defs/schema547"
+                                "$ref": "#/$defs/schema546"
                               },
                               {
                                 "not": {
@@ -20967,10 +20921,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema548"
-                              },
-                              {
-                                "$ref": "#/$defs/schema542"
+                                "$ref": "#/$defs/schema547"
                               },
                               {
                                 "$ref": "#/$defs/schema456"
@@ -21926,10 +21877,10 @@
                                   "description": "clientId defines a key of a Secret or ConfigMap containing the\nOAuth2 client's ID.",
                                   "properties": {
                                     "configMap": {
-                                      "$ref": "#/$defs/schema147"
+                                      "$ref": "#/$defs/schema146"
                                     },
                                     "secret": {
-                                      "$ref": "#/$defs/schema141"
+                                      "$ref": "#/$defs/schema139"
                                     }
                                   },
                                   "type": "object"
@@ -21965,7 +21916,7 @@
                                   "$ref": "#/$defs/schema253"
                                 },
                                 "proxyConnectHeader": {
-                                  "$ref": "#/$defs/schema110"
+                                  "$ref": "#/$defs/schema109"
                                 },
                                 "proxyFromEnvironment": {
                                   "$ref": "#/$defs/schema264"
@@ -21985,16 +21936,16 @@
                                   "description": "tlsConfig defines the TLS configuration to use when connecting to the OAuth2 server.\nIt requires Prometheus >= v2.43.0.",
                                   "properties": {
                                     "ca": {
-                                      "$ref": "#/$defs/schema74"
+                                      "$ref": "#/$defs/schema72"
                                     },
                                     "cert": {
-                                      "$ref": "#/$defs/schema73"
+                                      "$ref": "#/$defs/schema71"
                                     },
                                     "insecureSkipVerify": {
                                       "$ref": "#/$defs/schema457"
                                     },
                                     "keySecret": {
-                                      "$ref": "#/$defs/schema138"
+                                      "$ref": "#/$defs/schema137"
                                     },
                                     "maxVersion": {
                                       "$ref": "#/$defs/schema332"
@@ -22047,7 +21998,7 @@
                               "type": "integer"
                             },
                             "proxyConnectHeader": {
-                              "$ref": "#/$defs/schema110"
+                              "$ref": "#/$defs/schema109"
                             },
                             "proxyFromEnvironment": {
                               "$ref": "#/$defs/schema264"
@@ -22094,16 +22045,16 @@
                               "description": "tlsConfig defines the TLS configuration used by the client.",
                               "properties": {
                                 "ca": {
-                                  "$ref": "#/$defs/schema74"
+                                  "$ref": "#/$defs/schema72"
                                 },
                                 "cert": {
-                                  "$ref": "#/$defs/schema73"
+                                  "$ref": "#/$defs/schema71"
                                 },
                                 "insecureSkipVerify": {
                                   "$ref": "#/$defs/schema457"
                                 },
                                 "keySecret": {
-                                  "$ref": "#/$defs/schema138"
+                                  "$ref": "#/$defs/schema137"
                                 },
                                 "maxVersion": {
                                   "$ref": "#/$defs/schema332"
@@ -22343,7 +22294,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema75"
           }
         },
         {
@@ -22374,7 +22325,7 @@
                   "additionalArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema145"
+                        "$ref": "#/$defs/schema144"
                       },
                       {
                         "not": {
@@ -22462,7 +22413,7 @@
               "imagePullPolicy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema114"
+                    "$ref": "#/$defs/schema118"
                   },
                   {
                     "$ref": "#/$defs/schema263"
@@ -22629,7 +22580,7 @@
               "resources": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "not": {
@@ -22802,7 +22753,7 @@
                   "ports": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema39"
+                        "$ref": "#/$defs/schema38"
                       },
                       {
                         "not": {
@@ -22965,7 +22916,7 @@
               "tolerations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema75"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "not": {
@@ -23163,7 +23114,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema75"
           }
         },
         {
@@ -23187,7 +23138,7 @@
                   "additionalArgs": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema145"
+                        "$ref": "#/$defs/schema144"
                       },
                       {
                         "not": {
@@ -23261,7 +23212,7 @@
               "imagePullPolicy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema114"
+                    "$ref": "#/$defs/schema118"
                   },
                   {
                     "$ref": "#/$defs/schema263"
@@ -23413,7 +23364,7 @@
               "resources": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "not": {
@@ -23558,7 +23509,7 @@
                   "ports": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema39"
+                        "$ref": "#/$defs/schema38"
                       },
                       {
                         "not": {
@@ -23693,7 +23644,7 @@
               "tolerations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema75"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "not": {

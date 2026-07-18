@@ -262,7 +262,7 @@
         "null"
       ]
     },
-    "schema12": {
+    "schema11": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
         "additionalProperties": false,
@@ -304,7 +304,7 @@
         "null"
       ]
     },
-    "schema13": {
+    "schema12": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
         "additionalProperties": false,
@@ -371,11 +371,6 @@
         {
           "not": {
             "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
           }
         },
         {
@@ -795,11 +790,6 @@
                   },
                   {
                     "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
                       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                     }
                   },
@@ -855,11 +845,6 @@
                   {
                     "not": {
                       "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
                     }
                   },
                   {
@@ -928,13 +913,7 @@
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema51": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema54": {
+    "schema53": {
       "properties": {
         "create": {}
       },
@@ -943,7 +922,7 @@
       ],
       "type": "object"
     },
-    "schema55": {
+    "schema54": {
       "oneOf": [
         {
           "type": [
@@ -959,27 +938,22 @@
         }
       ]
     },
-    "schema56": {
+    "schema55": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema58": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema59": {
+    "schema57": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema60": {
+    "schema58": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema63": {
+    "schema60": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -1014,11 +988,6 @@
                 {
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
                   }
                 },
                 {
@@ -1679,13 +1648,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema59"
+                        "$ref": "#/$defs/schema57"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
                       },
                       {
                         "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
                       },
                       {
                         "not": {
@@ -1698,7 +1667,9 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema58"
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
                       },
                       {
                         "$ref": "#/$defs/schema46"
@@ -1710,7 +1681,7 @@
                         "$ref": "#/$defs/schema48"
                       },
                       {
-                        "$ref": "#/$defs/schema56"
+                        "$ref": "#/$defs/schema55"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -1735,167 +1706,159 @@
   ],
   "properties": {
     "affinity": {
-      "anyOf": [
-        {
+      "additionalProperties": false,
+      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity",
+      "properties": {
+        "nodeAffinity": {
           "additionalProperties": false,
-          "description": "Affinity is a group of affinity scheduling rules.",
+          "description": "Node affinity is a group of node affinity scheduling rules.",
           "properties": {
-            "nodeAffinity": {
-              "additionalProperties": false,
-              "description": "Node affinity is a group of node affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
-                  "items": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
+              "items": {
+                "additionalProperties": false,
+                "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
+                "properties": {
+                  "preference": {
                     "additionalProperties": false,
-                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
+                    "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                     "properties": {
-                      "preference": {
-                        "additionalProperties": false,
-                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-                        "properties": {
-                          "matchExpressions": {
-                            "$ref": "#/$defs/schema13"
-                          },
-                          "matchFields": {
-                            "$ref": "#/$defs/schema12"
-                          }
-                        },
-                        "type": "object",
-                        "x-kubernetes-map-type": "atomic"
+                      "matchExpressions": {
+                        "$ref": "#/$defs/schema12"
                       },
-                      "weight": {
-                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
-                        "format": "int32",
-                        "type": "integer"
+                      "matchFields": {
+                        "$ref": "#/$defs/schema11"
                       }
                     },
-                    "required": [
-                      "weight",
-                      "preference"
-                    ],
+                    "type": "object",
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "weight": {
+                    "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "weight",
+                  "preference"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "additionalProperties": false,
+              "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
+              "properties": {
+                "nodeSelectorTerms": {
+                  "description": "Required. A list of node selector terms. The terms are ORed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                    "properties": {
+                      "matchExpressions": {
+                        "$ref": "#/$defs/schema12"
+                      },
+                      "matchFields": {
+                        "$ref": "#/$defs/schema11"
+                      }
+                    },
                     "type": [
                       "object",
                       "null"
-                    ]
+                    ],
+                    "x-kubernetes-map-type": "atomic"
                   },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "additionalProperties": false,
-                  "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
-                  "properties": {
-                    "nodeSelectorTerms": {
-                      "description": "Required. A list of node selector terms. The terms are ORed.",
-                      "items": {
-                        "additionalProperties": false,
-                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-                        "properties": {
-                          "matchExpressions": {
-                            "$ref": "#/$defs/schema13"
-                          },
-                          "matchFields": {
-                            "$ref": "#/$defs/schema12"
-                          }
-                        },
-                        "type": [
-                          "object",
-                          "null"
-                        ],
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "nodeSelectorTerms"
-                  ],
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "x-kubernetes-map-type": "atomic"
+                  "type": "array"
                 }
               },
+              "required": [
+                "nodeSelectorTerms"
+              ],
               "type": [
                 "object",
                 "null"
-              ]
-            },
-            "podAffinity": {
-              "additionalProperties": false,
-              "description": "Pod affinity is a group of inter pod affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
-                  "items": {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
-                  "items": {
-                    "$ref": "#/$defs/schema2"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                }
+              ],
+              "x-kubernetes-map-type": "atomic"
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "podAffinity": {
+          "additionalProperties": false,
+          "description": "Pod affinity is a group of inter pod affinity scheduling rules.",
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+              "items": {
+                "$ref": "#/$defs/schema1"
               },
               "type": [
-                "object",
+                "array",
                 "null"
               ]
             },
-            "podAntiAffinity": {
-              "additionalProperties": false,
-              "description": "Pod anti affinity is a group of inter pod anti affinity scheduling rules.",
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
-                  "items": {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
-                  "items": {
-                    "$ref": "#/$defs/schema2"
-                  },
-                  "type": [
-                    "array",
-                    "null"
-                  ]
-                }
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+              "items": {
+                "$ref": "#/$defs/schema2"
               },
               "type": [
-                "object",
+                "array",
                 "null"
               ]
             }
           },
-          "type": "object"
+          "type": [
+            "object",
+            "null"
+          ]
         },
-        {
-          "$ref": "#/$defs/schema51"
-        },
-        {
-          "type": "null"
+        "podAntiAffinity": {
+          "additionalProperties": false,
+          "description": "Pod anti affinity is a group of inter pod anti affinity scheduling rules.",
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+              "items": {
+                "$ref": "#/$defs/schema1"
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+              "items": {
+                "$ref": "#/$defs/schema2"
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      ],
-      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
+      },
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "envs": {
       "additionalProperties": {},
@@ -1906,13 +1869,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
                 },
                 {
                   "$ref": "#/$defs/schema60"
-                },
-                {
-                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "not": {
@@ -1925,9 +1888,6 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema58"
-                },
-                {
                   "$ref": "#/$defs/schema46"
                 },
                 {
@@ -1937,7 +1897,7 @@
                   "$ref": "#/$defs/schema48"
                 },
                 {
-                  "$ref": "#/$defs/schema56"
+                  "$ref": "#/$defs/schema55"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -2051,7 +2011,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/schema55"
+                        "$ref": "#/$defs/schema54"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -2140,13 +2100,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
                 },
                 {
                   "$ref": "#/$defs/schema60"
-                },
-                {
-                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "not": {
@@ -2159,9 +2119,6 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema58"
-                },
-                {
                   "$ref": "#/$defs/schema46"
                 },
                 {
@@ -2171,7 +2128,7 @@
                   "$ref": "#/$defs/schema48"
                 },
                 {
-                  "$ref": "#/$defs/schema56"
+                  "$ref": "#/$defs/schema55"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2350,13 +2307,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema59"
+                        "$ref": "#/$defs/schema57"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
                       },
                       {
                         "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
                       },
                       {
                         "not": {
@@ -2369,9 +2326,6 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
                         "$ref": "#/$defs/schema46"
                       },
                       {
@@ -2381,7 +2335,7 @@
                         "$ref": "#/$defs/schema48"
                       },
                       {
-                        "$ref": "#/$defs/schema56"
+                        "$ref": "#/$defs/schema55"
                       }
                     ],
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -2615,31 +2569,26 @@
       ]
     },
     "nodeSelector": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/schema51"
-        },
-        {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        {
-          "type": "null"
-        }
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
+      "type": [
+        "object",
+        "null"
       ],
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+      "x-kubernetes-map-type": "atomic"
     },
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema51"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
           "$ref": "#/$defs/schema20"
@@ -2660,13 +2609,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema59"
+              "$ref": "#/$defs/schema57"
+            },
+            {
+              "$ref": "#/$defs/schema58"
             },
             {
               "$ref": "#/$defs/schema60"
-            },
-            {
-              "$ref": "#/$defs/schema63"
             },
             {
               "not": {
@@ -2679,9 +2628,6 @@
               }
             },
             {
-              "$ref": "#/$defs/schema58"
-            },
-            {
               "$ref": "#/$defs/schema46"
             },
             {
@@ -2691,7 +2637,7 @@
               "$ref": "#/$defs/schema48"
             },
             {
-              "$ref": "#/$defs/schema56"
+              "$ref": "#/$defs/schema55"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -2783,7 +2729,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema55"
+                    "$ref": "#/$defs/schema54"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2805,7 +2751,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema55"
+                    "$ref": "#/$defs/schema54"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2883,7 +2829,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema51"
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
             },
             {
               "$ref": "#/$defs/schema20"
@@ -2917,13 +2866,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
                 },
                 {
                   "$ref": "#/$defs/schema60"
-                },
-                {
-                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "not": {
@@ -2936,9 +2885,6 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema58"
-                },
-                {
                   "$ref": "#/$defs/schema46"
                 },
                 {
@@ -2948,7 +2894,7 @@
                   "$ref": "#/$defs/schema48"
                 },
                 {
-                  "$ref": "#/$defs/schema56"
+                  "$ref": "#/$defs/schema55"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -2979,7 +2925,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema54"
+                  "$ref": "#/$defs/schema53"
                 }
               },
               {
@@ -3003,13 +2949,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema59"
+                        "$ref": "#/$defs/schema57"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
                       },
                       {
                         "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
                       },
                       {
                         "not": {
@@ -3022,9 +2968,6 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
                         "$ref": "#/$defs/schema46"
                       },
                       {
@@ -3034,7 +2977,7 @@
                         "$ref": "#/$defs/schema48"
                       },
                       {
-                        "$ref": "#/$defs/schema56"
+                        "$ref": "#/$defs/schema55"
                       }
                     ],
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -3074,13 +3017,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
                 },
                 {
                   "$ref": "#/$defs/schema60"
-                },
-                {
-                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "not": {
@@ -3093,9 +3036,6 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema58"
-                },
-                {
                   "$ref": "#/$defs/schema46"
                 },
                 {
@@ -3105,7 +3045,7 @@
                   "$ref": "#/$defs/schema48"
                 },
                 {
-                  "$ref": "#/$defs/schema56"
+                  "$ref": "#/$defs/schema55"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

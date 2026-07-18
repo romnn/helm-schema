@@ -50,6 +50,12 @@ pub(crate) struct HelperOutputMeta {
     /// exempt raw strings containing any token instead of projecting the
     /// final language onto them.
     pub(crate) lexical_escapes: BTreeSet<String>,
+    /// Literal member keys an `omit` removed from this map value on some
+    /// path to the render, mapped to the sound RETAIN guards under which
+    /// the key certainly survives (external-secrets' OpenShift
+    /// `adaptSecurityContext` omit). Empty guards mean survival is
+    /// undecidable: the key's sink typing abstains.
+    pub(crate) omitted_keys: std::collections::BTreeMap<String, Vec<crate::Guard>>,
 }
 
 impl HelperOutputMeta {
@@ -69,6 +75,18 @@ impl HelperOutputMeta {
             .extend(other.capture_exclusions.iter().cloned());
         self.lexical_escapes
             .extend(other.lexical_escapes.iter().cloned());
+        for (key, retain_guards) in &other.omitted_keys {
+            // Conflicting retain guards for one key collapse to abstention:
+            // typing may only bind where the key CERTAINLY survives.
+            self.omitted_keys
+                .entry(key.clone())
+                .and_modify(|existing| {
+                    if existing != retain_guards {
+                        existing.clear();
+                    }
+                })
+                .or_insert_with(|| retain_guards.clone());
+        }
     }
 
     pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {

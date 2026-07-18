@@ -172,6 +172,8 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::RangeKeyMatches { path, pattern } => {
             format!("rangeKeyMatches({path} ~ {pattern})")
         }
+        Guard::AtMostOneMember { path } => format!("atMostOneMember({path})"),
+        Guard::MinMembers { path, bound } => format!("minMembers({path} >= {bound})"),
         Guard::Or { paths } => format!("or({})", paths.join(", ")),
         Guard::AnyOf { alternatives } => {
             let rendered: Vec<String> = alternatives

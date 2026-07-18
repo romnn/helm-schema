@@ -158,8 +158,11 @@ impl IrAnalysisDb {
     /// that feeds `tpl` — the structural shape of an engine that replaces
     /// singleton `{KEY: PROGRAM}` maps with rendered program results
     /// (nats' `tplYaml`/`tplYamlItr`). Empty when the family is not such
-    /// an engine.
-    pub(crate) fn program_wrapper_sentinels(&self, entry: &str) -> BTreeSet<String> {
+    /// an engine. The value marks SPREAD sentinels: a sentinel whose
+    /// `hasKey` test guards a `fail` terminal is the engine's
+    /// spread-into-parent form (nats' `$tplYamlSpread` root guard) rather
+    /// than a plain node replacement.
+    pub(crate) fn program_wrapper_sentinels(&self, entry: &str) -> BTreeMap<String, bool> {
         const MAX_FAMILY: usize = 16;
         let mut visited: BTreeSet<String> = BTreeSet::new();
         let mut queue = vec![entry.to_string()];
@@ -228,7 +231,13 @@ impl IrAnalysisDb {
         }
         has_key_literals
             .intersection(&tpl_fed_literals)
-            .cloned()
+            .map(|key| {
+                let spread = visited
+                    .iter()
+                    .filter_map(|name| self.parsed_helper_body(name))
+                    .any(|body| if_has_key_guards_fail(body.source, body.tree.root_node(), key));
+                (key.clone(), spread)
+            })
             .collect()
     }
 
@@ -578,6 +587,77 @@ fn children_with_field<'node>(
 ) -> Vec<tree_sitter::Node<'node>> {
     let mut cursor = node.walk();
     node.children_by_field_name(field, &mut cursor).collect()
+}
+
+/// Whether any `if` whose condition tests `hasKey … "key"` — and no other
+/// literal key — guards a `fail` terminal in its consequence subtree: the
+/// structural shape of a wrapper engine's spread sentinel, whose semantics
+/// carry extra failure rules (nats' `$tplYamlSpread`: no spread at the
+/// values root, and the program result must match the parent collection's
+/// kind). The engine's outer dispatch tests every sentinel in one `or`
+/// condition, so requiring a single-key test keeps the plain replace
+/// sentinel out of the classification.
+fn if_has_key_guards_fail(source: &str, node: tree_sitter::Node<'_>, key: &str) -> bool {
+    let mut walker = node.walk();
+    for child in node.named_children(&mut walker) {
+        if child.kind() == "if_action"
+            && let Some(header) = crate::node_eval::control_header(source, child)
+            && header_has_key_literals(&header)
+                .is_some_and(|literals| literals.len() == 1 && literals.contains(key))
+            && children_with_field(child, "consequence")
+                .into_iter()
+                .any(|consequence| subtree_contains_fail(source, consequence))
+        {
+            return true;
+        }
+        if if_has_key_guards_fail(source, child, key) {
+            return true;
+        }
+    }
+    false
+}
+
+/// Literal keys the header tests with `hasKey`; `None` when it tests none.
+fn header_has_key_literals(header: &helm_schema_ast::TemplateHeader) -> Option<BTreeSet<String>> {
+    let mut literals = BTreeSet::new();
+    header.expr().walk(|inner| {
+        if let TemplateExpr::Call { function, args } = inner
+            && function == "hasKey"
+            && let Some(literal) = literal_string_argument(args.get(1))
+        {
+            literals.insert(literal);
+        }
+    });
+    if literals.is_empty() {
+        None
+    } else {
+        Some(literals)
+    }
+}
+
+fn subtree_contains_fail(source: &str, node: tree_sitter::Node<'_>) -> bool {
+    match crate::node_eval::node_action(source, node) {
+        crate::node_eval::NodeAction::Output(Some(exprs))
+        | crate::node_eval::NodeAction::Assignment(Some(exprs)) => {
+            let mut found = false;
+            for expr in &exprs {
+                expr.walk(|inner| {
+                    if let TemplateExpr::Call { function, .. } = inner
+                        && function == "fail"
+                    {
+                        found = true;
+                    }
+                });
+            }
+            if found {
+                return true;
+            }
+        }
+        _ => {}
+    }
+    let mut walker = node.walk();
+    node.named_children(&mut walker)
+        .any(|child| subtree_contains_fail(source, child))
 }
 
 #[cfg(test)]

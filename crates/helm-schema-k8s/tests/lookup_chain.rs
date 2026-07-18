@@ -39,6 +39,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        omitted_members: Default::default(),
     }
 }
 

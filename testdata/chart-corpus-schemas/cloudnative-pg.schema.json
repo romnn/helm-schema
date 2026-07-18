@@ -346,7 +346,7 @@
         "null"
       ]
     },
-    "schema18": {
+    "schema19": {
       "allOf": [
         {
           "not": {
@@ -399,7 +399,6 @@
           }
         }
       ],
-      "description": "Name of the object being referenced.",
       "type": "string"
     },
     "schema2": {
@@ -623,11 +622,6 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
                 "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
@@ -679,11 +673,6 @@
         {
           "not": {
             "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
           }
         },
         {
@@ -1171,11 +1160,6 @@
         },
         {
           "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
           }
         },
@@ -1244,11 +1228,6 @@
                 {
                   "not": {
                     "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
                   }
                 },
                 {
@@ -1383,11 +1362,6 @@
         },
         {
           "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
           }
         },
@@ -1422,12 +1396,12 @@
     },
     "schema92": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema93": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "schema94": {
@@ -1435,12 +1409,12 @@
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema97": {
+    "schema96": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema98": {
+    "schema97": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -2222,7 +2196,7 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "not": {
@@ -2408,13 +2382,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "$ref": "#/$defs/schema94"
                   },
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "not": {
@@ -2422,10 +2396,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema98"
-                  },
-                  {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema97"
                   },
                   {
                     "$ref": "#/$defs/schema69"
@@ -2451,6 +2422,61 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema62"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema55"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -2538,13 +2564,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "$ref": "#/$defs/schema94"
                   },
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "not": {
@@ -2552,10 +2578,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema98"
+                    "$ref": "#/$defs/schema97"
                   },
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema93"
                   },
                   {
                     "$ref": "#/$defs/schema69"
@@ -2577,61 +2603,6 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema62"
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema55"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema21"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
               }
             ]
           }
@@ -2664,7 +2635,7 @@
           "namespaceOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "not": {
@@ -2819,13 +2790,13 @@
               "name": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema92"
                   },
                   {
                     "$ref": "#/$defs/schema94"
                   },
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "not": {
@@ -2833,10 +2804,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema98"
+                    "$ref": "#/$defs/schema97"
                   },
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema93"
                   },
                   {
                     "$ref": "#/$defs/schema69"
@@ -3134,60 +3105,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema62"
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema18"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -3229,12 +3146,102 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema92"
+                      },
+                      {
+                        "$ref": "#/$defs/schema94"
+                      },
+                      {
+                        "$ref": "#/$defs/schema96"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema97"
+                      },
+                      {
+                        "$ref": "#/$defs/schema93"
+                      },
+                      {
+                        "$ref": "#/$defs/schema69"
+                      },
+                      {
+                        "$ref": "#/$defs/schema42"
+                      },
+                      {
+                        "$ref": "#/$defs/schema77"
+                      },
+                      {
+                        "$ref": "#/$defs/schema89"
+                      }
+                    ],
+                    "description": "Name of the object being referenced.",
+                    "type": "string"
                   },
                   {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  }
+                ],
+                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema62"
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "description": "Name of the object being referenced.",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
@@ -4052,13 +4059,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema93"
+              "$ref": "#/$defs/schema92"
             },
             {
               "$ref": "#/$defs/schema94"
             },
             {
-              "$ref": "#/$defs/schema97"
+              "$ref": "#/$defs/schema96"
             },
             {
               "not": {
@@ -4066,10 +4073,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema98"
-            },
-            {
-              "$ref": "#/$defs/schema92"
+              "$ref": "#/$defs/schema97"
             },
             {
               "$ref": "#/$defs/schema69"
@@ -4133,13 +4137,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema93"
+                  "$ref": "#/$defs/schema92"
                 },
                 {
                   "$ref": "#/$defs/schema94"
                 },
                 {
-                  "$ref": "#/$defs/schema97"
+                  "$ref": "#/$defs/schema96"
                 },
                 {
                   "not": {
@@ -4147,10 +4151,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema98"
-                },
-                {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema97"
                 },
                 {
                   "$ref": "#/$defs/schema69"
@@ -4891,13 +4892,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema93"
+              "$ref": "#/$defs/schema92"
             },
             {
               "$ref": "#/$defs/schema94"
             },
             {
-              "$ref": "#/$defs/schema97"
+              "$ref": "#/$defs/schema96"
             },
             {
               "not": {
@@ -4905,10 +4906,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema98"
-            },
-            {
-              "$ref": "#/$defs/schema92"
+              "$ref": "#/$defs/schema97"
             },
             {
               "$ref": "#/$defs/schema69"
@@ -4980,70 +4978,62 @@
       ]
     },
     "resources": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "description": "ResourceRequirements describes the compute resource requirements.",
-          "properties": {
-            "claims": {
-              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-              "items": {
-                "additionalProperties": false,
-                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                "properties": {
-                  "name": {
-                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": [
-                "array",
-                "null"
-              ],
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
+      "additionalProperties": false,
+      "description": "If you want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 200Mi\nrequests:\ncpu: 100m\nmemory: 100Mi",
+      "properties": {
+        "claims": {
+          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+          "items": {
+            "additionalProperties": false,
+            "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+            "properties": {
+              "name": {
+                "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                "type": "string"
+              }
             },
-            "limits": {
-              "additionalProperties": {
-                "$ref": "#/$defs/schema88"
-              },
-              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "requests": {
-              "additionalProperties": {
-                "$ref": "#/$defs/schema88"
-              },
-              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
+            "required": [
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
           },
-          "type": "object"
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
         },
-        {
-          "$ref": "#/$defs/schema81"
+        "limits": {
+          "additionalProperties": {
+            "$ref": "#/$defs/schema88"
+          },
+          "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
         },
-        {
-          "type": "null"
+        "requests": {
+          "additionalProperties": {
+            "$ref": "#/$defs/schema88"
+          },
+          "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      ],
-      "description": "If you want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 200Mi\nrequests:\ncpu: 100m\nmemory: 100Mi"
+      },
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "service": {
       "additionalProperties": {},
@@ -5077,13 +5067,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema93"
+                  "$ref": "#/$defs/schema92"
                 },
                 {
                   "$ref": "#/$defs/schema94"
                 },
                 {
-                  "$ref": "#/$defs/schema97"
+                  "$ref": "#/$defs/schema96"
                 },
                 {
                   "not": {
@@ -5091,10 +5081,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema98"
-                },
-                {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema97"
                 },
                 {
                   "$ref": "#/$defs/schema69"
@@ -5152,13 +5139,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema93"
+                  "$ref": "#/$defs/schema92"
                 },
                 {
                   "$ref": "#/$defs/schema94"
                 },
                 {
-                  "$ref": "#/$defs/schema97"
+                  "$ref": "#/$defs/schema96"
                 },
                 {
                   "not": {
@@ -5166,10 +5153,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema98"
-                },
-                {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema97"
                 },
                 {
                   "$ref": "#/$defs/schema69"
@@ -5260,13 +5244,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema93"
+                  "$ref": "#/$defs/schema92"
                 },
                 {
                   "$ref": "#/$defs/schema94"
                 },
                 {
-                  "$ref": "#/$defs/schema97"
+                  "$ref": "#/$defs/schema96"
                 },
                 {
                   "not": {
@@ -5274,10 +5258,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema98"
-                },
-                {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema97"
                 },
                 {
                   "$ref": "#/$defs/schema69"

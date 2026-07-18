@@ -350,6 +350,28 @@ fn record_contract_use(
         } else {
             predicates
         };
+        // A first-iteration sound subset (`AtMostOneMember`) replaces its
+        // approximate conjunct before recording: the strengthened
+        // conjunction describes a genuine SUBSET of the row's real firing
+        // states, so every fact recorded under it — including narrowing
+        // evidence — binds where the row provably fires and nowhere else
+        // (the signoz singleton-`additionalEnvs` lane). Other sound-subset
+        // kinds stay approximate here: only the collection-size bound has
+        // been audited for row polarity.
+        let predicates: Vec<Predicate> = predicates
+            .into_iter()
+            .map(|predicate| match &predicate {
+                Predicate::Approximate { sound_subset, .. }
+                    if !sound_subset.is_empty()
+                        && sound_subset
+                            .iter()
+                            .all(|guard| matches!(guard, Guard::AtMostOneMember { .. })) =>
+                {
+                    Predicate::all(sound_subset.iter().cloned().map(Predicate::from).collect())
+                }
+                _ => predicate,
+            })
+            .collect();
         record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
     }
 }
@@ -1935,6 +1957,10 @@ fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
     match predicate {
         Predicate::Not(inner) => !matches!(inner.as_ref(), Predicate::Guard(Guard::Range { .. })),
         Predicate::Guard(Guard::TypeIs { .. } | Guard::Absent { .. } | Guard::Eq { .. }) => true,
+        // A truthiness test over a ranged MEMBER's field is an exact
+        // member decode: the fallback truthy stand-ins for undecodable
+        // conditions ride absolute paths, never wildcard member scopes.
+        Predicate::Guard(Guard::Truthy { path }) => path.contains(".*"),
         Predicate::Or(items) => items.iter().all(predicate_is_negatable_test),
         _ => false,
     }
@@ -1966,6 +1992,18 @@ fn requirements_from_negation(
             let member = path.strip_prefix(&format!("{scope}."))?;
             (!member.contains('.'))
                 .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+        }
+        // A truthiness test over a member's FIELD negates to "the field,
+        // when present, is Helm-falsy" (oauth2-proxy's legacy extraPaths
+        // gate fires on `.backend.serviceName`); the member-scope
+        // restriction keeps absolute-path truthy stand-ins out.
+        Predicate::Guard(Guard::Truthy { path }) if scope.contains(".*") => {
+            let field = path.strip_prefix(&format!("{scope}."))?;
+            (!field.contains('*')).then(|| {
+                vec![FailValueRequirement::FieldHelmFalsy {
+                    path: helm_schema_core::split_value_path(field),
+                }]
+            })
         }
         // A concrete scalar equality over a tested MEMBER negates to a
         // not-equals requirement (cilium's forbidden `extraEnv` names). A
@@ -2654,6 +2692,21 @@ fn provider_schema_use(
         split_segment: contract_use.split_segment.clone(),
         merge_layers: contract_use.merge_layers.clone(),
         range_key: contract_use.range_key,
+        omitted_members: contract_use
+            .omitted_members
+            .iter()
+            .map(|(key, retain_guards)| {
+                // A retain guard that cannot lower keeps the subtraction
+                // but drops the re-add arm: the member's typing then
+                // abstains, which only accepts more.
+                let guards = retain_guards
+                    .iter()
+                    .map(|guard| guard_to_conditional_guard(guard, None))
+                    .collect::<Option<Vec<_>>>()
+                    .unwrap_or_default();
+                (key.clone(), guards)
+            })
+            .collect(),
         is_self_range_collection: self_range_guarded
             && contract_use
                 .path
@@ -2922,6 +2975,26 @@ fn guard_to_conditional_guard(
         Guard::MatchesPattern { .. }
         | Guard::RangeKeyPrefix { .. }
         | Guard::RangeKeyMatches { .. } => None,
+        Guard::AtMostOneMember { path: value_path } => Some(ConditionalGuard::AtMostOneMember {
+            path: path(value_path)?,
+        }),
+        Guard::MinMembers {
+            path: value_path,
+            bound,
+        } => {
+            // A member-count gate on the TARGET itself is load-bearing:
+            // the render fires only for maps that large, so the arm must
+            // keep the bound (external-secrets' `gt (keys . | len) 1`).
+            let path = if target_value_path == Some(value_path.as_str()) {
+                (!path_contains_wildcard(value_path)).then(|| value_path.clone())?
+            } else {
+                path(value_path)?
+            };
+            Some(ConditionalGuard::MinMembers {
+                path,
+                bound: *bound,
+            })
+        }
         Guard::TypeIs {
             path: value_path,
             schema_type,

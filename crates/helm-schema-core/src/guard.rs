@@ -181,6 +181,18 @@ pub enum Guard {
     /// `lt (int .Values.x) N` also holds for coercible non-integers, so
     /// this guard may only strengthen positive-polarity consumers.
     IntLt { path: String, bound: i64 },
+    /// The collection at `path` has at most one entry.
+    ///
+    /// A sound SUBSET stand-in for loop-carried conditions that provably
+    /// hold on a range's FIRST iteration (an empty-initialized dedup
+    /// accumulator cannot shadow anything yet): with at most one member,
+    /// every iteration is the first. Like [`Guard::IntGt`], it may only
+    /// strengthen positive-polarity consumers.
+    AtMostOneMember { path: String },
+    /// The value at `path` is a mapping with at least `bound` members —
+    /// the exact meaning of `gt (keys X | len) N` (`keys` aborts on
+    /// non-maps, so the render reaches the body only for maps).
+    MinMembers { path: String, bound: i64 },
 }
 
 impl Guard {
@@ -220,7 +232,9 @@ impl Guard {
             | Self::TypeIs { .. }
             | Self::NotTypeIs { .. }
             | Self::IntGt { .. }
-            | Self::IntLt { .. } => {}
+            | Self::IntLt { .. }
+            | Self::AtMostOneMember { .. }
+            | Self::MinMembers { .. } => {}
         }
     }
 
@@ -243,7 +257,9 @@ impl Guard {
             | Guard::TypeIs { path, .. }
             | Guard::NotTypeIs { path, .. }
             | Guard::IntGt { path, .. }
-            | Guard::IntLt { path, .. } => {
+            | Guard::IntLt { path, .. }
+            | Guard::AtMostOneMember { path }
+            | Guard::MinMembers { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -323,6 +339,11 @@ impl Guard {
                 bound,
             },
             Guard::IntLt { path, bound } => Guard::IntLt {
+                path: map(&path),
+                bound,
+            },
+            Guard::AtMostOneMember { path } => Guard::AtMostOneMember { path: map(&path) },
+            Guard::MinMembers { path, bound } => Guard::MinMembers {
                 path: map(&path),
                 bound,
             },

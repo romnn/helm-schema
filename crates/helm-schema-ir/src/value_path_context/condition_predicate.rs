@@ -366,29 +366,35 @@ impl ValuePathContext<'_> {
         let [left, right] = args else {
             return None;
         };
-        let subject = match (function, left.deparen(), right.deparen()) {
-            (
-                "gt",
-                TemplateExpr::Call {
-                    function,
-                    args: len_args,
-                },
-                TemplateExpr::Literal(Literal::Int(0)),
-            ) if function == "len" => len_args.as_slice(),
-            (
-                "lt",
-                TemplateExpr::Literal(Literal::Int(0)),
-                TemplateExpr::Call {
-                    function,
-                    args: len_args,
-                },
-            ) if function == "len" => len_args.as_slice(),
+        let (subject, bound) = match (function, left.deparen(), right.deparen()) {
+            ("gt", subject, TemplateExpr::Literal(Literal::Int(bound))) => (subject, *bound),
+            ("lt", TemplateExpr::Literal(Literal::Int(bound)), subject) => (subject, *bound),
             _ => return None,
         };
-        let [subject] = subject else {
-            return None;
-        };
-        self.single_truthy_predicate(subject)
+        if bound == 0
+            && let TemplateExpr::Call {
+                function,
+                args: len_args,
+            } = subject
+            && function == "len"
+            && let [len_subject] = len_args.as_slice()
+        {
+            return self.single_truthy_predicate(len_subject);
+        }
+        // `gt (keys X | len) N` is an exact member-count bound: `keys`
+        // aborts rendering on non-maps, so the body runs exactly for
+        // mappings with more than N members (external-secrets'
+        // `gt (keys . | len) 1` securityContext gate).
+        if bound >= 0
+            && let Some(map_expr) = keys_len_subject(subject)
+            && let Some(path) = self.single_resolved_values_path_expr(map_expr)
+        {
+            return Some(Predicate::from(Guard::MinMembers {
+                path,
+                bound: bound.checked_add(1)?,
+            }));
+        }
+        None
     }
 
     fn default_truthy_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -1136,7 +1142,107 @@ impl ValuePathContext<'_> {
         if !subset.is_empty() {
             return subset;
         }
+        let subset = self.include_dispatch_semver_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
         self.negated_membership_sound_subset(expr)
+    }
+
+    /// `eq (include "helper" .) "LIT"` over a pure literal dispatch whose
+    /// non-else arms are `semverCompare "<C" (PATH | default
+    /// .Capabilities.KubeVersion.Version)` upper bounds: selecting the
+    /// ELSE arm's literal requires every bound to fail, and a PATH
+    /// matching every flipped `>=C` constraint certainly fails them all —
+    /// a sound subset usable in fail position (oauth2-proxy's
+    /// `capabilities.ingress.apiVersion` gate on the legacy extraPaths
+    /// abort). The capability-default lane stays out of the subset: with
+    /// PATH unset the selection is cluster-dependent.
+    fn include_dispatch_semver_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        if function != "eq" {
+            return Vec::new();
+        }
+        let [left, right] = args.as_slice() else {
+            return Vec::new();
+        };
+        let (name, target) = match (helper_root_call(left), helper_root_call(right)) {
+            (Some(name), None) => (name, literal_string(right)),
+            (None, Some(name)) => (name, literal_string(left)),
+            _ => return Vec::new(),
+        };
+        let Some(target) = target else {
+            return Vec::new();
+        };
+        if !self
+            .current_dot_binding
+            .as_ref()
+            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+        {
+            return Vec::new();
+        }
+        if HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH {
+            return Vec::new();
+        }
+        let Some(arms) = crate::helper_literal_dispatch::helper_literal_dispatch(
+            self.fragment_context.analysis_db,
+            name,
+        ) else {
+            return Vec::new();
+        };
+        let Some((else_arm, bounded_arms)) = arms.split_last() else {
+            return Vec::new();
+        };
+        if else_arm.header.is_some()
+            || else_arm.literal != target
+            || bounded_arms.iter().any(|arm| arm.literal == target)
+        {
+            return Vec::new();
+        }
+        let mut subject_path: Option<String> = None;
+        let mut guards = Vec::new();
+        for arm in bounded_arms {
+            let Some(header) = &arm.header else {
+                return Vec::new();
+            };
+            let TemplateExpr::Call { function, args } = header.expr().deparen() else {
+                return Vec::new();
+            };
+            if function != "semverCompare" || args.len() != 2 {
+                return Vec::new();
+            }
+            let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+                return Vec::new();
+            };
+            // `<X-0` opts prereleases into Masterminds' matching; the
+            // flipped subset pattern only ever matches RELEASE versions,
+            // and a release ≥ X certainly fails `<X-0` too, so the
+            // prerelease marker drops out of the flipped bound.
+            let Some(flipped) = constraint
+                .strip_prefix('<')
+                .filter(|rest| !rest.starts_with('='))
+                .map(|rest| format!(">={}", rest.strip_suffix("-0").unwrap_or(rest)))
+            else {
+                return Vec::new();
+            };
+            let Some(path) = self.single_resolved_values_path_expr(&args[1]) else {
+                return Vec::new();
+            };
+            if subject_path.get_or_insert_with(|| path.clone()) != &path {
+                return Vec::new();
+            }
+            let Some(pattern) = helm_schema_ast::semver_constraint_match_pattern(&flipped) else {
+                return Vec::new();
+            };
+            guards.push(Guard::MatchesPattern {
+                path,
+                pattern,
+                templated: false,
+            });
+        }
+        guards
     }
 
     /// `gt (len .Values.x) N` admits a bounded string strengthening: a
@@ -1876,6 +1982,37 @@ fn bool_predicate(value: bool) -> Predicate {
         Predicate::True
     } else {
         Predicate::False
+    }
+}
+
+/// The mapping whose member count `expr` computes: `len (keys M)` or the
+/// pipeline form `keys M | len`.
+fn keys_len_subject(expr: &TemplateExpr) -> Option<&TemplateExpr> {
+    fn keys_map(candidate: &TemplateExpr) -> Option<&TemplateExpr> {
+        match candidate.deparen() {
+            TemplateExpr::Call { function, args } if function == "keys" => match args.as_slice() {
+                [map_expr] => Some(map_expr),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+    match expr.deparen() {
+        TemplateExpr::Call { function, args } if function == "len" => match args.as_slice() {
+            [inner] => keys_map(inner),
+            _ => None,
+        },
+        TemplateExpr::Pipeline(stages) => match stages.as_slice() {
+            [first, last] => {
+                let piped_len = matches!(
+                    last.deparen(),
+                    TemplateExpr::Call { function, args } if function == "len" && args.is_empty()
+                );
+                piped_len.then(|| keys_map(first)).flatten()
+            }
+            _ => None,
+        },
+        _ => None,
     }
 }
 

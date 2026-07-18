@@ -28,10 +28,10 @@ use crate::values_yaml::yaml_value_at_path;
 
 /// Strings spelling an implicit YAML NULL token (including the empty
 /// string) in a bare plain-scalar position.
-const PLAIN_SCALAR_NULL_TOKEN_PATTERN: &str = r"^(|~|null|Null|NULL)$";
+pub(crate) const PLAIN_SCALAR_NULL_TOKEN_PATTERN: &str = r"^(|~|null|Null|NULL)$";
 /// Strings spelling an implicit YAML BOOLEAN token in a bare plain-scalar
 /// position (the YAML 1.1 set Helm's renderer round-trips through).
-const PLAIN_SCALAR_BOOL_TOKEN_PATTERN: &str =
+pub(crate) const PLAIN_SCALAR_BOOL_TOKEN_PATTERN: &str =
     r"^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$";
 
 // The numeric token grammars below are derived from go-yaml v2's `resolve()`,
@@ -62,7 +62,8 @@ const PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN: &str =
     r"^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$";
 /// The exact special-float table entries: signed infinities and UNSIGNED
 /// NaNs only — "+.nan" is absent from the resolver table and stays a string.
-const PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN: &str = r"^([+-]?\.(inf|Inf|INF)|\.(nan|NaN|NAN))$";
+pub(crate) const PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN: &str =
+    r"^([+-]?\.(inf|Inf|INF)|\.(nan|NaN|NAN))$";
 /// Tokens the resolver provably reads as `!!int` within `int64`/`uint64`:
 /// optionally signed decimal without a leading zero (underscores stripped),
 /// or a bounded radix-prefixed/legacy-octal literal. Float-tagged spellings
@@ -73,7 +74,7 @@ const PLAIN_SCALAR_INTEGER_TOKEN_PATTERN: &str = r"^([+-]_*)?(0|[1-9][0-9_]{0,17
 /// JSON-representable value: the integer lane plus the decimal float lanes.
 /// Infinities and NaNs are excluded — they have no JSON encoding, so a
 /// number slot never accepts them downstream.
-const PLAIN_SCALAR_NUMBER_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$";
+pub(crate) const PLAIN_SCALAR_NUMBER_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$";
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
@@ -183,9 +184,12 @@ impl ResolvePolicy {
             // directly back to the input. Opaque fragment output does not
             // provide that identity guarantee; only a sequence placement is
             // structurally load-bearing there.
-            ValueKind::YamlSerialized => Some(relax_template_supplied_required(
-                schema.clone(),
-                &use_.template_supplied_member_keys,
+            ValueKind::YamlSerialized => Some(subtract_omitted_members(
+                relax_template_supplied_required(
+                    schema.clone(),
+                    &use_.template_supplied_member_keys,
+                ),
+                &use_.omitted_members,
             )),
             ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
             ValueKind::PartialScalar | ValueKind::Serialized => None,
@@ -244,6 +248,8 @@ impl ResolvePolicy {
             | ConditionalGuard::IntGt { .. }
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
+            | ConditionalGuard::AtMostOneMember { .. }
+            | ConditionalGuard::MinMembers { .. }
             | ConditionalGuard::Not(_)
             | ConditionalGuard::AllOf(_)
             | ConditionalGuard::AnyOf(_) => None,
@@ -628,6 +634,40 @@ fn relax_template_supplied_required(
             if let Some(arms) = object.get_mut(arms_key).and_then(Value::as_array_mut) {
                 for arm in arms {
                     *arm = relax_template_supplied_required(arm.take(), supplied);
+                }
+            }
+        }
+    }
+    schema
+}
+
+/// Strip the typing of members a guard-scoped `omit` may remove before the
+/// sink reads the map: the rendered object lacks them in the omitting
+/// states, so their unconditional payload typing would reject documents
+/// the chart renders fine (external-secrets' OpenShift-adapted
+/// `runAsUser`). Keys with lowerable retain guards come back as dedicated
+/// conditional arms.
+fn subtract_omitted_members(
+    mut schema: Value,
+    omitted: &std::collections::BTreeMap<String, Vec<helm_schema_core::ConditionalGuard>>,
+) -> Value {
+    if omitted.is_empty() {
+        return schema;
+    }
+    if let Some(object) = schema.as_object_mut() {
+        if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
+            properties.retain(|key, _| !omitted.contains_key(key));
+        }
+        if let Some(required) = object.get_mut("required").and_then(Value::as_array_mut) {
+            required.retain(|key| key.as_str().is_none_or(|key| !omitted.contains_key(key)));
+            if required.is_empty() {
+                object.remove("required");
+            }
+        }
+        for arms_key in ["allOf", "anyOf", "oneOf"] {
+            if let Some(arms) = object.get_mut(arms_key).and_then(Value::as_array_mut) {
+                for arm in arms {
+                    *arm = subtract_omitted_members(arm.take(), omitted);
                 }
             }
         }
@@ -1051,7 +1091,9 @@ fn collect_positive_self_types(
         | helm_schema_core::ConditionalGuard::NotEq { .. }
         | helm_schema_core::ConditionalGuard::Absent { .. }
         | helm_schema_core::ConditionalGuard::TypeIs { .. }
-        | helm_schema_core::ConditionalGuard::MatchesPattern { .. } => {}
+        | helm_schema_core::ConditionalGuard::MatchesPattern { .. }
+        | helm_schema_core::ConditionalGuard::AtMostOneMember { .. }
+        | helm_schema_core::ConditionalGuard::MinMembers { .. } => {}
     }
 }
 

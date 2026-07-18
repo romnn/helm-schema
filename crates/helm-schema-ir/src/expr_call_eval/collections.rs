@@ -613,6 +613,17 @@ pub(super) fn eval_omit(
         base.effects.merge(key.effects);
     }
     let value = base.value.map(|value| value.omit_keys(&keys));
+    // A values-backed base keeps its path identity (structural entries are
+    // filtered in place), so the removal is recorded as an effect: sink
+    // typing for the removed members must not bind through this render
+    // (external-secrets' OpenShift `adaptSecurityContext` omit).
+    if let Some(path) = value.as_ref().and_then(AbstractValue::unique_path) {
+        base.effects
+            .omitted_map_keys
+            .entry(path)
+            .or_default()
+            .extend(keys.iter().cloned());
+    }
     EvalResult::with_effects(value, base.effects)
 }
 

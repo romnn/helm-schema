@@ -43,6 +43,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: Default::default(),
         },
         ContractUse {
             source_expr: "image.tag".to_string(),
@@ -60,6 +61,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            omitted_members: Default::default(),
         },
     ];
 

@@ -537,3 +537,270 @@ fn range_key_at_string_slot_excludes_integer_key_lanes() {
         );
     }
 }
+/// The signoz variant of the same helper guards every render on a
+/// case-folding dedup accumulator (`$processedKeys := dict` before the
+/// range, `if not (hasKey $processedKeys $key)` inside it). The guard is
+/// provably TRUE on the first iteration — the accumulator starts empty —
+/// so with at most one member every iteration is the first and the member
+/// typing binds under that size bound; larger maps stay open because an
+/// earlier case-colliding key can SHADOW a member entirely.
+#[test]
+fn dedup_accumulator_binds_member_typing_to_singleton_maps() {
+    let helpers = indoc! {r#"
+        {{- define "test.renderEnv" -}}
+        {{- $dict := . -}}
+        {{- $processedKeys := dict -}}
+        {{- range keys . | sortAlpha }}
+        {{- $val := pluck . $dict | first -}}
+        {{- $key := upper . -}}
+        {{- if not (hasKey $processedKeys $key) }}
+        {{- $processedKeys = merge $processedKeys (dict $key true) -}}
+        {{- $valueType := printf "%T" $val -}}
+        {{- if eq $valueType "map[string]interface {}" }}
+        - name: {{ $key }}
+        {{ toYaml $val | indent 2 -}}
+        {{- else }}
+        - name: {{ $key }}
+          value: {{ $val | quote }}
+        {{- end }}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+                - name: main
+                  env:
+                    {{- include "test.renderEnv" .Values.additionalEnvs | nindent 20 }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("additionalEnvs: {}\n"),
+    );
+    for (instance, want) in [
+        // A single member cannot be shadowed: it always renders, so the
+        // provider's EnvVar shape binds it.
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": { "value": 7 } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": { "value": "ok" } } }),
+            true,
+        ),
+        // Scalar members render through the quoted `value:` lane.
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": 7 } }),
+            true,
+        ),
+        // With two or more members the dedup is relational: an earlier
+        // case-colliding key shadows the invalid member, so the map stays
+        // open.
+        (
+            serde_json::json!({ "additionalEnvs": {
+                "AUDIT": { "value": "ok" }, "audit": { "value": 7 }
+            } }),
+            true,
+        ),
+        (serde_json::json!({ "additionalEnvs": {} }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "dedup accumulator singleton lane: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A guard-scoped `omit` removes literal keys from a values-backed map
+/// before the sink reads it (external-secrets' OpenShift
+/// `adaptSecurityContext`): the removed keys' provider typing must not
+/// bind where the omit may run, and comes back exactly where the omitting
+/// arm certainly did not run (`adaptSecurityContext` not force/auto).
+/// Keys the omit never touches keep their unconditional typing, and the
+/// member-count render gate (`gt (keys . | len) 1`) scopes every arm.
+#[test]
+fn guard_scoped_omit_scopes_removed_member_typing() {
+    let helpers = indoc! {r#"
+        {{- define "test.renderSecurityContext" -}}
+        {{- $adaptedContext := .securityContext -}}
+        {{- if .context.Values.global.compatibility -}}
+          {{- if .context.Values.global.compatibility.openshift -}}
+            {{- if or (eq .context.Values.global.compatibility.openshift.adaptSecurityContext "force") (and (eq .context.Values.global.compatibility.openshift.adaptSecurityContext "auto") (include "test.isOpenShift" .context)) -}}
+              {{- $adaptedContext = omit $adaptedContext "fsGroup" "runAsUser" "runAsGroup" -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+        {{- omit $adaptedContext "enabled" | toYaml -}}
+        {{- end -}}
+        {{- define "test.isOpenShift" -}}
+        {{- if .Capabilities.APIVersions.Has "security.openshift.io/v1" -}}
+        {{- true -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+                - name: main
+                  {{- with .Values.securityContext }}
+                  {{- if and (.enabled) (gt (keys . | len) 1) }}
+                  securityContext:
+                    {{- include "test.renderSecurityContext" (dict "securityContext" . "context" $) | nindent 20 }}
+                  {{- end }}
+                  {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(
+            "securityContext:\n  enabled: true\nglobal:\n  compatibility:\n    openshift:\n      adaptSecurityContext: auto\n",
+        ),
+    );
+    for (mode, member, value, enabled, want) in [
+        // The omit certainly runs under "force" and may run under "auto"
+        // (the OpenShift capability is cluster-dependent), so the removed
+        // key's typing abstains there.
+        ("force", "runAsUser", serde_json::json!("audit"), true, true),
+        ("auto", "runAsUser", serde_json::json!("audit"), true, true),
+        // With adaptation disabled the key certainly survives to the
+        // provider slot.
+        (
+            "disabled",
+            "runAsUser",
+            serde_json::json!("audit"),
+            true,
+            false,
+        ),
+        ("disabled", "runAsUser", serde_json::json!(1000), true, true),
+        // A disabled render gate never reaches the provider slot at all.
+        (
+            "disabled",
+            "runAsUser",
+            serde_json::json!("audit"),
+            false,
+            true,
+        ),
+        // Keys the omit never touches keep their typing in every mode.
+        (
+            "force",
+            "runAsNonRoot",
+            serde_json::json!("audit"),
+            true,
+            false,
+        ),
+        (
+            "disabled",
+            "runAsNonRoot",
+            serde_json::json!("audit"),
+            true,
+            false,
+        ),
+    ] {
+        let instance = serde_json::json!({
+            "securityContext": { "enabled": enabled, "runAsNonRoot": true, member: value },
+            "global": { "compatibility": { "openshift": { "adaptSecurityContext": mode } } },
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "guard-scoped omit member typing: mode={mode} member={member} value={value} \
+             enabled={enabled}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A `fail` inside `range .Values.ingress.extraPaths` firing on
+/// `or (.backend.serviceName) (.backend.servicePort)` — behind
+/// `eq (include "capabilities.ingress.apiVersion" .) "networking.k8s.io/v1"`,
+/// a literal dispatch whose non-else arms are capability-defaulted
+/// `semverCompare "<C"` bounds — lowers to a per-member field-falsy
+/// requirement scoped by the flipped `>=C` kubeVersion patterns
+/// (oauth2-proxy's legacy extraPaths gate). Without a pinned kubeVersion
+/// the selection is cluster-dependent and the arm soundly abstains.
+#[test]
+fn capability_dispatch_scoped_member_field_fail_lowers() {
+    let helpers = indoc! {r#"
+        {{- define "capabilities.ingress.apiVersion" -}}
+        {{- if semverCompare "<1.14-0" ( .Values.kubeVersion | default .Capabilities.KubeVersion.Version ) -}}
+        {{- print "extensions/v1beta1" -}}
+        {{- else if semverCompare "<1.19-0" ( .Values.kubeVersion | default .Capabilities.KubeVersion.Version ) -}}
+        {{- print "networking.k8s.io/v1beta1" -}}
+        {{- else -}}
+        {{- print "networking.k8s.io/v1" -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.checkDeprecation }}
+            {{- if eq ( include "capabilities.ingress.apiVersion" . ) "networking.k8s.io/v1" -}}
+                {{- range .Values.ingress.extraPaths }}
+                    {{- if or (.backend.serviceName) (.backend.servicePort) }}
+                        {{ fail "Please update the format of your `ingress.extraPaths`" }}
+                    {{- end }}
+                {{- end }}
+            {{- end }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("checkDeprecation: true\ningress:\n  extraPaths: []\n"),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
+                { "path": "/*", "backend": { "serviceName": "x" } }
+            ] } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
+                { "path": "/*", "backend": { "servicePort": "y" } }
+            ] } }),
+            false,
+        ),
+        // The old api keeps the legacy format.
+        (
+            serde_json::json!({ "kubeVersion": "1.18.0", "ingress": { "extraPaths": [
+                { "path": "/*", "backend": { "serviceName": "x" } }
+            ] } }),
+            true,
+        ),
+        // Without a pinned kubeVersion the capability default decides:
+        // cluster-dependent, so the arm abstains.
+        (
+            serde_json::json!({ "ingress": { "extraPaths": [
+                { "path": "/*", "backend": { "serviceName": "x" } }
+            ] } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
+                { "path": "/*", "backend": { "service": { "name": "x" } } }
+            ] } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "checkDeprecation": false, "kubeVersion": "1.30.0",
+                "ingress": { "extraPaths": [
+                    { "path": "/*", "backend": { "serviceName": "x" } }
+                ] } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "capability-scoped member field fail: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

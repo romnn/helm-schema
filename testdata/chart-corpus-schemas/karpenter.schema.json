@@ -402,11 +402,6 @@
         },
         {
           "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
           }
         },
@@ -589,20 +584,43 @@
     },
     "schema161": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema162": {
-      "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema163": {
+    "schema162": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
     "schema17": {
+      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+      "items": {
+        "additionalProperties": false,
+        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+        "properties": {
+          "name": {
+            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-map-keys": [
+        "name"
+      ],
+      "x-kubernetes-list-type": "map"
+    },
+    "schema18": {
       "allOf": [
         {
           "not": {
@@ -631,11 +649,6 @@
         },
         {
           "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
             "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
           }
         },
@@ -656,34 +669,6 @@
         }
       ],
       "type": "string"
-    },
-    "schema18": {
-      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-      "items": {
-        "additionalProperties": false,
-        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-        "properties": {
-          "name": {
-            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-map-keys": [
-        "name"
-      ],
-      "x-kubernetes-list-type": "map"
     },
     "schema19": {
       "not": {
@@ -2934,7 +2919,7 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "not": {
@@ -3938,9 +3923,6 @@
         "containerName": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema17"
-            },
-            {
               "description": "Container name: required for volumes, optional for env vars",
               "type": "null"
             },
@@ -3948,6 +3930,9 @@
               "not": {
                 "$ref": "#/$defs/helm-truthy"
               }
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "Distinguishing container name (containerName: karpenter-controller)."
@@ -4073,7 +4058,7 @@
               "description": "ResourceRequirements describes the compute resource requirements.",
               "properties": {
                 "claims": {
-                  "$ref": "#/$defs/schema18"
+                  "$ref": "#/$defs/schema17"
                 },
                 "limits": {
                   "$ref": "#/$defs/schema65"
@@ -4226,10 +4211,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema161"
             },
             {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema162"
             },
             {
               "not": {
@@ -4245,9 +4230,6 @@
               "not": {
                 "pattern": "[\\r\\n]"
               }
-            },
-            {
-              "$ref": "#/$defs/schema161"
             },
             {
               "$ref": "#/$defs/schema123"
@@ -5947,10 +5929,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema161"
             },
             {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema162"
             },
             {
               "not": {
@@ -5966,9 +5948,6 @@
               "not": {
                 "pattern": "[\\r\\n]"
               }
-            },
-            {
-              "$ref": "#/$defs/schema161"
             },
             {
               "$ref": "#/$defs/schema123"
@@ -6208,7 +6187,7 @@
                 "description": "ResourceRequirements describes the compute resource requirements.",
                 "properties": {
                   "claims": {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema17"
                   },
                   "limits": {
                     "$ref": "#/$defs/schema65"
@@ -6483,7 +6462,7 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema17"
+          "$ref": "#/$defs/schema18"
         },
         {
           "not": {
@@ -6552,7 +6531,36 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema17"
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/schema161"
+                    },
+                    {
+                      "$ref": "#/$defs/schema162"
+                    },
+                    {
+                      "not": {
+                        "pattern": ":[ \\t]|:$"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "[ \\t]#"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "[\\r\\n]"
+                      }
+                    },
+                    {
+                      "$ref": "#/$defs/schema123"
+                    },
+                    {
+                      "$ref": "#/$defs/schema155"
+                    }
+                  ],
+                  "type": "string"
                 },
                 {
                   "type": "null"
@@ -6866,9 +6874,6 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema17"
-            },
-            {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
@@ -6876,6 +6881,9 @@
               "not": {
                 "$ref": "#/$defs/helm-truthy"
               }
+            },
+            {
+              "type": "string"
             }
           ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."

@@ -93,6 +93,11 @@ fn dispatch_arms(
     for (arm_header, children) in arms {
         let mut literal = String::new();
         for child in children {
+            // Trim-marker delimiter tokens surface as named children of
+            // the consequence; they render nothing.
+            if matches!(child.kind(), "{{" | "{{-" | "}}" | "-}}") {
+                continue;
+            }
             match node_action(source, child) {
                 NodeAction::Text => {
                     literal.push_str(child.utf8_text(source.as_bytes()).ok()?);
@@ -129,6 +134,12 @@ fn literal_output_text(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
         }
         TemplateExpr::Literal(Literal::Bool(value)) => Some(value.to_string()),
         TemplateExpr::Literal(Literal::Int(value)) => Some(value.to_string()),
+        // `print` of one literal renders it verbatim (oauth2-proxy's
+        // capability helpers spell their arms `{{- print "…" -}}`).
+        TemplateExpr::Call { function, args } if function == "print" => match args.as_slice() {
+            [argument] => literal_output_text(argument),
+            _ => None,
+        },
         _ => None,
     }
 }

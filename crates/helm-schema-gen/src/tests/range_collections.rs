@@ -466,6 +466,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        omitted_members: Default::default(),
     }];
     let values_yaml = indoc! {"
         image:

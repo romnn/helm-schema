@@ -473,6 +473,17 @@ impl Interpreter<'_> {
             for path in &hole.effects.derived_text_paths {
                 output_meta.entry(path.clone()).or_default().derived_text = true;
             }
+            // An omitting RHS (`$ctx = omit $ctx "runAsUser"`) rides the
+            // binding: wherever the local renders the map, the removed
+            // keys' sink typing must not bind. Retain guards start empty;
+            // the branch join fills them where the omit provably did not
+            // run.
+            for (path, keys) in &hole.effects.omitted_map_keys {
+                let meta = output_meta.entry(path.clone()).or_default();
+                for key in keys {
+                    meta.omitted_keys.insert(key.clone(), Vec::new());
+                }
+            }
             // A string-contracting RHS (`$name := .Values.x | trunc 63`)
             // also rides the binding: wherever the local renders, that row
             // requires a string input.
