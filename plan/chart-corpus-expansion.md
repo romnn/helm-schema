@@ -7198,3 +7198,102 @@ its arm is dead).
 Validation: 1263/1263 workspace tests, doc tests, `task lint`
 warning-free (exit 0), luup2 `check:local` with the fresh release
 binary.
+
+## Reopened-items round (2026-07-18, sixth round)
+
+The independent post-fix audit reopened twelve verified follow-up items.
+This round re-verified each claim against the chart templates, implemented
+nine, bounded two, and re-adjudicated one lane whose root cause turned out
+to be deliberate policy.
+
+### Implemented
+
+- **F102 dependency gate.** `corpus_integrity` now discovers Helm-v2
+  `requirements.lock` (datadog was entirely unchecked before) and requires
+  unpacked `charts/<name>/` directories to record the locked version in
+  their own `Chart.yaml`. Focused pins: `legacy_requirements_lock_is_
+  discovered`, `unpacked_dependency_with_wrong_version_is_not_vendored`.
+- **F76 resolver tokens.** All numeric/Boolean token grammars in
+  `resolve_policy.rs` are derived from go-yaml v2's `resolve()` (the
+  resolver Helm's manifest consumers inherit through `sigs.k8s.io/yaml`):
+  global underscore stripping, signs, radix prefixes, trailing-dot floats,
+  the exact signed-infinity/unsigned-NaN table, and float-overflow
+  fallback to string. Exclusion alternates are provably numeric (bounded
+  digit counts keep them below the float64 overflow cliff — `"1e999"`
+  stays a string); accept preimages for bool slots use the full YAML 1.1
+  alias table and for integer slots the int-tag lanes only. Probes fixed:
+  external-dns `pullPolicy: "1_000"` (false accept), metrics-server
+  `port: "+443"` and crossplane `hostNetwork: "yes"` (false rejects), all
+  re-verified against the regenerated chart fixtures.
+- **F88 dispatched-lane provider intersection.** The positive-self-type
+  union in `conditional_target_schema` no longer widens an
+  integer-allowing branch with `{type: number}`: draft-07 `integer` is a
+  value predicate integral floats satisfy, so the `typeOf`-dispatched arm
+  keeps the provider constraint (sealed-secrets PDB rejects `1.5`, keeps
+  `2.0` and `"50%"`).
+- **F87 IP lexical domain.** New `strict_collection_item_pattern` catalog
+  channel rides the `CollectionItems` capture as an additional
+  `MatchesPattern` member requirement; `genSignedCert`/`genSelfSignedCert`
+  ip lists get exact IPv4 plus an IPv6 superset. Cilium's Hubble SAN pin
+  gained the `"not-an-ip"` rejection.
+- **F45/F61 checksum operands.** The checksum family is catalogued as a
+  strict Go-string consumer with dedicated call/pipeline arms that keep
+  unknown-call value semantics (the trivy-style `include … | sha256sum`
+  annotation keeps its serialized row attribution — classifying them as
+  string transforms broke exactly that, caught by an existing pin). Three
+  layers were needed for the real bitnami-redis shape and each is pinned:
+  the ranged-member `default ""` selection lowers as a truthy-scoped
+  member requirement (`TruthyImpliesSchemaType`, absent-leaf tolerant);
+  outer branch guards decode through fail-polarity `fail_outer_guard`
+  in the member-field lane; and the `if (include "redis.createConfigmap"
+  .)` document gate decodes through the new include-truthiness lane.
+- **Include-truthiness decoding.** `helper_literal_dispatch` now accepts
+  bare literal outputs (`{{- true -}}`) as arm text (via new literal
+  node kinds in `node_action`), records whether an arm collected any raw
+  text, and `condition_predicate` decodes a bare `include "name" .` as
+  the disjunction of non-empty arms (whitespace-ambiguous arms abstain).
+  The obsolete `opaque_include_guard_abstains…` fixture now uses a
+  genuinely opaque helper.
+- **F28/F51/F44 ranged terminals.** Three lowering gaps closed with new
+  `FailValueRequirement` variants: member truthiness → `HelmTruthy`
+  (sealed-secrets rejects empty-string `privateKeyAnnotations` members),
+  member equality negation → `NotEquals` (cilium rejects
+  `KUBE_CLIENT_BACKOFF_*` extraEnv names while the feature is live; both
+  gated to member scopes after the loki htpasswd pin caught the
+  value-target selection/test inversion), and range-KEY regexes → new
+  `Guard::RangeKeyMatches` lowering to `propertyNames` through a
+  dedicated builder lane (traefik rejects uppercase `ingressRoute`
+  keys). Requirement lists now conjoin explicitly (`allOf`) instead of
+  riding the union-fallback merge.
+- **F31 decimal preimages (bounded).** `IntGt`/`IntLt` condition
+  encodings carry digit-wise decimal string preimages for single-sign
+  bound regions; declared-default evaluation reads clean decimal string
+  defaults. Jenkins now rejects `"5"`/`"-1"` replicas. Radix/leading-zero
+  spellings deliberately abstain (`ParseInt` base detection), as do
+  mixed-sign regions.
+- **F74 semver overflow (bounded).** Core components bounded at 20 digits
+  (21+ certainly overflow `ParseUint(…, 10, 64)`), still a superset of
+  the accepted language.
+
+### Bounded / re-adjudicated
+
+- **F80.** `AbstractValue::apply_to_path` keeps MergedLayers precedence
+  through member/`pick` projection (mergo recurses with the same override
+  order), so kyverno's override lane now binds member typing. The
+  kyverno scalar-shadow false rejection itself was re-adjudicated: it
+  originates in declared-default object typing (composed-values policy
+  evidence), not the merge analysis — recorded under Rejected. Airflow's
+  recursive `workersMergeValues`/`mustMerge` lane and external-secrets'
+  guard-scoped `omit` remain In progress.
+- **F93 singleton and F104 wrapper compatibility** were not started this
+  round (F93 needs first-iteration accumulator evaluation for soundness;
+  F104 is the largest remaining item); both stay In progress.
+
+### Validation
+
+All 55 chart-corpus fixtures, 18 IR corpus fixtures, and 20 gen corpus
+fixtures regenerated; churn adjudicated as the corpus-wide resolver-token
+pattern rewrite plus `$defs` renumbering, with the semantic layer held by
+the 79 passing `chart_reaudit` pins and per-chart default validation.
+1280/1280 workspace tests, doc tests clean, `task lint` warning-free
+(exit 0), luup2 `check:local` exit 0 with the fresh release binary.

@@ -1,13 +1,14 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-18, after the remainder completion round (the
-jenkins F31 variable-bound coercion validator and the F83/F85
-inline-local kind partition; see the work log's "Remainder completion
-round"). One classification per finding. Where a finding has
-both a completed bounded part and a remainder, the remainder is what is
-classified here; the completed part is listed under Completed with a
-"(bounded)" marker. Per-finding evidence and fix history live in the dated
-sections of the historical work log in `chart-corpus-expansion.md`.
+Last reconciled 2026-07-18 (sixth round) after implementing the reopened
+follow-up items from the independent post-fix pass. Green corpus tests are a
+baseline, not completion evidence: the reopening pass verified claims with
+concrete opposite-polarity probes, and this round implemented the ones that
+survived verification, re-adjudicating the ones whose root cause turned out
+to be a deliberate policy. Where a finding has both a completed bounded part
+and a remainder, the completed part is listed below with a "(bounded)" marker
+and the residual is classified separately. Per-finding history lives in
+`chart-corpus-expansion.md`.
 
 ## Completed
 
@@ -40,7 +41,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F25 direct `typeIs` Go container names
 - F26 guarded `range` rejecting rangeable integers
 - F27 compound document guards dropping chart-level string contracts
-- F28 type-validation guards and `fail` branches as schema evidence
+- F28 type-validation guards and `fail` branches as schema evidence (bounded;
+  range-local terminal implications remain In progress)
 - F29 condition transform collection ignoring pipeline order
 - F30 Helm `required` termination as schema evidence (incl. dynamic
   `extraEnvConfigMaps` members)
@@ -56,8 +58,10 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F42 `default`/`coalesce`-guarded contracts (direct, helper-boundary, and
   fallback-selection scope; Helm-falsy escapes stay open)
 - F43 range-derived union alternatives bypassing shape requirements
-- F44 key-predicate contracts on dynamic map values
-- F45 string-only call effects (incl. `substr`, `htpasswd`)
+- F44 key-predicate contracts on dynamic map values (bounded; ranged-member
+  conjunctions and dynamic key domains remain In progress)
+- F45 string-only call effects (bounded; incl. `substr`, `htpasswd`; strict
+  hash operands remain In progress)
 - F46 empty-map/observed-subset defaults closing passthrough objects
 - F47 secretKeyRef/configMapKeyRef closing to name-only
 - F48 list-valued paths typed or closed as objects
@@ -76,8 +80,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F59 range-body requirements reaching iterable lanes (direct ranged
   members; velero schedules via `additionalProperties`)
 - F60 `eq`/`ne` operand domains incl. missing/null tolerance
-- F61 strict collection-call signatures for every audited function
-  (uncatalogued long tail abstains by design — see Rejected)
+- F61 strict collection-call signatures for audited functions (bounded;
+  newly audited hash calls remain In progress and the unknown long tail is
+  Rejected)
 - F62 opening empty declared containers erasing the container type
 - F63 chained member reads requiring intermediate members (incl.
   header-member ordering)
@@ -92,29 +97,32 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F73 statically selected file-backed template programs (`.Files.Get`
   programs, BasePath partials)
 - F74 strict parser lexical domains — semver/duration/URL catalog,
-  conditional literal reassignment, lexical escape tokens (bounded; the
-  printf-derived datadog tag is Rejected)
+  conditional literal reassignment, lexical escape tokens (bounded; parser
+  range/authority checks and derived tag preimages remain In progress)
 - F75 shape erasure through `first`/`last`/`initial`/`rest`/`compact` and
   audited nested member paths (bounded; dynamic `slice`/opaque identities
   are Rejected)
-- F76 YAML scalar lexical safety: plain-token exclusions with class-aware
+- F76 YAML scalar lexical safety (bounded): plain-token exclusions with class-aware
   allowances, numeric-grammar exclusions, double/single-quoted content,
   flow style, mapping keys, completed-token contracts, composite-in-quotes
-  recursive serialization preimage (F76.2), empty-scalar defaults under
-  member projection
+  recursive serialization preimage (F76.2), and empty-scalar defaults under
+  member projection; resolver-token coverage remains In progress
 - F77 `and`/`or` selected-operand values
 - F78 value-selecting functions keeping candidate-selection predicates
 - F79 `break`/`continue` suppressing later-iteration contracts
 - F80 ordered `merge`/`mergeOverwrite` layers with per-key shadowing arms
-  (velero securityContext)
+  (bounded to the direct Velero provider-splice case; derived maps remain In
+  progress)
 - F81 Sprig arithmetic coercion boundary
 - F82 chart-authored `values.yaml` programs executed by `tpl`
 - F84 split-segment provider preimage for integer slots (bounded; general
   numeric enum/range projection is Rejected)
 - F86 strict Boolean call signatures incl. architecture partitions and
   `IntGt` sound subsets
-- F87 builtin signatures constraining nested collection elements
+- F87 builtin signatures constraining nested collection element kinds
+  (bounded; element parser domains remain In progress)
 - F88 derived literal-membership and `typeOf`→`regexMatch` dispatch guards
+  (bounded; provider intersection on the selected lane remains In progress)
 - F89 statically constructed finite `tpl` programs
 - F90 caller predicates over mutually exclusive helper-return alternatives
 - F91 parenthesized nil-safe selectors and receiver members
@@ -128,31 +136,24 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F100 post-`tpl` regex requirements on raw template programs
 - F101 provider availability as a committed deterministic test input
   (`testdata/provider-bundle/`, cold/warm equivalence)
-- F102 bitnami-redis locked `common` dependency vendored plus
-  corpus-integrity gate
+- F102 bitnami-redis locked `common` dependency vendored plus a `Chart.lock`
+  presence gate (bounded; legacy locks and unpacked-version verification remain
+  In progress)
 - F103 test compositors scrubbing nulls only along map chains
 - F104 `$tplYaml` program-wrapper alternatives at value nodes (bounded;
-  the extraResources member-kind case is the NATS entry below)
+  decoded-result and `$tplYamlSpread` compatibility remain In progress)
 
-- F31 scalar-domain fail implications: `len` bounds via the pattern
-  subset, `int`-coerced inequality pairs via the raw-integer subset,
-  negated literal membership via the exact NotEq conjunction, and the
-  semver-minimum terminal through the comparator pattern subset (cilium
-  name/kvstoreMode/maxConnectedClusters, airflow minimum version).
-  Variable-bound casts included: a local bound to `int`/`int64` of a
-  direct selector (optionally through a literal-integer `default`)
-  carries `IntCastSource` provenance, both raw-integer recognizers
-  resolve through it, `IntLt` mirrors `IntGt` for the below-bound
-  direction, and disjunctive fail conditions lower arm-by-arm
-  (`AnyOf`) — jenkins' `controller.replicas` 0..=1 domain, plus
-  kyverno's PDB mutual-exclusion terminals as fallout
-- F51 existential range sentinels: branch joins stamp arm conditions onto
-  changed truthiness reductions (bounded), the joined
+- F31 scalar-domain fail implications (bounded): `len`, literal membership,
+  semver-minimum, and raw-integer subsets are lowered; direct/local
+  `int`/`int64` provenance covers Jenkins' integer 0..=1 lane. Coerced-string
+  preimages remain In progress.
+- F51 existential range sentinels (bounded): branch joins stamp arm conditions onto
+  changed truthiness reductions, the joined
   `Range ∧ member-Eq` flag lowers as `ConditionalGuard::
   ContainsMemberEquals` (`contains` on the array lane, the double-negated
   member quantifier on the object lane), and terminal clauses admit
   approximate conjuncts through their sound subsets (airflow's celery
-  broker sentinel)
+  broker sentinel). General terminals inside ranges remain In progress.
 - F68 range-key slot domains: a raw range key rendered at a provider slot
   rides a marked splice (`range_key`) whose collection gains a
   keys-must-be-strings arm when the slot is string-only — non-empty lists
@@ -164,16 +165,14 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   dependency that solely owns a live helper (bitnami-postgresql's
   `tags.bitnami-common`, scoped by the including chart's own activation —
   the airflow postgresql counter-pin)
-- F93 same-map member identity through `pluck`: `keys m` keeps the map
-  identity (`KeysList`), `sortAlpha` preserves it, `pluck . $dict |
-  first` over the ranged key is a member projection, `printf "%T"` joins
-  the type-descriptor family, and member-local type partitions lower to
-  member overlays carrying the provider projection (pinned at gen level;
-  the signoz corpus chart itself abstains — see Rejected)
-- NATS `extraResources` member kinds: a ranged member spliced as a whole
+- F93 same-map member identity through `keys | sortAlpha | pluck | first`
+  and member-local type partitions (bounded and gen-pinned; the representable
+  SigNoz singleton lane remains In progress, while general dedup correlation
+  is Rejected)
+- NATS direct `extraResources` member kinds (bounded): a ranged member spliced as a whole
   document at column zero must be an object when present and non-null
-  (Helm decodes every manifest as a mapping); wrapper items are objects
-  and stay open
+  (Helm decodes every manifest as a mapping). Program-wrapper bypasses remain
+  In progress under F104.
 - F83/F85 inline-local kind partition: an inline-conditional `kind:`
   chain records per-arm guard sources (detector), the evaluator lowers
   them through the live scope into `KindBranch` predicates on the
@@ -184,12 +183,98 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   strategy/updateStrategy per-arm provider scoping incl. dead-arm
   tolerance; a StatefulSet/DaemonSet shared-slot gen pin discriminates
   the concretization from pointer-miss fallback)
+- F76 resolver tokens (sixth round): the numeric/Boolean token grammars are
+  now derived from go-yaml v2's `resolve()` — underscore stripping, signs,
+  radix prefixes, trailing-dot floats, the exact signed-infinity/unsigned-NaN
+  table, and float-overflow fallback to string — symmetrically for
+  string-slot exclusions and int/number/bool-slot accept preimages
+  (external-dns `"1_000"` now rejected in a string slot; metrics-server
+  `"+443"` and crossplane `"yes"` now accepted)
+- F102 dependency-integrity gate: Helm-v2 `requirements.lock` is discovered
+  (datadog was previously entirely unchecked) and unpacked dependency
+  directories must record the locked version in their own `Chart.yaml`
+- F88 provider intersection on kind-dispatched lanes: a "number" type
+  partition over an integer-allowing branch no longer unions `{type:
+  number}` into the arm — draft-07 `integer` accepts integral floats, so
+  the arm stays satisfiable while fractional floats reject (sealed-secrets'
+  `typeOf`-dispatched policy/v1 `minAvailable` rejects `1.5`, keeps `2.0`
+  and `"50%"`)
+- F87 nested parser domains: `genSignedCert`/`genSelfSignedCert` ip-list
+  items carry an IP lexical domain (exact dotted-quad IPv4 plus an IPv6
+  textual superset) through a new per-item pattern channel on the
+  collection-items capture (cilium's Hubble SANs reject `"not-an-ip"`)
+- F45/F61 strict hash operands: the checksum family (`sha1sum`,
+  `sha256sum`, `sha512sum`, `adler32sum`) is catalogued as a strict
+  Go-string consumer with unknown-call value semantics (an
+  `include … | sha256sum` annotation keeps its serialized attribution);
+  the effect survives ranged-member `default ""` selection via a
+  truthy-scoped member requirement, outer branch guards via
+  fail-polarity strengthened decoding, and the `if (include …)`
+  document gate via literal-dispatch include-truthiness (bitnami-redis
+  ACL passwords)
+- F28/F51/F44 ranged terminals (sixth round): member truthiness lowers as a
+  `HelmTruthy` member requirement (sealed-secrets rejects empty-string
+  `privateKeyAnnotations` members), member name equalities negate to
+  `NotEquals` requirements on the member field (cilium rejects backoff
+  env-name collisions while the feature is live), and range-KEY regex
+  terminals lower to `propertyNames` through the new `RangeKeyMatches`
+  guard (traefik rejects uppercase `ingressRoute` keys)
+- F31 decimal coercion preimages (bounded): `IntGt`/`IntLt` encodings carry
+  digit-wise decimal string preimages (clean spellings only — a leading
+  zero flips `ParseInt` to octal and abstains), and declared-default
+  evaluation reads decimal string defaults (jenkins rejects `"5"` and
+  `"-1"` replicas beside the raw integers)
+- Include-truthiness condition decoding: a bare `include "name" .` in
+  condition position decodes through the helper's literal dispatch when
+  every arm renders static text (including bare literal outputs like
+  `{{- true -}}`), with whitespace-ambiguous arms abstaining — document
+  gates like `if (include "redis.createConfigmap" .)` now lower exactly
+  instead of degrading to an undecodable marker
 
 ## In progress
 
-Nothing. Both former remainders (the jenkins F31 variable-bound
-coercion validator and the F83/F85 inline-local kind partition)
-completed in the 2026-07-18 remainder round.
+- **F28/F51 residual — provider splice for legacy Ingress paths.** OAuth2
+  Proxy accepts legacy `ingress.extraPaths[].backend.serviceName/servicePort`
+  spliced through `tpl (toYaml $extraPaths)` into a `networking.k8s.io/v1`
+  Ingress; the item schema should intersect the provider's HTTPIngressPath
+  (with the program-wrapper alternative for template-bearing strings). The
+  ranged-terminal machinery this item originally asked for landed (cilium's
+  forbidden `extraEnv` names are now rejected while the backoff is live).
+- **F31 residual — non-decimal coercion preimages.** Clean decimal spellings
+  now reject through the `IntGt`/`IntLt` string preimages (jenkins `"5"` and
+  `"-1"`), with declared-default evaluation extended to decimal strings.
+  Radix-prefixed and leading-zero spellings (`ParseInt` base detection reads
+  them as hex/octal), mixed-sign bound regions (a positive `IntLt` bound),
+  and cilium/traefik's not-yet-lowered `ge`/`le`/`gt`-chain comparators stay
+  open.
+- **F74 residual — duration/URL exactness and the datadog tag domain.**
+  Semver core components are now bounded at 20 digits (21+ certainly
+  overflow `ParseUint` and abort) while staying a superset of the accepted
+  language. Still open: `time.ParseDuration` overflow (value-dependent per
+  unit), exact URL authority validation, and datadog's
+  `toString | trimSuffix "-jmx"` tag domain — the latter needs the semver
+  comparator preimage to flow through derived-text subjects with lexical
+  escapes.
+- **F80 residual — recursive overlays and guard-scoped `omit`.** Member
+  projection over `mergeOverwrite` layers now keeps layered precedence
+  through `pick`/`deepCopy` (the override lane binds member typing). Still
+  open: airflow's scalar `workers.celery.sets[].labels` reaching `mustMerge`
+  (needs bounded interpretation of the recursive `workersMergeValues`
+  helper and the `$globals.Values` rebinding), and external-secrets' string
+  `securityContext.runAsUser` reaching the provider slot when the
+  openshift-compatibility `omit` is disabled (dict-boundary provenance
+  through guard-scoped `omit`).
+- **F93 bounded remainder — singleton `additionalEnvs`.** General case-folded
+  multi-key dedup remains relational, but a SigNoz map with at most one member
+  cannot be shadowed. Constrain that representable lane to the EnvVar shape
+  while retaining a case-colliding multi-key acceptance control. Soundness
+  needs the empty-dict-initialized merge-only accumulator recognized so the
+  dedup guard is provably true on the first iteration.
+- **F104 remainder — wrapper result compatibility.** NATS accepts static
+  `$tplYaml` programs that decode to a non-resource or wrong member kind, and
+  `$tplYamlSpread` programs whose result kind cannot spread into the parent;
+  Helm then aborts. Intersect decoded program output with the sink/node schema
+  and enforce spread parent/root rules.
 
 ## Rejected (invalid or won't fix by design)
 
@@ -218,18 +303,14 @@ evidence or a model extension, not more of the same analysis.
   functions abstain; treating every unknown call as strict (or copying
   output types onto operands) would recreate the false-rejection classes
   this plan removed. Audited functions get catalogued as audits surface
-  them.
-- **F74 remainder — datadog printf-composed agent tag.**
-  `get-agent-version` composes derived text through `printf`; no sound
-  bounded preimage exists, so the raw tag abstains (false ACCEPT, not a
-  false rejection).
+  them; the newly audited checksum family is In progress above.
 - **F84 remainder — general substring preimages.** Projecting an arbitrary
   provider numeric enum/range onto the nth substring of a raw string is
   not faithfully encodable as a Draft-07 regex once signs, bases, and
   coercion are involved; the integer-slot subset is Completed.
 - **F93 remainder — cross-map dynamic key correlation.** Draft-07 cannot
   correlate one dynamic property name across two independent maps; only
-  the same-map projection (In progress above) is representable.
+  same-map bounded projections are representable.
 - **SigNoz `additionalEnvs` member constraints — relational member set.**
   The chart's `renderAdditionalEnv` gates every render on a case-folding
   dedup accumulator: a member can be SHADOWED by an earlier
@@ -237,10 +318,19 @@ evidence or a model extension, not more of the same analysis.
   constraint would falsely reject `{audit: {value: 7}, AUDIT: …}`. The
   schema soundly keeps the members open
   (`signoz_additional_env_members_stay_open_under_dedup_shadowing` pins
-  the shadowed-member acceptance); the same-map projection MACHINERY is
-  Completed and gen-pinned. A future bounded increment could constrain
-  singleton maps (`maxProperties: 1` ⇒ the first iteration provably
-  renders).
+  the shadowed-member acceptance). General multi-member correlation stays
+  Rejected; the representable singleton lane is In progress above.
+- **F80 kyverno scalar-shadow lane — declared-default policy.** The audit's
+  false rejection of a scalar `features.logging` shadowed by every
+  controller's `featuresOverride.logging` is real but does not originate in
+  the merge analysis: the rejection comes from the declared-default object
+  typing of `values.yaml` (the composed-defaults evidence channel). Making
+  it conditional would need a root-level relational arm over all four
+  controllers' override presence — representable but disproportionate for a
+  lane that requires deliberately overriding a declared map with a scalar
+  AND shadowing it everywhere. The merged-member projection fix (layered
+  precedence through `pick`/`deepCopy`) landed; the declared-shape typing
+  stays as policy, like the F12 strict-mode adjudications.
 - **Adjudicated-wrong audit claims.** AWS LBC `nameOverride: "null"`:
   rendering yields a null label value that the strict v1.35.0 schemas
   reject on every resource, so the plain-token exclusion is correct.
