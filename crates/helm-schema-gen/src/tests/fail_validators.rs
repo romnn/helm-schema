@@ -1197,6 +1197,12 @@ fn stringified_equality_binds_the_tostring_preimage() {
         (serde_json::json!({ "kubeProxyReplacement": false }), true),
         (serde_json::json!({ "kubeProxyReplacement": "true" }), true),
         (serde_json::json!({ "kubeProxyReplacement": "false" }), true),
+        // An EMPTY stringification selects the coalesce's constant default
+        // ("false"), so the empty and null raw spellings render too: "" is
+        // Helm-empty directly, and null reaches "" through the chain's
+        // `"<nil>"` rewrite.
+        (serde_json::json!({ "kubeProxyReplacement": "" }), true),
+        (serde_json::json!({ "kubeProxyReplacement": null }), true),
         (
             serde_json::json!({ "kubeProxyReplacement": "strict" }),
             false,
@@ -1206,6 +1212,132 @@ fn stringified_equality_binds_the_tostring_preimage() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "stringified equality preimage: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// cilium's removed-option guards stringify a `dig` result before testing
+/// truthiness: `"false"`, `"0"`, and `"<nil>"` are truthy STRINGS, so an
+/// explicitly-disabled removed option still aborts the render. Only an
+/// absent chain (the dig's empty-string default) or a raw empty string is
+/// falsy; the sibling raw-`dig` disjunct keeps ordinary Helm truthiness.
+#[test]
+fn stringified_dig_truthiness_rejects_falsy_raw_spellings() {
+    let src = indoc! {r#"
+        {{- if or
+          ((dig "proxy" "prometheus" "enabled" "" .Values.AsMap) | toString)
+          (dig "proxy" "prometheus" "port" "" .Values.AsMap)
+        }}
+        {{ fail "proxy.prometheus.enabled and proxy.prometheus.port were removed" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          ok: "yes"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "absent chain renders"),
+        (
+            serde_json::json!({ "proxy": { "prometheus": {} } }),
+            true,
+            "absent leaf renders",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "enabled": "" } } }),
+            true,
+            "raw empty string stringifies to the falsy empty rendering",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "enabled": false } } }),
+            false,
+            "raw false renders truthy \"false\"",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "enabled": true } } }),
+            false,
+            "raw true renders truthy \"true\"",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "enabled": null } } }),
+            false,
+            "explicit null renders truthy \"<nil>\"",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "enabled": 0 } } }),
+            false,
+            "raw zero renders truthy \"0\"",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "port": 9095 } } }),
+            false,
+            "the sibling raw-dig disjunct keeps Helm truthiness",
+        ),
+        (
+            serde_json::json!({ "proxy": { "prometheus": { "port": "" } } }),
+            true,
+            "a falsy sibling value renders",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "stringified dig truthiness ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Truthiness of a DIRECT total stringification tests the rendered text:
+/// `toString nil` is the truthy `"<nil>"`, so an absent or null subject
+/// passes a `not (.Values.mode | toString)` gate and only the raw empty
+/// string fails it. traefik's `with .addX | toString` flag family rides
+/// the same decode — its bodies run for raw `false` too.
+#[test]
+fn direct_tostring_truthiness_is_a_rendering_test() {
+    let src = indoc! {r#"
+        {{- if not (.Values.mode | toString) }}
+        {{ fail "mode must not stringify empty" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          mode: {{ .Values.mode | toString | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+    for (instance, want, label) in [
+        (
+            serde_json::json!({}),
+            true,
+            "absent renders truthy \"<nil>\"",
+        ),
+        (
+            serde_json::json!({ "mode": null }),
+            true,
+            "null renders truthy \"<nil>\"",
+        ),
+        (
+            serde_json::json!({ "mode": false }),
+            true,
+            "raw false renders truthy \"false\"",
+        ),
+        (
+            serde_json::json!({ "mode": 0 }),
+            true,
+            "raw zero renders truthy \"0\"",
+        ),
+        (
+            serde_json::json!({ "mode": "" }),
+            false,
+            "only the raw empty string stringifies empty",
+        ),
+        (serde_json::json!({ "mode": "x" }), true, "text renders"),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "direct toString truthiness ({label}): instance={instance}; schema={schema}"
         );
     }
 }

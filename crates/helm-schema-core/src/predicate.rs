@@ -185,7 +185,8 @@ impl Predicate {
                 | Guard::IntGt { .. }
                 | Guard::IntLt { .. }
                 | Guard::AtMostOneMember { .. }
-                | Guard::MinMembers { .. },
+                | Guard::MinMembers { .. }
+                | Guard::HasKey { .. },
             ) => vec![self],
         }
     }
@@ -295,7 +296,8 @@ impl Predicate {
                 | Guard::IntGt { .. }
                 | Guard::IntLt { .. }
                 | Guard::AtMostOneMember { .. }
-                | Guard::MinMembers { .. },
+                | Guard::MinMembers { .. }
+                | Guard::HasKey { .. },
             ) => {}
         }
     }

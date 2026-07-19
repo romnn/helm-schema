@@ -513,19 +513,37 @@ fn project_node(
             let mut values = Vec::new();
             let mut strings = BTreeSet::new();
             let mut has_non_text = false;
+            // A scalar composing literal text AROUND splices renders each
+            // spliced path as DERIVED TEXT rather than as the bare value:
+            // a structural re-lowering of the projection (the pod-template
+            // `fromYaml | toYaml` roundtrip) must keep the partial-text
+            // discipline instead of minting full-value preimages
+            // (traefik's `--…={{ $value }}` flag items). Splice-only part
+            // sets stay bare — contribution-set degradation merges
+            // ALTERNATIVE renders into one part list (airflow's
+            // nil-aware `revisionHistoryLimit` picker), where each arm
+            // still renders its raw value exactly.
+            let has_literal_text = scalar.parts.iter().any(|part| {
+                matches!(
+                    part,
+                    StringPart::Text(alternatives)
+                        if alternatives.iter().any(|text| !text.is_empty())
+                )
+            });
+            let partial = has_literal_text && scalar.parts.len() > 1;
             for part in &scalar.parts {
                 match part {
                     StringPart::Text(alternatives) => strings.extend(alternatives.iter().cloned()),
                     StringPart::Splice(splice) => {
                         has_non_text = true;
-                        values.push(AbstractValue::OutputPath(
-                            splice.values_path.clone(),
-                            splice_row_meta(splice, conditions),
-                        ));
+                        let mut meta = splice_row_meta(splice, conditions);
+                        meta.partial_text |= partial;
+                        values.push(AbstractValue::OutputPath(splice.values_path.clone(), meta));
                     }
                     StringPart::Taint(taint) => {
                         has_non_text = true;
-                        let meta = scalar_taint_row_meta(taint, conditions);
+                        let mut meta = scalar_taint_row_meta(taint, conditions);
+                        meta.partial_text |= partial;
                         if let Some(value) = &taint.structured_value {
                             values.push(project_structured_taint_value(value, &meta));
                         } else {

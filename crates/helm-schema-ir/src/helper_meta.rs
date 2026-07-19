@@ -5,7 +5,21 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{ContractProvenance, ValueKind};
-use helm_schema_core::Predicate;
+use helm_schema_core::{GuardValue, Predicate};
+
+/// A `coalesce` substituted a constant string fallback for a stringified
+/// binding's Helm-empty rendering.
+///
+/// `spellings` are the exact raw values whose final stringification is
+/// empty: always the empty string itself, plus any values a preceding
+/// `"<nil>" → ""` normalization arm diverted. An equality against exactly
+/// the `fallback` literal admits every spelling beside the literal's own
+/// `toString` preimage.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct EmptyRescue {
+    pub(crate) fallback: String,
+    pub(crate) spellings: BTreeSet<GuardValue>,
+}
 
 /// The facts one rendered path carries out of a helper body: the branch
 /// conditions under which it renders (one set per branch), whether the
@@ -32,6 +46,15 @@ pub(crate) struct HelperOutputMeta {
     /// rendered output, a `printf` result): a consuming transform applied to
     /// the local operates on that text and claims nothing about the path.
     pub(crate) derived_text: bool,
+    /// The path rendered as one part of a COMPOSED scalar (literal text
+    /// around the splice) in a projected helper value: a structural
+    /// re-lowering must keep the partial-text discipline so provider
+    /// typing and full-value lexical preimages abstain (traefik's
+    /// `--…={{ $value }}` flag items through the pod-template roundtrip).
+    /// Unlike [`Self::derived_text`], this never rides ordinary
+    /// include-bound locals, whose splices render the picked value's exact
+    /// text and stay provider-typable.
+    pub(crate) partial_text: bool,
     /// A string-consuming transform bound a runtime string contract on this
     /// path while producing the binding's value: splices rendering it carry
     /// the contract under their own render conditions.
@@ -63,6 +86,18 @@ pub(crate) struct HelperOutputMeta {
     /// `adaptSecurityContext` omit). Empty guards mean survival is
     /// undecidable: the key's sink typing abstains.
     pub(crate) omitted_keys: std::collections::BTreeMap<String, Vec<crate::Guard>>,
+    /// Raw spellings a sibling branch arm diverted to the EMPTY string
+    /// before any fallback selection (the `if eq $x "<nil>" { $x = "" }`
+    /// normalization idiom): the diverting arm's exact header equality
+    /// literals. `None` means no divert was recorded (or an undecodable
+    /// one), so a downstream `coalesce` rescue seeing an empty-literal
+    /// alternative must abstain.
+    pub(crate) empty_fold_spellings: Option<BTreeSet<GuardValue>>,
+    /// A downstream `coalesce` substituted a constant fallback while this
+    /// stringified binding rendered Helm-empty (cilium's
+    /// `coalesce $stringValueKPR "false"`). Consumed by equality decoding;
+    /// see [`EmptyRescue`].
+    pub(crate) empty_rescue: Option<EmptyRescue>,
 }
 
 impl HelperOutputMeta {
@@ -73,6 +108,7 @@ impl HelperOutputMeta {
         self.stringified |= other.stringified;
         self.yaml_serialized |= other.yaml_serialized;
         self.derived_text |= other.derived_text;
+        self.partial_text |= other.partial_text;
         self.string_contract |= other.string_contract;
         self.json_serialized |= other.json_serialized;
         self.json_decoded |= other.json_decoded;
@@ -95,6 +131,15 @@ impl HelperOutputMeta {
                 })
                 .or_insert_with(|| retain_guards.clone());
         }
+        // The empty-rescue facts must stay EXACT: a one-sided fact survives
+        // (the fresh `or_default()` entry every meta transfer merges into
+        // carries none), but disagreeing recorded facts drop to abstention
+        // instead of unioning into a claim neither side made.
+        self.empty_fold_spellings = merge_exact_fact(
+            self.empty_fold_spellings.take(),
+            other.empty_fold_spellings.clone(),
+        );
+        self.empty_rescue = merge_exact_fact(self.empty_rescue.take(), other.empty_rescue.clone());
     }
 
     pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {
@@ -121,6 +166,15 @@ impl HelperOutputMeta {
                 branch
             })
             .collect();
+    }
+}
+
+/// Merges one optional exact fact: agreement (or one-sidedness) keeps the
+/// fact, disagreement drops it.
+fn merge_exact_fact<T: PartialEq>(left: Option<T>, right: Option<T>) -> Option<T> {
+    match (left, right) {
+        (Some(left), Some(right)) => (left == right).then_some(left),
+        (left, right) => left.or(right),
     }
 }
 

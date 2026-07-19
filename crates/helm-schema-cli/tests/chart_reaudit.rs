@@ -1466,7 +1466,10 @@ fn traefik_invalid_kind_guard_preserves_falsy_present_values() -> color_eyre::ey
 /// against `"true"`/`"false"` through a coalesce chain and aborts on
 /// anything else, so the accepted domain is the `toString` PREIMAGE of the
 /// two spellings: raw Booleans render exactly like their string forms
-/// (helm-verified), while any other truthy scalar aborts.
+/// (helm-verified), while any other truthy scalar aborts. The chain also
+/// folds the `"<nil>"` rendering to `""` and rescues the Helm-empty result
+/// through `coalesce … "false"`, so the empty, null, and literal-`"<nil>"`
+/// spellings render as well (all helm-verified).
 #[test]
 fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> color_eyre::eyre::Result<()> {
     assert_chart_cases(
@@ -1478,6 +1481,18 @@ fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> color_eyre::eyre::Res
                 json!({ "kubeProxyReplacement": false }),
             ),
             SemanticCase::accepted("string spelling", json!({ "kubeProxyReplacement": "true" })),
+            SemanticCase::accepted(
+                "empty string selects the coalesce default",
+                json!({ "kubeProxyReplacement": "" }),
+            ),
+            SemanticCase::accepted(
+                "null folds to empty and selects the coalesce default",
+                json!({ "kubeProxyReplacement": null }),
+            ),
+            SemanticCase::accepted(
+                "the literal <nil> spelling folds to empty too",
+                json!({ "kubeProxyReplacement": "<nil>" }),
+            ),
             // The fail-implication arm rejects at the instance root
             // (`if … then false`), not at the property.
             SemanticCase::rejected(
@@ -1489,6 +1504,85 @@ fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> color_eyre::eyre::Res
                 "numeric value stringifies to a rejected spelling",
                 "",
                 json!({ "kubeProxyReplacement": 1 }),
+            ),
+        ],
+    )
+}
+
+/// cilium's removed-option gate stringifies the dug value before testing
+/// truthiness (`(dig "proxy" "prometheus" "enabled" "" .Values.AsMap) |
+/// toString`), so an explicitly-DISABLED removed option still aborts:
+/// `"false"`, `"0"`, and `"<nil>"` are truthy strings. Only a missing key
+/// or a raw empty string renders; the sibling `port` disjunct keeps
+/// ordinary Helm truthiness (all polarities helm-verified). The
+/// explicit-null polarity (rejected: it renders truthy `"<nil>"`) is
+/// pinned by the gen reproducer — this harness's override compositor
+/// deletes null keys the way helm's value coalescing does, so a null
+/// case cannot be expressed here.
+#[test]
+fn cilium_removed_options_abort_even_when_disabled() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::accepted(
+                "absent leaf renders",
+                json!({ "proxy": { "prometheus": {} } }),
+            ),
+            SemanticCase::accepted(
+                "raw empty string stringifies to the falsy empty rendering",
+                json!({ "proxy": { "prometheus": { "enabled": "" } } }),
+            ),
+            SemanticCase::rejected(
+                "explicitly disabled still aborts (truthy \"false\")",
+                "/proxy",
+                json!({ "proxy": { "prometheus": { "enabled": false } } }),
+            ),
+            SemanticCase::rejected(
+                "enabled aborts",
+                "/proxy",
+                json!({ "proxy": { "prometheus": { "enabled": true } } }),
+            ),
+            SemanticCase::rejected(
+                "the sibling port disjunct keeps Helm truthiness",
+                "/proxy",
+                json!({ "proxy": { "prometheus": { "port": 9095 } } }),
+            ),
+        ],
+    )
+}
+
+/// traefik's OTLP `resourceAttributes` render as per-member flag loops
+/// through the `traefik.oltpCommonParams` helper inside the
+/// `fromYaml | toYaml` pod-template roundtrip. Map members render (any
+/// value kind — the loop stringifies), a list renders too, and only a
+/// non-rangeable scalar aborts Helm. The lane's guards ride the
+/// `with .addX | toString` family, whose truthiness is a RENDERING test
+/// (all polarities helm-verified).
+#[test]
+fn traefik_otlp_resource_attributes_render_as_flag_loops() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::accepted(
+                "string members render as flags",
+                json!({ "tracing": { "otlp": { "enabled": true, "resourceAttributes": { "env": "prod" } } } }),
+            ),
+            SemanticCase::accepted(
+                "non-string members stringify in the loop body",
+                json!({ "tracing": { "otlp": { "enabled": true, "resourceAttributes": { "env": 7 } } } }),
+            ),
+            SemanticCase::accepted(
+                "a list is rangeable too",
+                json!({ "tracing": { "otlp": { "enabled": true, "resourceAttributes": ["a"] } } }),
+            ),
+            SemanticCase::accepted(
+                "metrics rides the same helper",
+                json!({ "metrics": { "otlp": { "enabled": true, "resourceAttributes": { "env": "prod" } } } }),
+            ),
+            SemanticCase::rejected(
+                "a scalar is not rangeable",
+                "/tracing/otlp/resourceAttributes",
+                json!({ "tracing": { "otlp": { "enabled": true, "resourceAttributes": 7 } } }),
             ),
         ],
     )

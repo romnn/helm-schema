@@ -133,7 +133,12 @@ fn build_single_condition_fragment(
             // Render-time absence after coalescing with declared defaults:
             // an explicit `null` deletes the key (helm null-deletion), and
             // a missing key stays absent only when the chart declares no
-            // (non-null) default to fill it.
+            // (non-null) default to fill it. `Absent` deliberately counts
+            // explicit null as absent — the nil-safe selector lanes
+            // (`(.Values.x).leaf`) render at null exactly like at a
+            // missing key. Strict key-presence (Sprig `hasKey`/`dig`
+            // observability, where a present nil is PRESENT) is the
+            // separate `HasKey` guard.
             let explicit_null = build_required_condition_fragment(
                 &relative_segments,
                 SchemaNode::enum_values(vec![Value::Null]),

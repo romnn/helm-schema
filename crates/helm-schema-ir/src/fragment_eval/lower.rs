@@ -212,6 +212,20 @@ pub(crate) fn lower_value(
                 .then(|| scope.local_output_meta.get(path))
                 .flatten()
                 .unwrap_or(meta);
+            // A composed-text value renders the path INSIDE literal text
+            // (a projected multi-part scalar re-lowered through the
+            // pod-template roundtrip): the splice keeps the partial-text
+            // discipline so provider typing and full-value lexical
+            // preimages abstain, exactly as the direct lane's partial
+            // rows do. Ordinary `derived_text` (an include-bound local
+            // rendering the picked value's exact text) stays a Scalar
+            // render — airflow's revisionHistoryLimit picker keeps its
+            // provider typing.
+            let kind = if kind == ValueKind::Scalar && meta.partial_text {
+                ValueKind::PartialScalar
+            } else {
+                kind
+            };
             let mut out = Guarded::empty();
             for condition in helper_meta_conditions(meta) {
                 out.arms.push((

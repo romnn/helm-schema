@@ -28,11 +28,6 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
     for contract_use in uses {
-        if std::env::var("HS_SCRATCH_DBG").is_ok()
-            && contract_use.source_expr.contains("resourceAttributes")
-        {
-            dbg!(contract_use);
-        }
         record_contract_use(&mut paths, contract_use, range_modes);
     }
     for capture in fail_conditions {
@@ -3055,6 +3050,13 @@ fn guard_to_conditional_guard(
         }),
         Guard::Absent { path: value_path } => Some(ConditionalGuard::Absent {
             path: path(value_path)?,
+        }),
+        Guard::HasKey {
+            path: value_path,
+            key,
+        } => Some(ConditionalGuard::HasKey {
+            path: path(value_path)?,
+            key: key.clone(),
         }),
         Guard::MatchesPattern {
             path: value_path,

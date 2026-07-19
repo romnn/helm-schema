@@ -7,7 +7,7 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use helm_schema_ast::expression_schema_type;
-use helm_schema_core::Predicate;
+use helm_schema_core::{GuardValue, Predicate};
 
 use super::strict_operands::{
     pipeline_string_operand_facts, record_range_key_string_consumer_effects,
@@ -135,7 +135,83 @@ pub(super) fn eval_coalesce(
             previous_false.insert(Predicate::truthy_path(path).negated());
         }
     }
+    // A constant final fallback rescues the Helm-empty rendering of a
+    // STRINGIFIED first arm (cilium's `coalesce $stringValueKPR "false"`):
+    // equality decoding may then admit the empty spellings for the fallback
+    // literal. Bounded to the fully explained two-arm shape; a raw first
+    // arm abstains because its Helm-emptiness spans false/0/nil/empty
+    // collections, not just the empty string.
+    if let [first, fallback] = values.as_slice()
+        && let AbstractValue::StringSet(literals) = fallback
+        && literals.len() == 1
+        && let Some(literal) = literals
+            .iter()
+            .next()
+            .filter(|literal| !literal.is_empty())
+            .cloned()
+        && let Some(rescues) = empty_rescue_paths(first, &effects)
+    {
+        for path in rescues {
+            effects
+                .local_output_meta
+                .entry(path.0)
+                .or_default()
+                .empty_rescue = Some(crate::helper_meta::EmptyRescue {
+                fallback: literal.clone(),
+                spellings: path.1,
+            });
+        }
+    }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+/// The per-path [`crate::helper_meta::EmptyRescue`] spellings for a
+/// `coalesce` first argument, provided every alternative is explained: a
+/// STRINGIFIED identity (its rendering is empty exactly for the raw empty
+/// string), or the empty-string literal a recorded fold diverts to. One
+/// unexplained alternative (an empty literal without fold spellings, a raw
+/// identity, derived text) abstains — its states reach the fallback for
+/// spellings the rescue could not name.
+fn empty_rescue_paths(
+    value: &AbstractValue,
+    effects: &Effects,
+) -> Option<Vec<(String, BTreeSet<GuardValue>)>> {
+    let arms: Vec<&AbstractValue> = match value {
+        AbstractValue::Choice(choices) => choices.iter().collect(),
+        other => vec![other],
+    };
+    let is_empty_literal = |arm: &AbstractValue| matches!(arm, AbstractValue::StringSet(set) if set.len() == 1 && set.contains(""));
+    let has_empty_literal_arm = arms.iter().any(|arm| is_empty_literal(arm));
+    let stringified_in_effects = |path: &str| {
+        effects.stringified_paths.contains(path)
+            || effects
+                .local_output_meta
+                .get(path)
+                .is_some_and(|meta| meta.stringified)
+    };
+    let mut rescues = Vec::new();
+    for arm in arms {
+        let (path, meta) = match arm {
+            arm if is_empty_literal(arm) => continue,
+            AbstractValue::OutputPath(path, meta) => (path, Some(meta)),
+            AbstractValue::ValuesPath(path) => (path, None),
+            _ => return None,
+        };
+        let stringified = meta.is_some_and(|meta| meta.stringified) || stringified_in_effects(path);
+        if !stringified {
+            return None;
+        }
+        let mut spellings = BTreeSet::from([GuardValue::string("")]);
+        match meta.and_then(|meta| meta.empty_fold_spellings.as_ref()) {
+            Some(fold) => spellings.extend(fold.iter().cloned()),
+            // An empty-literal alternative without a recorded divert means
+            // unknown raw values reach the fallback.
+            None if has_empty_literal_arm => return None,
+            None => {}
+        }
+        rescues.push((path.clone(), spellings));
+    }
+    (!rescues.is_empty()).then_some(rescues)
 }
 
 pub(super) fn eval_dict(

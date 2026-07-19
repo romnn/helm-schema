@@ -1574,3 +1574,76 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
         );
     }
 }
+
+/// traefik's deployment routes its pod template through
+/// `include "traefik.podTemplate" . | fromYaml | toYaml | nindent`, and a
+/// NESTED helper renders ranged `resourceAttributes` members as container
+/// flag args. The roundtrip lane must keep those member rows anchored at
+/// the args ITEM depth: anchoring one level short provider-types them by
+/// the Container fragment and scalar-restricts the map to `type: null`,
+/// rejecting every member Helm renders.
+#[test]
+fn roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth() {
+    let helpers = indoc! {r#"
+        {{- define "repro.flags" }}
+          {{- $path := .path -}}
+          {{- $cfg := .cfg -}}
+          {{- if $cfg.enabled }}
+          - "--{{$path}}=true"
+           {{- range $name, $value := $cfg.resourceAttributes }}
+          -  "--{{$path}}.resourceAttributes.{{ $name }}={{ $value }}"
+           {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- define "repro.podTemplate" -}}
+        metadata:
+          labels:
+            app: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              args:
+                {{- with .Values.tracing.otlp }}
+                 {{- include "repro.flags" (dict "path" "tracing.otlp" "cfg" .) | nindent 8 }}
+                {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template: {{ include "repro.podTemplate" . | fromYaml | toYaml | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        tracing:
+          otlp:
+            enabled: false
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "tracing": { "otlp": { "enabled": true,
+                "resourceAttributes": { "env": "prod" } } } }),
+            true,
+            "string members render as flags",
+        ),
+        (
+            serde_json::json!({ "tracing": { "otlp": { "enabled": true,
+                "resourceAttributes": { "env": 7 } } } }),
+            true,
+            "non-string members stringify in the loop body",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "roundtrip flag rows ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}

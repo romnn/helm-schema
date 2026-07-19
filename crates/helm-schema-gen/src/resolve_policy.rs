@@ -191,6 +191,16 @@ impl ResolvePolicy {
                 ),
                 &use_.omitted_members,
             )),
+            // A self-ranged FRAGMENT use renders loop-body ITEMS derived
+            // from the members, so the slot's item schema types the
+            // rendered items, never the source's members: rangeability
+            // (array or map) is the only sound projection (traefik's
+            // resourceAttributes flag loops reassembled through the
+            // pod-template roundtrip).
+            ValueKind::Fragment if use_.is_self_range_collection => schema_allows_type(
+                schema, "array",
+            )
+            .then(|| serde_json::json!({ "anyOf": [{ "type": "array" }, { "type": "object" }] })),
             ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
             ValueKind::PartialScalar | ValueKind::Serialized => None,
             ValueKind::Scalar if use_.is_self_range_collection => {

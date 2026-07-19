@@ -6,14 +6,14 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
+use helm_schema_ast::{Literal, TemplateExpr, TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::{Guard, ValueKind};
-use helm_schema_core::Predicate;
+use helm_schema_core::{GuardValue, Predicate};
 
 use super::domain::{AbstractFragment, PathCondition, Splice, SpliceMeta, and_conditions};
 use super::eval::{Adopted, ArmSpec, Contributions, Interpreter, NodeView};
@@ -1295,6 +1295,10 @@ impl Interpreter<'_> {
         for (name, entry_paths) in entry_identities {
             let mut exclusions = Vec::new();
             let mut keeping = Vec::new();
+            // The union of the divert headers' equality spellings when EVERY
+            // identity-losing arm is an exactly explained empty-string fold;
+            // one unexplained arm drops the record entirely.
+            let mut fold_spellings: Option<BTreeSet<GuardValue>> = Some(BTreeSet::new());
             for (index, outcome) in outcomes.iter().enumerate() {
                 let Some(value) = outcome.fragment_values.get(name) else {
                     continue;
@@ -1314,10 +1318,18 @@ impl Interpreter<'_> {
                 });
                 if paths.is_empty() || (paths.is_disjoint(&entry_paths) && !advanced_into_member) {
                     let marker = format!("reassign:{}:{region_start}:{index}", self.source_offset);
-                    exclusions.push(self.reassignment_exclusion(
-                        header_exprs.get(index).and_then(Option::as_ref),
-                        marker,
-                    ));
+                    let header = header_exprs.get(index).and_then(Option::as_ref);
+                    exclusions.push(self.reassignment_exclusion(header, marker));
+                    fold_spellings = match (
+                        fold_spellings,
+                        self.empty_fold_spellings(header, name, value, &entry_paths),
+                    ) {
+                        (Some(mut spellings), Some(arm_spellings)) => {
+                            spellings.extend(arm_spellings);
+                            Some(spellings)
+                        }
+                        _ => None,
+                    };
                 } else if !paths.is_disjoint(&entry_paths) {
                     keeping.push(index);
                 }
@@ -1326,15 +1338,89 @@ impl Interpreter<'_> {
                 continue;
             }
             let exclusion: BTreeSet<Predicate> = exclusions.into_iter().collect();
+            let fold_spellings = fold_spellings.filter(|spellings| !spellings.is_empty());
             for index in keeping {
                 if let Some(value) = outcomes[index].fragment_values.get(name) {
-                    let excluded = attach_reassignment_exclusion(value, &exclusion);
+                    let mut excluded = attach_reassignment_exclusion(value, &exclusion);
+                    if let Some(spellings) = &fold_spellings {
+                        excluded = attach_empty_fold_spellings(excluded, spellings);
+                    }
                     outcomes[index]
                         .fragment_values
                         .insert(name.clone(), excluded);
                 }
             }
         }
+    }
+
+    /// The exact raw spellings one identity-losing arm diverts to the EMPTY
+    /// string: the arm must reassign the local to `""` under a bare
+    /// `eq $local <literal>` header whose decode yields only equality
+    /// guards on the local's single entry path (the stringified
+    /// `if eq $x "<nil>" { $x = "" }` normalization idiom). Anything else
+    /// abstains, which makes a downstream `coalesce` rescue refuse the
+    /// unexplained empty alternative.
+    fn empty_fold_spellings(
+        &self,
+        header: Option<&TemplateExpr>,
+        name: &str,
+        value: &AbstractValue,
+        entry_paths: &BTreeSet<String>,
+    ) -> Option<BTreeSet<GuardValue>> {
+        if !matches!(
+            value,
+            AbstractValue::StringSet(set) if set.len() == 1 && set.contains("")
+        ) {
+            return None;
+        }
+        let TemplateExpr::Call { function, args } = header?.deparen() else {
+            return None;
+        };
+        if function != "eq" || args.len() != 2 {
+            return None;
+        }
+        let local = name.trim_start_matches('$');
+        let is_local = |expr: &TemplateExpr| {
+            matches!(
+                expr.deparen(),
+                TemplateExpr::Variable(variable) if variable.trim_start_matches('$') == local
+            )
+        };
+        let is_string_literal = |expr: &TemplateExpr| {
+            matches!(
+                expr.deparen(),
+                TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_))
+            )
+        };
+        if !((is_local(&args[0]) && is_string_literal(&args[1]))
+            || (is_string_literal(&args[0]) && is_local(&args[1])))
+        {
+            return None;
+        }
+        let mut entry_paths = entry_paths.iter();
+        let (Some(path), None) = (entry_paths.next(), entry_paths.next()) else {
+            return None;
+        };
+        let predicate = self.value_path_context().condition_predicate_expr(header?);
+        let disjuncts = match predicate {
+            Predicate::Or(items) => items,
+            other => vec![other],
+        };
+        let mut spellings = BTreeSet::new();
+        for disjunct in disjuncts {
+            let Predicate::Guard(Guard::Eq {
+                path: guard_path,
+                value,
+            }) = disjunct
+            else {
+                return None;
+            };
+            if guard_path != *path {
+                return None;
+            }
+            spellings.insert(value);
+        }
+        (!spellings.is_empty()).then_some(spellings)
     }
 
     /// The exclusion predicate for one identity-losing arm: the negation of
@@ -1507,6 +1593,27 @@ fn binding_omitted_keys(
         }
     }
     out
+}
+
+/// Records an empty-fold's divert spellings on every kept identity arm;
+/// only `eval_coalesce`'s bounded empty rescue reads them.
+fn attach_empty_fold_spellings(
+    value: AbstractValue,
+    spellings: &BTreeSet<GuardValue>,
+) -> AbstractValue {
+    match value {
+        AbstractValue::OutputPath(path, mut meta) => {
+            meta.empty_fold_spellings = Some(spellings.clone());
+            AbstractValue::OutputPath(path, meta)
+        }
+        AbstractValue::Choice(choices) => AbstractValue::Choice(
+            choices
+                .into_iter()
+                .map(|choice| attach_empty_fold_spellings(choice, spellings))
+                .collect(),
+        ),
+        other => other,
+    }
 }
 
 fn attach_reassignment_exclusion(

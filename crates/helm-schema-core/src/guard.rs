@@ -193,6 +193,12 @@ pub enum Guard {
     /// the exact meaning of `gt (keys X | len) N` (`keys` aborts on
     /// non-maps, so the render reaches the body only for maps).
     MinMembers { path: String, bound: i64 },
+    /// The mapping at `path` contains `key` as a literal member — Sprig
+    /// `hasKey`/`dig` observability, where a present nil member IS present
+    /// (cilium's removed-option guards abort on the truthy `"<nil>"`
+    /// rendering of an explicit null). Contrast [`Guard::Absent`], which
+    /// counts explicit null as absent for the nil-safe selector lanes.
+    HasKey { path: String, key: String },
 }
 
 impl Guard {
@@ -234,7 +240,8 @@ impl Guard {
             | Self::IntGt { .. }
             | Self::IntLt { .. }
             | Self::AtMostOneMember { .. }
-            | Self::MinMembers { .. } => {}
+            | Self::MinMembers { .. }
+            | Self::HasKey { .. } => {}
         }
     }
 
@@ -259,7 +266,8 @@ impl Guard {
             | Guard::IntGt { path, .. }
             | Guard::IntLt { path, .. }
             | Guard::AtMostOneMember { path }
-            | Guard::MinMembers { path, .. } => {
+            | Guard::MinMembers { path, .. }
+            | Guard::HasKey { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -346,6 +354,10 @@ impl Guard {
             Guard::MinMembers { path, bound } => Guard::MinMembers {
                 path: map(&path),
                 bound,
+            },
+            Guard::HasKey { path, key } => Guard::HasKey {
+                path: map(&path),
+                key,
             },
         }
     }

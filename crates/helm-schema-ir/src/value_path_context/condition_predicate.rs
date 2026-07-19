@@ -154,6 +154,7 @@ impl ValuePathContext<'_> {
                 "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
                 "default" => self.default_truthy_predicate(args).is_some(),
                 "dig" => self.dig_truthy_predicate(args).is_some(),
+                "toString" => args.len() == 1 && self.tostring_truthy_predicate(&args[0]).is_some(),
                 "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
                 "include" => self.include_truthy_predicate(expr).is_some(),
                 function if is_files_get_function(function) => {
@@ -163,6 +164,7 @@ impl ValuePathContext<'_> {
             },
             TemplateExpr::Pipeline(stages) => {
                 self.default_pipeline_truthy_predicate(stages).is_some()
+                    || self.tostring_pipeline_truthy_predicate(stages).is_some()
             }
             _ => false,
         }
@@ -282,7 +284,9 @@ impl ValuePathContext<'_> {
 
     fn condition_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         if let TemplateExpr::Pipeline(stages) = expr.deparen() {
-            return self.default_pipeline_truthy_predicate(stages);
+            return self
+                .default_pipeline_truthy_predicate(stages)
+                .or_else(|| self.tostring_pipeline_truthy_predicate(stages));
         }
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return self.truthy_predicate(expr);
@@ -308,6 +312,9 @@ impl ValuePathContext<'_> {
             "dig" => self
                 .dig_truthy_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
+            "toString" if args.len() == 1 => self
+                .tostring_truthy_predicate(&args[0])
+                .or_else(|| self.truthy_predicate(expr)),
             "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args),
             "include" => self
                 .include_truthy_predicate(expr)
@@ -317,6 +324,88 @@ impl ValuePathContext<'_> {
                 .or_else(|| self.truthy_predicate(expr)),
             _ => self.truthy_predicate(expr),
         }
+    }
+
+    /// Truthiness of a total stringification (`toString X` /
+    /// `X | toString`) tests the RENDERED text against the empty string,
+    /// never the raw value's own Helm truthiness: `"false"`, `"0"`, and
+    /// `"<nil>"` are all truthy strings (cilium's removed-option guards
+    /// rely on exactly that to abort on explicitly-disabled options).
+    ///
+    /// Two subjects decode exactly:
+    ///
+    /// - a literal-key `dig` with an EMPTY-STRING literal default: a
+    ///   missing chain renders the empty default (falsy), so the guard
+    ///   holds exactly when the leaf is present with any value other than
+    ///   the empty string — explicit null renders `"<nil>"`, which is
+    ///   truthy;
+    /// - a direct selector: an absent or null subject renders `"<nil>"`
+    ///   (truthy), so only the raw empty string is falsy.
+    fn tostring_truthy_predicate(&self, subject: &TemplateExpr) -> Option<Predicate> {
+        if let TemplateExpr::Call { function, args } = subject.deparen()
+            && function == "dig"
+        {
+            let (map, rest) = args.split_last()?;
+            let (default, key_exprs) = rest.split_last()?;
+            if key_exprs.is_empty() {
+                return None;
+            }
+            let keys = key_exprs
+                .iter()
+                .map(literal_string)
+                .collect::<Option<Vec<_>>>()?;
+            // Only the empty-string default keeps "missing renders falsy"
+            // exact: any other falsy literal (`false`, `0`) stringifies to
+            // truthy text, flipping the absent case.
+            if !literal_string(default)?.is_empty() {
+                return None;
+            }
+            let base = match self.with_body_fragment_value_expr(map)? {
+                AbstractValue::ValuesPath(base) => base,
+                _ => return None,
+            };
+            let (leaf_key, parent_keys) = keys.split_last()?;
+            let parent = parent_keys.iter().fold(base, |path, key| {
+                helm_schema_core::append_value_path(&path, key)
+            });
+            let path = helm_schema_core::append_value_path(&parent, leaf_key);
+            // `HasKey` (not `¬Absent`): dig OBSERVES a present nil member,
+            // which renders as truthy "<nil>".
+            return Some(Predicate::all(vec![
+                Predicate::from(Guard::HasKey {
+                    path: parent,
+                    key: (*leaf_key).to_string(),
+                }),
+                Predicate::from(Guard::NotEq {
+                    path,
+                    value: GuardValue::string(""),
+                }),
+            ]));
+        }
+        if matches!(
+            subject.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            let path = self.single_resolved_values_path_expr(subject)?;
+            return Some(Predicate::from(Guard::NotEq {
+                path,
+                value: GuardValue::string(""),
+            }));
+        }
+        None
+    }
+
+    /// The `X | toString` pipeline form of [`Self::tostring_truthy_predicate`].
+    fn tostring_pipeline_truthy_predicate(&self, stages: &[TemplateExpr]) -> Option<Predicate> {
+        let [primary, stage] = stages else {
+            return None;
+        };
+        let TemplateExpr::Call { function, args } = stage.deparen() else {
+            return None;
+        };
+        (function == "toString" && args.is_empty())
+            .then(|| self.tostring_truthy_predicate(primary))
+            .flatten()
     }
 
     /// `dig k1 … kn default subject` with literal keys, a FALSY literal
@@ -618,6 +707,24 @@ impl ValuePathContext<'_> {
             TemplateExpr::Call { function, args } if function == "and" => {
                 self.and_predicate(args).map(|p| p.negated())
             }
+            // `not (toString X)` / `not (X | toString)` negates the
+            // RENDERING test; the raw-truthiness fallback below would fire
+            // on raw false, which stringifies truthy. An undecodable
+            // stringification abstains for the same reason.
+            TemplateExpr::Call { function, args } if function == "toString" && args.len() == 1 => {
+                self.tostring_truthy_predicate(&args[0])
+                    .map(|predicate| predicate.negated())
+            }
+            TemplateExpr::Pipeline(stages)
+                if matches!(
+                    stages.last().map(TemplateExpr::deparen),
+                    Some(TemplateExpr::Call { function, args })
+                        if function == "toString" && args.is_empty()
+                ) =>
+            {
+                self.tostring_pipeline_truthy_predicate(stages)
+                    .map(|predicate| predicate.negated())
+            }
             // A local's negation lowers through its stored truthy
             // reduction — the same trust the positive Variable lowering
             // extends (`not $stateful` selecting airflow's Deployment
@@ -777,6 +884,16 @@ impl ValuePathContext<'_> {
         for arg in args {
             let paths = self.paths_for_expr(arg);
             if !paths.is_empty() && !matches!(arg.deparen(), TemplateExpr::Call { .. }) {
+                // An exactly decodable pipeline disjunct (`… | toString`)
+                // must not collapse to raw truthiness: the RENDERING's
+                // truthiness differs from the value's (cilium's
+                // removed-option guards abort on a truthy "false").
+                if matches!(arg.deparen(), TemplateExpr::Pipeline(_))
+                    && let Some(exact) = self.condition_predicate(arg)
+                {
+                    alternatives.push(exact);
+                    continue;
+                }
                 truthy_paths.extend(paths);
                 continue;
             }
@@ -1806,7 +1923,26 @@ impl ValuePathContext<'_> {
             let stringified = tostring_selector(subject)
                 || subject_meta_for(&path).is_some_and(|meta| meta.stringified);
             let candidates = match &value {
-                GuardValue::String(text) if stringified => stringified_equality_preimage(text),
+                GuardValue::String(text) if stringified => {
+                    let mut candidates = stringified_equality_preimage(text);
+                    // A recorded coalesce rescue substitutes the fallback
+                    // exactly while the stringification renders Helm-empty,
+                    // so an equality against the fallback literal also
+                    // admits the empty spellings (cilium's
+                    // `ne $kubeProxyReplacement "false"` chain keeps ""
+                    // and null renderable).
+                    if let Some(rescue) =
+                        subject_meta_for(&path).and_then(|meta| meta.empty_rescue.as_ref())
+                        && rescue.fallback == *text
+                    {
+                        for spelling in &rescue.spellings {
+                            if !candidates.contains(spelling) {
+                                candidates.push(spelling.clone());
+                            }
+                        }
+                    }
+                    candidates
+                }
                 other => vec![other.clone()],
             };
             let comparisons = candidates
