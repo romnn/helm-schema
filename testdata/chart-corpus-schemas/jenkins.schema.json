@@ -30465,6 +30465,48 @@
         "properties": {
           "controller": {
             "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "controller": {
+            "properties": {
               "initScripts": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -47345,54 +47387,60 @@
         },
         "imageTag": {},
         "ingress": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {
-              "description": "Primary Ingress annotations"
-            },
-            "apiVersion": {
-              "description": "Primary Ingress API version",
-              "type": "string"
-            },
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
-              "description": "Enables the Primary ingress"
-            },
-            "hostName": {
-              "description": "Primary Ingress hostname"
-            },
-            "ingressClassName": {
-              "description": "Primary Ingress ingressClassName"
-            },
-            "labels": {
-              "description": "Primary Ingress labels"
-            },
-            "path": {
-              "description": "Primary Ingress path"
-            },
-            "pathType": {
-              "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix"
-            },
-            "paths": {
-              "description": "Override for the default Primary Ingress paths\n- backend:\nserviceName: ssl-redirect\nservicePort: use-annotation\n- backend:\nserviceName: >-\n{{ template \"jenkins.fullname\" . }}\nDon't use string here, use only integer value!\nservicePort: 8080"
-            },
-            "resourceRootUrl": {
-              "description": "Primary Hostname to serve assets from"
-            },
-            "tls": {
+          "anyOf": [
+            {
               "additionalProperties": {},
-              "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
+              "properties": {
+                "annotations": {
+                  "description": "Primary Ingress annotations"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ],
+                  "description": "Enables the Primary ingress"
+                },
+                "hostName": {
+                  "description": "Primary Ingress hostname"
+                },
+                "ingressClassName": {
+                  "description": "Primary Ingress ingressClassName"
+                },
+                "labels": {
+                  "description": "Primary Ingress labels"
+                },
+                "path": {
+                  "description": "Primary Ingress path"
+                },
+                "pathType": {
+                  "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix"
+                },
+                "paths": {
+                  "description": "Override for the default Primary Ingress paths\n- backend:\nserviceName: ssl-redirect\nservicePort: use-annotation\n- backend:\nserviceName: >-\n{{ template \"jenkins.fullname\" . }}\nDon't use string here, use only integer value!\nservicePort: 8080"
+                },
+                "resourceRootUrl": {
+                  "description": "Primary Hostname to serve assets from"
+                },
+                "tls": {
+                  "additionalProperties": {},
+                  "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
+                }
+              },
+              "type": "object"
             }
-          },
+          ],
           "type": "object"
         },
         "initConfigMap": {

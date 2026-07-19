@@ -1684,6 +1684,42 @@ fn oauth2_proxy_redis_ha_config_members_render_as_block_text() -> color_eyre::ey
     )
 }
 
+/// The redis StandaloneUrl helper fails ("please set
+/// sessionStorage.redis.standalone.connectionUrl or enable the redis
+/// subchart via redis-ha.enabled") when the standalone client has no
+/// explicit url and `redis-ha.enabled` is false. The caller gate is
+/// `eq (default "" .Values.sessionStorage.redis.clientType) "standalone"`
+/// and the subchart test is `eq (include "oauth2-proxy.redis.enabled" .)
+/// "true"` over a helper whose body is one boolean expression — both must
+/// decode for the terminal to reach the schema (helm-verified all three
+/// ways).
+#[test]
+fn oauth2_proxy_standalone_redis_requires_a_connection_url() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "oauth2-proxy",
+        vec![
+            SemanticCase::rejected(
+                "standalone client without a connection url aborts",
+                "",
+                json!({ "sessionStorage": { "type": "redis",
+                    "redis": { "clientType": "standalone" } } }),
+            ),
+            SemanticCase::accepted(
+                "an explicit connection url renders",
+                json!({ "sessionStorage": { "type": "redis",
+                    "redis": { "clientType": "standalone",
+                        "standalone": { "connectionUrl": "redis://myredis:6379" } } } }),
+            ),
+            SemanticCase::accepted(
+                "the enabled redis subchart computes the url",
+                json!({ "sessionStorage": { "type": "redis",
+                    "redis": { "clientType": "standalone" } },
+                    "redis-ha": { "enabled": true } }),
+            ),
+        ],
+    )
+}
+
 /// argo-cd vendors the same redis-ha chart, and its own values file sets
 /// `redis-ha.redis.config.save: '""'` — enabling the dependency must not
 /// reject the chart's own defaults (helm renders them).
@@ -2254,6 +2290,47 @@ fn datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback()
                 "truthy non-version tag reaches the parser",
                 "/otelAgentGateway/image/tag",
                 json!({ "otelAgentGateway": { "enabled": true, "image": { "tag": "junk" } } }),
+            ),
+        ],
+    )
+}
+
+/// The OTLP verify helpers run with the dot bound to the endpoint SCALAR
+/// (`include "verify-otlp-grpc-endpoint-prefix" .grpc.endpoint`): their
+/// `hasPrefix "unix:" .` and `not (regexMatch ":[0-9]+$" .)` terminals
+/// must bind the caller's endpoint path under the daemonset's apiKey and
+/// grpc-enabled gates (helm-verified each way). The port-suffixed unix
+/// spelling isolates the prefix terminal — the port test alone admits it.
+#[test]
+fn datadog_otlp_grpc_endpoints_reject_the_unix_protocol() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "datadog",
+        vec![
+            SemanticCase::rejected(
+                "a unix endpoint with a port suffix aborts on the prefix",
+                "",
+                json!({ "datadog": { "apiKey": "dummykey", "otlp": { "receiver": {
+                    "protocols": { "grpc": { "enabled": true,
+                        "endpoint": "unix:///tmp/otlp.sock:4317" } } } } } }),
+            ),
+            SemanticCase::rejected(
+                "a portless endpoint aborts",
+                "/datadog/otlp/receiver/protocols/grpc/endpoint",
+                json!({ "datadog": { "apiKey": "dummykey", "otlp": { "receiver": {
+                    "protocols": { "grpc": { "enabled": true,
+                        "endpoint": "0.0.0.0" } } } } } }),
+            ),
+            SemanticCase::accepted(
+                "a host:port endpoint renders",
+                json!({ "datadog": { "apiKey": "dummykey", "otlp": { "receiver": {
+                    "protocols": { "grpc": { "enabled": true,
+                        "endpoint": "0.0.0.0:4317" } } } } } }),
+            ),
+            SemanticCase::accepted(
+                "the disabled receiver keeps any endpoint open",
+                json!({ "datadog": { "apiKey": "dummykey", "otlp": { "receiver": {
+                    "protocols": { "grpc": { "enabled": false,
+                        "endpoint": "unix:///tmp/otlp.sock" } } } } } }),
             ),
         ],
     )
@@ -2851,6 +2928,65 @@ fn cilium_inclusive_comparator_chains_bound_integer_domains() -> color_eyre::eyr
                     "eni": { "enabled": true },
                     "extraConfig": { "allow-unsafe-policy-skb-usage": "true" }
                 }),
+            ),
+        ],
+    )
+}
+
+/// cilium's provider-mode gates: `ne (.Values.routingMode | default
+/// "native") "native"` aborts GKE with tunnel routing (the AKS-BYOCNI
+/// twin defaults to "tunnel" and aborts native), and the ingress /
+/// Gateway API `externalTrafficPolicy` tests negate the
+/// Cluster-or-Local equality disjunction exactly instead of weakening
+/// to truthiness (every polarity helm-verified).
+#[test]
+fn cilium_provider_modes_pin_routing_and_traffic_policy_domains() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::rejected(
+                "gke with tunnel routing aborts",
+                "",
+                json!({ "gke": { "enabled": true }, "routingMode": "tunnel",
+                    "ipam": { "mode": "kubernetes" } }),
+            ),
+            SemanticCase::accepted(
+                "gke with native routing renders",
+                json!({ "gke": { "enabled": true }, "routingMode": "native",
+                    "ipam": { "mode": "kubernetes" },
+                    "ipv4NativeRoutingCIDR": "10.0.0.0/8" }),
+            ),
+            SemanticCase::rejected(
+                "aks-byocni with native routing aborts",
+                "",
+                json!({ "aksbyocni": { "enabled": true }, "routingMode": "native",
+                    "ipv4NativeRoutingCIDR": "10.0.0.0/8" }),
+            ),
+            SemanticCase::accepted(
+                "aks-byocni with tunnel routing renders",
+                json!({ "aksbyocni": { "enabled": true }, "routingMode": "tunnel" }),
+            ),
+            SemanticCase::rejected(
+                "an unlisted ingress traffic policy aborts",
+                "/ingressController",
+                json!({ "ingressController": { "enabled": true, "service": {
+                    "type": "LoadBalancer", "externalTrafficPolicy": "Foo" } } }),
+            ),
+            SemanticCase::accepted(
+                "the Local ingress traffic policy renders",
+                json!({ "ingressController": { "enabled": true, "service": {
+                    "type": "LoadBalancer", "externalTrafficPolicy": "Local" } } }),
+            ),
+            SemanticCase::rejected(
+                "an unlisted gateway traffic policy aborts",
+                "/gatewayAPI",
+                json!({ "gatewayAPI": { "enabled": true,
+                    "externalTrafficPolicy": "Foo" } }),
+            ),
+            SemanticCase::accepted(
+                "the Cluster gateway traffic policy renders",
+                json!({ "gatewayAPI": { "enabled": true,
+                    "externalTrafficPolicy": "Cluster" } }),
             ),
         ],
     )

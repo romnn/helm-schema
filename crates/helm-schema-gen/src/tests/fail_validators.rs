@@ -1606,3 +1606,279 @@ fn ranged_not_equals_chains_negate_to_the_field_enum() {
         );
     }
 }
+
+/// cilium's provider-mode gates spell their tests through defaulted
+/// pipelines and negated equality disjunctions: `ne (.Values.routingMode
+/// | default "native") "native"` aborts GKE+tunnel while the unset and
+/// explicit-native spellings render, and `not (or (eq P "Cluster")
+/// (eq P "Local"))` aborts any other traffic policy. Both must decode
+/// exactly — the truthiness weakenings accept the invalid spellings.
+#[test]
+fn defaulted_pipeline_and_negated_disjunction_tests_decode() {
+    let src = indoc! {r#"
+        config:
+          {{- if .Values.gke.enabled }}
+          {{- if ne (.Values.routingMode | default "native") "native" }}
+          {{- fail "RoutingMode must be set to native when gke.enabled=true" }}
+          {{- end }}
+          endpointRoutes: true
+          {{- end }}
+          {{- if .Values.ingress.enabled }}
+          {{- if not (or (eq .Values.ingress.policy "Cluster") (eq .Values.ingress.policy "Local")) }}
+          {{- fail "policy must be Cluster or Local" }}
+          {{- end }}
+          policy: {{ .Values.ingress.policy }}
+          {{- end }}
+          ok: true
+    "#};
+    let values_yaml = indoc! {r#"
+        gke:
+          enabled: false
+        routingMode: ""
+        ingress:
+          enabled: false
+          policy: Cluster
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "gke": { "enabled": true } }),
+            true,
+            "gke with the unset routing mode takes the default",
+        ),
+        (
+            serde_json::json!({ "gke": { "enabled": true }, "routingMode": "native" }),
+            true,
+            "gke with explicit native renders",
+        ),
+        (
+            serde_json::json!({ "gke": { "enabled": true }, "routingMode": "tunnel" }),
+            false,
+            "gke with tunnel aborts",
+        ),
+        (
+            serde_json::json!({ "routingMode": "tunnel" }),
+            true,
+            "tunnel without gke stays open",
+        ),
+        (
+            serde_json::json!({ "ingress": { "enabled": true, "policy": "Local" } }),
+            true,
+            "a listed policy renders",
+        ),
+        (
+            serde_json::json!({ "ingress": { "enabled": true, "policy": "Foo" } }),
+            false,
+            "an unlisted policy aborts",
+        ),
+        (
+            serde_json::json!({ "ingress": { "enabled": false, "policy": "Foo" } }),
+            true,
+            "the disabled gate keeps the policy open",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "defaulted pipeline and negated disjunction ({label}): \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// vault's `validateRedundancyZones` helper spells every gate through a
+/// `| toString` pipeline (`eq (.Values.…enabled | toString) "true"` as
+/// the outer guard, `ne (.Values.server.ha.enabled | toString) "true"`
+/// as the failing tests): the pipeline stringification must decode like
+/// the `toString X` call form so the values-decidable combination
+/// implications reach the schema. The helper's Kubernetes-version semver
+/// fail is cluster-dependent and must abstain, keeping the valid
+/// combination open.
+#[test]
+fn pipeline_tostring_gates_decode_in_helper_terminals() {
+    let helpers = indoc! {r#"
+        {{- define "repro.validate" -}}
+        {{- if eq (.Values.zones.enabled | toString) "true" -}}
+        {{- if ne (.Values.ha.enabled | toString) "true" -}}
+        {{- fail "zones.enabled=true requires ha.enabled=true" -}}
+        {{- end -}}
+        {{- if ne (.Values.raft.enabled | toString) "true" -}}
+        {{- fail "zones.enabled=true requires raft.enabled=true" -}}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- include "repro.validate" . -}}
+        replicas: {{ .Values.replicas }}
+    "#};
+    let values_yaml = indoc! {r#"
+        replicas: 1
+        zones:
+          enabled: false
+        ha:
+          enabled: false
+        raft:
+          enabled: false
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults skip the gates"),
+        (
+            serde_json::json!({ "zones": { "enabled": true },
+                "ha": { "enabled": true }, "raft": { "enabled": true } }),
+            true,
+            "the full combination renders",
+        ),
+        (
+            serde_json::json!({ "zones": { "enabled": true } }),
+            false,
+            "zones without ha aborts",
+        ),
+        (
+            serde_json::json!({ "zones": { "enabled": true }, "ha": { "enabled": true } }),
+            false,
+            "zones without raft aborts",
+        ),
+        (
+            serde_json::json!({ "ha": { "enabled": true } }),
+            true,
+            "ha alone stays open",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "pipeline tostring gates ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// datadog's OTLP verify helpers are included with the dot bound to a
+/// SCALAR (`include "verify-…" .grpc.endpoint` under a `with` over the
+/// protocols map): their `hasPrefix "unix:" .` / `not (regexMatch
+/// ":[0-9]+$" .)` fails must bind the caller's endpoint path with the
+/// enabling guards retained (helm rejects the unix and portless
+/// endpoints, renders the host:port one).
+#[test]
+fn scalar_dot_helper_terminals_bind_the_caller_argument_path() {
+    let helpers = indoc! {r#"
+        {{- define "repro.verifyPrefix" -}}
+        {{- if hasPrefix "unix:" . }}
+        {{ fail "'unix' protocol is not supported" }}
+        {{- end }}
+        {{- end -}}
+        {{- define "repro.verifyPort" -}}
+        {{- if not ( regexMatch ":[0-9]+$" . ) }}
+        {{ fail "port must be set explicitly" }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        ports:
+          {{- with .Values.otlp.protocols }}
+          {{- if (and .grpc .grpc.enabled) }}
+          {{- include "repro.verifyPrefix" .grpc.endpoint }}
+          {{- include "repro.verifyPort" .grpc.endpoint }}
+          - port: 4317
+          {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        otlp:
+          protocols:
+            grpc:
+              enabled: false
+              endpoint: "0.0.0.0:4317"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (endpoint, want, label) in [
+        ("0.0.0.0:4317", true, "host:port renders"),
+        ("unix:///tmp/otlp.sock", false, "unix protocol aborts"),
+        ("0.0.0.0", false, "a portless endpoint aborts"),
+        // A port-suffixed unix endpoint passes the port test, so only the
+        // decoded prefix terminal can reject it (helm-verified on datadog).
+        (
+            "unix:///tmp/otlp.sock:4317",
+            false,
+            "unix protocol aborts despite a port",
+        ),
+    ] {
+        let enabled = serde_json::json!({ "otlp": { "protocols": { "grpc": {
+            "enabled": true, "endpoint": endpoint } } } });
+        assert!(
+            schema_accepts_instance(&schema, &enabled) == want,
+            "scalar-dot helper terminal ({label}): instance={enabled}; schema={schema}"
+        );
+        let disabled = serde_json::json!({ "otlp": { "protocols": { "grpc": {
+            "enabled": false, "endpoint": endpoint } } } });
+        assert!(
+            schema_accepts_instance(&schema, &disabled),
+            "scalar-dot helper terminal (disabled gate keeps {label} open): \
+             instance={disabled}; schema={schema}"
+        );
+    }
+}
+
+/// oauth2-proxy's `redis.StandaloneUrl` helper terminates rendering when
+/// neither `connectionUrl` is set nor the redis subchart enabled; the
+/// caller invokes it only for the `standalone` client type. The helper's
+/// fail must reach the caller with BOTH its internal guards (the url
+/// truthiness and the subchart-enabled include, whose helper renders a
+/// single decodable boolean expression) AND the caller's live clientType
+/// guard.
+#[test]
+fn helper_terminals_keep_caller_guards_and_boolean_include_arms() {
+    let helpers = indoc! {r#"
+        {{- define "repro.enabled" -}}
+          {{- eq (index .Values "redis-ha" "enabled") true -}}
+        {{- end -}}
+        {{- define "repro.url" -}}
+        {{- if .Values.session.url -}}
+        {{ .Values.session.url }}
+        {{- else if eq (include "repro.enabled" .) "true" -}}
+        {{- printf "redis://auto" -}}
+        {{- else -}}
+        {{ fail "please set session.url or enable the redis subchart" }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        config:
+          {{- if eq (default "" .Values.session.clientType) "standalone" }}
+          url: {{ include "repro.url" . }}
+          {{- end }}
+          ok: true
+    "#};
+    let values_yaml = indoc! {r#"
+        session:
+          clientType: ""
+        redis-ha:
+          enabled: false
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults skip the include"),
+        (
+            serde_json::json!({ "session": { "clientType": "standalone",
+                "url": "redis://myredis:6379" } }),
+            true,
+            "an explicit url renders",
+        ),
+        (
+            serde_json::json!({ "session": { "clientType": "standalone" },
+                "redis-ha": { "enabled": true } }),
+            true,
+            "the enabled subchart computes the url",
+        ),
+        (
+            serde_json::json!({ "session": { "clientType": "standalone" } }),
+            false,
+            "standalone without a url aborts",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "helper terminal caller guards ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}

@@ -3244,33 +3244,6 @@
     "schema222": {
       "not": {
         "properties": {
-          "controller": {
-            "properties": {
-              "readinessProbe": {
-                "properties": {
-                  "enabled": {}
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "controller"
-        ],
-        "type": "object"
-      }
-    },
-    "schema223": {
-      "not": {
-        "properties": {
           "speaker": {
             "properties": {
               "excludeInterfaces": {
@@ -3295,12 +3268,12 @@
         "type": "object"
       }
     },
-    "schema227": {
+    "schema223": {
       "not": {
         "properties": {
           "controller": {
             "properties": {
-              "livenessProbe": {
+              "readinessProbe": {
                 "properties": {
                   "enabled": {}
                 },
@@ -3311,7 +3284,7 @@
               }
             },
             "required": [
-              "livenessProbe"
+              "readinessProbe"
             ],
             "type": "object"
           }
@@ -3322,7 +3295,7 @@
         "type": "object"
       }
     },
-    "schema228": {
+    "schema227": {
       "not": {
         "properties": {
           "controller": {
@@ -3339,6 +3312,33 @@
             },
             "required": [
               "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      }
+    },
+    "schema228": {
+      "not": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "livenessProbe": {
+                "properties": {
+                  "enabled": {}
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "livenessProbe"
             ],
             "type": "object"
           }
@@ -3526,7 +3526,7 @@
         "type": "object"
       }
     },
-    "schema244": {
+    "schema246": {
       "not": {
         "properties": {
           "speaker": {
@@ -4944,7 +4944,7 @@
         "type": "object"
       }
     },
-    "schema306": {
+    "schema305": {
       "anyOf": [
         {
           "additionalProperties": {},
@@ -4962,7 +4962,7 @@
         }
       ]
     },
-    "schema307": {
+    "schema306": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -7239,7 +7239,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema227"
+                "$ref": "#/$defs/schema228"
               },
               {
                 "properties": {
@@ -7347,7 +7347,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema227"
+                    "$ref": "#/$defs/schema228"
                   },
                   {
                     "properties": {
@@ -7433,7 +7433,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema227"
+                "$ref": "#/$defs/schema228"
               },
               {
                 "properties": {
@@ -7613,7 +7613,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema222"
+                "$ref": "#/$defs/schema223"
               },
               {
                 "properties": {
@@ -7721,7 +7721,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema222"
+                    "$ref": "#/$defs/schema223"
                   },
                   {
                     "properties": {
@@ -7807,7 +7807,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema222"
+                "$ref": "#/$defs/schema223"
               },
               {
                 "properties": {
@@ -8046,292 +8046,11 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema321"
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema321"
-                      },
-                      {
-                        "properties": {
-                          "controller": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controller"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "image": {
-                            "properties": {
-                              "pullPolicy": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "pullPolicy"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "image"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema321"
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema321"
-                      },
-                      {
-                        "properties": {
-                          "controller": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controller"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema227"
-                      },
-                      {
-                        "properties": {
-                          "controller": {
-                            "properties": {
-                              "livenessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controller"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema321"
-                  },
-                  {
-                    "properties": {
-                      "controller": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "controller"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema321"
-                      },
-                      {
-                        "properties": {
-                          "controller": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controller"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema222"
-                      },
-                      {
-                        "properties": {
-                          "controller": {
-                            "properties": {
-                              "readinessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "readinessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controller"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
-            "type": "object"
-          }
+      "additionalProperties": {},
+      "properties": {
+        "controller": {
+          "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+          "type": "object"
         }
       }
     },
@@ -18650,7 +18369,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema228"
+                "$ref": "#/$defs/schema227"
               },
               {
                 "properties": {
@@ -18913,7 +18632,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema228"
+                    "$ref": "#/$defs/schema227"
                   },
                   {
                     "properties": {
@@ -19233,7 +18952,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema228"
+                    "$ref": "#/$defs/schema227"
                   },
                   {
                     "properties": {
@@ -19668,7 +19387,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema228"
+                "$ref": "#/$defs/schema227"
               },
               {
                 "properties": {
@@ -24202,100 +23921,10 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "podMonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "podMonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema291"
-                  },
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "rbacPrometheus": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "rbacPrometheus"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "serviceMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheus": {
-            "type": "object"
-          }
+      "additionalProperties": {},
+      "properties": {
+        "prometheus": {
+          "type": "object"
         }
       }
     },
@@ -24456,7 +24085,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema223"
+                        "$ref": "#/$defs/schema222"
                       },
                       {
                         "properties": {
@@ -25202,7 +24831,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema244"
+                    "$ref": "#/$defs/schema246"
                   },
                   {
                     "properties": {
@@ -25496,7 +25125,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema244"
+                    "$ref": "#/$defs/schema246"
                   },
                   {
                     "properties": {
@@ -27203,7 +26832,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema223"
+                    "$ref": "#/$defs/schema222"
                   },
                   {
                     "properties": {
@@ -27441,7 +27070,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema223"
+                    "$ref": "#/$defs/schema222"
                   },
                   {
                     "properties": {
@@ -27572,6 +27201,204 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema335"
+              },
+              {
+                "properties": {
+                  "speaker": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "speaker"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema251"
+              },
+              {
+                "properties": {
+                  "speaker": {
+                    "properties": {
+                      "memberlist": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "memberlist"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "speaker"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema222"
+                  },
+                  {
+                    "properties": {
+                      "speaker": {
+                        "properties": {
+                          "excludeInterfaces": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "excludeInterfaces"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "speaker"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "speaker": {
+                    "properties": {
+                      "frr": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "speaker"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema251"
+                  },
+                  {
+                    "properties": {
+                      "speaker": {
+                        "properties": {
+                          "memberlist": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "memberlist"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "speaker"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "speakerMetricsTLSSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "speakerMetricsTLSSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "speaker": {
+            "additionalProperties": {},
+            "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
+            "properties": {
+              "memberlist": {
+                "type": "object"
               }
             }
           }
@@ -29009,7 +28836,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema244"
+                    "$ref": "#/$defs/schema246"
                   },
                   {
                     "properties": {
@@ -29064,1477 +28891,11 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema335"
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "speaker": {
-                    "properties": {
-                      "frr": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "speaker"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema335"
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "frr": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "frr": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema239"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "livenessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema239"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "livenessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema335"
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "frr": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "image": {
-                            "properties": {
-                              "pullPolicy": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "pullPolicy"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "image"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema335"
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema234"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "readinessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "readinessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema335"
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "speaker": {
-                          "properties": {
-                            "frr": {
-                              "properties": {
-                                "enabled": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "frr"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "speaker"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema251"
-                        },
-                        {
-                          "properties": {
-                            "speaker": {
-                              "properties": {
-                                "memberlist": {
-                                  "properties": {
-                                    "enabled": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "memberlist"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "speaker"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema223"
-                          },
-                          {
-                            "properties": {
-                              "speaker": {
-                                "properties": {
-                                  "excludeInterfaces": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "excludeInterfaces"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "speaker"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "frr": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "frr"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema251"
-                          },
-                          {
-                            "properties": {
-                              "speaker": {
-                                "properties": {
-                                  "memberlist": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "memberlist"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "speaker"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "speakerMetricsTLSSecret": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "speakerMetricsTLSSecret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema348"
-                      },
-                      {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema348"
-                      },
-                      {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema238"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "serviceAccount": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "serviceAccount"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema348"
-                      },
-                      {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema238"
-                        },
-                        {
-                          "properties": {
-                            "speaker": {
-                              "properties": {
-                                "serviceAccount": {
-                                  "properties": {
-                                    "create": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "create"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "speaker"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema335"
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema238"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "serviceAccount": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "serviceAccount"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema238"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "serviceAccount": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "serviceAccount"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema238"
-                        },
-                        {
-                          "properties": {
-                            "speaker": {
-                              "properties": {
-                                "serviceAccount": {
-                                  "properties": {
-                                    "create": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "create"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "speaker"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema238"
-                        },
-                        {
-                          "properties": {
-                            "speaker": {
-                              "properties": {
-                                "serviceAccount": {
-                                  "properties": {
-                                    "create": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "create"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "speaker"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "frr": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema335"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "frr": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema244"
-                      },
-                      {
-                        "properties": {
-                          "speaker": {
-                            "properties": {
-                              "startupProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "startupProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "speaker"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "speaker": {
-            "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
-            "type": "object"
-          }
+      "additionalProperties": {},
+      "properties": {
+        "speaker": {
+          "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
+          "type": "object"
         }
       }
     },
@@ -32399,7 +30760,7 @@
         },
         "extraContainers": {},
         "image": {
-          "$ref": "#/$defs/schema306"
+          "$ref": "#/$defs/schema305"
         },
         "labels": {},
         "livenessProbe": {
@@ -34846,7 +33207,8 @@
               "type": "object"
             }
           ],
-          "description": "Prometheus Operator alertmanager alerts"
+          "description": "Prometheus Operator alertmanager alerts",
+          "type": "object"
         },
         "rbacPrometheus": {
           "anyOf": [
@@ -34955,7 +33317,8 @@
               "type": "object"
             }
           ],
-          "description": "Prometheus Operator ServiceMonitors. To be used as an alternative\nto podMonitor, supports secure metrics."
+          "description": "Prometheus Operator ServiceMonitors. To be used as an alternative\nto podMonitor, supports secure metrics.",
+          "type": "object"
         }
       },
       "type": "object"
@@ -36828,7 +35191,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema307"
+                    "$ref": "#/$defs/schema306"
                   },
                   {
                     "properties": {
@@ -36903,7 +35266,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema307"
+                    "$ref": "#/$defs/schema306"
                   },
                   {
                     "properties": {
@@ -37400,7 +35763,8 @@
               "type": "object"
             }
           ],
-          "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend."
+          "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
+          "type": "object"
         },
         "frrMetrics": {
           "additionalProperties": {},
@@ -37413,7 +35777,7 @@
           "type": "boolean"
         },
         "image": {
-          "$ref": "#/$defs/schema306"
+          "$ref": "#/$defs/schema305"
         },
         "initContainers": {
           "anyOf": [
@@ -37479,25 +35843,35 @@
           "description": "Speaker log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
         },
         "memberlist": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ],
+                  "description": "When enabled: false, the speaker pods must run on all nodes"
                 }
-              ],
-              "description": "When enabled: false, the speaker pods must run on all nodes"
+              }
             },
-            "mlBindAddrOverride": {},
-            "mlBindPort": {},
-            "mlSecretKeyPath": {}
-          },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "mlBindAddrOverride": {},
+                "mlBindPort": {},
+                "mlSecretKeyPath": {}
+              },
+              "type": "object"
+            }
+          ],
           "type": "object"
         },
         "nodeSelector": {

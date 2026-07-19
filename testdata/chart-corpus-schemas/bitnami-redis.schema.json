@@ -47126,6 +47126,23 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "sentinel": {
+          "additionalProperties": {},
+          "properties": {
+            "externalAccess": {
+              "anyOf": [
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -49854,6 +49871,24 @@
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "sentinel": {
+          "additionalProperties": {},
+          "properties": {
+            "service": {
+              "anyOf": [
+                {
+                  "type": "object"
+                }
+              ],
+              "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden."
             }
           }
         }
@@ -62936,7 +62971,7 @@
       "type": "object"
     },
     "master": {
-      "additionalProperties": {}
+      "$ref": "#/$defs/schema334"
     },
     "metrics": {
       "additionalProperties": {},
@@ -66368,7 +66403,8 @@
             }
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/schema279"
@@ -67198,7 +67234,8 @@
             }
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "resources": {},
     "secretAnnotations": {
@@ -67260,7 +67297,8 @@
             }
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "serviceAccount": {
       "additionalProperties": {},
@@ -67640,7 +67678,8 @@
     },
     "volumePermissions": {
       "additionalProperties": {},
-      "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters"
+      "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
+      "type": "object"
     }
   },
   "type": "object"

@@ -147,7 +147,11 @@ impl ValuePathContext<'_> {
                 "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args).is_some(),
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
-                "hasPrefix" => self.range_key_prefix_predicate(args).is_some(),
+                "hasPrefix" => {
+                    self.range_key_prefix_predicate(args).is_some()
+                        || self.string_affix_predicate(args, false).is_some()
+                }
+                "hasSuffix" => self.string_affix_predicate(args, true).is_some(),
                 "contains" => self.contains_predicate(args).is_some(),
                 "has" => self.helper_literal_membership_predicate(args).is_some(),
                 "empty" => self.empty_predicate(args).is_some(),
@@ -297,7 +301,10 @@ impl ValuePathContext<'_> {
             "not" => self.not_predicate(args),
             "empty" => self.empty_predicate(args),
             "hasKey" => self.has_key_predicate(args),
-            "hasPrefix" => self.range_key_prefix_predicate(args),
+            "hasPrefix" => self
+                .range_key_prefix_predicate(args)
+                .or_else(|| self.string_affix_predicate(args, false)),
+            "hasSuffix" => self.string_affix_predicate(args, true),
             "contains" => self.contains_predicate(args),
             "has" => self
                 .helper_literal_membership_predicate(args)
@@ -673,6 +680,27 @@ impl ValuePathContext<'_> {
                 .empty_predicate(args)
                 .map(|predicate| predicate.negated()),
             TemplateExpr::Call { function, args } if function == "or" => {
+                // De Morgan over EXACT per-disjunct decodes: when every
+                // disjunct lowers faithfully, each negates precisely and
+                // the conjunction stays flat for guard extraction —
+                // cilium's `not (or (eq … "Cluster") (eq … "Local"))`
+                // traffic-policy gate needs the equality enum, not the
+                // truthiness weakening the fallback lowers to. A truthy
+                // stand-in for an undecodable disjunct must never be
+                // negated, hence the faithfulness gate.
+                if args
+                    .iter()
+                    .all(|arg| self.condition_lowering_is_faithful(arg))
+                    && let Some(negated) = args
+                        .iter()
+                        .map(|arg| {
+                            self.condition_predicate(arg)
+                                .map(|predicate| predicate.negated())
+                        })
+                        .collect::<Option<Vec<_>>>()
+                {
+                    return Some(Predicate::all(negated));
+                }
                 self.negated_or_predicate(args)
             }
             TemplateExpr::Call { function, args } if function == "eq" => {
@@ -829,6 +857,32 @@ impl ValuePathContext<'_> {
         Some(Predicate::from(Guard::MatchesPattern {
             path,
             pattern: pattern.to_string(),
+            templated,
+        }))
+    }
+
+    /// `hasPrefix`/`hasSuffix` over a literal affix and a values-path
+    /// subject is an anchored literal pattern test on the value's rendered
+    /// text (datadog's `hasPrefix "unix:" .` OTLP endpoint terminal, where
+    /// the dot is the caller's bound endpoint scalar).
+    fn string_affix_predicate(&self, args: &[TemplateExpr], suffix: bool) -> Option<Predicate> {
+        let [affix, subject] = args else {
+            return None;
+        };
+        let affix = literal_string(affix)?;
+        let path = match self.with_body_fragment_value_expr(subject)? {
+            AbstractValue::ValuesPath(path) if !path.is_empty() => path,
+            _ => return None,
+        };
+        let templated = self.subject_is_derived_text(subject, &path);
+        let pattern = if suffix {
+            format!("{}$", escape_regex_literal(affix))
+        } else {
+            format!("^{}", escape_regex_literal(affix))
+        };
+        Some(Predicate::from(Guard::MatchesPattern {
+            path,
+            pattern,
             templated,
         }))
     }
@@ -1895,15 +1949,12 @@ impl ValuePathContext<'_> {
         // projection below decodes exactly (cilium validate.yaml's
         // `eq (toString .Values.kubeProxyReplacement) "disabled"`).
         fn tostring_selector(expr: &TemplateExpr) -> bool {
-            matches!(
-                expr.deparen(),
-                TemplateExpr::Call { function, args } if function == "toString"
-                    && args.len() == 1
-                    && matches!(
-                        args[0].deparen(),
-                        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-                    )
-            )
+            tostring_wrapped_subject(expr).is_some_and(|subject| {
+                matches!(
+                    subject.deparen(),
+                    TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+                )
+            })
         }
         let direct_selector = |expr: &TemplateExpr| match expr.deparen() {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
@@ -1928,13 +1979,7 @@ impl ValuePathContext<'_> {
         // A `toString`-wrapped selector compares the rendering of the inner
         // path's value; resolve the paths from the operand itself.
         fn tostring_operand(expr: &TemplateExpr) -> &TemplateExpr {
-            if let TemplateExpr::Call { function, args } = expr.deparen()
-                && function == "toString"
-                && args.len() == 1
-            {
-                return &args[0];
-            }
-            expr
+            tostring_wrapped_subject(expr).unwrap_or(expr)
         }
         // Literal-key `index` navigation compares the MEMBER value only; the
         // evaluator's influence set also carries the parent map, which is
@@ -1969,6 +2014,63 @@ impl ValuePathContext<'_> {
                     (self.constant_scalar(left), self.constant_scalar(right))
                 {
                     return Some(bool_predicate((left_value == right_value) != negated));
+                }
+                // `eq (default D X) V` over a literal fallback D compares X
+                // with its Helm-falsy states substituted by D: with V == D
+                // the guard also holds for every falsy X; a truthy V ≠ D
+                // binds X == V exactly (a falsy X renders D ≠ V); a falsy
+                // V ≠ D never holds (any X equal to V would itself be falsy
+                // and render D instead). oauth2-proxy's
+                // `eq (default "" .Values.…clientType) "standalone"` caller
+                // gate rides this shape.
+                let defaulted = match (guard_value_literal(left), guard_value_literal(right)) {
+                    (Some(value), None) => default_call_operand(right)
+                        .map(|(fallback, subject)| (value, fallback, subject)),
+                    (None, Some(value)) => default_call_operand(left)
+                        .map(|(fallback, subject)| (value, fallback, subject)),
+                    _ => None,
+                };
+                if let Some((value, fallback, subject)) = defaulted
+                    && direct_selector(subject)
+                {
+                    let paths = subject_paths(subject);
+                    if !paths.is_empty() {
+                        let predicate = if value == fallback {
+                            Predicate::all(
+                                paths
+                                    .iter()
+                                    .map(|path| {
+                                        predicate_any(vec![
+                                            Predicate::from(Guard::Eq {
+                                                path: path.clone(),
+                                                value: value.clone(),
+                                            }),
+                                            Predicate::truthy_path(path.clone()).negated(),
+                                        ])
+                                    })
+                                    .collect(),
+                            )
+                        } else if guard_value_is_truthy(&value) {
+                            Predicate::all(
+                                paths
+                                    .iter()
+                                    .map(|path| {
+                                        Predicate::from(Guard::Eq {
+                                            path: path.clone(),
+                                            value: value.clone(),
+                                        })
+                                    })
+                                    .collect(),
+                            )
+                        } else {
+                            bool_predicate(false)
+                        };
+                        return Some(if negated {
+                            predicate.negated()
+                        } else {
+                            predicate
+                        });
+                    }
                 }
                 return self.helper_literal_dispatch_predicate(left, right, negated);
             }
@@ -2474,6 +2576,62 @@ fn keys_len_subject(expr: &TemplateExpr) -> Option<&TemplateExpr> {
             _ => None,
         },
         _ => None,
+    }
+}
+
+/// The subject of a total stringification — `toString X` or the two-stage
+/// pipeline `X | toString` (vault's `.Values.server.ha.enabled | toString`
+/// redundancy-zone gates spell it this way).
+fn tostring_wrapped_subject(expr: &TemplateExpr) -> Option<&TemplateExpr> {
+    match expr.deparen() {
+        TemplateExpr::Call { function, args } if function == "toString" && args.len() == 1 => {
+            Some(&args[0])
+        }
+        TemplateExpr::Pipeline(stages) => {
+            let [subject, tail] = stages.as_slice() else {
+                return None;
+            };
+            let TemplateExpr::Call { function, args } = tail.deparen() else {
+                return None;
+            };
+            (function == "toString" && args.is_empty()).then_some(subject)
+        }
+        _ => None,
+    }
+}
+
+/// The `(fallback, subject)` of a literal-fallback `default` call —
+/// `default D X` or the two-stage pipeline `X | default D`.
+fn default_call_operand(expr: &TemplateExpr) -> Option<(GuardValue, &TemplateExpr)> {
+    match expr.deparen() {
+        TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
+            Some((guard_value_literal(&args[0])?, &args[1]))
+        }
+        TemplateExpr::Pipeline(stages) => {
+            let [subject, tail] = stages.as_slice() else {
+                return None;
+            };
+            let TemplateExpr::Call { function, args } = tail.deparen() else {
+                return None;
+            };
+            if function != "default" || args.len() != 1 {
+                return None;
+            }
+            Some((guard_value_literal(&args[0])?, subject))
+        }
+        _ => None,
+    }
+}
+
+/// Helm truthiness of a literal guard value (sprig `empty` complement):
+/// nil, `""`, `0`, `0.0`, and `false` are falsy.
+fn guard_value_is_truthy(value: &GuardValue) -> bool {
+    match value {
+        GuardValue::String(text) => !text.is_empty(),
+        GuardValue::Bool(value) => *value,
+        GuardValue::Int(value) => *value != 0,
+        GuardValue::Float(text) => text.parse::<f64>().is_ok_and(|value| value != 0.0),
+        GuardValue::Null => false,
     }
 }
 

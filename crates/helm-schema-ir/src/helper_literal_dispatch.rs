@@ -4,7 +4,7 @@
 //! helper's output against a literal (`eq (include "mode" .) "x"`)
 //! decode into the matching arms' branch conditions.
 
-use helm_schema_ast::{TemplateHeader, children_with_field};
+use helm_schema_ast::{TemplateExpr, TemplateHeader, children_with_field};
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::node_eval::{NodeAction, else_if_pairs, node_action};
@@ -67,13 +67,73 @@ fn collect_dispatch(
                     return false;
                 }
             }
-            NodeAction::Assignment(_)
-            | NodeAction::With(_)
-            | NodeAction::Range(_)
-            | NodeAction::Output(_) => return false,
+            // A body that is ONE boolean-valued expression renders exactly
+            // `true` or `false`, which is the two-arm dispatch
+            // `if <expr>` → "true" / else → "false" (oauth2-proxy's
+            // `redis.enabled` helper is `eq (index .Values "redis-ha"
+            // "enabled") true`).
+            NodeAction::Output(exprs) => {
+                if dispatch.is_some() {
+                    return false;
+                }
+                let Some(arms) = boolean_output_arms(source, child, exprs.as_deref()) else {
+                    return false;
+                };
+                *dispatch = Some(arms);
+            }
+            NodeAction::Assignment(_) | NodeAction::With(_) | NodeAction::Range(_) => {
+                return false;
+            }
         }
     }
     true
+}
+
+/// The synthetic two-arm dispatch for a single boolean-valued output body.
+/// The header re-parses the expression's own source text, so the arm's
+/// condition is exactly the rendered test.
+fn boolean_output_arms(
+    source: &str,
+    node: tree_sitter::Node<'_>,
+    exprs: Option<&[TemplateExpr]>,
+) -> Option<Vec<LiteralDispatchArm>> {
+    let [expr] = exprs? else {
+        return None;
+    };
+    if !boolean_valued(expr) {
+        return None;
+    }
+    let raw = node.utf8_text(source.as_bytes()).ok()?;
+    Some(vec![
+        LiteralDispatchArm {
+            header: Some(TemplateHeader::parse_control(raw.trim())),
+            literal: "true".to_string(),
+            raw_empty: false,
+        },
+        LiteralDispatchArm {
+            header: None,
+            literal: "false".to_string(),
+            raw_empty: false,
+        },
+    ])
+}
+
+/// Whether the expression's VALUE is a Go/Sprig boolean, so its `%v`
+/// rendering is exactly `true`/`false`. `and`/`or` return one of their
+/// arguments rather than a coerced bool, hence the recursive requirement.
+fn boolean_valued(expr: &TemplateExpr) -> bool {
+    use helm_schema_ast::Literal;
+    match expr.deparen() {
+        TemplateExpr::Literal(Literal::Bool(_)) => true,
+        TemplateExpr::Call { function, args } => match function.as_str() {
+            "eq" | "ne" | "lt" | "le" | "gt" | "ge" | "not" | "hasKey" | "has" | "contains"
+            | "empty" | "kindIs" | "typeIs" | "regexMatch" | "mustRegexMatch" | "hasPrefix"
+            | "hasSuffix" => true,
+            "and" | "or" => !args.is_empty() && args.iter().all(boolean_valued),
+            _ => false,
+        },
+        _ => false,
+    }
 }
 
 fn dispatch_arms(

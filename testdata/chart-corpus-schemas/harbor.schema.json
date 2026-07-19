@@ -13514,171 +13514,10 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "database": {
-                    "properties": {
-                      "internal": {
-                        "properties": {
-                          "initContainer": {
-                            "properties": {
-                              "permissions": {
-                                "properties": {
-                                  "resources": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "resources"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "permissions"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "initContainer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "internal"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "database"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema226"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "database": {
-                    "properties": {
-                      "internal": {
-                        "properties": {
-                          "priorityClassName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "priorityClassName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "internal"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "database"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema226"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "database": {
-                    "properties": {
-                      "internal": {
-                        "properties": {
-                          "resources": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "resources"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "internal"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "database"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema226"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "database": {
-                    "properties": {
-                      "internal": {
-                        "properties": {
-                          "serviceAccountName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "serviceAccountName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "internal"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "database"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema226"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema226"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "database": {
-            "type": "object"
-          }
+      "additionalProperties": {},
+      "properties": {
+        "database": {
+          "type": "object"
         }
       }
     },
@@ -31558,6 +31397,24 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "redis": {
+          "additionalProperties": {},
+          "properties": {
+            "external": {
+              "anyOf": [
+                {
+                  "type": "object"
+                }
+              ],
+              "description": "harborDatabaseIndex: \"6\"\ncacheLayerDatabaseIndex: \"7\""
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "$ref": "#/$defs/schema235"
       },
@@ -31645,6 +31502,14 @@
               "description": "if external Redis is used, set \"type\" to \"external\"\nand fill the connection information in \"external\" section"
             }
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "redis": {
+          "type": "object"
         }
       }
     },
@@ -42575,7 +42440,8 @@
             "$ref": "#/$defs/helm-truthy"
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "registry": {
       "additionalProperties": {},

@@ -2324,10 +2324,15 @@ fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAc
         .map(|(path, acc)| (path.clone(), acc.member_access_guard_sets.clone()))
         .collect();
     for (path, grouped_guard_sets) in pending {
-        let access_count: usize = grouped_guard_sets.values().map(BTreeSet::len).sum();
-        if access_count > MEMBER_ACCESS_GUARD_FANOUT {
-            continue;
-        }
+        // The cap bounds the ANY-OF arm built from guarded-only accesses.
+        // An unconditional access folds to no guards at all, so it binds
+        // regardless of how many guarded siblings exist — decoding MORE
+        // guards must never lose an unconditional navigation's typing
+        // (oauth2-proxy reads `.Values.sessionStorage.type` on every
+        // render; a scalar `sessionStorage` aborts helm).
+        let capped = |guard_sets: &BTreeSet<Vec<ConditionalGuard>>| {
+            !guard_sets.contains(&Vec::new()) && guard_sets.len() > MEMBER_ACCESS_GUARD_FANOUT
+        };
         let fold_guards = |guard_sets: BTreeSet<Vec<ConditionalGuard>>| {
             let mut outer_guards = Vec::new();
             if guard_sets.contains(&Vec::new()) {
@@ -2357,6 +2362,9 @@ fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAc
         };
 
         for (handled_kinds, guard_sets) in &grouped_guard_sets {
+            if capped(guard_sets) {
+                continue;
+            }
             let outer_guards = fold_guards(guard_sets.clone());
             let implication = ContractFailImplication {
                 outer_guards,
@@ -2375,6 +2383,9 @@ fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAc
             .into_values()
             .flatten()
             .collect::<BTreeSet<_>>();
+        if capped(&all_guard_sets) {
+            continue;
+        }
         let outer_guards = fold_guards(all_guard_sets);
         let mut segments = helm_schema_core::split_value_path(&path);
         let Some(member) = segments.pop() else {

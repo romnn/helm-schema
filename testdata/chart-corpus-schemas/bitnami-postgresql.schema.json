@@ -20340,6 +20340,15 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "auth": {
+          "description": "Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-user-on-first-run",
+          "type": "object"
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -34081,6 +34090,39 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "global": {
+          "additionalProperties": {},
+          "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
+          "properties": {
+            "postgresql": {
+              "additionalProperties": {},
+              "properties": {
+                "service": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "global": {
+          "additionalProperties": {},
+          "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
+          "properties": {
+            "postgresql": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -34785,6 +34827,15 @@
             ],
             "type": "object"
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "global": {
+          "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
+          "type": "object"
         }
       }
     },
@@ -42215,6 +42266,24 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "primary": {
+          "additionalProperties": {},
+          "properties": {
+            "initdb": {
+              "anyOf": [
+                {
+                  "type": "object"
+                }
+              ],
+              "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments"
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -45439,6 +45508,503 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "primary": {
+          "additionalProperties": {},
+          "properties": {
+            "persistence": {
+              "anyOf": [
+                {
+                  "type": "object"
+                }
+              ],
+              "description": "PostgreSQL Primary persistence configuration"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema430"
+                  },
+                  {
+                    "properties": {
+                      "primary": {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "primary"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "existingClaim": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "existingClaim"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "volumePermissions": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "volumePermissions"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "volumePermissions": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "volumePermissions"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "volumePermissions": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "volumePermissions"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "volumePermissions": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "volumePermissions"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema430"
+                              },
+                              {
+                                "properties": {
+                                  "primary": {
+                                    "properties": {
+                                      "persistence": {
+                                        "properties": {
+                                          "enabled": {
+                                            "$ref": "#/$defs/helm-truthy"
+                                          }
+                                        },
+                                        "required": [
+                                          "enabled"
+                                        ],
+                                        "type": "object"
+                                      }
+                                    },
+                                    "required": [
+                                      "persistence"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "primary"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema576"
+                              },
+                              {
+                                "properties": {
+                                  "shmVolume": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "shmVolume"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "primary": {
+                        "properties": {
+                          "initContainers": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "initContainers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "primary"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema430"
+                      },
+                      {
+                        "properties": {
+                          "primary": {
+                            "properties": {
+                              "persistence": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "persistence"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "primary"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema576"
+                      },
+                      {
+                        "properties": {
+                          "shmVolume": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "shmVolume"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema430"
+                    },
+                    {
+                      "properties": {
+                        "primary": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "primary"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema430"
+                        },
+                        {
+                          "properties": {
+                            "primary": {
+                              "properties": {
+                                "persistence": {
+                                  "properties": {
+                                    "enabled": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "persistence"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "primary"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "primary": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "primary"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "primary": {
+            "additionalProperties": {},
+            "properties": {
+              "persistence": {
+                "description": "PostgreSQL Primary persistence configuration",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -48016,6 +48582,24 @@
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "primary": {
+          "additionalProperties": {},
+          "properties": {
+            "service": {
+              "anyOf": [
+                {
+                  "type": "object"
+                }
+              ],
+              "description": "PostgreSQL Primary service configuration"
             }
           }
         }
@@ -74852,7 +75436,8 @@
             }
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "nameOverride": {
       "anyOf": [
@@ -78806,7 +79391,8 @@
             }
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "psp": {
       "additionalProperties": {},
@@ -78962,7 +79548,7 @@
       "type": "object"
     },
     "readReplicas": {
-      "additionalProperties": {}
+      "$ref": "#/$defs/schema802"
     },
     "replication": {
       "additionalProperties": {},
@@ -79553,7 +80139,8 @@
     },
     "volumePermissions": {
       "additionalProperties": {},
-      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"
+      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+      "type": "object"
     }
   },
   "type": "object"

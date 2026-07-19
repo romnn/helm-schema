@@ -3167,6 +3167,37 @@
     },
     {
       "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "disableBaseClientPort": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "disableBaseClientPort"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "containerPorts": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -18390,6 +18421,14 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "type": "object"
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -23973,7 +24012,8 @@
         "selector": {},
         "size": {},
         "storageClass": {}
-      }
+      },
+      "type": "object"
     },
     "podAffinityPreset": {
       "anyOf": [
