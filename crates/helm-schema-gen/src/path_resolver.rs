@@ -658,6 +658,9 @@ fn requirements_allow_runtime_kind(
         // every other kind passes vacuously.
         FailValueRequirement::FieldHelmFalsy { .. } => true,
         FailValueRequirement::FieldEquals { .. } => schema_type == "object",
+        // Presence of a (truthy or non-null) field needs an object host.
+        FailValueRequirement::FieldPresentNotNull { .. }
+        | FailValueRequirement::FieldHelmTruthy { .. } => schema_type == "object",
         FailValueRequirement::AnyOf(alternatives) => alternatives
             .iter()
             .any(|alternative| requirements_allow_runtime_kind(alternative, schema_type)),
@@ -825,6 +828,34 @@ fn fail_value_requirement_schema(
                 }
                 parts.push(node);
             }
+            // Presence rides along both field forms: an absent field is
+            // null-rendered (not-null fails) and falsy (truthy fails), so
+            // every wrapping level requires its segment.
+            FailValueRequirement::FieldPresentNotNull { path } => {
+                let mut node = serde_json::json!({ "not": { "type": "null" } });
+                for segment in path.iter().rev() {
+                    node = serde_json::json!({
+                        "type": "object",
+                        "required": [segment],
+                        "properties": { segment: node },
+                    });
+                }
+                parts.push(node);
+            }
+            FailValueRequirement::FieldHelmTruthy { path } => {
+                let mut node = serde_json::json!({ "$ref": format!(
+                    "#/$defs/{}",
+                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
+                ) });
+                for segment in path.iter().rev() {
+                    node = serde_json::json!({
+                        "type": "object",
+                        "required": [segment],
+                        "properties": { segment: node },
+                    });
+                }
+                parts.push(node);
+            }
             FailValueRequirement::AnyOf(alternatives) => {
                 let arms: Vec<Value> = alternatives
                     .iter()
@@ -843,6 +874,8 @@ fn fail_value_requirement_schema(
                         FailValueRequirement::HasMember(_)
                             | FailValueRequirement::FieldEquals { .. }
                             | FailValueRequirement::FieldHelmFalsy { .. }
+                            | FailValueRequirement::FieldPresentNotNull { .. }
+                            | FailValueRequirement::FieldHelmTruthy { .. }
                     )
                 });
                 if field_based {

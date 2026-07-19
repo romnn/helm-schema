@@ -102,6 +102,151 @@ pub(crate) fn synthesized_required_source_implications(
     implications
 }
 
+/// The ranged-member half of the required-source projection: a wildcard
+/// member LEAF (`extraPorts.*.containerPort`, `…httpHeaders.*.name`)
+/// rendered into a provider-required field emits an explicit null for
+/// every member missing the leaf, which the provider rejects. Guards
+/// split by scope: collection-level guards ride the arm as outer guards,
+/// while a member-scoped truthiness guard becomes the ESCAPE alternative
+/// of a per-member disjunction (promtail's `service` arm renders its own
+/// port, so only service-less members need `containerPort`). Any other
+/// member-scoped guard shape abstains — firing wider than the real branch
+/// would reject members the chart renders.
+pub(crate) fn synthesized_ranged_member_required_implications(
+    contract_schema_signals: &ContractSchemaSignals,
+    provider: &dyn ResourceSchemaOracle,
+) -> BTreeMap<String, Vec<ContractFailImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+    let mut required_by_use: HashMap<ProviderSchemaUse, bool> = HashMap::new();
+
+    for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        let segments = crate::split_value_path(value_path);
+        let Some(star) = segments.iter().position(|segment| segment == "*") else {
+            continue;
+        };
+        let collection_segments = &segments[..star];
+        let field_segments = &segments[star + 1..];
+        if collection_segments.is_empty()
+            || field_segments.is_empty()
+            || field_segments.iter().any(|segment| segment == "*")
+        {
+            continue;
+        }
+        let collection_path =
+            helm_schema_core::join_value_path(collection_segments.iter().cloned());
+        let member_scope = format!("{collection_path}.*");
+
+        let base_uses = std::iter::once((
+            &[] as &[helm_schema_core::ConditionalGuard],
+            evidence.facts,
+            &evidence.provider_schema_uses,
+        ));
+        let overlay_uses = evidence.conditional_overlays.iter().map(|overlay| {
+            (
+                overlay.guards.as_slice(),
+                overlay.evidence.facts,
+                &overlay.evidence.provider_schema_uses,
+            )
+        });
+        for (guards, facts, uses) in base_uses.chain(overlay_uses) {
+            // Tolerant render forms emit something else (or nothing) on a
+            // missing source; only the direct scalar hole forces the null.
+            // Self-`default` fallbacks surface as nullability, exactly as
+            // in the direct lane above.
+            if facts.used_as_serialized
+                || facts.used_as_yaml_serialized
+                || facts.used_as_fragment
+                || facts.used_as_pathless_fragment
+                || facts.is_partial_scalar_value_path
+                || facts.is_nullable
+                || facts.has_self_guarded_render_use
+            {
+                continue;
+            }
+            let renders_into_required_field = uses.iter().any(|use_| {
+                use_.kind == ValueKind::Scalar
+                    && !use_.is_self_range_collection
+                    && !use_.range_key
+                    && use_.split_segment.is_none()
+                    && *required_by_use.entry(use_.clone()).or_insert_with(|| {
+                        provider
+                            .schema_fragment_for_use(use_)
+                            .is_some_and(|fragment| fragment.required_in_parent())
+                    })
+            });
+            if !renders_into_required_field {
+                continue;
+            }
+            let mut outer_guards = Vec::new();
+            let mut escapes: Vec<Vec<FailValueRequirement>> = Vec::new();
+            let mut undecodable = false;
+            for guard in guards {
+                let paths = guard.value_paths();
+                if paths.iter().all(|path| !path.contains('*')) {
+                    outer_guards.push(guard.clone());
+                    continue;
+                }
+                let member_field = |path: &str| {
+                    path.strip_prefix(&format!("{member_scope}."))
+                        .filter(|field| !field.contains('*'))
+                        .map(helm_schema_core::split_value_path)
+                };
+                // Only NEGATIVE member guards qualify: an else-arm renders
+                // the leaf alone, so its guard's positive side is the
+                // exact escape. A POSITIVE member-field guard selects an
+                // arm reading from the guarded subtree, where the leaf
+                // routinely rides a `default` fallback chain whose primary
+                // source this projection cannot see — requiring the leaf
+                // there would reject members the chart renders (promtail's
+                // `service.port` members need no `containerPort`).
+                match guard {
+                    helm_schema_core::ConditionalGuard::Not(inner) => match inner.as_ref() {
+                        helm_schema_core::ConditionalGuard::Truthy { path } => {
+                            match member_field(path) {
+                                Some(field) => {
+                                    escapes.push(vec![FailValueRequirement::FieldHelmTruthy {
+                                        path: field,
+                                    }]);
+                                }
+                                None => undecodable = true,
+                            }
+                        }
+                        _ => undecodable = true,
+                    },
+                    _ => undecodable = true,
+                }
+            }
+            if undecodable {
+                continue;
+            }
+            let field_path: Vec<String> = field_segments.to_vec();
+            let presence = FailValueRequirement::FieldPresentNotNull { path: field_path };
+            let requirements = if escapes.is_empty() {
+                vec![presence]
+            } else {
+                let mut alternatives = escapes;
+                alternatives.push(vec![presence]);
+                vec![FailValueRequirement::AnyOf(alternatives)]
+            };
+            push_implication(
+                &mut implications,
+                collection_path.clone(),
+                ContractFailImplication {
+                    outer_guards,
+                    // An integer iterable has no members to constrain;
+                    // leaving that lane open is the safe direction.
+                    target: ContractRequirementTarget::Members {
+                        allow_integer: true,
+                    },
+                    requirements,
+                },
+            );
+        }
+    }
+
+    implications
+}
+
 /// Fail implications for provider slots observed through a SPLIT SEGMENT
 /// of the raw string (tempo's `regexSplit ":" . -1 | last` port suffix):
 /// wherever the source is truthy, its named segment must satisfy the

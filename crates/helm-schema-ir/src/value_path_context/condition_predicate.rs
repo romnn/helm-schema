@@ -1293,11 +1293,23 @@ impl ValuePathContext<'_> {
         }
     }
 
-    /// Sound subsets of a comparison's NEGATION: only the int-cast lane
-    /// region-flips exactly (¬(x > N) ⇔ x < N+1 over the coerced value);
-    /// other comparison families abstain under negation.
+    /// Sound subsets of a comparison's NEGATION: the int-cast lanes
+    /// region-flip exactly (¬(x > N) ⇔ x < N+1 over the coerced value,
+    /// ¬(x == N) ⇔ x ≠ N, ¬(x ≠ N) ⇔ x == N); other comparison families
+    /// abstain under negation.
     fn negated_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
-        self.int_cast_comparison_region_subset(expr, true)
+        let subset = self.int_cast_comparison_region_subset(expr, true);
+        if !subset.is_empty() {
+            return subset;
+        }
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        match function.as_str() {
+            "eq" => self.int_cast_not_equal_subset(args),
+            "ne" => self.int_cast_equality_region(args),
+            _ => Vec::new(),
+        }
     }
 
     /// Sound positive strengthenings of otherwise-undecodable comparison
@@ -1316,6 +1328,10 @@ impl ValuePathContext<'_> {
             return subset;
         }
         let subset = self.int_cast_inequality_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
+        let subset = self.int_cast_equality_sound_subset(expr);
         if !subset.is_empty() {
             return subset;
         }
@@ -1490,7 +1506,14 @@ impl ValuePathContext<'_> {
         if function != "ne" {
             return Vec::new();
         }
-        let [left, right] = args.as_slice() else {
+        self.int_cast_not_equal_subset(args)
+    }
+
+    /// The "coerced value differs from N" claim shared by `ne (int X) N`
+    /// and the negation of `eq (int X) N`: a raw JSON integer other than
+    /// the literal certainly satisfies it.
+    fn int_cast_not_equal_subset(&self, args: &[TemplateExpr]) -> Vec<Guard> {
+        let [left, right] = args else {
             return Vec::new();
         };
         let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
@@ -1515,6 +1538,59 @@ impl ValuePathContext<'_> {
         // BEFORE the comparison: when the fallback equals the literal, a
         // raw 0 no longer satisfies `ne`, so exclude it from the claim.
         if literal != 0 && source.default_int == Some(literal) {
+            guards.push(Guard::NotEq {
+                path: source.path,
+                value: helm_schema_core::GuardValue::Int(0),
+            });
+        }
+        guards
+    }
+
+    /// `eq (int X) N` certainly holds for a RAW integer equal to N, so a
+    /// fail arm keyed on the [`Guard::IntGt`]`{N-1}` ∧ [`Guard::IntLt`]
+    /// `{N+1}` region pair keeps firing there (kyverno's `eq (int .) 0`
+    /// replicas terminal through `{{ template … }}`). Coercible
+    /// non-integers — booleans, fractional floats, parseable strings —
+    /// also satisfy the equality; they stay a sound abstention.
+    fn int_cast_equality_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        if function != "eq" {
+            return Vec::new();
+        }
+        self.int_cast_equality_region(args)
+    }
+
+    fn int_cast_equality_region(&self, args: &[TemplateExpr]) -> Vec<Guard> {
+        let [left, right] = args else {
+            return Vec::new();
+        };
+        let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
+            (cast, TemplateExpr::Literal(Literal::Int(literal))) => (cast, *literal),
+            (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
+            _ => return Vec::new(),
+        };
+        let (Some(below), Some(above)) = (literal.checked_sub(1), literal.checked_add(1)) else {
+            return Vec::new();
+        };
+        let Some(source) = self.int_cast_operand(cast_expr) else {
+            return Vec::new();
+        };
+        let mut guards = vec![
+            Guard::IntGt {
+                path: source.path.clone(),
+                bound: below,
+            },
+            Guard::IntLt {
+                path: source.path.clone(),
+                bound: above,
+            },
+        ];
+        // A literal `default` substitutes for a raw 0 (numerically empty)
+        // BEFORE the comparison: when the fallback misses the literal, a
+        // raw 0 no longer satisfies the equality, so exclude it.
+        if literal == 0 && source.default_int.is_some_and(|fallback| fallback != 0) {
             guards.push(Guard::NotEq {
                 path: source.path,
                 value: helm_schema_core::GuardValue::Int(0),
@@ -2308,6 +2384,15 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
             .then_some(Predicate::True)
             .or_else(|| value_has_key(fallback, key)),
         AbstractValue::Choice(choices) => {
+            // Alternatives must AGREE — including definitely-empty
+            // `default list`/`default dict` fallbacks. Skipping the empty
+            // alternatives here is tempting for range-item bindings (nats'
+            // jsonpatch members ride `.patch | default list`), but the
+            // helper walker records member probes at TRUNCATED absolute
+            // paths with no range identity, and a decode here feeds those
+            // captures into document-level terminal clauses that reject
+            // valid documents. The abstention is load-bearing until fail
+            // captures carry member identities through helper ranges.
             let mut resolved = choices
                 .iter()
                 .map(|choice| value_has_key(choice, key))

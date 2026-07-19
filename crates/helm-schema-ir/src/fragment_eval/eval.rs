@@ -1623,6 +1623,24 @@ impl<'a> Interpreter<'a> {
                     out.loop_control.extend(child.take_loop_control());
                     value.extend(child.assemble());
                 }
+                // A bare output hanging at or above a block-scalar entry's
+                // indent (`key: |` followed by a column-0 `{{- include … }}`)
+                // renders into the still-open block whenever its text is
+                // deeper than the entry, so it contributes block text — not
+                // structure escaping to the parent container.
+                let siblings = if entry.block.is_some() {
+                    let (adopted, rest): (Vec<_>, Vec<_>) = siblings
+                        .into_iter()
+                        .partition(|child| matches!(child.node, Node::Output(_)));
+                    for adopted_view in adopted {
+                        if let Node::Output(action) = adopted_view.node {
+                            value.extend(self.eval_block_adopted_output(action.span));
+                        }
+                    }
+                    rest
+                } else {
+                    siblings
+                };
                 out.merge_entry(key, value);
                 if !siblings.is_empty() {
                     out.extend(self.eval_node_list(&siblings));
@@ -1646,6 +1664,21 @@ impl<'a> Interpreter<'a> {
                     out.loop_control.extend(child.take_loop_control());
                     value.extend(child.assemble());
                 }
+                // `- |` items adopt shallow bare outputs as block text, the
+                // same as block-scalar mapping entries above.
+                let siblings = if item.block.is_some() {
+                    let (adopted, rest): (Vec<_>, Vec<_>) = siblings
+                        .into_iter()
+                        .partition(|child| matches!(child.node, Node::Output(_)));
+                    for adopted_view in adopted {
+                        if let Node::Output(action) = adopted_view.node {
+                            value.extend(self.eval_block_adopted_output(action.span));
+                        }
+                    }
+                    rest
+                } else {
+                    siblings
+                };
                 out.items.push(value);
                 if !siblings.is_empty() {
                     out.extend(self.eval_node_list(&siblings));

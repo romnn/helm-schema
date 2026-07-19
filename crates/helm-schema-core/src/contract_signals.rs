@@ -332,6 +332,17 @@ pub enum FailValueRequirement {
         path: Vec<String>,
         value: GuardValue,
     },
+    /// The value must be an object whose field at `path` is present and
+    /// non-null: a ranged member's leaf renders into a provider-REQUIRED
+    /// resource field, where a missing or null source emits an explicit
+    /// null the provider rejects (promtail's extra Service `port`).
+    FieldPresentNotNull { path: Vec<String> },
+    /// The value must be an object whose field at `path` is present and
+    /// Helm-truthy — the positive mirror of [`Self::FieldHelmFalsy`], used
+    /// as the ESCAPE alternative when a member-scoped branch guard selects
+    /// another render for truthy fields (promtail's `service` arm renders
+    /// its own port instead of `containerPort`).
+    FieldHelmTruthy { path: Vec<String> },
     /// At least one alternative (each a conjunction of requirements) must
     /// hold. A `fail` whose test conjoins several member conditions negates
     /// to the DISJUNCTION of their negations — traefik's local plugins

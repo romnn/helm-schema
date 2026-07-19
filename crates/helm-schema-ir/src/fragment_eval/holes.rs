@@ -918,6 +918,24 @@ impl Interpreter<'_> {
         scalar_arms_to_fragment(arms, true)
     }
 
+    /// A shallow bare output hanging under a block-scalar entry or item
+    /// (`key: |` followed by a column-0 `{{- include … }}`): the `|`/`>`
+    /// header says the rendered text continues the block whenever it is
+    /// deeper than the entry, so the hole gets the same treatment as holes
+    /// inside the block body — fragment renders keep their semantic rows
+    /// without minting structure, everything else contributes partial
+    /// scalar text.
+    pub(super) fn eval_block_adopted_output(&mut self, span: Span) -> Guarded<AbstractFragment> {
+        if parse_expr_text(self.text(span))
+            .iter()
+            .any(TemplateExpr::renders_yaml_fragment)
+        {
+            self.eval_suppressed_fragment_hole(span);
+            return Guarded::empty();
+        }
+        scalar_arms_to_fragment(self.eval_hole_parts(span), true)
+    }
+
     /// A fragment-rendering hole inside a render-suppressed blob: rendered
     /// helper rows become pathless reads that keep their kinds, and direct
     /// value paths read with the hole's fragment kind.

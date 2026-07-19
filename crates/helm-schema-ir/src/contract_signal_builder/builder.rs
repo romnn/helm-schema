@@ -2012,6 +2012,12 @@ fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
     match predicate {
         Predicate::Not(inner) => !matches!(inner.as_ref(), Predicate::Guard(Guard::Range { .. })),
         Predicate::Guard(Guard::TypeIs { .. } | Guard::Absent { .. } | Guard::Eq { .. }) => true,
+        // A not-equals over a ranged MEMBER's field negates to the exact
+        // equality (nats' jsonpatch `ne $patch.op "add"` chain, whose
+        // conjunction of inequalities negates to the op enum). Absolute
+        // paths stay out: a scalar-target `ne` rides the terminal-clause
+        // lane, like `Eq` below.
+        Predicate::Guard(Guard::NotEq { path, .. }) => path.contains(".*"),
         // A truthiness test over a ranged MEMBER's field is an exact
         // member decode: the fallback truthy stand-ins for undecodable
         // conditions ride absolute paths, never wildcard member scopes.
@@ -2057,6 +2063,20 @@ fn requirements_from_negation(
             (!field.contains('*')).then(|| {
                 vec![FailValueRequirement::FieldHelmFalsy {
                     path: helm_schema_core::split_value_path(field),
+                }]
+            })
+        }
+        // ¬(field ≠ literal) is the exact equality, with presence riding
+        // along exactly like the positive `eq` decode (Go's `ne` reads a
+        // missing field as nil, which differs from every literal, so the
+        // failing inequality HELD there — nats' jsonpatch `op` chain
+        // negates to the enum of valid operations this way).
+        Predicate::Guard(Guard::NotEq { path, value }) if scope.contains(".*") => {
+            let field = path.strip_prefix(&format!("{scope}."))?;
+            (!field.contains('*')).then(|| {
+                vec![FailValueRequirement::FieldEquals {
+                    path: helm_schema_core::split_value_path(field),
+                    value: value.clone(),
                 }]
             })
         }

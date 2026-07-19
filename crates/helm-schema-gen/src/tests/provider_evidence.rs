@@ -1575,6 +1575,81 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
     }
 }
 
+/// redis-ha's ConfigMap fills each `data` value with `redis.conf: |`
+/// followed by a COLUMN-ZERO `{{- include "config-redis.conf" . }}`: the
+/// include's rendered lines are deeper than the entry, so they continue
+/// the still-open block scalar — pure text. Evaluating the include as
+/// structure escaping to the parent anchors the helper's ranged `config`
+/// members at the `data` field itself, whose object provider schema
+/// scalar-restricts to `type: null` and rejects every member Helm renders
+/// (oauth2-proxy and argo-cd with redis-ha enabled). The adopted lane must
+/// keep the members open while preserving the helper's strict `tpl`
+/// string-program contract on `customConfig`.
+#[test]
+fn block_scalar_adopted_includes_render_as_text_not_structure() {
+    let helpers = indoc! {r#"
+        {{- define "repro.conf" }}
+        {{- if .Values.redis.customConfig }}
+        {{ tpl .Values.redis.customConfig . | indent 4 }}
+        {{- else }}
+            dir "/data"
+            port {{ .Values.redis.port }}
+            {{- range $key, $value := .Values.redis.config }}
+            {{ $key }} {{ $value }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          redis.conf: |
+        {{- include "repro.conf" . }}
+    "#};
+    let values_yaml = indoc! {r#"
+        redis:
+          port: 6379
+          config: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "redis": { "config": { "maxmemory": "100mb" } } }),
+            true,
+            "string members render as block text",
+        ),
+        (
+            serde_json::json!({ "redis": { "config": { "save": "" } } }),
+            true,
+            "empty-string members render",
+        ),
+        (
+            serde_json::json!({ "redis": { "config": { "repl-diskless-sync": true } } }),
+            true,
+            "raw scalars stringify in the loop body",
+        ),
+        (
+            serde_json::json!({ "redis": { "customConfig": "maxmemory 100mb" } }),
+            true,
+            "string custom config renders through tpl",
+        ),
+        (
+            serde_json::json!({ "redis": { "customConfig": { "bad": true } } }),
+            false,
+            "tpl requires a string program even under the block",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "block-adopted include ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// traefik's deployment routes its pod template through
 /// `include "traefik.podTemplate" . | fromYaml | toYaml | nindent`, and a
 /// NESTED helper renders ranged `resourceAttributes` members as container
@@ -1644,6 +1719,137 @@ fn roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "roundtrip flag rows ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A ranged member LEAF rendered into a provider-REQUIRED field emits an
+/// explicit null for every member missing the leaf, which strict provider
+/// validation rejects (kube-state-metrics' probe `httpHeaders: [{}]`
+/// renders null `name`/`value`; promtail's `extraPorts` render a null
+/// Service `port`). Every member must carry the leaf present and
+/// non-null; an empty or absent collection runs zero iterations and stays
+/// open, and a member-scoped ELSE-arm guard becomes the escape
+/// alternative of a per-member disjunction.
+#[test]
+fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: test
+                  image: busybox
+                  livenessProbe:
+                    httpGet:
+                      path: /healthz
+                      port: http
+                      {{- if .Values.probe.httpHeaders }}
+                      httpHeaders:
+                      {{- range $_, $header := .Values.probe.httpHeaders }}
+                      - name: {{ $header.name }}
+                        value: {{ $header.value }}
+                      {{- end }}
+                      {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        probe:
+          httpHeaders: []
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "probe": { "httpHeaders": [] } }),
+            true,
+            "empty collection runs zero iterations",
+        ),
+        (
+            serde_json::json!({ "probe": { "httpHeaders":
+                [{ "name": "X-Audit", "value": "audit" }] } }),
+            true,
+            "populated headers render",
+        ),
+        (
+            serde_json::json!({ "probe": { "httpHeaders": [{}] } }),
+            false,
+            "an empty member renders null name and value",
+        ),
+        (
+            serde_json::json!({ "probe": { "httpHeaders": [{ "name": "X-Audit" }] } }),
+            false,
+            "a missing value renders null",
+        ),
+        (
+            serde_json::json!({ "probe": { "httpHeaders":
+                [{ "name": "X-Audit", "value": null }] } }),
+            false,
+            "an explicit null value renders null",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "ranged required leaf ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The member-scoped else-arm variant: promtail's extra Services render
+/// `port: {{ $values.containerPort }}` only for members WITHOUT a truthy
+/// `service`, so the presence requirement carries the service escape.
+#[test]
+fn ranged_member_required_leaves_keep_the_else_arm_escape() {
+    let src = indoc! {r#"
+        {{- range $key, $values := .Values.extraPorts }}
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: extra-{{ $key }}
+        spec:
+          ports:
+            - name: {{ $key }}
+              protocol: TCP
+              {{- if $values.service }}
+              port: {{ $values.service.port | default $values.containerPort }}
+              {{- else }}
+              port: {{ $values.containerPort }}
+              {{- end }}
+          selector:
+            app: test
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        extraPorts: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (member, want, label) in [
+        (
+            serde_json::json!({ "containerPort": 1234 }),
+            true,
+            "containerPort renders the port",
+        ),
+        (
+            serde_json::json!({ "service": { "port": 80 } }),
+            true,
+            "a truthy service escapes the else arm",
+        ),
+        (serde_json::json!({}), false, "an empty member renders null"),
+    ] {
+        let instance = serde_json::json!({ "extraPorts": { "audit": member } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "else-arm escape ({label}): instance={instance}; schema={schema}"
         );
     }
 }

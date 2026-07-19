@@ -105,22 +105,31 @@ fn build_single_condition_fragment(
             ),
         ),
         // The guard is a sound SUBSET of its Sprig coercion by definition:
-        // the explicit test admits raw integers, plus the clean decimal
-        // string spellings the coercion provably parses into the claimed
-        // region (jenkins' `"5"` replicas abort like `5`). An absent key
-        // satisfies it exactly when the declared default lands in the
-        // region (the merged render is then statically decided).
+        // the explicit test admits raw integers, plus the string spellings
+        // the coercion provably parses into the claimed region (jenkins'
+        // `"5"` replicas abort like `5`; a mixed-sign region also collects
+        // every unparseable spelling through the complement lane). An
+        // absent key satisfies it exactly when the declared default lands
+        // in the region (the merged render is then statically decided).
         ConditionalGuard::IntGt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            int_bound_leaf_schema("exclusiveMinimum", *bound, decimal_strings_above(*bound)),
+            int_bound_leaf_schema(
+                "exclusiveMinimum",
+                *bound,
+                int_region_string_preimage(true, *bound),
+            ),
             decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
                 .is_some_and(|value| value > *bound),
         ),
         ConditionalGuard::IntLt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            int_bound_leaf_schema("exclusiveMaximum", *bound, decimal_strings_below(*bound)),
+            int_bound_leaf_schema(
+                "exclusiveMaximum",
+                *bound,
+                int_region_string_preimage(false, *bound),
+            ),
             decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
                 .is_some_and(|value| value < *bound),
         ),
@@ -292,26 +301,143 @@ fn guard_value_enum_schema(value: &GuardValue) -> Option<SchemaNode> {
     guard_value_to_json(value).map(|value| SchemaNode::enum_values(vec![value]))
 }
 
-/// The typed-integer bound leaf, widened with the decimal string preimage
-/// when one is representable.
-fn int_bound_leaf_schema(keyword: &str, bound: i64, pattern: Option<String>) -> SchemaNode {
+/// String spellings provably landing in (or out of) an int-cast region.
+enum IntStringPreimage {
+    /// Spellings certainly COERCING INTO the region (single-sign regions:
+    /// the value must parse, so only clean bounded spellings qualify).
+    Within(String),
+    /// Spellings certainly coercing into the region are everything OUTSIDE
+    /// this overapproximated escape language (mixed-sign regions contain
+    /// 0, where every unparseable or overflowing spelling lands).
+    Excluding(String),
+}
+
+/// The typed-integer bound leaf, widened with the string preimage when one
+/// is representable.
+fn int_bound_leaf_schema(
+    keyword: &str,
+    bound: i64,
+    preimage: Option<IntStringPreimage>,
+) -> SchemaNode {
     let integer = serde_json::json!({ "type": "integer", (keyword): bound });
-    match pattern {
-        Some(pattern) => SchemaNode::foreign(serde_json::json!({
+    match preimage {
+        Some(IntStringPreimage::Within(pattern)) => SchemaNode::foreign(serde_json::json!({
             "anyOf": [integer, { "type": "string", "pattern": pattern }]
+        })),
+        Some(IntStringPreimage::Excluding(pattern)) => SchemaNode::foreign(serde_json::json!({
+            "anyOf": [integer, { "type": "string", "not": { "pattern": pattern } }]
         })),
         None => SchemaNode::foreign(integer),
     }
 }
 
+/// The string preimage of the `IntGt`/`IntLt` regions under Sprig's
+/// `int`/`int64` coercion (`strconv.ParseInt` base 0 after trimming a
+/// zero decimal tail; every parse failure and overflow coerces to 0).
+///
+/// Single-sign regions (0 outside the region) claim only spellings that
+/// certainly PARSE into the region — clean decimal and radix forms with
+/// enough significant digits. Mixed-sign regions (a positive `IntLt`
+/// bound, a negative `IntGt` bound) contain 0, so every spelling except
+/// a successful parse beyond the bound lands inside: they claim the
+/// COMPLEMENT of an overapproximated escape language instead.
+fn int_region_string_preimage(greater: bool, bound: i64) -> Option<IntStringPreimage> {
+    if greater {
+        if let Some(pattern) = decimal_strings_above(bound) {
+            return Some(IntStringPreimage::Within(pattern));
+        }
+        // bound < 0: only a successful parse of a magnitude STRICTLY
+        // beyond |bound| escapes the region.
+        let escape = parse_magnitude_reaching(bound.unsigned_abs());
+        Some(IntStringPreimage::Excluding(format!(
+            "^-({escape})(\\.0*)?$"
+        )))
+    } else {
+        if let Some(pattern) = decimal_strings_below(bound) {
+            return Some(IntStringPreimage::Within(pattern));
+        }
+        // bound > 0: only a successful unsigned parse reaching the bound
+        // escapes the region.
+        let escape = parse_magnitude_reaching(bound.unsigned_abs());
+        Some(IntStringPreimage::Excluding(format!(
+            "^\\+?({escape})(\\.0*)?$"
+        )))
+    }
+}
+
+/// Overapproximation of every spelling whose successful parse reaches a
+/// magnitude of at least `bound`: per radix family, any spelling long
+/// enough that its maximal value `radix^chars − 1` reaches the bound.
+/// Underscores and leading zeros only lower the parsed value (a leading
+/// zero flips decimals to octal), so counting raw characters is safe for
+/// an OVERapproximation — the complement lane claims only spellings that
+/// certainly stay below.
+fn parse_magnitude_reaching(bound: u64) -> String {
+    // (prefix, first-char class, tail-char class, radix)
+    let families: [(&str, &str, &str, u128); 4] = [
+        ("", "[0-9]", "[0-9_]", 10),
+        ("0[xX]", "[0-9a-fA-F_]", "[0-9a-fA-F_]", 16),
+        ("0[bB]", "[01_]", "[01_]", 2),
+        ("0[oO]", "[0-7_]", "[0-7_]", 8),
+    ];
+    let mut alternates = Vec::new();
+    for (prefix, first, tail, radix) in families {
+        // Smallest char count whose maximal value reaches the bound.
+        let mut chars = 1usize;
+        let mut max_value: u128 = radix - 1;
+        while max_value < u128::from(bound) {
+            max_value = max_value * radix + (radix - 1);
+            chars += 1;
+        }
+        alternates.push(match chars - 1 {
+            0 => format!("{prefix}{first}{tail}*"),
+            more => format!("{prefix}{first}{tail}{{{more},}}"),
+        });
+    }
+    alternates.join("|")
+}
+
+/// Radix spellings (hex, binary, explicit and legacy octal) certainly
+/// parsing to a magnitude strictly above `bound`: a nonzero leading digit
+/// with enough digits that the minimal value `radix^(digits−1)` already
+/// exceeds the bound, capped where every spelling still parses without
+/// overflow. Underscored and zero-padded spellings abstain.
+fn radix_magnitudes_above(bound: u64) -> Vec<String> {
+    // (prefix, lead class, digit class, radix, max significant digits)
+    let families: [(&str, &str, &str, u128, usize); 3] = [
+        ("0[xX]", "[1-9a-fA-F]", "[0-9a-fA-F]", 16, 15),
+        ("0[bB]", "1", "[01]", 2, 62),
+        ("0[oO]?", "[1-7]", "[0-7]", 8, 20),
+    ];
+    let mut alternates = Vec::new();
+    for (prefix, lead, digit, radix, max_digits) in families {
+        // Smallest digit count whose minimal value exceeds the bound.
+        let mut digits = 1usize;
+        let mut min_value: u128 = 1;
+        while min_value <= u128::from(bound) {
+            min_value *= radix;
+            digits += 1;
+        }
+        if digits > max_digits {
+            continue;
+        }
+        alternates.push(match (digits - 1, max_digits - 1) {
+            (0, 0) => format!("{prefix}{lead}"),
+            (0, high) => format!("{prefix}{lead}{digit}{{0,{high}}}"),
+            (low, high) if low == high => format!("{prefix}{lead}{digit}{{{low}}}"),
+            (low, high) => format!("{prefix}{lead}{digit}{{{low},{high}}}"),
+        });
+    }
+    alternates
+}
+
 // Sprig's `int`/`int64` coercion parses strings through `strconv.ParseInt`
 // with base detection, so a leading zero flips the base to octal and a
-// non-decimal spelling coerces to 0. The preimage patterns below therefore
-// claim only CLEAN decimal spellings — optional sign, no leading zero —
-// whose parsed value provably lands in the claimed region; every other
-// spelling abstains. Bounds outside the simple sign regimes (a positive
-// `IntLt` bound, a negative `IntGt` bound) abstain entirely: their regions
-// span both signs and zero, which these digit-wise patterns do not model.
+// non-decimal spelling coerces to 0. The single-sign preimage patterns
+// below therefore claim clean spellings only — optional sign, no leading
+// zero, no underscores — whose parsed value provably lands in the claimed
+// region; ambiguous spellings abstain. Mixed-sign regions ride the
+// complement lane in `int_region_string_preimage` instead.
 
 /// Alternates matching unsigned decimal spellings with value strictly
 /// greater than `bound` (`bound >= 0`), without leading zeros.
@@ -344,26 +470,32 @@ fn decimal_magnitude_above(bound: u64) -> String {
     alternates.join("|")
 }
 
-/// Decimal string spellings coercing strictly above `bound`; only
+/// String spellings certainly parsing strictly above `bound`; only
 /// non-negative bounds have a single-sign region.
 fn decimal_strings_above(bound: i64) -> Option<String> {
     let bound = u64::try_from(bound).ok()?;
-    Some(format!("^\\+?({})$", decimal_magnitude_above(bound)))
+    let mut alternates = vec![decimal_magnitude_above(bound)];
+    alternates.extend(radix_magnitudes_above(bound));
+    Some(format!("^\\+?({})$", alternates.join("|")))
 }
 
-/// Decimal string spellings coercing strictly below `bound`; only
+/// String spellings certainly parsing strictly below `bound`; only
 /// non-positive bounds have a single-sign region.
 fn decimal_strings_below(bound: i64) -> Option<String> {
     if bound > 0 {
         return None;
     }
     let magnitude = bound.unsigned_abs();
+    let mut alternates = vec![decimal_magnitude_above(magnitude)];
+    alternates.extend(radix_magnitudes_above(magnitude));
     if magnitude == 0 {
-        // Below zero: any negative with a nonzero digit. Leading zeros are
-        // safe HERE only: the octal reinterpretation is still negative.
-        return Some("^-0*[1-9][0-9]*$".to_string());
+        // Below zero the magnitude is value-free, so zero-padded VALID
+        // octal is admissible too. It must stay out of the general arm:
+        // a zero-led spelling parses as octal, where an 8 or 9 digit is
+        // a parse ERROR coercing to 0 ("-018" renders 0, not −18).
+        alternates.push("0+[1-7][0-7]{0,19}".to_string());
     }
-    Some(format!("^-({})$", decimal_magnitude_above(magnitude)))
+    Some(format!("^-({})$", alternates.join("|")))
 }
 
 /// The statically decided integer value of a declared default: a YAML

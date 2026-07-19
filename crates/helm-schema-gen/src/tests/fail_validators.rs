@@ -1406,3 +1406,203 @@ fn multi_test_fail_negations_lower_as_member_alternatives() {
         );
     }
 }
+
+/// kyverno's `kyverno.deployment.replicas` helper (called through
+/// `{{ template … .Values.X.replicas }}`) fails on `eq (int .) 0` when the
+/// argument is neither nil nor a string: a raw integer (or integral
+/// float) zero certainly satisfies the coercing equality, so the fail arm
+/// rejects it while strings and null keep the helper's own escapes. The
+/// equality lowers as the [IntGt bound-1, IntLt bound+1] region pair —
+/// coercible non-integers (booleans, fractional floats) stay a documented
+/// sound abstention.
+#[test]
+fn int_cast_zero_equality_fails_reject_raw_zero() {
+    let helpers = indoc! {r#"
+        {{- define "repro.replicas" -}}
+          {{- if and (not (kindIs "invalid" .)) (not (kindIs "string" .)) -}}
+          {{- if eq (int .) 0 -}}
+            {{- fail "no zero replicas" -}}
+          {{- end -}}
+          {{- end -}}
+          {{- . -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        config:
+          replicas: {{ template "repro.replicas" .Values.replicas }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some("replicas: 1\n"));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "absent renders empty"),
+        (serde_json::json!({ "replicas": null }), true, "nil escapes"),
+        (
+            serde_json::json!({ "replicas": 1 }),
+            true,
+            "nonzero renders",
+        ),
+        (
+            serde_json::json!({ "replicas": -1 }),
+            true,
+            "negative renders",
+        ),
+        (
+            serde_json::json!({ "replicas": "0" }),
+            true,
+            "strings escape the kind dispatch",
+        ),
+        (
+            serde_json::json!({ "replicas": 0 }),
+            false,
+            "raw zero aborts",
+        ),
+        (
+            serde_json::json!({ "replicas": 0.0 }),
+            false,
+            "integral float zero aborts",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "int-cast zero equality ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The int-cast regions' STRING preimages follow `strconv.ParseInt` base
+/// 0 (all polarities helm-verified): single-sign regions add the radix
+/// spellings that certainly parse inside (`"0x10"`/`"017"` abort a
+/// positive-bound gate like raw 16/15 do), a below-zero region keeps
+/// zero-padded VALID octal while an 8/9 digit is a parse error coercing
+/// to 0 (`"-018"` renders — the old pattern falsely rejected it), and a
+/// MIXED-sign region (positive `lt` bound) claims the complement of the
+/// parse-escape language: every unparseable, empty, or negative spelling
+/// coerces to 0 inside the region while a successful parse past the
+/// bound escapes.
+#[test]
+fn int_cast_string_preimages_cover_radix_and_complement_lanes() {
+    let src = indoc! {r#"
+        {{- if gt (int64 .Values.count) 0 }}
+        {{- fail "count must not be positive" }}
+        {{- end }}
+        {{- if lt (int .Values.floor) 3 }}
+        {{- fail "floor too low" }}
+        {{- end }}
+        {{- if lt (int .Values.neg) 0 }}
+        {{- fail "neg must not be negative" }}
+        {{- end }}
+        config:
+          ok: true
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("count: 0\nfloor: 5\nneg: 1\n"));
+    for (instance, want, label) in [
+        (serde_json::json!({ "count": "0x10" }), false, "hex above 0"),
+        (
+            serde_json::json!({ "count": "017" }),
+            false,
+            "legacy octal above 0",
+        ),
+        (serde_json::json!({ "count": "0" }), true, "zero renders"),
+        (
+            serde_json::json!({ "floor": "abc" }),
+            false,
+            "unparseable coerces to 0 below the floor",
+        ),
+        (
+            serde_json::json!({ "floor": "" }),
+            false,
+            "empty coerces to 0 below the floor",
+        ),
+        (
+            serde_json::json!({ "floor": "-5" }),
+            false,
+            "negative parse lands below the floor",
+        ),
+        (
+            serde_json::json!({ "floor": "0x10" }),
+            true,
+            "hex parse escapes past the floor",
+        ),
+        (
+            serde_json::json!({ "floor": "3" }),
+            true,
+            "boundary parse escapes",
+        ),
+        // "2" coerces below the floor and aborts Helm, but it matches the
+        // overapproximated escape language — the complement lane claims
+        // only spellings that CERTAINLY stay below (documented widening).
+        (
+            serde_json::json!({ "floor": "2" }),
+            true,
+            "in-language low parse stays a sound abstention",
+        ),
+        (
+            serde_json::json!({ "neg": "-018" }),
+            true,
+            "invalid octal digit coerces to 0 and renders",
+        ),
+        (
+            serde_json::json!({ "neg": "-09" }),
+            true,
+            "invalid octal 9 coerces to 0 and renders",
+        ),
+        (
+            serde_json::json!({ "neg": "-017" }),
+            false,
+            "valid zero-padded octal parses negative",
+        ),
+        (
+            serde_json::json!({ "neg": "-0x10" }),
+            false,
+            "negative hex parses negative",
+        ),
+        (
+            serde_json::json!({ "neg": "-5" }),
+            false,
+            "clean negative decimal",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "int-cast string preimage ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A conjunction of `ne $item.field "…"` inequalities guarding a ranged
+/// fail negates to the DISJUNCTION of the equalities — the field's value
+/// enum (nats' jsonpatch `op` gate, in the direct-range shape). Each
+/// `FieldEquals` alternative carries presence, so a member missing the
+/// field rejects too.
+#[test]
+fn ranged_not_equals_chains_negate_to_the_field_enum() {
+    let src = indoc! {r#"
+        {{- range $patch := .Values.service.patch }}
+        {{- if and (ne $patch.op "add") (ne $patch.op "remove") }}
+        {{- fail "patch has invalid op" }}
+        {{- end }}
+        {{- end }}
+        config:
+          ok: true
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("service:\n  patch: []\n"));
+    for (item, want, label) in [
+        (serde_json::json!({ "op": "add" }), true, "add allowed"),
+        (
+            serde_json::json!({ "op": "remove" }),
+            true,
+            "remove allowed",
+        ),
+        (
+            serde_json::json!({ "op": "bogus" }),
+            false,
+            "unknown op aborts",
+        ),
+        (serde_json::json!({}), false, "missing op aborts"),
+    ] {
+        let instance = serde_json::json!({ "service": { "patch": [item] } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "ranged ne-chain enum ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}

@@ -1551,6 +1551,153 @@ fn cilium_removed_options_abort_even_when_disabled() -> color_eyre::eyre::Result
     )
 }
 
+/// promtail renders every `extraPorts` member into a provider-REQUIRED
+/// Service `port` AND an unconditional pod `containerPort`: a member
+/// without `containerPort` emits an explicit null the strict provider
+/// rejects — even when `service.port` fills the Service side, the pod
+/// port stays null (all polarities helm-rendered and checked against the
+/// committed provider bundle).
+#[test]
+fn promtail_extra_port_members_require_the_container_port() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "promtail",
+        vec![
+            SemanticCase::rejected(
+                "an empty member renders null ports",
+                "/extraPorts",
+                json!({ "extraPorts": { "audit": {} } }),
+            ),
+            SemanticCase::rejected(
+                "service.port alone leaves the pod port null",
+                "/extraPorts",
+                json!({ "extraPorts": { "audit": { "service": { "port": 80 } } } }),
+            ),
+            SemanticCase::accepted(
+                "containerPort fills both sinks",
+                json!({ "extraPorts": { "audit": { "containerPort": 1234 } } }),
+            ),
+            SemanticCase::accepted(
+                "containerPort beside a service port",
+                json!({ "extraPorts": { "audit": { "containerPort": 1234,
+                    "service": { "port": 80 } } } }),
+            ),
+        ],
+    )
+}
+
+/// kube-state-metrics renders probe `httpHeaders` members' `name` and
+/// `value` — both provider-required — for every item once the probe is
+/// enabled; `[{}]` renders null header fields the strict provider
+/// rejects, while the disabled probe renders nothing (helm-verified).
+#[test]
+fn kube_state_metrics_probe_headers_require_name_and_value() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "kube-state-metrics",
+        vec![
+            SemanticCase::rejected(
+                "an empty header member renders null name and value",
+                "/startupProbe/httpGet/httpHeaders",
+                json!({ "startupProbe": { "enabled": true,
+                    "httpGet": { "httpHeaders": [{}] } } }),
+            ),
+            SemanticCase::accepted(
+                "populated headers render",
+                json!({ "startupProbe": { "enabled": true,
+                    "httpGet": { "httpHeaders":
+                        [{ "name": "X-Audit", "value": "audit" }] } } }),
+            ),
+            SemanticCase::accepted(
+                "the disabled probe renders nothing",
+                json!({ "startupProbe": { "httpGet": { "httpHeaders": [{}] } } }),
+            ),
+        ],
+    )
+}
+
+/// kyverno's `kyverno.deployment.replicas` helper aborts on
+/// `eq (int .) 0` for any non-string, non-nil argument — every
+/// controller's `replicas: 0` terminates Helm while `1` renders, and the
+/// string `"0"` escapes through the helper's own `kindIs "string"`
+/// dispatch (all polarities helm-verified).
+#[test]
+fn kyverno_zero_replicas_abort_through_the_template_helper() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "kyverno",
+        vec![
+            SemanticCase::rejected(
+                "admission controller zero replicas abort",
+                "/admissionController/replicas",
+                json!({ "admissionController": { "replicas": 0 } }),
+            ),
+            SemanticCase::rejected(
+                "reports controller zero replicas abort",
+                "/reportsController/replicas",
+                json!({ "reportsController": { "replicas": 0 } }),
+            ),
+            SemanticCase::accepted(
+                "nonzero replicas render",
+                json!({ "admissionController": { "replicas": 2 } }),
+            ),
+            SemanticCase::accepted(
+                "a string spelling escapes the kind dispatch",
+                json!({ "admissionController": { "replicas": "0" } }),
+            ),
+        ],
+    )
+}
+
+/// redis-ha's ConfigMap renders `redis.conf: |` followed by a column-zero
+/// `{{- include "config-redis.conf" . }}`: the include's output continues
+/// the block scalar, so ranged `redis.config` members are pure text and
+/// any scalar spelling renders (helm-verified). Anchoring the include as
+/// `data`-level structure provider-typed the members `type: null`,
+/// rejecting even argo-cd's own `save: '""'` default once `redis-ha` is
+/// enabled. The strict `tpl` string-program contract on `customConfig`
+/// must survive the text adoption.
+#[test]
+fn oauth2_proxy_redis_ha_config_members_render_as_block_text() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "oauth2-proxy",
+        vec![
+            SemanticCase::accepted(
+                "string config members render as block text",
+                json!({ "redis-ha": { "enabled": true,
+                    "redis": { "config": { "maxmemory": "100mb" } } } }),
+            ),
+            SemanticCase::accepted(
+                "raw scalars stringify in the loop body",
+                json!({ "redis-ha": { "enabled": true,
+                    "redis": { "config": { "repl-diskless-sync": true } } } }),
+            ),
+            SemanticCase::accepted(
+                "string custom config renders through tpl",
+                json!({ "redis-ha": { "enabled": true,
+                    "redis": { "customConfig": "maxmemory 100mb" } } }),
+            ),
+            SemanticCase::rejected(
+                "tpl still requires a string program",
+                "/redis-ha/redis/customConfig",
+                json!({ "redis-ha": { "enabled": true,
+                    "redis": { "customConfig": { "bad": true } } } }),
+            ),
+        ],
+    )
+}
+
+/// argo-cd vendors the same redis-ha chart, and its own values file sets
+/// `redis-ha.redis.config.save: '""'` — enabling the dependency must not
+/// reject the chart's own defaults (helm renders them).
+#[test]
+fn argo_cd_redis_ha_own_defaults_render_when_enabled() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "argo-cd",
+        vec![SemanticCase::accepted(
+            "enabling redis-ha keeps the chart's own config defaults",
+            json!({ "redis-ha": { "enabled": true } }),
+        )],
+    )
+}
+
 /// traefik's OTLP `resourceAttributes` render as per-member flag loops
 /// through the `traefik.oltpCommonParams` helper inside the
 /// `fromYaml | toYaml` pod-template roundtrip. Map members render (any

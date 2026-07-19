@@ -58,6 +58,12 @@ pub(crate) fn collect_conditional_schemas(
                 provider,
             ),
         )
+        .chain(
+            crate::required_source_backprojection::synthesized_ranged_member_required_implications(
+                contract_schema_signals,
+                provider,
+            ),
+        )
     {
         let entries = synthesized_implications.entry(path).or_default();
         for implication in split_implications {
@@ -758,7 +764,9 @@ fn requirement_admits_runtime_type(
         FailValueRequirement::TruthyImpliesSchemaType(_) => true,
         FailValueRequirement::HelmTruthy => runtime_type != "null",
         FailValueRequirement::FieldHelmFalsy { .. } => true,
-        FailValueRequirement::FieldEquals { .. } => runtime_type == "object",
+        FailValueRequirement::FieldEquals { .. }
+        | FailValueRequirement::FieldPresentNotNull { .. }
+        | FailValueRequirement::FieldHelmTruthy { .. } => runtime_type == "object",
         FailValueRequirement::NotEquals(_) => true,
         FailValueRequirement::NotSchemaType(rejected) => {
             runtime_type != rejected && !(rejected == "number" && runtime_type == "integer")
