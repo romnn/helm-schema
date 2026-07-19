@@ -1,10 +1,14 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-19 after the guard-exactness round (thirteenth
-round — F17's coalesce-default rescue, F24's stringified-truthiness
-terminals with the strict `HasKey` guard, and F56's roundtrip
-partial-text discipline landed; each with a minimal gen reproducer
-beside its real-chart pin). The twelfth was the residuals round (F17's
+Last reconciled 2026-07-19 after the ranged-required round (fourteenth
+round — the F56 block-scalar adopted-include lane, the complete F31
+coercion preimage family with the kyverno `template`-helper terminal,
+F98's ranged-member required-leaf projection, and F108's bounded
+direct-range enum lane landed; each with a minimal gen reproducer
+beside its real-chart pin). The thirteenth was the guard-exactness
+round (F17's coalesce-default rescue, F24's stringified-truthiness
+terminals with the strict `HasKey` guard, F56's roundtrip partial-text
+discipline). The twelfth was the residuals round (F17's
 toString preimages, F74's fallback selection, F87's exact IP language,
 F102's recursive lock gate, F109's member alternatives, F56's
 collection map lane). The tenth round was a fresh chart-source
@@ -146,8 +150,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F96 header-condition string contracts (null override coalesces to
   absence — renamed accordingly)
 - F97 niladic methods on typed Helm objects
-- F98 provider-required output fields requiring source leaves (bounded;
-  ranged array/map member leaves remain In progress)
+- F98 provider-required output fields requiring source leaves (the
+  ranged array/map member half landed in the fourteenth round — see its
+  entry below)
 - F99 finite literal `fromYaml` path programs (traversal interpreter)
 - F100 post-`tpl` regex requirements on raw template programs
 - F101 provider availability as a committed deterministic test input
@@ -168,8 +173,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 
 - F31 scalar-domain fail implications (bounded): `len`, literal membership,
   semver-minimum, and raw-integer subsets are lowered; direct/local
-  `int`/`int64` provenance covers Jenkins' integer 0..=1 lane. Coerced-string
-  preimages remain In progress.
+  `int`/`int64` provenance covers Jenkins' integer 0..=1 lane. The
+  coerced-string preimages completed in the fourteenth round — see its
+  entry below.
 - F51 existential range sentinels (bounded): branch joins stamp arm conditions onto
   changed truthiness reductions, the joined
   `Range ∧ member-Eq` flag lowers as `ConditionalGuard::
@@ -241,11 +247,12 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   env-name collisions while the feature is live), and range-KEY regex
   terminals lower to `propertyNames` through the new `RangeKeyMatches`
   guard (traefik rejects uppercase `ingressRoute` keys)
-- F31 decimal coercion preimages (bounded): `IntGt`/`IntLt` encodings carry
-  digit-wise decimal string preimages (clean spellings only — a leading
-  zero flips `ParseInt` to octal and abstains), and declared-default
-  evaluation reads decimal string defaults (jenkins rejects `"5"` and
-  `"-1"` replicas beside the raw integers)
+- F31 decimal coercion preimages: `IntGt`/`IntLt` encodings carry
+  digit-wise decimal string preimages, and declared-default evaluation
+  reads decimal string defaults (jenkins rejects `"5"` and `"-1"`
+  replicas beside the raw integers); the radix family, the mixed-sign
+  complement lane, and the zero-padded-octal false-rejection fix landed
+  in the fourteenth round — see its entry below
 - Include-truthiness condition decoding: a bare `include "name" .` in
   condition position decodes through the helper's literal dispatch when
   every arm renders static text (including bare literal outputs like
@@ -446,6 +453,85 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   member with neither field reject — all helm-verified. Pinned by
   `traefik_local_plugins_keep_their_alternative_shapes` (CLI) and
   `multi_test_fail_negations_lower_as_member_alternatives` (gen)
+- F56 block-scalar adopted includes (fourteenth round): the audit's
+  OAuth2 Proxy / Argo CD "block-scalar claims" DID reproduce once the
+  `redis-ha` gate was enabled — the twelfth round's re-check had only
+  exercised the charts' own values, whose `enabled: false` kept the
+  guilty arm dormant. redis-ha's ConfigMap writes `redis.conf: |`
+  followed by a COLUMN-ZERO `{{- include "config-redis.conf" . }}`; the
+  include's rendered lines are deeper than the entry, so at render time
+  they continue the still-open block scalar — pure text. The evaluator
+  instead let the include escape to the parent container as structure,
+  anchoring the helper's ranged `redis.config` members at the `data`
+  field itself, whose OBJECT provider schema scalar-restricts to
+  `type: null` — rejecting every member Helm renders (argo-cd's own
+  `save: '""'` default rejected once `redis-ha.enabled`). A bare Output
+  hanging under a block-scalar entry or item is now ADOPTED into the
+  block text with exactly the block-body hole discipline: fragment
+  renders keep their semantic rows without minting structure, plain
+  holes contribute partial scalar text — so the strict `tpl`
+  string-program contract on `customConfig` survives while the members
+  open up. Pinned by
+  `oauth2_proxy_redis_ha_config_members_render_as_block_text` and
+  `argo_cd_redis_ha_own_defaults_render_when_enabled` (CLI) and
+  `block_scalar_adopted_includes_render_as_text_not_structure` (gen,
+  provider bundle); all polarities helm-verified
+- F31 coercion preimages and the kyverno terminal (fourteenth round —
+  closes the F31 residual): (a) `eq (int X) N` decodes in fail position
+  as the `IntGt{N-1} ∧ IntLt{N+1}` region pair (with the default-zero
+  escape), and its negation as the inequality subset — kyverno's
+  `kyverno.deployment.replicas` helper terminal now rejects
+  `replicas: 0` through the `{{ template … }}` call while `"0"` keeps
+  the helper's own `kindIs "string"` escape; (b) the single-sign string
+  preimages gained the radix family (hex/binary/explicit and legacy
+  octal, nonzero lead, overflow-capped digit counts; underscored and
+  zero-padded spellings abstain); (c) mixed-sign regions (positive
+  `IntLt` bound, negative `IntGt` bound) now claim the COMPLEMENT of an
+  overapproximated parse-escape language — every unparseable, empty, or
+  wrong-sign spelling coerces to 0 inside the region; (d) the
+  below-zero pattern's `-0*[1-9][0-9]*` arm was a live FALSE REJECTION:
+  a zero-led spelling parses as octal, where an 8/9 digit is a parse
+  error coercing to 0 (`"-018"` renders — helm-verified), so the
+  zero-padded arm now admits valid octal digits only. Pinned by
+  `kyverno_zero_replicas_abort_through_the_template_helper` (CLI),
+  `int_cast_zero_equality_fails_reject_raw_zero` and
+  `int_cast_string_preimages_cover_radix_and_complement_lanes` (gen);
+  all coercions verified against `helm template` renderings of
+  `int`/`int64`
+- F98 ranged-member required leaves (fourteenth round — closes the F98
+  residual): a wildcard member LEAF rendered as a direct scalar hole
+  into a provider-REQUIRED field emits an explicit null for every
+  member missing the leaf, which strict provider validation rejects.
+  The new `synthesized_ranged_member_required_implications` lane
+  projects `Members`-targeted `FieldPresentNotNull` requirements onto
+  the collection: collection-level guards ride the arm as outer guards,
+  and a NEGATIVE member-scoped truthiness guard (an else-arm) becomes
+  the `FieldHelmTruthy` ESCAPE alternative of a per-member disjunction
+  — promtail's `service`-arm members escape the `containerPort`
+  requirement… except promtail ALSO renders every member's
+  `containerPort` unconditionally at the pod ports, so `service.port`
+  alone is still provider-invalid (helm-rendered nulls verified).
+  Positive member-scoped guards abstain: those arms read from the
+  guarded subtree, where the leaf routinely rides a `default` fallback
+  whose primary source the projection cannot see. Tolerant render
+  forms (serialized/fragment/partial/nullable/self-guarded) abstain
+  like the direct lane. kube-state-metrics' probe `httpHeaders: [{}]`
+  and promtail's `extraPorts.audit: {}` now reject while populated
+  members and the zero-iteration lanes stay open. Pinned by
+  `promtail_extra_port_members_require_the_container_port` and
+  `kube_state_metrics_probe_headers_require_name_and_value` (CLI),
+  `ranged_member_leaves_of_required_provider_fields_bind_presence` and
+  `ranged_member_required_leaves_keep_the_else_arm_escape` (gen)
+- F108 direct-range inequality enums (fourteenth round, bounded): a
+  conjunction of `ne $item.field "…"` tests guarding a ranged fail now
+  negates to the DISJUNCTION of the equalities — `Guard::NotEq` joined
+  the negatable member tests, lowering through `FieldEquals`
+  alternatives (presence rides Go's nil-comparing `ne`: a missing
+  field differs from every literal, so the inequality HELD there and
+  the enum requires the field). Pinned by
+  `ranged_not_equals_chains_negate_to_the_field_enum` (gen). The nats
+  jsonpatch grammar itself stays In progress below — its fails ride a
+  helper-scope range whose captures lack member identities.
 - F56 self-ranged collection map lane (twelfth round, bounded): a
   self-ranged Scalar row at an array provider slot
   (`ForeignSchemaRestriction::ScalarCollection`) keeps an OPEN map lane
@@ -523,28 +609,22 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   TLS disabled although both range-local terminals abort Helm. Velero also
   accepts both legacy fs-restore label/image forms because the `$breaking`
   accumulator mutated inside a range is lost before the final `fail`; current
-  forms and satisfied Traefik members are the passing controls.
-- **F31 residual — coercion preimages and helper-bound numeric terminals.**
-  Radix/leading-zero `ParseInt` spellings and mixed-sign bounds remain (the
-  `ge`/`le`/`gt` chains landed in the eleventh round); the mixed-sign
-  regions are now understood to be encodable as the COMPLEMENT of the
-  above-bound patterns once the radix family is complete — `cast.ToInt64`
-  coerces every unparseable and overflowing spelling to 0, inside every
-  positive-bound region. Separately, Kyverno accepts
-  `admissionController.replicas: 0`, but the `kyverno.deployment.replicas`
-  template helper aborts; `1` renders. Carry terminal summaries across scalar
-  `template` returns as well as completing the coercion domains.
+  forms and satisfied Traefik members are the passing controls. The
+  fourteenth round pinned the shared machinery gap: fail captures from
+  HELPER-SCOPE ranges record member conditions at TRUNCATED absolute
+  paths (`service.patch.op`) with no range identity or member wildcard,
+  so downstream lanes can only lower them through the member-host
+  conversion repair — and decodes that would make those captures'
+  conjunctions fully lowerable (the nats attempt's `hasKey`-over-Choice
+  reduction) leak them into document-level terminal clauses that reject
+  valid documents. Member identities must ride helper-range captures
+  before the F108 grammar or the accumulator lanes can land.
 - **F32 residual — nested cross-path/default implications.** Cilium accepts
   GKE+tunnel and AKS-BYOCNI+native routing, invalid ingress/Gateway API
   `externalTrafficPolicy`, and external kvstore mode with apiserver replicas
   `2`; Helm aborts each, while `native`, `tunnel`, `Cluster`/`Local`, and
   replicas `1` respectively render. Preserve the nested guards through
   `default` and project the guarded `toString` equality to its raw preimage.
-- **F56 note — non-reproducing block-scalar claims.** The OAuth2 Proxy
-  and Argo CD redis-ha block-scalar claims did not reproduce against the
-  current tree (both charts' own values accept); re-verify them with
-  concrete instances before treating them as open. (The roundtrip lane
-  itself landed in the thirteenth round.)
 - **F74 residual — parser exactness.** Exact URL authority and Datadog's
   derived `toString | trimSuffix "-jmx"` semver preimage remain open
   (per-term duration overflow bounds landed in the eleventh round;
@@ -568,17 +648,17 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   a numeric annotation member renders but fails the committed PrometheusRule
   provider schema; map/string controls pass. Preserve kind and member
   provenance through the selected ordered layers.
-- **F98 residual — provider-required leaves on ranged members.** Promtail
-  accepts `extraPorts.audit: {}` and renders null Service/DaemonSet port
-  fields; kube-state-metrics accepts a startup-probe `httpHeaders: [{}]` and
-  renders null `name`/`value`. Strict provider validation rejects both, while
-  populated controls pass. Back-propagate required leaves through ranged
-  dynamic-map and array members.
 - **F104 residual — wrapper consumers before tree rewrite.** NATS accepts a
   `$tplYaml` wrapper at `nameOverride`, but `nats.fullname` calls `trunc` on
   the sentinel map before the rewrite and Helm aborts. The raw string control
   and a wrapper at the later `container.image.fullImageName` consumer render.
-  Wrapper alternatives must be scoped to the consumer's execution phase.
+  Sharpened in the fourteenth round: the exclusion needs pre- versus
+  post-rewrite ORDERING inside the wrapper-engine helper itself —
+  `nats.defaultValues` calls `nats.fullname` (line 54) BEFORE the
+  `set . "Values" (tplYaml …)` rewrite (lines 72-73) but reads
+  `natsBox.contexts` AFTER it, and excluding wrappers from every path
+  the engine helper reads would falsely reject valid post-rewrite
+  wrappers. The gap is a widening only (no false rejection).
 - **F107 — terminal contracts lost across helpers/caller scopes.** Verified
   schema-accept/Helm-fail cases are Kube Prometheus Stack Grafana dashboards
   without exactly one folder selector or non-empty `matchLabels`, OAuth2
@@ -587,12 +667,15 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   forbidden `unix:` OTLP gRPC endpoint. Their satisfied controls render.
   Summarize helper terminals and retain the caller's live guard when applying
   them.
-- **F108 — NATS static JSON Patch item grammar.** `service.patch: [{}]`, an
-  unknown `op`, and a non-rooted `path` all pass the schema but abort the
-  chart's bounded `_jsonpatch.tpl` interpreter; a valid `test` operation
-  renders. Infer object items, the operation enum, JSON-pointer lexical rules,
-  and the per-operation `value`/`from` requirements; pointer existence may
-  remain unknown.
+- **F108 residual — NATS JSON Patch grammar through the helper range.**
+  The direct-range enum lane landed in the fourteenth round (see the
+  Completed entry), and `[{}]` items are covered at the gen level for
+  direct ranges. The real chart's `_jsonpatch.tpl` fails ride a
+  helper-scope range over a json-roundtripped dict member whose
+  captures record `service.patch.op`-style truncated paths without
+  member identities — blocked on the F28/F51 machinery above. The
+  wrapper-item lane (`$tplYamlSpread` inside `patch`) must stay open
+  when the grammar lands (helm-verified rendering).
 
 ## Rejected (invalid or won't fix by design)
 

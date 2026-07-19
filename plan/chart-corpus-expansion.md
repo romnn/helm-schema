@@ -7978,3 +7978,138 @@ removed-option enforcement is a nested tightening, helm-verified at
 every probed boundary. F31 and F98 were scoped for this batch but
 deferred untouched; the stale F87 In-progress ledger entry (closed by
 the twelfth round) was deleted.
+
+## Ranged-required round (2026-07-19, fourteenth round)
+
+Four ledger items landed, each with a minimal gen reproducer beside its
+real-chart pin; two more were re-attributed with sharpened machinery
+diagnoses instead of half-landing. The connecting theme is ranged and
+adopted positions: members of iterated collections and block-scalar
+interiors both mis-lowered because a position's rendering discipline
+(text continuation, per-member nulls) degraded to the generic structural
+model.
+
+### F56 — block-scalar adopted includes (landed; reopened from the "note")
+
+The "non-reproducing" OAuth2 Proxy / Argo CD block-scalar claims DID
+reproduce: the twelfth round's re-check exercised only the charts' own
+values, whose `redis-ha.enabled: false` kept the guilty conditional arm
+dormant. With the dependency enabled, `redis-ha.redis.config` members
+were typed `type: null` by the ConfigMap `data` field's OBJECT schema
+scalar-restricted — argo-cd's own `save: '""'` default rejected. Root
+cause: `redis.conf: |` followed by a column-zero
+`{{- include "config-redis.conf" . }}` hangs the include as a CST child
+of the block entry, and the evaluator routed it to the PARENT container
+as structure (anchoring the helper's ranged members one level short —
+the same disease as traefik's roundtrip lane, in a new position).
+The fix adopts bare Output children of block-scalar entries/items into
+the block text with the existing block-body hole discipline
+(`eval_block_adopted_output`): fragment renders keep semantic rows
+without minting structure, plain holes contribute partial scalar text.
+The strict `tpl` string-program contract on `customConfig` survives
+(map rejects, string renders — helm-verified). Pins:
+`oauth2_proxy_redis_ha_config_members_render_as_block_text`,
+`argo_cd_redis_ha_own_defaults_render_when_enabled` (CLI),
+`block_scalar_adopted_includes_render_as_text_not_structure` (gen).
+
+### F31 — coercion preimages completed + kyverno terminal (landed)
+
+(a) `eq (int X) N` now decodes in fail position as the
+`IntGt{N-1} ∧ IntLt{N+1}` region pair (checked shifts, default-zero
+escape), and negation-side `eq`/`ne` map to each other's subsets —
+kyverno's `kyverno.deployment.replicas` terminal rejects `replicas: 0`
+through `{{ template … }}` on all four controllers while the string
+`"0"` keeps the helper's `kindIs "string"` escape (helm-verified).
+(b) Single-sign string preimages gained the radix family (hex/binary/
+explicit and legacy octal; nonzero lead, overflow-capped digit counts;
+underscores and zero-padding abstain). (c) Mixed-sign regions (positive
+`IntLt` bound, negative `IntGt` bound) claim the COMPLEMENT of an
+overapproximated parse-escape language: `cast.ToInt64` coerces every
+unparseable, empty, or overflowing spelling to 0, which lies inside
+every mixed region — `"abc"`, `""`, and `"-5"` now abort a
+`lt (int x) 3` gate at the schema level. (d) The below-zero pattern's
+`-0*[1-9][0-9]*` arm was a LIVE false rejection: zero-led spellings
+parse as octal, where an 8/9 digit is a parse error coercing to 0 —
+`"-018"` and `"-09"` render (helm-verified) and now stay accepted while
+`"-017"` (valid octal, −15) still rejects. All coercion semantics were
+verified against `helm template` renderings of `int`/`int64` including
+trailing zero-decimal trimming (`"0x10.00"` → 16) and overflow-to-zero.
+Pins: `kyverno_zero_replicas_abort_through_the_template_helper` (CLI),
+`int_cast_zero_equality_fails_reject_raw_zero`,
+`int_cast_string_preimages_cover_radix_and_complement_lanes` (gen).
+
+### F98 — ranged-member required leaves (landed)
+
+The new `synthesized_ranged_member_required_implications` lane projects
+provider requiredness onto wildcard member leaves: a `X.*.leaf` rendered
+as a direct scalar hole into a provider-REQUIRED field emits an explicit
+null for members missing the leaf. Two new requirement vocabulary
+entries carry the encoding: `FieldPresentNotNull` (presence + non-null
+along the field path) and `FieldHelmTruthy` (the positive mirror of
+`FieldHelmFalsy`, used as the ESCAPE alternative when a NEGATIVE
+member-scoped guard marks an else-arm — promtail's `service`-less
+members). Positive member-scoped guards abstain: those arms read from
+the guarded subtree, where the leaf routinely rides a `default`
+fallback whose primary source the projection cannot see (requiring
+`containerPort` under a truthy `service` would have rejected members
+promtail renders — caught during the round and bounded away). Adjudged
+polarities: promtail `extraPorts.audit: {}` AND `{service: {port: 80}}`
+both reject (the pod template renders every member's `containerPort`
+unconditionally, so the service arm still leaves a provider-invalid
+null — helm-rendered output verified); kube-state-metrics' enabled
+probe `httpHeaders: [{}]` rejects while the disabled probe and
+populated headers stay open. Pins:
+`promtail_extra_port_members_require_the_container_port`,
+`kube_state_metrics_probe_headers_require_name_and_value` (CLI),
+`ranged_member_leaves_of_required_provider_fields_bind_presence`,
+`ranged_member_required_leaves_keep_the_else_arm_escape` (gen).
+
+### F108 — direct-range enums landed; grammar re-attributed
+
+`Guard::NotEq` on a ranged member's field joined the negatable member
+tests: a conjunction of `ne $item.field "…"` inequalities negates to
+the DISJUNCTION of `FieldEquals` alternatives — the field's enum, with
+presence riding Go's nil-comparing `ne`. Pin:
+`ranged_not_equals_chains_negate_to_the_field_enum` (gen). The real
+nats jsonpatch grammar did NOT land: its fails ride a helper-scope
+range over a json-roundtripped dict member, and those captures record
+member conditions at TRUNCATED absolute paths (`service.patch.op`)
+with no range identity. A tempting fix — dropping definitely-empty
+`default list` alternatives in `value_has_key`'s Choice resolution —
+made the captures fully decodable and thereby leaked them into 44
+document-level `then: false` terminal clauses that rejected even the
+chart's DEFAULT values (caught by the nats baseline probe and
+reverted; the abstention is now documented as load-bearing in the
+code). The residual is re-attributed to the same machinery gap as the
+F28/F51 accumulator lanes: member identities must ride helper-range
+fail captures.
+
+### F104 — re-attributed (no code change)
+
+The wrapper-at-`nameOverride` widening needs pre- versus post-rewrite
+ORDERING inside the wrapper-engine helper: `nats.defaultValues` calls
+`nats.fullname` before the `set . "Values" (tplYaml …)` rewrite but
+reads `natsBox.contexts` after it, so neither "exclude paths the engine
+reads" (falsely rejects valid post-rewrite wrappers) nor any other
+order-blind rule is sound. Stays open as a pure widening.
+
+### Validation
+
+Full workspace suite 1317/1317 (including all 95 `chart_reaudit` pins,
+7 of them new this round), doc tests, `task lint` exit 0 (one new
+`redundant_closure` fixed; the two pre-existing enum-size warnings are
+untouched), and the downstream luup2 `check:local` exit 0 with the
+freshly installed binary. 26 corpus fixtures regenerated from one clean
+`SCHEMA_DUMP=1` run after deleting stale dumps; drift characterized as
+the F98 `not {type: null}` member arms (most charts), the F31 radix
+additions, and the octal fix (cilium, jenkins). Acceptance probes ran
+at THREE granularities (top-level keys, second-level keys, and
+empty-object member/item probes; a compiled Rust prober replaced the
+Python one after the latter proved ~100x too slow for the large
+schemas): top-level flips zero; deep flips 12 — one intended widening
+(argo-cd's own defaults under `redis-ha.enabled`) and eleven
+tightenings, every one helm-adjudicated (airflow env/secret `[{}]`
+abort helm outright; coredns `zoneFiles[{}]` renders invalid YAML;
+cilium/coredns/fluent-bit/grafana/promtail empty members render
+explicit nulls at provider-required VolumeMount/ContainerPort/Secret
+fields).
