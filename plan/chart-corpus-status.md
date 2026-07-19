@@ -1,14 +1,15 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-18 (ninth round) after auditing the F105 airflow
-`labels` string-typing claim. Green corpus tests are a
-baseline, not completion evidence: the reopening pass verified claims with
-concrete opposite-polarity probes, and the recent rounds implemented the ones
-that survived verification, re-adjudicating the ones whose root cause turned
-out to be a deliberate policy. Where a finding has both a completed bounded
-part and a remainder, the completed part is listed below with a "(bounded)"
-marker and the residual is classified separately. Per-finding history lives
-in `chart-corpus-expansion.md`.
+Last reconciled 2026-07-19 after two concurrent rounds: a fresh
+chart-source versus generated-schema audit (tenth round — every reopened or
+new item below has a concrete bad case plus a good Helm/provider control)
+and the open-items implementation round (eleventh round — F106 implemented,
+the F31/F74 comparator/duration halves landed, the F80 residual attributed
+to two named machinery gaps). Green corpus tests are a baseline, not
+completion evidence. Where a finding has both a completed bounded part and a
+remainder, the completed part is listed below with a "(bounded)" marker and
+the residual is classified separately. Per-finding history lives in
+`chart-corpus-expansion.md`.
 
 ## Completed
 
@@ -31,13 +32,15 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   downstream chart revision is gone; the structural regression is fixed)
 - F16 corpus fixtures leaking the developer's CRD catalog cache
 - F17 stringification transfer functions rejecting values Helm accepts
+  (bounded; total-`toString` literal preimages remain In progress)
 - F18 shape-erasing uses deleting independent strict uses
 - F19 `printf` conflating the format parameter with data parameters
 - F20 local-guard runtime contracts binding path-wide (loki `kindIs` arm)
 - F21 guarded `range` domains
 - F22 numeric casts modeled as identity
 - F23 `typeOf` dispatch losing string-versus-structured alternatives
-- F24 total-stringification facts lost in guard-only paths
+- F24 total-stringification facts lost in guard-only paths (bounded; terminal
+  truthiness over the derived string remains In progress)
 - F25 direct `typeIs` Go container names
 - F26 guarded `range` rejecting rangeable integers
 - F27 compound document guards dropping chart-level string contracts
@@ -46,7 +49,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F29 condition transform collection ignoring pipeline order
 - F30 Helm `required` termination as schema evidence (incl. dynamic
   `extraEnvConfigMaps` members)
-- F32 cross-path Boolean `fail` implications
+- F32 cross-path Boolean `fail` implications (bounded; nested/defaulted and
+  derived-text implications remain In progress)
 - F33 finite `.Files.Get (printf …)` selectors
 - F34 literal-key `dig` navigation
 - F35 helper-computed type alternatives behind declared defaults
@@ -56,12 +60,12 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F40 nested range requirements through ranged locals
 - F41 `with`-rebound dot losing the originating path in type dispatch
 - F42 `default`/`coalesce`-guarded contracts (direct, helper-boundary, and
-  fallback-selection scope; Helm-falsy escapes stay open)
+  fallback-selection scope)
 - F43 range-derived union alternatives bypassing shape requirements
-- F44 key-predicate contracts on dynamic map values (bounded; ranged-member
-  conjunctions and dynamic key domains remain In progress)
-- F45 string-only call effects (bounded; incl. `substr`, `htpasswd`; strict
-  hash operands remain In progress)
+- F44 key-predicate contracts on dynamic map values, including audited
+  ranged-member conjunctions and range-key domains
+- F45 string-only call effects (incl. `substr`, `htpasswd`, and the audited
+  checksum family)
 - F46 empty-map/observed-subset defaults closing passthrough objects
 - F47 secretKeyRef/configMapKeyRef closing to name-only
 - F48 list-valued paths typed or closed as objects
@@ -72,17 +76,16 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   equality members
 - F54 type-dispatch overlays making supported arms impossible
 - F55 partial type dispatch re-closing the unmatched complement
-- F56 generic fragment fallback vs structural placement (jaeger,
-  CloudNativePG, airflow, CoreDNS ranged items)
+- F56 generic fragment fallback vs structural placement (bounded; provider
+  evidence leaking through scalar text fragments remains In progress)
 - F57 broad fragment alternatives bypassing member/range contracts
 - F58 integer rangeability vs range-variable arity (jenkins hasKey/member
   slot degradation)
 - F59 range-body requirements reaching iterable lanes (direct ranged
   members; velero schedules via `additionalProperties`)
 - F60 `eq`/`ne` operand domains incl. missing/null tolerance
-- F61 strict collection-call signatures for audited functions (bounded;
-  newly audited hash calls remain In progress and the unknown long tail is
-  Rejected)
+- F61 strict collection-call signatures for audited functions (the unknown
+  long tail is Rejected)
 - F62 opening empty declared containers erasing the container type
 - F63 chained member reads requiring intermediate members (incl.
   header-member ordering)
@@ -102,11 +105,11 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F75 shape erasure through `first`/`last`/`initial`/`rest`/`compact` and
   audited nested member paths (bounded; dynamic `slice`/opaque identities
   are Rejected)
-- F76 YAML scalar lexical safety (bounded): plain-token exclusions with class-aware
+- F76 YAML scalar lexical safety: plain-token exclusions with class-aware
   allowances, numeric-grammar exclusions, double/single-quoted content,
   flow style, mapping keys, completed-token contracts, composite-in-quotes
-  recursive serialization preimage (F76.2), and empty-scalar defaults under
-  member projection; resolver-token coverage remains In progress
+  recursive serialization preimage (F76.2), empty-scalar defaults under
+  member projection, and go-yaml v2 resolver-token coverage
 - F77 `and`/`or` selected-operand values
 - F78 value-selecting functions keeping candidate-selection predicates
 - F79 `break`/`continue` suppressing later-iteration contracts
@@ -121,9 +124,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F86 strict Boolean call signatures incl. architecture partitions and
   `IntGt` sound subsets
 - F87 builtin signatures constraining nested collection element kinds
-  (bounded; element parser domains remain In progress)
-- F88 derived literal-membership and `typeOf`→`regexMatch` dispatch guards
-  (bounded; provider intersection on the selected lane remains In progress)
+  (bounded; exact IPv6 parser domains remain In progress)
+- F88 derived literal-membership and `typeOf`→`regexMatch` dispatch guards,
+  including provider intersection on the selected lane
 - F89 statically constructed finite `tpl` programs
 - F90 caller predicates over mutually exclusive helper-return alternatives
 - F91 parenthesized nil-safe selectors and receiver members
@@ -132,24 +135,25 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F96 header-condition string contracts (null override coalesces to
   absence — renamed accordingly)
 - F97 niladic methods on typed Helm objects
-- F98 provider-required output fields requiring source leaves
+- F98 provider-required output fields requiring source leaves (bounded;
+  ranged array/map member leaves remain In progress)
 - F99 finite literal `fromYaml` path programs (traversal interpreter)
 - F100 post-`tpl` regex requirements on raw template programs
 - F101 provider availability as a committed deterministic test input
   (`testdata/provider-bundle/`, cold/warm equivalence)
-- F102 bitnami-redis locked `common` dependency vendored plus a `Chart.lock`
-  presence gate (bounded; legacy locks and unpacked-version verification remain
-  In progress)
+- F102 bitnami-redis locked `common` dependency vendored plus legacy-lock and
+  unpacked-version verification (bounded; recursive nested-lock discovery
+  remains In progress)
 - F103 test compositors scrubbing nulls only along map chains
-- F104 `$tplYaml` program-wrapper alternatives at value nodes, completed by
+- F104 `$tplYaml` program-wrapper alternatives at value nodes (bounded):
   wrapper RESULT compatibility (seventh round): a replace program's static
   decoding must inhabit the node's accepted kinds (certainly-incompatible
   lexeme classes reject; dynamic programs stay open), spread programs must
   decode to the parent collection's kind (scalars always abort; the values
   root refuses the spread wrapper), sentinels are classified structurally
   (a `hasKey`-guarded `fail` marks the spread form), and a singleton
-  sentinel map never rides a node's ordinary object domain — the engine
-  intercepts it before consumers see it
+  sentinel map does not ride a node's ordinary post-rewrite object domain.
+  Consumers that execute before the rewrite remain In progress.
 
 - F31 scalar-domain fail implications (bounded): `len`, literal membership,
   semver-minimum, and raw-integer subsets are lowered; direct/local
@@ -173,10 +177,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   dependency that solely owns a live helper (bitnami-postgresql's
   `tags.bitnami-common`, scoped by the including chart's own activation —
   the airflow postgresql counter-pin)
-- F93 same-map member identity through `keys | sortAlpha | pluck | first`
-  and member-local type partitions (bounded and gen-pinned; the representable
-  SigNoz singleton lane remains In progress, while general dedup correlation
-  is Rejected)
+- F93 same-map member identity through `keys | sortAlpha | pluck | first`,
+  member-local type partitions, and the representable SigNoz singleton lane
+  (general dedup correlation is Rejected)
 - NATS direct `extraResources` member kinds (bounded): a ranged member spliced as a whole
   document at column zero must be an object when present and non-null
   (Helm decodes every manifest as a mapping). Program-wrapper bypasses remain
@@ -334,49 +337,151 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   21 corpus fixtures, 2 gen fixtures, and 3 IR fixtures regenerated with
   a per-chart old-versus-new acceptance probe showing no tightenings at
   the top-level key domain
+- F106 airflow falsy-family root `labels` (eleventh round): re-verification
+  OVERTURNED the falsy-no-op note — helm 4's `merge`/`mustMerge` take
+  typed `map[string]any` parameters, so a LIVE gate aborts on any non-map
+  operand and the true domain is relational (falsy non-map `labels`
+  renders iff every partner is falsy; all boundaries helm-verified). The
+  or-gated `ValueType{object}` fail arms already carried the relational
+  rejections; the missing base escape landed as: (a)
+  `Effects::merge_operand_paths` marks each identity-bearing DIRECT merge
+  operand (via the shared `AbstractValue::merge_layer_identity`
+  discipline) through `SpliceMeta`/`ContractUse::merge_operand`, joining
+  the render-site identity; (b) a new
+  `all_render_uses_falsy_tolerant` fact — merge-operand and digest rows
+  cannot reject a falsy input at the base — feeds ONLY the base falsy
+  escape, gated on `!has_referenced_descendants`, never overlay routing
+  or declared-default placement (the reverted attempt's leak). `""`/`[]`/
+  `0`/`false` accept alone, truthy scalars reject, a truthy scheduler
+  partner rejects the falsy combination exactly, and the workers-partner
+  combination stays a documented widening (wildcard disjunct; see the F80
+  residual). Pinned by
+  `airflow_falsy_root_labels_render_while_live_merge_gates_bind`
+- F31 inclusive comparators and De Morgan chains (eleventh round): `ge`/`le`
+  normalize into `IntGt`/`IntLt`/len/member-count vocabulary with shifted
+  bounds; approximate condition lowering decomposes nested `and`/`or`
+  recursively and distributes `not` by De Morgan with region-flipped
+  int-cast subsets; `fail_outer_guard` and `terminal_clause_guard` lower
+  `And` all-or-nothing; literal-key `index` navigation is an admitted
+  equality subject binding the member path. cilium's `envoy.baseID`
+  window rejects both sides and the ENI/AlibabaCloud cluster-id windows
+  reject exactly at every boundary (helm-verified; pinned by
+  `cilium_inclusive_comparator_chains_bound_integer_domains`); istiod and
+  traefik's `ge`-gated arms materialize
+- F74 duration overflow bounds and the semver significant-digit fix
+  (eleventh round): `mustDateModify` terms are bounded per unit by
+  certain-overflow SIGNIFICANT digit counts (ns 19 … h 7; leading zeros
+  and fractional digits unbounded — both value-free; helm-verified at the
+  exact boundaries), and the semver core grammar becomes
+  `0*[0-9]{1,20}` per component — `ParseUint` overflow-checks the value,
+  so the raw length cap was a latent false rejection on zero-padded
+  spellings
 
 ## In progress
 
-- **F31 residual — non-decimal coercion preimages.** Clean decimal spellings
-  now reject through the `IntGt`/`IntLt` string preimages (jenkins `"5"` and
-  `"-1"`), with declared-default evaluation extended to decimal strings.
-  Radix-prefixed and leading-zero spellings (`ParseInt` base detection reads
-  them as hex/octal), mixed-sign bound regions (a positive `IntLt` bound),
-  and cilium/traefik's not-yet-lowered `ge`/`le`/`gt`-chain comparators stay
-  open.
-- **F74 residual — duration/URL exactness and the datadog tag domain.**
-  Semver core components are now bounded at 20 digits (21+ certainly
-  overflow `ParseUint` and abort) while staying a superset of the accepted
-  language. Still open: `time.ParseDuration` overflow (value-dependent per
-  unit), exact URL authority validation, and datadog's
-  `toString | trimSuffix "-jmx"` tag domain — the latter needs the semver
-  comparator preimage to flow through derived-text subjects with lexical
-  escapes.
-- **F106 — airflow root `labels` Helm-falsy scalars at the base
-  (false rejection, partially pre-existing).** Uncovered by the F105
-  audit: `labels: ""` and `labels: []` were already rejected by the base
-  typing, and with the digest rows no longer provider-typed the previous
-  fixtures' incidental `labels: null` acceptance is gone too, while
-  `helm template` renders all three (every `with` guard skips a falsy
-  value, and the `if or .Values.labels .Values.X.labels` `mustMerge`
-  sites tolerate falsy operands — sprig merge no-ops them; all
-  helm-verified). The base falsy escape is blocked because the or-guarded
-  `mustMerge` rows are not self-guarded renders; treating merge-layer
-  rows as self-guarded by construction was attempted and reverted (it let
-  the declared-default array typing leak into the self-guarded `sets`
-  overlay branch and regressed the F80 map-shaped `sets` pins). The old
-  null arm was itself fallout of the conditional-target base assembly
-  under the buggy string overlays, not a nullability grant. Reopening
-  needs either a falsy-tolerance catalog fact for merge operand rows that
-  does not reroute the overlay's declared-default merge, or the F80
-  merge-aware candidate decoding below.
-- **F80 residual — worker-family provider typing under the merged
-  context.** With `.Values.workers` resolving through the per-set merge,
-  the `airflowPodSecurityContext` priority-chain decoding cannot scope the
-  layered candidate exactly, so `workers.securityContext` abstains from
-  provider claims entirely (previously an overlay-guarded use; the
-  scheduler family keeps the exact break-scoped overlay). Sound but
-  incomplete; re-tightening needs merge-aware candidate-priority decoding.
+- **F17 residual — total-string literal preimages.** Cilium documents
+  `kubeProxyReplacement` as string-or-Boolean and compares its `toString`
+  result with `"true"`/`"false"`; the schema rejects both raw Booleans while
+  Helm renders them. Project derived literal membership back through total
+  stringification; the two string spellings are the passing controls.
+- **F24 residual — terminal truthiness after total stringification.** Cilium's
+  removed `proxy.prometheus.enabled` guard stringifies the `dig` result before
+  testing it. The schema accepts raw `false`, but Helm sees truthy `"false"`
+  and aborts; an absent/empty value remains the valid control.
+- **F28/F51 residual — ranged terminals and accumulator state.** Traefik
+  accepts an HTTPS gateway listener without `certificateRefs` and HTTP/3 with
+  TLS disabled although both range-local terminals abort Helm. Velero also
+  accepts both legacy fs-restore label/image forms because the `$breaking`
+  accumulator mutated inside a range is lost before the final `fail`; current
+  forms and satisfied Traefik members are the passing controls.
+- **F31 residual — coercion preimages and helper-bound numeric terminals.**
+  Radix/leading-zero `ParseInt` spellings and mixed-sign bounds remain (the
+  `ge`/`le`/`gt` chains landed in the eleventh round); the mixed-sign
+  regions are now understood to be encodable as the COMPLEMENT of the
+  above-bound patterns once the radix family is complete — `cast.ToInt64`
+  coerces every unparseable and overflowing spelling to 0, inside every
+  positive-bound region. Separately, Kyverno accepts
+  `admissionController.replicas: 0`, but the `kyverno.deployment.replicas`
+  template helper aborts; `1` renders. Carry terminal summaries across scalar
+  `template` returns as well as completing the coercion domains.
+- **F32 residual — nested cross-path/default implications.** Cilium accepts
+  GKE+tunnel and AKS-BYOCNI+native routing, invalid ingress/Gateway API
+  `externalTrafficPolicy`, and external kvstore mode with apiserver replicas
+  `2`; Helm aborts each, while `native`, `tunnel`, `Cluster`/`Local`, and
+  replicas `1` respectively render. Preserve the nested guards through
+  `default` and project the guarded `toString` equality to its raw preimage.
+- **F56 residual — provider evidence leaking through scalar text.**
+  Chart-authored OAuth2 Proxy and Argo CD redis-ha values put scalar members
+  under block-scalar config text, and Traefik quotes
+  `tracing.otlp.resourceAttributes` members into command arguments. The
+  generated schemas type those members as `null` and reject the charts' own
+  values, while Helm plus strict provider validation succeeds. Scalar text
+  fragments must not inherit the outer ConfigMap/argument provider shape.
+- **F74 residual — parser exactness and fallback selection.** Exact URL
+  authority and Datadog's derived `toString | trimSuffix "-jmx"` semver
+  preimage remain open (per-term duration overflow bounds landed in the
+  eleventh round; multi-term sums stay a superset by design — a sum bound
+  is not regex-representable). Datadog's own OTEL gateway CI values add
+  the opposite selection bug: an empty image tag is rejected by the raw
+  semver arm although the helper replaces it with the agent-version
+  fallback; an explicit valid tag is the passing control.
+- **F80 residual — merge selection and provider attribution.** Airflow's
+  worker-family `securityContext` still loses provider typing under its merged
+  context — now attributed exactly to two stacked gaps (eleventh round):
+  (1) `removeNilFields … | fromYaml` summarizes as `Unknown`, erasing the
+  celery layer's identity, so every `hasKey`/truthiness probe of the
+  priority chain lowers `Approximate` and the builder skips every placed
+  row; (2) with identities restored, the per-set layer's probes decode to
+  wildcard-member guards (`¬Absent(workers.celery.sets.*.securityContext)`)
+  the conditional-overlay vocabulary cannot encode — member quantification
+  exists only in the fail-implication lane, and the overlay arm needs the
+  existential form. Re-tightening needs a nil-scrub identity recognizer
+  plus existential member-guard encoding; neither piece alone yields any
+  tightening. Kube Prometheus Stack adds a literal-`dig`/`mergeOverwrite` case:
+  a scalar per-rule annotation operand passes the schema but aborts Helm, and
+  a numeric annotation member renders but fails the committed PrometheusRule
+  provider schema; map/string controls pass. Preserve kind and member
+  provenance through the selected ordered layers.
+- **F87 residual — exact IPv6 element language.** The Cilium Hubble SAN regex
+  is only an IPv6 superset: it accepts `":"`, but `genSignedCert` rejects it
+  as an invalid IP; `"::1"` passes schema and Helm. Replace the superset with
+  the builtin parser's exact accepted language or a provably sound subset.
+- **F98 residual — provider-required leaves on ranged members.** Promtail
+  accepts `extraPorts.audit: {}` and renders null Service/DaemonSet port
+  fields; kube-state-metrics accepts a startup-probe `httpHeaders: [{}]` and
+  renders null `name`/`value`. Strict provider validation rejects both, while
+  populated controls pass. Back-propagate required leaves through ranged
+  dynamic-map and array members.
+- **F102 residual — nested dependency-lock coverage.** The integrity test
+  scans only immediate corpus chart roots although nested vendored charts in
+  Airflow, Datadog, Kyverno, MetalLB, and SigNoz carry their own locks. The
+  current nested locks match, but deleting or drifting one is invisible to the
+  gate. Discover locked charts recursively while avoiding duplicate traversal.
+- **F104 residual — wrapper consumers before tree rewrite.** NATS accepts a
+  `$tplYaml` wrapper at `nameOverride`, but `nats.fullname` calls `trunc` on
+  the sentinel map before the rewrite and Helm aborts. The raw string control
+  and a wrapper at the later `container.image.fullImageName` consumer render.
+  Wrapper alternatives must be scoped to the consumer's execution phase.
+- **F107 — terminal contracts lost across helpers/caller scopes.** Verified
+  schema-accept/Helm-fail cases are Kube Prometheus Stack Grafana dashboards
+  without exactly one folder selector or non-empty `matchLabels`, OAuth2
+  Proxy standalone Redis without `connectionUrl`, Vault HTTPRoute without
+  `parentRefs` and invalid redundancy-zone combinations, and Datadog's
+  forbidden `unix:` OTLP gRPC endpoint. Their satisfied controls render.
+  Summarize helper terminals and retain the caller's live guard when applying
+  them.
+- **F108 — NATS static JSON Patch item grammar.** `service.patch: [{}]`, an
+  unknown `op`, and a non-rooted `path` all pass the schema but abort the
+  chart's bounded `_jsonpatch.tpl` interpreter; a valid `test` operation
+  renders. Infer object items, the operation enum, JSON-pointer lexical rules,
+  and the per-operation `value`/`from` requirements; pointer existence may
+  remain unknown.
+- **F109 — helper-return alternatives collapsed into one object shape.**
+  Traefik's local-plugin helper has mutually exclusive legacy-hostPath and
+  inline-plugin return arms. Both documented valid shapes are rejected, while
+  an unknown `type` passes the schema and aborts Helm because the generated
+  definition conjoins `hostPath` and `type`. Preserve the helper's per-arm
+  requirements and `type` literal domain instead of intersecting the arms.
 
 ## Rejected (invalid or won't fix by design)
 

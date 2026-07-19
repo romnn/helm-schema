@@ -7601,3 +7601,165 @@ from the mis-attributed merge synthesis to the templates' real render
 conditions), and 3 IR fixtures (the `[commonLabels, nameOverride]` merge
 marker removed) regenerated; a per-chart old-versus-new acceptance probe
 over every changed chart's top-level keys shows zero tightenings.
+
+## Open-items round (2026-07-19, eleventh round)
+
+One round covering every ledger item open at its start: F106
+(implemented), F31 residual (comparator chains implemented; coercion
+preimages re-scoped), F74 residual (duration/semver bounds implemented;
+URL/datadog re-scoped), and F80 residual (diagnosed to two named machinery
+gaps; abstention kept). A concurrent fresh chart-source audit (the tenth
+round, recorded directly in the status ledger) landed while this round was
+in flight; its new findings (F107–F109 and the residual re-scopes) are
+reconciled in the ledger but were not in this round's scope.
+
+### F106 — airflow falsy-family root `labels` at the base
+
+Re-verification first OVERTURNED the ninth round's polarity note: helm 4's
+`merge`/`mustMerge` take typed `map[string]any` parameters, so a live gate
+feeds ANY non-map operand — falsy included, even a null-deleted missing
+key — into a template type error. `labels: ""` renders with default values
+only because every `if or .Values.labels .Values.<component>.labels` gate
+is dead while both operands are falsy (webserver's gate additionally sits
+behind the Airflow<3 version check). The true domain is relational: falsy
+non-map `labels` renders iff every partner is falsy; a truthy partner
+aborts (`helm template` verified per component and per boundary).
+
+The structural pieces already in the tree carried the relational half: the
+merge dispatch records `ValueType{object}` captures for every operand, and
+their or-gated fail implications emit root arms (`Truthy(scheduler.labels)
+⇒ labels: object|null`) that reject the live-gate combinations. The base
+falsy escape was the only missing piece, and the blockers were the
+worker-family fold sites: `mustMerge <merged workers labels> .Values.labels`
+has a first operand with NO single identity (`MergedLayers` of the per-set
+overlay, `Choice` of the kubernetes/celery lanes), so `merge_layer_order`
+abstains to the unordered fold and the `labels` operand row lost its
+merge-layer marker — leaving a non-self-guarded render use that vetoed the
+escape.
+
+Lowerings:
+
+- `AbstractValue::merge_layer_identity` — the ninth round's
+  `layer_identity_path` discipline moves onto `AbstractValue` and is shared
+  by `merge_layer_order` marking and the lowering.
+- `eval_merge` records each identity-bearing DIRECT operand into a new
+  `Effects::merge_operand_paths` channel (recorded even when the ordered
+  form abstains; discarded at eager-argument boundaries), which threads
+  through `LowerScope` into `SpliceMeta::merge_operand` and
+  `ContractUse::merge_operand`, and joins `contract_use_base_cmp`'s
+  render-site identity like `digest`.
+- `ContractValuePathFacts::all_render_uses_falsy_tolerant` — a new bit fed
+  by `record_render_use`: merge-operand rows (their strict map contract
+  rides the fail implication, keyed on the call's live gate) and digest
+  rows (checksum text never consumes the raw value) cannot reject a falsy
+  input at the base. The bit feeds ONLY the base falsy escape in
+  `resolve_policy` — additionally gated on
+  `!has_referenced_descendants` so a falsy parent cannot escape past its
+  descendants' field reads — and never overlay-branch routing or
+  declared-default placement, which is what sank the reverted
+  `has_matching_self_guard` attempt.
+
+Validation: `labels: ""`/`[]`/`0`/`false` accept (helm renders), truthy
+scalars reject, `labels: "" + scheduler.labels: {…}` rejects through the
+or-gated arm (helm aborts), the airflowVersion-gated webserver partner
+stays open (helm renders), and the workers-partner combination stays open
+as a documented widening (its or-disjunct has a wildcard member spelling
+the fail lane vetoes; F80's second gap below). Pinned by
+`airflow_falsy_root_labels_render_while_live_merge_gates_bind`; every
+polarity verified under `helm template`.
+
+### F80 residual — worker-family provider typing (diagnosis; abstention kept)
+
+The abstention is now attributed exactly, to two stacked gaps: (1)
+`removeNilFields .Values.workers.celery | fromYaml` summarizes as
+`Unknown`, erasing the celery layer's identity inside the merged workers
+context — `value_has_key` over `MergedLayers` needs every layer to
+resolve, so every `hasKey`/truthiness probe of the priority chain lowers
+`Approximate` and the builder skips every placed row (the summary's
+per-candidate `OutputPath` values and their flat global-lane predicates
+are otherwise intact); (2) with identities restored, the per-set layer's
+probes decode to wildcard-member guards
+(`¬Absent(workers.celery.sets.*.securityContext)`) that the
+conditional-overlay guard vocabulary cannot encode — member
+quantification exists only in the fail-implication lane, and an overlay
+arm additionally needs the existential form (`some live set leaves the
+candidate unshadowed`). Neither piece alone yields any tightening, so the
+sound abstention stays; re-tightening needs a nil-scrub identity
+recognizer plus existential member-guard encoding.
+
+### F31 residual — inclusive comparators, De Morgan chains, index equality
+
+Landed the comparator half of the residual:
+
+- `ge`/`le` normalize into the strict `IntGt`/`IntLt` vocabulary with a
+  shifted bound (overflow abstains) in the int-cast lane, the
+  `len`-comparison lane (traefik's `ge (len .Values.hub.token) 65`
+  license gates), and the `keys|len` member-count lane.
+- `approximate_condition_predicate_expr` decomposes recursively:
+  nested `and`/`or` connectives no longer collapse into one opaque atom,
+  and `not` distributes by De Morgan — each negated leaf either decodes
+  exactly and negates, or carries a region-flipped int-cast subset
+  (¬(x ≥ 0) ⇔ x < 0 over the coerced value). A whole negated atom still
+  tries its own subset first, which keeps the negated-literal-membership
+  decode (`not (list … | has X)`) intact.
+- `fail_outer_guard` and `terminal_clause_guard` lower `And` predicates
+  all-or-nothing (dropping a conjunct would weaken the clause), so
+  `or (and (ge …) (le …)) (and (ge …) (le …))` window disjunctions reach
+  the terminal-clause lane.
+- Literal-key `index` navigation is now an admitted equality subject —
+  its output IS the member value — binding the MEMBER path only (the
+  influence set's parent-map path is not the compared value).
+
+cilium's `envoy.baseID` window now rejects both sides (`-5` and
+`4294967296`, plus coercing string spellings), and the ENI/AlibabaCloud
+policy-drop check rejects a `cluster.id` inside either affected window
+exactly — boundaries 127/128, 255/256, 511/512, the literal `extraConfig`
+opt-out, and the no-ENI configuration all match `helm template`. Pinned by
+`cilium_inclusive_comparator_chains_bound_integer_domains`. istiod's
+`autoscaleMin`/`replicaCount` guards gain the shifted-bound preimage and
+traefik's hub-token arms materialize.
+
+Still open (re-scoped): radix-prefixed and underscore spellings
+(`ParseInt` base detection) need base-B digit-wise preimages, and the
+mixed-sign bound regions (a positive `IntLt` bound) are now understood to
+be encodable as the COMPLEMENT of the above-bound patterns once the radix
+family is complete — `cast.ToInt64` coerces every unparseable and
+overflowing spelling to 0, which lies inside every positive-bound region.
+
+### F74 residual — duration overflow bounds and the semver significant-digit fix
+
+`time.ParseDuration` overflow-checks each term twice (the raw int64 digit
+scan, then unit scaling into int64 nanoseconds), so a term whose
+SIGNIFICANT integer digits exceed the unit's may-fit count certainly
+aborts. The `mustDateModify` operand pattern now bounds each term per
+unit — ns 19, us/µs/μs 16, ms 13, s 10, m 9, h 7 significant digits —
+with unbounded leading zeros (no value) and unbounded fractional digits
+(the fraction scan drops precision instead of overflowing). Multi-term
+sums inside the bounds may still overflow and stay accepted (superset by
+design; a sum bound is not regex-representable). Helm-verified at the
+exact boundaries: `2562047h`/`9223372036s`/`153722867m` render while
+`25620470h`/`99999999999s`/`1000000000m` abort, and
+`0000000001h`/`00000000000000000000123h` render (leading zeros carry no
+value).
+
+The same value-not-spelling insight fixed a latent FALSE REJECTION in the
+semver operand pattern: `ParseUint` overflow-checks the value, so
+leading-zero-padded core components of any length parse fine; the core
+grammar becomes `0*[0-9]{1,20}` per component instead of a raw length cap.
+
+Still open (re-scoped): exact URL authority validation, and datadog's
+`toString | trimSuffix "-jmx"` tag domain — the semver comparator
+preimage needs a channel through derived-text subjects with lexical
+escapes (the trimmed-suffix preimage is `P ∪ P+"-jmx"` for an anchored
+pattern P, but no capture shape carries it today).
+
+### Validation
+
+Full workspace suite green (1293 tests) with the two new pins
+(`airflow_falsy_root_labels_render_while_live_merge_gates_bind`,
+`cilium_inclusive_comparator_chains_bound_integer_domains`); 18 corpus
+fixtures, 1 gen fixture, and 1 IR fixture regenerated; per-chart
+old-versus-new acceptance probes over every changed chart's top-level
+keys show zero tightenings and zero widenings outside airflow's intended
+falsy-family acceptances; `task lint` and the downstream luup2
+`check:local` run clean.
