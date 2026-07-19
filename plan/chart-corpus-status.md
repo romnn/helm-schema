@@ -1,10 +1,13 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-19 after the residuals round (twelfth round —
-F17's toString preimages, F74's fallback selection, F87's exact IP
-language, F102's recursive lock gate, F109's member alternatives, and
-F56's collection map lane landed; each with a minimal gen/ast reproducer
-beside its real-chart pin). The tenth round was a fresh chart-source
+Last reconciled 2026-07-19 after the guard-exactness round (thirteenth
+round — F17's coalesce-default rescue, F24's stringified-truthiness
+terminals with the strict `HasKey` guard, and F56's roundtrip
+partial-text discipline landed; each with a minimal gen reproducer
+beside its real-chart pin). The twelfth was the residuals round (F17's
+toString preimages, F74's fallback selection, F87's exact IP language,
+F102's recursive lock gate, F109's member alternatives, F56's
+collection map lane). The tenth round was a fresh chart-source
 versus generated-schema audit (every reopened or new item below has a
 concrete bad case plus a good Helm/provider control); the eleventh was the
 open-items implementation round (F106 implemented, the F31/F74
@@ -36,17 +39,18 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   downstream chart revision is gone; the structural regression is fixed)
 - F16 corpus fixtures leaking the developer's CRD catalog cache
 - F17 stringification transfer functions rejecting values Helm accepts
-  (bounded; the total-`toString` literal preimages landed in the twelfth
-  round — see its entry below; only the coalesce-default rescue of
-  empty/null spellings remains In progress)
+  (the total-`toString` literal preimages landed in the twelfth round and
+  the coalesce-default rescue of empty/null spellings in the thirteenth —
+  see their entries below)
 - F18 shape-erasing uses deleting independent strict uses
 - F19 `printf` conflating the format parameter with data parameters
 - F20 local-guard runtime contracts binding path-wide (loki `kindIs` arm)
 - F21 guarded `range` domains
 - F22 numeric casts modeled as identity
 - F23 `typeOf` dispatch losing string-versus-structured alternatives
-- F24 total-stringification facts lost in guard-only paths (bounded; terminal
-  truthiness over the derived string remains In progress)
+- F24 total-stringification facts lost in guard-only paths (terminal
+  truthiness over the derived string landed in the thirteenth round — see
+  its entry below)
 - F25 direct `typeIs` Go container names
 - F26 guarded `range` rejecting rangeable integers
 - F27 compound document guards dropping chart-level string contracts
@@ -451,22 +455,69 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   container args slot; the direct and nested-include lanes are pinned by
   `scalar_collection_restriction_keeps_the_map_lane_beside_the_array`).
   The real chart's `template: {{ include "traefik.podTemplate" . |
-  fromYaml | toYaml | nindent 4 }}` lane remains In progress below
+  fromYaml | toYaml | nindent 4 }}` lane landed in the thirteenth round —
+  see its entry below
+- F17 coalesce-default rescue (thirteenth round): an equality against
+  exactly the constant fallback of a `coalesce` over a STRINGIFIED
+  identity also admits the Helm-empty spellings — the empty string
+  always, plus every spelling a preceding `if eq $x "<nil>" { $x = "" }`
+  normalization arm diverts (recorded at the branch join, where the
+  divert header decodes exactly, and only when every identity-losing arm
+  is an explained empty fold). The facts ride
+  `HelperOutputMeta::{empty_fold_spellings, empty_rescue}` with
+  agreement-or-drop merges; `eval_coalesce` records the rescue for the
+  bounded two-arm shape whose alternatives are all explained (raw first
+  arms abstain — their Helm-emptiness spans false/0/nil/empty
+  collections). cilium's `kubeProxyReplacement: ""`, null, and even the
+  literal `"<nil>"` spelling now render (all helm-verified). Pinned by
+  the extended `cilium_kube_proxy_replacement_accepts_raw_booleans`
+  (CLI) and `stringified_equality_binds_the_tostring_preimage` (gen)
+- F24 stringified terminal truthiness (thirteenth round): truthiness of
+  a total stringification tests the RENDERED text against the empty
+  string — `"false"`, `"0"`, and `"<nil>"` are truthy strings. Two
+  subjects decode exactly: a literal-key `dig` with an EMPTY-string
+  default (present-with-non-empty-value; explicit null renders truthy
+  `"<nil>"`, encoded through the new strict `Guard::HasKey`/
+  `ConditionalGuard::HasKey` presence vocabulary — `Guard::Absent`
+  deliberately keeps its null-as-absent semantics for the nil-safe
+  selector lanes) and a direct selector (absent/null render `"<nil>"`,
+  so only the raw empty string is falsy). Wired through the call and
+  pipeline forms, `not_predicate` (which previously minted a WRONG
+  raw-truthiness negation), and `or_predicate`'s truthy shortcut (which
+  previously swallowed exactly-decodable pipeline disjuncts, poisoning
+  the whole `or` — cilium's removed-option gates were entirely
+  unenforced). cilium now aborts on `proxy.prometheus.enabled` false/
+  true/null/0 and `proxy.prometheus.port` while ""/absent render (all
+  helm-verified). Pinned by
+  `cilium_removed_options_abort_even_when_disabled` (CLI) and
+  `stringified_dig_truthiness_rejects_falsy_raw_spellings` /
+  `direct_tostring_truthiness_is_a_rendering_test` (gen)
+- F56 roundtrip partial-text discipline (thirteenth round): the
+  `include … | fromYaml | toYaml` pod-template roundtrip re-lowers the
+  helper's PROJECTED value, which flattened composed scalar parts into
+  bare per-path renders — minting full-value provider preimages and
+  string-lexical arms for paths that only render INSIDE flag text
+  (traefik's `--…={{ $value }}` items scalar-restricted the
+  resourceAttributes map to `type: null`). Three lowerings landed:
+  (a) a projected scalar with literal text AROUND splices marks each
+  path `HelperOutputMeta::partial_text` (splice-only part sets stay
+  bare — contribution-set degradation merges ALTERNATIVE renders, and
+  airflow's nil-aware `revisionHistoryLimit` picker must keep its
+  provider int typing); (b) the fragment re-lowering keeps
+  `partial_text` splices at `PartialScalar`, so provider typing and
+  full-value lexical preimages abstain exactly like the direct lane's
+  partial rows; (c) a self-ranged FRAGMENT use projects rangeability
+  only (`anyOf [array, object]`) — the loop renders derived items, so
+  the slot's item schema types the rendered items, never the source's
+  members. traefik's `tracing.otlp.resourceAttributes` members render
+  again under the committed provider bundle (string/int/list shapes;
+  a non-rangeable scalar still aborts — all helm-verified). Pinned by
+  `traefik_otlp_resource_attributes_render_as_flag_loops` (CLI, provider
+  bundle) and
+  `roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth` (gen)
 
 ## In progress
 
-- **F17 residual — coalesce-default rescue of empty spellings.** The
-  Boolean preimages landed (twelfth round), but cilium's chain rescues an
-  EMPTY stringification through `coalesce $stringValueKPR
-  $defaultKubeProxyReplacement` (default always `"false"`): helm renders
-  `kubeProxyReplacement: ""` and null while the schema still rejects both.
-  Exactness needs the equality decode to see the constant default of the
-  coalesce chain — when the literal equals the default, the preimage gains
-  the empty/nil spellings.
-- **F24 residual — terminal truthiness after total stringification.** Cilium's
-  removed `proxy.prometheus.enabled` guard stringifies the `dig` result before
-  testing it. The schema accepts raw `false`, but Helm sees truthy `"false"`
-  and aborts; an absent/empty value remains the valid control.
 - **F28/F51 residual — ranged terminals and accumulator state.** Traefik
   accepts an HTTPS gateway listener without `certificateRefs` and HTTP/3 with
   TLS disabled although both range-local terminals abort Helm. Velero also
@@ -489,17 +540,11 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `2`; Helm aborts each, while `native`, `tunnel`, `Cluster`/`Local`, and
   replicas `1` respectively render. Preserve the nested guards through
   `default` and project the guarded `toString` equality to its raw preimage.
-- **F56 residual — the fromYaml|toYaml roundtrip lane.** The args-slot
-  collection lane landed (twelfth round), but traefik still rejects
-  `tracing.otlp.resourceAttributes` members: the deployment routes the pod
-  template through `include "traefik.podTemplate" . | fromYaml | toYaml |
-  nindent 4`, and in THAT lane the member rows anchor one level short (at
-  `containers[*]` instead of `containers[*].args[*]`), get provider-typed
-  by the Container fragment, and scalar-restrict to `type: null`. Fix the
-  roundtrip lane's row anchoring so partial-scalar rows keep their depth.
-  The OAuth2 Proxy and Argo CD redis-ha block-scalar claims did not
-  reproduce against the current tree (both charts' own values accept);
-  re-verify them with concrete instances before treating them as open.
+- **F56 note — non-reproducing block-scalar claims.** The OAuth2 Proxy
+  and Argo CD redis-ha block-scalar claims did not reproduce against the
+  current tree (both charts' own values accept); re-verify them with
+  concrete instances before treating them as open. (The roundtrip lane
+  itself landed in the thirteenth round.)
 - **F74 residual — parser exactness.** Exact URL authority and Datadog's
   derived `toString | trimSuffix "-jmx"` semver preimage remain open
   (per-term duration overflow bounds landed in the eleventh round;
@@ -523,10 +568,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   a numeric annotation member renders but fails the committed PrometheusRule
   provider schema; map/string controls pass. Preserve kind and member
   provenance through the selected ordered layers.
-- **F87 residual — exact IPv6 element language.** The Cilium Hubble SAN regex
-  is only an IPv6 superset: it accepts `":"`, but `genSignedCert` rejects it
-  as an invalid IP; `"::1"` passes schema and Helm. Replace the superset with
-  the builtin parser's exact accepted language or a provably sound subset.
 - **F98 residual — provider-required leaves on ranged members.** Promtail
   accepts `extraPorts.audit: {}` and renders null Service/DaemonSet port
   fields; kube-state-metrics accepts a startup-probe `httpHeaders: [{}]` and

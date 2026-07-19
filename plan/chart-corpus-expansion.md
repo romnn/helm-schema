@@ -7887,3 +7887,94 @@ ScalarCollection map-lane widening plus its `$defs` renumbering) with
 per-chart old-versus-new acceptance probes over every top-level key
 showing zero tightenings, and zero widenings except cilium's intended
 raw-Boolean `kubeProxyReplacement` acceptance.
+
+## Guard-exactness round (2026-07-19, thirteenth round)
+
+Three residuals from the twelfth round's ledger landed, each with a
+minimal gen reproducer beside its real-chart pin. The connecting theme
+is guard exactness over stringified renderings: two cilium chains and
+traefik's pod-template roundtrip all mis-lowered because a rendering
+test (or a rendering position) degraded to a raw-value model.
+
+### F17 residual — coalesce-default rescue (cilium)
+
+`coalesce $stringValueKPR "false"` substitutes its constant fallback
+exactly while the stringification renders Helm-empty, so an equality
+against the fallback literal also admits the empty spellings. The fold
+`if eq $stringValueKPR "<nil>" { $stringValueKPR = "" }` is recorded at
+the branch join — where the positive header decodes exactly through the
+stringified preimage — as `HelperOutputMeta::empty_fold_spellings` on
+the kept identity arm (one unexplained identity-losing arm drops the
+record). `eval_coalesce` converts it into
+`HelperOutputMeta::empty_rescue { fallback, spellings }` for the bounded
+two-arm shape whose alternatives are all explained: stringified identity
+arms and the empty literal the fold diverts to; raw identity arms
+abstain because raw Helm-emptiness spans `false`/`0`/nil/empty
+collections, not just `""`. Both facts merge agreement-or-drop so joins
+cannot union a claim neither side made. Equality decoding then extends
+the candidate list only when the compared literal equals the recorded
+fallback. helm verification: `""`, null, and the literal `"<nil>"`
+spelling all render; `"strict"` still aborts.
+
+### F24 residual — stringified terminal truthiness (cilium)
+
+`((dig "proxy" "prometheus" "enabled" "" .Values.AsMap) | toString)` in
+condition position tests the RENDERED text, where `"false"`, `"0"`, and
+`"<nil>"` are truthy. Landed as `tostring_truthy_predicate` with two
+exact subjects: a literal-key `dig` with an EMPTY-string default (guard
+= key present ∧ value ≠ `""`; explicit null renders truthy `"<nil>"`)
+and a direct selector (absent/null render `"<nil>"`; only `""` is
+falsy). Presence needed new vocabulary: `Guard::HasKey` →
+`ConditionalGuard::HasKey`, strict Sprig observability where a present
+nil member IS present — `Guard::Absent` deliberately keeps counting
+explicit null as absent for the nil-safe selector lanes
+(`(.Values.x).leaf` renders at null), which the
+`grouped_selector_receiver_is_optional_but_present_scalars_fail` pin
+protects. Two decode-path defects fixed en route: `not_predicate`'s
+fallback minted a raw-truthiness negation for `toString` subjects, and
+`or_predicate`'s truthy shortcut swallowed exactly-decodable pipeline
+disjuncts — which had poisoned cilium's whole removed-option `or`, so
+even the plain `proxy.prometheus.port` arm was unenforced. helm
+verification: enabled false/true/null/0 and port 9095 abort; `""` and
+absent render. keda's fixture re-encoded its serviceAccount guard
+disjunction through the exact `or` decode (acceptance-neutral, probed).
+
+### F56 residual — roundtrip partial-text discipline (traefik)
+
+The deployment's `template: {{ include "traefik.podTemplate" . |
+fromYaml | toYaml | nindent 4 }}` re-lowers the helper's PROJECTED
+value. The projection flattened composed scalar parts (traefik's
+`-  "--{{$path}}.resourceAttributes.{{ $name }}={{ $value }}"` items)
+into bare per-path renders, so the re-lowered rows minted full-value
+provider preimages and string-lexical arms — under the committed
+provider bundle the Container fragment scalar-restricted the
+`resourceAttributes` map to `type: null`. Three lowerings landed: the
+projection marks paths rendered beside literal text as
+`HelperOutputMeta::partial_text` (splice-only part sets stay bare:
+contribution-set degradation merges ALTERNATIVE renders, and airflow's
+nil-aware `revisionHistoryLimit` picker must keep its provider int
+typing — the first cut re-used `derived_text` and stripped that typing,
+caught by the acceptance probe); the fragment re-lowering keeps
+`partial_text` splices at `PartialScalar`; and a self-ranged FRAGMENT
+use projects rangeability only (`anyOf [array, object]`). The zalando
+ingress IR fixture's momentary Scalar→PartialScalar drift reverted with
+the dedicated flag. helm verification: string/int members and a list
+render; a non-rangeable scalar aborts. An early conclusion that the
+lane was already fixed came from an ad-hoc CLI run WITHOUT the
+committed provider bundle — the reaudit pin (which pins provider
+availability) caught it; only provider-bundle-configured runs are
+evidence for provider-typed lanes.
+
+### Validation
+
+Full workspace suite green (1306 tests, every prior pin intact), doc
+tests, `task lint` exit 0, downstream luup2 `check:local` exit 0. The
+authoritative clean-dump drift set was three charts (cilium, traefik,
+keda) once the `partial_text` flag replaced the over-broad
+`derived_text` reuse; per-chart old-versus-new acceptance probes over
+every top-level key show zero tightenings and zero widenings except
+cilium's intended `kubeProxyReplacement` empty/null rescue. The
+removed-option enforcement is a nested tightening, helm-verified at
+every probed boundary. F31 and F98 were scoped for this batch but
+deferred untouched; the stale F87 In-progress ledger entry (closed by
+the twelfth round) was deleted.
