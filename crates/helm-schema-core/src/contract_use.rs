@@ -78,6 +78,12 @@ pub struct ContractUse {
     /// serialization use.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub digest: bool,
+    /// Set when the value flowed through a Sprig `merge` call as a DIRECT
+    /// operand: the operand's strict map contract rides its own fail
+    /// implication (keyed on the call's live gate), so this row never
+    /// rejects a Helm-falsy input at the base.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub merge_operand: bool,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -108,6 +114,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
             #[serde(default)]
             digest: bool,
+            #[serde(default)]
+            merge_operand: bool,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -125,6 +133,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             range_key: wire.range_key,
             omitted_members: wire.omitted_members,
             digest: wire.digest,
+            merge_operand: wire.merge_operand,
         })
     }
 }
@@ -181,6 +190,7 @@ impl ContractUse {
             range_key: false,
             omitted_members: std::collections::BTreeMap::new(),
             digest: false,
+            merge_operand: false,
         }
     }
 

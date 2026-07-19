@@ -33,6 +33,13 @@ pub(crate) struct Effects {
     /// (`printf`, `quote`, `trunc`, `b64enc`, …): later transform stages
     /// operate on that text, so they claim nothing about the raw path.
     pub(crate) derived_text_paths: BTreeSet<String>,
+    /// Paths consumed as a DIRECT operand of a Sprig `merge` family call in
+    /// this expression. The operand's strict map contract rides its own fail
+    /// implication (keyed on the call's live gate), so the operand's splice
+    /// row cannot itself reject a Helm-falsy value and the base falsy escape
+    /// survives it. Only operands that ARE a path identity are recorded;
+    /// constructed containers referencing a path abstain.
+    pub(crate) merge_operand_paths: BTreeSet<String>,
     /// Literal keys an `omit` in this expression removed from the map at
     /// each path: whole-map sink typing must not bind those members
     /// (external-secrets' OpenShift `adaptSecurityContext` omit).
@@ -239,6 +246,7 @@ impl Effects {
             encoded_paths,
             shape_erased_paths,
             derived_text_paths,
+            merge_operand_paths,
             omitted_map_keys,
             derived_range_key_paths,
             string_contract_paths,
@@ -269,6 +277,7 @@ impl Effects {
         self.encoded_paths.extend(encoded_paths);
         self.shape_erased_paths.extend(shape_erased_paths);
         self.derived_text_paths.extend(derived_text_paths);
+        self.merge_operand_paths.extend(merge_operand_paths);
         for (path, keys) in omitted_map_keys {
             self.omitted_map_keys.entry(path).or_default().extend(keys);
         }
@@ -366,6 +375,10 @@ impl Effects {
             encoded_paths,
             shape_erased_paths,
             derived_text_paths,
+            // Describes the merged VALUE's operands, which do not render at
+            // the call site: keeping it would grant falsy tolerance to
+            // unrelated splices of the same path in the caller.
+            merge_operand_paths: _,
             omitted_map_keys: _,
             derived_range_key_paths,
             string_contract_paths,
@@ -406,6 +419,7 @@ impl Effects {
             encoded_paths,
             shape_erased_paths,
             derived_text_paths,
+            merge_operand_paths: BTreeSet::new(),
             omitted_map_keys: BTreeMap::new(),
             derived_range_key_paths,
             string_contract_paths,

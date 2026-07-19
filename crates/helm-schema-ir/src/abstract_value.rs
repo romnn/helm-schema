@@ -889,6 +889,37 @@ impl AbstractValue {
         }
     }
 
+    /// The values path a merge layer's runtime value IS.
+    ///
+    /// Accepts a direct path identity, possibly alternated with pathless
+    /// literal arms (velero's `.Values.podSecurityContext | default dict`
+    /// off-state).
+    ///
+    /// A constructed container REFERENCING a path returns `None` — its keys
+    /// are template-supplied (external-dns's `merge $defaultSelector
+    /// .podAffinityTerm` selector built from `nameOverride`), so keying the
+    /// merge shadow on the referenced path would scope sibling-layer members
+    /// by the wrong value.
+    pub(crate) fn merge_layer_identity(&self) -> Option<String> {
+        fn arms_are_identity_or_literal(value: &AbstractValue) -> bool {
+            match value {
+                AbstractValue::ValuesPath(_)
+                | AbstractValue::JsonDecodedPath(_)
+                | AbstractValue::OutputPath(_, _) => true,
+                // A nested merge of identities keeps the lineage: airflow's
+                // per-set worker context resolves `.Values.workers.x` to
+                // `MergedLayers([overwrite, workers.x])`, which still IS the
+                // `workers.x` value wherever the overwrite abstains.
+                AbstractValue::Choice(choices) => choices.iter().all(arms_are_identity_or_literal),
+                AbstractValue::MergedLayers(layers) => {
+                    layers.iter().all(arms_are_identity_or_literal)
+                }
+                other => other.paths().is_empty(),
+            }
+        }
+        arms_are_identity_or_literal(self).then(|| self.unique_path())?
+    }
+
     pub(crate) fn with_overlay_entries(self, new_entries: BTreeMap<String, AbstractValue>) -> Self {
         if new_entries.is_empty() {
             return self;

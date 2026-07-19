@@ -144,7 +144,7 @@ impl ValuePathContext<'_> {
                 }
                 "eq" => self.value_comparison_predicate(args, false).is_some(),
                 "ne" => self.value_comparison_predicate(args, true).is_some(),
-                "gt" | "lt" => self.positive_len_predicate(function, args).is_some(),
+                "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args).is_some(),
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
                 "hasPrefix" => self.range_key_prefix_predicate(args).is_some(),
@@ -188,40 +188,88 @@ impl ValuePathContext<'_> {
         expr: &TemplateExpr,
         marker: &str,
     ) -> Predicate {
+        self.approximate_condition_parts(expr, marker, false)
+    }
+
+    /// One node of an approximately-lowered condition, decomposed as far as
+    /// the Boolean structure allows.
+    ///
+    /// `and`/`or` decompose per argument so exact conjuncts survive beside
+    /// undecodable siblings, recursing into nested connectives (cilium's
+    /// `or (and (ge …) (le …)) (and (ge …) (le …))` cluster-id window):
+    /// a fail-arm consumer can then strengthen the residue soundly (drop
+    /// approximate disjuncts, or negate only the decodable conjuncts)
+    /// instead of abstaining on one opaque blob. `not` distributes by
+    /// De Morgan — each negated leaf either decodes exactly and negates,
+    /// or carries the region-flipped comparison subset (cilium's
+    /// `not (and (ge (int …) 0) (le (int …) 4294967295))` baseID domain).
+    fn approximate_condition_parts(
+        &self,
+        expr: &TemplateExpr,
+        marker: &str,
+        negated: bool,
+    ) -> Predicate {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
-            return Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
+            let leaf = Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
+            // The stand-in covers the unknown condition in BOTH polarities:
+            // an Approximate marker is never negated downstream, so the
+            // negated leaf keeps the same abstention.
+            return leaf;
         };
-        // `and`/`or` decompose per argument so exact conjuncts survive
-        // beside undecodable siblings: a fail-arm consumer can then
-        // strengthen the residue soundly (drop approximate disjuncts, or
-        // negate only the decodable conjuncts) instead of abstaining on
-        // one opaque blob.
-        if function != "or" && function != "and" {
-            return Predicate::approximate_with_sound_subset(
+        match function.as_str() {
+            // Under negation, De Morgan swaps the connective.
+            "and" | "or" => {
+                let parts: Vec<Predicate> = args
+                    .iter()
+                    .enumerate()
+                    .map(|(index, arg)| {
+                        if !negated && self.condition_lowering_is_faithful(arg) {
+                            self.condition_predicate_expr(arg)
+                        } else if negated
+                            && self.condition_lowering_is_faithful(arg)
+                            && let Some(exact) = self.condition_predicate(arg)
+                        {
+                            exact.negated()
+                        } else {
+                            self.approximate_condition_parts(
+                                arg,
+                                &format!("{marker}:{index}"),
+                                negated,
+                            )
+                        }
+                    })
+                    .collect();
+                if (function == "and") != negated {
+                    Predicate::all(parts)
+                } else {
+                    predicate_any(parts)
+                }
+            }
+            "not" if args.len() == 1 => {
+                // The whole negated atom may decode as its own subset —
+                // negated literal membership rides the full
+                // `not (list … | has X)` shape — before De Morgan descends.
+                if !negated {
+                    let whole = self.comparison_sound_subset(expr);
+                    if !whole.is_empty() {
+                        return Predicate::approximate_with_sound_subset(
+                            marker,
+                            self.resolved_values_paths_from_expr(expr),
+                            whole,
+                        );
+                    }
+                }
+                self.approximate_condition_parts(&args[0], &format!("{marker}:!"), !negated)
+            }
+            _ => Predicate::approximate_with_sound_subset(
                 marker,
                 self.resolved_values_paths_from_expr(expr),
-                self.comparison_sound_subset(expr),
-            );
-        }
-        let parts: Vec<Predicate> = args
-            .iter()
-            .enumerate()
-            .map(|(index, arg)| {
-                if self.condition_lowering_is_faithful(arg) {
-                    self.condition_predicate_expr(arg)
+                if negated {
+                    self.negated_comparison_sound_subset(expr)
                 } else {
-                    Predicate::approximate_with_sound_subset(
-                        format!("{marker}:{index}"),
-                        self.resolved_values_paths_from_expr(arg),
-                        self.comparison_sound_subset(arg),
-                    )
-                }
-            })
-            .collect();
-        if function == "and" {
-            Predicate::all(parts)
-        } else {
-            predicate_any(parts)
+                    self.comparison_sound_subset(expr)
+                },
+            ),
         }
     }
 
@@ -253,7 +301,7 @@ impl ValuePathContext<'_> {
             "or" => self.or_predicate(args),
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
-            "gt" | "lt" => self.positive_len_predicate(function, args),
+            "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args),
             "typeIs" | "kindIs" => self.type_is_predicate(args),
             "coalesce" => self.coalesce_truthy_predicate(args),
             "default" => self.default_truthy_predicate(args),
@@ -369,6 +417,11 @@ impl ValuePathContext<'_> {
         let (subject, bound) = match (function, left.deparen(), right.deparen()) {
             ("gt", subject, TemplateExpr::Literal(Literal::Int(bound))) => (subject, *bound),
             ("lt", TemplateExpr::Literal(Literal::Int(bound)), subject) => (subject, *bound),
+            // The inclusive forms normalize to the strict bound below them.
+            ("ge", subject, TemplateExpr::Literal(Literal::Int(bound)))
+            | ("le", TemplateExpr::Literal(Literal::Int(bound)), subject) => {
+                (subject, bound.checked_sub(1)?)
+            }
             _ => return None,
         };
         if bound == 0
@@ -1123,6 +1176,13 @@ impl ValuePathContext<'_> {
         }
     }
 
+    /// Sound subsets of a comparison's NEGATION: only the int-cast lane
+    /// region-flips exactly (¬(x > N) ⇔ x < N+1 over the coerced value);
+    /// other comparison families abstain under negation.
+    fn negated_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        self.int_cast_comparison_region_subset(expr, true)
+    }
+
     /// Sound positive strengthenings of otherwise-undecodable comparison
     /// conditions, tried in order of exactness.
     fn comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
@@ -1249,21 +1309,38 @@ impl ValuePathContext<'_> {
     /// string of more than N CHARACTERS has more than N bytes, so it always
     /// satisfies Go's byte-length comparison (cilium's 32-character
     /// `cluster.name` bound). Long collections also satisfy the guard but
-    /// have no pattern encoding, so they stay outside the subset.
+    /// have no pattern encoding, so they stay outside the subset. The
+    /// inclusive comparators normalize by shifting the bound (traefik's
+    /// `ge (len .Values.hub.token) 65` license gates).
     fn len_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
         };
-        let (len_expr, bound) = match (function.as_str(), args.as_slice()) {
-            ("gt", [left, right]) => match right.deparen() {
-                TemplateExpr::Literal(Literal::Int(bound)) => (left.deparen(), *bound),
-                _ => return Vec::new(),
+        let form = match (function.as_str(), args.as_slice()) {
+            ("gt" | "ge", [left, right]) => match right.deparen() {
+                TemplateExpr::Literal(Literal::Int(bound)) => {
+                    Some((function, left.deparen(), *bound))
+                }
+                _ => None,
             },
-            ("lt", [left, right]) => match left.deparen() {
-                TemplateExpr::Literal(Literal::Int(bound)) => (right.deparen(), *bound),
-                _ => return Vec::new(),
+            ("lt" | "le", [left, right]) => match left.deparen() {
+                TemplateExpr::Literal(Literal::Int(bound)) => {
+                    Some((function, right.deparen(), *bound))
+                }
+                _ => None,
             },
-            _ => return Vec::new(),
+            _ => None,
+        };
+        let Some((function, len_expr, bound)) = form else {
+            return Vec::new();
+        };
+        let bound = match function.as_str() {
+            "gt" | "lt" => bound,
+            // `ge (len x) N` ⇔ `gt (len x) (N-1)`; overflow abstains.
+            _ => match bound.checked_sub(1) {
+                Some(bound) => bound,
+                None => return Vec::new(),
+            },
         };
         let TemplateExpr::Call { function, args } = len_expr else {
             return Vec::new();
@@ -1441,20 +1518,55 @@ impl ValuePathContext<'_> {
     /// instead of abstaining wholesale (redis `gt (int64 .Values.
     /// master.count) 0`, jenkins' `$replicas` domain). The cast may sit
     /// behind a bound local.
+    ///
+    /// The inclusive comparators normalize into the strict guards with a
+    /// shifted bound — `ge (int x) N` ⇔ `gt (int x) (N-1)` over int64 —
+    /// abstaining when the shift overflows (cilium's `ge (int
+    /// .Values.cluster.id) 128` ENI window).
     fn int_cast_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        self.int_cast_comparison_region_subset(expr, false)
+    }
+
+    fn int_cast_comparison_region_subset(&self, expr: &TemplateExpr, negated: bool) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
         };
         let [left, right] = args.as_slice() else {
             return Vec::new();
         };
-        let (cast_expr, bound, greater) = match (function.as_str(), left.deparen(), right.deparen())
-        {
-            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound))) => (cast, *bound, true),
-            ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => (cast, *bound, true),
-            ("lt", cast, TemplateExpr::Literal(Literal::Int(bound))) => (cast, *bound, false),
-            ("gt", TemplateExpr::Literal(Literal::Int(bound)), cast) => (cast, *bound, false),
-            _ => return Vec::new(),
+        let form = match (function.as_str(), left.deparen(), right.deparen()) {
+            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound))) => Some((cast, *bound, true)),
+            ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => Some((cast, *bound, true)),
+            ("lt", cast, TemplateExpr::Literal(Literal::Int(bound))) => Some((cast, *bound, false)),
+            ("gt", TemplateExpr::Literal(Literal::Int(bound)), cast) => Some((cast, *bound, false)),
+            ("ge", cast, TemplateExpr::Literal(Literal::Int(bound)))
+            | ("le", TemplateExpr::Literal(Literal::Int(bound)), cast) => {
+                bound.checked_sub(1).map(|bound| (cast, bound, true))
+            }
+            ("le", cast, TemplateExpr::Literal(Literal::Int(bound)))
+            | ("ge", TemplateExpr::Literal(Literal::Int(bound)), cast) => {
+                bound.checked_add(1).map(|bound| (cast, bound, false))
+            }
+            _ => None,
+        };
+        let Some((cast_expr, bound, greater)) = form else {
+            return Vec::new();
+        };
+        // Negation flips the region: ¬(x > N) ⇔ x < N+1 over int64. The
+        // flipped guard feeds the same zero/fallback reasoning below — the
+        // claim is still plain region membership of the coerced value.
+        let (bound, greater) = if negated {
+            let flipped = if greater {
+                bound.checked_add(1)
+            } else {
+                bound.checked_sub(1)
+            };
+            match flipped {
+                Some(bound) => (bound, !greater),
+                None => return Vec::new(),
+            }
+        } else {
+            (bound, greater)
         };
         let Some(source) = self.int_cast_operand(cast_expr) else {
             return Vec::new();
@@ -1581,17 +1693,55 @@ impl ValuePathContext<'_> {
         }
         // Only a DIRECT selector operand claims a value equality: seeing
         // through a call (`eq (typeOf .Values.x) "string"`) would compare
-        // the call's OUTPUT, not the path's value.
+        // the call's OUTPUT, not the path's value. Literal-key `index`
+        // navigation is the one admitted call shape — its output IS the raw
+        // member value (nil when absent), so the equality binds the member
+        // path exactly (cilium's `ne (index .Values.extraConfig
+        // "allow-unsafe-policy-skb-usage") "true"` gate).
         let direct_selector = |expr: &TemplateExpr| match expr.deparen() {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
             TemplateExpr::Variable(name) => !self
                 .typeof_bindings
                 .contains_key(name.trim_start_matches('$')),
+            TemplateExpr::Call { function, args } if function == "index" => {
+                args.len() >= 2
+                    && matches!(
+                        args[0].deparen(),
+                        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+                    )
+                    && args[1..].iter().all(|key| {
+                        matches!(
+                            key.deparen(),
+                            TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_))
+                        )
+                    })
+            }
             _ => false,
         };
+        // Literal-key `index` navigation compares the MEMBER value only; the
+        // evaluator's influence set also carries the parent map, which is
+        // not the compared value.
+        let subject_paths = |expr: &TemplateExpr| {
+            if let TemplateExpr::Call { function, args } = expr.deparen()
+                && function == "index"
+                && let Some(base) = self.single_resolved_values_path_expr(&args[0])
+            {
+                let mut path = base;
+                for key in &args[1..] {
+                    match key.deparen() {
+                        TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) => {
+                            path = helm_schema_core::append_value_path(&path, key);
+                        }
+                        _ => return self.paths_for_expr(expr),
+                    }
+                }
+                return std::collections::BTreeSet::from([path]);
+            }
+            self.paths_for_expr(expr)
+        };
         let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
-            (Some(value), None) if direct_selector(right) => (value, self.paths_for_expr(right)),
-            (None, Some(value)) if direct_selector(left) => (value, self.paths_for_expr(left)),
+            (Some(value), None) if direct_selector(right) => (value, subject_paths(right)),
+            (None, Some(value)) if direct_selector(left) => (value, subject_paths(left)),
             _ => {
                 // Two statically known scalars compare as a constant:
                 // `eq (len $secret.path) (add1 $index)` selects the last

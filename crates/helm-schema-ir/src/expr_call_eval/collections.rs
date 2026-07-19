@@ -641,6 +641,16 @@ pub(super) fn eval_merge(
     merge_arg_values(args, env, resolver, &mut values, &mut effects);
     // A Go pipeline passes the piped subject as the LAST argument.
     values.extend(piped_values);
+    // Each identity-bearing operand's splice rows tolerate Helm-falsy
+    // inputs: the strict map contract rides the operand's own fail
+    // implication, not the merged value's render. Recorded even when the
+    // ordered-layer form below abstains — a fold site's operands carry the
+    // same contract split (airflow's worker-family labels merges).
+    for value in &values {
+        if let Some(path) = value.merge_layer_identity().filter(|path| !path.is_empty()) {
+            effects.merge_operand_paths.insert(path);
+        }
+    }
     if let Some(layers) = merge_layer_order(function, operand_count, &values) {
         return EvalResult::with_effects(Some(AbstractValue::MergedLayers(layers)), effects);
     }

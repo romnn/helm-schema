@@ -378,6 +378,7 @@ fn splice_row(
     row.merge_layers = splice.meta.merge_layers.clone();
     row.omitted_members = splice.meta.omitted_members.clone();
     row.digest = splice.meta.digest;
+    row.merge_operand = splice.meta.merge_operand;
     row
 }
 

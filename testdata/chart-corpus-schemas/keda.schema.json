@@ -55795,7 +55795,16 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema629"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema629"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
                   }
                 }
               ],

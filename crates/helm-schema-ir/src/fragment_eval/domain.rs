@@ -337,6 +337,10 @@ pub struct SpliceMeta {
     /// its serialization, so the row abstains from slot typing and from
     /// path-wide serialization claims while keeping branch tolerance.
     pub digest: bool,
+    /// The spliced value flowed through a Sprig `merge` call as a DIRECT
+    /// operand: the operand's strict map contract rides its own fail
+    /// implication, so the row never rejects a Helm-falsy input at the base.
+    pub merge_operand: bool,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

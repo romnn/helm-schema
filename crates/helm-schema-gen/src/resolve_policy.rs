@@ -370,7 +370,9 @@ impl ResolvePolicy {
             && !facts.contract.is_direct_ranged_source
             && !facts.contract.has_string_contract
             && ((facts.contract.has_render_use
-                && facts.contract.all_render_uses_self_guarded
+                && (facts.contract.all_render_uses_self_guarded
+                    || (facts.contract.all_render_uses_falsy_tolerant
+                        && !facts.contract.has_referenced_descendants))
                 && !facts.contract.has_unconditional_render_use)
                 || fallback_hint_only_typing)
         {
@@ -379,7 +381,10 @@ impl ResolvePolicy {
             // declared falsy default made schema validity depend on which
             // off-state the chart happened to ship. A path-wide runtime
             // string contract disables the escape: that consumer parses the
-            // RAW value before any selection runs.
+            // RAW value before any selection runs. Falsy-tolerant uses
+            // (merge operands, digest rows) extend the escape only for LEAF
+            // paths: a falsy parent would still abort its descendants' field
+            // reads, so referenced descendants keep the strict base.
             union_schema_list(vec![merged, helm_falsy_schema()])
         } else {
             merged

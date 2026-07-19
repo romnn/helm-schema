@@ -368,7 +368,7 @@
                 "$ref": "#/$defs/schema88"
               },
               "readOnlyRootFilesystem": {
-                "$ref": "#/$defs/schema133"
+                "$ref": "#/$defs/schema134"
               },
               "runAsGroup": {
                 "$ref": "#/$defs/schema83"
@@ -872,6 +872,28 @@
         "type": "object"
       }
     },
+    "schema127": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "labelSelector": {}
+            }
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "labelSelector": {}
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
     "schema13": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
@@ -953,14 +975,14 @@
       },
       "type": "object"
     },
-    "schema133": {
+    "schema134": {
       "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema134": {
+    "schema135": {
       "anyOf": [
         {
           "allOf": [
@@ -998,31 +1020,10 @@
         }
       ]
     },
-    "schema137": {
-      "additionalProperties": {},
-      "properties": {
-        "preferredDuringSchedulingIgnoredDuringExecution": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
     "schema138": {
       "additionalProperties": {},
       "properties": {
-        "requiredDuringSchedulingIgnoredDuringExecution": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
           "anyOf": [
             {
               "type": "array"
@@ -1360,7 +1361,7 @@
         "null"
       ]
     },
-    "schema185": {
+    "schema186": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
@@ -1415,7 +1416,7 @@
         "null"
       ]
     },
-    "schema191": {
+    "schema192": {
       "description": "Added capabilities",
       "items": {
         "type": [
@@ -1428,7 +1429,7 @@
         "null"
       ]
     },
-    "schema193": {
+    "schema194": {
       "not": {
         "properties": {
           "provider": {
@@ -1441,7 +1442,7 @@
         "type": "object"
       }
     },
-    "schema197": {
+    "schema198": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
@@ -1627,26 +1628,13 @@
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema218": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema221": {
+    "schema220": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema225": {
+    "schema224": {
       "anyOf": [
         {
           "type": "null"
@@ -1656,17 +1644,17 @@
         }
       ]
     },
-    "schema226": {
+    "schema225": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema228": {
+    "schema227": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema231": {
+    "schema230": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3899,49 +3887,6 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema137"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "affinity": {
-            "properties": {
-              "podAffinity": {
-                "properties": {
-                  "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "requiredDuringSchedulingIgnoredDuringExecution"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podAffinity"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAffinity": {
                 "$ref": "#/$defs/schema138"
               }
             }
@@ -4093,49 +4038,6 @@
                 },
                 "required": [
                   "preferredDuringSchedulingIgnoredDuringExecution"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podAntiAffinity"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAntiAffinity": {
-                "$ref": "#/$defs/schema137"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "affinity": {
-            "properties": {
-              "podAntiAffinity": {
-                "properties": {
-                  "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "requiredDuringSchedulingIgnoredDuringExecution"
                 ],
                 "type": "object"
               }
@@ -4470,7 +4372,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema221"
+                "$ref": "#/$defs/schema220"
               },
               {
                 "not": {
@@ -4551,7 +4453,7 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/schema221"
+                "$ref": "#/$defs/schema220"
               },
               {
                 "type": "null"
@@ -8819,7 +8721,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema193"
+                "$ref": "#/$defs/schema194"
               }
             ]
           },
@@ -8850,7 +8752,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema193"
+            "$ref": "#/$defs/schema194"
           },
           {
             "$ref": "#/$defs/schema70"
@@ -9128,7 +9030,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema221"
+                    "$ref": "#/$defs/schema220"
                   },
                   {
                     "type": "null"
@@ -9581,7 +9483,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema221"
+                    "$ref": "#/$defs/schema220"
                   },
                   {
                     "type": "null"
@@ -10309,6 +10211,64 @@
                   "podAffinity"
                 ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podAffinity": {
+                      "properties": {
+                        "preferredDuringSchedulingIgnoredDuringExecution": {
+                          "additionalProperties": {
+                            "properties": {
+                              "podAffinityTerm": {
+                                "properties": {
+                                  "labelSelector": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "labelSelector"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podAffinityTerm"
+                            ],
+                            "type": "object"
+                          },
+                          "items": {
+                            "properties": {
+                              "podAffinityTerm": {
+                                "properties": {
+                                  "labelSelector": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "labelSelector"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podAffinityTerm"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      },
+                      "required": [
+                        "preferredDuringSchedulingIgnoredDuringExecution"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podAffinity"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -10423,6 +10383,48 @@
                   "podAffinity"
                 ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "additionalProperties": {
+                            "properties": {
+                              "labelSelector": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labelSelector"
+                            ],
+                            "type": "object"
+                          },
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labelSelector"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      },
+                      "required": [
+                        "requiredDuringSchedulingIgnoredDuringExecution"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podAffinity"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -10480,6 +10482,64 @@
                   "podAntiAffinity"
                 ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "preferredDuringSchedulingIgnoredDuringExecution": {
+                          "additionalProperties": {
+                            "properties": {
+                              "podAffinityTerm": {
+                                "properties": {
+                                  "labelSelector": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "labelSelector"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podAffinityTerm"
+                            ],
+                            "type": "object"
+                          },
+                          "items": {
+                            "properties": {
+                              "podAffinityTerm": {
+                                "properties": {
+                                  "labelSelector": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "labelSelector"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podAffinityTerm"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      },
+                      "required": [
+                        "preferredDuringSchedulingIgnoredDuringExecution"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -10594,6 +10654,48 @@
                   "podAntiAffinity"
                 ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "additionalProperties": {
+                            "properties": {
+                              "labelSelector": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labelSelector"
+                            ],
+                            "type": "object"
+                          },
+                          "items": {
+                            "properties": {
+                              "labelSelector": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labelSelector"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      },
+                      "required": [
+                        "requiredDuringSchedulingIgnoredDuringExecution"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -10630,22 +10732,23 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema218"
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               ]
             },
             "requiredDuringSchedulingIgnoredDuringExecution": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/helm-truthy"
-                  },
-                  "then": {
-                    "$ref": "#/$defs/schema218"
-                  }
-                }
-              ]
+              "$ref": "#/$defs/schema127"
             }
           }
         },
@@ -10659,22 +10762,23 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema218"
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               ]
             },
             "requiredDuringSchedulingIgnoredDuringExecution": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/helm-truthy"
-                  },
-                  "then": {
-                    "$ref": "#/$defs/schema218"
-                  }
-                }
-              ]
+              "$ref": "#/$defs/schema127"
             }
           }
         }
@@ -10852,13 +10956,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema226"
+              "$ref": "#/$defs/schema225"
             },
             {
-              "$ref": "#/$defs/schema228"
+              "$ref": "#/$defs/schema227"
             },
             {
-              "$ref": "#/$defs/schema231"
+              "$ref": "#/$defs/schema230"
             },
             {
               "not": {
@@ -10877,7 +10981,7 @@
               "$ref": "#/$defs/schema111"
             },
             {
-              "$ref": "#/$defs/schema197"
+              "$ref": "#/$defs/schema198"
             },
             {
               "$ref": "#/$defs/schema215"
@@ -11433,7 +11537,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11499,7 +11603,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11558,7 +11662,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11617,7 +11721,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11669,7 +11773,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11716,7 +11820,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11763,7 +11867,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11822,7 +11926,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11851,7 +11955,7 @@
                             "$ref": "#/$defs/schema88"
                           },
                           "readOnlyRootFilesystem": {
-                            "$ref": "#/$defs/schema133"
+                            "$ref": "#/$defs/schema134"
                           },
                           "runAsGroup": {
                             "$ref": "#/$defs/schema83"
@@ -11928,7 +12032,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               }
             ]
           },
@@ -11944,7 +12048,7 @@
                       "port": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema185"
+                            "$ref": "#/$defs/schema186"
                           },
                           {
                             "$ref": "#/$defs/schema163"
@@ -12097,14 +12201,14 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/schema191"
+                      "$ref": "#/$defs/schema192"
                     },
                     "drop": {
                       "anyOf": [
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema225"
+                            "$ref": "#/$defs/schema224"
                           },
                           "type": "array"
                         },
@@ -12255,13 +12359,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema226"
+                  "$ref": "#/$defs/schema225"
                 },
                 {
-                  "$ref": "#/$defs/schema228"
+                  "$ref": "#/$defs/schema227"
                 },
                 {
-                  "$ref": "#/$defs/schema231"
+                  "$ref": "#/$defs/schema230"
                 },
                 {
                   "not": {
@@ -12280,7 +12384,7 @@
                   "$ref": "#/$defs/schema111"
                 },
                 {
-                  "$ref": "#/$defs/schema197"
+                  "$ref": "#/$defs/schema198"
                 },
                 {
                   "$ref": "#/$defs/schema215"
@@ -12307,7 +12411,7 @@
         "port": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema185"
+              "$ref": "#/$defs/schema186"
             },
             {
               "$ref": "#/$defs/schema163"
@@ -12524,13 +12628,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema226"
+                        "$ref": "#/$defs/schema225"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema231"
+                        "$ref": "#/$defs/schema230"
                       },
                       {
                         "not": {
@@ -12549,7 +12653,7 @@
                         "$ref": "#/$defs/schema111"
                       },
                       {
-                        "$ref": "#/$defs/schema197"
+                        "$ref": "#/$defs/schema198"
                       },
                       {
                         "$ref": "#/$defs/schema215"
@@ -12602,13 +12706,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema226"
+                  "$ref": "#/$defs/schema225"
                 },
                 {
-                  "$ref": "#/$defs/schema228"
+                  "$ref": "#/$defs/schema227"
                 },
                 {
-                  "$ref": "#/$defs/schema231"
+                  "$ref": "#/$defs/schema230"
                 },
                 {
                   "not": {
@@ -12627,7 +12731,7 @@
                   "$ref": "#/$defs/schema111"
                 },
                 {
-                  "$ref": "#/$defs/schema197"
+                  "$ref": "#/$defs/schema198"
                 },
                 {
                   "$ref": "#/$defs/schema215"
@@ -12675,7 +12779,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema221"
+                    "$ref": "#/$defs/schema220"
                   },
                   {
                     "not": {
@@ -12706,7 +12810,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema221"
+                    "$ref": "#/$defs/schema220"
                   },
                   {
                     "not": {

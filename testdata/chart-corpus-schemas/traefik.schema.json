@@ -275,7 +275,7 @@
                 "$ref": "#/$defs/schema101"
               },
               "capabilities": {
-                "$ref": "#/$defs/schema120"
+                "$ref": "#/$defs/schema121"
               },
               "privileged": {
                 "$ref": "#/$defs/schema185"
@@ -861,7 +861,21 @@
         "null"
       ]
     },
-    "schema118": {
+    "schema117": {
+      "additionalProperties": {},
+      "properties": {
+        "proxy": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "pattern": "@|experimental-|latest-|master|(?:^v?(0*[0-9]{1,20})(\\.0*[0-9]{1,20})?(\\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$)",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "schema119": {
       "additionalProperties": {},
       "properties": {
         "keepAliveMaxRequests": {},
@@ -948,7 +962,7 @@
         "null"
       ]
     },
-    "schema120": {
+    "schema121": {
       "additionalProperties": false,
       "description": "Adds and removes POSIX capabilities from running containers.",
       "properties": {
@@ -983,20 +997,6 @@
         "object",
         "null"
       ]
-    },
-    "schema121": {
-      "additionalProperties": {},
-      "properties": {
-        "proxy": {
-          "additionalProperties": {},
-          "properties": {
-            "tag": {
-              "pattern": "@|experimental-|latest-|master|(?:^v?([0-9]{1,20})(\\.[0-9]{1,20})?(\\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$)",
-              "type": "string"
-            }
-          }
-        }
-      }
     },
     "schema122": {
       "additionalProperties": false,
@@ -1568,11 +1568,11 @@
         }
       ]
     },
-    "schema149": {
+    "schema146": {
       "additionalProperties": {},
       "properties": {
         "tag": {
-          "pattern": "@|experimental-|latest-|master|(?:^v?([0-9]{1,20})(\\.[0-9]{1,20})?(\\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$)",
+          "pattern": "@|experimental-|latest-|master|(?:^v?(0*[0-9]{1,20})(\\.0*[0-9]{1,20})?(\\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$)",
           "type": "string"
         }
       }
@@ -1773,7 +1773,7 @@
         "type": "object"
       }
     },
-    "schema165": {
+    "schema166": {
       "additionalProperties": {},
       "properties": {
         "port": {
@@ -1785,11 +1785,11 @@
         }
       }
     },
-    "schema166": {
+    "schema167": {
       "description": "proxyFromEnvironment defines whether to use the proxy configuration defined by environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
       "type": "boolean"
     },
-    "schema167": {
+    "schema168": {
       "description": "CurvePreferences defines the preferred elliptic curves.\nMore info: https://doc.traefik.io/traefik/v3.7/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#curve-preferences",
       "items": {
         "type": "string"
@@ -28980,10 +28980,10 @@
             "properties": {
               "listeners": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema165"
+                  "$ref": "#/$defs/schema166"
                 },
                 "items": {
-                  "$ref": "#/$defs/schema165"
+                  "$ref": "#/$defs/schema166"
                 }
               }
             }
@@ -31398,7 +31398,7 @@
                 "description": "Required for Azure Marketplace integration.\nSee https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-container-technical-assets-kubernetes?tabs=linux,linux2#update-the-helm-chart",
                 "properties": {
                   "images": {
-                    "$ref": "#/$defs/schema121"
+                    "$ref": "#/$defs/schema117"
                   }
                 }
               }
@@ -44709,6 +44709,65 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "hub": {
+                "properties": {
+                  "token": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hub"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "hub": {
+                "properties": {
+                  "token": {
+                    "pattern": "^[\\s\\S]{65,}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hub"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hub": {
+            "additionalProperties": {},
+            "description": "Traefik Hub configuration. See https://doc.traefik.io/traefik-hub/",
+            "properties": {
+              "token": {
+                "$ref": "#/$defs/schema547"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "hub": {
             "properties": {
@@ -49025,7 +49084,7 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/schema149"
+            "$ref": "#/$defs/schema146"
           }
         }
       }
@@ -78459,7 +78518,7 @@
             "description": "Required for OCI Marketplace integration.\nSee https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Marketplace/understanding-helm-charts.htm",
             "properties": {
               "images": {
-                "$ref": "#/$defs/schema121"
+                "$ref": "#/$defs/schema117"
               }
             }
           }
@@ -102424,7 +102483,7 @@
                     "$ref": "#/$defs/schema101"
                   },
                   "capabilities": {
-                    "$ref": "#/$defs/schema120"
+                    "$ref": "#/$defs/schema121"
                   },
                   "privileged": {
                     "$ref": "#/$defs/schema185"
@@ -102910,7 +102969,7 @@
                   "curvePreferences": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema167"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
                         "not": {
@@ -103033,7 +103092,7 @@
                   "curvePreferences": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema167"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
                         "not": {
@@ -110671,7 +110730,7 @@
         "properties": {
           "versionOverride": {
             "description": "This field overrides the default version extracted from image.tag. Required when pinning by `image.digest`, since the version cannot be derived from a digest.",
-            "pattern": "^v?([0-9]{1,20})(\\.[0-9]{1,20})?(\\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+            "pattern": "^v?(0*[0-9]{1,20})(\\.0*[0-9]{1,20})?(\\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
             "type": "string"
           }
         }
@@ -120126,7 +120185,7 @@
                                         "$ref": "#/$defs/schema30"
                                       },
                                       "proxyFromEnvironment": {
-                                        "$ref": "#/$defs/schema166"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       "proxyUrl": {
                                         "$ref": "#/$defs/schema396"
@@ -120201,7 +120260,7 @@
                                     "$ref": "#/$defs/schema30"
                                   },
                                   "proxyFromEnvironment": {
-                                    "$ref": "#/$defs/schema166"
+                                    "$ref": "#/$defs/schema167"
                                   },
                                   "proxyUrl": {
                                     "$ref": "#/$defs/schema396"
@@ -121364,7 +121423,7 @@
                   "description": "Different target traefik port on the cluster, useful for IP type LB"
                 },
                 "transport": {
-                  "$ref": "#/$defs/schema118"
+                  "$ref": "#/$defs/schema119"
                 }
               },
               "type": "object"

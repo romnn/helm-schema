@@ -21,6 +21,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -163,6 +164,7 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -217,6 +219,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -259,6 +262,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -340,6 +344,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -412,6 +417,7 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -465,6 +471,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.host", "string")],
     );
@@ -528,6 +535,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         }]),
         &[("feature.enabled", "boolean"), ("feature.host", "string")],
     );
@@ -596,6 +604,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -614,6 +623,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         },
     ]);
 
@@ -682,6 +692,7 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
         range_key: false,
         omitted_members: Default::default(),
         digest: false,
+        merge_operand: false,
     }]);
 
     let schema = generate_values_schema(
@@ -746,6 +757,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -764,6 +776,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             range_key: false,
             omitted_members: Default::default(),
             digest: false,
+            merge_operand: false,
         },
     ]);
 
@@ -837,6 +850,7 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         range_key: false,
         omitted_members: Default::default(),
         digest: false,
+        merge_operand: false,
     }]);
 
     let schema = generate_values_schema(

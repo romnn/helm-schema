@@ -561,20 +561,37 @@ pub struct ContractValuePathFacts {
     pub has_unconditional_render_use: bool,
     pub has_self_guarded_render_use: bool,
     pub all_render_uses_self_guarded: bool,
+    /// Every render use either sits behind the path's own truthy selection or
+    /// cannot reject a Helm-falsy value at all: a `merge` operand's strict
+    /// map contract rides its fail implication (which keys on the call's live
+    /// gate), and a checksum digest row hashes re-rendered text without
+    /// consuming the raw value. Unlike `all_render_uses_self_guarded`, this
+    /// bit feeds ONLY the base falsy escape — never overlay-branch routing or
+    /// declared-default placement.
+    pub all_render_uses_falsy_tolerant: bool,
     pub has_self_range_guard_render_use: bool,
     pub is_nullable: bool,
 }
 
 impl ContractValuePathFacts {
-    pub fn record_render_use(&mut self, range_guarded: bool, self_guarded: Option<bool>) {
+    pub fn record_render_use(
+        &mut self,
+        range_guarded: bool,
+        self_guarded: Option<bool>,
+        falsy_tolerant: Option<bool>,
+    ) {
         if !self.has_render_use {
             self.all_render_uses_self_guarded = true;
+            self.all_render_uses_falsy_tolerant = true;
         }
         self.has_render_use = true;
         self.has_self_range_guard_render_use |= range_guarded;
         if let Some(self_guarded) = self_guarded {
             self.has_self_guarded_render_use |= self_guarded;
             self.all_render_uses_self_guarded &= self_guarded;
+        }
+        if let Some(falsy_tolerant) = falsy_tolerant {
+            self.all_render_uses_falsy_tolerant &= falsy_tolerant;
         }
     }
 
@@ -584,12 +601,14 @@ impl ContractValuePathFacts {
         }
         if !self.has_render_use {
             self.all_render_uses_self_guarded = true;
+            self.all_render_uses_falsy_tolerant = true;
         }
         self.has_render_use = true;
         self.has_unconditional_render_use |= other.has_unconditional_render_use;
         self.has_self_guarded_render_use |= other.has_self_guarded_render_use;
         self.has_self_range_guard_render_use |= other.has_self_range_guard_render_use;
         self.all_render_uses_self_guarded &= other.all_render_uses_self_guarded;
+        self.all_render_uses_falsy_tolerant &= other.all_render_uses_falsy_tolerant;
     }
 
     #[must_use]

@@ -16056,6 +16056,118 @@
                 "type": "object"
               },
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema546"
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "usePasswordFiles": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "usePasswordFiles"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "postgresql": {
+                          "properties": {
+                            "auth": {
+                              "properties": {
+                                "existingSecret": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingSecret"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "auth"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "postgresql"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema532"
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "enablePostgresUser": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enablePostgresUser"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "auth": {
+                    "properties": {
+                      "existingSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "existingSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "auth"
+                ],
+                "type": "object"
+              },
+              {
                 "not": {
                   "anyOf": [
                     {
@@ -29759,6 +29871,97 @@
     {
       "if": {
         "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema532"
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "enablePostgresUser": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enablePostgresUser"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema546"
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "usePasswordFiles": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "usePasswordFiles"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "auth": {
+                            "properties": {
+                              "existingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "existingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "auth"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
           {
             "allOf": [
               {

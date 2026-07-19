@@ -173,6 +173,7 @@ impl Default for PathSchemaFactsAccumulator {
             provider_schema_uses: Vec::new(),
             facts: ContractValuePathFacts {
                 all_render_uses_self_guarded: true,
+                all_render_uses_falsy_tolerant: true,
                 ..ContractValuePathFacts::default()
             },
             all_uses_nullable: true,
@@ -616,7 +617,17 @@ fn record_contract_use_conjunction(
             ..ContractValuePathFacts::default()
         };
         if !path_is_empty {
-            facts.record_render_use(self_range_guarded, Some(has_matching_self_guard));
+            // A merge operand's map contract keys on the call's live gate and
+            // rides the fail implication exactly; a digest row hashes derived
+            // text without consuming the raw value. Neither can reject a
+            // falsy input at the base, so the falsy escape survives them.
+            let falsy_tolerant_use =
+                merge_layered.is_some() || contract_use.digest || contract_use.merge_operand;
+            facts.record_render_use(
+                self_range_guarded,
+                Some(has_matching_self_guard),
+                Some(has_matching_self_guard || falsy_tolerant_use),
+            );
             facts.has_unconditional_render_use = predicates.is_empty();
         }
 
@@ -770,7 +781,7 @@ fn record_contract_use_conjunction(
         acc.referenced |= has_source;
         if !path_is_empty {
             let mut facts = ContractValuePathFacts::default();
-            facts.record_render_use(range_guard_paths.contains(&path), None);
+            facts.record_render_use(range_guard_paths.contains(&path), None, None);
             acc.facts.record_facts(facts);
         }
     }
@@ -1594,6 +1605,24 @@ fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
                 [] => None,
                 [guard] => Some(guard.clone()),
                 _ => Some(ConditionalGuard::AnyOf(guards)),
+            }
+        }
+        // A conjunction lowers all-or-nothing: each conjunct's
+        // strengthening strengthens the whole, but DROPPING a conjunct
+        // would weaken it (fire more often), so an undecodable conjunct
+        // vetoes the guard (cilium's `and (ge (int .Values.cluster.id)
+        // 128) (le (int .Values.cluster.id) 255)` ENI window arms).
+        Predicate::And(items) => {
+            let mut guards = items
+                .iter()
+                .map(fail_outer_guard)
+                .collect::<Option<Vec<_>>>()?;
+            guards.sort();
+            guards.dedup();
+            match guards.as_slice() {
+                [] => None,
+                [guard] => Some(guard.clone()),
+                _ => Some(ConditionalGuard::AllOf(guards)),
             }
         }
         _ => None,
@@ -2939,6 +2968,25 @@ fn terminal_clause_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
             [] => None,
             [guard] => Some(guard.clone()),
             _ => Some(ConditionalGuard::AnyOf(guards)),
+        };
+    }
+    // A conjunction strengthens all-or-nothing: each conjunct's sound
+    // strengthening strengthens the whole, while dropping one would widen
+    // it (cilium's `and (ge …) (le …)` cluster-id window arms inside the
+    // ENI check's disjunction).
+    if let Predicate::And(items) = predicate
+        && predicate.contains_approximation()
+    {
+        let mut guards = items
+            .iter()
+            .map(terminal_clause_guard)
+            .collect::<Option<Vec<_>>>()?;
+        guards.sort();
+        guards.dedup();
+        return match guards.as_slice() {
+            [] => None,
+            [guard] => Some(guard.clone()),
+            _ => Some(ConditionalGuard::AllOf(guards)),
         };
     }
     predicate_to_guard(predicate, None)

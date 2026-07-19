@@ -66,6 +66,7 @@ pub(crate) struct LowerScope<'a> {
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
     pub(crate) encoded_paths: &'a BTreeSet<String>,
     pub(crate) derived_text_paths: &'a BTreeSet<String>,
+    pub(crate) merge_operand_paths: &'a BTreeSet<String>,
     pub(crate) yaml_serialized_paths: &'a BTreeSet<String>,
     pub(crate) shape_erased_paths: &'a BTreeSet<String>,
     pub(crate) string_contract_paths: &'a BTreeSet<String>,
@@ -107,6 +108,7 @@ impl LowerScope<'_> {
                 merge_layers: None,
                 range_key: false,
                 digest: false,
+                merge_operand: self.merge_operand_paths.contains(path),
                 omitted_members: helper_meta
                     .map(|meta| meta.omitted_keys.clone())
                     .unwrap_or_default(),
@@ -287,7 +289,10 @@ pub(crate) fn lower_value(
             // with a selector built from `nameOverride`) supplies its OWN
             // literal keys, so keying its shadow on the referenced path
             // would scope sibling-layer members by the wrong value.
-            let identities: Option<Vec<String>> = layers.iter().map(layer_identity_path).collect();
+            let identities: Option<Vec<String>> = layers
+                .iter()
+                .map(AbstractValue::merge_layer_identity)
+                .collect();
             let mut out = Guarded::empty();
             for (position, layer) in layers.iter().enumerate() {
                 let mut lowered = lower_value(layer, kind, scope);
@@ -403,35 +408,6 @@ pub(crate) fn lower_value(
             out
         }
     }
-}
-
-/// The values path a merge layer's runtime value IS.
-///
-/// Accepts a direct path identity, possibly alternated with pathless
-/// literal arms (velero's `.Values.podSecurityContext | default dict`
-/// off-state).
-///
-/// A constructed container REFERENCING a path returns `None` — its keys
-/// are template-supplied (external-dns's `merge $defaultSelector
-/// .podAffinityTerm` selector built from `nameOverride`), so keying the
-/// merge shadow on the referenced path would scope sibling-layer members
-/// by the wrong value.
-fn layer_identity_path(layer: &AbstractValue) -> Option<String> {
-    fn arms_are_identity_or_literal(value: &AbstractValue) -> bool {
-        match value {
-            AbstractValue::ValuesPath(_)
-            | AbstractValue::JsonDecodedPath(_)
-            | AbstractValue::OutputPath(_, _) => true,
-            // A nested merge of identities keeps the lineage: airflow's
-            // per-set worker context resolves `.Values.workers.x` to
-            // `MergedLayers([overwrite, workers.x])`, which still IS the
-            // `workers.x` value wherever the overwrite abstains.
-            AbstractValue::Choice(choices) => choices.iter().all(arms_are_identity_or_literal),
-            AbstractValue::MergedLayers(layers) => layers.iter().all(arms_are_identity_or_literal),
-            other => other.paths().is_empty(),
-        }
-    }
-    arms_are_identity_or_literal(layer).then(|| layer.unique_path())?
 }
 
 fn lower_entries(

@@ -175,18 +175,28 @@ pub fn strict_parser_operand_pattern(
             // leading zero (`3.1.0-01` aborts while `3.1.0-rc.1` renders),
             // so the prerelease alternatives spell that rule out. Build
             // metadata stays unvalidated. Core components parse through
-            // `ParseUint(…, 10, 64)`: every value up to 20 digits may fit
-            // uint64, while 21+ digits certainly overflow and abort, so the
-            // component grammar is bounded there (still a superset of the
-            // accepted language).
+            // `ParseUint(…, 10, 64)`, which overflow-checks the VALUE, not
+            // the spelling: leading zeros never overflow, so the bound
+            // applies to the significant digits only — up to 20 may fit
+            // uint64, while 21+ certainly overflow and abort (still a
+            // superset of the accepted language).
             Some((
                 argument_count - 1,
-                r"^v?([0-9]{1,20})(\.[0-9]{1,20})?(\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+                r"^v?(0*[0-9]{1,20})(\.0*[0-9]{1,20})?(\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
             ))
         }
+        // `time.ParseDuration` overflow-checks each term twice: the raw
+        // digit scan caps int64 (~19 significant digits) and the unit
+        // scaling caps int64 NANOSECONDS, so a term whose significant
+        // integer digits exceed the unit's may-fit count certainly aborts
+        // (2562047h fits, 8-digit hour terms cannot). Leading zeros carry
+        // no value and stay unbounded, as do fractional digits (the
+        // fraction scan drops precision instead of overflowing). Multi-term
+        // sums may still overflow inside the bounds; the pattern stays a
+        // superset of the accepted language.
         "mustDateModify" if argument_count == 2 => Some((
             0,
-            r"^[+-]?(0|(([0-9]+(\.[0-9]*)?|\.[0-9]+)(ns|us|µs|μs|ms|s|m|h))+)$",
+            r"^[+-]?(0|((0*[0-9]{1,19}(\.[0-9]*)?|\.[0-9]+)ns|(0*[0-9]{1,16}(\.[0-9]*)?|\.[0-9]+)(us|µs|μs)|(0*[0-9]{1,13}(\.[0-9]*)?|\.[0-9]+)ms|(0*[0-9]{1,10}(\.[0-9]*)?|\.[0-9]+)s|(0*[0-9]{1,9}(\.[0-9]*)?|\.[0-9]+)m|(0*[0-9]{1,7}(\.[0-9]*)?|\.[0-9]+)h)+)$",
         )),
         "urlParse" if argument_count == 1 => {
             Some((0, r"^([^\u0000-\u001F\u007F%]|%[0-9A-Fa-f]{2})*$"))

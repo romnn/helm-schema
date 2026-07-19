@@ -2423,6 +2423,61 @@ fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> color_eyre::
     )
 }
 
+/// cilium's validators bound integer domains through `ge`/`le` chains: the
+/// envoy `baseID` window rejects both sides via the De Morgan'd
+/// `not (and (ge …) (le …))` fail, and the ENI/AlibabaCloud policy-drop
+/// check rejects a cluster.id inside either affected window while the
+/// literal `extraConfig` opt-out and the no-ENI configuration stay open
+/// (all polarities verified under `helm template`).
+#[test]
+fn cilium_inclusive_comparator_chains_bound_integer_domains() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::rejected(
+                "negative envoy baseID",
+                "/envoy/baseID",
+                json!({ "envoy": { "baseID": -5 } }),
+            ),
+            SemanticCase::rejected(
+                "envoy baseID above 4294967295",
+                "/envoy/baseID",
+                json!({ "envoy": { "baseID": 4_294_967_296_i64 } }),
+            ),
+            SemanticCase::accepted(
+                "envoy baseID inside the window",
+                json!({ "envoy": { "baseID": 42 } }),
+            ),
+            SemanticCase::rejected(
+                "cluster id in the 128-255 window under ENI",
+                "",
+                json!({ "cluster": { "id": 200, "name": "c1" }, "eni": { "enabled": true } }),
+            ),
+            SemanticCase::rejected(
+                "cluster id in the 384-511 window under AlibabaCloud",
+                "",
+                json!({ "cluster": { "id": 450, "name": "c1" }, "alibabacloud": { "enabled": true } }),
+            ),
+            SemanticCase::accepted(
+                "cluster id below the window under ENI",
+                json!({ "cluster": { "id": 127, "name": "c1" }, "eni": { "enabled": true } }),
+            ),
+            SemanticCase::accepted(
+                "affected cluster id without an affected datapath",
+                json!({ "cluster": { "id": 200, "name": "c1" } }),
+            ),
+            SemanticCase::accepted(
+                "affected cluster id with the unsafe-skb opt-out",
+                json!({
+                    "cluster": { "id": 200, "name": "c1" },
+                    "eni": { "enabled": true },
+                    "extraConfig": { "allow-unsafe-policy-skb-usage": "true" }
+                }),
+            ),
+        ],
+    )
+}
+
 /// airflow's `check-values.yaml` terminates below the minimum supported
 /// version through `semverCompare "<2.11.0"`; the comparator's exact
 /// pattern subset now reaches the terminal clause.
@@ -2625,6 +2680,45 @@ fn airflow_checksum_annotations_do_not_string_type_root_labels() -> color_eyre::
                 "truthy scalar root labels terminate the mustMerge sites",
                 "/labels",
                 json!({ "labels": "oops" }),
+            ),
+        ],
+    )
+}
+
+/// airflow renders a Helm-falsy root `labels` with default values: every
+/// `with .Values.labels` guard skips it, and every `mustMerge` site sits
+/// behind `if or .Values.labels .Values.<component>.labels`, whose gate is
+/// dead while both operands are falsy. The strict map contract binds only
+/// when a partner makes the gate live — `mustMerge`'s typed
+/// `map[string]any` parameters then abort on any non-map operand
+/// (helm-verified both ways) — so the falsy family must stay open at the
+/// base while the or-gated fail arm keeps the live-gate combination
+/// rejected.
+#[test]
+fn airflow_falsy_root_labels_render_while_live_merge_gates_bind() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted(
+                "empty-string root labels leave every merge gate dead",
+                json!({ "labels": "" }),
+            ),
+            SemanticCase::accepted(
+                "empty-list root labels leave every merge gate dead",
+                json!({ "labels": [] }),
+            ),
+            SemanticCase::accepted(
+                "false root labels leave every merge gate dead",
+                json!({ "labels": false }),
+            ),
+            SemanticCase::rejected(
+                "a truthy scheduler partner makes the merge gate live, so a \
+                 falsy non-map root labels aborts mustMerge",
+                "/labels",
+                json!({
+                    "labels": "",
+                    "scheduler": { "labels": { "team": "data" } }
+                }),
             ),
         ],
     )
