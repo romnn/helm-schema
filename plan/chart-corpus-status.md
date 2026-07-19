@@ -1,11 +1,15 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-19 after two concurrent rounds: a fresh
-chart-source versus generated-schema audit (tenth round — every reopened or
-new item below has a concrete bad case plus a good Helm/provider control)
-and the open-items implementation round (eleventh round — F106 implemented,
-the F31/F74 comparator/duration halves landed, the F80 residual attributed
-to two named machinery gaps). Green corpus tests are a baseline, not
+Last reconciled 2026-07-19 after the residuals round (twelfth round —
+F17's toString preimages, F74's fallback selection, F87's exact IP
+language, F102's recursive lock gate, F109's member alternatives, and
+F56's collection map lane landed; each with a minimal gen/ast reproducer
+beside its real-chart pin). The tenth round was a fresh chart-source
+versus generated-schema audit (every reopened or new item below has a
+concrete bad case plus a good Helm/provider control); the eleventh was the
+open-items implementation round (F106 implemented, the F31/F74
+comparator/duration halves landed, the F80 residual attributed to two
+named machinery gaps). Green corpus tests are a baseline, not
 completion evidence. Where a finding has both a completed bounded part and a
 remainder, the completed part is listed below with a "(bounded)" marker and
 the residual is classified separately. Per-finding history lives in
@@ -32,7 +36,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   downstream chart revision is gone; the structural regression is fixed)
 - F16 corpus fixtures leaking the developer's CRD catalog cache
 - F17 stringification transfer functions rejecting values Helm accepts
-  (bounded; total-`toString` literal preimages remain In progress)
+  (bounded; the total-`toString` literal preimages landed in the twelfth
+  round — see its entry below; only the coalesce-default rescue of
+  empty/null spellings remains In progress)
 - F18 shape-erasing uses deleting independent strict uses
 - F19 `printf` conflating the format parameter with data parameters
 - F20 local-guard runtime contracts binding path-wide (loki `kindIs` arm)
@@ -124,7 +130,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F86 strict Boolean call signatures incl. architecture partitions and
   `IntGt` sound subsets
 - F87 builtin signatures constraining nested collection element kinds
-  (bounded; exact IPv6 parser domains remain In progress)
+  (the exact IPv6 parser language landed in the twelfth round — see its
+  entry below)
 - F88 derived literal-membership and `typeOf`→`regexMatch` dispatch guards,
   including provider intersection on the selected lane
 - F89 statically constructed finite `tpl` programs
@@ -376,14 +383,86 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `0*[0-9]{1,20}` per component — `ParseUint` overflow-checks the value,
   so the raw length cap was a latent false rejection on zero-padded
   spellings
+- F17 total-`toString` literal preimages (twelfth round): an equality whose
+  subject is the exact `%v` rendering of a path projects its literal back
+  through the `toString` preimage — `"true"`/`"false"` admit the raw
+  Booleans, `"<nil>"` admits null, and clean sub-million decimal spellings
+  admit the number (larger magnitudes keep the string alone: float64 `%v`
+  switches to exponent form at 1e6). The image is tracked precisely: a new
+  `Effects::stringified_paths` channel records `toString` over a pure
+  identity operand (never `quote`/`join`/`len`/casts, whose text differs),
+  rides `HelperOutputMeta::stringified` through binding meta and value
+  arms (`mark_stringified_identities`), and `eq`/`ne` decoding expands
+  `Eq`/`NotEq` into the preimage disjunction/conjunction; a direct
+  `toString <selector>` call is now an admitted equality subject. cilium
+  accepts raw `kubeProxyReplacement: true`/`false` while `strict` and `1`
+  still abort (helm-verified). Pinned by
+  `cilium_kube_proxy_replacement_accepts_raw_booleans` (CLI) and
+  `stringified_equality_binds_the_tostring_preimage` (gen)
+- F74 datadog empty-tag fallback selection (twelfth round): an `if`-arm
+  that reassigns a local to ANOTHER source path (`if not $imageTag {
+  $imageTag = include "get-agent-version" . }`) now severs the entry
+  identity like a literal sentinel — the kept raw arm gains a capture
+  exclusion whose sound subset decodes falsiness headers to the path's
+  truthiness — and `stringified` identity arms survive the `toString`
+  reassignment in parser-operand collection, so the semver domain binds
+  only truthy raw tags. The gateway CI values' empty tag and a null tag
+  render through the agent-version fallback while `junk` still aborts
+  (helm-verified). Pinned by
+  `datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback`
+  (CLI) and
+  `falsy_reassignment_to_another_source_scopes_the_parser_to_truthy_values`
+  (gen)
+- F87 exact IP element language (twelfth round): the
+  `genSignedCert`/`genSelfSignedCert` ip-list item pattern is now
+  `net.ParseIP`'s exact accepted language — dotted-quad IPv4 without
+  leading zeros plus RFC 4291 IPv6 under Go's rules (1-4 hex digits per
+  group, one `::` expanding at least one zero group, embedded quads only
+  as the final four bytes, no zones), with the v4-embedded left/right
+  splits enumerated. Fuzz-differentialed against `net.ParseIP` over ~56k
+  candidates and cross-checked against `helm template`; a bare `:` and a
+  zoned address now reject while every compressed/mixed form renders.
+  Pinned by `ip_item_pattern_is_the_parse_ip_language` (ast) and the
+  extended `cilium_certificate_sans_require_string_members` (CLI)
+- F102 recursive dependency-lock discovery (twelfth round): the corpus
+  integrity gate walks every `charts/` subdirectory as a chart root of its
+  own, so nested vendored locks (airflow's postgresql, signoz's
+  clickhouse → zookeeper chain) are checked; pinned by
+  `nested_dependency_locks_are_discovered`
+- F109 local-plugin alternative shapes (twelfth round): a fail whose test
+  conjoins several member conditions now negates to the DISJUNCTION of
+  their negations — `FailValueRequirement::AnyOf` alternatives (plus the
+  new `FieldEquals` for `eq $plugin.type "…"` dispatch arms holding),
+  emitted as `{type: object, anyOf: […]}` so property carriers merge
+  conjunctively. Two union-combiner defects surfaced and were fixed:
+  `merge_object_schemas` treated an alternation-only object as
+  unstructured (replacing it wholesale) and silently dropped the other
+  side's sibling `anyOf`. traefik's legacy-hostPath and inlinePlugin
+  shapes now render, an unknown `type` (even beside a hostPath) and a
+  member with neither field reject — all helm-verified. Pinned by
+  `traefik_local_plugins_keep_their_alternative_shapes` (CLI) and
+  `multi_test_fail_negations_lower_as_member_alternatives` (gen)
+- F56 self-ranged collection map lane (twelfth round, bounded): a
+  self-ranged Scalar row at an array provider slot
+  (`ForeignSchemaRestriction::ScalarCollection`) keeps an OPEN map lane
+  beside the array rewrite — `range` iterates maps, and the loop body may
+  render values as partial text, so an array-only type falsely rejected
+  map-shaped sources (traefik's `resourceAttributes` flag loops at the
+  container args slot; the direct and nested-include lanes are pinned by
+  `scalar_collection_restriction_keeps_the_map_lane_beside_the_array`).
+  The real chart's `template: {{ include "traefik.podTemplate" . |
+  fromYaml | toYaml | nindent 4 }}` lane remains In progress below
 
 ## In progress
 
-- **F17 residual — total-string literal preimages.** Cilium documents
-  `kubeProxyReplacement` as string-or-Boolean and compares its `toString`
-  result with `"true"`/`"false"`; the schema rejects both raw Booleans while
-  Helm renders them. Project derived literal membership back through total
-  stringification; the two string spellings are the passing controls.
+- **F17 residual — coalesce-default rescue of empty spellings.** The
+  Boolean preimages landed (twelfth round), but cilium's chain rescues an
+  EMPTY stringification through `coalesce $stringValueKPR
+  $defaultKubeProxyReplacement` (default always `"false"`): helm renders
+  `kubeProxyReplacement: ""` and null while the schema still rejects both.
+  Exactness needs the equality decode to see the constant default of the
+  coalesce chain — when the literal equals the default, the preimage gains
+  the empty/nil spellings.
 - **F24 residual — terminal truthiness after total stringification.** Cilium's
   removed `proxy.prometheus.enabled` guard stringifies the `dig` result before
   testing it. The schema accepts raw `false`, but Helm sees truthy `"false"`
@@ -410,21 +489,23 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `2`; Helm aborts each, while `native`, `tunnel`, `Cluster`/`Local`, and
   replicas `1` respectively render. Preserve the nested guards through
   `default` and project the guarded `toString` equality to its raw preimage.
-- **F56 residual — provider evidence leaking through scalar text.**
-  Chart-authored OAuth2 Proxy and Argo CD redis-ha values put scalar members
-  under block-scalar config text, and Traefik quotes
-  `tracing.otlp.resourceAttributes` members into command arguments. The
-  generated schemas type those members as `null` and reject the charts' own
-  values, while Helm plus strict provider validation succeeds. Scalar text
-  fragments must not inherit the outer ConfigMap/argument provider shape.
-- **F74 residual — parser exactness and fallback selection.** Exact URL
-  authority and Datadog's derived `toString | trimSuffix "-jmx"` semver
-  preimage remain open (per-term duration overflow bounds landed in the
-  eleventh round; multi-term sums stay a superset by design — a sum bound
-  is not regex-representable). Datadog's own OTEL gateway CI values add
-  the opposite selection bug: an empty image tag is rejected by the raw
-  semver arm although the helper replaces it with the agent-version
-  fallback; an explicit valid tag is the passing control.
+- **F56 residual — the fromYaml|toYaml roundtrip lane.** The args-slot
+  collection lane landed (twelfth round), but traefik still rejects
+  `tracing.otlp.resourceAttributes` members: the deployment routes the pod
+  template through `include "traefik.podTemplate" . | fromYaml | toYaml |
+  nindent 4`, and in THAT lane the member rows anchor one level short (at
+  `containers[*]` instead of `containers[*].args[*]`), get provider-typed
+  by the Container fragment, and scalar-restrict to `type: null`. Fix the
+  roundtrip lane's row anchoring so partial-scalar rows keep their depth.
+  The OAuth2 Proxy and Argo CD redis-ha block-scalar claims did not
+  reproduce against the current tree (both charts' own values accept);
+  re-verify them with concrete instances before treating them as open.
+- **F74 residual — parser exactness.** Exact URL authority and Datadog's
+  derived `toString | trimSuffix "-jmx"` semver preimage remain open
+  (per-term duration overflow bounds landed in the eleventh round;
+  multi-term sums stay a superset by design — a sum bound is not
+  regex-representable; the OTEL gateway empty-tag fallback selection
+  landed in the twelfth round).
 - **F80 residual — merge selection and provider attribution.** Airflow's
   worker-family `securityContext` still loses provider typing under its merged
   context — now attributed exactly to two stacked gaps (eleventh round):
@@ -452,11 +533,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   renders null `name`/`value`. Strict provider validation rejects both, while
   populated controls pass. Back-propagate required leaves through ranged
   dynamic-map and array members.
-- **F102 residual — nested dependency-lock coverage.** The integrity test
-  scans only immediate corpus chart roots although nested vendored charts in
-  Airflow, Datadog, Kyverno, MetalLB, and SigNoz carry their own locks. The
-  current nested locks match, but deleting or drifting one is invisible to the
-  gate. Discover locked charts recursively while avoiding duplicate traversal.
 - **F104 residual — wrapper consumers before tree rewrite.** NATS accepts a
   `$tplYaml` wrapper at `nameOverride`, but `nats.fullname` calls `trunc` on
   the sentinel map before the rewrite and Helm aborts. The raw string control
@@ -476,12 +552,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   renders. Infer object items, the operation enum, JSON-pointer lexical rules,
   and the per-operation `value`/`from` requirements; pointer existence may
   remain unknown.
-- **F109 — helper-return alternatives collapsed into one object shape.**
-  Traefik's local-plugin helper has mutually exclusive legacy-hostPath and
-  inline-plugin return arms. Both documented valid shapes are rejected, while
-  an unknown `type` passes the schema and aborts Helm because the generated
-  definition conjoins `hostPath` and `type`. Preserve the helper's per-arm
-  requirements and `type` literal domain instead of intersecting the arms.
 
 ## Rejected (invalid or won't fix by design)
 

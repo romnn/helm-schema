@@ -7763,3 +7763,127 @@ old-versus-new acceptance probes over every changed chart's top-level
 keys show zero tightenings and zero widenings outside airflow's intended
 falsy-family acceptances; `task lint` and the downstream luup2
 `check:local` run clean.
+
+## Residuals round (2026-07-19, twelfth round)
+
+Directive: fix the remaining open residuals and new findings judged valid.
+Six items landed, each with a minimal reproducer beside its real-chart pin;
+the rest of the open ledger was either advanced with a sharper diagnosis or
+left explicitly open.
+
+### F17 — total-`toString` literal preimages (landed)
+
+Helm-verified that cilium renders raw `kubeProxyReplacement: true`/`false`
+(and aborts `strict`, `disabled`, `1`) through the configmap's
+`toString → "<nil>"→"" → coalesce → ne "true"/"false"` chain, while the
+generated fail arm rejected the raw Booleans. An equality whose subject is
+the exact `%v` rendering of a path now projects its literal through the
+`toString` preimage: a precise `Effects::stringified_paths` channel records
+`toString` over a pure identity operand — never `quote`/`join`/`len`/casts,
+whose text differs — rides `HelperOutputMeta::stringified` through binding
+meta, and `eq`/`ne` decoding expands `Eq`/`NotEq` into the preimage
+disjunction/conjunction (`"true"`→raw `true`, `"<nil>"`→null, clean
+sub-million decimals→the number; float64 `%v` flips to exponent form at
+1e6, so larger spellings abstain). Direct `toString <selector>` calls are
+now admitted equality subjects. A joined raw-identity branch keeps the flag
+soundly: Go's `eq` aborts on type-mismatched operands, so the extra
+preimage members only widen there. Discovered residual: the chain's
+coalesce default rescues `""`/null (helm renders; schema still rejects) —
+recorded as the remaining F17 item. Pins:
+`cilium_kube_proxy_replacement_accepts_raw_booleans` (CLI),
+`stringified_equality_binds_the_tostring_preimage` (gen).
+
+### F74 — datadog empty-tag fallback selection (landed)
+
+The gateway helper replaces a FALSY `otelAgentGateway.image.tag` with the
+agent version before `semverCompare`; the schema rejected the CI values'
+empty tag. Two mechanisms landed: (a) `apply_reassignment_exclusions` now
+severs the entry identity when an arm rebinds the local to ANOTHER source
+path (not only to values-independent content), with descendant traversal
+advances excluded, and `header_negation_sound_subset` decodes a falsiness
+header (`if not $tag`) to the path's truthiness; (b) the raw arm wrapped in
+exclusion meta survives the later `| toString` reassignment in
+parser-operand identity collection through the new value-level
+`stringified` mark (`mark_stringified_identities` at the `toString` eval).
+Empty and null tags now render through the fallback, `junk` still aborts —
+helm-verified. Pins:
+`datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback` (CLI),
+`falsy_reassignment_to_another_source_scopes_the_parser_to_truthy_values`
+(gen). The earlier `latest`-sentinel pin still passes.
+
+### F87 — exact IP element language (landed)
+
+Replaced the IPv6 textual superset with `net.ParseIP`'s exact language:
+dotted-quad IPv4 without leading zeros, RFC 4291 IPv6 under Go's rules
+(1-4 hex digits per group, at most one `::` expanding at least one zero
+group, embedded dotted quads only as the final four bytes, no zones), the
+v4-embedded left/right group splits enumerated because a regex cannot count
+the eight-group budget globally. Verified with a `net.ParseIP` oracle
+cross-checked against `helm template` on 34 boundary probes, then
+fuzz-differentialed over ~56k adversarial candidates — zero mismatches.
+Pins: `ip_item_pattern_is_the_parse_ip_language` (ast), extended
+`cilium_certificate_sans_require_string_members` (CLI: bare `:` and zoned
+addresses reject, compressed and v4-embedded forms accept).
+
+### F102 — recursive dependency-lock discovery (landed)
+
+The integrity gate now walks every `charts/` subdirectory as a chart root
+(airflow's postgresql, kyverno's reports-server → postgresql, signoz's
+clickhouse → zookeeper chains), each visited once; missing-lock reporting
+keys on corpus-relative paths. Pin: `nested_dependency_locks_are_discovered`.
+
+### F109 — local-plugin alternative shapes (landed)
+
+traefik's `getLocalPluginType` fails unless a member has an enum `type` OR
+a legacy truthy `hostPath`; the generated member conjoined
+`required: [hostPath, type]`, rejecting both documented shapes, and the
+unknown-type eq-chain abstained entirely. The member-test lowering now
+negates a multi-conjunct fail to the DISJUNCTION of the per-test negations
+— `FailValueRequirement::AnyOf`, with the new `FieldEquals` decoding
+`eq $plugin.type "…"` holding (presence rides Go's nil-aborting `eq`) —
+emitted as `{type: object, anyOf: […]}` for field-based alternatives so
+property carriers merge conjunctively. Two union-combiner defects fixed en
+route: `merge_object_schemas` treated an alternation-only object as
+unstructured (wholesale replacement by the other side) and dropped the
+other side's sibling `anyOf`; both now preserve the alternation. All six
+polarities helm-verified on the real chart (localPath's volume correlation
+stays a sound abstention). Pins:
+`traefik_local_plugins_keep_their_alternative_shapes` (CLI),
+`multi_test_fail_negations_lower_as_member_alternatives` (gen).
+
+### F56 — self-ranged collection map lane (landed, bounded)
+
+traefik's `resourceAttributes` flag loops render map members into container
+args; the self-ranged Scalar row's `ScalarCollection` provider restriction
+rewrote the args slot to an ARRAY-only type, rejecting the map-shaped
+source outright (reproduced in both the direct-include and nested-include
+lanes; the plain `with`-header lane tolerated it only by accident of the
+`With` marker). The restriction now keeps an OPEN map lane beside the array
+rewrite — open because the loop body may render values as partial text,
+where the slot's item schema claims nothing about raw member values. Pin:
+`scalar_collection_restriction_keeps_the_map_lane_beside_the_array` (gen);
+gen fixtures for signoz-zookeeper and zalando-ui-ingress absorb the
+widened arms. Remaining (ledger): the real chart's
+`include "traefik.podTemplate" . | fromYaml | toYaml` lane anchors the
+member rows one level short (`containers[*]`), provider-types them by the
+Container fragment, and scalar-restricts to `type: null` — the roundtrip
+lane's row anchoring is the open piece. The audit's OAuth2 Proxy and
+Argo CD block-scalar claims did not reproduce (own values accept).
+
+### Verified but left open
+
+F98's promtail half (`extraPorts.audit: {}` accepts; the Service `port`
+renders null) and the datadog `7.60.0` helper-terminal gap (F107 family)
+were re-verified against helm as real widenings; F24/F28/F51/F31 (radix)/
+F32/F104/F107/F108/F80 stay open per the status ledger.
+
+### Validation
+
+Full library suites green after each landing (`helm-schema-gen` 415,
+`helm-schema-ir`, `helm-schema-core`, `helm-schema-ast` including the new
+pattern truth table); the complete `chart_reaudit` suite passes with every
+prior pin intact; 36 corpus fixtures regenerated (most drift is the
+ScalarCollection map-lane widening plus its `$defs` renumbering) with
+per-chart old-versus-new acceptance probes over every top-level key
+showing zero tightenings, and zero widenings except cilium's intended
+raw-Boolean `kubeProxyReplacement` acceptance.
