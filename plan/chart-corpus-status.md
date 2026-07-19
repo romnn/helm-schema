@@ -1,11 +1,15 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-19 after the ranged-required round (fourteenth
-round — the F56 block-scalar adopted-include lane, the complete F31
-coercion preimage family with the kyverno `template`-helper terminal,
-F98's ranged-member required-leaf projection, and F108's bounded
-direct-range enum lane landed; each with a minimal gen reproducer
-beside its real-chart pin). The thirteenth was the guard-exactness
+Last reconciled 2026-07-19 after the helper-terminal round (fifteenth
+round — F107's helper-terminal decode lanes with the oauth2-proxy and
+datadog chart flips, F32's defaulted-pipeline and negated-disjunction
+decodes with the cilium flips, and the member-access fanout regression
+fix that keeps unconditional navigation typing immune to the guard-set
+cap; each with a minimal gen reproducer beside its real-chart pin).
+The fourteenth was the ranged-required round (the F56 block-scalar
+adopted-include lane, the complete F31 coercion preimage family with
+the kyverno `template`-helper terminal, F98's ranged-member
+required-leaf projection, and F108's bounded direct-range enum lane). The thirteenth was the guard-exactness
 round (F17's coalesce-default rescue, F24's stringified-truthiness
 terminals with the strict `HasKey` guard, F56's roundtrip partial-text
 discipline). The twelfth was the residuals round (F17's
@@ -63,8 +67,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F29 condition transform collection ignoring pipeline order
 - F30 Helm `required` termination as schema evidence (incl. dynamic
   `extraEnvConfigMaps` members)
-- F32 cross-path Boolean `fail` implications (bounded; nested/defaulted and
-  derived-text implications remain In progress)
+- F32 cross-path Boolean `fail` implications (nested/defaulted and
+  negated-disjunction implications landed in the fifteenth round — see
+  its entry below)
 - F33 finite `.Files.Get (printf …)` selectors
 - F34 literal-key `dig` navigation
 - F35 helper-computed type alternatives behind declared defaults
@@ -532,6 +537,64 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `ranged_not_equals_chains_negate_to_the_field_enum` (gen). The nats
   jsonpatch grammar itself stays In progress below — its fails ride a
   helper-scope range whose captures lack member identities.
+- F107 helper-terminal decode lanes (fifteenth round, bounded): four
+  condition shapes that abstained helper-terminal captures now decode
+  exactly. (1) `eq (include "h" .) "true"` where the helper body is ONE
+  boolean-valued expression synthesizes the two-arm literal dispatch
+  `if <expr>` → "true" / else → "false" (oauth2-proxy's
+  `redis.enabled` helper). (2) `eq (default D X) V` over a literal
+  fallback binds X exactly (V == D also admits every Helm-falsy X; a
+  truthy V ≠ D is the plain equality; a falsy V ≠ D never holds) —
+  oauth2-proxy's `clientType`/"standalone" caller gate. (3) Scalar-dot
+  helper terminals (`include "verify-…" .grpc.endpoint`) already bound
+  the caller path; `hasPrefix`/`hasSuffix` over a values-path subject
+  now lower as anchored `MatchesPattern` tests so datadog's
+  `hasPrefix "unix:" .` terminal rejects beside the existing
+  `regexMatch ":[0-9]+$"` port test. (4) `X | toString` pipelines
+  decode like the `toString X` call form in equality position (vault's
+  redundancy-zone gates, cilium's operator update-strategy arm). Chart
+  flips: oauth2-proxy standalone Redis without `connectionUrl` rejects
+  while the explicit-url and enabled-subchart variants render
+  (`oauth2_proxy_standalone_redis_requires_a_connection_url`);
+  datadog's `unix:`-with-port and portless OTLP gRPC endpoints reject
+  under the apiKey/enabled gates while host:port and the disabled
+  receiver stay open
+  (`datadog_otlp_grpc_endpoints_reject_the_unix_protocol`). Gen
+  reproducers: `helper_terminals_keep_caller_guards_and_boolean_include_arms`,
+  `scalar_dot_helper_terminals_bind_the_caller_argument_path`,
+  `pipeline_tostring_gates_decode_in_helper_terminals`. The vault/KPS
+  chart-level residuals stay In progress below.
+- F32 defaulted-pipeline and negated-disjunction tests (fifteenth
+  round): cilium's provider-mode gates decode end to end.
+  `ne (.Values.routingMode | default "native") "native"` rides the
+  default-eq lane, so GKE+tunnel and AKS-BYOCNI+native reject while the
+  unset and matching spellings render; `not (or (eq P "Cluster")
+  (eq P "Local"))` now negates by De Morgan over EXACT per-disjunct
+  decodes (faithfulness-gated so truthy stand-ins are never negated),
+  keeping the conjunction flat for guard extraction — the ingress and
+  Gateway API `externalTrafficPolicy` domains reject unlisted values.
+  The audited kvstore-replicas case was adjudicated already-correct:
+  replicas `1` with the default `identityAllocationMode=crd` ALSO
+  aborts Helm (line 201's identity-mode check), so both rejections
+  stand, and the fully valid combination (kvstore identity mode,
+  replicas 1, placeholder config) renders and validates. Pinned by
+  `cilium_provider_modes_pin_routing_and_traffic_policy_domains` (CLI)
+  and `defaulted_pipeline_and_negated_disjunction_tests_decode` (gen).
+- Member-access fanout regression fix (fifteenth round): decoding MORE
+  guards must never lose an unconditional navigation's typing. The
+  member-access guard-set cap previously skipped a whole path once its
+  access count passed the fanout bound — with the new decode lanes,
+  paths like oauth2-proxy's `sessionStorage` crossed the bound and lost
+  the unconditional `type: object` the chart's unguarded
+  `.Values.sessionStorage.type` navigation requires (helm errors on a
+  scalar host). The cap now bounds only the guarded-only ANY-OF folds;
+  an unconditional access (empty guard set) binds regardless. The
+  rescue re-types 27 corpus charts' unconditionally navigated hosts
+  (airflow `dags.gitSync`, datadog `providers.gke`, harbor `redis`,
+  kyverno `global`, traefik `providers.*`, …) — twelve helm spot
+  checks all reject the probes, and the falsy sub-class is pinned by
+  datadog's `agent-services.yaml` unguarded deep navigation
+  (`can't evaluate field receiver` on `otlp: false`).
 - F56 self-ranged collection map lane (twelfth round, bounded): a
   self-ranged Scalar row at an array provider slot
   (`ForeignSchemaRestriction::ScalarCollection`) keeps an OPEN map lane
@@ -619,12 +682,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   reduction) leak them into document-level terminal clauses that reject
   valid documents. Member identities must ride helper-range captures
   before the F108 grammar or the accumulator lanes can land.
-- **F32 residual — nested cross-path/default implications.** Cilium accepts
-  GKE+tunnel and AKS-BYOCNI+native routing, invalid ingress/Gateway API
-  `externalTrafficPolicy`, and external kvstore mode with apiserver replicas
-  `2`; Helm aborts each, while `native`, `tunnel`, `Cluster`/`Local`, and
-  replicas `1` respectively render. Preserve the nested guards through
-  `default` and project the guarded `toString` equality to its raw preimage.
 - **F74 residual — parser exactness.** Exact URL authority and Datadog's
   derived `toString | trimSuffix "-jmx"` semver preimage remain open
   (per-term duration overflow bounds landed in the eleventh round;
@@ -659,14 +716,25 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `natsBox.contexts` AFTER it, and excluding wrappers from every path
   the engine helper reads would falsely reject valid post-rewrite
   wrappers. The gap is a widening only (no false rejection).
-- **F107 — terminal contracts lost across helpers/caller scopes.** Verified
-  schema-accept/Helm-fail cases are Kube Prometheus Stack Grafana dashboards
-  without exactly one folder selector or non-empty `matchLabels`, OAuth2
-  Proxy standalone Redis without `connectionUrl`, Vault HTTPRoute without
-  `parentRefs` and invalid redundancy-zone combinations, and Datadog's
-  forbidden `unix:` OTLP gRPC endpoint. Their satisfied controls render.
-  Summarize helper terminals and retain the caller's live guard when applying
-  them.
+- **F107 residual — terminal contracts behind root-mutation and
+  capabilities guards.** The helper-terminal decode lanes landed in the
+  fifteenth round (see the Completed entry): OAuth2 Proxy standalone Redis
+  without `connectionUrl` and Datadog's `unix:`/portless OTLP gRPC
+  endpoints now reject. The remaining verified schema-accept/Helm-fail
+  cases are blocked on two named machinery gaps: Vault's HTTPRoute
+  `parentRefs` and redundancy-zone fails sit under `ne .mode "external"` /
+  `.serverEnabled` guards over root-dot keys SET across `vault.mode`'s
+  if/else arms — the root-set machinery keeps one value and one truthiness
+  predicate per key, so a VALUE comparison over a branch-conditioned root
+  mutation cannot decode (the same branch-conditioned root-value tracking
+  the F104 wrapper-engine ordering needs); Kube Prometheus Stack's Grafana
+  dashboards `matchLabels`/folder fails ride
+  `semverCompare … (default .Capabilities.KubeVersion …
+  .Values.kubeTargetVersionOverride)` document gates, which need the
+  Kubernetes version policy threaded into IR condition lowering plus a
+  Masterminds-compatible constraint evaluator. The vault pipeline-toString
+  gates themselves DO decode now (pinned at the gen level); only the
+  enclosing `.mode` guards abstain the captures.
 - **F108 residual — NATS JSON Patch grammar through the helper range.**
   The direct-range enum lane landed in the fourteenth round (see the
   Completed entry), and `[{}]` items are covered at the gen level for

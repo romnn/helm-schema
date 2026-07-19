@@ -8113,3 +8113,121 @@ abort helm outright; coredns `zoneFiles[{}]` renders invalid YAML;
 cilium/coredns/fluent-bit/grafana/promtail empty members render
 explicit nulls at provider-required VolumeMount/ContainerPort/Secret
 fields).
+
+## Helper-terminal round (2026-07-19, fifteenth round)
+
+Two ledger items landed with real-chart flips, one audited case was
+adjudicated already-correct, and the round's own decode gains surfaced
+(and fixed) a latent regression class in the member-access fold. The
+connecting theme is conditions that helper-terminal captures could not
+decode: include-computed booleans, defaulted comparisons, scalar-dot
+affix tests, and stringification pipelines.
+
+### F107 — helper-terminal decode lanes (landed, bounded)
+
+The fail machinery already summarized helper terminals and conjoined
+caller predicates (`scope_execution_effects` on `helper_fails`); the
+losses were all CONDITION DECODES, pinpointed by capture tracing:
+
+- `eq (include "repro.enabled" .) "true"` abstained because the
+  helper's body is one boolean EXPRESSION, not static literal-dispatch
+  text. `collect_dispatch` now synthesizes the two-arm dispatch
+  `if <expr>` → "true" / else → "false" for a single boolean-valued
+  Output body (`boolean_output_arms`; `and`/`or` qualify only when
+  every argument is itself boolean-valued, since Go returns the
+  argument, not a coerced bool). Both arms render non-empty text, so
+  include-truthiness over such helpers stays constant-true — Helm
+  truthiness of the string "false" — which the synthetic arms encode
+  for free.
+- `eq (default "" .Values.…clientType) "standalone"` abstained with an
+  empty sound subset, poisoning every capture it guarded. The new
+  default-eq lane decodes `eq (default D X) V` (call and two-stage
+  pipeline forms): V == D also admits every Helm-falsy X; a truthy
+  V ≠ D binds X == V exactly (a falsy X renders D ≠ V); a falsy V ≠ D
+  never holds.
+- datadog's `verify-otlp-grpc-endpoint-prefix` runs with the dot bound
+  to the endpoint SCALAR — the bound-helper resolver already
+  substituted the caller path (the `regexMatch ":[0-9]+$"` port
+  terminal was exact all along), but `hasPrefix` only decoded range-key
+  prefixes. `hasPrefix`/`hasSuffix` over a values-path subject now
+  lower as anchored `MatchesPattern` tests (`^unix:` and the like).
+- `X | toString` pipelines now share the `toString X` equality decode
+  (`tostring_wrapped_subject`), so vault's redundancy-zone gates and
+  cilium's operator update-strategy arm decode with the stringified
+  preimages.
+
+Chart flips (helm-verified each way): oauth2-proxy `sessionStorage
+.redis.clientType=standalone` without `connectionUrl` rejects at the
+document terminal while the explicit-url and redis-ha-enabled variants
+render; datadog's port-suffixed `unix:` endpoint (isolating the prefix
+terminal past the port test) and the portless endpoint reject under
+the apiKey/grpc-enabled gates. Pins:
+`oauth2_proxy_standalone_redis_requires_a_connection_url`,
+`datadog_otlp_grpc_endpoints_reject_the_unix_protocol` (CLI);
+`helper_terminals_keep_caller_guards_and_boolean_include_arms`,
+`scalar_dot_helper_terminals_bind_the_caller_argument_path`,
+`pipeline_tostring_gates_decode_in_helper_terminals` (gen).
+
+Residuals re-attributed with named machinery: vault's HTTPRoute and
+redundancy-zone document gates ride `ne .mode "external"` over a
+root-dot key SET across `vault.mode`'s five if/else arms — the
+root-set machinery keeps one value plus one truthiness predicate per
+key, so value comparisons over branch-conditioned root mutations
+abstain (the same branch-conditioned tracking the F104 wrapper-engine
+ordering needs). KPS's dashboards gates need the Kubernetes version
+policy inside IR condition lowering plus a Masterminds-compatible
+semver evaluator for `default .Capabilities.KubeVersion …
+kubeTargetVersionOverride` subjects.
+
+### F32 — defaulted-pipeline and negated-disjunction tests (landed)
+
+cilium's provider-mode gates fell out of the F107 lanes plus one
+negation fix. `ne (.Values.routingMode | default "native") "native"`
+rides the default-eq lane: GKE+tunnel and AKS-BYOCNI+native reject
+while the unset spelling (which renders the default) and the matching
+explicit spelling stay open. The `externalTrafficPolicy` tests
+(`not (or (eq P "Cluster") (eq P "Local"))`) previously weakened to
+negated TRUTHINESS per disjunct — sound but blind to unlisted values.
+`not_predicate`'s or-arm now applies De Morgan over EXACT per-disjunct
+decodes, gated on per-disjunct faithfulness so a truthy stand-in is
+never negated, and keeps the conjunction FLAT (a wrapped
+`Not(Or(…))` loses the guard-list decomposition the demorgan test
+pins). The audited kvstore case needed no change: replicas `1` with
+the default `identityAllocationMode=crd` also aborts Helm at the
+identity-mode check, so the old rejection was correct, and the fully
+valid combination renders and validates. Pins:
+`cilium_provider_modes_pin_routing_and_traffic_policy_domains` (CLI),
+`defaulted_pipeline_and_negated_disjunction_tests_decode` (gen).
+
+### Member-access fanout regression (found by probe, fixed)
+
+The round's decode gains flipped a probe the WRONG way: oauth2-proxy
+`sessionStorage=false` went reject → accept while helm still errors
+(`can't evaluate field type` on the unguarded
+`.Values.sessionStorage.type` navigation). Cause: the member-access
+fold capped a PATH once its guard-set count passed the fanout bound —
+previously the approximate captures never registered, so decodable
+paths stayed under the cap; the new decodes pushed `sessionStorage`
+over it and the whole path abstained, losing the unconditional
+`type: object`. The cap now bounds only the guarded-only ANY-OF folds;
+an unconditional access (empty guard set) folds to no guards and binds
+regardless. The rescue re-types unconditionally navigated hosts across
+27 corpus charts and 3 gen fixtures (bitnami-redis `networkPolicy`,
+zookeeper `persistence`/`service`/`tls` and the
+`disableBaseClientPort`-guarded `containerPorts` arm).
+
+### Validation
+
+Full suite 1324/1324 (98 reaudit pins; 3 new CLI pins, 4 new gen
+reproducers), doc tests, `task lint` (the two `large_enum_variant`
+warnings reproduce identically at HEAD in a detached worktree —
+toolchain drift, not this round), downstream luup2 `check:local`
+clean. Corpus: 27 fixtures + 3 gen fixtures adopted from one clean
+dump; the Rust prober's three-granularity battery reports 290 flips —
+the two intended F107/F32 chart-flip families, two intended widenings
+(cilium falsy `updateStrategy` under lazy `and`, oauth2-proxy dormant
+`waitForRedis` arm — both helm-verified rendering), and the
+member-access re-typing class, spot-adjudicated by twelve helm checks
+(every probe rejected: template navigation errors or chart-shipped
+schema rejections) plus datadog's unguarded deep-navigation error for
+the falsy sub-class.
