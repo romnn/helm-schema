@@ -11,6 +11,12 @@
 //! directory only counts when its own `Chart.yaml` records the locked
 //! version — presence alone would let a stale vendored copy drift away from
 //! the packaged chart while this gate keeps passing.
+//!
+//! Discovery is recursive: an unpacked vendored dependency is itself a chart
+//! and may carry its own lock (airflow's postgresql, signoz's clickhouse →
+//! zookeeper chain), so every `charts/` subdirectory is walked as a chart
+//! root of its own. Packaged `.tgz` dependencies are immutable committed
+//! archives; their internal locks are not extracted.
 
 use serde::Deserialize;
 
@@ -71,39 +77,98 @@ fn dependency_is_vendored(chart_dir: &std::path::Path, names: &[&str], version: 
     })
 }
 
+/// Every chart directory reachable from the corpus roots through unpacked
+/// `charts/` dependencies, each visited exactly once.
+fn locked_chart_roots(
+    corpus_root: &std::path::Path,
+) -> color_eyre::eyre::Result<Vec<std::path::PathBuf>> {
+    let mut roots = Vec::new();
+    let mut stack: Vec<std::path::PathBuf> = std::fs::read_dir(corpus_root)?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<Result<_, _>>()?;
+    while let Some(chart_dir) = stack.pop() {
+        if !chart_dir.is_dir() {
+            continue;
+        }
+        let charts_dir = chart_dir.join("charts");
+        if charts_dir.is_dir() {
+            for entry in std::fs::read_dir(&charts_dir)? {
+                stack.push(entry?.path());
+            }
+        }
+        roots.push(chart_dir);
+    }
+    roots.sort();
+    Ok(roots)
+}
+
+fn missing_locked_dependencies(
+    chart_dir: &std::path::Path,
+    corpus_root: &std::path::Path,
+) -> color_eyre::eyre::Result<Vec<String>> {
+    let Some(lock_path) = chart_lock_path(chart_dir) else {
+        return Ok(Vec::new());
+    };
+    let mut missing = Vec::new();
+    let lock: ChartLock = serde_yaml::from_str(&std::fs::read_to_string(&lock_path)?)?;
+    let manifest: ChartManifest =
+        serde_yaml::from_str(&std::fs::read_to_string(chart_dir.join("Chart.yaml"))?)?;
+    for dependency in &lock.dependencies {
+        let mut names = vec![dependency.name.as_str()];
+        names.extend(manifest.dependencies.iter().filter_map(|declared| {
+            (declared.name == dependency.name)
+                .then_some(declared.alias.as_deref())
+                .flatten()
+        }));
+        if !dependency_is_vendored(chart_dir, &names, &dependency.version) {
+            missing.push(format!(
+                "{chart}: locked dependency {name} {version} is not vendored under charts/",
+                chart = chart_dir
+                    .strip_prefix(corpus_root)
+                    .unwrap_or(chart_dir)
+                    .display(),
+                name = dependency.name,
+                version = dependency.version,
+            ));
+        }
+    }
+    Ok(missing)
+}
+
 #[test]
 fn corpus_charts_vendor_every_locked_dependency() -> color_eyre::eyre::Result<()> {
     let corpus_root = test_util::workspace_testdata().join("charts");
     let mut missing = Vec::new();
-    for entry in std::fs::read_dir(&corpus_root)? {
-        let chart_dir = entry?.path();
-        let Some(lock_path) = chart_lock_path(&chart_dir) else {
-            continue;
-        };
-        let lock: ChartLock = serde_yaml::from_str(&std::fs::read_to_string(&lock_path)?)?;
-        let manifest: ChartManifest =
-            serde_yaml::from_str(&std::fs::read_to_string(chart_dir.join("Chart.yaml"))?)?;
-        for dependency in &lock.dependencies {
-            let mut names = vec![dependency.name.as_str()];
-            names.extend(manifest.dependencies.iter().filter_map(|declared| {
-                (declared.name == dependency.name)
-                    .then_some(declared.alias.as_deref())
-                    .flatten()
-            }));
-            if !dependency_is_vendored(&chart_dir, &names, &dependency.version) {
-                missing.push(format!(
-                    "{chart}: locked dependency {name} {version} is not vendored under charts/",
-                    chart = chart_dir.file_name().unwrap_or_default().to_string_lossy(),
-                    name = dependency.name,
-                    version = dependency.version,
-                ));
-            }
-        }
+    for chart_dir in locked_chart_roots(&corpus_root)? {
+        missing.extend(missing_locked_dependencies(&chart_dir, &corpus_root)?);
     }
     assert!(
         missing.is_empty(),
         "missing vendored dependencies:\n{}",
         missing.join("\n")
+    );
+    Ok(())
+}
+
+/// Nested vendored charts carry their own locks (signoz's clickhouse →
+/// zookeeper chain sits two levels deep); the walk must reach them, or
+/// deleting a nested dependency would be invisible to the gate.
+#[test]
+fn nested_dependency_locks_are_discovered() -> color_eyre::eyre::Result<()> {
+    let corpus_root = test_util::workspace_testdata().join("charts");
+    let roots = locked_chart_roots(&corpus_root)?;
+    let nested = corpus_root
+        .join("signoz-signoz")
+        .join("charts")
+        .join("clickhouse");
+    assert!(
+        roots.contains(&nested),
+        "nested chart root {} not discovered",
+        nested.display()
+    );
+    assert!(
+        chart_lock_path(&nested).is_some(),
+        "expected the nested clickhouse chart to carry its own lock"
     );
     Ok(())
 }

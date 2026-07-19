@@ -214,13 +214,35 @@ pub fn strict_parser_operand_pattern(
 pub fn strict_collection_item_pattern(function: &str, index: usize) -> Option<&'static str> {
     match (function, index) {
         // genSignedCert/genSelfSignedCert pass every ip-list entry through
-        // net.ParseIP and abort rendering on nil. The alternates are exact
-        // dotted-quad IPv4 (leading zeros rejected, as Go's parser does) and
-        // a superset of every IPv6 textual form — hex digits, colons, and
-        // dots with at least one colon — so no valid address is rejected.
-        ("genSignedCert" | "genSelfSignedCert", 1) => Some(
-            r"^(((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])|[0-9A-Fa-f.]*:[0-9A-Fa-f:.]*)$",
-        ),
+        // net.ParseIP and abort rendering on nil. The pattern is the
+        // parser's EXACT accepted language (fuzz-differentialed against
+        // `net.ParseIP`): dotted-quad IPv4 without leading zeros, and IPv6
+        // enumerated per RFC 4291 textual form under Go's rules — 1-4 hex
+        // digits per group, at most one `::` expanding at least one zero
+        // group, an embedded dotted quad only as the final 4 bytes, and no
+        // zone suffix. The v4-embedded arms enumerate the left/right group
+        // splits because a regex cannot count the 8-group budget globally.
+        ("genSignedCert" | "genSelfSignedCert", 1) => Some(concat!(
+            "^(((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}",
+            "|([0-9A-Fa-f]{1,4}:){1,7}:",
+            "|([0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}",
+            "|([0-9A-Fa-f]{1,4}:){1,5}(:[0-9A-Fa-f]{1,4}){1,2}",
+            "|([0-9A-Fa-f]{1,4}:){1,4}(:[0-9A-Fa-f]{1,4}){1,3}",
+            "|([0-9A-Fa-f]{1,4}:){1,3}(:[0-9A-Fa-f]{1,4}){1,4}",
+            "|([0-9A-Fa-f]{1,4}:){1,2}(:[0-9A-Fa-f]{1,4}){1,5}",
+            "|[0-9A-Fa-f]{1,4}:(:[0-9A-Fa-f]{1,4}){1,6}",
+            "|:(:[0-9A-Fa-f]{1,4}){1,7}",
+            "|::",
+            "|([0-9A-Fa-f]{1,4}:){6}((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|::([0-9A-Fa-f]{1,4}:){0,5}((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|([0-9A-Fa-f]{1,4}:){1}:([0-9A-Fa-f]{1,4}:){0,4}((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,3}((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,2}((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,1}((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            "|([0-9A-Fa-f]{1,4}:){5}:((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])",
+            ")$",
+        )),
         _ => None,
     }
 }

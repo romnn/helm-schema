@@ -279,6 +279,33 @@ pub(super) fn split_transformed_value(
 /// truncation, a numeric cast), so an escape-qualified identity they still
 /// spell no longer holds. `ValuesPath` arms need no marking — the
 /// expression-level derived flags already cover them.
+/// Marks `toString`'s identity-bearing operand arms as `stringified`: the
+/// result IS the exact `%v` rendering of that path, so total-string-preimage
+/// consumers (strict parsers, equality preimages) may keep binding the raw
+/// path through the rendered text. An arm that was already text-derived
+/// stringifies its derivation instead and keeps its flags alone.
+pub(super) fn mark_stringified_identities(value: Option<AbstractValue>) -> Option<AbstractValue> {
+    fn mark(value: AbstractValue) -> AbstractValue {
+        match value {
+            AbstractValue::OutputPath(path, mut meta) => {
+                if !meta.derived_text
+                    && !meta.shape_erased
+                    && !meta.yaml_serialized
+                    && !meta.json_serialized
+                {
+                    meta.stringified = true;
+                }
+                AbstractValue::OutputPath(path, meta)
+            }
+            AbstractValue::Choice(choices) => {
+                AbstractValue::Choice(choices.into_iter().map(mark).collect())
+            }
+            other => other,
+        }
+    }
+    value.map(mark)
+}
+
 pub(super) fn derive_value_text(value: Option<AbstractValue>) -> Option<AbstractValue> {
     fn mark(value: AbstractValue) -> AbstractValue {
         match value {

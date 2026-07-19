@@ -18,6 +18,13 @@ pub(crate) struct HelperOutputMeta {
     /// The binding's value is a total stringification (`quote`, `toString`,
     /// `join`) of this path, so splices rendering it expose no input shape.
     pub(crate) shape_erased: bool,
+    /// The binding's value is the exact Go `%v` rendering of this path
+    /// (`toString` over the path identity): an equality on the binding
+    /// projects its literal back through the `toString` preimage. A join
+    /// with a raw-identity branch keeps the flag — the raw branch's
+    /// type-mismatched comparisons abort Helm, so the projected preimage
+    /// only widens there.
+    pub(crate) stringified: bool,
     /// The binding's value is YAML serialization of this path. Serialization
     /// accepts any input kind, while a sequence placement remains structural.
     pub(crate) yaml_serialized: bool,
@@ -63,6 +70,7 @@ impl HelperOutputMeta {
         self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
         self.shape_erased |= other.shape_erased;
+        self.stringified |= other.stringified;
         self.yaml_serialized |= other.yaml_serialized;
         self.derived_text |= other.derived_text;
         self.string_contract |= other.string_contract;

@@ -701,7 +701,7 @@ fn resolved_schema_admits_fail_requirement_domain(
 fn fail_requirement_runtime_types(
     implication: &helm_schema_core::ContractFailImplication,
 ) -> BTreeSet<&'static str> {
-    use helm_schema_core::{ContractRequirementTarget, FailValueRequirement};
+    use helm_schema_core::ContractRequirementTarget;
 
     let all_types = || {
         BTreeSet::from([
@@ -733,45 +733,60 @@ fn fail_requirement_runtime_types(
         ContractRequirementTarget::Value => {
             let mut types = all_types();
             for requirement in &implication.requirements {
-                types.retain(|runtime_type| match requirement {
-                    FailValueRequirement::SchemaType(required)
-                    | FailValueRequirement::ComparableKind(required) => {
-                        *runtime_type == "null"
-                            || *runtime_type == required
-                            || required == "number" && *runtime_type == "integer"
-                    }
-                    // Every runtime kind has a Helm-falsy escape spelling.
-                    FailValueRequirement::TruthyImpliesSchemaType(_) => true,
-                    FailValueRequirement::HelmTruthy => *runtime_type != "null",
-                    FailValueRequirement::FieldHelmFalsy { .. } => true,
-                    FailValueRequirement::NotEquals(_) => true,
-                    FailValueRequirement::NotSchemaType(rejected) => {
-                        *runtime_type != rejected
-                            && !(rejected == "number" && *runtime_type == "integer")
-                    }
-                    FailValueRequirement::HasMember(_) => *runtime_type == "object",
-                    FailValueRequirement::MatchesPattern { .. }
-                    | FailValueRequirement::NotMatchesPattern { .. } => *runtime_type == "string",
-                    FailValueRequirement::MemberHost { handled_kinds } => {
-                        *runtime_type == "object"
-                            || handled_kinds.iter().any(|handled| handled == runtime_type)
-                    }
-                    FailValueRequirement::Iterable { allow_integer } => {
-                        matches!(*runtime_type, "array" | "null" | "object")
-                            || *allow_integer && *runtime_type == "integer"
-                    }
-                    FailValueRequirement::IndexableAt(_) => {
-                        matches!(*runtime_type, "array" | "string")
-                    }
-                    FailValueRequirement::SplitSegmentsAtLeast {
-                        allow_non_string, ..
-                    } => *runtime_type == "string" || *allow_non_string,
-                    // Constrains rendered content, not the value's kind.
-                    FailValueRequirement::QuotedSerializationSafe { .. } => true,
+                types.retain(|runtime_type| {
+                    requirement_admits_runtime_type(requirement, runtime_type)
                 });
             }
             types
         }
+    }
+}
+
+fn requirement_admits_runtime_type(
+    requirement: &helm_schema_core::FailValueRequirement,
+    runtime_type: &str,
+) -> bool {
+    use helm_schema_core::FailValueRequirement;
+    match requirement {
+        FailValueRequirement::SchemaType(required)
+        | FailValueRequirement::ComparableKind(required) => {
+            runtime_type == "null"
+                || runtime_type == required
+                || required == "number" && runtime_type == "integer"
+        }
+        // Every runtime kind has a Helm-falsy escape spelling.
+        FailValueRequirement::TruthyImpliesSchemaType(_) => true,
+        FailValueRequirement::HelmTruthy => runtime_type != "null",
+        FailValueRequirement::FieldHelmFalsy { .. } => true,
+        FailValueRequirement::FieldEquals { .. } => runtime_type == "object",
+        FailValueRequirement::NotEquals(_) => true,
+        FailValueRequirement::NotSchemaType(rejected) => {
+            runtime_type != rejected && !(rejected == "number" && runtime_type == "integer")
+        }
+        FailValueRequirement::HasMember(_) => runtime_type == "object",
+        FailValueRequirement::MatchesPattern { .. }
+        | FailValueRequirement::NotMatchesPattern { .. } => runtime_type == "string",
+        FailValueRequirement::MemberHost { handled_kinds } => {
+            runtime_type == "object" || handled_kinds.iter().any(|handled| handled == runtime_type)
+        }
+        FailValueRequirement::Iterable { allow_integer } => {
+            matches!(runtime_type, "array" | "null" | "object")
+                || *allow_integer && runtime_type == "integer"
+        }
+        FailValueRequirement::IndexableAt(_) => {
+            matches!(runtime_type, "array" | "string")
+        }
+        FailValueRequirement::SplitSegmentsAtLeast {
+            allow_non_string, ..
+        } => runtime_type == "string" || *allow_non_string,
+        // Constrains rendered content, not the value's kind.
+        FailValueRequirement::QuotedSerializationSafe { .. } => true,
+        // A kind survives when SOME alternative fully admits it.
+        FailValueRequirement::AnyOf(alternatives) => alternatives.iter().any(|alternative| {
+            alternative
+                .iter()
+                .all(|requirement| requirement_admits_runtime_type(requirement, runtime_type))
+        }),
     }
 }
 

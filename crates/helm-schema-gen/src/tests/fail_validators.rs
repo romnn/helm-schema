@@ -1165,3 +1165,112 @@ fn variable_bound_coercion_fail_guards_lower_through_sound_subsets() {
         );
     }
 }
+
+/// cilium `kubeProxyReplacement`: the configmap stringifies the value
+/// (`toString`, a `<nil>` → `""` rewrite, `coalesce` with a literal
+/// default) before comparing it against `"true"`/`"false"` and failing
+/// otherwise. The equality binds the raw path through the `toString`
+/// PREIMAGE, so raw Booleans render exactly like their string spellings
+/// while any other truthy scalar aborts.
+#[test]
+fn stringified_equality_binds_the_tostring_preimage() {
+    let src = indoc! {r#"
+        {{- $default := "false" -}}
+        {{- $string := (toString .Values.kubeProxyReplacement) -}}
+        {{- if (eq $string "<nil>") }}
+          {{- $string = "" -}}
+        {{- end }}
+        {{- $mode := (coalesce $string $default) -}}
+        {{- if and (ne $mode "true") (ne $mode "false") }}
+        {{ fail "kubeProxyReplacement must be true or false" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          mode: {{ $mode | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+    for (instance, want) in [
+        (serde_json::json!({ "kubeProxyReplacement": true }), true),
+        (serde_json::json!({ "kubeProxyReplacement": false }), true),
+        (serde_json::json!({ "kubeProxyReplacement": "true" }), true),
+        (serde_json::json!({ "kubeProxyReplacement": "false" }), true),
+        (
+            serde_json::json!({ "kubeProxyReplacement": "strict" }),
+            false,
+        ),
+        (serde_json::json!({ "kubeProxyReplacement": 1 }), false),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "stringified equality preimage: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// traefik's local-plugin type helper renders each ranged member through
+/// mutually exclusive arms — a `type` from a literal enum, or the legacy
+/// bare `hostPath` — and `fail`s otherwise. The member requirements are
+/// the DISJUNCTION of the arm negations: either documented shape renders
+/// alone, while an unknown `type` (even beside a hostPath) and a member
+/// with neither field abort.
+#[test]
+fn multi_test_fail_negations_lower_as_member_alternatives() {
+    let helpers = indoc! {r#"
+        {{- define "repro.pluginType" -}}
+            {{- $plugin := .plugin -}}
+            {{- if $plugin.type -}}
+                {{- if eq $plugin.type "hostPath" -}}
+                    {{- printf "hostPath" -}}
+                {{- else if eq $plugin.type "inlinePlugin" -}}
+                    {{- printf "inlinePlugin" -}}
+                {{- else -}}
+                    {{- fail (printf "plugin %s has an invalid type" .pluginName) -}}
+                {{- end -}}
+            {{- else if $plugin.hostPath -}}
+                {{- printf "hostPath" -}}
+            {{- else -}}
+                {{- fail (printf "plugin %s must set hostPath or type" .pluginName) -}}
+            {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.plugins }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: plugins
+        data:
+          {{- range $name, $plugin := .Values.plugins }}
+          {{ $name }}: {{ include "repro.pluginType" (dict "plugin" $plugin "pluginName" $name) | quote }}
+          {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        plugins: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (member, want) in [
+        (serde_json::json!({ "hostPath": "/plugins/x" }), true),
+        (
+            serde_json::json!({ "type": "hostPath", "hostPath": "/plugins/x" }),
+            true,
+        ),
+        (serde_json::json!({ "type": "inlinePlugin" }), true),
+        (serde_json::json!({ "type": "bogus" }), false),
+        (
+            serde_json::json!({ "type": "bogus", "hostPath": "/plugins/x" }),
+            false,
+        ),
+        (serde_json::json!({ "moduleName": "x" }), false),
+        (serde_json::json!("scalar"), false),
+    ] {
+        let instance = serde_json::json!({ "plugins": { "p": member } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "member alternatives: instance={instance}; schema={schema}"
+        );
+    }
+}

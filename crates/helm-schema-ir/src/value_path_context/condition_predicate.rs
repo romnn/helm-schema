@@ -1693,11 +1693,25 @@ impl ValuePathContext<'_> {
         }
         // Only a DIRECT selector operand claims a value equality: seeing
         // through a call (`eq (typeOf .Values.x) "string"`) would compare
-        // the call's OUTPUT, not the path's value. Literal-key `index`
-        // navigation is the one admitted call shape — its output IS the raw
+        // the call's OUTPUT, not the path's value. Two call shapes are
+        // admitted: literal-key `index` navigation — its output IS the raw
         // member value (nil when absent), so the equality binds the member
         // path exactly (cilium's `ne (index .Values.extraConfig
-        // "allow-unsafe-policy-skb-usage") "true"` gate).
+        // "allow-unsafe-policy-skb-usage") "true"` gate) — and `toString`
+        // over a selector, whose output is the `%v` rendering the preimage
+        // projection below decodes exactly (cilium validate.yaml's
+        // `eq (toString .Values.kubeProxyReplacement) "disabled"`).
+        fn tostring_selector(expr: &TemplateExpr) -> bool {
+            matches!(
+                expr.deparen(),
+                TemplateExpr::Call { function, args } if function == "toString"
+                    && args.len() == 1
+                    && matches!(
+                        args[0].deparen(),
+                        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+                    )
+            )
+        }
         let direct_selector = |expr: &TemplateExpr| match expr.deparen() {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
             TemplateExpr::Variable(name) => !self
@@ -1716,12 +1730,24 @@ impl ValuePathContext<'_> {
                         )
                     })
             }
-            _ => false,
+            expr => tostring_selector(expr),
         };
+        // A `toString`-wrapped selector compares the rendering of the inner
+        // path's value; resolve the paths from the operand itself.
+        fn tostring_operand(expr: &TemplateExpr) -> &TemplateExpr {
+            if let TemplateExpr::Call { function, args } = expr.deparen()
+                && function == "toString"
+                && args.len() == 1
+            {
+                return &args[0];
+            }
+            expr
+        }
         // Literal-key `index` navigation compares the MEMBER value only; the
         // evaluator's influence set also carries the parent map, which is
         // not the compared value.
         let subject_paths = |expr: &TemplateExpr| {
+            let expr = tostring_operand(expr);
             if let TemplateExpr::Call { function, args } = expr.deparen()
                 && function == "index"
                 && let Some(base) = self.single_resolved_values_path_expr(&args[0])
@@ -1754,24 +1780,60 @@ impl ValuePathContext<'_> {
                 return self.helper_literal_dispatch_predicate(left, right, negated);
             }
         };
+        let subject = if guard_value_literal(left).is_some() {
+            right
+        } else {
+            left
+        };
+        let subject_meta_for = |path: &str| {
+            let TemplateExpr::Variable(name) = subject.deparen() else {
+                return None;
+            };
+            self.template_output_meta
+                .get(name)
+                .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')))
+                .and_then(|by_path| by_path.get(path))
+        };
         let comparison_for = |path: String| {
+            // Equality over a total stringification compares the DERIVED
+            // text, so a string literal binds the raw path through its
+            // `toString` preimage: every raw value that renders the same
+            // text stays inside the equality (cilium's
+            // `ne $kubeProxyReplacement "true"` chain must keep a raw
+            // Boolean `true` beside the string spelling). Serialized or
+            // include-derived text has a different (or unknowable) image
+            // and keeps the literal alone.
+            let stringified = tostring_selector(subject)
+                || subject_meta_for(&path).is_some_and(|meta| meta.stringified);
+            let candidates = match &value {
+                GuardValue::String(text) if stringified => stringified_equality_preimage(text),
+                other => vec![other.clone()],
+            };
+            let comparisons = candidates
+                .into_iter()
+                .map(|candidate| {
+                    if negated {
+                        Predicate::from(Guard::NotEq {
+                            path: path.clone(),
+                            value: candidate,
+                        })
+                    } else {
+                        Predicate::from(Guard::Eq {
+                            path: path.clone(),
+                            value: candidate,
+                        })
+                    }
+                })
+                .collect::<Vec<_>>();
+            // `ne` holds only when the raw value misses EVERY preimage
+            // member; `eq` when it hits any one of them.
             if negated {
-                Predicate::from(Guard::NotEq {
-                    path,
-                    value: value.clone(),
-                })
+                Predicate::all(comparisons)
             } else {
-                Predicate::from(Guard::Eq {
-                    path,
-                    value: value.clone(),
-                })
+                predicate_any(comparisons)
             }
         };
-        if let TemplateExpr::Variable(name) = if guard_value_literal(left).is_some() {
-            right.deparen()
-        } else {
-            left.deparen()
-        } {
+        if let TemplateExpr::Variable(name) = subject.deparen() {
             let meta = self
                 .template_output_meta
                 .get(name)
@@ -2030,6 +2092,34 @@ fn invalid_kind_predicate(path: String) -> Predicate {
             value: GuardValue::Null,
         }),
     ])
+}
+
+/// The raw values whose Go `toString` rendering equals `text`, for an
+/// equality whose subject is a total stringification of the path.
+///
+/// The string itself always renders itself. Beyond it, `%v` prints Booleans
+/// as `true`/`false`, nil as `<nil>`, and numbers in fixed decimal notation —
+/// but float64 switches to exponent form at 1e6 (`1e+06`), so only spellings
+/// below that magnitude cover draft-07's single number kind exactly (an
+/// `enum` integer already accepts the numerically equal float). Larger or
+/// non-canonical spellings keep the string alone rather than claim a
+/// preimage that splits the int and float channels.
+fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
+    let mut values = vec![GuardValue::string(text)];
+    match text {
+        "true" => values.push(GuardValue::Bool(true)),
+        "false" => values.push(GuardValue::Bool(false)),
+        "<nil>" => values.push(GuardValue::Null),
+        _ => {
+            if let Ok(value) = text.parse::<i64>()
+                && value.to_string() == text
+                && (-1_000_000..1_000_000).contains(&value)
+            {
+                values.push(GuardValue::Int(value));
+            }
+        }
+    }
+    values
 }
 
 fn predicate_any(predicates: Vec<Predicate>) -> Predicate {

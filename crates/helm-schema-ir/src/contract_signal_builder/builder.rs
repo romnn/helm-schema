@@ -28,6 +28,11 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
     for contract_use in uses {
+        if std::env::var("HS_SCRATCH_DBG").is_ok()
+            && contract_use.source_expr.contains("resourceAttributes")
+        {
+            dbg!(contract_use);
+        }
         record_contract_use(&mut paths, contract_use, range_modes);
     }
     for capture in fail_conditions {
@@ -1199,7 +1204,7 @@ fn record_fail_conjunction(
     if let Some(scope) = &member_scope
         && !member_tests.is_empty()
     {
-        let requirements_at = |at: &str| -> Option<Vec<FailValueRequirement>> {
+        let requirements_at = |at: &str| -> Option<Vec<Vec<FailValueRequirement>>> {
             member_tests
                 .iter()
                 .map(|predicate| {
@@ -1207,10 +1212,21 @@ fn record_fail_conjunction(
                         .filter(|required| !required.is_empty())
                 })
                 .collect::<Option<Vec<_>>>()
-                .map(|nested| nested.into_iter().flatten().collect())
+        };
+        // The fail fires only when EVERY member test holds, so validity is
+        // the DISJUNCTION of their negations: one satisfied negation keeps
+        // the member. A single test lowers flat; several become one AnyOf
+        // (traefik's legacy-hostPath-or-typed local plugins).
+        let combine = |mut alternatives: Vec<Vec<FailValueRequirement>>| match alternatives.len() {
+            1 => alternatives.remove(0),
+            _ => {
+                alternatives.sort();
+                alternatives.dedup();
+                vec![FailValueRequirement::AnyOf(alternatives)]
+            }
         };
         if let Some(required) = requirements_at(scope) {
-            requirements.extend(required);
+            requirements.extend(combine(required));
             test_paths.insert(scope.clone());
         } else {
             let field_path = {
@@ -1234,7 +1250,7 @@ fn record_fail_conjunction(
             member_field = Some(helm_schema_core::split_value_path(
                 &field_path[scope.len() + 1..],
             ));
-            requirements.extend(required);
+            requirements.extend(combine(required));
             test_paths.insert(field_path);
         }
     }
@@ -2117,6 +2133,19 @@ fn requirements_from_holding(
             let member = path.strip_prefix(&format!("{scope}."))?;
             (!member.contains('.'))
                 .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
+        }
+        // An equality on a member FIELD holding: the field is present and
+        // equals the literal — Go's `eq` aborts on a nil operand, so
+        // presence rides along (traefik's `eq $plugin.type "hostPath"`
+        // dispatch arms negate their else-`fail` this way).
+        Predicate::Guard(Guard::Eq { path, value }) if scope.contains(".*") => {
+            let field = path.strip_prefix(&format!("{scope}."))?;
+            (!field.contains('*')).then(|| {
+                vec![FailValueRequirement::FieldEquals {
+                    path: helm_schema_core::split_value_path(field),
+                    value: value.clone(),
+                }]
+            })
         }
         Predicate::And(items) => {
             let mut requirements = Vec::new();

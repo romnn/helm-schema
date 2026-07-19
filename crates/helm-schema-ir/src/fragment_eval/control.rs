@@ -1299,18 +1299,26 @@ impl Interpreter<'_> {
                 let Some(value) = outcome.fragment_values.get(name) else {
                     continue;
                 };
-                // Only a reassignment to values-independent content (a
-                // literal sentinel, derived text) severs the identity.
-                // Path-bearing rebindings — a guarded traversal advance
-                // into a member, a switch to another source path — keep
-                // their own machinery.
-                if value.paths().is_empty() {
+                // A reassignment severs the identity when the arm's value
+                // lost EVERY entry path: values-independent content (a
+                // literal sentinel, derived text) and a switch to another
+                // source path (datadog's empty-tag → agent-version
+                // fallback) both mean the raw entry value no longer
+                // reaches downstream consumers on that arm. A guarded
+                // traversal advance INTO a member keeps its own machinery.
+                let paths = value.paths();
+                let advanced_into_member = paths.iter().any(|path| {
+                    entry_paths
+                        .iter()
+                        .any(|entry| helm_schema_core::values_path_is_descendant(path, entry))
+                });
+                if paths.is_empty() || (paths.is_disjoint(&entry_paths) && !advanced_into_member) {
                     let marker = format!("reassign:{}:{region_start}:{index}", self.source_offset);
                     exclusions.push(self.reassignment_exclusion(
                         header_exprs.get(index).and_then(Option::as_ref),
                         marker,
                     ));
-                } else if !value.paths().is_disjoint(&entry_paths) {
+                } else if !paths.is_disjoint(&entry_paths) {
                     keeping.push(index);
                 }
             }
@@ -1385,11 +1393,26 @@ impl Interpreter<'_> {
                 other => vec![other],
             };
             for conjunct in conjuncts {
-                if let Predicate::Guard(Guard::Eq { path, value }) = conjunct
+                if let Predicate::Guard(Guard::Eq { path, value }) = &conjunct
                     && !path.starts_with('$')
                     && !path.split('.').any(|part| part == "*")
                 {
-                    return vec![Guard::NotEq { path, value }];
+                    return vec![Guard::NotEq {
+                        path: path.clone(),
+                        value: value.clone(),
+                    }];
+                }
+                // A falsiness conjunct (`if not $tag` selecting a fallback)
+                // negates to the path's truthiness: the losing arm runs
+                // only on falsy values, so the kept raw identity is
+                // consumed exactly on the truthy ones (datadog's
+                // empty-tag → agent-version fallback).
+                if let Predicate::Not(inner) = &conjunct
+                    && let Predicate::Guard(Guard::Truthy { path }) = inner.as_ref()
+                    && !path.starts_with('$')
+                    && !path.split('.').any(|part| part == "*")
+                {
+                    return vec![Guard::Truthy { path: path.clone() }];
                 }
             }
         }

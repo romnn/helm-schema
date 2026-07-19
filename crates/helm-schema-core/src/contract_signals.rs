@@ -324,6 +324,20 @@ pub enum FailValueRequirement {
     /// when a legacy `extraPaths[].backend.serviceName` is set under the
     /// `networking.k8s.io/v1` Ingress api).
     FieldHelmFalsy { path: Vec<String> },
+    /// The value must be an object whose field at `path` is present and
+    /// equals the literal: the failing test's negation held an equality on
+    /// the field (traefik's `eq $plugin.type "hostPath"` dispatch arm; Go's
+    /// `eq` aborts on a nil operand, so presence rides along).
+    FieldEquals {
+        path: Vec<String>,
+        value: GuardValue,
+    },
+    /// At least one alternative (each a conjunction of requirements) must
+    /// hold. A `fail` whose test conjoins several member conditions negates
+    /// to the DISJUNCTION of their negations — traefik's local plugins
+    /// render with a truthy `type` OR a legacy truthy `hostPath`, and
+    /// conjoining those requirements rejected both documented shapes.
+    AnyOf(Vec<Vec<FailValueRequirement>>),
     /// The value must not equal this literal (cilium forbids ranged
     /// `extraEnv` names colliding with its own backoff variables).
     NotEquals(GuardValue),

@@ -27,6 +27,17 @@ pub(super) fn record_string_transform_effects(
         // a total stringification constrains nothing about its input and the
         // sink observes only the rendered text, never the input shape.
         record_total_conversion_effects(influence_paths, effects);
+        // Only `toString` returns the exact `%v` rendering of its operand
+        // (`quote`/`squote`/`urlquery` decorate or rewrite the text), and
+        // only a pure identity operand pins that image to a path: a derived
+        // operand stringifies its derivation, not the raw value. Equality
+        // decoding projects literals back through this image (cilium's
+        // `toString .Values.kubeProxyReplacement` chain).
+        if function == "toString"
+            && let Some(AbstractValue::ValuesPath(path)) = value
+        {
+            effects.stringified_paths.insert(path.clone());
+        }
         effects
             .derived_range_key_paths
             .extend(identity_range_key_paths(value));
@@ -211,10 +222,18 @@ fn parser_operand_identity_paths(
                 }
             }
             AbstractValue::OutputPath(path, meta) => {
-                if !meta.shape_erased
-                    && !meta.derived_text
-                    && !meta.yaml_serialized
-                    && !meta.json_serialized
+                // A `stringified` arm is the exact `%v` rendering of the
+                // path — the identity on raw strings, while a lexical
+                // pattern is vacuous on non-string instances — so the
+                // parser identity survives the derivation flags the
+                // stringification itself set (the datadog empty-tag
+                // fallback wraps the raw arm in exclusion meta before its
+                // `toString` reassignment).
+                if meta.stringified
+                    || (!meta.shape_erased
+                        && !meta.derived_text
+                        && !meta.yaml_serialized
+                        && !meta.json_serialized)
                 {
                     paths.insert(path.clone());
                 }

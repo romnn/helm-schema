@@ -1462,6 +1462,38 @@ fn traefik_invalid_kind_guard_preserves_falsy_present_values() -> color_eyre::ey
     )
 }
 
+/// cilium's configmap compares `toString .Values.kubeProxyReplacement`
+/// against `"true"`/`"false"` through a coalesce chain and aborts on
+/// anything else, so the accepted domain is the `toString` PREIMAGE of the
+/// two spellings: raw Booleans render exactly like their string forms
+/// (helm-verified), while any other truthy scalar aborts.
+#[test]
+fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::accepted("raw Boolean true", json!({ "kubeProxyReplacement": true })),
+            SemanticCase::accepted(
+                "raw Boolean false",
+                json!({ "kubeProxyReplacement": false }),
+            ),
+            SemanticCase::accepted("string spelling", json!({ "kubeProxyReplacement": "true" })),
+            // The fail-implication arm rejects at the instance root
+            // (`if … then false`), not at the property.
+            SemanticCase::rejected(
+                "legacy strict spelling aborts the render",
+                "",
+                json!({ "kubeProxyReplacement": "strict" }),
+            ),
+            SemanticCase::rejected(
+                "numeric value stringifies to a rejected spelling",
+                "",
+                json!({ "kubeProxyReplacement": 1 }),
+            ),
+        ],
+    )
+}
+
 #[test]
 fn cilium_certificate_sans_require_string_members() -> color_eyre::eyre::Result<()> {
     assert_chart_cases(
@@ -1488,13 +1520,36 @@ fn cilium_certificate_sans_require_string_members() -> color_eyre::eyre::Result<
                     "hubble": { "tls": { "server": { "extraIpAddresses": ["not-an-ip"] } } }
                 }),
             ),
+            // The IPv6 arm is the parser's exact language, not a
+            // hex-and-colons superset: a bare colon and a zoned address
+            // both abort `genSignedCert` (helm-verified).
+            SemanticCase::rejected(
+                "bare-colon Hubble IP SAN",
+                "/hubble/tls/server/extraIpAddresses/0",
+                json!({
+                    "hubble": { "tls": { "server": { "extraIpAddresses": [":"] } } }
+                }),
+            ),
+            SemanticCase::rejected(
+                "zoned Hubble IP SAN",
+                "/hubble/tls/server/extraIpAddresses/0",
+                json!({
+                    "hubble": { "tls": { "server": { "extraIpAddresses": ["fe80::1%eth0"] } } }
+                }),
+            ),
             SemanticCase::accepted(
                 "string Hubble SANs",
                 json!({
                     "hubble": {
                         "tls": {
                             "server": {
-                                "extraIpAddresses": ["10.0.0.7", "2001:db8::1"],
+                                "extraIpAddresses": [
+                                    "10.0.0.7",
+                                    "2001:db8::1",
+                                    "::ffff:10.0.0.7",
+                                    "1:2:3:4:5:6:1.2.3.4",
+                                    "1:2:3:4:5:6:7::"
+                                ],
                                 "extraDnsNames": ["audit.example"]
                             }
                         }
@@ -1927,6 +1982,88 @@ fn datadog_cluster_agent_latest_tag_survives_the_version_check() -> color_eyre::
             SemanticCase::accepted(
                 "doNotCheckTag skips the check entirely",
                 json!({ "clusterAgent": { "image": { "tag": "garbage", "doNotCheckTag": true } } }),
+            ),
+        ],
+    )
+}
+
+/// The `ddot-collector-gateway-image` helper replaces a FALSY tag with the
+/// agent-version fallback before its semver checks, so an empty or null
+/// `otelAgentGateway.image.tag` renders (helm-verified) and only a truthy
+/// non-version string reaches the parser and aborts.
+#[test]
+fn datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback()
+-> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "datadog",
+        vec![
+            SemanticCase::accepted(
+                "empty tag takes the fallback",
+                json!({ "otelAgentGateway": { "enabled": true, "image": { "tag": "" } } }),
+            ),
+            SemanticCase::accepted(
+                "null tag takes the fallback",
+                json!({ "otelAgentGateway": { "enabled": true, "image": { "tag": null } } }),
+            ),
+            SemanticCase::accepted(
+                "explicit valid tag",
+                json!({ "otelAgentGateway": { "enabled": true, "image": { "tag": "7.70.0" } } }),
+            ),
+            SemanticCase::rejected(
+                "truthy non-version tag reaches the parser",
+                "/otelAgentGateway/image/tag",
+                json!({ "otelAgentGateway": { "enabled": true, "image": { "tag": "junk" } } }),
+            ),
+        ],
+    )
+}
+
+/// traefik's `traefik.getLocalPluginType` helper renders a local plugin
+/// through mutually exclusive arms — a `type` from the
+/// hostPath/inlinePlugin/localPath enum, or the legacy bare `hostPath` —
+/// and `fail`s otherwise. The member requirements are the DISJUNCTION of
+/// those arms (helm-verified each way): conjoining them rejected both
+/// documented shapes, and the missing enum accepted an unknown `type`.
+#[test]
+fn traefik_local_plugins_keep_their_alternative_shapes() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::accepted(
+                "legacy hostPath shape",
+                json!({ "experimental": { "localPlugins": { "my-plugin": {
+                    "moduleName": "github.com/x/y", "hostPath": "/plugins/y"
+                } } } }),
+            ),
+            SemanticCase::accepted(
+                "inline plugin shape",
+                json!({ "experimental": { "localPlugins": { "my-plugin": {
+                    "moduleName": "github.com/x/y",
+                    "type": "inlinePlugin",
+                    "source": { "main.go": "package main" }
+                } } } }),
+            ),
+            SemanticCase::accepted(
+                "typed hostPath shape",
+                json!({ "experimental": { "localPlugins": { "my-plugin": {
+                    "moduleName": "github.com/x/y",
+                    "type": "hostPath",
+                    "hostPath": "/plugins/y"
+                } } } }),
+            ),
+            SemanticCase::rejected(
+                "unknown type aborts even beside a hostPath",
+                "/experimental/localPlugins",
+                json!({ "experimental": { "localPlugins": { "my-plugin": {
+                    "moduleName": "github.com/x/y", "type": "bogus", "hostPath": "/x"
+                } } } }),
+            ),
+            SemanticCase::rejected(
+                "neither type nor hostPath aborts",
+                "/experimental/localPlugins",
+                json!({ "experimental": { "localPlugins": { "my-plugin": {
+                    "moduleName": "github.com/x/y"
+                } } } }),
             ),
         ],
     )

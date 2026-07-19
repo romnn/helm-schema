@@ -5240,6 +5240,9 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "object"
               }
             ],
             "description": "- color: green\n- shape: circle\nautoscalingGroups -- For AWS, Azure AKS, Exoscale or Magnum. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: asg1<br />\nmaxSize: 2<br />\nminSize: 1\n</pre>\nFor Hetzner Cloud, the `instanceType` and `region` keys are also required.\n<pre>\n- name: mypool<br />\nmaxSize: 2<br />\nminSize: 1<br />\ninstanceType: CPX21<br />\nregion: FSN1\n</pre>\n- name: asg1\nmaxSize: 2\nminSize: 1\n- name: asg2\nmaxSize: 2\nminSize: 1"
@@ -6027,6 +6030,9 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "object"
               }
             ],
             "description": "autoscalingGroupsnamePrefix -- For GCE. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: ig01<br />\nmaxSize: 10<br />\nminSize: 0\n</pre>\n- name: ig01\nmaxSize: 10\nminSize: 0\n- name: ig02\nmaxSize: 10\nminSize: 0"
@@ -10454,13 +10460,14 @@
                 }
               },
               {
+                "properties": {},
+                "type": "object"
+              },
+              {
                 "type": "integer"
               },
               {
                 "type": "null"
-              },
-              {
-                "type": "object"
               }
             ],
             "description": "customArgs -- Additional custom container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nList of arguments as strings."
@@ -11774,10 +11781,11 @@
                 }
               },
               {
-                "type": "null"
+                "properties": {},
+                "type": "object"
               },
               {
-                "type": "object"
+                "type": "null"
               }
             ],
             "description": "extraArgs -- Additional container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nEverything after the first _ will be ignored allowing the use of multi-string arguments."

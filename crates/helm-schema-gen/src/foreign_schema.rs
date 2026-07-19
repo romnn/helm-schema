@@ -236,7 +236,15 @@ impl ForeignSchemaRestriction {
         if !schema.allows_type(JsonSchemaType::Array) {
             return None;
         }
-        rewrite_array_schema(schema, Self::Scalar)
+        // `range` iterates maps as well as arrays: the collection needs an
+        // open map lane beside the array rewrite, or a map-shaped source is
+        // rejected by an array-only type (traefik's resourceAttributes flag
+        // loop over the container args slot). The lane stays OPEN because
+        // the loop body may render each value as partial text rather than a
+        // bare item, where the slot's item schema claims nothing about the
+        // raw member values.
+        let array = rewrite_array_schema(schema, Self::Scalar)?;
+        Some(serde_json::json!({ "anyOf": [array, { "type": "object" }] }))
     }
 }
 

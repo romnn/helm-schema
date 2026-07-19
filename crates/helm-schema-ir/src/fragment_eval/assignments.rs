@@ -515,6 +515,9 @@ impl Interpreter<'_> {
             for path in &hole.effects.shape_erased_paths {
                 output_meta.entry(path.clone()).or_default().shape_erased = true;
             }
+            for path in &hole.effects.stringified_paths {
+                output_meta.entry(path.clone()).or_default().stringified = true;
+            }
             for path in &hole.effects.yaml_serialized_paths {
                 output_meta.entry(path.clone()).or_default().yaml_serialized = true;
             }

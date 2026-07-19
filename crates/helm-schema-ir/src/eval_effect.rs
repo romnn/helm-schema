@@ -29,6 +29,13 @@ pub(crate) struct Effects {
     pub(crate) json_serialized_paths: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) shape_erased_paths: BTreeSet<String>,
+    /// Paths whose value in this expression IS the exact Go `%v` rendering
+    /// of the path (`toString .Values.x` over a single identity operand).
+    /// Unlike `shape_erased_paths` — which also covers `quote`, `join`,
+    /// `len`, and the numeric casts, whose output is NOT that text — an
+    /// equality on such a value projects its literal back through the
+    /// `toString` preimage.
+    pub(crate) stringified_paths: BTreeSet<String>,
     /// Paths whose value was replaced by derived text in this expression
     /// (`printf`, `quote`, `trunc`, `b64enc`, …): later transform stages
     /// operate on that text, so they claim nothing about the raw path.
@@ -245,6 +252,7 @@ impl Effects {
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            stringified_paths,
             derived_text_paths,
             merge_operand_paths,
             omitted_map_keys,
@@ -276,6 +284,7 @@ impl Effects {
         self.json_serialized_paths.extend(json_serialized_paths);
         self.encoded_paths.extend(encoded_paths);
         self.shape_erased_paths.extend(shape_erased_paths);
+        self.stringified_paths.extend(stringified_paths);
         self.derived_text_paths.extend(derived_text_paths);
         self.merge_operand_paths.extend(merge_operand_paths);
         for (path, keys) in omitted_map_keys {
@@ -374,6 +383,10 @@ impl Effects {
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            // Describes the value returned by the expression, not its
+            // evaluation: the argument value does not render at the call
+            // site.
+            stringified_paths: _,
             derived_text_paths,
             // Describes the merged VALUE's operands, which do not render at
             // the call site: keeping it would grant falsy tolerance to
@@ -418,6 +431,7 @@ impl Effects {
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            stringified_paths: BTreeSet::new(),
             derived_text_paths,
             merge_operand_paths: BTreeSet::new(),
             omitted_map_keys: BTreeMap::new(),

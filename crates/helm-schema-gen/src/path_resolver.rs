@@ -657,6 +657,10 @@ fn requirements_allow_runtime_kind(
         // The field constraint applies only to objects carrying the field;
         // every other kind passes vacuously.
         FailValueRequirement::FieldHelmFalsy { .. } => true,
+        FailValueRequirement::FieldEquals { .. } => schema_type == "object",
+        FailValueRequirement::AnyOf(alternatives) => alternatives
+            .iter()
+            .any(|alternative| requirements_allow_runtime_kind(alternative, schema_type)),
     })
 }
 
@@ -803,6 +807,49 @@ fn fail_value_requirement_schema(
             }
             FailValueRequirement::QuotedSerializationSafe { style } => {
                 parts.push(crate::quoted_serialization::reference_schema(*style));
+            }
+            // Presence rides the equality (Go's `eq` aborts on nil), so
+            // every wrapping level requires its segment and the host must
+            // be an object.
+            FailValueRequirement::FieldEquals { path, value } => {
+                let Some(value) = guard_value_to_json(value) else {
+                    continue;
+                };
+                let mut node = serde_json::json!({ "const": value });
+                for segment in path.iter().rev() {
+                    node = serde_json::json!({
+                        "type": "object",
+                        "required": [segment],
+                        "properties": { segment: node },
+                    });
+                }
+                parts.push(node);
+            }
+            FailValueRequirement::AnyOf(alternatives) => {
+                let arms: Vec<Value> = alternatives
+                    .iter()
+                    .map(|alternative| fail_value_requirement_schema(alternative, per_member))
+                    .collect();
+                // Field-based alternatives all READ a member field, and a
+                // field read aborts on non-object members, so the
+                // alternation nests inside one object schema. Descendant
+                // property insertions then merge as siblings of the inner
+                // `anyOf` (a conjunction); emitting a bare `anyOf` would
+                // let the union combiner treat the carrier as one more
+                // arm and make the alternation vacuous.
+                let field_based = alternatives.iter().flatten().all(|requirement| {
+                    matches!(
+                        requirement,
+                        FailValueRequirement::HasMember(_)
+                            | FailValueRequirement::FieldEquals { .. }
+                            | FailValueRequirement::FieldHelmFalsy { .. }
+                    )
+                });
+                if field_based {
+                    parts.push(serde_json::json!({ "type": "object", "anyOf": arms }));
+                } else {
+                    parts.push(serde_json::json!({ "anyOf": arms }));
+                }
             }
         }
     }

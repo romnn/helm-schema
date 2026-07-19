@@ -49,6 +49,7 @@ use strict_operands::{
 use traversal::{eval_dig, eval_index};
 use value_facts::{
     concrete_collection_len, concrete_integer, derive_value_text, identity_value_paths,
+    mark_stringified_identities,
 };
 
 pub(crate) fn eval_call_with_helper_calls(
@@ -364,7 +365,12 @@ pub(crate) fn eval_call_with_helper_calls(
                 &raw_range_key_paths,
                 &mut effects,
             );
-            EvalResult::with_effects(derive_value_text(result.value), effects)
+            let value = if function == "toString" {
+                mark_stringified_identities(result.value)
+            } else {
+                result.value
+            };
+            EvalResult::with_effects(derive_value_text(value), effects)
         }
         // Subject-last string consumers with non-string output (`splitList`,
         // `semverCompare`): the LAST argument must be a Go string; the
@@ -568,7 +574,12 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                     &raw_range_key_paths,
                     &mut effects,
                 );
-                EvalResult::with_effects(derive_value_text(current.value), effects)
+                let value = if function == "toString" {
+                    mark_stringified_identities(current.value)
+                } else {
+                    current.value
+                };
+                EvalResult::with_effects(derive_value_text(value), effects)
             }
             "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
             "fromJson" => eval_from_json_pipeline(current, args, env, resolver),

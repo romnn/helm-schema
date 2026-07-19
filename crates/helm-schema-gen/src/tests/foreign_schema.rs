@@ -90,8 +90,14 @@ fn scalar_restriction_keeps_only_scalar_union_variants_and_annotations() {
     );
 }
 
+/// `range` iterates maps as well as arrays: a self-ranged collection at an
+/// array slot keeps an OPEN map lane beside the array rewrite, so a
+/// map-shaped source is not rejected by an array-only type (traefik's
+/// resourceAttributes flag loop over the container args slot). The lane
+/// carries no value typing because the loop body may render each value as
+/// partial text rather than a bare item.
 #[test]
-fn scalar_collection_restriction_requires_array_and_restricts_items() {
+fn scalar_collection_restriction_keeps_the_map_lane_beside_the_array() {
     let schema = json!({
         "type": ["array", "object"],
         "properties": { "name": { "type": "string" } },
@@ -106,10 +112,15 @@ fn scalar_collection_restriction_requires_array_and_restricts_items() {
     sim_assert_eq!(
         have: ForeignSchemaRestriction::ScalarCollection.apply(schema),
         want: Some(json!({
-            "type": "array",
-            "items": {
-                "anyOf": [{ "type": "string" }]
-            }
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [{ "type": "string" }]
+                    }
+                },
+                { "type": "object" }
+            ]
         })),
     );
 }

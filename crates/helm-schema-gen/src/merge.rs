@@ -362,6 +362,13 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 .get("allOf")
                 .and_then(|v| v.as_array())
                 .is_some_and(|a| !a.is_empty())
+            // A sibling `anyOf` (a member-requirement alternation) is
+            // structure: replacing the object with the other side would
+            // silently drop the alternation.
+            || obj
+                .get("anyOf")
+                .and_then(|v| v.as_array())
+                .is_some_and(|a| !a.is_empty())
     }
 
     let a_structured = is_structured_object(&out);
@@ -464,6 +471,20 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
         .unwrap_or_default();
     if let Some(b_all_of) = bobj.get("allOf").and_then(Value::as_array) {
         all_of.extend(b_all_of.iter().cloned());
+    }
+    // A sibling `anyOf` is conjunctive with the object keywords (a
+    // member-requirement alternation such as traefik's hostPath-or-type
+    // local plugins): carry the other side's alternation instead of
+    // silently dropping it, nesting under `allOf` when both sides
+    // alternate.
+    if let Some(b_any_of) = bobj.get("anyOf")
+        && out.get("anyOf") != Some(b_any_of)
+    {
+        if out.contains_key("anyOf") {
+            all_of.push(serde_json::json!({ "anyOf": b_any_of }));
+        } else {
+            out.insert("anyOf".to_string(), b_any_of.clone());
+        }
     }
     all_of = dedup_schemas(all_of);
     if !all_of.is_empty() {

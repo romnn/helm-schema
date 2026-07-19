@@ -187,3 +187,69 @@ fn liveness_gated_helper_keeps_helm_empty_fallback_inputs_open() {
         );
     }
 }
+
+/// datadog's otel gateway image helper replaces a FALSY tag with the
+/// agent-version fallback (another source path) before its `semverCompare`
+/// checks, so only truthy raw values reach the parser: an empty or null
+/// tag renders through the fallback while a truthy non-version aborts.
+#[test]
+fn falsy_reassignment_to_another_source_scopes_the_parser_to_truthy_values() {
+    let helpers = indoc! {r#"
+        {{- define "repro.agentVersion" -}}
+        {{- $version := .Values.agents.tag | toString | trimSuffix "-jmx" -}}
+        {{- if eq $version "latest" -}}
+        {{- $version = "7.80.1" -}}
+        {{- end -}}
+        {{- $version -}}
+        {{- end -}}
+
+        {{- define "repro.gatewayImage" -}}
+          {{- $imageTag := .Values.gw.tag -}}
+          {{- if not $imageTag -}}
+            {{- $imageTag = include "repro.agentVersion" . -}}
+          {{- end -}}
+          {{- $imageTag = $imageTag | toString -}}
+          {{- if semverCompare "<7.67.0" $imageTag -}}
+            {{- fail "agent versions before 7.67.0 are not supported" -}}
+          {{- end -}}
+          {{- $imageTag -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.gw.enabled }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: gw
+        spec:
+          template:
+            spec:
+              containers:
+                - name: gw
+                  image: "agent:{{ include "repro.gatewayImage" . }}"
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        gw:
+          enabled: false
+          tag: ""
+        agents:
+          tag: "7.80.1"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (tag, want) in [
+        (serde_json::json!(""), true),
+        (serde_json::json!(null), true),
+        (serde_json::json!("7.70.0"), true),
+        (serde_json::json!("junk"), false),
+    ] {
+        let instance = serde_json::json!({
+            "gw": { "enabled": true, "tag": tag },
+            "agents": { "tag": "7.80.1" },
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "falsy-reassignment parser scoping: instance={instance}; schema={schema}"
+        );
+    }
+}
