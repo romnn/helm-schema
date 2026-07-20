@@ -157,7 +157,7 @@ pub(super) fn concrete_integer(value: &AbstractValue) -> Option<i64> {
 pub(super) fn escape_wrapped_identity(
     value: &AbstractValue,
     effects: &crate::eval_effect::Effects,
-    token: &str,
+    escape: crate::helper_meta::LexicalEscape,
 ) -> Option<AbstractValue> {
     match value {
         AbstractValue::ValuesPath(path) => {
@@ -171,7 +171,7 @@ pub(super) fn escape_wrapped_identity(
                 return None;
             }
             let mut meta = crate::helper_meta::HelperOutputMeta::default();
-            meta.lexical_escapes.insert(token.to_string());
+            meta.lexical_escapes.insert(escape);
             Some(AbstractValue::OutputPath(path.clone(), meta))
         }
         AbstractValue::OutputPath(path, meta) => {
@@ -183,7 +183,7 @@ pub(super) fn escape_wrapped_identity(
                 return None;
             }
             let mut meta = meta.clone();
-            meta.lexical_escapes.insert(token.to_string());
+            meta.lexical_escapes.insert(escape);
             Some(AbstractValue::OutputPath(path.clone(), meta))
         }
         _ => None,
@@ -221,7 +221,11 @@ pub(super) fn replace_transformed_value(
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
-        other => escape_wrapped_identity(other, effects, old),
+        other => escape_wrapped_identity(
+            other,
+            effects,
+            crate::helper_meta::LexicalEscape::Contains(old.to_string()),
+        ),
     }
 }
 
@@ -265,7 +269,11 @@ pub(super) fn split_transformed_value(
             AbstractValue::choice(mapped)
         }
         other => {
-            let prefix = escape_wrapped_identity(other, effects, separator)?;
+            let prefix = escape_wrapped_identity(
+                other,
+                effects,
+                crate::helper_meta::LexicalEscape::Contains(separator.to_string()),
+            )?;
             Some(AbstractValue::Overlay {
                 entries: std::collections::BTreeMap::from([("_0".to_string(), prefix)]),
                 fallback: Box::new(AbstractValue::Unknown),
@@ -324,10 +332,10 @@ pub(super) fn derive_value_text(value: Option<AbstractValue>) -> Option<Abstract
 
 /// The transformed value of `trimPrefix`/`trimSuffix` with one static
 /// nonempty affix: static string arms trim exactly, raw-identity arms keep
-/// their path qualified by the affix as a lexical escape (trimming is the
-/// identity on strings that do not contain it — a superset of the
-/// starts-with/ends-with strings it actually touches, so the exemption
-/// only widens). `None` when any arm has neither meaning.
+/// their path qualified by a typed affix escape — downstream captures
+/// project their language through the exact stripped-affix preimage
+/// (datadog's `trimSuffix "-jmx"` semver tag). `None` when any arm has
+/// neither meaning.
 pub(super) fn trim_affix_transformed_value(
     value: &AbstractValue,
     effects: &crate::eval_effect::Effects,
@@ -355,7 +363,14 @@ pub(super) fn trim_affix_transformed_value(
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
-        other => escape_wrapped_identity(other, effects, token),
+        other => {
+            let escape = if prefix {
+                crate::helper_meta::LexicalEscape::TrimPrefix(token.to_string())
+            } else {
+                crate::helper_meta::LexicalEscape::TrimSuffix(token.to_string())
+            };
+            escape_wrapped_identity(other, effects, escape)
+        }
     }
 }
 
@@ -377,7 +392,11 @@ pub(super) fn regex_replace_transformed_value(
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
-        other => escape_wrapped_identity(other, effects, token),
+        other => escape_wrapped_identity(
+            other,
+            effects,
+            crate::helper_meta::LexicalEscape::Contains(token.to_string()),
+        ),
     }
 }
 

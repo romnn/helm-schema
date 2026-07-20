@@ -780,6 +780,15 @@ impl ValuePathContext<'_> {
                         .next()
                         .map(|path| Predicate::truthy_path(path).negated());
                 }
+                // A grouped selector chain reads the receiver AND the leaf
+                // (`($config.http).tls.enabled` yields `…http` beside
+                // `…http.tls.enabled`). On an ancestor CHAIN the leaf's
+                // truthiness is the exact conjunction — a truthy leaf makes
+                // every ancestor a nonempty container — so the negation is
+                // the leaf's falsiness. Unrelated path sets still abstain.
+                if let Some(leaf) = ancestor_chain_leaf(&paths) {
+                    return Some(Predicate::truthy_path(leaf).negated());
+                }
                 None
             }
         }
@@ -2699,6 +2708,19 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         | AbstractValue::SplitSegment { .. }
         | AbstractValue::Widened(_) => None,
     }
+}
+
+/// The deepest path of a set forming one ancestor CHAIN (every path an
+/// ancestor of the next); `None` for unrelated paths.
+fn ancestor_chain_leaf(paths: &std::collections::BTreeSet<String>) -> Option<&str> {
+    let mut ordered: Vec<&String> = paths.iter().collect();
+    ordered.sort_by_key(|path| helm_schema_core::split_value_path(path).len());
+    for pair in ordered.windows(2) {
+        if !helm_schema_core::values_path_is_descendant(pair[1], pair[0]) {
+            return None;
+        }
+    }
+    ordered.last().map(|path| path.as_str())
 }
 
 fn bool_predicate(value: bool) -> Predicate {

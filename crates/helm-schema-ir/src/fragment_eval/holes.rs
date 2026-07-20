@@ -494,6 +494,10 @@ impl Interpreter<'_> {
         );
         self.values_default_sources_observed
             .extend(summary.values_default_sources.iter().cloned());
+        // A wrapper-engine body computed its own pre-rewrite snapshot;
+        // callers carry it verbatim (their reads run after the call).
+        self.pre_rewrite_strict_paths
+            .extend(summary.pre_rewrite_strict_paths.iter().cloned());
         self.values_root_helper_includes_observed
             .extend(summary.values_root_helper_includes.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();

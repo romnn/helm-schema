@@ -211,3 +211,89 @@ fn nats_program_wrappers_inhabit_typed_leaves() -> color_eyre::eyre::Result<()> 
     }
     Ok(())
 }
+
+/// The `_jsonpatch.tpl` op grammar binds through the HELPER-SCOPE range
+/// (F108): every values `patch` list rides `nats.loadMergePatch` into the
+/// `jsonpatch` helper, whose `range $patch := $patches` gates each member
+/// on `hasKey "op"`/`hasKey "path"` and the op enum. Member identities now
+/// survive the JSON-roundtripped call dict, so an unknown or missing op
+/// rejects while valid patches, the empty default, and the wrapper-item
+/// lane (`$tplYamlSpread` inside `patch`) render — all polarities verified
+/// under `helm template` on the vendored chart.
+#[test]
+fn nats_jsonpatch_ops_bind_through_the_helper_range() -> color_eyre::eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+    for (overrides, want) in [
+        (
+            serde_json::json!({ "service": { "patch": [
+                { "op": "add", "path": "/metadata/labels/x", "value": "y" }
+            ] } }),
+            true,
+        ),
+        (serde_json::json!({ "service": { "patch": [] } }), true),
+        (
+            serde_json::json!({ "service": { "patch": [
+                { "op": "bogus", "path": "/x" }
+            ] } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "service": { "patch": [{ "path": "/x" }] } }),
+            false,
+        ),
+        // The wrapper-item lane stays open: the engine replaces the
+        // sentinel item before jsonpatch ranges the list.
+        (
+            serde_json::json!({ "service": { "patch": [
+                { "$tplYamlSpread": "- {op: add, path: /metadata/labels/x, value: y}" }
+            ] } }),
+            true,
+        ),
+    ] {
+        let instance = chart_instances::with_override("nats", overrides.clone())?;
+        assert!(
+            validator.is_valid(&instance) == want,
+            "jsonpatch ops bind through the helper range: overrides={overrides}; want={want}"
+        );
+    }
+    Ok(())
+}
+
+/// Wrapper consumers BEFORE the tree rewrite (F104 residual):
+/// `nats.defaultValues` calls `nats.fullname` — which truncs
+/// `nameOverride`/`fullnameOverride` raw — BEFORE the `$tplYaml` engine
+/// substitutes wrapper programs, so a wrapper map at those paths aborts
+/// rendering. Tolerant pre-rewrite reads (the `.name` default selections
+/// only copy the value into the tree the engine then rewrites) and
+/// post-rewrite consumers keep their wrapper alternatives — every
+/// polarity verified under `helm template` on the vendored chart.
+#[test]
+fn nats_pre_rewrite_strict_consumers_reject_wrapper_programs() -> color_eyre::eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+    for (overrides, want) in [
+        (
+            serde_json::json!({ "nameOverride": { "$tplYaml": "x" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "fullnameOverride":
+                { "$tplYaml": "{{ .Release.Name | quote }}" } }),
+            false,
+        ),
+        (serde_json::json!({ "nameOverride": "plain" }), true),
+        (
+            serde_json::json!({ "configMap": { "name":
+                { "$tplYaml": "{{ .Release.Name | quote }}" } } }),
+            true,
+        ),
+    ] {
+        let instance = chart_instances::with_override("nats", overrides.clone())?;
+        assert!(
+            validator.is_valid(&instance) == want,
+            "pre-rewrite strict consumers exclude wrappers: overrides={overrides}; want={want}"
+        );
+    }
+    Ok(())
+}

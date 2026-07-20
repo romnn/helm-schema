@@ -387,6 +387,15 @@ impl Interpreter<'_> {
         );
         self.values_default_sources_observed
             .extend(effects.values_default_sources.iter().cloned());
+        // The first values-root wrapper rewrite freezes the strict-consumer
+        // snapshot: string contracts recorded so far ran on RAW values, so
+        // a wrapper map at those paths aborts before the engine rewrites it
+        // (nats' `fullname | trunc` on `nameOverride`).
+        if !effects.values_root_helper_includes.is_empty()
+            && self.values_root_helper_includes_observed.is_empty()
+        {
+            self.pre_rewrite_strict_paths = self.strict_string_capture_paths();
+        }
         self.values_root_helper_includes_observed
             .extend(effects.values_root_helper_includes.iter().cloned());
         self.chart_defaults_observed
@@ -607,6 +616,7 @@ fn runtime_requirement_paths(
         CaptureKind::IndexAccess { path, .. } => [path.clone()].into_iter().collect(),
         CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
         CaptureKind::ValueType { path, .. }
+        | CaptureKind::DigSubject { path }
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. } => [path.clone()].into_iter().collect(),

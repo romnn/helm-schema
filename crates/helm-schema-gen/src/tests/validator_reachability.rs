@@ -96,6 +96,87 @@ fn monotone_error_accumulator_preserves_guarded_fail_condition() {
     );
 }
 
+/// An error accumulator appended INSIDE a range whose arm is narrowed by a
+/// range-key equality keeps those member conditions through the range join:
+/// the final `if $breaking` fail rejects exactly the legacy member shapes
+/// (velero's NOTES.txt fs-restore label/image gates).
+#[test]
+fn range_appended_error_accumulator_reaches_the_final_fail() {
+    let src = indoc! {r#"
+        Thank you for installing.
+
+        {{- $breaking := "" }}
+        {{- if hasKey .Values "resticTimeout" }}
+        {{- $breaking = print $breaking "\n\nREMOVED: resticTimeout" }}
+        {{- end }}
+        {{- range $key, $value := .Values.configMaps }}
+        {{- if eq $key "fs-restore-action-config" }}
+        {{- if hasKey $value.labels "velero.io/restic" }}
+        {{- $breaking = print $breaking "\n\nREMOVED: velero.io/restic label" }}
+        {{- end }}
+        {{- if $value.data.image }}
+        {{- if contains "velero-restic-restore-helper" $value.data.image }}
+        {{- $breaking = print $breaking "\n\nREMOVED: restic restore helper image" }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if $breaking }}
+        {{- fail $breaking }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        configMaps: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "resticTimeout": "1h" }),
+            false,
+            "the removed top-level key aborts",
+        ),
+        (
+            serde_json::json!({ "configMaps": { "fs-restore-action-config": {
+                "labels": { "velero.io/pod-volume-restore": "" },
+                "data": { "image": "velero/velero-restore-helper:v1.0" },
+            } } }),
+            true,
+            "current label and image forms render",
+        ),
+        (
+            serde_json::json!({ "configMaps": { "fs-restore-action-config": {
+                "labels": { "velero.io/restic": "" },
+                "data": {},
+            } } }),
+            false,
+            "the legacy restic label aborts",
+        ),
+        (
+            serde_json::json!({ "configMaps": { "fs-restore-action-config": {
+                "labels": {},
+                "data": { "image": "velero/velero-restic-restore-helper:v1.0" },
+            } } }),
+            false,
+            "the legacy restore-helper image aborts",
+        ),
+        (
+            serde_json::json!({ "configMaps": { "other": {
+                "labels": { "velero.io/restic": "" },
+                "data": {},
+            } } }),
+            true,
+            "other members escape the key-narrowed gates",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "range-appended accumulator ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A list accumulator made nonempty by guarded `append` calls retains the
 /// exact guards when a later length check terminates rendering.
 #[test]

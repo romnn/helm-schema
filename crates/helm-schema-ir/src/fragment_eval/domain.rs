@@ -312,10 +312,10 @@ pub struct SpliceMeta {
     pub json_serialized: bool,
     /// The splice's runtime identity was recovered through JSON decoding.
     pub json_decoded: bool,
-    /// Literal tokens whose presence in the raw string diverts it from the
-    /// rendered value (`replace`/split-prefix chains); lexical captures
-    /// exempt raw strings containing any of them.
-    pub lexical_escapes: BTreeSet<String>,
+    /// Lexical divergences between the raw string and the rendered value
+    /// (`replace`/split-prefix chains, trim affixes); lexical captures
+    /// project their language through them.
+    pub lexical_escapes: BTreeSet<crate::helper_meta::LexicalEscape>,
     /// The rendered text is one separator-delimited segment of the source
     /// string (`regexSplit ":" . -1 | last`): sinks constrain that segment,
     /// and raw-identity consumers (quoted-token claims, parser preimages)

@@ -311,6 +311,11 @@ impl QuotedScalarStyle {
 pub enum FailValueRequirement {
     /// The value must be of this JSON Schema type.
     SchemaType(String),
+    /// The value must be of this JSON Schema type EVEN WHEN NULL: the
+    /// consumer type-asserts before any nil check (Sprig `dig` subjects),
+    /// so an explicit null aborts while structural absence stays open
+    /// through the arm's properties anchoring.
+    SchemaTypeEvenNull(String),
     /// The value must be of this JSON Schema type only when Helm-truthy:
     /// every falsy spelling escapes through the consumer's own truthiness
     /// selection (a ranged ACL member's `default ""` password reaching
@@ -319,6 +324,11 @@ pub enum FailValueRequirement {
     /// The value must be Helm-truthy (sealed-secrets aborts on any falsy
     /// `privateKeyAnnotations` member, including the empty string).
     HelmTruthy,
+    /// The value must be Helm-FALSY — the negation of a member's own
+    /// truthiness test inside a compound ranged terminal: the fail fires
+    /// only for truthy members, so falsiness is one escape alternative
+    /// (traefik's `if $config` gate around the http3-without-tls abort).
+    HelmFalsy,
     /// The value's field at `path`, when present, must be Helm-FALSY: the
     /// failing test fired on the field's truthiness (oauth2-proxy aborts
     /// when a legacy `extraPaths[].backend.serviceName` is set under the
@@ -352,6 +362,16 @@ pub enum FailValueRequirement {
     /// The value must not equal this literal (cilium forbids ranged
     /// `extraEnv` names colliding with its own backoff variables).
     NotEquals(GuardValue),
+    /// The value's field at `path`, when present, must differ from the
+    /// literal — the negation of a member-field equality test. Absent and
+    /// null fields differ from every literal (Helm's `eq` compares `nil`
+    /// without aborting), so no presence requirement rides along
+    /// (traefik's HTTPS-protocol listeners must carry `certificateRefs`;
+    /// non-HTTPS listeners escape through this arm).
+    FieldNotEquals {
+        path: Vec<String>,
+        value: GuardValue,
+    },
     /// The value must be of this JSON Schema type IF present and non-null:
     /// Go's `eq`/`ne` compare `nil` against anything, so a missing or null
     /// comparison operand renders while a present value of a different
@@ -421,6 +441,10 @@ pub struct ContractSchemaSignals {
     direct_ranged_value_paths: BTreeSet<String>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
     values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
+    /// Values paths whose nodes must not gain a wrapper alternative: a
+    /// strict string consumer reads them before the engine's values-root
+    /// rewrite, so a wrapper map there aborts rendering.
+    values_program_wrapper_exclusions: BTreeSet<String>,
     /// Terminating validator formulas spanning several paths: rendering
     /// aborts whenever ALL guards of one clause hold, so no valid values
     /// document may satisfy them (`fail`/`required` under fully lowerable
@@ -458,6 +482,7 @@ impl ContractSchemaSignals {
             direct_ranged_value_paths,
             values_default_sources: BTreeSet::new(),
             values_program_wrappers: BTreeSet::new(),
+            values_program_wrapper_exclusions: BTreeSet::new(),
             terminal_clauses,
         }
     }
@@ -492,6 +517,23 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn values_program_wrappers(&self) -> &BTreeSet<ValuesProgramWrapper> {
         &self.values_program_wrappers
+    }
+
+    /// Attaches paths excluded from wrapper alternatives (pre-rewrite
+    /// strict consumers).
+    #[must_use]
+    pub fn with_values_program_wrapper_exclusions(
+        mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) -> Self {
+        self.values_program_wrapper_exclusions.extend(paths);
+        self
+    }
+
+    /// Values paths whose nodes must not gain a wrapper alternative.
+    #[must_use]
+    pub fn values_program_wrapper_exclusions(&self) -> &BTreeSet<String> {
+        &self.values_program_wrapper_exclusions
     }
 
     /// Paths the chart ranges DIRECTLY: their runtime iterable domain is

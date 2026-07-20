@@ -531,13 +531,41 @@ impl AbstractValue {
     }
 
     /// Keep only identities that remain unambiguous across a JSON roundtrip.
-    /// Direct values paths retain their identity. A structured helper value
-    /// may retain the `.Values` root together with the literal wrapper keys
-    /// needed to select it, but mutable sibling structure stays opaque.
+    /// Direct values paths retain their identity. Container structure
+    /// roundtrips member-wise: a member that IS a path identity keeps that
+    /// identity in the decoded copy (reading the copy reads the same chart
+    /// value; `set` mutations on the copy ride the local's overlay
+    /// machinery, never the path), literal structure survives verbatim, and
+    /// anything else stays an opaque PRESENT member — dropping it would
+    /// fabricate absence for `hasKey`-style probes (the nats `jsonpatch`
+    /// helper ranges the `patch` member of a roundtripped call dict).
     pub(crate) fn json_roundtrip_identity(&self) -> Option<Self> {
+        fn member(value: &AbstractValue) -> AbstractValue {
+            value
+                .json_roundtrip_identity()
+                .unwrap_or(AbstractValue::Unknown)
+        }
         match self {
             Self::ValuesPath(_) | Self::JsonDecodedPath(_) | Self::OutputPath(_, _) => {
                 Some(self.clone().mark_json_decoded())
+            }
+            Self::StringSet(_) | Self::DerivedBoolean(_) => Some(self.clone()),
+            Self::Dict(entries) => Some(Self::Dict(
+                entries
+                    .iter()
+                    .map(|(key, value)| (key.clone(), member(value)))
+                    .collect(),
+            )),
+            Self::List(items) => Some(Self::List(items.iter().map(member).collect())),
+            Self::Overlay { entries, fallback } => Some(Self::Overlay {
+                entries: entries
+                    .iter()
+                    .map(|(key, value)| (key.clone(), member(value)))
+                    .collect(),
+                fallback: Box::new(member(fallback)),
+            }),
+            Self::Choice(choices) => {
+                Self::choice(choices.iter().map(member).collect()).map(Self::mark_json_decoded)
             }
             _ => self.values_root_structure().map(Self::mark_json_decoded),
         }

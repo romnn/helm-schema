@@ -5659,7 +5659,7 @@
       "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
       "type": "string"
     },
-    "schema389": {
+    "schema388": {
       "properties": {
         "configMaps": {
           "required": [
@@ -6148,7 +6148,13 @@
       },
       "type": "object"
     },
-    "schema496": {
+    "schema494": {
+      "required": [
+        "fs-restore-action-config"
+      ],
+      "type": "object"
+    },
+    "schema497": {
       "anyOf": [
         {
           "not": {
@@ -6159,11 +6165,6 @@
           "type": "string"
         }
       ]
-    },
-    "schema499": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
     },
     "schema5": {
       "additionalProperties": false,
@@ -6587,24 +6588,29 @@
     },
     "schema500": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema501": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema502": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema502": {
+    "schema503": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema505": {
+    "schema506": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema506": {
+    "schema507": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -8031,7 +8037,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema389"
+        "$ref": "#/$defs/schema388"
       },
       "then": {
         "additionalProperties": {},
@@ -8105,7 +8111,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema389"
+        "$ref": "#/$defs/schema388"
       },
       "then": {
         "additionalProperties": {},
@@ -8870,7 +8876,7 @@
                         "name": {},
                         "prefix": {},
                         "provider": {
-                          "$ref": "#/$defs/schema496"
+                          "$ref": "#/$defs/schema497"
                         },
                         "validationFrequency": {}
                       },
@@ -8924,7 +8930,7 @@
                         "name": {},
                         "prefix": {},
                         "provider": {
-                          "$ref": "#/$defs/schema496"
+                          "$ref": "#/$defs/schema497"
                         },
                         "validationFrequency": {}
                       },
@@ -13486,7 +13492,7 @@
               "secretContents": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema501"
+                    "$ref": "#/$defs/schema502"
                   },
                   {
                     "$ref": "#/$defs/schema125"
@@ -21242,13 +21248,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema499"
+                            "$ref": "#/$defs/schema500"
                           },
                           {
-                            "$ref": "#/$defs/schema502"
+                            "$ref": "#/$defs/schema503"
                           },
                           {
-                            "$ref": "#/$defs/schema505"
+                            "$ref": "#/$defs/schema506"
                           },
                           {
                             "not": {
@@ -21256,10 +21262,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema506"
+                            "$ref": "#/$defs/schema507"
                           },
                           {
-                            "$ref": "#/$defs/schema500"
+                            "$ref": "#/$defs/schema501"
                           },
                           {
                             "$ref": "#/$defs/schema417"
@@ -22245,6 +22251,84 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "configMaps": {
+                    "properties": {
+                      "fs-restore-action-config": {
+                        "properties": {
+                          "data": {
+                            "properties": {
+                              "image": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "image"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "data"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "fs-restore-action-config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "configMaps"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "configMaps": {
+                    "properties": {
+                      "fs-restore-action-config": {
+                        "properties": {
+                          "data": {
+                            "properties": {
+                              "image": {
+                                "pattern": "velero-restic-restore-helper",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "image"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "data"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "fs-restore-action-config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "configMaps"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema388"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/schema300"
               },
               {
@@ -22256,6 +22340,91 @@
                     "$ref": "#/$defs/schema300"
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema388"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "configMaps": {
+                            "properties": {
+                              "fs-restore-action-config": {
+                                "properties": {
+                                  "labels": {
+                                    "properties": {
+                                      "velero.io/restic": {}
+                                    },
+                                    "required": [
+                                      "velero.io/restic"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "labels"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "fs-restore-action-config"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "configMaps"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "configMaps": {
+                          "properties": {
+                            "fs-restore-action-config": {
+                              "properties": {
+                                "labels": {
+                                  "properties": {
+                                    "velero.io/restic": {
+                                      "enum": [
+                                        null
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "velero.io/restic"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "labels"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "fs-restore-action-config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configMaps"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -22346,10 +22515,7 @@
       "allOf": [
         {
           "if": {
-            "required": [
-              "fs-restore-action-config"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema494"
           },
           "then": {
             "anyOf": [
@@ -23272,7 +23438,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema501"
+          "$ref": "#/$defs/schema502"
         }
       ],
       "description": "Extra K8s manifests to deploy\n- apiVersion: secrets-store.csi.x-k8s.io/v1\nkind: SecretProviderClass\nmetadata:\nname: velero-secrets-store\nspec:\nprovider: aws\nparameters:\nobjects: |\n- objectName: \"velero\"\nobjectType: \"secretsmanager\"\njmesPath:\n- path: \"access_key\"\nobjectAlias: \"access_key\"\n- path: \"secret_key\"\nobjectAlias: \"secret_key\"\nsecretObjects:\n- data:\n- key: access_key\nobjectName: client-id\n- key: client-secret\nobjectName: client-secret\nsecretName: velero-secrets-store\ntype: Opaque"
@@ -23970,13 +24136,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema499"
+                            "$ref": "#/$defs/schema500"
                           },
                           {
-                            "$ref": "#/$defs/schema502"
+                            "$ref": "#/$defs/schema503"
                           },
                           {
-                            "$ref": "#/$defs/schema505"
+                            "$ref": "#/$defs/schema506"
                           },
                           {
                             "not": {
@@ -23984,7 +24150,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema506"
+                            "$ref": "#/$defs/schema507"
                           },
                           {
                             "$ref": "#/$defs/schema417"
@@ -24050,13 +24216,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema499"
+                            "$ref": "#/$defs/schema500"
                           },
                           {
-                            "$ref": "#/$defs/schema502"
+                            "$ref": "#/$defs/schema503"
                           },
                           {
-                            "$ref": "#/$defs/schema505"
+                            "$ref": "#/$defs/schema506"
                           },
                           {
                             "not": {
@@ -24064,7 +24230,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema506"
+                            "$ref": "#/$defs/schema507"
                           },
                           {
                             "$ref": "#/$defs/schema417"
@@ -24184,13 +24350,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema499"
+                            "$ref": "#/$defs/schema500"
                           },
                           {
-                            "$ref": "#/$defs/schema502"
+                            "$ref": "#/$defs/schema503"
                           },
                           {
-                            "$ref": "#/$defs/schema505"
+                            "$ref": "#/$defs/schema506"
                           },
                           {
                             "not": {
@@ -24198,7 +24364,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema506"
+                            "$ref": "#/$defs/schema507"
                           },
                           {
                             "$ref": "#/$defs/schema417"
@@ -24370,13 +24536,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema499"
+                            "$ref": "#/$defs/schema500"
                           },
                           {
-                            "$ref": "#/$defs/schema502"
+                            "$ref": "#/$defs/schema503"
                           },
                           {
-                            "$ref": "#/$defs/schema505"
+                            "$ref": "#/$defs/schema506"
                           },
                           {
                             "not": {
@@ -24384,7 +24550,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema506"
+                            "$ref": "#/$defs/schema507"
                           },
                           {
                             "$ref": "#/$defs/schema417"
@@ -24972,13 +25138,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema499"
+                        "$ref": "#/$defs/schema500"
                       },
                       {
-                        "$ref": "#/$defs/schema502"
+                        "$ref": "#/$defs/schema503"
                       },
                       {
-                        "$ref": "#/$defs/schema505"
+                        "$ref": "#/$defs/schema506"
                       },
                       {
                         "not": {
@@ -24986,7 +25152,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema506"
+                        "$ref": "#/$defs/schema507"
                       },
                       {
                         "$ref": "#/$defs/schema417"
@@ -25135,13 +25301,13 @@
               "clusterAdministratorName": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema499"
+                    "$ref": "#/$defs/schema500"
                   },
                   {
-                    "$ref": "#/$defs/schema502"
+                    "$ref": "#/$defs/schema503"
                   },
                   {
-                    "$ref": "#/$defs/schema505"
+                    "$ref": "#/$defs/schema506"
                   },
                   {
                     "not": {
@@ -25149,10 +25315,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema506"
+                    "$ref": "#/$defs/schema507"
                   },
                   {
-                    "$ref": "#/$defs/schema500"
+                    "$ref": "#/$defs/schema501"
                   },
                   {
                     "$ref": "#/$defs/schema417"

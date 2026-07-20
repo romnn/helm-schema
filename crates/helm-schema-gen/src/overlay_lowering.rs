@@ -220,8 +220,26 @@ pub(crate) fn collect_conditional_schemas(
             // .Values.…kubeVersionOverride` reaching `semverCompare`), and
             // the falsy set spans every runtime type, so a typed base
             // would reject documents the chart renders.
+            // A dig-lane TYPE arm scoped by the target's own strict
+            // PRESENCE behaves like the self-truthy case: absence (and
+            // every state its execution gates leave dormant) must stay
+            // open, so the base goes to the guarded-only lane and the arm
+            // alone enforces the type where the dig actually executes
+            // (KPS's `customRules` under `defaultRules.create: false`).
+            // Member-shaped requirements (HasMember, MemberHost) keep the
+            // established preserve rules — their presence guards scope
+            // probes, not the host's whole typing.
+            let presence_scoped_type_arm =
+                implication.requirements.iter().all(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::SchemaType(_)
+                            | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(_)
+                    )
+                }) && implication_has_self_presence_guard(implication, target_value_path);
             let preserve_base_schema = implication.outer_guards.is_empty()
                 || (!implication_has_self_truthy_guard(implication, target_value_path)
+                    && !presence_scoped_type_arm
                     && resolved_schema_admits_fail_requirement_domain(
                         &resolved_target.schema,
                         implication,
@@ -695,6 +713,28 @@ fn implication_has_self_truthy_guard(
     })
 }
 
+/// Whether an outer guard scopes the arm to the target's own strict
+/// PRESENCE — `¬Absent(target)` or a `HasKey` naming the target as its
+/// parent's member. Such arms fire only where the value exists, so the
+/// base must keep its independent resolution.
+fn implication_has_self_presence_guard(
+    implication: &helm_schema_core::ContractFailImplication,
+    target_value_path: &str,
+) -> bool {
+    implication.outer_guards.iter().any(|guard| match guard {
+        ConditionalGuard::Not(inner) => matches!(
+            inner.as_ref(),
+            ConditionalGuard::Absent { path } if path == target_value_path
+        ),
+        ConditionalGuard::HasKey { path, key } => {
+            let mut segments = split_value_path(path);
+            segments.push(key.clone());
+            segments == split_value_path(target_value_path)
+        }
+        _ => false,
+    })
+}
+
 fn resolved_schema_admits_fail_requirement_domain(
     resolved_schema: &Value,
     implication: &helm_schema_core::ContractFailImplication,
@@ -760,10 +800,15 @@ fn requirement_admits_runtime_type(
                 || runtime_type == required
                 || required == "number" && runtime_type == "integer"
         }
+        FailValueRequirement::SchemaTypeEvenNull(required) => {
+            runtime_type == required || required == "number" && runtime_type == "integer"
+        }
         // Every runtime kind has a Helm-falsy escape spelling.
         FailValueRequirement::TruthyImpliesSchemaType(_) => true,
         FailValueRequirement::HelmTruthy => runtime_type != "null",
+        FailValueRequirement::HelmFalsy => true,
         FailValueRequirement::FieldHelmFalsy { .. } => true,
+        FailValueRequirement::FieldNotEquals { .. } => true,
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }
         | FailValueRequirement::FieldHelmTruthy { .. } => runtime_type == "object",

@@ -102,6 +102,10 @@ pub struct EvaluatedDocument {
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// Helper names through which the values root was replaced.
     pub(crate) values_root_helper_includes: BTreeSet<String>,
+    /// Strictly string-consumed paths whose consumers execute BEFORE the
+    /// values-root wrapper rewrite: their nodes must not gain the wrapper
+    /// alternative (see the interpreter field of the same name).
+    pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(crate) fail_conditions: Vec<FailCapture>,
@@ -153,6 +157,7 @@ pub(crate) fn eval_document(
         range_modes: interpreter.range_modes,
         values_default_sources: interpreter.values_default_sources_observed,
         values_root_helper_includes: interpreter.values_root_helper_includes_observed,
+        pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
         fail_conditions: interpreter.fail_conditions,
     }
 }
@@ -539,6 +544,14 @@ pub(super) struct Interpreter<'a> {
         BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
     pub(super) values_root_helper_includes_observed: BTreeSet<String>,
+    /// Values paths with a strict STRING consumer that executed before the
+    /// first values-root program-wrapper rewrite in this source: a wrapper
+    /// map at such a path reaches the consumer raw and aborts (nats'
+    /// `fullname | trunc` reads `nameOverride` before `nats.defaultValues`
+    /// substitutes the tplYaml result), so those nodes must not gain the
+    /// wrapper alternative. Tolerant pre-rewrite reads (`default`
+    /// selections that only copy the value) stay wrapper-eligible.
+    pub(super) pre_rewrite_strict_paths: BTreeSet<String>,
     pub(super) active_predicates: Vec<Predicate>,
     /// Loop nesting depth of the evaluation point (block and inline range
     /// bodies): first-iteration reasoning is only sound at depth one.
@@ -582,6 +595,12 @@ pub(super) struct Interpreter<'a> {
     /// membership with truthy predicates (the summary lane's flavor), so
     /// fail capture re-adds the range facts from here.
     pub(super) active_direct_ranged_paths: Vec<String>,
+    /// Approximate conjuncts for exact-range items that not every iterable
+    /// alternative executes (nats' jsonpatch conditionally appends "from"
+    /// to `$opPathKeys`). They condition CAPTURE conjunctions only — rows
+    /// and type hints keep the join semantics ordinary contributions have —
+    /// so strict captures inside such an item cannot bind unconditionally.
+    pub(super) alternative_capture_approximates: Vec<Predicate>,
     /// Predicate paths severed by index-call narrowing anywhere in this
     /// source: guard reads of their strict ancestors are dropped from the
     /// summary (the narrowing proves the ancestor probe was a traversal
@@ -645,6 +664,7 @@ impl<'a> Interpreter<'a> {
             root_value_dispatches_observed: BTreeMap::new(),
             values_default_sources_observed: BTreeSet::new(),
             values_root_helper_includes_observed: BTreeSet::new(),
+            pre_rewrite_strict_paths: BTreeSet::new(),
             active_predicates: Vec::new(),
             loop_depth: 0,
             reads: Vec::new(),
@@ -661,6 +681,7 @@ impl<'a> Interpreter<'a> {
             fail_conditions: Vec::new(),
             member_host_conversions: BTreeSet::new(),
             active_direct_ranged_paths: Vec::new(),
+            alternative_capture_approximates: Vec::new(),
             suppress_predicate_paths: BTreeSet::new(),
             chart_defaults_observed: BTreeSet::new(),
             current_site: None,
@@ -930,6 +951,11 @@ impl<'a> Interpreter<'a> {
                 conjunction.push(range);
             }
         }
+        for approximate in &self.alternative_capture_approximates {
+            if !conjunction.contains(approximate) {
+                conjunction.push(approximate.clone());
+            }
+        }
         conjunction.extend(tail);
         conjunction
     }
@@ -1189,6 +1215,32 @@ impl<'a> Interpreter<'a> {
     /// Absorb called-helper fail conjunctions: the body recorded its
     /// internal predicates; the call site prepends its ambient predicates,
     /// the same scoping helper reads get.
+    /// Values paths a strict STRING consumer captured so far, regardless
+    /// of branch scope: a program-wrapper map reaching such a consumer raw
+    /// aborts rendering (`trunc`/`contains` type-assert strings, and a
+    /// wrapper map is truthy, so even self-guarded consumers run). The
+    /// pre-rewrite wrapper-exclusion snapshot reads this — conditional
+    /// captures count because engines guard their whole body with an
+    /// idempotence flag exactly as conditional as the rewrite itself.
+    pub(super) fn strict_string_capture_paths(&self) -> BTreeSet<String> {
+        let mut paths = self.string_contract_paths.clone();
+        for capture in &self.fail_conditions {
+            match &capture.kind {
+                crate::eval_effect::CaptureKind::ValueType { path, schema_type }
+                    if schema_type == "string" =>
+                {
+                    paths.insert(path.clone());
+                }
+                crate::eval_effect::CaptureKind::ValuePattern { path, .. } => {
+                    paths.insert(path.clone());
+                }
+                _ => {}
+            }
+        }
+        paths.retain(|path| !path.trim().is_empty() && !path.contains('*'));
+        paths
+    }
+
     pub(super) fn absorb_helper_fails(&mut self, fails: &[FailCapture]) {
         for body_capture in fails {
             let mut ranged = self.capture_ranged_modes();

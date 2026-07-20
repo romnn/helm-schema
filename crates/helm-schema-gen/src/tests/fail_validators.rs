@@ -1607,6 +1607,162 @@ fn ranged_not_equals_chains_negate_to_the_field_enum() {
     }
 }
 
+/// A ranged fail whose test CONJOINS several member conditions negates to
+/// the disjunction of their negations, per member: an equality on a member
+/// field flips to the absence-tolerant `FieldNotEquals`, a negated
+/// truthiness over a nested field flips to `FieldHelmTruthy`, and the
+/// member's own truthiness gate contributes the Helm-falsy escape
+/// (traefik's HTTPS-listener certificateRefs and http3-without-tls
+/// terminals).
+#[test]
+fn compound_ranged_terminals_negate_to_member_alternatives() {
+    let src = indoc! {r#"
+        {{- range $name, $config := .Values.gateway.listeners }}
+        {{- if and (eq .protocol "HTTPS") (not .certificateRefs) }}
+        {{- fail "ERROR: certificateRefs needs to be specified using HTTPS" }}
+        {{- end }}
+        {{- end }}
+        {{- range $portName, $config := .Values.ports }}
+        {{- if $config }}
+        {{- if ($config.http3).enabled }}
+        {{- if not ($config.http).tls.enabled }}
+        {{- fail "ERROR: You cannot enable http3 without enabling tls" }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        config:
+          ok: true
+    "#};
+    let values_yaml = indoc! {r#"
+        gateway:
+          listeners: {}
+        ports: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (listener, want, label) in [
+        (
+            serde_json::json!({ "protocol": "HTTPS", "port": 443 }),
+            false,
+            "an HTTPS listener without certificateRefs aborts",
+        ),
+        (
+            serde_json::json!({ "protocol": "HTTPS", "port": 443,
+                "certificateRefs": [{ "name": "tls" }] }),
+            true,
+            "an HTTPS listener with certificateRefs renders",
+        ),
+        (
+            serde_json::json!({ "protocol": "HTTPS", "port": 443,
+                "certificateRefs": [] }),
+            false,
+            "an empty certificateRefs list is Helm-falsy and aborts",
+        ),
+        (
+            serde_json::json!({ "protocol": "HTTP", "port": 80 }),
+            true,
+            "a non-HTTPS listener escapes the terminal",
+        ),
+    ] {
+        let instance = serde_json::json!({ "gateway": { "listeners": { "web": listener } } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "listener terminal ({label}): instance={instance}; schema={schema}"
+        );
+    }
+    for (port, want, label) in [
+        (
+            serde_json::json!({ "http3": { "enabled": true } }),
+            false,
+            "http3 without tls aborts",
+        ),
+        (
+            serde_json::json!({ "http3": { "enabled": true },
+                "http": { "tls": { "enabled": true } } }),
+            true,
+            "http3 with tls renders",
+        ),
+        (
+            serde_json::json!({ "http3": { "enabled": false } }),
+            true,
+            "disabled http3 escapes",
+        ),
+        (serde_json::json!(null), true, "a falsy port config escapes"),
+    ] {
+        let instance = serde_json::json!({ "ports": { "web": port } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "http3 terminal ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A HELPER-SCOPE range over a JSON-roundtripped dict member carries the
+/// member identity into its fail captures: the nats `jsonpatch` shape —
+/// `$params := fromJson (toJson .)`, `$patches := $params.patch`,
+/// `range $patch := $patches` with `hasKey`/`ne $patch.op` gates — must
+/// bind the caller's `service.patch` members instead of truncating to
+/// `service.patch.op` and leaking document-level terminals.
+#[test]
+fn helper_scope_ranges_bind_member_identities_in_fail_captures() {
+    let helpers = indoc! {r#"
+        {{- define "repro.jsonpatch" -}}
+          {{- $params := fromJson (toJson .) -}}
+          {{- $patches := $params.patch -}}
+          {{- range $patch := $patches -}}
+            {{- if not (hasKey $patch "op") -}}
+              {{- fail "patch is missing op key" -}}
+            {{- end -}}
+            {{- if and (ne $patch.op "add") (ne $patch.op "remove") (ne $patch.op "replace") -}}
+              {{- fail (cat "patch has invalid op" $patch.op) -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toJson . -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: t
+        data:
+          out: {{ include "repro.jsonpatch" (dict "doc" (dict) "patch" (.Values.service.patch | default list)) | quote }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("service:\n  patch: []\n"),
+    );
+    for (patch, want, label) in [
+        (serde_json::json!([]), true, "an empty patch list renders"),
+        (
+            serde_json::json!([{ "op": "add", "path": "/a" }]),
+            true,
+            "a valid op renders",
+        ),
+        (
+            serde_json::json!([{ "op": "bogus" }]),
+            false,
+            "an unknown op aborts",
+        ),
+        (
+            serde_json::json!([{ "path": "/a" }]),
+            false,
+            "a patch without op aborts",
+        ),
+    ] {
+        let instance = serde_json::json!({ "service": { "patch": patch } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "helper-range member identity ({label}): instance={instance}; schema={schema}"
+        );
+    }
+    let unrelated = serde_json::json!({ "service": { "patch": [{ "op": "add" }], "extra": 1 } });
+    assert!(
+        schema_accepts_instance(&schema, &unrelated),
+        "sibling members stay open: {schema}"
+    );
+}
+
 /// cilium's provider-mode gates spell their tests through defaulted
 /// pipelines and negated equality disjunctions: `ne (.Values.routingMode
 /// | default "native") "native"` aborts GKE+tunnel while the unset and
@@ -2023,6 +2179,78 @@ fn capabilities_defaulted_semver_gates_decode_against_the_policy_version() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "capabilities semver gate ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Sprig `dig` splits its subject and intermediate-step contracts: the
+/// SUBJECT is type-asserted before any missing-key handling (an explicit
+/// null aborts; absence stays open to the caller's defaults), while an
+/// INTERMEDIATE step falls back to the dig default when nil but aborts on
+/// any other non-map — including Helm-falsy scalars (KPS's nulled
+/// `customRules` and trivy-operator's nulled `trivy.resources`).
+#[test]
+fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
+    let src = indoc! {r#"
+        {{- if .Values.rules.create }}
+        config:
+          severity: {{ dig "alpha" "severity" "critical" .Values.customRules }}
+          cpu: {{ dig "resources" "requests" "cpu" "100m" .Values.trivy }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        rules:
+          create: true
+        customRules: {}
+        trivy: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "customRules": null }),
+            false,
+            "a null dig subject aborts the type assertion",
+        ),
+        (
+            serde_json::json!({ "customRules": "junk" }),
+            false,
+            "a scalar dig subject aborts",
+        ),
+        (
+            serde_json::json!({ "customRules": { "alpha": { "severity": "warning" } } }),
+            true,
+            "a map subject renders",
+        ),
+        (
+            serde_json::json!({ "customRules": null, "rules": { "create": false } }),
+            true,
+            "the create gate keeps the dig dormant",
+        ),
+        (
+            serde_json::json!({ "trivy": { "resources": null } }),
+            true,
+            "a nil intermediate step falls back to the default",
+        ),
+        (
+            serde_json::json!({ "trivy": { "resources": false } }),
+            false,
+            "a falsy non-nil intermediate aborts",
+        ),
+        (
+            serde_json::json!({ "trivy": { "resources": "junk" } }),
+            false,
+            "a scalar intermediate aborts",
+        ),
+        (
+            serde_json::json!({ "trivy": { "resources": { "requests": { "cpu": "1" } } } }),
+            true,
+            "map intermediates render",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "dig subject/intermediate contract ({label}): instance={instance}; schema={schema}"
         );
     }
 }

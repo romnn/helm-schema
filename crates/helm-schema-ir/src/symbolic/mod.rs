@@ -107,6 +107,9 @@ impl SymbolicIrContext {
                     }),
             );
         }
+        contract.extend_values_program_wrapper_exclusions(
+            document.pre_rewrite_strict_paths.iter().cloned(),
+        );
         contract
     }
 }

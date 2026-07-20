@@ -41,6 +41,11 @@ pub struct ContractIr {
     /// Chart value subtrees supplying defaults to effective values subtrees.
     values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
+    /// Values paths whose nodes must NOT gain a wrapper alternative: a
+    /// strict string consumer reads them BEFORE the engine's values-root
+    /// rewrite, so a wrapper map there aborts rendering (nats'
+    /// `nameOverride` through `fullname | trunc`).
+    values_program_wrapper_exclusions: BTreeSet<String>,
     /// `fail` captures: no valid values document may satisfy one of these
     /// conjunctions.
     fail_conditions: Vec<crate::eval_effect::FailCapture>,
@@ -128,6 +133,8 @@ impl ContractIr {
             .append(&mut other.values_default_sources);
         self.values_program_wrappers
             .append(&mut other.values_program_wrappers);
+        self.values_program_wrapper_exclusions
+            .append(&mut other.values_program_wrapper_exclusions);
         for condition in std::mem::take(&mut other.fail_conditions) {
             if !self.fail_conditions.contains(&condition) {
                 self.fail_conditions.push(condition);
@@ -267,6 +274,11 @@ impl ContractIr {
                 spread: wrapper.spread,
             })
             .collect();
+        self.values_program_wrapper_exclusions =
+            std::mem::take(&mut self.values_program_wrapper_exclusions)
+                .into_iter()
+                .map(|path| map(&path))
+                .collect();
         self.fail_conditions = std::mem::take(&mut self.fail_conditions)
             .into_iter()
             .map(|mut capture| {
@@ -416,6 +428,52 @@ impl ContractIr {
         self.values_program_wrappers.extend(wrappers);
     }
 
+    pub(crate) fn extend_values_program_wrapper_exclusions(
+        &mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) {
+        self.values_program_wrapper_exclusions.extend(paths);
+    }
+
+    /// Drop evidence recorded AT a program-wrapper sentinel key: within a
+    /// wrapper-engine chart a `$tplYaml`-keyed member is the engine's own
+    /// dispatch convention — probed by the recursive walker, replaced
+    /// before ordinary consumers read the tree — never an ordinary chart
+    /// value, so reads and fail predicates over such paths must not mint
+    /// values properties. The wrapper alternatives model those nodes.
+    pub(crate) fn scrub_program_wrapper_sentinel_evidence(&mut self) {
+        let keys: std::collections::BTreeSet<String> = self
+            .values_program_wrappers
+            .iter()
+            .map(|wrapper| wrapper.key.clone())
+            .collect();
+        if keys.is_empty() {
+            return;
+        }
+        let touches = |path: &str| {
+            helm_schema_core::split_value_path(path)
+                .iter()
+                .any(|segment| keys.contains(segment))
+        };
+        self.uses
+            .retain(|contract_use| !touches(&contract_use.source_expr));
+        self.dependency_uses
+            .retain(|contract_use| !touches(&contract_use.source_expr));
+        self.fail_conditions.retain(|capture| {
+            let mut paths: Vec<String> = capture
+                .conjunction
+                .iter()
+                .flat_map(helm_schema_core::Predicate::value_paths)
+                .collect();
+            let mut kind = capture.kind.clone();
+            kind.map_value_paths(&mut |path: &str| {
+                paths.push(path.to_string());
+                path.to_string()
+            });
+            !paths.iter().any(|path| touches(path))
+        });
+    }
+
     pub(crate) fn extend_fail_conditions(
         &mut self,
         conditions: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
@@ -431,7 +489,8 @@ impl ContractIr {
     /// one normalized contract representation.
     #[must_use]
     #[tracing::instrument(skip_all)]
-    pub fn finalize(self) -> FinalizedContract {
+    pub fn finalize(mut self) -> FinalizedContract {
+        self.scrub_program_wrapper_sentinel_evidence();
         let Self {
             mut uses,
             mut dependency_uses,
@@ -444,6 +503,7 @@ impl ContractIr {
             range_modes,
             values_default_sources,
             values_program_wrappers,
+            values_program_wrapper_exclusions,
             mut fail_conditions,
             dependency_values_root_fragments,
         } = self;
@@ -476,6 +536,7 @@ impl ContractIr {
             range_modes,
             values_default_sources,
             values_program_wrappers,
+            values_program_wrapper_exclusions,
             fail_conditions,
             dependency_values_root_fragments,
         )

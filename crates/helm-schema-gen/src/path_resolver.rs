@@ -628,12 +628,19 @@ fn requirements_allow_runtime_kind(
 
     requirements.iter().all(|requirement| match requirement {
         FailValueRequirement::SchemaType(required) => required == schema_type,
+        // Null is asserted away before Sprig's missing-key handling runs.
+        FailValueRequirement::SchemaTypeEvenNull(required) => required == schema_type,
         // Every runtime kind has a Helm-falsy spelling that escapes the
         // consumer, so the truthy-scoped requirement excludes no kind.
         FailValueRequirement::TruthyImpliesSchemaType(_) => true,
         // Every runtime kind except null has truthy inhabitants.
         FailValueRequirement::HelmTruthy => schema_type != "null",
+        // Every runtime kind has a Helm-falsy spelling.
+        FailValueRequirement::HelmFalsy => true,
         FailValueRequirement::NotEquals(_) => true,
+        // Applies only to present fields on objects; every other kind
+        // passes vacuously (a missing field differs from every literal).
+        FailValueRequirement::FieldNotEquals { .. } => true,
         FailValueRequirement::ComparableKind(required) => {
             required == schema_type || schema_type == "null"
         }
@@ -686,6 +693,12 @@ fn fail_value_requirement_schema(
                     }));
                 }
             }
+            // No null tolerance: the consumer type-asserts before its nil
+            // handling, so an explicit null aborts (absence stays open
+            // through the arm's properties anchoring).
+            FailValueRequirement::SchemaTypeEvenNull(schema_type) => {
+                parts.push(type_schema(schema_type));
+            }
             // Only truthy values reach the consumer; every Helm-falsy
             // spelling escapes through the selection and stays accepted.
             FailValueRequirement::TruthyImpliesSchemaType(schema_type) => {
@@ -704,6 +717,25 @@ fn fail_value_requirement_schema(
                     "#/$defs/{}",
                     crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
                 ) }));
+            }
+            FailValueRequirement::HelmFalsy => {
+                parts.push(serde_json::json!({ "not": { "$ref": format!(
+                    "#/$defs/{}",
+                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
+                ) } }));
+            }
+            // `properties` constrains only PRESENT keys on objects — an
+            // absent or null field differs from every literal, so no
+            // `required` rides along.
+            FailValueRequirement::FieldNotEquals { path, value } => {
+                let Some(value) = guard_value_to_json(value) else {
+                    continue;
+                };
+                let mut node = serde_json::json!({ "not": { "const": value } });
+                for segment in path.iter().rev() {
+                    node = serde_json::json!({ "properties": { segment: node } });
+                }
+                parts.push(node);
             }
             // `properties` constrains only PRESENT keys on objects, which
             // is exactly the tolerance the negated truthiness test needs:
@@ -873,6 +905,7 @@ fn fail_value_requirement_schema(
                         requirement,
                         FailValueRequirement::HasMember(_)
                             | FailValueRequirement::FieldEquals { .. }
+                            | FailValueRequirement::FieldNotEquals { .. }
                             | FailValueRequirement::FieldHelmFalsy { .. }
                             | FailValueRequirement::FieldPresentNotNull { .. }
                             | FailValueRequirement::FieldHelmTruthy { .. }

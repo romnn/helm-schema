@@ -85,6 +85,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// Helper names through which the values root was replaced.
     pub(crate) values_root_helper_includes: BTreeSet<String>,
+    /// Strictly string-consumed paths whose consumers ran before the
+    /// body's values-root wrapper rewrite (see the interpreter field).
+    pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
     /// The value projection (see module docs), computed once.
     pub(crate) value: Option<AbstractValue>,
     /// Rendered splice/taint rows flattened from the tree: per-path branch
@@ -168,6 +171,7 @@ pub(crate) fn eval_bound_helper_fragment(
         root_set_value_dispatches: interpreter.root_value_dispatches_observed,
         values_default_sources: interpreter.values_default_sources_observed,
         values_root_helper_includes: interpreter.values_root_helper_includes_observed,
+        pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
     };
     // Render-suppressed splices (block-scalar bodies) influence the text
     // without rendering a sink-typed value; value-position consumers see

@@ -120,6 +120,93 @@ pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variabl
             }))
 }
 
+/// Concretization of range-key equalities over one predicate scope: inside
+/// `range $k, $v := .Values.p`, an `eq $k "name"` arm makes this iteration
+/// the NAMED member, so `Range(p)` and the equality collapse into the
+/// member's presence (`HasKey(p, name)` — a range visits present-nil
+/// members exactly like `hasKey` observes them) and member wildcard paths
+/// `p.*.rest` rebind to `p.name.rest`. Keys that spell path syntax (dots,
+/// `*`) abstain — the rewrite would fabricate nested segments.
+pub(super) struct RangeKeyConcretization {
+    /// collection path → equated literal key.
+    keyed: std::collections::BTreeMap<String, String>,
+    /// (`p.*`, `p.*.`, `p.name`) per keyed collection.
+    rewrites: Vec<(String, String, String)>,
+}
+
+impl RangeKeyConcretization {
+    pub(super) fn from_conjuncts<'a>(conjuncts: impl Iterator<Item = &'a Predicate>) -> Self {
+        let keyed: std::collections::BTreeMap<String, String> = conjuncts
+            .filter_map(|predicate| match predicate {
+                Predicate::Guard(crate::Guard::RangeKeyEquals { path, key })
+                    if !key.contains('.') && !key.contains('*') =>
+                {
+                    Some((path.clone(), key.clone()))
+                }
+                _ => None,
+            })
+            .collect();
+        let rewrites = keyed
+            .iter()
+            .map(|(path, key)| {
+                (
+                    format!("{path}.*"),
+                    format!("{path}.*."),
+                    helm_schema_core::append_value_path(path, key),
+                )
+            })
+            .collect();
+        Self { keyed, rewrites }
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.keyed.is_empty()
+    }
+
+    pub(super) fn apply(&self, predicate: &Predicate) -> Predicate {
+        match predicate {
+            Predicate::Guard(crate::Guard::Range { path }) if self.keyed.contains_key(path) => {
+                Predicate::from(crate::Guard::HasKey {
+                    path: path.clone(),
+                    key: self.keyed[path].clone(),
+                })
+            }
+            Predicate::Guard(crate::Guard::RangeKeyEquals { path, key })
+                if self.keyed.get(path) == Some(key) =>
+            {
+                Predicate::from(crate::Guard::HasKey {
+                    path: path.clone(),
+                    key: key.clone(),
+                })
+            }
+            predicate => predicate.clone().map_value_paths(&mut |path: &str| {
+                for (member, member_prefix, concrete) in &self.rewrites {
+                    if path == member {
+                        return concrete.clone();
+                    }
+                    if let Some(rest) = path.strip_prefix(member_prefix.as_str()) {
+                        return format!("{concrete}.{rest}");
+                    }
+                }
+                path.to_string()
+            }),
+        }
+    }
+}
+
+fn concretize_range_key_equalities(predicates: &[Predicate]) -> Vec<Predicate> {
+    let concretization = RangeKeyConcretization::from_conjuncts(predicates.iter());
+    if concretization.is_empty() {
+        return predicates.to_vec();
+    }
+    let mut mapped: Vec<Predicate> = predicates
+        .iter()
+        .map(|predicate| concretization.apply(predicate))
+        .collect();
+    mapped.dedup();
+    mapped
+}
+
 pub(super) fn or_predicates(left: Predicate, right: Predicate) -> Predicate {
     match (left, right) {
         (Predicate::True, _) | (_, Predicate::True) => Predicate::True,
@@ -400,7 +487,9 @@ impl Interpreter<'_> {
                     ) =>
                 {
                     previous_truthy_reduction.map(|previous| {
-                        let condition = Predicate::all(self.active_predicates.clone());
+                        let condition = Predicate::all(concretize_range_key_equalities(
+                            &self.active_predicates,
+                        ));
                         let exact = !condition.contains_approximation()
                             && condition.value_paths().iter().all(|path| {
                                 !path.starts_with('$') && !path.split('.').any(|part| part == "*")

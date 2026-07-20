@@ -29,6 +29,7 @@ pub(super) struct RangeIterations {
     pub(super) nonempty: bool,
 }
 
+#[derive(PartialEq)]
 pub(super) struct RangeIterationBinding {
     pub(super) dot: AbstractValue,
     pub(super) variable: Option<(String, AbstractValue)>,
@@ -142,10 +143,34 @@ impl Interpreter<'_> {
                     let alternative_entry = self.locals.clone();
                     let mut all = Contributions::default();
                     let mut alternative_outcomes = Vec::new();
+                    // Items beyond the alternatives' SHARED PREFIX execute
+                    // only under the (undecoded) alternative selection: an
+                    // approximate conjunct on their CAPTURE conjunctions
+                    // keeps strict captures from binding unconditionally
+                    // (nats' jsonpatch appends "from" to `$opPathKeys` only
+                    // for copy/move patches — demanding `from` of every
+                    // patch member falsely rejects valid adds). Rows and
+                    // type hints keep the ordinary join semantics, so
+                    // per-alternative RENDER facts still lower exactly
+                    // (kyverno's label-merge lists differ across callers).
+                    let shared_items = if plan.alternatives.len() > 1 {
+                        let (first, rest) = plan
+                            .alternatives
+                            .split_first()
+                            .map_or((&[][..], &[][..]), |(first, rest)| (first.as_slice(), rest));
+                        (0..first.len())
+                            .take_while(|&index| {
+                                rest.iter()
+                                    .all(|alternative| alternative.get(index) == first.get(index))
+                            })
+                            .count()
+                    } else {
+                        usize::MAX
+                    };
                     for alternative in &plan.alternatives {
                         self.locals = alternative_entry.clone();
                         let mut remaining = Predicate::True;
-                        for item in alternative {
+                        for (item_index, item) in alternative.iter().enumerate() {
                             if remaining == Predicate::False {
                                 break;
                             }
@@ -160,11 +185,25 @@ impl Interpreter<'_> {
                                     .insert(variable.clone(), ordinal.clone());
                             }
                             let entry_predicates = self.active_predicates.len();
+                            let entry_capture_approximates =
+                                self.alternative_capture_approximates.len();
+                            if item_index >= shared_items {
+                                self.alternative_capture_approximates
+                                    .push(Predicate::approximate(
+                                        format!(
+                                            "{}:{}:range alternative",
+                                            self.source_offset, region.span.start
+                                        ),
+                                        std::collections::BTreeSet::new(),
+                                    ));
+                            }
                             self.push_predicate(remaining.clone());
                             self.dot_stack.push(Some(item.dot.clone()));
                             let mut iteration = self.eval_node_list(nodes);
                             self.dot_stack.pop();
                             self.active_predicates.truncate(entry_predicates);
+                            self.alternative_capture_approximates
+                                .truncate(entry_capture_approximates);
                             let break_condition = iteration.loop_control.break_condition();
                             iteration.take_loop_control();
                             iteration.guard_all(&remaining);
@@ -200,8 +239,22 @@ impl Interpreter<'_> {
             // union the exact disjunction (the range-sentinel flag pattern:
             // `$found = true` under `if eq .name "…"` inside `range env`
             // joins to the existential `Range(env) ∧ Eq(env.*.name, …)`).
+            // An ambient range-key equality concretizes the stamp first, so
+            // member wildcards rebind to the named member and the stamped
+            // reduction stays encodable (velero's `$breaking` appends under
+            // `eq $key "fs-restore-action-config"`).
+            let stamped_condition = {
+                let concretization = super::assignments::RangeKeyConcretization::from_conjuncts(
+                    self.active_predicates.iter().chain([&arm_condition]),
+                );
+                if concretization.is_empty() {
+                    arm_condition.clone()
+                } else {
+                    concretization.apply(&arm_condition)
+                }
+            };
             self.locals
-                .conjoin_changed_truthy_reductions(&entry_locals, &arm_condition);
+                .conjoin_changed_truthy_reductions(&entry_locals, &stamped_condition);
             outcomes.push(self.locals.clone());
             if entry_root.is_some() {
                 root_arm_states.push((

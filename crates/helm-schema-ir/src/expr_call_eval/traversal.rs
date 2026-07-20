@@ -51,17 +51,46 @@ pub(super) fn eval_dig(
             if step.is_empty() {
                 continue;
             }
-            let capture = crate::eval_effect::FailCapture {
-                conjunction: vec![
-                    Predicate::truthy_path(step.clone()),
-                    Predicate::from(crate::Guard::TypeIs {
-                        path: step.clone(),
-                        schema_type: "object".to_string(),
-                    })
-                    .negated(),
-                ],
-                ranged: crate::range_modes::RangeModes::default(),
-                kind: crate::eval_effect::CaptureKind::Fail,
+            let capture = if prefix_len == 0 {
+                // The SUBJECT is type-asserted before any missing-key
+                // handling, so a present-but-null subject aborts too
+                // (KPS's nulled `customRules`). The strict `HasKey`
+                // conjunct self-scopes the claim — absence keeps the
+                // caller's structural tolerance — and the dig-subject
+                // kind keeps null rejected where a truthy-scoped arm
+                // would go vacuous.
+                let Some((parent, leaf)) = helm_schema_core::split_value_path(&step)
+                    .split_last()
+                    .map(|(leaf, parents)| (parents.join("."), leaf.clone()))
+                else {
+                    continue;
+                };
+                crate::eval_effect::FailCapture {
+                    conjunction: vec![Predicate::from(crate::Guard::HasKey {
+                        path: parent,
+                        key: leaf,
+                    })],
+                    ranged: crate::range_modes::RangeModes::default(),
+                    kind: crate::eval_effect::CaptureKind::DigSubject { path: step.clone() },
+                }
+            } else {
+                // An INTERMEDIATE step falls back to the default when nil
+                // (trivy-operator's nulled `trivy.resources` renders) but
+                // aborts on any other non-map — including Helm-falsy
+                // scalars — so the exact scope is present-and-non-null,
+                // which is `Guard::Absent`'s negation.
+                crate::eval_effect::FailCapture {
+                    conjunction: vec![
+                        Predicate::from(crate::Guard::Absent { path: step.clone() }).negated(),
+                        Predicate::from(crate::Guard::TypeIs {
+                            path: step.clone(),
+                            schema_type: "object".to_string(),
+                        })
+                        .negated(),
+                    ],
+                    ranged: crate::range_modes::RangeModes::default(),
+                    kind: crate::eval_effect::CaptureKind::Fail,
+                }
             };
             if !effects.helper_fails.contains(&capture) {
                 effects.helper_fails.push(capture);
@@ -105,8 +134,34 @@ pub(super) fn eval_index(
         let Some(options) = path_segment_options(arg, arg_result.value.as_ref()) else {
             return EvalResult::with_effects(None, effects);
         };
+        // A variable key must not extend a whole-values-root identity that
+        // rides one arm of a CHOICE subject: the join lost the correlation
+        // between subject arms and key candidates (`index $lastMap
+        // $lastKey` in nats' jsonpatch pairs the root arm with the other
+        // arms' scaffolding keys), and a fabricated root member would mint
+        // values properties the chart never reads. A single-valued subject
+        // keeps the exact navigation — the split-path traversal reads
+        // `index $.Values <segment>` per unrolled key, and helper-computed
+        // key alternatives fan out over a NON-choice root exactly.
+        let literal_key = matches!(
+            arg.deparen(),
+            TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_) | Literal::Int(_))
+        );
+        let values_snapshot: Vec<AbstractValue> = if literal_key {
+            values.clone()
+        } else {
+            values
+                .iter()
+                .map(|value| match value {
+                    AbstractValue::Choice(_) | AbstractValue::MergedLayers(_) => {
+                        without_values_root_identity(value)
+                    }
+                    other => other.clone(),
+                })
+                .collect()
+        };
         let mut next_values = Vec::new();
-        for value in &values {
+        for value in &values_snapshot {
             let base_paths = value.paths();
             for option in &options {
                 if option.integer_index
@@ -209,6 +264,29 @@ pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effe
 pub(super) struct PathSegmentOption {
     segments: Vec<String>,
     integer_index: bool,
+}
+
+/// Replace whole-values-root identity arms with opaque present values, so
+/// a variable-key navigation cannot fabricate root member paths; container
+/// structure and non-root identities stay intact.
+fn without_values_root_identity(value: &AbstractValue) -> AbstractValue {
+    match value {
+        AbstractValue::ValuesPath(path)
+        | AbstractValue::JsonDecodedPath(path)
+        | AbstractValue::OutputPath(path, _)
+            if path.is_empty() =>
+        {
+            AbstractValue::Unknown
+        }
+        AbstractValue::Choice(choices) => {
+            AbstractValue::choice(choices.iter().map(without_values_root_identity).collect())
+                .unwrap_or(AbstractValue::Unknown)
+        }
+        AbstractValue::MergedLayers(layers) => {
+            AbstractValue::MergedLayers(layers.iter().map(without_values_root_identity).collect())
+        }
+        other => other.clone(),
+    }
 }
 
 pub(super) fn apply_index_segment(

@@ -43,6 +43,7 @@ enum WrapperEdge {
 pub(crate) fn apply_program_wrapper_alternatives(
     root: &mut Value,
     wrappers: &BTreeSet<ValuesProgramWrapper>,
+    exclusions: &BTreeSet<String>,
 ) {
     if wrappers.is_empty() {
         return;
@@ -59,16 +60,74 @@ pub(crate) fn apply_program_wrapper_alternatives(
             .and_modify(|spread| *spread &= wrapper.spread)
             .or_insert(wrapper.spread);
     }
+    // A strict pre-rewrite consumer aborts on a wrapper map before the
+    // engine substitutes it, so its exact property path skips the wrapper
+    // alternative (nats' `nameOverride` through `fullname | trunc`). The
+    // exclusion applies along literal property chains only — nodes reached
+    // through `additionalProperties`, `items`, or shared `$defs` have no
+    // stable path and keep their alternatives.
+    let excluded: BTreeSet<Vec<String>> = exclusions
+        .iter()
+        .map(|path| crate::split_value_path(path))
+        .collect();
     for (scope, keys) in keys_by_scope {
         let keys: Vec<(&str, bool)> = keys.into_iter().collect();
         if scope.is_empty() {
-            rewrite_document(root, &keys);
+            rewrite_document(root, &keys, &excluded);
+            wrap_document_root(root, &keys);
             reject_root_spread_wrappers(root, &keys);
         } else if let Some(node) = properties_node_mut(root, scope) {
-            rewrite_value_edges(node, &keys);
+            let scope_path = crate::split_value_path(scope);
+            rewrite_value_edges(node, &keys, Some(&scope_path), &excluded);
             reject_root_spread_wrappers(node, &keys);
         }
     }
+}
+
+/// The engine's recursion starts at the values document itself, so the
+/// ROOT may be a singleton REPLACE wrapper (`{"$tplYaml": program}`; the
+/// spread form is rejected separately). Union the root's own value domain
+/// with the wrapper alternative, leaving `$schema`/`$defs` and the
+/// conditional `allOf` arms as top-level conjuncts — they constrain the
+/// REWRITTEN tree and evaluate vacuously against the raw singleton form.
+/// Children were already wrapped by `rewrite_document`, so no recursion.
+fn wrap_document_root(root: &mut Value, keys: &[(&str, bool)]) {
+    const VALUE_DOMAIN: [&str; 5] = [
+        "type",
+        "properties",
+        "additionalProperties",
+        "patternProperties",
+        "anyOf",
+    ];
+    let Some(object) = root.as_object_mut() else {
+        return;
+    };
+    let mut domain = serde_json::Map::new();
+    for keyword in VALUE_DOMAIN {
+        if let Some(child) = object.remove(keyword) {
+            domain.insert(keyword.to_string(), child);
+        }
+    }
+    if domain.is_empty() {
+        return;
+    }
+    let node = Value::Object(domain);
+    if schema_accepts_everything(&node) {
+        if let Value::Object(domain) = node {
+            object.extend(domain);
+        }
+        return;
+    }
+    let alternative = wrapper_schema(&node, keys, WrapperEdge::Unknown);
+    let ordinary = if accepted_kinds(&node).object {
+        json!({ "allOf": [node, { "not": sentinel_singleton_shape(keys) }] })
+    } else {
+        node
+    };
+    object.insert(
+        "anyOf".to_string(),
+        Value::Array(vec![ordinary, alternative]),
+    );
 }
 
 /// The schema node declared for `scope` under the document's base
@@ -85,20 +144,22 @@ fn properties_node_mut<'a>(root: &'a mut Value, scope: &str) -> Option<&'a mut V
 /// shared definitions. Definitions encoding TESTS rather than accepted
 /// values (helm truthiness, quoted-content grammars) stay untouched — a
 /// wrapper alternative inside a test would change what the test means.
-fn rewrite_document(root: &mut Value, keys: &[(&str, bool)]) {
+fn rewrite_document(root: &mut Value, keys: &[(&str, bool)], excluded: &BTreeSet<Vec<String>>) {
     let Some(object) = root.as_object_mut() else {
         return;
     };
     for (keyword, child) in object.iter_mut() {
         match keyword.as_str() {
-            "properties" | "patternProperties" => wrap_member_values(child, keys),
+            "properties" | "patternProperties" => {
+                wrap_member_values(child, keys, Some(&[]), excluded);
+            }
             "additionalProperties" if child.is_object() => {
-                wrap_node(child, keys, WrapperEdge::Member);
+                wrap_node(child, keys, WrapperEdge::Member, excluded);
             }
             "allOf" | "anyOf" | "oneOf" => {
                 if let Some(arms) = child.as_array_mut() {
                     for arm in arms {
-                        rewrite_value_edges(arm, keys);
+                        rewrite_value_edges(arm, keys, Some(&[]), excluded);
                     }
                 }
             }
@@ -108,7 +169,7 @@ fn rewrite_document(root: &mut Value, keys: &[(&str, bool)]) {
                         if name.starts_with("helm-") {
                             continue;
                         }
-                        wrap_node(definition, keys, WrapperEdge::Unknown);
+                        wrap_node(definition, keys, WrapperEdge::Unknown, excluded);
                     }
                 }
             }
@@ -152,29 +213,36 @@ fn reject_root_spread_wrappers(root: &mut Value, keys: &[(&str, bool)]) {
 /// Condition-position keywords (`if`, `not`, `propertyNames`) encode tests
 /// and are left alone; union alternatives recurse without a wholesale wrap
 /// because the node owning the union is wrapped at ITS edge.
-fn rewrite_value_edges(node: &mut Value, keys: &[(&str, bool)]) {
+fn rewrite_value_edges(
+    node: &mut Value,
+    keys: &[(&str, bool)],
+    path: Option<&[String]>,
+    excluded: &BTreeSet<Vec<String>>,
+) {
     let Some(object) = node.as_object_mut() else {
         return;
     };
     for (keyword, child) in object.iter_mut() {
         match keyword.as_str() {
-            "properties" | "patternProperties" => wrap_member_values(child, keys),
-            "additionalProperties" if child.is_object() => {
-                wrap_node(child, keys, WrapperEdge::Member);
+            "properties" | "patternProperties" => {
+                wrap_member_values(child, keys, path, excluded);
             }
-            "items" if child.is_object() => wrap_node(child, keys, WrapperEdge::Item),
+            "additionalProperties" if child.is_object() => {
+                wrap_node(child, keys, WrapperEdge::Member, excluded);
+            }
+            "items" if child.is_object() => wrap_node(child, keys, WrapperEdge::Item, excluded),
             "anyOf" | "allOf" | "oneOf" => {
                 if let Some(alternatives) = child.as_array_mut() {
                     for alternative in alternatives {
-                        rewrite_value_edges(alternative, keys);
+                        rewrite_value_edges(alternative, keys, path, excluded);
                     }
                 }
             }
-            "then" | "else" => rewrite_value_edges(child, keys),
+            "then" | "else" => rewrite_value_edges(child, keys, path, excluded),
             "$defs" | "definitions" => {
                 if let Some(definitions) = child.as_object_mut() {
                     for definition in definitions.values_mut() {
-                        wrap_node(definition, keys, WrapperEdge::Unknown);
+                        wrap_node(definition, keys, WrapperEdge::Unknown, excluded);
                     }
                 }
             }
@@ -183,10 +251,35 @@ fn rewrite_value_edges(node: &mut Value, keys: &[(&str, bool)]) {
     }
 }
 
-fn wrap_member_values(members: &mut Value, keys: &[(&str, bool)]) {
+fn wrap_member_values(
+    members: &mut Value,
+    keys: &[(&str, bool)],
+    path: Option<&[String]>,
+    excluded: &BTreeSet<Vec<String>>,
+) {
     if let Some(members) = members.as_object_mut() {
-        for member in members.values_mut() {
-            wrap_node(member, keys, WrapperEdge::Member);
+        for (name, member) in members.iter_mut() {
+            let member_path = path.map(|path| {
+                let mut member_path = path.to_vec();
+                member_path.push(name.clone());
+                member_path
+            });
+            if member_path
+                .as_ref()
+                .is_some_and(|member_path| excluded.contains(member_path))
+            {
+                // A strict pre-rewrite consumer aborts on the raw wrapper
+                // map here; children keep their alternatives.
+                rewrite_value_edges(member, keys, member_path.as_deref(), excluded);
+                continue;
+            }
+            wrap_node_at(
+                member,
+                keys,
+                WrapperEdge::Member,
+                member_path.as_deref(),
+                excluded,
+            );
         }
     }
 }
@@ -197,8 +290,28 @@ fn wrap_member_values(members: &mut Value, keys: &[(&str, bool)]) {
 /// whose ordinary domain accepts objects must NOT let the raw wrapper map
 /// ride that domain — the wrapper alternative's program constraint is the
 /// only lane a wrapper map may take.
-fn wrap_node(node: &mut Value, keys: &[(&str, bool)], edge: WrapperEdge) {
-    rewrite_value_edges(node, keys);
+fn wrap_node(
+    node: &mut Value,
+    keys: &[(&str, bool)],
+    edge: WrapperEdge,
+    excluded: &BTreeSet<Vec<String>>,
+) {
+    // Edges without a stable property path (items, additionalProperties,
+    // shared definitions) descend outside the exclusion namespace.
+    wrap_node_at(node, keys, edge, None, excluded);
+}
+
+/// Recurse into a value node's edges, then union the node with the wrapper
+/// alternative (see [`wrap_node`]); `path` names the node's own property
+/// chain for descendant exclusion checks.
+fn wrap_node_at(
+    node: &mut Value,
+    keys: &[(&str, bool)],
+    edge: WrapperEdge,
+    path: Option<&[String]>,
+    excluded: &BTreeSet<Vec<String>>,
+) {
+    rewrite_value_edges(node, keys, path, excluded);
     if schema_accepts_everything(node) {
         return;
     }

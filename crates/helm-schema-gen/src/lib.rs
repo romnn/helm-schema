@@ -259,6 +259,7 @@ fn build_root_schema(
         program_wrapper::apply_program_wrapper_alternatives(
             &mut root_schema,
             contract_schema_signals.values_program_wrappers(),
+            contract_schema_signals.values_program_wrapper_exclusions(),
         );
     }
     {

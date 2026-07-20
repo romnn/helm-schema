@@ -3377,3 +3377,43 @@ fn kube_prometheus_stack_dashboard_gates_decode_the_version_policy() -> color_ey
         ],
     )
 }
+
+/// The Sprig `dig` hosts behind KPS's per-rule-file gates carry the exact
+/// split contract (F107 residual): the SUBJECT is type-asserted before
+/// any missing-key handling, so a present-but-null `customRules` or
+/// `defaultRules.additionalRuleAnnotations` aborts while the
+/// `defaultRules.create: false` escape keeps every spelling open — all
+/// polarities verified under `helm template`.
+#[test]
+fn kube_prometheus_stack_dig_subjects_bind_the_even_null_contract() -> color_eyre::eyre::Result<()>
+{
+    assert_chart_cases(
+        "kube-prometheus-stack",
+        vec![
+            // Null spellings are pinned by the gen reproducer
+            // (`dig_subjects_reject_null_while_intermediate_nils_fall_back`)
+            // — the override harness applies helm's null-deletion merge,
+            // which turns a null override into absence.
+            SemanticCase::rejected(
+                "a scalar customRules aborts",
+                "/customRules",
+                json!({ "customRules": "junk" }),
+            ),
+            SemanticCase::rejected(
+                "scalar additionalRuleAnnotations abort",
+                "/defaultRules/additionalRuleAnnotations",
+                json!({ "defaultRules": { "additionalRuleAnnotations": "junk" } }),
+            ),
+            SemanticCase::accepted(
+                "map-shaped custom rules render",
+                json!({ "customRules": {
+                    "KubeStateMetricsListErrors": { "severity": "warning" } } }),
+            ),
+            SemanticCase::accepted(
+                "disabling defaultRules keeps every spelling dormant",
+                json!({ "customRules": "junk",
+                    "defaultRules": { "create": false } }),
+            ),
+        ],
+    )
+}

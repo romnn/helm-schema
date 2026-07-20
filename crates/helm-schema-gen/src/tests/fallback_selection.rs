@@ -188,6 +188,66 @@ fn liveness_gated_helper_keeps_helm_empty_fallback_inputs_open() {
     }
 }
 
+/// A `toString | trimSuffix "-jmx"` stage before a `semverCompare` binds
+/// the semver domain through the exact stripped-affix preimage: the raw
+/// tag may optionally wear the trimmed suffix, but a mid-string
+/// occurrence no longer exempts the whole value (datadog's derived agent
+/// tag).
+#[test]
+fn trim_suffix_projects_the_parser_domain_through_the_affix_preimage() {
+    let helpers = indoc! {r#"
+        {{- define "repro.agentVersion" -}}
+        {{- $version := .Values.agents.tag | toString | trimSuffix "-jmx" -}}
+        {{- if semverCompare "<7.67.0" $version -}}
+        {{- fail "agent versions before 7.67.0 are not supported" -}}
+        {{- end -}}
+        {{- $version -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cm
+        data:
+          version: {{ include "repro.agentVersion" . | quote }}
+    "#};
+    let values_yaml = indoc! {r#"
+        agents:
+          tag: "7.80.1"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (tag, want, label) in [
+        (serde_json::json!("7.80.1"), true, "a plain version parses"),
+        (
+            serde_json::json!("7.80.1-jmx"),
+            true,
+            "the jmx-suffixed version is trimmed before parsing",
+        ),
+        (
+            serde_json::json!("junk"),
+            false,
+            "a non-version aborts the parser",
+        ),
+        (
+            serde_json::json!("junk-jmx"),
+            false,
+            "trimming the suffix still leaves a non-version",
+        ),
+        (
+            serde_json::json!("v-jmx-7.80.1"),
+            false,
+            "a mid-string token no longer exempts the raw value",
+        ),
+    ] {
+        let instance = serde_json::json!({ "agents": { "tag": tag } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "trim-suffix parser preimage ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// datadog's otel gateway image helper replaces a FALSY tag with the
 /// agent-version fallback (another source path) before its `semverCompare`
 /// checks, so only truthy raw values reach the parser: an empty or null

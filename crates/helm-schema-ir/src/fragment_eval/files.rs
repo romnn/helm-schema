@@ -205,6 +205,8 @@ impl<'a> Interpreter<'a> {
             .extend(nested.values_default_sources_observed);
         self.values_root_helper_includes_observed
             .extend(nested.values_root_helper_includes_observed);
+        self.pre_rewrite_strict_paths
+            .extend(nested.pre_rewrite_strict_paths);
         self.chart_defaults_observed
             .extend(nested.chart_defaults_observed);
         self.suppress_predicate_paths

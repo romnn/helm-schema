@@ -177,6 +177,12 @@ pub(crate) enum CaptureKind {
     /// A scalar path must have the named JSON Schema type whenever the
     /// capture's execution predicates hold.
     ValueType { path: String, schema_type: String },
+    /// A `dig` SUBJECT step: whenever the capture's execution predicates
+    /// hold, the path must be an object even when explicitly null — Sprig
+    /// type-asserts the dict before any nil handling, so a null aborts
+    /// while absence stays open (the conjunction carries the strict
+    /// presence guard).
+    DigSubject { path: String },
     /// A comparison operand must have the named JSON Schema type when
     /// PRESENT and non-null; `eq`/`ne` compare `nil` against anything.
     ComparableKind { path: String, schema_type: String },
@@ -231,6 +237,7 @@ impl CaptureKind {
             }
             Self::IndexAccess { path, .. }
             | Self::ValueType { path, .. }
+            | Self::DigSubject { path }
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
             | Self::QuotedSerialization { path, .. } => {

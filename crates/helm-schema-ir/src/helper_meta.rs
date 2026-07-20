@@ -21,6 +21,22 @@ pub(crate) struct EmptyRescue {
     pub(crate) spellings: BTreeSet<GuardValue>,
 }
 
+/// One lexical divergence between a raw string input and the transformed
+/// value a capture observes.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum LexicalEscape {
+    /// The transform is the identity on raw strings NOT containing the
+    /// token (`replace TOKEN …`, `(split TOKEN …)._0`): captures exempt
+    /// any raw string holding it.
+    Contains(String),
+    /// `trimPrefix TOKEN` — at most one leading occurrence is stripped
+    /// before the capture's check runs, so the accepted raw language is
+    /// the capture language optionally prefixed by the token.
+    TrimPrefix(String),
+    /// `trimSuffix TOKEN` — the suffix mirror of [`Self::TrimPrefix`].
+    TrimSuffix(String),
+}
+
 /// The facts one rendered path carries out of a helper body: the branch
 /// conditions under which it renders (one set per branch), whether the
 /// render site substitutes a fallback, and the body sites it was derived
@@ -73,13 +89,12 @@ pub(crate) struct HelperOutputMeta {
     /// before rejecting raw inputs. Only the capture lanes read them —
     /// guard decoding and row lowering see the joined value choice itself.
     pub(crate) capture_exclusions: BTreeSet<Predicate>,
-    /// Literal tokens whose PRESENCE in the raw string diverts it from this
-    /// value: the value equals the raw string exactly when the raw contains
-    /// none of them (traefik's `replace "latest-" ""` sentinel stripping and
-    /// `(split "@" …)._0` digest trimming). Lexical captures must
-    /// exempt raw strings containing any token instead of projecting the
-    /// final language onto them.
-    pub(crate) lexical_escapes: BTreeSet<String>,
+    /// Lexical divergences between the raw string and this value (see
+    /// [`LexicalEscape`]): a `Contains` token exempts raw strings holding
+    /// it (traefik's `replace "latest-" ""` sentinel stripping), while a
+    /// trim affix projects the capture language through the exact
+    /// stripped-affix preimage (datadog's `trimSuffix "-jmx"` tag).
+    pub(crate) lexical_escapes: BTreeSet<LexicalEscape>,
     /// Literal member keys an `omit` removed from this map value on some
     /// path to the render, mapped to the sound RETAIN guards under which
     /// the key certainly survives (external-secrets' OpenShift
@@ -244,16 +259,47 @@ pub(crate) fn insert_type_hint(
         .insert(schema_type.to_string());
 }
 
-/// Weakens a lexical capture pattern by escape tokens: a raw string
-/// containing any token diverged from the observed value before the check
-/// ran, so the capture accepts it unconditionally. JSON Schema
-/// `pattern` is an unanchored search, so a bare escaped token alternative
-/// matches any string containing it.
-pub(crate) fn pattern_with_lexical_escapes(pattern: &str, escapes: &BTreeSet<String>) -> String {
+/// Projects a lexical capture pattern through its escapes.
+///
+/// A single trim-affix escape composes EXACTLY: the runtime strips at most
+/// one affix occurrence before the check runs, so the raw language is the
+/// capture language optionally wearing the affix (`^P$` becomes
+/// `^(?:P)(?:-jmx)?$` for `trimSuffix "-jmx"`; a capture-valid string that
+/// itself ends in the affix is trimmed first, so admitting it is a bounded
+/// widening, never a rejection). `Contains` tokens — and any escape MIX the
+/// affix composition cannot order — weaken to exemption alternatives: a raw
+/// string containing the token diverged from the observed value before the
+/// check ran, so the capture accepts it unconditionally (JSON Schema
+/// `pattern` is an unanchored search, so a bare token alternative matches
+/// any string containing it).
+pub(crate) fn pattern_with_lexical_escapes(
+    pattern: &str,
+    escapes: &BTreeSet<LexicalEscape>,
+) -> String {
     if escapes.is_empty() {
         return pattern.to_string();
     }
-    let mut alternatives: Vec<String> = escapes.iter().map(|token| regex_literal(token)).collect();
+    if let [escape] = escapes.iter().collect::<Vec<_>>().as_slice()
+        && let Some(anchored) = pattern.strip_prefix('^').and_then(|p| p.strip_suffix('$'))
+    {
+        match escape {
+            LexicalEscape::TrimPrefix(token) => {
+                return format!("^(?:{})?(?:{anchored})$", regex_literal(token));
+            }
+            LexicalEscape::TrimSuffix(token) => {
+                return format!("^(?:{anchored})(?:{})?$", regex_literal(token));
+            }
+            LexicalEscape::Contains(_) => {}
+        }
+    }
+    let mut alternatives: Vec<String> = escapes
+        .iter()
+        .map(|escape| match escape {
+            LexicalEscape::Contains(token)
+            | LexicalEscape::TrimPrefix(token)
+            | LexicalEscape::TrimSuffix(token) => regex_literal(token),
+        })
+        .collect();
     alternatives.push(format!("(?:{pattern})"));
     alternatives.join("|")
 }

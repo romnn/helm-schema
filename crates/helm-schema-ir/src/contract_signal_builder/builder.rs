@@ -1013,6 +1013,15 @@ fn record_fail_conjunction(
         );
         return;
     }
+    if let crate::eval_effect::CaptureKind::DigSubject { path } = &capture.kind {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::SchemaTypeEvenNull("object".to_string()),
+        );
+        return;
+    }
     if let crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } = &capture.kind {
         record_value_requirement_capture(
             paths,
@@ -1242,6 +1251,19 @@ fn record_fail_conjunction(
             let Some(required) = requirements_at(&field_path) else {
                 return;
             };
+            // The `MembersAt` target demands the field of EVERY member —
+            // correct for unconditional per-member reads, wrong when the
+            // failing test was scoped by the field's own truthiness: an
+            // absent field is Helm-falsy and escapes the fail, so demanding
+            // presence falsely rejects (minio's per-statement
+            // `if $statement.conditions` len gate). Such captures abstain.
+            if required
+                .iter()
+                .flatten()
+                .any(|requirement| matches!(requirement, FailValueRequirement::HelmFalsy))
+            {
+                return;
+            }
             member_field = Some(helm_schema_core::split_value_path(
                 &field_path[scope.len() + 1..],
             ));
@@ -2057,8 +2079,13 @@ fn requirements_from_negation(
         // A truthiness test over a member's FIELD negates to "the field,
         // when present, is Helm-falsy" (oauth2-proxy's legacy extraPaths
         // gate fires on `.backend.serviceName`); the member-scope
-        // restriction keeps absolute-path truthy stand-ins out.
+        // restriction keeps absolute-path truthy stand-ins out. The
+        // member's OWN truthiness (`if $config` around a ranged terminal)
+        // negates to Helm-falsiness of the member value itself.
         Predicate::Guard(Guard::Truthy { path }) if scope.contains(".*") => {
+            if path == scope {
+                return Some(vec![FailValueRequirement::HelmFalsy]);
+            }
             let field = path.strip_prefix(&format!("{scope}."))?;
             (!field.contains('*')).then(|| {
                 vec![FailValueRequirement::FieldHelmFalsy {
@@ -2098,6 +2125,35 @@ fn requirements_from_negation(
             }
             GuardValue::Int(_) | GuardValue::Bool(_) if path == scope && scope.contains(".*") => {
                 Some(vec![FailValueRequirement::NotEquals(value.clone())])
+            }
+            // An equality on a member FIELD negates to "the field, when
+            // present, differs" — Helm's `eq` compares a missing or null
+            // field against any literal without aborting, so absence
+            // escapes and no presence requirement rides along (traefik's
+            // non-HTTPS gateway listeners escape the certificateRefs
+            // terminal through this arm). Empty-string arms stay dropped:
+            // they ride `required` emptiness tests whose absence semantics
+            // the tolerant-leaf encoding already covers.
+            GuardValue::String(text) if scope.contains(".*") && path != scope => {
+                if text.is_empty() {
+                    return Some(Vec::new());
+                }
+                let field = path.strip_prefix(&format!("{scope}."))?;
+                (!field.contains('*')).then(|| {
+                    vec![FailValueRequirement::FieldNotEquals {
+                        path: helm_schema_core::split_value_path(field),
+                        value: value.clone(),
+                    }]
+                })
+            }
+            GuardValue::Int(_) | GuardValue::Bool(_) if scope.contains(".*") && path != scope => {
+                let field = path.strip_prefix(&format!("{scope}."))?;
+                (!field.contains('*')).then(|| {
+                    vec![FailValueRequirement::FieldNotEquals {
+                        path: helm_schema_core::split_value_path(field),
+                        value: value.clone(),
+                    }]
+                })
             }
             _ => Some(Vec::new()),
         },
@@ -2146,6 +2202,17 @@ fn requirements_from_holding(
         }
         Predicate::Guard(Guard::Truthy { path }) => {
             let member = path.strip_prefix(&format!("{scope}."))?;
+            // At a ranged member scope the exact form is "present and
+            // Helm-truthy", including nested fields (traefik's
+            // `http.tls.enabled` beside an http3 gate); the non-member
+            // lane keeps its established presence-only decode.
+            if scope.contains(".*") {
+                return (!member.contains('*')).then(|| {
+                    vec![FailValueRequirement::FieldHelmTruthy {
+                        path: helm_schema_core::split_value_path(member),
+                    }]
+                });
+            }
             (!member.contains('.'))
                 .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
         }
