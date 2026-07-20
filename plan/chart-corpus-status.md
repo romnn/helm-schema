@@ -1,17 +1,22 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-20 after the residual-machinery round (seventeenth
-round), which landed the five items the previous ledger had blocked on
-large named machinery: F28/F51's helper-range member identities (with the
-F108 jsonpatch grammar and the velero accumulator), F74's exact
-`url.Parse` language and trimSuffix affix preimages, F104's
-pre/post-rewrite wrapper-consumer ordering, and F107's split dig-subject
-contract — each entry below records its landing. The audit before it
-re-tested Completed claims rather than trusting them: F30, F31, F32, F53,
-F56, F65, F68, and F98 have verified residuals and stay reopened below;
-F110 is new; F80 remains the one untouched In-progress item from the
-machinery list. Green corpus tests are a baseline, not completion
-evidence.
+Last reconciled 2026-07-20 after the merge-layer round (eighteenth round),
+which landed F80's ordered-merge half — fresh-dict `mergeOverwrite` layer
+ordering, exact merged-truthiness disjunctions, layer-scoped sink typing
+with decoded dormant gates, and the KPS/keda/velero/airflow flips recorded
+in the F80 entry — plus two structural repairs that round surfaced: a
+subchart's chart-local values-root facts (wrapper scopes, root defaults,
+whole-tree uses) now compose to the subchart prefix instead of re-rooting
+at the parent document (the luup2 nats parent chart had its injected root
+keys rejected; KPS's parent root closes and its bundled subchart roots
+keep their own openness), and the emitter conjoins arms sharing one scope
+and encoded condition (`if C then A ∧ B`), which cut temporal's emitted
+schema from 5.49 MB (over helm's 5 MiB chart-file limit) to 4.13 MB with
+flatten-verified neutrality across every corpus fixture. The seventeenth
+round's audit reopens stand: F30, F31, F32, F53, F56, F65, F68, and F98
+keep verified residuals below; F110 and F111 stay open; F80's remaining
+half is re-scoped in its entry. Green corpus tests are a baseline, not
+completion evidence.
 Where a finding has both a completed bounded part and a remainder, the
 completed part is listed below with a "(bounded)" marker and the residual is
 classified separately. Per-finding history lives in
@@ -128,8 +133,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F79 `break`/`continue` suppressing later-iteration contracts
 - F80 ordered `merge`/`mergeOverwrite` layers with per-key shadowing arms
   (the direct Velero provider-splice case; the airflow recursive
-  custom-merge lane landed in the eighth round — see its entry below;
-  the worker-family provider-typing residual stays In progress)
+  custom-merge lane landed in the eighth round and the fresh-dict
+  layer-ordering/dormant-gate half in the eighteenth — see the In
+  progress entry; the nil-scrub worker-family residual stays open)
 - F81 Sprig arithmetic coercion boundary
 - F82 chart-authored `values.yaml` programs executed by `tpl`
 - F84 split-segment provider preimage for integer slots (bounded; general
@@ -831,15 +837,55 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   helm-verified). REMAINING: cilium's `>=0.9.0` predicate through
   `regexReplaceAll | trimPrefix` (multi-escape chains fall back to the
   exemption by design — unordered affixes cannot compose exactly).
-- **F80 residual — merge selection and provider attribution.** Airflow's
-  worker and per-set `securityContext` merges still accept a string
-  `runAsUser`; Helm renders it and the provider rejects it. Kube Prometheus
-  Stack accepts numeric members in both per-alert
-  `additionalRuleAnnotations` and per-group
-  `additionalRuleGroupAnnotations`; Helm renders them and the PrometheusRule
-  provider rejects them, while string members pass. The formerly listed scalar
-  annotation host is fixed. Preserve source/member provenance through
-  nil-scrubbed and ordered merge layers.
+- **F80 residual — merge selection and provider attribution (bounded;
+  eighteenth round).** The ordered-merge half landed in four pieces.
+  (a) A definitely-empty literal destination (`mergeOverwrite (dict) a b`)
+  drops out of the operand list, so fresh-dict merges keep the ordered
+  layer form, and merge/`mergeOverwrite` truthiness decodes to the
+  operands' disjunction (call-level via each operand's own reduction;
+  a variable bound to `MergedLayers` gets the same disjunction lane, with
+  undecodable layers abstaining to the approximate encoding instead of
+  the old all-paths conjunction — cert-manager's `with (merge …)`
+  nodeSelector gate now carries the exact or-condition). (b) A merge
+  layer's sink typing moved out of the base lanes entirely (metadata
+  field kinds included) onto synthesized layer arms: the whole payload
+  binds under the layer's own truthiness plus every earlier layer's
+  Helm-emptiness, per-key arms keep the finite `¬hasKey` refinement, and
+  a sink whose provider fragment is unavailable falls back to its
+  metadata string-map kind (keda's CRD annotations). (c) Decoded render
+  gates ride the `ProviderSchemaUse` and scope the synthesized arms, so
+  dormant states stay open — KPS `defaultRules.create/rules.*/disabled.*`
+  false-spellings, keda `crds.install: false`, and velero's
+  `deployNodeAgent: false` all accept junk while the live lanes reject
+  (each polarity helm-verified; `fresh_dict_merge_layers_type_dynamic_members_with_shadow_refinement`
+  pins the gen shape). KPS now rejects numeric members in per-alert
+  `additionalRuleAnnotations` unconditionally-when-live and in per-group
+  `additionalRuleGroupAnnotations` exactly where the per-alert layer is
+  Helm-empty; the fully-shadowed corner stays accepted and the
+  numeric-beside-unrelated-rule-keys corner stays open (dynamic-name
+  per-key correlation is the documented F93 bound). Airflow's worker
+  member lanes tightened as collateral (scalar `resources`, malformed
+  `hostAliases`/`extraPorts` items now reject, helm-verified).
+  REMAINING (the nil-scrub half): airflow's worker and per-set
+  `securityContexts.pod` string `runAsUser` still accepts. The scope-list
+  candidate helper itself DECODES
+  (`candidate_selection_helper_binds_provider_payload_through_scope_list`
+  pins the minimal shape rejecting a string member); the real chart
+  abstains behind `removeNilFields(.Values.workers.celery) | fromYaml`,
+  whose output is opaque and blocks the merged-context member
+  projection. Landing plan: recognize the scrub define shape and
+  substitute a scrubbed identity (an `OutputPath` meta bit), then
+  null-relax the scrubbed layer's payload arms member-wise — the scrub
+  drops null members before the sink sees them, so un-relaxed typing
+  would falsely reject `runAsUser: null`. Also open: gates that cannot
+  lower at the document root (member-local wildcard conditions on
+  airflow's per-set rows; 78 uses in that chart) keep their pre-existing
+  ungated arms — exact scoping needs the existential member-guard
+  encoding in the conditional-overlay vocabulary. Adjudication note:
+  signoz's clickhouse `settings`/`profiles` overlay arms lost their
+  provider payload reference under the new layer routing, but the
+  payload is an open `x-kubernetes-preserve-unknown-fields` object — all
+  acceptance polarities are unchanged (probed both ways).
 - **F98 residual — required leaves through helper projections.** Both Traefik
   local-plugin alternatives accept a member without `mountPath`; Helm renders
   a null Deployment `volumeMount.mountPath`, which strict provider validation
