@@ -1,20 +1,24 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-20 after the merge-layer round (eighteenth round),
-which landed F80's ordered-merge half — fresh-dict `mergeOverwrite` layer
-ordering, exact merged-truthiness disjunctions, layer-scoped sink typing
-with decoded dormant gates, and the KPS/keda/velero/airflow flips recorded
-in the F80 entry — plus two structural repairs that round surfaced: a
-subchart's chart-local values-root facts (wrapper scopes, root defaults,
-whole-tree uses) now compose to the subchart prefix instead of re-rooting
-at the parent document (the luup2 nats parent chart had its injected root
-keys rejected; KPS's parent root closes and its bundled subchart roots
-keep their own openness), and the emitter conjoins arms sharing one scope
-and encoded condition (`if C then A ∧ B`), which cut temporal's emitted
-schema from 5.49 MB (over helm's 5 MiB chart-file limit) to 4.13 MB with
-flatten-verified neutrality across every corpus fixture. The seventeenth
-round's audit reopens stand: F30, F31, F32, F53, F56, F65, F68, and F98
-keep verified residuals below; F110 and F111 stay open; F80's remaining
+Last reconciled 2026-07-21 after the nil-scrub round (nineteenth round),
+which closed F110 and F111 and landed F80's scrub half. F111: nack's root
+`global` — read only through the nil-safe grouped `((.Values.global).labels)`
+— no longer pins `type: object` (helm's null-deletion renders `global:
+null`); the declared-default base widens to `object|null` and the
+presence-guarded member-host arm carries the strict typing. F110: provider
+RE2 spellings normalize at fragment ingestion — a leading global `(?i)`
+case-folds exactly (`^(?i)(abort|warn)?$` → per-letter classes, Unicode
+simple-fold partners included) — and a new dialect gate compiles every
+committed fixture's patterns under a real ECMA-262 engine plus the
+metaschema. F80's scrub half: the `removeNilFields` define shape is
+recognized structurally and its call substitutes the operand's identity
+with a scrubbed marker; merged-member truthiness decodes member-wise
+through selector projections; binding-carried layer facts ride helper
+summaries into layered sink typing (scrub-involving merges only), and the
+scrubbed layer's synthesized arms null-relax members at every depth. The
+full scrub → custom-merge → candidate-selection chain is pinned at gen
+level. The seventeenth round's audit reopens stand: F30, F31, F32, F53,
+F56, F65, F68, and F98 keep verified residuals below; F80's remaining
 half is re-scoped in its entry. Green corpus tests are a baseline, not
 completion evidence.
 Where a finding has both a completed bounded part and a remainder, the
@@ -133,9 +137,11 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F79 `break`/`continue` suppressing later-iteration contracts
 - F80 ordered `merge`/`mergeOverwrite` layers with per-key shadowing arms
   (the direct Velero provider-splice case; the airflow recursive
-  custom-merge lane landed in the eighth round and the fresh-dict
-  layer-ordering/dormant-gate half in the eighteenth — see the In
-  progress entry; the nil-scrub worker-family residual stays open)
+  custom-merge lane landed in the eighth round, the fresh-dict
+  layer-ordering/dormant-gate half in the eighteenth, and the nil-scrub
+  recognizer with null-relaxed layer arms in the nineteenth — see the In
+  progress entry; the real airflow worker-family chain stays open behind
+  the `$globals` root re-root and per-set loop)
 - F81 Sprig arithmetic coercion boundary
 - F82 chart-authored `values.yaml` programs executed by `tpl`
 - F84 split-segment provider preimage for integer slots (bounded; general
@@ -745,6 +751,36 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `traefik_otlp_resource_attributes_render_as_flag_loops` (CLI, provider
   bundle) and
   `roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth` (gen)
+- F111 nack root `global` null false rejection (nineteenth round): the
+  base-typing source was the declared values.yaml mapping default — the
+  presence-guarded member-host arm was already null-exact (`Absent`
+  counts explicit null). A target whose member-host requirements ALL
+  ride its own strict presence was only ever read through the nil-safe
+  grouped form (`((.Values.global).labels)`), so its base host relaxes:
+  a tree host drops `type: object`, a declared-default foreign base
+  widens to `type: [object, null]` — helm's null-deletion renders
+  `global: null` and every spelling is helm-verified (null/absent/maps
+  render, scalars and `false` abort). Pinned by
+  `nil_safe_grouped_receiver_with_declared_default_admits_null`; the
+  KPS subchart-prefix keys (`kube-state-metrics`, `prometheus-node-exporter`)
+  lost the same decorative base pin with polarities unchanged — their
+  null spellings render but stay rejected by the subchart-composition
+  lane, a separate pre-existing widening target.
+- F110 provider regex dialect portability (nineteenth round): provider
+  fragments normalize regex dialects at INGESTION
+  (`ProviderSchemaFragment::new` /
+  `helm_schema_core::normalize_schema_pattern_dialects`): a leading
+  global `(?i)` case-folds to an exactly language-equal ECMA/Go-portable
+  spelling (`^(?i)(abort|warn)?$` → `^([aA][bB][oO][rR][tT]|…)?$`,
+  Unicode simple-fold partners for `k`/`s` included; unfoldable
+  constructs abstain and stay reportable). The
+  `schema_dialect_hygiene` gate walks every committed schema artifact
+  the generator owns — corpus, gen, and CLI fixtures — validating the
+  metaschema and compiling every schema-position `pattern` /
+  `patternProperties` key under a real ECMA-262 engine (`regress`),
+  instance-data keywords excluded. jenkins and KPS regenerated with the
+  portable spelling; differential-verified against the RE2 semantics
+  (`folded_patterns_accept_exactly_the_re2_language`).
 
 ## In progress
 
@@ -838,7 +874,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `regexReplaceAll | trimPrefix` (multi-escape chains fall back to the
   exemption by design — unordered affixes cannot compose exactly).
 - **F80 residual — merge selection and provider attribution (bounded;
-  eighteenth round).** The ordered-merge half landed in four pieces.
+  eighteenth–nineteenth rounds).** The ordered-merge half landed in
+  four pieces.
   (a) A definitely-empty literal destination (`mergeOverwrite (dict) a b`)
   drops out of the operand list, so fresh-dict merges keep the ordered
   layer form, and merge/`mergeOverwrite` truthiness decodes to the
@@ -866,26 +903,49 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   per-key correlation is the documented F93 bound). Airflow's worker
   member lanes tightened as collateral (scalar `resources`, malformed
   `hostAliases`/`extraPorts` items now reject, helm-verified).
-  REMAINING (the nil-scrub half): airflow's worker and per-set
-  `securityContexts.pod` string `runAsUser` still accepts. The scope-list
-  candidate helper itself DECODES
-  (`candidate_selection_helper_binds_provider_payload_through_scope_list`
-  pins the minimal shape rejecting a string member); the real chart
-  abstains behind `removeNilFields(.Values.workers.celery) | fromYaml`,
-  whose output is opaque and blocks the merged-context member
-  projection. Landing plan: recognize the scrub define shape and
-  substitute a scrubbed identity (an `OutputPath` meta bit), then
-  null-relax the scrubbed layer's payload arms member-wise — the scrub
-  drops null members before the sink sees them, so un-relaxed typing
-  would falsely reject `runAsUser: null`. Also open: gates that cannot
-  lower at the document root (member-local wildcard conditions on
-  airflow's per-set rows; 78 uses in that chart) keep their pre-existing
+  The nil-scrub half landed in the nineteenth round. (d) The
+  `removeNilFields` define shape is recognized by an exact ordered match
+  of its action sequence (dict accumulator, one destructured range over
+  DOT, self-recursive scrub for map members kept when nonempty, non-nil
+  copy otherwise, `toYaml ACC`), and the call substitutes the operand's
+  identity with a scrubbed marker (`HelperOutputMeta::nil_scrubbed`)
+  instead of the opaque body summary. (e) Merged-member truthiness and
+  `hasKey` decode through selector projections and scrubbed identities
+  (the truthiness lane keys on the VALUE, not the expression spelling;
+  undecodable layer sets fall through to the historic all-paths
+  conjunction so ranged captures keep their existential encodings).
+  (f) Binding-carried layer facts ride helper summaries into layered
+  sink typing (`MergeLayersUse::via_binding`), bounded to
+  scrub-involving merges — ordinary binding-carried merges keep the
+  pre-layered routing their sibling dispatch arms rely on (bitnami's
+  `tplvalues.render` string lane) — and a scrubbed layer entering a
+  RANGE-member merge degrades to the opaque form so the per-set capture
+  machinery keeps its arms. (g) The scrubbed layer's synthesized arms
+  null-relax members recursively (the scrub drops nil members before
+  the sink renders). The full chain — real `removeNilFields` +
+  `workersMergeValues` + `airflowPodSecurityContext` — is pinned by
+  `nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads`:
+  string `runAsUser` rejects through either layer, the fully-shadowed
+  corner stays open, and null members stay accepted.
+  REMAINING: the real airflow chart's worker lanes still abstain — the
+  deployment re-roots `.Values` per worker set (`set $globals.Values
+  "workers" $workers` under a `range` over `$workerSets`), and the
+  scrubbed identity deliberately degrades at that per-set merge, so
+  `workers.securityContexts.pod` string `runAsUser` keeps accepting.
+  Landing the chart flip needs the root-reroot chain to carry layered
+  identities without displacing the round-8/17 per-set capture arms
+  (`airflow_worker_set_overrides_bind_strict_member_kinds` pins those).
+  Also open: gates that cannot lower at the document root (member-local
+  wildcard conditions on airflow's per-set rows) keep their pre-existing
   ungated arms — exact scoping needs the existential member-guard
-  encoding in the conditional-overlay vocabulary. Adjudication note:
-  signoz's clickhouse `settings`/`profiles` overlay arms lost their
-  provider payload reference under the new layer routing, but the
-  payload is an open `x-kubernetes-preserve-unknown-fields` object — all
-  acceptance polarities are unchanged (probed both ways).
+  encoding in the conditional-overlay vocabulary. Adjudication notes:
+  signoz's clickhouse `settings`/`profiles` payload reference loss
+  (eighteenth round) stands — polarities unchanged; the nineteenth
+  round's scrub short-circuit drops the summary-derived iterable arm on
+  `workers.celery` (scalar spellings of the whole subtree now accept —
+  a bounded widening; helm aborts ranging a scalar), and the
+  bitnami/redis/keda condition spellings re-encode with zero acceptance
+  flips across the probe batteries.
 - **F98 residual — required leaves through helper projections.** Both Traefik
   local-plugin alternatives accept a member without `mountPath`; Helm renders
   a null Deployment `volumeMount.mountPath`, which strict provider validation
@@ -954,20 +1014,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   per-op `value`/`from` requirements ride the conditionally-appended
   `$opPathKeys` alternative, whose capture-only approximate conjunct
   soundly abstains — `{"op": "copy"}` without `from` stays accepted.
-- **F111 — nack root `global` null false rejection.** Surfaced by the
-  seventeenth round's drift adjudication: nack's generated schema types
-  root `global` as `type: object`, rejecting `global: null` although
-  `helm template` renders it (null deletes the key and the chart-default
-  empty map takes over). A broad presence-guard preserve rule
-  incidentally fixed it before being narrowed to the dig lanes; the
-  base-typing source for nack's `global` still needs its own diagnosis.
-- **F110 — provider regex dialect portability.** Generated Jenkins and Kube
-  Prometheus Stack schemas contain `pattern: "^(?i)(abort|warn)?$"`, copied
-  from a provider schema. Inline `(?i)` is not valid Draft-07/ECMAScript;
-  conforming validators reject the schema or fail when that definition is
-  exercised, while the Rust validator masks it. Normalize representable
-  RE2/Go patterns to ECMA (or abstain), and add an output-wide metaschema plus
-  pattern-compilation gate that traverses definitions.
 
 ## Rejected (invalid or won't fix by design)
 
