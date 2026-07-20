@@ -492,3 +492,52 @@ fn header_member_read_requires_an_object_host_beside_body_dispatch() {
         );
     }
 }
+
+/// The nack shape: a declared mapping default whose ONLY consumer is the
+/// nil-safe grouped read `((.Values.global).labels)`. Helm's null-deletion
+/// renders `global: null` (the receiver goes absent and the grouped chain
+/// yields nil instead of aborting), so the declared default's base typing
+/// must admit null while present non-null scalars keep aborting through
+/// the presence-guarded member-host arm.
+#[test]
+fn nil_safe_grouped_receiver_with_declared_default_admits_null() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+          {{- with ((.Values.global).labels) }}
+          labels:
+            {{- toYaml . | nindent 4 }}
+          {{- end }}
+        data: {}
+    "#};
+    let values_yaml = indoc! {"
+        global:
+          labels: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    sim_assert_eq!(
+        have: schema.pointer("/properties/global/type") == Some(&serde_json::json!("object")),
+        want: false,
+        "declared-default base must not pin bare `type: object`: {schema}",
+    );
+    for (instance, want) in [
+        (serde_json::json!({ "global": null }), true),
+        (serde_json::json!({}), true),
+        (serde_json::json!({ "global": {} }), true),
+        (
+            serde_json::json!({ "global": { "labels": { "a": "b" } } }),
+            true,
+        ),
+        (serde_json::json!({ "global": 42 }), false),
+        (serde_json::json!({ "global": "oops" }), false),
+        (serde_json::json!({ "global": false }), false),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

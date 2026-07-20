@@ -508,7 +508,17 @@ fn record_contract_use_conjunction(
     let merge_layered = contract_use
         .merge_layers
         .as_ref()
-        .filter(|merge| merge.layers.get(merge.position) == Some(&contract_use.source_expr));
+        .filter(|merge| merge.layers.get(merge.position) == Some(&contract_use.source_expr))
+        // Binding-carried layer facts reroute only when the merge involves
+        // a nil-scrubbed layer (airflow's worker chain): there the member
+        // typing must scope to the states each layer actually supplies —
+        // shadowed members stay open and scrubbed members null-relax.
+        // Ordinary binding-carried merges keep the pre-layered routing:
+        // their sibling dispatch arms (bitnami's `tplvalues.render` string
+        // lane) rely on the branch alternatives the rerouting suppresses.
+        .filter(|merge| {
+            !merge.via_binding || merge.nil_scrubbed_layers.iter().any(|scrubbed| *scrubbed)
+        });
     let merge_outer_guards = merge_layered.is_some().then(|| lowerable_guards.clone());
     let lowerable_guards = if merge_layered.is_some() {
         Some(vec![ConditionalGuard::Truthy {
@@ -693,7 +703,22 @@ fn record_contract_use_conjunction(
             });
         let provider_use = (!type_dispatched || complement_dispatched || structural_dispatch_arm)
             .then(|| provider_schema_use(contract_use, self_range_guarded))
-            .flatten();
+            .flatten()
+            // A row whose layer facts stay UN-rerouted (binding-carried,
+            // no scrub involved) types through the ordinary branch/base
+            // lanes; its use must not also seed synthesized layer arms.
+            // Rows whose position mismatches their own path (member
+            // projections of a layered parent) keep the info — their
+            // synthesized member arms are exactly round 18's ungated lanes.
+            .map(|mut provider_use| {
+                let keeps_layer_arms = provider_use.merge_layers.as_ref().is_some_and(|merge| {
+                    !merge.via_binding || merge.nil_scrubbed_layers.iter().any(|scrubbed| *scrubbed)
+                });
+                if !keeps_layer_arms {
+                    provider_use.merge_layers = None;
+                }
+                provider_use
+            });
         // A merge layer's provider typing is synthesized by the generator
         // from the path-level use: the preferred layer becomes a whole-
         // payload arm under its own truthiness, and a SHADOWED layer
@@ -704,6 +729,7 @@ fn record_contract_use_conjunction(
         } else {
             (provider_use, None)
         };
+        let layer_arms_carry_sink_typing = merge_layer_provider_use.is_some();
         if let Some(mut layered) = merge_layer_provider_use {
             // Decoded render gates scope the synthesized layer arms — a
             // dormant gate must silence them (KPS's `defaultRules.create:
@@ -712,6 +738,7 @@ fn record_contract_use_conjunction(
             // instead of dropping verified typing; their exact encoding is
             // the F80 existential member-guard residual.
             layered.outer_guards = merge_outer_guards.flatten().unwrap_or_default();
+            acc.facts.facts.has_merge_layered_use = true;
             acc.facts.record_provider_schema_use(layered);
         }
         // The sink's metadata field kind is layer-scoped the same way: a
@@ -719,7 +746,11 @@ fn record_contract_use_conjunction(
         // earlier layers leave it visible, so the string-map typing rides
         // the synthesized layer arms, never the base lanes (KPS's
         // group-level rule annotations beneath the per-alert layer).
-        let metadata_field_kind = if merge_layered.is_some() {
+        // Suppression presupposes the synthesized arms exist: a layered row
+        // whose resource never resolved has no provider use to carry the
+        // typing (minio's ternary-kinded workload), so its string-map kind
+        // keeps typing the base lanes as an unlayered row would.
+        let metadata_field_kind = if merge_layered.is_some() && layer_arms_carry_sink_typing {
             None
         } else {
             metadata_field_kind

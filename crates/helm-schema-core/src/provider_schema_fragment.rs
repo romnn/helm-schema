@@ -118,7 +118,12 @@ impl ProviderSourceFragment {
 
 impl ProviderSchemaFragment {
     #[must_use]
-    pub fn new(schema: Value) -> Self {
+    pub fn new(mut schema: Value) -> Self {
+        // Ingestion is the one boundary where foreign regex dialects enter:
+        // provider documents spell Go/RE2 patterns (a leading `(?i)`), and
+        // everything downstream — resolution, arms, emitted fixtures — must
+        // only ever see the portable ECMA-262 form.
+        crate::normalize_schema_pattern_dialects(&mut schema);
         Self {
             schema,
             source_fragment: None,
@@ -140,9 +145,11 @@ impl ProviderSchemaFragment {
     pub fn with_source_definition_schema(
         mut self,
         source: ProviderSchemaSource,
-        source_schema: Value,
-        definition_schema: Value,
+        mut source_schema: Value,
+        mut definition_schema: Value,
     ) -> Self {
+        crate::normalize_schema_pattern_dialects(&mut source_schema);
+        crate::normalize_schema_pattern_dialects(&mut definition_schema);
         self.source_fragment = Some(ProviderSourceFragment::new(
             source,
             source_schema,

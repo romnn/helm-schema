@@ -105,7 +105,7 @@ impl LowerScope<'_> {
                     .map(|meta| meta.lexical_escapes.clone())
                     .unwrap_or_default(),
                 split_segment: None,
-                merge_layers: None,
+                merge_layers: helper_meta.and_then(|meta| meta.merge_layers.clone()),
                 range_key: false,
                 digest: false,
                 merge_operand: self.merge_operand_paths.contains(path),
@@ -318,6 +318,17 @@ pub(crate) fn lower_value(
                             splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
                                 layers: layer_paths.clone(),
                                 position,
+                                nil_scrubbed_layers: layers
+                                    .iter()
+                                    .map(|layer| {
+                                        matches!(
+                                            layer,
+                                            AbstractValue::OutputPath(_, meta)
+                                                if meta.nil_scrubbed
+                                        )
+                                    })
+                                    .collect(),
+                                via_binding: false,
                             });
                         }
                     }

@@ -628,6 +628,12 @@ pub struct ContractValuePathFacts {
     pub has_unconditional_render_use: bool,
     pub has_self_guarded_render_use: bool,
     pub all_render_uses_self_guarded: bool,
+    /// A render consumed this path as one layer of an ordered merge: the
+    /// generator synthesizes the layer's typing as root arms, and the
+    /// layer's synthetic self-truthiness guard must not drive base
+    /// classification (a declared `{}` default stays an open map — the
+    /// merged sink renders any user-supplied members).
+    pub has_merge_layered_use: bool,
     /// Every render use either sits behind the path's own truthy selection or
     /// cannot reject a Helm-falsy value at all: a `merge` operand's strict
     /// map contract rides its fail implication (which keys on the call's live
@@ -673,6 +679,7 @@ impl ContractValuePathFacts {
         self.has_render_use = true;
         self.has_unconditional_render_use |= other.has_unconditional_render_use;
         self.has_self_guarded_render_use |= other.has_self_guarded_render_use;
+        self.has_merge_layered_use |= other.has_merge_layered_use;
         self.has_self_range_guard_render_use |= other.has_self_range_guard_render_use;
         self.all_render_uses_self_guarded &= other.all_render_uses_self_guarded;
         self.all_render_uses_falsy_tolerant &= other.all_render_uses_falsy_tolerant;

@@ -9370,25 +9370,45 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonAnnotations": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema316"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "string"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonAnnotations": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema316"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Annotations to add to all deployed objects"
               }
-            ],
-            "description": "Annotations to add to all deployed objects"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema316"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Labels to add to all deployed objects"
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -10353,905 +10373,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "podMonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "podMonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "prometheusRule": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheusRule"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "serviceMonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema316"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Labels to add to all deployed objects"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema182"
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/schema152"
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema182"
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/schema166"
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternal": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternal"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema323"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Labels to add to all deployed objects"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema212"
-                  },
-                  {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema242"
-                  },
-                  {
-                    "properties": {
-                      "secretChecksumAnnotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "secretChecksumAnnotations"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "auth": {
-                      "properties": {
-                        "existingSecret": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "existingSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "auth"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema181"
-                        },
-                        {
-                          "properties": {
-                            "auth": {
-                              "properties": {
-                                "usePasswordFiles": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "usePasswordFiles"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "auth"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema156"
-                      },
-                      {
-                        "properties": {
-                          "auth": {
-                            "properties": {
-                              "usePasswordFileFromSecret": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "usePasswordFileFromSecret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "auth"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema238"
-                  },
-                  {
-                    "properties": {
-                      "configmapChecksumAnnotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "configmapChecksumAnnotations"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "$ref": "#/$defs/schema162"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "replica": {
-                      "properties": {
-                        "affinity": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "affinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "replica"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/$defs/schema154"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "$ref": "#/$defs/schema161"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "replica": {
-                      "properties": {
-                        "affinity": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "affinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "replica"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "$ref": "#/$defs/schema155"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "replica": {
-                      "properties": {
-                        "affinity": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "affinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "replica"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/$defs/schema66"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "$ref": "#/$defs/schema68"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "replica": {
-                      "properties": {
-                        "affinity": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "affinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "replica"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "replica": {
-                      "properties": {
-                        "persistence": {
-                          "properties": {
-                            "existingClaim": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "existingClaim"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "replica"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/schema173"
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema121"
-                          },
-                          {
-                            "properties": {
-                              "replica": {
-                                "properties": {
-                                  "persistence": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "persistence"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "replica"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema323"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Labels to add to all deployed objects"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
-          {
-            "properties": {
-              "diagnosticMode": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "diagnosticMode"
-            ],
-            "type": "object"
-          },
           {
             "$ref": "#/$defs/schema140"
           },
@@ -11283,450 +10405,22 @@
           {
             "additionalProperties": {},
             "properties": {
-              "diagnosticMode": {
-                "additionalProperties": {},
-                "description": "Enable diagnostic mode in the deployment",
-                "properties": {
-                  "args": {
-                    "$ref": "#/$defs/schema209"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "diagnosticMode": {
-                "additionalProperties": {},
-                "description": "Enable diagnostic mode in the deployment",
-                "properties": {
-                  "command": {
-                    "$ref": "#/$defs/schema208"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "sentinel": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sentinel"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "debug": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "debug"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+              "commonLabels": {
                 "anyOf": [
                   {
-                    "properties": {
-                      "sentinel": {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "nodePorts": {
-                                "properties": {
-                                  "redis": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "redis"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "nodePorts"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sentinel"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema59"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "sentinel": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sentinel"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "debug": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "debug"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "sentinel": {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "nodePorts": {
-                                "properties": {
-                                  "redis": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "redis"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "nodePorts"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sentinel"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema59"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema140"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "debug": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "debug"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sentinel": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "sentinel"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema56"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "debug": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "debug"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema247"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "sentinel": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "sentinel"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "diagnosticMode": {
-            "additionalProperties": {},
-            "description": "Enable diagnostic mode in the deployment",
-            "properties": {
-              "enabled": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
+                    "$ref": "#/$defs/schema316"
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
                 ],
-                "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)"
+                "description": "Labels to add to all deployed objects"
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/schema140"
           },
-          {
-            "not": {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "debug": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "debug"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "sentinel": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "sentinel"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "diagnosticMode": {
-            "additionalProperties": {},
-            "description": "Enable diagnostic mode in the deployment",
-            "properties": {
-              "enabled": {
-                "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)",
-                "type": "boolean"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/schema140"
-          },
-          {
-            "not": {
-              "properties": {
-                "sentinel": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "sentinel"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
           {
             "additionalProperties": {},
             "properties": {
@@ -12935,6 +11629,1151 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema182"
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema152"
+                    },
+                    {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "allowExternalEgress": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "allowExternalEgress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema182"
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema166"
+                    },
+                    {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "allowExternal"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema323"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Labels to add to all deployed objects"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema212"
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema242"
+                  },
+                  {
+                    "properties": {
+                      "secretChecksumAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "secretChecksumAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "auth": {
+                      "properties": {
+                        "existingSecret": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "existingSecret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "auth"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema181"
+                        },
+                        {
+                          "properties": {
+                            "auth": {
+                              "properties": {
+                                "usePasswordFiles": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "usePasswordFiles"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "auth"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema156"
+                      },
+                      {
+                        "properties": {
+                          "auth": {
+                            "properties": {
+                              "usePasswordFileFromSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "usePasswordFileFromSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "auth"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema238"
+                  },
+                  {
+                    "properties": {
+                      "configmapChecksumAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configmapChecksumAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "$ref": "#/$defs/schema162"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replica": {
+                      "properties": {
+                        "affinity": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "replica"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/$defs/schema154"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "$ref": "#/$defs/schema161"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replica": {
+                      "properties": {
+                        "affinity": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "replica"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "$ref": "#/$defs/schema155"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replica": {
+                      "properties": {
+                        "affinity": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "replica"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/$defs/schema66"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "$ref": "#/$defs/schema68"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replica": {
+                      "properties": {
+                        "affinity": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "replica"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "replica": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "existingClaim": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingClaim"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "replica"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema173"
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema121"
+                          },
+                          {
+                            "properties": {
+                              "replica": {
+                                "properties": {
+                                  "persistence": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "persistence"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "replica"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema323"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Labels to add to all deployed objects"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "diagnosticMode": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "diagnosticMode"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema140"
+          },
+          {
+            "not": {
+              "properties": {
+                "sentinel": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "diagnosticMode": {
+                "additionalProperties": {},
+                "description": "Enable diagnostic mode in the deployment",
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/schema209"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "diagnosticMode": {
+                "additionalProperties": {},
+                "description": "Enable diagnostic mode in the deployment",
+                "properties": {
+                  "command": {
+                    "$ref": "#/$defs/schema208"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "sentinel": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sentinel"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "debug": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "debug"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "sentinel": {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "nodePorts": {
+                                "properties": {
+                                  "redis": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "redis"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "nodePorts"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sentinel"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema59"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "sentinel": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sentinel"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "debug": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "debug"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "sentinel": {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "nodePorts": {
+                                "properties": {
+                                  "redis": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "redis"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "nodePorts"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "sentinel"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema59"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema140"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "debug": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "debug"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema56"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "debug": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "debug"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema247"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "sentinel": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "sentinel"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "diagnosticMode": {
+            "additionalProperties": {},
+            "description": "Enable diagnostic mode in the deployment",
+            "properties": {
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema140"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {
+                  "properties": {
+                    "debug": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "debug"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "sentinel": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "diagnosticMode": {
+            "additionalProperties": {},
+            "description": "Enable diagnostic mode in the deployment",
+            "properties": {
+              "enabled": {
+                "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)",
+                "type": "boolean"
+              }
+            }
+          }
+        }
       }
     },
     {

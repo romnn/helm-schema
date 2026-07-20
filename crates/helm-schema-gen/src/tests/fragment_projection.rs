@@ -253,10 +253,42 @@ fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call()
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
-    assert_open_string_map_or_templated_string(
+    assert_open_map_with_layered_string_values(
+        &schema,
         pod_labels,
+        "podLabels",
         "podLabels reused through a local fragment variable",
     );
+}
+
+/// The layered-merge shape: the path's BASE keeps an open map lane (and
+/// the templated-string alternative), while string-VALUE typing rides the
+/// synthesized layer arms — asserted through acceptance polarities so the
+/// arms' scoping stays observable.
+fn assert_open_map_with_layered_string_values(
+    schema: &serde_json::Value,
+    node: &serde_json::Value,
+    property: &str,
+    label: &str,
+) {
+    assert!(
+        schema_contains_type(node, "string"),
+        "{label} should keep a templated string branch, got {node}"
+    );
+    let segments: Vec<&str> = property.split('.').collect();
+    for (member_value, want) in [
+        (serde_json::json!("x"), true),
+        (serde_json::json!(5), false),
+    ] {
+        let mut instance = serde_json::json!({ "custom-key": member_value });
+        for segment in segments.iter().rev() {
+            instance = serde_json::json!({ *segment: instance });
+        }
+        assert!(
+            schema_accepts_instance(schema, &instance) == want,
+            "{label}: instance={instance}; want={want}; schema={schema}"
+        );
+    }
 }
 
 #[test]
@@ -283,8 +315,10 @@ fn assigned_annotations_fragment_variable_keeps_open_string_map() {
     let annotations = schema
         .pointer("/properties/serviceAccount/properties/annotations")
         .expect("serviceAccount.annotations present");
-    assert_open_string_map_or_templated_string(
+    assert_open_map_with_layered_string_values(
+        &schema,
         annotations,
+        "serviceAccount.annotations",
         "serviceAccount.annotations reused through a local fragment variable",
     );
 }
@@ -450,8 +484,10 @@ fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
-    assert_open_string_map_or_templated_string(
+    assert_open_map_with_layered_string_values(
+        &schema,
         pod_labels,
+        "podLabels",
         "empty-map podLabels rendered through the assigned fragment helper path",
     );
 }
@@ -655,8 +691,10 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
     let pod_labels = schema
         .pointer("/properties/podLabels")
         .expect("podLabels present");
-    assert_open_string_map_or_templated_string(
+    assert_open_map_with_layered_string_values(
+        &schema,
         pod_labels,
+        "podLabels",
         "metadata.labels podLabels with unresolved workload kind",
     );
 

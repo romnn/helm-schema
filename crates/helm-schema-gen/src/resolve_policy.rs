@@ -421,6 +421,19 @@ impl ResolvePolicy {
         } else if preserve_explicit_null_default {
             empty_schema()
         } else if facts.empty_map_placeholder_has_structural_object_use(&merged) {
+            // A merge-layered render proves any user-supplied map renders
+            // here — its member typing rides the synthesized layer arms —
+            // so the declared `{}` keeps an open-map lane, and the layer's
+            // SYNTHETIC self-truthiness guard must not pin the exact
+            // off-state against the other (templated-string) evidence.
+            let merged = if facts.contract.has_merge_layered_use {
+                crate::merge::union_schema_list(vec![
+                    merged,
+                    serde_json::json!({ "additionalProperties": {}, "type": "object" }),
+                ])
+            } else {
+                merged
+            };
             merge_explicit_empty_placeholder(
                 merged,
                 facts.values_yaml.is_empty_map,
@@ -432,7 +445,9 @@ impl ResolvePolicy {
                 // off-state (cluster-autoscaler `extraEnvConfigMaps`).
                 facts.contract.has_structured_item_descendants
                     && !facts.contract.has_destructured_range_use,
-                facts.contract.has_render_use && facts.contract.all_render_uses_self_guarded,
+                facts.contract.has_render_use
+                    && facts.contract.all_render_uses_self_guarded
+                    && !facts.contract.has_merge_layered_use,
                 facts.contract.used_as_fragment && !facts.contract.is_ranged_source,
             )
         } else if facts.values_yaml.has_no_schema_evidence && facts.contract.is_ranged_source {

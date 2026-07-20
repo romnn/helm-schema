@@ -25447,6 +25447,40 @@
             ]
           },
           {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema430"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "properties": {
               "rbac": {
                 "properties": {
@@ -25464,88 +25498,6 @@
               "rbac"
             ],
             "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema384"
-                  },
-                  {
-                    "properties": {
-                      "readReplicas": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "readReplicas"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema678"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema429"
-                  },
-                  {
-                    "properties": {
-                      "readReplicas": {
-                        "properties": {
-                          "pdb": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "pdb"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "readReplicas"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema678"
-              }
-            ]
           },
           {
             "anyOf": [
@@ -25616,6 +25568,9 @@
                 }
               }
             ]
+          },
+          {
+            "$ref": "#/$defs/schema678"
           }
         ]
       },

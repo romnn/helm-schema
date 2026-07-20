@@ -22,6 +22,20 @@ pub struct MergeLayersUse {
     pub layers: Vec<String>,
     /// This use's own index within `layers`.
     pub position: usize,
+    /// Per-layer scrub markers, parallel to `layers`: a `true` layer's map
+    /// had nil members recursively removed before the merge (airflow's
+    /// `removeNilFields`), so that layer's sink typing must admit null
+    /// member spellings, and binding-carried rows of a scrub-involving
+    /// merge keep the layered routing.
+    pub nil_scrubbed_layers: Vec<bool>,
+    /// The layer facts were recovered from a local BINDING's meta (the
+    /// merged value flowed through a helper output before rendering)
+    /// rather than the render site's own layered value. Such rows keep
+    /// their base metadata field kind: the binding's other dispatch arms
+    /// (bitnami's `tplvalues.render` string lane) rely on the string-map
+    /// alternative it contributes, while direct render-site layers moved
+    /// that typing onto the synthesized arms entirely.
+    pub via_binding: bool,
 }
 
 impl MergeLayersUse {

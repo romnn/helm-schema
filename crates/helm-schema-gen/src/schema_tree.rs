@@ -54,6 +54,17 @@ impl SchemaDocument {
         constrain_existing_path_to_object(&mut self.root, path_segments)
     }
 
+    /// Drops the structural `type: object` from a host whose members are
+    /// only ever read through the nil-safe grouped form: the caller's
+    /// presence-guarded arm carries the object requirement, and the base
+    /// must render-match helm's tolerance for an absent or null-deleted
+    /// receiver. Only the tree's own `Object` nodes relax — a `Foreign`
+    /// base claiming `type: object` was resolved from independent
+    /// evidence and keeps it.
+    pub(crate) fn relax_host_object_type(&mut self, path_segments: &[String]) {
+        relax_host_object_type(&mut self.root, path_segments);
+    }
+
     #[tracing::instrument(skip_all)]
     pub(crate) fn merge_missing_values_yaml_defaults_under_roots(
         &mut self,
@@ -81,6 +92,49 @@ impl SchemaDocument {
 
     pub(crate) fn into_value(self) -> Value {
         self.root.into_value()
+    }
+}
+
+fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
+    let Some((head, tail)) = path_segments.split_first() else {
+        match node {
+            SchemaNode::Object { typed, .. } => *typed = false,
+            // A declared mapping default resolves to a foreign base pinning
+            // `type: object`; keep its scalar rejection and admit only the
+            // null spelling helm deletes before any consumer runs.
+            SchemaNode::Foreign(Value::Object(object))
+                if object.get("type").and_then(Value::as_str) == Some("object") =>
+            {
+                object.insert(
+                    "type".to_string(),
+                    Value::Array(vec![
+                        Value::String("object".to_string()),
+                        Value::String("null".to_string()),
+                    ]),
+                );
+            }
+            _ => {}
+        }
+        return;
+    };
+    match node {
+        SchemaNode::Object { properties, .. } => {
+            if let Some(child) = properties.get_mut(head) {
+                relax_host_object_type(child, tail);
+            }
+        }
+        SchemaNode::Foreign(Value::Object(object)) => {
+            if let Some(child_value) = object
+                .get_mut("properties")
+                .and_then(Value::as_object_mut)
+                .and_then(|properties| properties.get_mut(head))
+            {
+                let mut child = SchemaNode::foreign(std::mem::take(child_value));
+                relax_host_object_type(&mut child, tail);
+                *child_value = child.into_value();
+            }
+        }
+        _ => {}
     }
 }
 

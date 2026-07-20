@@ -120,6 +120,10 @@ regex = "1"
 # — we don't use the validator's built-in HTTP retriever (we have our own
 # ureq-based one in helm-schema-cli/src/flatten.rs).
 jsonschema = { version = "0.46", default-features = false, features = ["resolve-file"] }
+# ECMA-262 regex engine: the schema-output dialect gate compiles every
+# emitted `pattern` with the dialect Draft-07 actually specifies, instead
+# of the laxer engines validators substitute.
+regress = "0.11"
 referencing = "0.46"
 
 # virtual file system

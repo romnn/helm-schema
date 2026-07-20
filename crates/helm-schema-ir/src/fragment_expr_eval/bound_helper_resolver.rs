@@ -43,6 +43,9 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         if let Some(result) = self.custom_merge_call(name, arg) {
             return Some(result);
         }
+        if let Some(result) = self.nil_scrub_call(name, arg) {
+            return Some(result);
+        }
         if self.params.seen.contains(name) {
             return Some(EvalResult::none());
         }
@@ -179,6 +182,25 @@ impl BoundHelperValueResolver<'_, '_, '_> {
         if input_layer.paths().is_empty() && overwrite_layer.paths().is_empty() {
             return None;
         }
+        // A scrubbed layer merged against a RANGE-member operand (airflow's
+        // per-worker-set merge over the scrubbed celery base) keeps the
+        // scrub OUT of the layered value: the ranged capture machinery owns
+        // those member lanes, and the scrubbed identity would displace the
+        // existential encodings its arms ride. The scrub survives in the
+        // set-free half of the chain (the first workers/celery merge).
+        let wildcard_operand = input_layer
+            .paths()
+            .iter()
+            .chain(overwrite_layer.paths().iter())
+            .any(|path| path.split('.').any(|segment| segment == "*"));
+        let (input_layer, overwrite_layer) = if wildcard_operand {
+            (
+                input_layer.without_nil_scrub_markers(),
+                overwrite_layer.without_nil_scrub_markers(),
+            )
+        } else {
+            (input_layer, overwrite_layer)
+        };
         let value = AbstractValue::MergedLayers(vec![overwrite_layer, input_layer]);
         let mut effects = Effects::default();
         effects.merge(input.effects.execution_only());
@@ -188,6 +210,46 @@ impl BoundHelperValueResolver<'_, '_, '_> {
             .yaml_serialized_paths
             .extend(payload_paths.iter().cloned());
         effects.derived_text_paths.extend(payload_paths);
+        Some(EvalResult::with_effects(Some(value), effects))
+    }
+
+    /// A call to a recognized nil-scrub helper resolves to the operand's
+    /// own identity with the scrubbed marker instead of the recursive
+    /// body summary: the output IS the operand map minus its nil members,
+    /// so member projection and layer ordering keep working while sink
+    /// typing null-relaxes the scrubbed payload. The payload path is
+    /// marked YAML-serialized text so the conventional
+    /// `include … | fromYaml` decode passes the value through.
+    fn nil_scrub_call(&mut self, name: &str, arg: Option<&TemplateExpr>) -> Option<EvalResult> {
+        self.params.context.analysis_db.nil_scrub_helper(name)?;
+        let arg = arg?;
+        let mut seen = self.params.seen.clone();
+        let operand = helper_result_from_expr_with_fragment_locals(
+            arg,
+            self.params.fragment_locals,
+            self.params.outer,
+            self.params.current_dot,
+            self.params.context,
+            &mut seen,
+        );
+        let (path, mut meta) = match operand.value.as_ref()?.clone().without_widened()? {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)
+                if !path.is_empty() =>
+            {
+                (path, crate::helper_meta::HelperOutputMeta::default())
+            }
+            AbstractValue::OutputPath(path, meta) if meta.json_decoded && !path.is_empty() => {
+                (path, meta)
+            }
+            _ => return None,
+        };
+        meta.json_decoded = true;
+        meta.nil_scrubbed = true;
+        let value = AbstractValue::OutputPath(path.clone(), meta);
+        let mut effects = Effects::default();
+        effects.merge(operand.effects.execution_only());
+        effects.yaml_serialized_paths.insert(path.clone());
+        effects.derived_text_paths.insert(path);
         Some(EvalResult::with_effects(Some(value), effects))
     }
 }

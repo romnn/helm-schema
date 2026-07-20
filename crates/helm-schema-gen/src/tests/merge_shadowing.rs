@@ -315,3 +315,140 @@ fn candidate_selection_helper_binds_provider_payload_through_scope_list() {
         );
     }
 }
+
+/// The airflow worker chain end-to-end: `removeNilFields` scrubs the
+/// celery overrides, the hand-rolled `workersMergeValues` deep-merge
+/// helper layers them over the workers map, and the candidate-selection
+/// helper binds the merged `securityContexts.pod` to the provider's pod
+/// securityContext. Each layer types its own payload exactly where it
+/// supplies the rendered member — the fully-shadowed corner stays open —
+/// and the scrubbed layer's members admit null (the scrub drops them
+/// before the sink renders).
+#[test]
+fn nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads() {
+    let helpers = indoc! {r#"
+        {{- define "test.podSecurityContext" }}
+          {{- $ := last . }}
+          {{- $result := dict }}
+          {{- range . }}
+            {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod }}
+              {{- $result = .securityContexts.pod }}
+              {{- break }}
+            {{- end }}
+            {{- if and (hasKey . "securityContext") .securityContext }}
+              {{- $result = .securityContext }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+          {{- if $result }}
+            {{- toYaml $result | print }}
+          {{- else }}
+        runAsUser: {{ $.uid }}
+          {{- end }}
+        {{- end }}
+        {{- define "removeNilFields" -}}
+          {{- $newValues := dict -}}
+          {{- range $key, $val := . -}}
+            {{- if kindIs "map" $val -}}
+              {{- $nested := include "removeNilFields" $val | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $newValues $key $nested -}}
+              {{- end -}}
+            {{- else if not (kindIs "invalid" $val) -}}
+              {{- $_ := set $newValues $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $newValues -}}
+        {{- end -}}
+        {{- define "workersMergeValues" -}}
+          {{- $inputMap := index . 0 -}}
+          {{- $overwriteMap := index . 1 -}}
+          {{- $sectionName := index . 2 -}}
+          {{- $orBoolean := index . 3 -}}
+          {{- $outputMap := dict -}}
+          {{- $fullOverwrite := list "annotations" "podAnnotations" "securityContext" "resources" "nodeSelector" "affinity" "labels" -}}
+          {{- range $key, $val := $inputMap -}}
+            {{- if and (hasKey $overwriteMap $key) (has $key $fullOverwrite) -}}
+              {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+            {{- else if and (hasKey $overwriteMap $key) (kindIs "map" $val) -}}
+              {{- $nested := include "workersMergeValues" (list $val (get $overwriteMap $key) $key $orBoolean) | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $outputMap $key $nested -}}
+              {{- end -}}
+            {{- else if and (hasKey $overwriteMap $key) (not (and (kindIs "slice" (get $overwriteMap $key)) (eq (len (get $overwriteMap $key)) 0))) -}}
+              {{- if and (kindIs "bool" $val) (has $sectionName $orBoolean) -}}
+                {{- $_ := set $outputMap $key (or $val (get $overwriteMap $key)) -}}
+              {{- else -}}
+                {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+              {{- end -}}
+            {{- else -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- range $key, $val := $overwriteMap -}}
+            {{- if not (hasKey $inputMap $key) -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $outputMap -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $filteredCelery := include "removeNilFields" .Values.workers.celery | fromYaml -}}
+        {{- $workers := include "workersMergeValues" (list .Values.workers $filteredCelery "" list) | fromYaml -}}
+        {{- $securityContext := include "test.podSecurityContext" (list $workers .Values) }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              securityContext: {{ $securityContext | nindent 8 }}
+              containers:
+                - name: main
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(
+            "uid: 50000\nworkers:\n  securityContexts: {}\n  celery:\n    securityContexts: {}\nsecurityContexts: {}\nsecurityContext: {}\n",
+        ),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "workers": {
+                "securityContexts": { "pod": { "runAsUser": "oops" } },
+                "celery": { "securityContexts": { "pod": { "runAsUser": 50000 } } } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": "oops" } } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": 50000 } } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": "oops" } } } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": 50000 } } } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": null, "fsGroup": 5 } } } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": null } } } } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "scrubbed merge-helper layer polarity: instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

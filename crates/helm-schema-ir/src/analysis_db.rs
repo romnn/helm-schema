@@ -35,6 +35,7 @@ pub(crate) struct IrAnalysisDb {
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
     custom_merge_helpers: RefCell<HashMap<String, bool>>,
+    nil_scrub_helpers: RefCell<HashMap<String, bool>>,
     /// The analysis-policy Kubernetes version (normalized core, e.g.
     /// `1.29.0`): the value `.Capabilities.KubeVersion` renders under this
     /// run's provider policy. `None` abstains every capabilities-version
@@ -102,6 +103,7 @@ impl IrAnalysisDb {
             body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
             custom_merge_helpers: RefCell::new(HashMap::new()),
+            nil_scrub_helpers: RefCell::new(HashMap::new()),
             kubernetes_version,
         }
     }
@@ -282,6 +284,188 @@ impl IrAnalysisDb {
             .borrow_mut()
             .insert(name.to_string(), recognized);
         recognized.then_some(())
+    }
+
+    /// Recognize the nil-scrub define shape (airflow's `removeNilFields`):
+    /// one destructured range over DOT that copies each member into a
+    /// fresh dict accumulator — map members through the self-recursive
+    /// scrub (kept only when nonempty), other members only when not nil —
+    /// and renders exactly `toYaml ACC`. Under those rules the output IS
+    /// the input map minus its (recursively) nil members, so the call
+    /// site can substitute the input identity with a scrubbed marker
+    /// instead of evaluating the recursion.
+    pub(crate) fn nil_scrub_helper(&self, name: &str) -> Option<()> {
+        if let Some(cached) = self.nil_scrub_helpers.borrow().get(name) {
+            return cached.then_some(());
+        }
+        let recognized = self.classify_nil_scrub_helper(name).is_some();
+        self.nil_scrub_helpers
+            .borrow_mut()
+            .insert(name.to_string(), recognized);
+        recognized.then_some(())
+    }
+
+    /// The recognizer matches the canonical action sequence exactly — any
+    /// extra action (another condition, another write, another render)
+    /// rejects, so a helper that drops more than nil members or rewrites
+    /// values can never claim the scrubbed identity.
+    fn classify_nil_scrub_helper(&self, name: &str) -> Option<()> {
+        use helm_schema_ast::Literal;
+
+        let body = self.parsed_helper_body(name)?;
+        let mut ranges = Vec::new();
+        if !collect_dot_ranges(body.tree.root_node(), body.source, &mut ranges) {
+            return None;
+        }
+        let [(key_var, val_var)] = ranges.as_slice() else {
+            return None;
+        };
+
+        let exprs = helm_schema_ast::parse_action_expressions(body.source);
+        let [
+            accumulator_init,
+            range_header,
+            map_test,
+            nested_init,
+            nonempty_test,
+            nested_write,
+            not_nil_test,
+            member_write,
+            render,
+        ] = exprs.as_slice()
+        else {
+            return None;
+        };
+
+        let var_is = |expr: &TemplateExpr, name: &str| {
+            matches!(
+                expr.deparen(),
+                TemplateExpr::Variable(variable) if variable.trim_start_matches('$') == name
+            )
+        };
+        let TemplateExpr::VariableDefinition {
+            name: accumulator,
+            value,
+        } = accumulator_init
+        else {
+            return None;
+        };
+        let accumulator = accumulator.trim_start_matches('$');
+        if !matches!(
+            value.deparen(),
+            TemplateExpr::Call { function, args } if function == "dict" && args.is_empty()
+        ) {
+            return None;
+        }
+        if !matches!(range_header.deparen(), TemplateExpr::Field(path) if path.is_empty()) {
+            return None;
+        }
+        if !matches!(
+            map_test.deparen(),
+            TemplateExpr::Call { function, args }
+                if function == "kindIs"
+                    && matches!(
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Literal(Literal::String(kind))) if kind == "map"
+                    )
+                    && args.get(1).is_some_and(|arg| var_is(arg, val_var))
+        ) {
+            return None;
+        }
+        let TemplateExpr::VariableDefinition {
+            name: nested,
+            value,
+        } = nested_init
+        else {
+            return None;
+        };
+        let nested = nested.trim_start_matches('$');
+        let TemplateExpr::Pipeline(stages) = value.deparen() else {
+            return None;
+        };
+        let [head, tail] = stages.as_slice() else {
+            return None;
+        };
+        if !matches!(
+            head.deparen(),
+            TemplateExpr::Call { function, args }
+                if (function == "include" || function == "template")
+                    && matches!(
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Literal(Literal::String(callee))) if callee == name
+                    )
+                    && args.len() == 2
+                    && var_is(&args[1], val_var)
+        ) || !matches!(
+            tail.deparen(),
+            TemplateExpr::Call { function, args } if function == "fromYaml" && args.is_empty()
+        ) {
+            return None;
+        }
+        if !matches!(
+            nonempty_test.deparen(),
+            TemplateExpr::Call { function, args }
+                if function == "gt"
+                    && matches!(
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Call { function: len_fn, args: len_args })
+                            if len_fn == "len"
+                                && len_args.len() == 1
+                                && var_is(&len_args[0], nested)
+                    )
+                    && matches!(
+                        args.get(1).map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Literal(Literal::Int(0)))
+                    )
+        ) {
+            return None;
+        }
+        let accumulator_write = |expr: &TemplateExpr, member: &str| {
+            matches!(
+                expr,
+                TemplateExpr::VariableDefinition { value, .. }
+                    if matches!(
+                        value.deparen(),
+                        TemplateExpr::Call { function, args }
+                            if function == "set"
+                                && args.len() == 3
+                                && var_is(&args[0], accumulator)
+                                && var_is(&args[1], key_var)
+                                && var_is(&args[2], member)
+                    )
+            )
+        };
+        if !accumulator_write(nested_write, nested) {
+            return None;
+        }
+        if !matches!(
+            not_nil_test.deparen(),
+            TemplateExpr::Call { function, args }
+                if function == "not"
+                    && args.len() == 1
+                    && matches!(
+                        args[0].deparen(),
+                        TemplateExpr::Call { function: kind_fn, args: kind_args }
+                            if kind_fn == "kindIs"
+                                && matches!(
+                                    kind_args.first().map(TemplateExpr::deparen),
+                                    Some(TemplateExpr::Literal(Literal::String(kind)))
+                                        if kind == "invalid"
+                                )
+                                && kind_args.get(1).is_some_and(|arg| var_is(arg, val_var))
+                    )
+        ) {
+            return None;
+        }
+        if !accumulator_write(member_write, val_var) {
+            return None;
+        }
+        matches!(
+            render.deparen(),
+            TemplateExpr::Call { function, args }
+                if function == "toYaml" && args.len() == 1 && var_is(&args[0], accumulator)
+        )
+        .then_some(())
     }
 
     fn classify_custom_merge_helper(&self, name: &str) -> Option<()> {
@@ -985,6 +1169,30 @@ fn collect_destructured_ranges(
     let mut walker = node.walk();
     node.named_children(&mut walker)
         .all(|child| collect_destructured_ranges(child, source, out))
+}
+
+/// Collect `(key_var, value_var)` for destructured ranges whose source is
+/// the helper's own DOT, rejecting any other range in the subtree.
+fn collect_dot_ranges(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    out: &mut Vec<(String, String)>,
+) -> bool {
+    if node.kind() == "range_action" {
+        let source_is_dot =
+            helm_schema_ast::range_header_from_source(node, source).is_some_and(|header| {
+                matches!(header.expr().deparen(), TemplateExpr::Field(path) if path.is_empty())
+            });
+        let key_var = helm_schema_ast::range_destructured_key_variable(node, source);
+        let value_var = helm_schema_ast::range_destructured_value_variable(node, source);
+        match (source_is_dot, key_var, value_var) {
+            (true, Some(key_var), Some(value_var)) => out.push((key_var, value_var)),
+            _ => return false,
+        }
+    }
+    let mut walker = node.walk();
+    node.named_children(&mut walker)
+        .all(|child| collect_dot_ranges(child, source, out))
 }
 
 /// Whether a binding's value is the helper's own recursive merge of two

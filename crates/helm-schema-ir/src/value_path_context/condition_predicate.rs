@@ -99,8 +99,10 @@ impl ValuePathContext<'_> {
             TemplateExpr::VariableDefinition { value, .. }
             | TemplateExpr::Assignment { value, .. } => self.condition_lowering_is_faithful(value),
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
-                self.root_field_truthy_predicate(expr).is_some()
-                    || !self.paths_for_expr(expr).is_empty()
+                if self.root_field_truthy_predicate(expr).is_some() {
+                    return true;
+                }
+                !self.paths_for_expr(expr).is_empty()
             }
             TemplateExpr::Literal(_) => true,
             // A local bound to DERIVED TEXT (`$message := join "\n"
@@ -1330,11 +1332,31 @@ impl ValuePathContext<'_> {
         // `mergeOverwrite`): the all-paths conjunction below would demand
         // every layer at once. Undecodable layers abstain to the
         // approximate lane instead of riding that wrong conjunction.
+        // Selectors project the same layered form member-wise (airflow's
+        // candidate helper tests `.securityContexts.pod` on a merged
+        // workers context), so the lane keys on the VALUE, not the
+        // expression spelling.
         if let TemplateExpr::Variable(_) = expr.deparen()
             && let Some(AbstractValue::MergedLayers(layers)) =
                 eval_expr(expr, &self.expression_eval_env()).value
         {
             return merged_layers_truthy_predicate(&layers);
+        }
+        // Selectors project the same layered form member-wise (airflow's
+        // candidate helper tests `.securityContexts.pod` on a merged
+        // workers context). Unlike the local-variable lane, an undecodable
+        // layer set FALLS THROUGH to the generic all-paths conjunction:
+        // ranged captures concretize member wildcards there, and dropping
+        // the predicate entirely would silence their existential arms
+        // (airflow's per-set labels under the merged worker context).
+        if matches!(
+            expr.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) && let Some(AbstractValue::MergedLayers(layers)) =
+            eval_expr(expr, &self.expression_eval_env()).value
+            && let Some(predicate) = merged_layers_truthy_predicate(&layers)
+        {
+            return Some(predicate);
         }
         let paths = self.paths_for_expr(expr);
         if paths.is_empty() {
@@ -2696,7 +2718,11 @@ fn escape_regex_literal(value: &str) -> String {
 
 /// Helm truthiness of an ordered merge: nonempty exactly when some layer
 /// is. A nonempty literal layer decides the whole merge; identity layers
-/// contribute their own truthiness; any other layer kind abstains.
+/// contribute their own truthiness; any other layer kind abstains. A
+/// WILDCARD layer path also abstains: the ranged capture machinery owns
+/// member-quantified encodings (airflow's per-set labels under the merged
+/// worker context), and a disjunction naming `p.*` members would drop at
+/// guard lowering instead of riding that encoding.
 fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate> {
     let mut arms = Vec::new();
     for layer in layers {
@@ -2707,6 +2733,19 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
                 }
             }
             AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                if path.split('.').any(|segment| segment == "*") {
+                    return None;
+                }
+                arms.push(Predicate::truthy_path(path));
+            }
+            // A nil-scrubbed identity over-approximates: an all-nil map is
+            // input-truthy but scrubs to empty. The wider condition only
+            // fires arms whose member typing is null-relaxed, so the delta
+            // stays in the accept direction.
+            AbstractValue::OutputPath(path, meta) if meta.nil_scrubbed && !path.is_empty() => {
+                if path.split('.').any(|segment| segment == "*") {
+                    return None;
+                }
                 arms.push(Predicate::truthy_path(path));
             }
             AbstractValue::MergedLayers(nested) => {
@@ -2760,6 +2799,16 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
             }
         }
         AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => Some(
+            Predicate::from(Guard::Absent {
+                path: helm_schema_core::append_value_path(path, key),
+            })
+            .negated(),
+        ),
+        // A nil-scrubbed identity over-approximates presence by the input
+        // key's presence: the delta is exactly the nil-ish states, whose
+        // member typing the scrubbed layer's arms null-relax, so candidate
+        // misselection there only widens.
+        AbstractValue::OutputPath(path, meta) if meta.nil_scrubbed && !path.is_empty() => Some(
             Predicate::from(Guard::Absent {
                 path: helm_schema_core::append_value_path(path, key),
             })

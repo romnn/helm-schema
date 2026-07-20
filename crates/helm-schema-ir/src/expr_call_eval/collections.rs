@@ -731,10 +731,20 @@ pub(super) fn eval_merge(
     // inputs: the strict map contract rides the operand's own fail
     // implication, not the merged value's render. Recorded even when the
     // ordered-layer form below abstains — a fold site's operands carry the
-    // same contract split (airflow's worker-family labels merges).
+    // same contract split (airflow's worker-family labels merges). An
+    // operand that is ITSELF a layered merge records every layer identity:
+    // a truthy non-map in any visible layer terminates the outer merge the
+    // same way, and collapsing to one path would drop the member-level
+    // contract (airflow's per-set labels under the merged worker context).
     for value in &values {
         if let Some(path) = value.merge_layer_identity().filter(|path| !path.is_empty()) {
             effects.merge_operand_paths.insert(path);
+        } else if let AbstractValue::MergedLayers(layers) = value {
+            for layer in layers {
+                if let Some(path) = layer.merge_layer_identity().filter(|path| !path.is_empty()) {
+                    effects.merge_operand_paths.insert(path);
+                }
+            }
         }
     }
     if let Some(layers) = merge_layer_order(function, operand_count, &values) {

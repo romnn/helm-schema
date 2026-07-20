@@ -305,6 +305,18 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
         json_serialized: splice.meta.json_serialized,
         json_decoded: splice.meta.json_decoded,
         lexical_escapes: splice.meta.lexical_escapes.clone(),
+        // Crossing the helper-summary boundary makes the layer facts
+        // binding-carried: the caller renders the helper's OUTPUT, whose
+        // sibling dispatch arms may rely on the base typing the direct
+        // render-site lane moves onto synthesized arms.
+        // Crossing the helper-summary boundary makes the layer facts
+        // binding-carried: the caller renders the helper's OUTPUT, whose
+        // sibling dispatch arms may rely on the base typing the direct
+        // render-site lane moves onto synthesized arms.
+        merge_layers: splice.meta.merge_layers.clone().map(|mut merge| {
+            merge.via_binding = true;
+            merge
+        }),
         provenance,
         ..HelperOutputMeta::default()
     };

@@ -673,8 +673,10 @@ dependencies = [
  "helm-schema-k8s",
  "indoc",
  "json-schema-minify",
+ "json-schema-walk",
  "jsonschema",
  "mimalloc",
+ "regress",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -692,6 +694,8 @@ dependencies = [
 name = "helm-schema-core"
 version = "0.0.1"
 dependencies = [
+ "json-schema-walk",
+ "regex",
  "serde",
  "serde_json",
  "test-util",
@@ -1461,6 +1465,16 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "regress"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "158a764437582235e3501f683b93a0a6f8d825d04a789dbe5ed30b8799b8908a"
+dependencies = [
+ "hashbrown 0.16.1",
+ "memchr",
+]
 
 [[package]]
 name = "ring"

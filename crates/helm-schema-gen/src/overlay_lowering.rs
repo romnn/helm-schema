@@ -32,6 +32,14 @@ pub(crate) struct ConditionalResolvedSchema {
     /// must ignore it entirely — an implication must never flip an
     /// overlay-owned base to the resolved schema nor empty a resolved one.
     pub(crate) arm_only: bool,
+    /// Every member access on this target rides the nil-safe grouped form
+    /// (`(.Values.x).member`), which renders at an absent or null-deleted
+    /// receiver instead of aborting. The base host materialized for the
+    /// target's descendants must then stay untyped — this arm alone carries
+    /// the object requirement, scoped to the receiver's strict presence
+    /// (nack's root `global`, read only through `((.Values.global).labels)`,
+    /// renders at `global: null`).
+    relax_untyped_host: bool,
 }
 
 #[tracing::instrument(skip_all)]
@@ -113,6 +121,30 @@ pub(crate) fn collect_conditional_schemas(
             .get(target_value_path)
             .map(Vec::as_slice)
             .unwrap_or_default();
+        // A target whose member-host requirements ALL ride its own strict
+        // presence was only ever read through the nil-safe grouped form
+        // (`(.Values.x).member`): absence and helm's null-deletion render,
+        // so the base host materialized for its descendants must stay
+        // untyped and the presence-guarded arms alone carry `type: object`.
+        let all_member_hosts_presence_scoped = {
+            let mut member_host_implications = evidence
+                .fail_implications
+                .iter()
+                .chain(synthesized)
+                .filter(|implication| {
+                    implication.requirements.iter().any(|requirement| {
+                        matches!(
+                            requirement,
+                            helm_schema_core::FailValueRequirement::MemberHost { .. }
+                        )
+                    })
+                })
+                .peekable();
+            member_host_implications.peek().is_some()
+                && member_host_implications.all(|implication| {
+                    implication_has_self_presence_guard(implication, target_value_path)
+                })
+        };
         for implication in evidence.fail_implications.iter().chain(synthesized) {
             if is_bare_iterable_implication(implication)
                 && member_implication_covers_range_domain(
@@ -254,6 +286,7 @@ pub(crate) fn collect_conditional_schemas(
                 preserve_base_schema,
                 fold_unconditional_object_host_into_base: member_host_only,
                 arm_only: true,
+                relax_untyped_host: member_host_only && all_member_hosts_presence_scoped,
             });
         }
 
@@ -333,6 +366,7 @@ pub(crate) fn collect_conditional_schemas(
                             preserve_base_schema: overlay.preserve_base_schema
                                 || has_unconditional_self_presence_contract,
                             fold_unconditional_object_host_into_base: false,
+                            relax_untyped_host: false,
                             arm_only: false,
                         });
                     }
@@ -352,6 +386,7 @@ pub(crate) fn collect_conditional_schemas(
                     preserve_base_schema: overlay.preserve_base_schema
                         || has_unconditional_self_presence_contract,
                     fold_unconditional_object_host_into_base: false,
+                    relax_untyped_host: false,
                     arm_only: false,
                 });
             }
@@ -440,6 +475,7 @@ fn append_omitted_member_arms(
                 provider_schema_candidate: None,
                 preserve_base_schema: true,
                 fold_unconditional_object_host_into_base: false,
+                relax_untyped_host: false,
                 arm_only: true,
             });
         }
@@ -503,7 +539,10 @@ fn append_merge_shadow_arms(
                 }
                 (whole, None) | (None, whole) => whole,
             };
-            if let Some(whole) = whole {
+            if let Some(mut whole) = whole {
+                if merge.nil_scrubbed_layers.get(merge.position) == Some(&true) {
+                    null_relax_member_schemas(&mut whole);
+                }
                 let mut guards = vec![ConditionalGuard::Truthy {
                     path: value_path.clone(),
                 }];
@@ -524,6 +563,7 @@ fn append_merge_shadow_arms(
                     provider_schema_candidate: None,
                     preserve_base_schema: true,
                     fold_unconditional_object_host_into_base: false,
+                    relax_untyped_host: false,
                     arm_only: true,
                 });
             }
@@ -537,11 +577,17 @@ fn append_merge_shadow_arms(
                 continue;
             };
             for (member, member_schema) in properties {
-                let Some(member_schema) =
+                let Some(mut member_schema) =
                     dereferenced_payload_subschema(member_schema, definitions, 8)
                 else {
                     continue;
                 };
+                if merge.nil_scrubbed_layers.get(merge.position) == Some(&true) {
+                    null_relax_member_schemas(&mut member_schema);
+                    member_schema = serde_json::json!({
+                        "anyOf": [member_schema, { "type": "null" }]
+                    });
+                }
                 let mut guards: Vec<ConditionalGuard> = merge
                     .shadowed_by()
                     .iter()
@@ -567,10 +613,51 @@ fn append_merge_shadow_arms(
                     provider_schema_candidate: None,
                     preserve_base_schema: true,
                     fold_unconditional_object_host_into_base: false,
+                    relax_untyped_host: false,
                     arm_only: true,
                 });
             }
         }
+    }
+}
+
+/// Admit `null` for every MEMBER of a nil-scrubbed layer's payload
+/// schema, recursively: the scrub removes nil map members at any depth
+/// before the sink renders, so a null member spelling never reaches the
+/// provider. The payload's own top level keeps its typing — the layer
+/// arm already scopes it by the layer's truthiness. List items stay
+/// strict (the scrub copies non-map members verbatim, nested nulls
+/// included). A provider-`required` member nulled away renders as a
+/// missing field the provider rejects; the relaxation deliberately
+/// abstains from re-encoding that as an input rejection.
+fn null_relax_member_schemas(schema: &mut Value) {
+    let Some(object) = schema.as_object_mut() else {
+        return;
+    };
+    for group in ["allOf", "anyOf", "oneOf"] {
+        if let Some(Value::Array(arms)) = object.get_mut(group) {
+            for arm in arms {
+                null_relax_member_schemas(arm);
+            }
+        }
+    }
+    for members_key in ["properties", "patternProperties"] {
+        if let Some(Value::Object(members)) = object.get_mut(members_key) {
+            for member in members.values_mut() {
+                null_relax_member_schemas(member);
+                if member.is_object() {
+                    let original = std::mem::take(member);
+                    *member = serde_json::json!({ "anyOf": [original, { "type": "null" }] });
+                }
+            }
+        }
+    }
+    if let Some(additional) = object.get_mut("additionalProperties")
+        && additional.is_object()
+    {
+        null_relax_member_schemas(additional);
+        let original = std::mem::take(additional);
+        *additional = serde_json::json!({ "anyOf": [original, { "type": "null" }] });
     }
 }
 
@@ -1226,6 +1313,20 @@ pub(crate) fn append_conditional_schemas(
             && root_schema.constrain_existing_path_to_object(&conditional.relative_target_segments);
         !folds_into_base
     });
+    // Nil-safe member hosts drop the structural `type: object` their
+    // descendants materialized: the presence-guarded arm emitted below is
+    // the exact contract (grouped reads render at absent/null receivers).
+    // Only arms that actually emit may relax — a dropped arm would turn
+    // the relaxation into a plain widening.
+    for conditional in &conditionals {
+        if conditional.relax_untyped_host
+            && !crate::schema_model::is_empty_schema(&conditional.target_schema)
+        {
+            let mut segments = conditional.ancestor_segments.clone();
+            segments.extend(conditional.relative_target_segments.iter().cloned());
+            root_schema.relax_host_object_type(&segments);
+        }
+    }
     // Conditionals sharing one guard set and scope conjoin into one if/then:
     // `allOf [{if G then A}, {if G then B}]` is `{if G then A ∧ B}`, and the
     // repeated `if` blocks dominate emitted size on charts with many guarded

@@ -79,6 +79,18 @@ pub(crate) struct HelperOutputMeta {
     pub(crate) json_serialized: bool,
     /// The path's runtime identity came from JSON decoding.
     pub(crate) json_decoded: bool,
+    /// The value is the path's map with nil members recursively removed
+    /// (airflow's `removeNilFields` scrub): the render never sees a null
+    /// member, so sink typing must relax members to admit null spellings,
+    /// and the identity's truthiness over-approximates the scrubbed
+    /// output's (an all-nil map scrubs to empty).
+    pub(crate) nil_scrubbed: bool,
+    /// The value is one layer of an ordered merge whose every layer has a
+    /// path identity: rendering the binding renders the MERGE, so the
+    /// path's sink typing must scope to the states its layer actually
+    /// supplies the rendered members (airflow's merged worker context
+    /// flowing through the candidate-selection helper).
+    pub(crate) merge_layers: Option<helm_schema_core::MergeLayersUse>,
     pub(crate) provenance: Vec<ContractProvenance>,
     /// Predicate paths this row's derivation explicitly severed (index-call
     /// narrowing): guard reads of their strict ancestors are dropped.
@@ -127,6 +139,13 @@ impl HelperOutputMeta {
         self.string_contract |= other.string_contract;
         self.json_serialized |= other.json_serialized;
         self.json_decoded |= other.json_decoded;
+        // Any scrubbed derivation relaxes: the relaxation only widens
+        // member typing, so it is safe when other derivations kept nulls.
+        self.nil_scrubbed |= other.nil_scrubbed;
+        // Layer facts must stay EXACT: disagreeing merge positions (or a
+        // non-layered sibling derivation) drop to the ordinary row, whose
+        // typing is the stricter direction.
+        self.merge_layers = merge_exact_fact(self.merge_layers.take(), other.merge_layers.clone());
         merge_provenance_sites(&mut self.provenance, &other.provenance);
         self.suppress_predicate_paths
             .extend(other.suppress_predicate_paths.iter().cloned());

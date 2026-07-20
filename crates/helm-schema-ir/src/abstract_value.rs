@@ -290,6 +290,34 @@ impl AbstractValue {
                 for value in layers {
                     value.collect_output_meta(out);
                 }
+                // When every layer IS a path identity, each layer path's
+                // binding meta carries its place in the merge: a local
+                // bound to the merge renders the MERGED value, so the
+                // per-path rows the binding produces must keep the layer
+                // scoping (shadowed members stay open, scrubbed layers
+                // null-relax) instead of typing each path unconditionally.
+                let identities: Option<Vec<String>> =
+                    layers.iter().map(Self::merge_layer_identity).collect();
+                if let Some(layer_paths) = identities
+                    && layer_paths.len() > 1
+                    && layer_paths.iter().all(|path| !path.is_empty())
+                {
+                    let nil_scrubbed_layers: Vec<bool> = layers
+                        .iter()
+                        .map(
+                            |layer| matches!(layer, Self::OutputPath(_, meta) if meta.nil_scrubbed),
+                        )
+                        .collect();
+                    for position in 0..layers.len() {
+                        let entry = out.entry(layer_paths[position].clone()).or_default();
+                        entry.merge_layers = Some(helm_schema_core::MergeLayersUse {
+                            layers: layer_paths.clone(),
+                            position,
+                            nil_scrubbed_layers: nil_scrubbed_layers.clone(),
+                            via_binding: true,
+                        });
+                    }
+                }
             }
             Self::Top
             | Self::Unknown
@@ -539,6 +567,34 @@ impl AbstractValue {
     /// anything else stays an opaque PRESENT member — dropping it would
     /// fabricate absence for `hasKey`-style probes (the nats `jsonpatch`
     /// helper ranges the `patch` member of a roundtripped call dict).
+    /// Strip nil-scrub layers recursively, degrading scrubbed identities
+    /// to the opaque form the analysis produced before the scrub decode
+    /// existed: consumers then treat the value exactly as they did then.
+    pub(crate) fn without_nil_scrub_markers(self) -> Self {
+        match self {
+            Self::OutputPath(_, meta) if meta.nil_scrubbed => Self::Unknown,
+            Self::MergedLayers(layers) => Self::MergedLayers(
+                layers
+                    .into_iter()
+                    .map(Self::without_nil_scrub_markers)
+                    .collect(),
+            ),
+            Self::Choice(choices) => Self::Choice(
+                choices
+                    .into_iter()
+                    .map(Self::without_nil_scrub_markers)
+                    .collect(),
+            ),
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.without_nil_scrub_markers()))
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
     pub(crate) fn json_roundtrip_identity(&self) -> Option<Self> {
         fn member(value: &AbstractValue) -> AbstractValue {
             value
