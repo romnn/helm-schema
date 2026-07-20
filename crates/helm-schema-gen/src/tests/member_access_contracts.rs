@@ -96,44 +96,44 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
             "type": "object",
         }),
     );
+    // Arms sharing one encoded condition conjoin their contents into a
+    // single `if C then allOf [...]` (the emitter's size-bounding merge).
     let all_of = vec![
         serde_json::json!({
-            "if": grouped_receiver_present.clone(),
-            "then": root_property_schema(
-                "grouped",
-                serde_json::json!({
-                    "additionalProperties": {},
-                    "properties": {
-                        "receiver": { "anyOf": [{ "type": "object" }] },
-                    },
-                }),
-            ),
-        }),
-        serde_json::json!({
             "if": grouped_receiver_present,
-            "then": root_property_schema(
-                "grouped",
-                serde_json::json!({ "required": ["receiver"], "type": "object" }),
-            ),
-        }),
-        serde_json::json!({
-            "if": strict_enabled.clone(),
-            "then": root_property_schema(
-                "strict",
-                serde_json::json!({
-                    "additionalProperties": {},
-                    "properties": {
-                        "receiver": { "anyOf": [{ "type": "object" }] },
-                    },
-                }),
-            ),
+            "then": { "allOf": [
+                root_property_schema(
+                    "grouped",
+                    serde_json::json!({
+                        "additionalProperties": {},
+                        "properties": {
+                            "receiver": { "anyOf": [{ "type": "object" }] },
+                        },
+                    }),
+                ),
+                root_property_schema(
+                    "grouped",
+                    serde_json::json!({ "required": ["receiver"], "type": "object" }),
+                ),
+            ] },
         }),
         serde_json::json!({
             "if": strict_enabled,
-            "then": root_property_schema(
-                "strict",
-                serde_json::json!({ "required": ["receiver"], "type": "object" }),
-            ),
+            "then": { "allOf": [
+                root_property_schema(
+                    "strict",
+                    serde_json::json!({
+                        "additionalProperties": {},
+                        "properties": {
+                            "receiver": { "anyOf": [{ "type": "object" }] },
+                        },
+                    }),
+                ),
+                root_property_schema(
+                    "strict",
+                    serde_json::json!({ "required": ["receiver"], "type": "object" }),
+                ),
+            ] },
         }),
     ];
     for instance in [

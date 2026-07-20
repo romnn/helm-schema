@@ -39,6 +39,7 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        outer_guards: Vec::new(),
     }
 }
 
@@ -528,6 +529,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        outer_guards: Vec::new(),
     };
     let _ = chain.schema_fragment_for_use(&use_);
 
@@ -568,6 +570,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        outer_guards: Vec::new(),
     };
     let _ = chain.schema_fragment_for_use(&use_);
 

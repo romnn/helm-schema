@@ -40,6 +40,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        outer_guards: Vec::new(),
     }
 }
 

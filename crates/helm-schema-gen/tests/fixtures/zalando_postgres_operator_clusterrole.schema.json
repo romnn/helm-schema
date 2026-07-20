@@ -72,136 +72,208 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configGeneral": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "configGeneral": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+              "configKubernetes": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                ]
               }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configKubernetes": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                ]
               }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
+                          }
+                        ],
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
       }
     },
     {
@@ -280,119 +352,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -459,181 +418,6 @@
               },
               {
                 "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "anyOf": [
-              {
-                "type": "object"
               }
             ]
           }

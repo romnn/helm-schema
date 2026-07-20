@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
-    ResourceSchemaOracle,
+    ProviderSchemaFragment, ResourceSchemaOracle,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -464,42 +464,76 @@ fn append_merge_shadow_arms(
             let Some(merge) = provider_use.merge_layers.as_ref() else {
                 continue;
             };
-            let Some(fragment) = provider.schema_fragment_for_use(provider_use) else {
-                continue;
-            };
-            let payload = fragment.schema();
-            let definitions = ["$defs", "definitions"]
-                .iter()
-                .find_map(|key| payload.get(*key).and_then(Value::as_object));
+            let fragment = provider.schema_fragment_for_use(provider_use);
+            let payload = fragment.as_ref().map(ProviderSchemaFragment::schema);
+            let definitions = payload.and_then(|payload| {
+                ["$defs", "definitions"]
+                    .iter()
+                    .find_map(|key| payload.get(*key).and_then(Value::as_object))
+            });
             let target_segments = split_value_path(value_path);
-            if merge.position == 0 {
-                // The preferred layer's keys always win, so its payload
-                // typing holds exactly when the layer itself is truthy.
-                let Some(Value::Object(mut whole)) = payload
-                    .as_object()
-                    .map(|object| Value::Object(object.clone()))
-                    .and_then(|value| dereferenced_payload_subschema(&value, definitions, 8))
-                else {
-                    continue;
-                };
-                whole.remove("$defs");
-                whole.remove("definitions");
+            // The whole payload types this layer exactly where no earlier
+            // layer can shadow it: the preferred layer's keys always win
+            // (its guard is its own truthiness alone), and a shadowed layer
+            // is fully visible when every earlier layer is Helm-empty. The
+            // layer-absence form is the only member typing a payload with
+            // DYNAMIC member names admits (KPS's rule annotations under
+            // `additionalProperties: {type: string}`); enumerated members
+            // additionally get the finer per-key arms below. A sink whose
+            // provider fragment is unavailable still types through its
+            // metadata field kind (keda's CRD annotations merge).
+            let provider_whole = payload
+                .and_then(Value::as_object)
+                .map(|object| Value::Object(object.clone()))
+                .and_then(|value| dereferenced_payload_subschema(&value, definitions, 8))
+                .map(|mut whole| {
+                    if let Some(object) = whole.as_object_mut() {
+                        object.remove("$defs");
+                        object.remove("definitions");
+                    }
+                    whole
+                });
+            let metadata_whole = metadata_sink_schema(&provider_use.path.0);
+            let whole = match (provider_whole, metadata_whole) {
+                (Some(provider_whole), Some(metadata_whole)) => {
+                    Some(crate::merge::merge_schema_list(vec![
+                        provider_whole,
+                        metadata_whole,
+                    ]))
+                }
+                (whole, None) | (None, whole) => whole,
+            };
+            if let Some(whole) = whole {
+                let mut guards = vec![ConditionalGuard::Truthy {
+                    path: value_path.clone(),
+                }];
+                guards.extend(merge.shadowed_by().iter().map(|earlier| {
+                    ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                        path: earlier.clone(),
+                    }))
+                }));
+                guards.extend(provider_use.outer_guards.iter().cloned());
+                guards.sort();
+                guards.dedup();
                 conditionals.push(ConditionalResolvedSchema {
                     target_value_path: value_path.clone(),
                     relative_target_segments: target_segments.clone(),
                     ancestor_segments: Vec::new(),
-                    guards: vec![ConditionalGuard::Truthy {
-                        path: value_path.clone(),
-                    }],
-                    target_schema: Value::Object(whole),
+                    guards,
+                    target_schema: whole,
                     provider_schema_candidate: None,
                     preserve_base_schema: true,
                     fold_unconditional_object_host_into_base: false,
                     arm_only: true,
                 });
+            }
+            if merge.position == 0 {
                 continue;
             }
-            let Some(properties) = payload.get("properties").and_then(Value::as_object) else {
+            let Some(properties) = payload
+                .and_then(|payload| payload.get("properties"))
+                .and_then(Value::as_object)
+            else {
                 continue;
             };
             for (member, member_schema) in properties {
@@ -508,7 +542,7 @@ fn append_merge_shadow_arms(
                 else {
                     continue;
                 };
-                let guards: Vec<ConditionalGuard> = merge
+                let mut guards: Vec<ConditionalGuard> = merge
                     .shadowed_by()
                     .iter()
                     .map(|earlier| {
@@ -518,6 +552,9 @@ fn append_merge_shadow_arms(
                         }))
                     })
                     .collect();
+                guards.extend(provider_use.outer_guards.iter().cloned());
+                guards.sort();
+                guards.dedup();
                 let target_schema = serde_json::json!({
                     "properties": { member: member_schema }
                 });
@@ -535,6 +572,25 @@ fn append_merge_shadow_arms(
             }
         }
     }
+}
+
+/// The sink's metadata field-kind schema when the slot is a
+/// `metadata.annotations`/`metadata.labels` string map. Scalar metadata
+/// fields never host a map merge, so only the string-map kinds apply.
+fn metadata_sink_schema(path: &[String]) -> Option<Value> {
+    let parent = path
+        .len()
+        .checked_sub(2)
+        .and_then(|index| path.get(index))?;
+    if parent != "metadata" {
+        return None;
+    }
+    matches!(path.last()?.as_str(), "labels" | "annotations").then(|| {
+        serde_json::json!({
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+        })
+    })
 }
 
 /// Replace payload-internal `$ref`s with their payload-level definitions so
@@ -1231,15 +1287,24 @@ pub(crate) fn append_conditional_schemas(
                 .push(guards.clone());
         }
     }
+    // Arms sharing one scope and one encoded condition conjoin their
+    // contents: `if C then A` beside `if C then B` is `if C then A ∧ B`,
+    // and the repeated condition trees dominate emitted size on charts
+    // whose lanes share a few big gates (temporal's per-service config).
+    // Coalesced arms keep the FIRST occurrence's position so unaffected
+    // documents keep their emission order; trivially-true fragments have
+    // no if-block to save and land as their own conjuncts unchanged.
+    let mut emissions: Vec<(Vec<String>, SchemaNode, Vec<SchemaNode>)> = Vec::new();
+    let mut emission_index: BTreeMap<(Vec<String>, String), usize> = BTreeMap::new();
     for ((ancestor_segments, _), group) in by_content {
         // An empty guard set is trivially true: the fragment applies
         // unconditionally (an unguarded fail implication).
         if group.guard_sets.iter().any(Vec::is_empty) {
-            root_schema.append_conditional(
-                &ancestor_segments,
+            emissions.push((
+                ancestor_segments,
                 SchemaNode::empty(),
-                SchemaNode::foreign(group.fragment),
-            );
+                vec![SchemaNode::foreign(group.fragment)],
+            ));
             continue;
         }
         let mut conditions: Vec<SchemaNode> =
@@ -1259,11 +1324,33 @@ pub(crate) fn append_conditional_schemas(
         } else {
             SchemaNode::any_of(conditions)
         };
-        root_schema.append_conditional(
-            &ancestor_segments,
-            condition,
-            SchemaNode::foreign(group.fragment),
+        let key = (
+            ancestor_segments.clone(),
+            condition.clone().into_value().to_string(),
         );
+        match emission_index.entry(key) {
+            std::collections::btree_map::Entry::Occupied(entry) => {
+                emissions[*entry.get()]
+                    .2
+                    .push(SchemaNode::foreign(group.fragment));
+            }
+            std::collections::btree_map::Entry::Vacant(entry) => {
+                entry.insert(emissions.len());
+                emissions.push((
+                    ancestor_segments,
+                    condition,
+                    vec![SchemaNode::foreign(group.fragment)],
+                ));
+            }
+        }
+    }
+    for (ancestor_segments, condition, mut contents) in emissions {
+        let content = if contents.len() == 1 {
+            contents.remove(0)
+        } else {
+            SchemaNode::all_of(contents)
+        };
+        root_schema.append_conditional(&ancestor_segments, condition, content);
     }
 }
 

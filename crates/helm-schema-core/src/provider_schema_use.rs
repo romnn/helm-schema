@@ -27,4 +27,9 @@ pub struct ProviderSchemaUse {
     /// typing must exclude them, and each key's member typing is re-added
     /// only under its RETAIN guards (empty means never).
     pub omitted_members: std::collections::BTreeMap<String, Vec<crate::ConditionalGuard>>,
+    /// Decoded conditions gating the render this use rides. Synthesized
+    /// merge-layer arms must carry them: without the gates a dormant state
+    /// (KPS's `defaultRules.create: false`) would still be typed by the
+    /// layer arms even though nothing renders.
+    pub outer_guards: Vec<crate::ConditionalGuard>,
 }

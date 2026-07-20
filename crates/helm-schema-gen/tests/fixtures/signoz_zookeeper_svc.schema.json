@@ -1100,81 +1100,56 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "ports": {
+              "service": {
                 "additionalProperties": {},
                 "properties": {
-                  "tls": {
-                    "anyOf": [
-                      {
-                        "description": "The port that will be exposed by this service.",
-                        "format": "int32",
-                        "type": "integer"
-                      },
-                      {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-                        "type": "string"
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "anyOf": [
+                          {
+                            "description": "The port that will be exposed by this service.",
+                            "format": "int32",
+                            "type": "integer"
+                          },
+                          {
+                            "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                            "type": "string"
+                          }
+                        ]
                       }
-                    ]
+                    }
                   }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "tls": {
-            "properties": {
-              "client": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "client"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tls"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
+          },
+          {
             "additionalProperties": {},
             "properties": {
-              "ports": {
+              "service": {
                 "additionalProperties": {},
                 "properties": {
-                  "tls": {
-                    "not": {
-                      "type": "null"
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
                     }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1643,111 +1618,100 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "loadBalancerIP": {
-                "anyOf": [
-                  {
-                    "allOf": [
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "loadBalancerIP": {
+                    "anyOf": [
                       {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
+                          }
+                        ],
+                        "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+                        "type": "string"
                       },
                       {
                         "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       }
-                    ],
-                    "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    ]
                   }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "LoadBalancer"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "loadBalancerSourceRanges": {
-                "anyOf": [
-                  {
-                    "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array",
-                    "x-kubernetes-list-type": "atomic"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "loadBalancerSourceRanges": {
+                    "anyOf": [
+                      {
+                        "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array",
+                        "x-kubernetes-list-type": "atomic"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
                   }
-                ]
+                }
               }
-            }
+            ]
           }
         },
         {

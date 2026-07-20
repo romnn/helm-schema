@@ -1302,7 +1302,7 @@
         "null"
       ]
     },
-    "schema191": {
+    "schema192": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -1876,17 +1876,15 @@
       "type": "object"
     },
     "schema277": {
-      "not": {
-        "properties": {
-          "create": {}
-        },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
     },
-    "schema279": {
+    "schema278": {
       "oneOf": [
         {
           "type": [
@@ -1902,7 +1900,7 @@
         }
       ]
     },
-    "schema280": {
+    "schema279": {
       "oneOf": [
         {
           "type": [
@@ -1918,18 +1916,18 @@
         }
       ]
     },
-    "schema281": {
+    "schema280": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema284": {
+    "schema283": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema286": {
+    "schema285": {
       "anyOf": [
         {
           "type": "null"
@@ -1939,22 +1937,22 @@
         }
       ]
     },
-    "schema287": {
+    "schema286": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema288": {
+    "schema287": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema289": {
+    "schema288": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema291": {
+    "schema290": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3991,7 +3989,7 @@
         "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
-            "$ref": "#/$defs/schema284"
+            "$ref": "#/$defs/schema283"
           }
         }
       }
@@ -4017,88 +4015,50 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "addonResizer": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "nanny": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "type": "object"
               }
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "addonResizer": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "addonResizer"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "addonResizer": {
-            "additionalProperties": {},
-            "properties": {
-              "nanny": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "addonResizer": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "addonResizer"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "addonResizer": {
-            "type": "object"
-          }
-        }
+        ]
       }
     },
     {
@@ -4399,7 +4359,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema191"
+                "$ref": "#/$defs/schema192"
               },
               {
                 "properties": {
@@ -4428,24 +4388,48 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema96"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema96"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema61"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -4492,21 +4476,272 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema284"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema283"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema286"
+                      },
+                      {
+                        "$ref": "#/$defs/schema288"
+                      },
+                      {
+                        "$ref": "#/$defs/schema290"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema287"
+                      },
+                      {
+                        "$ref": "#/$defs/schema242"
+                      },
+                      {
+                        "$ref": "#/$defs/schema128"
+                      },
+                      {
+                        "$ref": "#/$defs/schema270"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalLabels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema283"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
                 }
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "interval": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema286"
+                          },
+                          {
+                            "$ref": "#/$defs/schema288"
+                          },
+                          {
+                            "$ref": "#/$defs/schema290"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema287"
+                          },
+                          {
+                            "$ref": "#/$defs/schema242"
+                          },
+                          {
+                            "$ref": "#/$defs/schema128"
+                          },
+                          {
+                            "$ref": "#/$defs/schema270"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
+                          }
+                        ],
+                        "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "metricRelabelings": {
+                    "anyOf": [
+                      {
+                        "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+                        "items": {
+                          "$ref": "#/$defs/schema15"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "relabelings": {
+                    "anyOf": [
+                      {
+                        "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                        "items": {
+                          "$ref": "#/$defs/schema15"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "additionalProperties": {},
+                "properties": {
+                  "scrapeTimeout": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema286"
+                          },
+                          {
+                            "$ref": "#/$defs/schema288"
+                          },
+                          {
+                            "$ref": "#/$defs/schema290"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema287"
+                          },
+                          {
+                            "$ref": "#/$defs/schema242"
+                          },
+                          {
+                            "$ref": "#/$defs/schema128"
+                          },
+                          {
+                            "$ref": "#/$defs/schema270"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
+                          }
+                        ],
+                        "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -4668,7 +4903,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema191"
+                "$ref": "#/$defs/schema192"
               },
               {
                 "properties": {
@@ -4785,248 +5020,6 @@
               },
               {
                 "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "addonResizer": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "addonResizer"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema201"
-              },
-              {
-                "properties": {
-                  "apiService": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "apiService"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema216"
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema191"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema214"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema61"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/schema287"
-                  },
-                  {
-                    "$ref": "#/$defs/schema289"
-                  },
-                  {
-                    "$ref": "#/$defs/schema291"
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema288"
-                  },
-                  {
-                    "$ref": "#/$defs/schema242"
-                  },
-                  {
-                    "$ref": "#/$defs/schema128"
-                  },
-                  {
-                    "$ref": "#/$defs/schema270"
-                  },
-                  {
-                    "$ref": "#/$defs/schema281"
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
               }
             ]
           }
@@ -5154,13 +5147,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema287"
+                        "$ref": "#/$defs/schema286"
                       },
                       {
-                        "$ref": "#/$defs/schema289"
+                        "$ref": "#/$defs/schema288"
                       },
                       {
-                        "$ref": "#/$defs/schema291"
+                        "$ref": "#/$defs/schema290"
                       },
                       {
                         "not": {
@@ -5173,7 +5166,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema288"
+                        "$ref": "#/$defs/schema287"
                       },
                       {
                         "$ref": "#/$defs/schema242"
@@ -5185,7 +5178,7 @@
                         "$ref": "#/$defs/schema270"
                       },
                       {
-                        "$ref": "#/$defs/schema281"
+                        "$ref": "#/$defs/schema280"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -5198,420 +5191,6 @@
                   }
                 ],
                 "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "additionalProperties": {},
-            "properties": {
-              "additionalLabels": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema284"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "additionalProperties": {},
-            "properties": {
-              "interval": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/schema287"
-                      },
-                      {
-                        "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema291"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema288"
-                      },
-                      {
-                        "$ref": "#/$defs/schema242"
-                      },
-                      {
-                        "$ref": "#/$defs/schema128"
-                      },
-                      {
-                        "$ref": "#/$defs/schema270"
-                      },
-                      {
-                        "$ref": "#/$defs/schema281"
-                      }
-                    ],
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "additionalProperties": {},
-            "properties": {
-              "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                    "items": {
-                      "$ref": "#/$defs/schema15"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "additionalProperties": {},
-            "properties": {
-              "relabelings": {
-                "anyOf": [
-                  {
-                    "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                    "items": {
-                      "$ref": "#/$defs/schema15"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "additionalProperties": {},
-            "properties": {
-              "scrapeTimeout": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/schema287"
-                      },
-                      {
-                        "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema291"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema288"
-                      },
-                      {
-                        "$ref": "#/$defs/schema242"
-                      },
-                      {
-                        "$ref": "#/$defs/schema128"
-                      },
-                      {
-                        "$ref": "#/$defs/schema270"
-                      },
-                      {
-                        "$ref": "#/$defs/schema281"
-                      }
-                    ],
-                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
               }
             }
           }
@@ -5662,21 +5241,25 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "certManager": {
+              "tls": {
                 "additionalProperties": {},
                 "properties": {
-                  "existingIssuer": {
+                  "certManager": {
                     "additionalProperties": {},
                     "properties": {
-                      "name": {
-                        "description": "Name of the existing cert-manager issuer",
-                        "not": {
-                          "type": "null"
+                      "existingIssuer": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "description": "Name of the existing cert-manager issuer",
+                            "not": {
+                              "type": "null"
+                            }
+                          }
                         }
                       }
                     }
@@ -5684,8 +5267,26 @@
                 }
               }
             }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "certManager": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "existingIssuer": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -5739,88 +5340,43 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "certManager": {
-                "additionalProperties": {},
-                "properties": {
-                  "existingIssuer": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "certManager": {
-                    "properties": {
-                      "existingIssuer": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "existingIssuer"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "certManager"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema206"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
             "additionalProperties": {},
             "properties": {
-              "certManager": {
+              "tls": {
                 "additionalProperties": {},
                 "properties": {
-                  "existingIssuer": {
+                  "certManager": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "existingIssuer": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "certManager": {
                     "type": "object"
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -5919,92 +5475,49 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "existingIssuer": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "existingIssuer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema206"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema206"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "certManager": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/schema214"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "clusterDomain": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "clusterDomain": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
                   }
-                ],
-                "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "helm": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -6123,28 +5636,6 @@
             "additionalProperties": {},
             "properties": {
               "existingSecret": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema214"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "helm": {
                 "anyOf": [
                   {
                     "type": "object"
@@ -6396,147 +5887,138 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "resources": {
-                "anyOf": [
-                  {
-                    "additionalProperties": false,
-                    "description": "ResourceRequirements describes the compute resource requirements.",
-                    "properties": {
-                      "claims": {
-                        "$ref": "#/$defs/schema59"
-                      },
-                      "limits": {
-                        "$ref": "#/$defs/schema117"
-                      },
-                      "requests": {
-                        "$ref": "#/$defs/schema83"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "additionalProperties": false,
-                    "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
-                    "properties": {
-                      "allowPrivilegeEscalation": {
-                        "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
-                        "type": [
-                          "boolean",
-                          "null"
-                        ]
-                      },
-                      "capabilities": {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "resources": {
+                    "anyOf": [
+                      {
                         "additionalProperties": false,
-                        "description": "Adds and removes POSIX capabilities from running containers.",
+                        "description": "ResourceRequirements describes the compute resource requirements.",
                         "properties": {
-                          "add": {
-                            "$ref": "#/$defs/schema259"
+                          "claims": {
+                            "$ref": "#/$defs/schema59"
                           },
-                          "drop": {
-                            "description": "Removed capabilities",
-                            "items": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
-                            "type": [
-                              "array",
-                              "null"
-                            ]
+                          "limits": {
+                            "$ref": "#/$defs/schema117"
+                          },
+                          "requests": {
+                            "$ref": "#/$defs/schema83"
                           }
                         },
-                        "type": [
-                          "object",
-                          "null"
-                        ]
+                        "type": "object"
                       },
-                      "privileged": {
-                        "$ref": "#/$defs/schema124"
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
-                      "procMount": {
-                        "$ref": "#/$defs/schema106"
-                      },
-                      "readOnlyRootFilesystem": {
-                        "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
-                        "type": [
-                          "boolean",
-                          "null"
-                        ]
-                      },
-                      "runAsGroup": {
-                        "$ref": "#/$defs/schema98"
-                      },
-                      "runAsNonRoot": {
-                        "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-                        "type": [
-                          "boolean",
-                          "null"
-                        ]
-                      },
-                      "runAsUser": {
-                        "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-                        "format": "int64",
-                        "type": [
-                          "integer",
-                          "null"
-                        ]
-                      },
-                      "seLinuxOptions": {
-                        "$ref": "#/$defs/schema67"
-                      },
-                      "seccompProfile": {
-                        "$ref": "#/$defs/schema44"
-                      },
-                      "windowsOptions": {
-                        "$ref": "#/$defs/schema35"
+                      {
+                        "type": "null"
                       }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
+                    ]
                   }
-                ]
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "securityContext": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+                        "properties": {
+                          "allowPrivilegeEscalation": {
+                            "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "capabilities": {
+                            "additionalProperties": false,
+                            "description": "Adds and removes POSIX capabilities from running containers.",
+                            "properties": {
+                              "add": {
+                                "$ref": "#/$defs/schema259"
+                              },
+                              "drop": {
+                                "description": "Removed capabilities",
+                                "items": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "type": [
+                                  "array",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "type": [
+                              "object",
+                              "null"
+                            ]
+                          },
+                          "privileged": {
+                            "$ref": "#/$defs/schema124"
+                          },
+                          "procMount": {
+                            "$ref": "#/$defs/schema106"
+                          },
+                          "readOnlyRootFilesystem": {
+                            "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "runAsGroup": {
+                            "$ref": "#/$defs/schema98"
+                          },
+                          "runAsNonRoot": {
+                            "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "runAsUser": {
+                            "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                            "format": "int64",
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "seLinuxOptions": {
+                            "$ref": "#/$defs/schema67"
+                          },
+                          "seccompProfile": {
+                            "$ref": "#/$defs/schema44"
+                          },
+                          "windowsOptions": {
+                            "$ref": "#/$defs/schema35"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -6779,7 +6261,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema277"
+                "not": {
+                  "$ref": "#/$defs/schema277"
+                }
               },
               {
                 "properties": {
@@ -7092,7 +6576,7 @@
                     "$ref": "#/$defs/schema115"
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema280"
+                    "$ref": "#/$defs/schema279"
                   }
                 },
                 "type": [
@@ -7215,13 +6699,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema287"
+                  "$ref": "#/$defs/schema286"
                 },
                 {
-                  "$ref": "#/$defs/schema289"
+                  "$ref": "#/$defs/schema288"
                 },
                 {
-                  "$ref": "#/$defs/schema291"
+                  "$ref": "#/$defs/schema290"
                 },
                 {
                   "not": {
@@ -7243,7 +6727,7 @@
                   "$ref": "#/$defs/schema270"
                 },
                 {
-                  "$ref": "#/$defs/schema281"
+                  "$ref": "#/$defs/schema280"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -7392,119 +6876,97 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "maxUnavailable": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema66"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "minAvailable": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema66"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "unhealthyPodEvictionPolicy": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/schema287"
-                      },
-                      {
-                        "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema291"
-                      },
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "maxUnavailable": {
+                    "anyOf": [
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema242"
-                      },
-                      {
-                        "$ref": "#/$defs/schema128"
-                      },
-                      {
-                        "$ref": "#/$defs/schema270"
-                      },
-                      {
-                        "$ref": "#/$defs/schema281"
+                        "$ref": "#/$defs/schema66"
                       }
-                    ],
-                    "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
-                    "type": "string"
-                  },
-                  {
-                    "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    ]
                   }
-                ]
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "minAvailable": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema66"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "unhealthyPodEvictionPolicy": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema286"
+                          },
+                          {
+                            "$ref": "#/$defs/schema288"
+                          },
+                          {
+                            "$ref": "#/$defs/schema290"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema242"
+                          },
+                          {
+                            "$ref": "#/$defs/schema128"
+                          },
+                          {
+                            "$ref": "#/$defs/schema270"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
+                          }
+                        ],
+                        "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
+                        "type": "string"
+                      },
+                      {
+                        "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
+                        "type": "null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -7739,7 +7201,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema280"
+                    "$ref": "#/$defs/schema279"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7816,13 +7278,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema287"
+              "$ref": "#/$defs/schema286"
             },
             {
-              "$ref": "#/$defs/schema289"
+              "$ref": "#/$defs/schema288"
             },
             {
-              "$ref": "#/$defs/schema291"
+              "$ref": "#/$defs/schema290"
             },
             {
               "not": {
@@ -7844,7 +7306,7 @@
               "$ref": "#/$defs/schema270"
             },
             {
-              "$ref": "#/$defs/schema281"
+              "$ref": "#/$defs/schema280"
             }
           ],
           "description": "If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.",
@@ -7892,7 +7354,7 @@
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema286"
+                            "$ref": "#/$defs/schema285"
                           },
                           "type": "array"
                         },
@@ -8059,13 +7521,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema287"
+                  "$ref": "#/$defs/schema286"
                 },
                 {
-                  "$ref": "#/$defs/schema289"
+                  "$ref": "#/$defs/schema288"
                 },
                 {
-                  "$ref": "#/$defs/schema291"
+                  "$ref": "#/$defs/schema290"
                 },
                 {
                   "not": {
@@ -8087,7 +7549,7 @@
                   "$ref": "#/$defs/schema270"
                 },
                 {
-                  "$ref": "#/$defs/schema281"
+                  "$ref": "#/$defs/schema280"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -8109,7 +7571,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema277"
+                "not": {
+                  "$ref": "#/$defs/schema277"
+                }
               },
               {
                 "properties": {
@@ -8125,201 +7589,165 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema86"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Annotations to add to the service account"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema277"
-              },
-              {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "allOf": [
+                  "annotations": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema287"
-                      },
-                      {
-                        "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema291"
+                        "$ref": "#/$defs/schema86"
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema242"
-                      },
-                      {
-                        "$ref": "#/$defs/schema128"
-                      },
-                      {
-                        "$ref": "#/$defs/schema270"
-                      },
-                      {
-                        "$ref": "#/$defs/schema281"
+                        "type": "null"
                       }
                     ],
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                    "type": "string"
-                  },
-                  {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "Annotations to add to the service account"
                   }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema277"
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema286"
+                          },
+                          {
+                            "$ref": "#/$defs/schema288"
+                          },
+                          {
+                            "$ref": "#/$defs/schema290"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema242"
+                          },
+                          {
+                            "$ref": "#/$defs/schema128"
+                          },
+                          {
+                            "$ref": "#/$defs/schema270"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
+                          }
+                        ],
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "secrets": {
-                "anyOf": [
-                  {
-                    "description": "Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a \"kubernetes.io/enforce-mountable-secrets\" annotation set to \"true\". This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "ObjectReference contains enough information to let you inspect or modify the referred object.",
-                      "properties": {
-                        "apiVersion": {
-                          "description": "API version of the referent.",
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "description": "Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a \"kubernetes.io/enforce-mountable-secrets\" annotation set to \"true\". This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret",
+                        "items": {
+                          "additionalProperties": false,
+                          "description": "ObjectReference contains enough information to let you inspect or modify the referred object.",
+                          "properties": {
+                            "apiVersion": {
+                              "description": "API version of the referent.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "fieldPath": {
+                              "description": "If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "kind": {
+                              "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "name": {
+                              "$ref": "#/$defs/schema190"
+                            },
+                            "namespace": {
+                              "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "resourceVersion": {
+                              "description": "Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "uid": {
+                              "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
                           "type": [
-                            "string",
+                            "object",
                             "null"
-                          ]
+                          ],
+                          "x-kubernetes-map-type": "atomic"
                         },
-                        "fieldPath": {
-                          "description": "If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "kind": {
-                          "description": "Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "name": {
-                          "$ref": "#/$defs/schema190"
-                        },
-                        "namespace": {
-                          "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "resourceVersion": {
-                          "description": "Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "uid": {
-                          "description": "UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
-                          "type": [
-                            "string",
-                            "null"
-                          ]
+                        "type": "array",
+                        "x-kubernetes-patch-merge-key": "name",
+                        "x-kubernetes-patch-strategy": "merge"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
-                      "type": [
-                        "object",
-                        "null"
-                      ],
-                      "x-kubernetes-map-type": "atomic"
-                    },
-                    "type": "array",
-                    "x-kubernetes-patch-merge-key": "name",
-                    "x-kubernetes-patch-strategy": "merge"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The list of secrets mountable by this service account.\nSee https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets"
                   }
-                ],
-                "description": "The list of secrets mountable by this service account.\nSee https://kubernetes.io/docs/reference/labels-annotations-taints/#enforce-mountable-secrets"
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -8345,13 +7773,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema287"
+                  "$ref": "#/$defs/schema286"
                 },
                 {
-                  "$ref": "#/$defs/schema289"
+                  "$ref": "#/$defs/schema288"
                 },
                 {
-                  "$ref": "#/$defs/schema291"
+                  "$ref": "#/$defs/schema290"
                 },
                 {
                   "not": {
@@ -8373,7 +7801,7 @@
                   "$ref": "#/$defs/schema270"
                 },
                 {
-                  "$ref": "#/$defs/schema281"
+                  "$ref": "#/$defs/schema280"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -8428,64 +7856,128 @@
             "$ref": "#/$defs/schema271"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "certManager": {
+            "allOf": [
+              {
                 "additionalProperties": {},
                 "properties": {
-                  "duration": {
-                    "anyOf": [
-                      {
-                        "allOf": [
+                  "certManager": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "duration": {
+                        "anyOf": [
                           {
-                            "$ref": "#/$defs/schema287"
-                          },
-                          {
-                            "$ref": "#/$defs/schema289"
-                          },
-                          {
-                            "$ref": "#/$defs/schema291"
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema286"
+                              },
+                              {
+                                "$ref": "#/$defs/schema288"
+                              },
+                              {
+                                "$ref": "#/$defs/schema290"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/schema287"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
+                              },
+                              {
+                                "$ref": "#/$defs/schema128"
+                              },
+                              {
+                                "$ref": "#/$defs/schema270"
+                              },
+                              {
+                                "$ref": "#/$defs/schema280"
+                              }
+                            ],
+                            "description": "Requested 'duration' (i.e. lifetime) of the Certificate. Note that the\nissuer may choose to ignore the requested duration, just like any other\nrequested attribute.\n\nIf unset, this defaults to 90 days.\nMinimum accepted duration is 1 hour.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.",
+                            "type": "string"
                           },
                           {
                             "not": {
-                              "pattern": "[ \\t]#"
+                              "$ref": "#/$defs/helm-truthy"
                             }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema288"
-                          },
-                          {
-                            "$ref": "#/$defs/schema242"
-                          },
-                          {
-                            "$ref": "#/$defs/schema128"
-                          },
-                          {
-                            "$ref": "#/$defs/schema270"
-                          },
-                          {
-                            "$ref": "#/$defs/schema281"
                           }
                         ],
-                        "description": "Requested 'duration' (i.e. lifetime) of the Certificate. Note that the\nissuer may choose to ignore the requested duration, just like any other\nrequested attribute.\n\nIf unset, this defaults to 90 days.\nMinimum accepted duration is 1 hour.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.",
-                        "type": "string"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
+                        "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
                       }
-                    ],
-                    "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "certManager": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "renewBefore": {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema286"
+                              },
+                              {
+                                "$ref": "#/$defs/schema288"
+                              },
+                              {
+                                "$ref": "#/$defs/schema290"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/schema287"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
+                              },
+                              {
+                                "$ref": "#/$defs/schema128"
+                              },
+                              {
+                                "$ref": "#/$defs/schema270"
+                              },
+                              {
+                                "$ref": "#/$defs/schema280"
+                              }
+                            ],
+                            "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
+                            "type": "string"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+                      }
+                    }
                   }
                 }
               }
-            }
+            ]
           }
         },
         {
@@ -8524,215 +8016,118 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "certManager": {
-                "additionalProperties": {},
-                "properties": {
-                  "existingIssuer": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "kind": {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/schema287"
-                          },
-                          {
-                            "$ref": "#/$defs/schema289"
-                          },
-                          {
-                            "$ref": "#/$defs/schema291"
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema288"
-                          },
-                          {
-                            "$ref": "#/$defs/schema242"
-                          },
-                          {
-                            "$ref": "#/$defs/schema128"
-                          },
-                          {
-                            "$ref": "#/$defs/schema270"
-                          },
-                          {
-                            "$ref": "#/$defs/schema281"
-                          }
-                        ],
-                        "description": "Kind of the existing cert-manager issuer",
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "properties": {
-                  "certManager": {
-                    "properties": {
-                      "existingIssuer": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "existingIssuer"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "certManager"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema271"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "certManager": {
                 "additionalProperties": {},
                 "properties": {
-                  "existingIssuer": {
+                  "certManager": {
                     "additionalProperties": {},
                     "properties": {
-                      "name": {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/schema287"
-                          },
-                          {
-                            "$ref": "#/$defs/schema289"
-                          },
-                          {
-                            "$ref": "#/$defs/schema291"
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema288"
-                          },
-                          {
-                            "$ref": "#/$defs/schema242"
-                          },
-                          {
-                            "$ref": "#/$defs/schema128"
-                          },
-                          {
-                            "$ref": "#/$defs/schema270"
-                          },
-                          {
-                            "$ref": "#/$defs/schema281"
+                      "existingIssuer": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "kind": {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema286"
+                              },
+                              {
+                                "$ref": "#/$defs/schema288"
+                              },
+                              {
+                                "$ref": "#/$defs/schema290"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/schema287"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
+                              },
+                              {
+                                "$ref": "#/$defs/schema128"
+                              },
+                              {
+                                "$ref": "#/$defs/schema270"
+                              },
+                              {
+                                "$ref": "#/$defs/schema280"
+                              }
+                            ],
+                            "description": "Kind of the existing cert-manager issuer",
+                            "type": "string"
                           }
-                        ],
-                        "description": "Name of the existing cert-manager issuer",
-                        "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "certManager": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "existingIssuer": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema286"
+                              },
+                              {
+                                "$ref": "#/$defs/schema288"
+                              },
+                              {
+                                "$ref": "#/$defs/schema290"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/schema287"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
+                              },
+                              {
+                                "$ref": "#/$defs/schema128"
+                              },
+                              {
+                                "$ref": "#/$defs/schema270"
+                              },
+                              {
+                                "$ref": "#/$defs/schema280"
+                              }
+                            ],
+                            "description": "Name of the existing cert-manager issuer",
+                            "type": "string"
+                          }
+                        }
                       }
                     }
                   }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/schema271"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "certManager": {
-                "additionalProperties": {},
-                "properties": {
-                  "renewBefore": {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/schema287"
-                          },
-                          {
-                            "$ref": "#/$defs/schema289"
-                          },
-                          {
-                            "$ref": "#/$defs/schema291"
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema288"
-                          },
-                          {
-                            "$ref": "#/$defs/schema242"
-                          },
-                          {
-                            "$ref": "#/$defs/schema128"
-                          },
-                          {
-                            "$ref": "#/$defs/schema270"
-                          },
-                          {
-                            "$ref": "#/$defs/schema281"
-                          }
-                        ],
-                        "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
-                        "type": "string"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      }
-                    ],
-                    "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
-                  }
-                }
-              }
-            }
+            ]
           }
         },
         {
@@ -8757,13 +8152,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema287"
+                            "$ref": "#/$defs/schema286"
                           },
                           {
-                            "$ref": "#/$defs/schema289"
+                            "$ref": "#/$defs/schema288"
                           },
                           {
-                            "$ref": "#/$defs/schema291"
+                            "$ref": "#/$defs/schema290"
                           },
                           {
                             "not": {
@@ -8785,7 +8180,7 @@
                             "$ref": "#/$defs/schema270"
                           },
                           {
-                            "$ref": "#/$defs/schema281"
+                            "$ref": "#/$defs/schema280"
                           }
                         ],
                         "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -8973,7 +8368,7 @@
                       "$ref": "#/$defs/schema115"
                     },
                     "sizeLimit": {
-                      "$ref": "#/$defs/schema280"
+                      "$ref": "#/$defs/schema279"
                     }
                   },
                   "type": "object"
@@ -9222,10 +8617,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema279"
+                  "$ref": "#/$defs/schema278"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema279"
+                  "$ref": "#/$defs/schema278"
                 }
               },
               "type": [

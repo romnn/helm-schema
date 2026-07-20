@@ -1009,34 +1009,37 @@
       }
     },
     "schema61": {
-      "not": {
-        "properties": {
-          "create": {}
-        },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
     },
-    "schema63": {
+    "schema62": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema66": {
+    "schema65": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema67": {
+    "schema66": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema68": {
+    "schema67": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema69": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
       }
     },
     "schema7": {
@@ -1078,11 +1081,6 @@
       ]
     },
     "schema70": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "schema71": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -1474,25 +1472,49 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "labels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema29"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema29"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional labels for any resource created"
               }
-            ],
-            "description": "Additional labels for any resource created"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema21"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -1554,148 +1576,6 @@
               ],
               "description": "When set to false leader election will be disabled"
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "nfs": {
-                "properties": {
-                  "mountOptions": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "mountOptions"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "nfs"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema39"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema41"
-              },
-              {
-                "properties": {
-                  "storageClass": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema21"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         }
       }
@@ -1820,36 +1700,55 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "mountOptions": {
-                "anyOf": [
-                  {
-                    "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "object"
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountOptions": {
+                    "anyOf": [
+                      {
+                        "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "storageClass": {
+                "additionalProperties": {},
+                "description": "For creating the StorageClass automatically:",
+                "properties": {
+                  "archiveOnDelete": {
+                    "$ref": "#/$defs/helm-double-quoted-safe",
+                    "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1873,30 +1772,56 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "mountOptions": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountOptions": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "storageClass": {
+                "additionalProperties": {},
+                "description": "For creating the StorageClass automatically:",
+                "properties": {
+                  "accessModes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema21"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1939,143 +1864,29 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
-            "$ref": "#/$defs/schema14"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "nfs": {
-                "properties": {
-                  "mountOptions": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "mountOptions"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "nfs"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "properties": {
-                    "buildMode": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "buildMode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nfs": {
-                      "properties": {
-                        "mountOptions": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "mountOptions"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "nfs"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
-            "additionalProperties": {},
-            "properties": {
-              "path": {
-                "not": {
-                  "type": "null"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "not": {
-              "properties": {
-                "buildMode": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "buildMode"
-              ],
-              "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "$ref": "#/$defs/schema14"
+              }
             }
           },
           {
-            "not": {
-              "properties": {
-                "nfs": {
-                  "properties": {
-                    "mountOptions": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "mountOptions"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "nfs"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
             "additionalProperties": {},
             "properties": {
-              "server": {
-                "$ref": "#/$defs/schema4"
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "$ref": "#/$defs/schema4"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2141,90 +1952,46 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "server": {
-                "not": {
-                  "type": "null"
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "path": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "nfs": {
-                "properties": {
-                  "mountOptions": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "mountOptions"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "nfs"
-            ],
-            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "not": {
-                  "properties": {
-                    "buildMode": {
-                      "$ref": "#/$defs/helm-truthy"
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
+                    "not": {
+                      "type": "null"
                     }
-                  },
-                  "required": [
-                    "buildMode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "nfs": {
-                      "properties": {
-                        "mountOptions": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "mountOptions"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "nfs"
-                  ],
-                  "type": "object"
+                  }
                 }
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "type": "object"
+              }
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
-            "type": "object"
-          }
-        }
       }
     },
     {
@@ -2265,13 +2032,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema66"
+                        "$ref": "#/$defs/schema65"
                       },
                       {
-                        "$ref": "#/$defs/schema68"
+                        "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema69"
                       },
                       {
                         "not": {
@@ -2279,10 +2046,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema70"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
                         "$ref": "#/$defs/schema50"
@@ -2294,7 +2061,7 @@
                         "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema63"
+                        "$ref": "#/$defs/schema62"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -2307,92 +2074,6 @@
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nfs": {
-            "properties": {
-              "mountOptions": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "mountOptions"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "nfs"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "accessModes": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema21"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema41"
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "archiveOnDelete": {
-                "$ref": "#/$defs/helm-double-quoted-safe",
-                "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
               }
             }
           }
@@ -2715,13 +2396,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema67"
                 },
                 {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema69"
                 },
                 {
                   "not": {
@@ -2729,7 +2410,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema71"
+                  "$ref": "#/$defs/schema70"
                 },
                 {
                   "$ref": "#/$defs/schema50"
@@ -2741,7 +2422,7 @@
                   "$ref": "#/$defs/schema56"
                 },
                 {
-                  "$ref": "#/$defs/schema63"
+                  "$ref": "#/$defs/schema62"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2865,36 +2546,72 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema14"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "mountOptions": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "mountOptions"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "reclaimPolicy": {
-                "anyOf": [
-                  {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema14"
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "reclaimPolicy": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema65"
+                          },
+                          {
+                            "$ref": "#/$defs/schema67"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema70"
+                          },
+                          {
+                            "$ref": "#/$defs/schema50"
+                          },
+                          {
+                            "$ref": "#/$defs/schema37"
+                          },
+                          {
+                            "$ref": "#/$defs/schema56"
+                          },
+                          {
+                            "$ref": "#/$defs/schema62"
+                          }
+                        ],
+                        "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
+                        "type": "string"
+                      },
+                      {
+                        "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Reclaim policy for the main nfs volume"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "server": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema66"
+                        "$ref": "#/$defs/schema65"
                       },
                       {
-                        "$ref": "#/$defs/schema68"
+                        "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema69"
                       },
                       {
                         "not": {
@@ -2902,7 +2619,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema70"
+                      },
+                      {
+                        "$ref": "#/$defs/schema66"
                       },
                       {
                         "$ref": "#/$defs/schema50"
@@ -2914,93 +2634,15 @@
                         "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema63"
+                        "$ref": "#/$defs/schema62"
                       }
                     ],
-                    "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
+                    "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
                     "type": "string"
-                  },
-                  {
-                    "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
-                    "type": "null"
-                  }
-                ],
-                "description": "Reclaim policy for the main nfs volume"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "mountOptions": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "mountOptions"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "server": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/schema66"
-                  },
-                  {
-                    "$ref": "#/$defs/schema68"
-                  },
-                  {
-                    "$ref": "#/$defs/schema70"
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema71"
-                  },
-                  {
-                    "$ref": "#/$defs/schema67"
-                  },
-                  {
-                    "$ref": "#/$defs/schema50"
-                  },
-                  {
-                    "$ref": "#/$defs/schema37"
-                  },
-                  {
-                    "$ref": "#/$defs/schema56"
-                  },
-                  {
-                    "$ref": "#/$defs/schema63"
-                  }
-                ],
-                "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
-                "type": "string"
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "mountOptions": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/helm-truthy"
-                  },
-                  "then": {
-                    "$ref": "#/$defs/schema6"
                   }
                 }
-              ]
-            }
+              }
+            ]
           }
         },
         {
@@ -3013,18 +2655,25 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "anyOf": [
+                    "allOf": [
                       {
-                        "type": "array"
+                        "$ref": "#/$defs/schema6"
                       },
                       {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     ]
                   }
@@ -3072,13 +2721,13 @@
         "volumeName": {
           "allOf": [
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema65"
             },
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema70"
+              "$ref": "#/$defs/schema69"
             },
             {
               "not": {
@@ -3086,10 +2735,10 @@
               }
             },
             {
-              "$ref": "#/$defs/schema71"
+              "$ref": "#/$defs/schema70"
             },
             {
-              "$ref": "#/$defs/schema67"
+              "$ref": "#/$defs/schema66"
             },
             {
               "$ref": "#/$defs/schema50"
@@ -3101,7 +2750,7 @@
               "$ref": "#/$defs/schema56"
             },
             {
-              "$ref": "#/$defs/schema63"
+              "$ref": "#/$defs/schema62"
             }
           ],
           "type": "string"
@@ -3186,13 +2835,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema66"
+                                "$ref": "#/$defs/schema65"
                               },
                               {
-                                "$ref": "#/$defs/schema68"
+                                "$ref": "#/$defs/schema67"
                               },
                               {
-                                "$ref": "#/$defs/schema70"
+                                "$ref": "#/$defs/schema69"
                               },
                               {
                                 "not": {
@@ -3200,13 +2849,13 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema71"
+                                "$ref": "#/$defs/schema70"
                               },
                               {
                                 "$ref": "#/$defs/schema50"
                               },
                               {
-                                "$ref": "#/$defs/schema63"
+                                "$ref": "#/$defs/schema62"
                               }
                             ],
                             "type": "string"
@@ -3621,7 +3270,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema61"
+                "not": {
+                  "$ref": "#/$defs/schema61"
+                }
               },
               {
                 "properties": {
@@ -3637,66 +3288,50 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema24"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Annotations to add to the service account"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema61"
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema24"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations to add to the service account"
+                  }
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema9"
+                      },
+                      {
+                        "$ref": "#/$defs/schema26"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema9"
-                  },
-                  {
-                    "$ref": "#/$defs/schema26"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
           }
         }
       ],
@@ -3722,13 +3357,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema67"
                 },
                 {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema69"
                 },
                 {
                   "not": {
@@ -3736,7 +3371,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema71"
+                  "$ref": "#/$defs/schema70"
                 },
                 {
                   "$ref": "#/$defs/schema50"
@@ -3748,7 +3383,7 @@
                   "$ref": "#/$defs/schema56"
                 },
                 {
-                  "$ref": "#/$defs/schema63"
+                  "$ref": "#/$defs/schema62"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -3779,7 +3414,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema61"
+                "not": {
+                  "$ref": "#/$defs/schema61"
+                }
               },
               {
                 "properties": {
@@ -3795,281 +3432,185 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "allowVolumeExpansion": {
-                "anyOf": [
-                  {
-                    "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
-                    "type": "null"
-                  },
-                  {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-                    "type": "string"
-                  }
-                ],
-                "description": "Allow volume to be expanded dynamically"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema61"
-              },
-              {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema24"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Storage class annotations"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema61"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema9"
-                  },
-                  {
-                    "$ref": "#/$defs/schema26"
-                  }
-                ],
-                "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema61"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "provisionerName": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema61"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "reclaimPolicy": {
-                "anyOf": [
-                  {
-                    "allOf": [
+                  "allowVolumeExpansion": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema66"
+                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
+                        "type": "boolean"
                       },
                       {
-                        "$ref": "#/$defs/schema68"
+                        "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
+                        "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Allow volume to be expanded dynamically"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema24"
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
-                      },
-                      {
-                        "$ref": "#/$defs/schema50"
-                      },
-                      {
-                        "$ref": "#/$defs/schema37"
-                      },
-                      {
-                        "$ref": "#/$defs/schema56"
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
+                        "type": "null"
                       }
                     ],
-                    "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
-                    "type": "string"
-                  },
-                  {
-                    "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
-                    "type": "null"
+                    "description": "Storage class annotations"
                   }
-                ],
-                "description": "Method used to reclaim an obsoleted volume"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema61"
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema9"
+                      },
+                      {
+                        "$ref": "#/$defs/schema26"
+                      }
+                    ],
+                    "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "volumeBindingMode": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/schema66"
-                      },
-                      {
-                        "$ref": "#/$defs/schema68"
-                      },
-                      {
-                        "$ref": "#/$defs/schema70"
-                      },
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "provisionerName": {
+                    "anyOf": [
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema50"
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "reclaimPolicy": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema65"
+                          },
+                          {
+                            "$ref": "#/$defs/schema67"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema70"
+                          },
+                          {
+                            "$ref": "#/$defs/schema50"
+                          },
+                          {
+                            "$ref": "#/$defs/schema37"
+                          },
+                          {
+                            "$ref": "#/$defs/schema56"
+                          },
+                          {
+                            "$ref": "#/$defs/schema62"
+                          }
+                        ],
+                        "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
+                        "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/schema37"
-                      },
-                      {
-                        "$ref": "#/$defs/schema56"
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
+                        "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
+                        "type": "null"
                       }
                     ],
-                    "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
-                    "type": "string"
-                  },
-                  {
-                    "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
-                    "type": "null"
+                    "description": "Method used to reclaim an obsoleted volume"
                   }
-                ],
-                "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "volumeBindingMode": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema65"
+                          },
+                          {
+                            "$ref": "#/$defs/schema67"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema70"
+                          },
+                          {
+                            "$ref": "#/$defs/schema50"
+                          },
+                          {
+                            "$ref": "#/$defs/schema37"
+                          },
+                          {
+                            "$ref": "#/$defs/schema56"
+                          },
+                          {
+                            "$ref": "#/$defs/schema62"
+                          }
+                        ],
+                        "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer"
+                  }
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -4127,13 +3668,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema65"
             },
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema70"
+              "$ref": "#/$defs/schema69"
             },
             {
               "not": {
@@ -4141,7 +3682,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema71"
+              "$ref": "#/$defs/schema70"
             },
             {
               "$ref": "#/$defs/schema50"
@@ -4153,7 +3694,7 @@
               "$ref": "#/$defs/schema56"
             },
             {
-              "$ref": "#/$defs/schema63"
+              "$ref": "#/$defs/schema62"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

@@ -94,214 +94,125 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configLoggingRestApi": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "api_port": {
-                "not": {
-                  "type": "null"
+              "configLoggingRestApi": {
+                "additionalProperties": {},
+                "properties": {
+                  "api_port": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
-            }
           },
           {
-            "properties": {
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configLoggingRestApi": {
             "additionalProperties": {},
             "properties": {
-              "api_port": {
-                "oneOf": [
-                  {
-                    "allOf": [
+              "configLoggingRestApi": {
+                "additionalProperties": {},
+                "properties": {
+                  "api_port": {
+                    "oneOf": [
                       {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
+                          }
+                        ],
                         "type": "string"
                       },
                       {
-                        "type": "integer"
+                        "anyOf": [
+                          {
+                            "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
                       }
                     ]
                   }
-                ]
+                }
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "readinessProbe": {
+              "configLoggingRestApi": {
                 "anyOf": [
                   {
                     "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
                   }
                 ]
               }
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configLoggingRestApi": {
-            "anyOf": [
-              {
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configLoggingRestApi": {
                 "type": "object"
               }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
             }
           },
           {
+            "additionalProperties": {},
             "properties": {
               "readinessProbe": {
                 "anyOf": [
                   {
                     "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
                   }
                 ]
               }
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configLoggingRestApi": {
-            "type": "object"
-          }
-        }
       }
     },
     {
@@ -408,53 +319,6 @@
               },
               {
                 "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "readinessProbe": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "readinessProbe"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "readinessProbe": {
-            "anyOf": [
-              {
-                "type": "object"
               }
             ]
           }
@@ -1798,52 +1662,44 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "initialDelaySeconds": {
-                "anyOf": [
-                  {
-                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "initialDelaySeconds": {
+                    "anyOf": [
+                      {
+                        "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
               },
               {
-                "$ref": "#/$defs/helm-truthy"
+                "additionalProperties": {},
+                "properties": {
+                  "periodSeconds": {
+                    "anyOf": [
+                      {
+                        "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "periodSeconds": {
-                "anyOf": [
-                  {
-                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
           }
         }
       ],

@@ -105,116 +105,362 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "creator": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+            "additionalProperties": {},
+            "properties": {
+              "creator": {
+                "anyOf": [
+                  {
+                    "type": "string"
                   },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  {
+                    "type": "null"
                   }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
+                ]
               }
-            ]
+            }
           },
           {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
                   },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "commonLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
                 }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "prometheus": {
+                "additionalProperties": {},
+                "properties": {
+                  "servicemonitor": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAnnotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceIPFamilies": {
+                "anyOf": [
+                  {
+                    "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-type": "atomic"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceIPFamilyPolicy": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceLabels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                    "properties": {},
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
             }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
       }
     },
     {
@@ -316,110 +562,6 @@
                 "type": "null"
               }
             ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "commonLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
           }
         }
       }
@@ -615,152 +757,6 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "properties": {
               "nameOverride": {
                 "$ref": "#/$defs/helm-truthy"
@@ -862,153 +858,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespace": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
-                  }
-                ],
-                "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -1051,611 +900,33 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheus": {
-            "additionalProperties": {},
-            "properties": {
-              "podmonitor": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheus": {
             "additionalProperties": {},
-            "properties": {
-              "servicemonitor": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          {
             "properties": {
               "prometheus": {
+                "additionalProperties": {},
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheus": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                  "podmonitor": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
+                }
               }
-            ]
+            }
           },
           {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "prometheus": {
+                "type": "object"
+              }
             }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceIPFamilies": {
-            "anyOf": [
-              {
-                "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
-                "items": {
-                  "type": "string"
-                },
-                "type": "array",
-                "x-kubernetes-list-type": "atomic"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceIPFamilyPolicy": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
-                  }
-                ],
-                "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "podmonitor": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podmonitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
       }
     }
   ],

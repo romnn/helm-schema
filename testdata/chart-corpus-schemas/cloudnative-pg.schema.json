@@ -1025,7 +1025,7 @@
         "null"
       ]
     },
-    "schema59": {
+    "schema58": {
       "not": {
         "properties": {
           "config": {
@@ -1258,20 +1258,7 @@
         }
       }
     },
-    "schema80": {
-      "properties": {
-        "create": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema83": {
+    "schema82": {
       "properties": {
         "clusterWide": {}
       },
@@ -1280,7 +1267,7 @@
       ],
       "type": "object"
     },
-    "schema84": {
+    "schema83": {
       "not": {
         "properties": {
           "create": {}
@@ -1291,7 +1278,7 @@
         "type": "object"
       }
     },
-    "schema86": {
+    "schema85": {
       "oneOf": [
         {
           "type": [
@@ -1307,12 +1294,12 @@
         }
       ]
     },
-    "schema87": {
+    "schema86": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema89": {
+    "schema88": {
       "anyOf": [
         {
           "type": "null"
@@ -1321,6 +1308,11 @@
           "type": "string"
         }
       ]
+    },
+    "schema89": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
     },
     "schema9": {
       "allOf": [
@@ -1375,25 +1367,20 @@
     },
     "schema90": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "schema91": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema92": {
-      "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema94": {
+    "schema93": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema95": {
+    "schema94": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -1430,7 +1417,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -1584,25 +1571,63 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonAnnotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "Annotations to be added to all other resources."
               }
-            ],
-            "description": "Annotations to be added to all other resources."
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema19"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema19"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -1633,26 +1658,141 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Operator configuration.",
             "properties": {
-              "clusterWide": {
+              "config": {
+                "additionalProperties": {},
+                "description": "Operator configuration.",
+                "properties": {
+                  "clusterWide": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "This option determines if the operator is responsible for observing\nevents across the entire Kubernetes cluster or if its focus should be\nnarrowed down to the specific namespace within which it has been deployed."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema89"
+                      },
+                      {
+                        "$ref": "#/$defs/schema91"
+                      },
+                      {
+                        "$ref": "#/$defs/schema93"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema94"
+                      },
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema42"
+                      },
+                      {
+                        "$ref": "#/$defs/schema75"
+                      },
+                      {
+                        "$ref": "#/$defs/schema86"
+                      }
+                    ],
+                    "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
+                    "type": "string"
                   },
                   {
+                    "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
                     "type": "null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
-                ],
-                "description": "This option determines if the operator is responsible for observing\nevents across the entire Kubernetes cluster or if its focus should be\nnarrowed down to the specific namespace within which it has been deployed."
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema89"
+                          },
+                          {
+                            "$ref": "#/$defs/schema91"
+                          },
+                          {
+                            "$ref": "#/$defs/schema93"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema94"
+                          },
+                          {
+                            "$ref": "#/$defs/schema90"
+                          },
+                          {
+                            "$ref": "#/$defs/schema68"
+                          },
+                          {
+                            "$ref": "#/$defs/schema42"
+                          },
+                          {
+                            "$ref": "#/$defs/schema75"
+                          },
+                          {
+                            "$ref": "#/$defs/schema86"
+                          }
+                        ],
+                        "description": "Name of the object being referenced.",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1661,7 +1801,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -1691,7 +1831,7 @@
                   "not": {
                     "properties": {
                       "config": {
-                        "$ref": "#/$defs/schema83"
+                        "$ref": "#/$defs/schema82"
                       }
                     },
                     "required": [
@@ -1920,7 +2060,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -2089,44 +2229,6 @@
     {
       "if": {
         "properties": {
-          "monitoring": {
-            "properties": {
-              "podMonitorEnabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "podMonitorEnabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "monitoring"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema19"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
           }
@@ -2168,7 +2270,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema58"
                   },
                   {
                     "properties": {
@@ -2252,87 +2354,6 @@
               },
               {
                 "$ref": "#/$defs/schema25"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema61"
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/schema90"
-                  },
-                  {
-                    "$ref": "#/$defs/schema92"
-                  },
-                  {
-                    "$ref": "#/$defs/schema94"
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema95"
-                  },
-                  {
-                    "$ref": "#/$defs/schema68"
-                  },
-                  {
-                    "$ref": "#/$defs/schema42"
-                  },
-                  {
-                    "$ref": "#/$defs/schema75"
-                  },
-                  {
-                    "$ref": "#/$defs/schema87"
-                  }
-                ],
-                "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
-                "type": "string"
-              },
-              {
-                "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
-                "type": "null"
               },
               {
                 "not": {
@@ -2491,94 +2512,159 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "allOf": [
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "anyOf": [
                   {
-                    "$ref": "#/$defs/schema90"
-                  },
-                  {
-                    "$ref": "#/$defs/schema92"
-                  },
-                  {
-                    "$ref": "#/$defs/schema94"
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema89"
+                      },
+                      {
+                        "$ref": "#/$defs/schema91"
+                      },
+                      {
+                        "$ref": "#/$defs/schema93"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema94"
+                      },
+                      {
+                        "$ref": "#/$defs/schema90"
+                      },
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema42"
+                      },
+                      {
+                        "$ref": "#/$defs/schema75"
+                      },
+                      {
+                        "$ref": "#/$defs/schema86"
+                      }
+                    ],
+                    "description": "`namespace` is the namespace of the service. Required",
+                    "type": "string"
                   },
                   {
                     "not": {
-                      "pattern": "[ \\t]#"
+                      "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "$ref": "#/$defs/schema95"
-                  },
-                  {
-                    "$ref": "#/$defs/schema91"
-                  },
-                  {
-                    "$ref": "#/$defs/schema68"
-                  },
-                  {
-                    "$ref": "#/$defs/schema42"
-                  },
-                  {
-                    "$ref": "#/$defs/schema75"
-                  },
-                  {
-                    "$ref": "#/$defs/schema87"
                   }
-                ],
-                "description": "`namespace` is the namespace of the service. Required",
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+                ]
               }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "monitoring": {
+            }
+          },
+          {
+            "additionalProperties": {},
             "properties": {
-              "podMonitorEnabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "podMonitorEnabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "monitoring"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema19"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema89"
+                      },
+                      {
+                        "$ref": "#/$defs/schema91"
+                      },
+                      {
+                        "$ref": "#/$defs/schema93"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema94"
+                      },
+                      {
+                        "$ref": "#/$defs/schema90"
+                      },
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema42"
+                      },
+                      {
+                        "$ref": "#/$defs/schema75"
+                      },
+                      {
+                        "$ref": "#/$defs/schema86"
+                      }
+                    ],
+                    "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+                    "type": "string"
+                  }
                 }
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "port": {
+                    "anyOf": [
+                      {
+                        "description": "If specified, the port on the service that hosting webhook. Default to 443 for backward compatibility. `port` should be a valid port number (1-65535, inclusive).",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "description": "If specified, the port on the service that hosting webhook. Default to 443 for backward compatibility. `port` should be a valid port number (1-65535, inclusive).",
+                        "format": "int32",
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/schema63"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "type": "object"
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -2636,487 +2722,6 @@
                     "type": "null"
                   }
                 ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema47"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "mutating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "mutating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "validating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "validating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/schema90"
-                  },
-                  {
-                    "$ref": "#/$defs/schema92"
-                  },
-                  {
-                    "$ref": "#/$defs/schema94"
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema95"
-                  },
-                  {
-                    "$ref": "#/$defs/schema91"
-                  },
-                  {
-                    "$ref": "#/$defs/schema68"
-                  },
-                  {
-                    "$ref": "#/$defs/schema42"
-                  },
-                  {
-                    "$ref": "#/$defs/schema75"
-                  },
-                  {
-                    "$ref": "#/$defs/schema87"
-                  }
-                ],
-                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema47"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "mutating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "mutating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "validating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "validating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
-                "not": {
-                  "type": "null"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema47"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "mutating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "mutating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "validating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "validating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "port": {
-                "anyOf": [
-                  {
-                    "description": "If specified, the port on the service that hosting webhook. Default to 443 for backward compatibility. `port` should be a valid port number (1-65535, inclusive).",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "If specified, the port on the service that hosting webhook. Default to 443 for backward compatibility. `port` should be a valid port number (1-65535, inclusive).",
-                    "format": "int32",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/schema63"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema47"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "mutating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "mutating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "validating": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "validating"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema61"
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/schema90"
-                      },
-                      {
-                        "$ref": "#/$defs/schema92"
-                      },
-                      {
-                        "$ref": "#/$defs/schema94"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema95"
-                      },
-                      {
-                        "$ref": "#/$defs/schema91"
-                      },
-                      {
-                        "$ref": "#/$defs/schema68"
-                      },
-                      {
-                        "$ref": "#/$defs/schema42"
-                      },
-                      {
-                        "$ref": "#/$defs/schema75"
-                      },
-                      {
-                        "$ref": "#/$defs/schema87"
-                      }
-                    ],
-                    "description": "Name of the object being referenced.",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
               }
             }
           }
@@ -3252,7 +2857,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/schema86"
+                        "$ref": "#/$defs/schema85"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -3542,7 +3147,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema84"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -3600,7 +3205,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema84"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -3636,7 +3241,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema84"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -3753,7 +3358,7 @@
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema89"
+                            "$ref": "#/$defs/schema88"
                           },
                           "type": "array"
                         },
@@ -3888,13 +3493,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema90"
+              "$ref": "#/$defs/schema89"
             },
             {
-              "$ref": "#/$defs/schema92"
+              "$ref": "#/$defs/schema91"
             },
             {
-              "$ref": "#/$defs/schema94"
+              "$ref": "#/$defs/schema93"
             },
             {
               "not": {
@@ -3902,7 +3507,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema95"
+              "$ref": "#/$defs/schema94"
             },
             {
               "$ref": "#/$defs/schema68"
@@ -3914,7 +3519,7 @@
               "$ref": "#/$defs/schema75"
             },
             {
-              "$ref": "#/$defs/schema87"
+              "$ref": "#/$defs/schema86"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -3966,13 +3571,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema89"
                 },
                 {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema91"
                 },
                 {
-                  "$ref": "#/$defs/schema94"
+                  "$ref": "#/$defs/schema93"
                 },
                 {
                   "not": {
@@ -3980,7 +3585,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema95"
+                  "$ref": "#/$defs/schema94"
                 },
                 {
                   "$ref": "#/$defs/schema68"
@@ -3992,7 +3597,7 @@
                   "$ref": "#/$defs/schema75"
                 },
                 {
-                  "$ref": "#/$defs/schema87"
+                  "$ref": "#/$defs/schema86"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -4059,95 +3664,73 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "podMonitorAdditionalLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "podMonitorAdditionalLabels": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Additional labels for the podMonitor"
                   }
-                ],
-                "description": "Additional labels for the podMonitor"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "podMonitorEnabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "podMonitorEnabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "podMonitorMetricRelabelings": {
-                "anyOf": [
-                  {
-                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                    "items": {
-                      "$ref": "#/$defs/schema4"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "podMonitorMetricRelabelings": {
+                    "anyOf": [
+                      {
+                        "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+                        "items": {
+                          "$ref": "#/$defs/schema4"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Metrics relabel configurations to apply to samples before ingestion."
                   }
-                ],
-                "description": "Metrics relabel configurations to apply to samples before ingestion."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "podMonitorEnabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "podMonitorEnabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "podMonitorRelabelings": {
-                "anyOf": [
-                  {
-                    "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                    "items": {
-                      "$ref": "#/$defs/schema4"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "podMonitorRelabelings": {
+                    "anyOf": [
+                      {
+                        "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                        "items": {
+                          "$ref": "#/$defs/schema4"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Relabel configurations to apply to samples before scraping."
                   }
-                ],
-                "description": "Relabel configurations to apply to samples before scraping."
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -4177,66 +3760,81 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema80"
-                  }
-                ]
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema26"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Annotations that ConfigMaps can have to get configured in Grafana."
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
                     "properties": {
                       "create": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "enum": [
+                          null
+                        ]
                       }
                     },
                     "required": [
                       "create"
                     ],
                     "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema80"
                   }
                 ]
               },
               "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "configMapName": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema9"
-                      },
-                      {
-                        "$ref": "#/$defs/schema29"
+                "allOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema26"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Annotations that ConfigMaps can have to get configured in Grafana."
                       }
-                    ],
-                    "description": "The name of the ConfigMap containing the dashboard."
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configMapName": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema9"
+                          },
+                          {
+                            "$ref": "#/$defs/schema29"
+                          }
+                        ],
+                        "description": "The name of the ConfigMap containing the dashboard."
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "namespace": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema7"
+                          },
+                          {
+                            "$ref": "#/$defs/schema25"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "Allows overriding the namespace where the ConfigMap will be created, defaulting to the same one as the Release."
+                      }
+                    }
                   }
-                }
+                ]
               }
             },
             {
@@ -4293,7 +3891,17 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema80"
+                        "properties": {
+                          "create": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
                       },
                       {
                         "anyOf": [
@@ -4350,47 +3958,6 @@
                       }
                     ],
                     "description": "Labels that ConfigMaps should have to get configured in Grafana."
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema80"
-                  }
-                ]
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema7"
-                      },
-                      {
-                        "$ref": "#/$defs/schema25"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      }
-                    ],
-                    "description": "Allows overriding the namespace where the ConfigMap will be created, defaulting to the same one as the Release."
                   }
                 }
               }
@@ -4721,13 +4288,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema90"
+              "$ref": "#/$defs/schema89"
             },
             {
-              "$ref": "#/$defs/schema92"
+              "$ref": "#/$defs/schema91"
             },
             {
-              "$ref": "#/$defs/schema94"
+              "$ref": "#/$defs/schema93"
             },
             {
               "not": {
@@ -4735,7 +4302,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema95"
+              "$ref": "#/$defs/schema94"
             },
             {
               "$ref": "#/$defs/schema68"
@@ -4747,7 +4314,7 @@
               "$ref": "#/$defs/schema75"
             },
             {
-              "$ref": "#/$defs/schema87"
+              "$ref": "#/$defs/schema86"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -4840,7 +4407,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/schema86"
+            "$ref": "#/$defs/schema85"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -4850,7 +4417,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/schema86"
+            "$ref": "#/$defs/schema85"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -4896,13 +4463,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema89"
                 },
                 {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema91"
                 },
                 {
-                  "$ref": "#/$defs/schema94"
+                  "$ref": "#/$defs/schema93"
                 },
                 {
                   "not": {
@@ -4910,7 +4477,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema95"
+                  "$ref": "#/$defs/schema94"
                 },
                 {
                   "$ref": "#/$defs/schema68"
@@ -4922,7 +4489,7 @@
                   "$ref": "#/$defs/schema75"
                 },
                 {
-                  "$ref": "#/$defs/schema87"
+                  "$ref": "#/$defs/schema86"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -4968,13 +4535,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema89"
                 },
                 {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema91"
                 },
                 {
-                  "$ref": "#/$defs/schema94"
+                  "$ref": "#/$defs/schema93"
                 },
                 {
                   "not": {
@@ -4982,7 +4549,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema95"
+                  "$ref": "#/$defs/schema94"
                 },
                 {
                   "$ref": "#/$defs/schema68"
@@ -4994,7 +4561,7 @@
                   "$ref": "#/$defs/schema75"
                 },
                 {
-                  "$ref": "#/$defs/schema87"
+                  "$ref": "#/$defs/schema86"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -5016,7 +4583,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema84"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -5073,13 +4640,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema89"
                 },
                 {
-                  "$ref": "#/$defs/schema92"
+                  "$ref": "#/$defs/schema91"
                 },
                 {
-                  "$ref": "#/$defs/schema94"
+                  "$ref": "#/$defs/schema93"
                 },
                 {
                   "not": {
@@ -5087,7 +4654,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema95"
+                  "$ref": "#/$defs/schema94"
                 },
                 {
                   "$ref": "#/$defs/schema68"
@@ -5099,7 +4666,7 @@
                   "$ref": "#/$defs/schema75"
                 },
                 {
-                  "$ref": "#/$defs/schema87"
+                  "$ref": "#/$defs/schema86"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -5358,7 +4925,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema84"
+                        "$ref": "#/$defs/schema83"
                       },
                       {
                         "properties": {
@@ -5390,7 +4957,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema84"
+                        "$ref": "#/$defs/schema83"
                       },
                       {
                         "properties": {

@@ -59,6 +59,130 @@
     "schema1": {
       "allOf": [
         {
+          "additionalProperties": {},
+          "properties": {
+            "failureThreshold": {
+              "anyOf": [
+                {
+                  "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+                  "format": "int32",
+                  "type": "null"
+                },
+                {
+                  "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "initialDelaySeconds": {
+              "anyOf": [
+                {
+                  "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                  "format": "int32",
+                  "type": "null"
+                },
+                {
+                  "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "periodSeconds": {
+              "anyOf": [
+                {
+                  "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                  "format": "int32",
+                  "type": "null"
+                },
+                {
+                  "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "successThreshold": {
+              "anyOf": [
+                {
+                  "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+                  "format": "int32",
+                  "type": "null"
+                },
+                {
+                  "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "timeoutSeconds": {
+              "anyOf": [
+                {
+                  "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                  "format": "int32",
+                  "type": "null"
+                },
+                {
+                  "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "schema17": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "schema2": {
+      "allOf": [
+        {
           "not": {
             "pattern": "^[!&*#{}\\[\\],|>@`%]"
           }
@@ -110,85 +234,6 @@
         }
       ],
       "type": "string"
-    },
-    "schema11": {
-      "additionalProperties": {},
-      "properties": {
-        "periodSeconds": {
-          "anyOf": [
-            {
-              "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "schema16": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "schema2": {
-      "additionalProperties": {},
-      "properties": {
-        "timeoutSeconds": {
-          "anyOf": [
-            {
-              "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "schema23": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "updateStrategy": {}
-            },
-            "required": [
-              "updateStrategy"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "updateStrategy": {
-              "enum": [
-                "RollingUpdate"
-              ]
-            }
-          },
-          "required": [
-            "updateStrategy"
-          ],
-          "type": "object"
-        }
-      ]
     },
     "schema24": {
       "not": {
@@ -244,29 +289,6 @@
         "type": "object"
       }
     },
-    "schema3": {
-      "additionalProperties": {},
-      "properties": {
-        "initialDelaySeconds": {
-          "anyOf": [
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
     "schema31": {
       "anyOf": [
         {
@@ -320,29 +342,6 @@
       "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
       "type": "string"
     },
-    "schema4": {
-      "additionalProperties": {},
-      "properties": {
-        "successThreshold": {
-          "anyOf": [
-            {
-              "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
     "schema40": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
@@ -352,7 +351,7 @@
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema43": {
+    "schema42": {
       "additionalProperties": {},
       "properties": {
         "password": {},
@@ -361,7 +360,7 @@
       },
       "type": "object"
     },
-    "schema45": {
+    "schema44": {
       "properties": {
         "antiAffinity": {
           "enum": [
@@ -374,12 +373,12 @@
       ],
       "type": "object"
     },
-    "schema47": {
+    "schema45": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema49": {
+    "schema47": {
       "not": {
         "properties": {
           "enabled": {}
@@ -390,7 +389,7 @@
         "type": "object"
       }
     },
-    "schema50": {
+    "schema48": {
       "not": {
         "properties": {
           "create": {}
@@ -401,36 +400,36 @@
         "type": "object"
       }
     },
-    "schema54": {
+    "schema52": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema55": {
+    "schema53": {
       "type": "object",
       "x-kubernetes-preserve-unknown-fields": true
     },
-    "schema57": {
+    "schema55": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema58": {
+    "schema56": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema59": {
+    "schema57": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema62": {
+    "schema60": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema7": {
+    "schema8": {
       "oneOf": [
         {
           "anyOf": [
@@ -494,29 +493,6 @@
           ]
         }
       ]
-    },
-    "schema9": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {
-          "anyOf": [
-            {
-              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-              "type": "string"
-            }
-          ]
-        }
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -667,23 +643,47 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "auth": {
+              "cluster": {
                 "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                 "properties": {
-                  "password": {
-                    "$ref": "#/$defs/helm-double-quoted-safe"
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "password": {
+                        "$ref": "#/$defs/helm-double-quoted-safe"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "username": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "This is where you enter a username/password for 1 user"
+                      }
+                    }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -724,38 +724,31 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema24"
-              },
-              {
+            "properties": {
+              "cluster": {
                 "properties": {
-                  "cluster": {
+                  "auth": {
                     "properties": {
-                      "auth": {
-                        "properties": {
-                          "username": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "username"
-                        ],
-                        "type": "object"
+                      "users": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "auth"
+                      "users"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "cluster"
+                  "auth"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "cluster"
+            ],
+            "type": "object"
           },
           {
             "anyOf": [
@@ -782,821 +775,218 @@
                 "type": "object"
               }
             ]
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "$ref": "#/$defs/schema42"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/$defs/schema42"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           {
-            "not": {
-              "properties": {
-                "cluster": {
-                  "properties": {
-                    "auth": {
-                      "properties": {
-                        "users": {
-                          "$ref": "#/$defs/helm-truthy"
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "properties": {
+                                "password": {
+                                  "$ref": "#/$defs/helm-double-quoted-safe"
+                                }
+                              },
+                              "required": [
+                                "password"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "properties": {
+                                "password": {
+                                  "$ref": "#/$defs/helm-double-quoted-safe"
+                                }
+                              },
+                              "required": [
+                                "password"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "properties": {
+                                "username": {
+                                  "$ref": "#/$defs/helm-double-quoted-safe"
+                                }
+                              },
+                              "required": [
+                                "username"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "properties": {
+                                "username": {
+                                  "$ref": "#/$defs/helm-double-quoted-safe"
+                                }
+                              },
+                              "required": [
+                                "username"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+                        "not": {
+                          "type": "boolean"
                         }
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
+                      }
                     }
-                  },
-                  "required": [
-                    "auth"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "cluster"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "username": {
-                    "$ref": "#/$defs/helm-double-quoted-safe",
-                    "description": "This is where you enter a username/password for 1 user"
                   }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema25"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
           },
           {
+            "additionalProperties": {},
             "properties": {
               "cluster": {
+                "additionalProperties": {},
                 "properties": {
                   "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                     "properties": {
                       "users": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+                        "not": {
+                          "type": "integer"
+                        }
                       }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema32"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "$ref": "#/$defs/schema43"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/schema43"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                    }
                   }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema25"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
           },
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema32"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
             "additionalProperties": {},
             "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "properties": {
-                            "password": {
-                              "$ref": "#/$defs/helm-double-quoted-safe"
-                            }
-                          },
-                          "required": [
-                            "password"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "properties": {
-                            "password": {
-                              "$ref": "#/$defs/helm-double-quoted-safe"
-                            }
-                          },
-                          "required": [
-                            "password"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema25"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
               "cluster": {
+                "additionalProperties": {},
                 "properties": {
                   "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                     "properties": {
                       "users": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+                        "not": {
+                          "type": "number"
+                        }
                       }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema32"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "properties": {
-                            "username": {
-                              "$ref": "#/$defs/helm-double-quoted-safe"
-                            }
-                          },
-                          "required": [
-                            "username"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "properties": {
-                            "username": {
-                              "$ref": "#/$defs/helm-double-quoted-safe"
-                            }
-                          },
-                          "required": [
-                            "username"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema25"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema32"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
-                    "not": {
-                      "type": "boolean"
                     }
                   }
                 }
               }
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema25"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema32"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
-                    "not": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema25"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "auth": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "auth"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema32"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
-                    "not": {
-                      "type": "number"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -2382,28 +1772,46 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "metrics": {
+              "cluster": {
                 "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
                 "properties": {
-                  "servicemonitor": {
-                    "anyOf": [
-                      {
-                        "type": "object"
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "servicemonitor": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ],
+                        "description": "Prometheus Operator ServiceMonitor config"
                       }
-                    ],
-                    "description": "Prometheus Operator ServiceMonitor config"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "type": "object"
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2607,175 +2015,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema32"
-                  },
-                  {
-                    "properties": {
-                      "cluster": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cluster"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "metrics": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema32"
-                  },
-                  {
-                    "properties": {
-                      "cluster": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cluster"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "metrics": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "cluster": {
-                    "properties": {
-                      "metrics": {
-                        "properties": {
-                          "servicemonitor": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "servicemonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "description": "Prometheus Metrics Exporter",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -2878,13 +2117,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema55"
+                      },
+                      {
                         "$ref": "#/$defs/schema57"
                       },
                       {
-                        "$ref": "#/$defs/schema59"
-                      },
-                      {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -2900,13 +2139,13 @@
                         "$ref": "#/$defs/schema41"
                       },
                       {
-                        "$ref": "#/$defs/schema16"
+                        "$ref": "#/$defs/schema17"
                       },
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema45"
                       },
                       {
-                        "$ref": "#/$defs/schema54"
+                        "$ref": "#/$defs/schema52"
                       }
                     ],
                     "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -2980,7 +2219,7 @@
               "namespace": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema1"
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "not": {
@@ -3989,7 +3228,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema45"
+            "$ref": "#/$defs/schema44"
           },
           {
             "allOf": [
@@ -4023,7 +3262,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/schema45"
+                  "$ref": "#/$defs/schema44"
                 }
               }
             ]
@@ -4069,28 +3308,52 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema23"
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "updateStrategy": {}
+              },
+              "required": [
+                "updateStrategy"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "updateStrategy": {
+                "enum": [
+                  "RollingUpdate"
+                ]
+              }
+            },
+            "required": [
+              "updateStrategy"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rollingUpdateMaxSurge": {
-            "$ref": "#/$defs/schema7"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "rollingUpdateMaxSurge": {
+                "$ref": "#/$defs/schema8"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "rollingUpdateMaxUnavailable": {
+                "$ref": "#/$defs/schema8"
+              }
+            }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema23"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rollingUpdateMaxUnavailable": {
-            "$ref": "#/$defs/schema7"
-          }
-        }
+        ]
       }
     },
     {
@@ -4162,7 +3425,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema50"
+                "$ref": "#/$defs/schema48"
               },
               {
                 "properties": {
@@ -4178,22 +3441,249 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema55"
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema53"
+                      }
+                    ],
+                    "description": "Optional custom annotations to add to Pods in the cluster"
                   }
-                ],
-                "description": "Optional custom annotations to add to Pods in the cluster"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/schema31"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "pullPolicy": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "resources": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema53"
+                          }
+                        ],
+                        "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/schema31"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "pullPolicy": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/schema2"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "resources": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema53"
+                      }
+                    ],
+                    "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "size": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema37"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "description": "Cluster Size"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "version": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema55"
+                      },
+                      {
+                        "$ref": "#/$defs/schema57"
+                      },
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
+                      },
+                      {
+                        "$ref": "#/$defs/schema41"
+                      },
+                      {
+                        "$ref": "#/$defs/schema17"
+                      },
+                      {
+                        "$ref": "#/$defs/schema45"
+                      },
+                      {
+                        "$ref": "#/$defs/schema52"
+                      }
+                    ],
+                    "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
+                    "type": "string"
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -4228,7 +3718,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema50"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "properties": {
@@ -4319,7 +3809,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema50"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "properties": {
@@ -4355,293 +3845,11 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "configReload": {
-                "additionalProperties": {},
-                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/schema31"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "configReload": {
-                "additionalProperties": {},
-                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                "properties": {
-                  "pullPolicy": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "configReload": {
-                "additionalProperties": {},
-                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                "properties": {
-                  "repository": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "configReload": {
-                "additionalProperties": {},
-                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                "properties": {
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema55"
-                      }
-                    ],
-                    "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "configReload": {
-                "additionalProperties": {},
-                "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
-                "properties": {
-                  "tag": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/schema31"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "pullPolicy": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "repository": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema50"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "properties": {
@@ -4716,7 +3924,7 @@
                     "description": "Prometheus Operator ServiceMonitor config",
                     "properties": {
                       "prometheusInstance": {
-                        "$ref": "#/$defs/schema1"
+                        "$ref": "#/$defs/schema2"
                       }
                     }
                   }
@@ -4727,147 +3935,11 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "description": "Prometheus Metrics Exporter",
-                "properties": {
-                  "tag": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "$ref": "#/$defs/schema1"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "resources": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema55"
-                  }
-                ],
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "size": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema37"
-                  },
-                  {
-                    "type": "integer"
-                  }
-                ],
-                "description": "Cluster Size"
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema50"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "properties": {
@@ -4904,138 +3976,34 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {},
-                "properties": {
-                  "routesSecret": {
-                    "$ref": "#/$defs/schema1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema50"
-                  },
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
                 "additionalProperties": {},
                 "properties": {
-                  "serverSecret": {
-                    "$ref": "#/$defs/schema1"
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "routesSecret": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serverSecret": {
+                        "$ref": "#/$defs/schema2"
+                      }
+                    }
                   }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema50"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "version": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/schema57"
-                  },
-                  {
-                    "$ref": "#/$defs/schema59"
-                  },
-                  {
-                    "$ref": "#/$defs/schema62"
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema58"
-                  },
-                  {
-                    "$ref": "#/$defs/schema41"
-                  },
-                  {
-                    "$ref": "#/$defs/schema16"
-                  },
-                  {
-                    "$ref": "#/$defs/schema47"
-                  },
-                  {
-                    "$ref": "#/$defs/schema54"
-                  }
-                ],
-                "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
-                "type": "string"
-              }
-            }
           }
         }
       ],
@@ -5218,13 +4186,13 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/schema55"
+                },
+                {
                   "$ref": "#/$defs/schema57"
                 },
                 {
-                  "$ref": "#/$defs/schema59"
-                },
-                {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 },
                 {
                   "not": {
@@ -5240,13 +4208,13 @@
                   "$ref": "#/$defs/schema41"
                 },
                 {
-                  "$ref": "#/$defs/schema16"
+                  "$ref": "#/$defs/schema17"
                 },
                 {
-                  "$ref": "#/$defs/schema47"
+                  "$ref": "#/$defs/schema45"
                 },
                 {
-                  "$ref": "#/$defs/schema54"
+                  "$ref": "#/$defs/schema52"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -5296,7 +4264,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema49"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -5312,99 +4280,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema9"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema3"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema11"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema4"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema2"
+            "$ref": "#/$defs/schema1"
           }
         }
       ],
@@ -5435,13 +4311,13 @@
         {
           "allOf": [
             {
+              "$ref": "#/$defs/schema55"
+            },
+            {
               "$ref": "#/$defs/schema57"
             },
             {
-              "$ref": "#/$defs/schema59"
-            },
-            {
-              "$ref": "#/$defs/schema62"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -5457,13 +4333,13 @@
               "$ref": "#/$defs/schema41"
             },
             {
-              "$ref": "#/$defs/schema16"
+              "$ref": "#/$defs/schema17"
             },
             {
-              "$ref": "#/$defs/schema47"
+              "$ref": "#/$defs/schema45"
             },
             {
-              "$ref": "#/$defs/schema54"
+              "$ref": "#/$defs/schema52"
             }
           ],
           "type": "string"
@@ -5589,7 +4465,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema49"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -5605,99 +4481,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema9"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema3"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema11"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema4"
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema49"
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/$defs/schema2"
+            "$ref": "#/$defs/schema1"
           }
         }
       ],
@@ -5834,7 +4618,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema49"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -5850,68 +4634,52 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "fsGroup": {
-                "anyOf": [
-                  {
-                    "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/schema37"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema49"
+                "additionalProperties": {},
+                "properties": {
+                  "fsGroup": {
+                    "anyOf": [
+                      {
+                        "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
+                        "format": "int64",
+                        "type": "integer"
+                      },
+                      {
+                        "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
+                        "format": "int64",
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
+                      }
+                    ]
+                  }
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "runAsUser": {
+                    "anyOf": [
+                      {
+                        "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                        "format": "int64",
+                        "type": "integer"
+                      },
+                      {
+                        "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                        "format": "int64",
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
+                      }
+                    ]
                   }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "runAsUser": {
-                "anyOf": [
-                  {
-                    "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/schema37"
-                  }
-                ]
-              }
-            }
           }
         }
       ],
@@ -6001,13 +4769,13 @@
         {
           "allOf": [
             {
+              "$ref": "#/$defs/schema55"
+            },
+            {
               "$ref": "#/$defs/schema57"
             },
             {
-              "$ref": "#/$defs/schema59"
-            },
-            {
-              "$ref": "#/$defs/schema62"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -6023,13 +4791,13 @@
               "$ref": "#/$defs/schema41"
             },
             {
-              "$ref": "#/$defs/schema16"
+              "$ref": "#/$defs/schema17"
             },
             {
-              "$ref": "#/$defs/schema47"
+              "$ref": "#/$defs/schema45"
             },
             {
-              "$ref": "#/$defs/schema54"
+              "$ref": "#/$defs/schema52"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

@@ -130,183 +130,143 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
             "properties": {
               "ingress": {
+                "additionalProperties": {},
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "host": {},
-                        "paths": {
-                          "anyOf": [
-                            {
-                              "items": {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "path": {},
-                                  "pathType": {}
-                                },
-                                "type": "object"
-                              },
-                              "type": "array"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
+                  "hosts": {
                     "additionalProperties": {
                       "additionalProperties": {},
                       "properties": {
-                        "host": {},
                         "paths": {
                           "anyOf": [
                             {
-                              "items": {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "path": {},
-                                  "pathType": {}
-                                },
-                                "type": "object"
-                              },
                               "type": "array"
                             },
                             {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
                             }
                           ]
                         }
-                      },
-                      "type": "object"
+                      }
                     },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    }
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "host": {},
+                            "paths": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "path": {},
+                                      "pathType": {}
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "host": {},
+                            "paths": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "path": {},
+                                      "pathType": {}
+                                    },
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     }
   ],
@@ -407,127 +367,75 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
                 }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "null"
+                  "hosts": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
-                      ]
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
                     }
                   }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
                 }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "hosts": {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "type": "array"
                   }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {},
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            }
           }
         }
       ],

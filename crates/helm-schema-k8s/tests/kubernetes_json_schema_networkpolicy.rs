@@ -123,6 +123,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        outer_guards: Vec::new(),
     };
 
     let schema = chain

@@ -736,10 +736,10 @@
         "null"
       ]
     },
-    "schema36": {
+    "schema39": {
       "not": {
         "properties": {
-          "serviceAccount": {
+          "rbac": {
             "properties": {
               "create": {}
             },
@@ -750,7 +750,7 @@
           }
         },
         "required": [
-          "serviceAccount"
+          "rbac"
         ],
         "type": "object"
       }
@@ -880,40 +880,21 @@
         }
       }
     },
-    "schema41": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
-    },
-    "schema44": {
+    "schema42": {
       "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
       "type": "string"
     },
-    "schema46": {
+    "schema44": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema48": {
+    "schema46": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema53": {
+    "schema51": {
       "properties": {
         "create": {}
       },
@@ -922,7 +903,7 @@
       ],
       "type": "object"
     },
-    "schema54": {
+    "schema52": {
       "oneOf": [
         {
           "type": [
@@ -938,22 +919,22 @@
         }
       ]
     },
-    "schema55": {
+    "schema53": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema57": {
+    "schema55": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema58": {
+    "schema56": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema60": {
+    "schema58": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -1072,7 +1053,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1098,7 +1079,17 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/$defs/schema51"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
               },
               {
                 "properties": {
@@ -1124,24 +1115,48 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema19"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -1235,146 +1250,108 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
-              "hosts": {
-                "$ref": "#/$defs/schema31"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "configure UI ingress. If needed: \"enabled: true\"",
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "host": {},
-                        "paths": {
-                          "anyOf": [
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "host": {},
-                        "paths": {
-                          "anyOf": [
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
+              "ingress": {
+                "additionalProperties": {},
+                "description": "configure UI ingress. If needed: \"enabled: true\"",
+                "properties": {
+                  "hosts": {
+                    "$ref": "#/$defs/schema31"
                   }
-                ]
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
+          },
+          {
             "additionalProperties": {},
-            "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
-              "tls": {
-                "$ref": "#/$defs/schema26"
+              "ingress": {
+                "additionalProperties": {},
+                "description": "configure UI ingress. If needed: \"enabled: true\"",
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "host": {},
+                            "paths": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "host": {},
+                            "paths": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "configure UI ingress. If needed: \"enabled: true\"",
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/schema26"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1466,103 +1443,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema41"
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema36"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema19"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -1614,7 +1494,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema41"
+            "$ref": "#/$defs/schema39"
           },
           {
             "properties": {
@@ -1648,13 +1528,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema55"
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -1672,16 +1552,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema46"
+                        "$ref": "#/$defs/schema44"
                       },
                       {
                         "$ref": "#/$defs/schema32"
                       },
                       {
-                        "$ref": "#/$defs/schema48"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
-                        "$ref": "#/$defs/schema55"
+                        "$ref": "#/$defs/schema53"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -1869,13 +1749,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema55"
+                },
+                {
+                  "$ref": "#/$defs/schema56"
                 },
                 {
                   "$ref": "#/$defs/schema58"
-                },
-                {
-                  "$ref": "#/$defs/schema60"
                 },
                 {
                   "not": {
@@ -1888,16 +1768,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "$ref": "#/$defs/schema32"
                 },
                 {
-                  "$ref": "#/$defs/schema48"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema55"
+                  "$ref": "#/$defs/schema53"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -2011,7 +1891,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/schema54"
+                        "$ref": "#/$defs/schema52"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -2100,13 +1980,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema55"
+                },
+                {
+                  "$ref": "#/$defs/schema56"
                 },
                 {
                   "$ref": "#/$defs/schema58"
-                },
-                {
-                  "$ref": "#/$defs/schema60"
                 },
                 {
                   "not": {
@@ -2119,16 +1999,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "$ref": "#/$defs/schema32"
                 },
                 {
-                  "$ref": "#/$defs/schema48"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema55"
+                  "$ref": "#/$defs/schema53"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2194,263 +2074,126 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema20"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema20"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/schema4"
-                },
-                "items": {
-                  "$ref": "#/$defs/schema4"
                 }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "$ref": "#/$defs/schema31"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {},
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressClassName": {
-                "anyOf": [
-                  {
-                    "allOf": [
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/schema4"
+                    },
+                    "items": {
+                      "$ref": "#/$defs/schema4"
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "$ref": "#/$defs/schema31"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressClassName": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema57"
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema55"
+                          },
+                          {
+                            "$ref": "#/$defs/schema56"
+                          },
+                          {
+                            "$ref": "#/$defs/schema58"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema44"
+                          },
+                          {
+                            "$ref": "#/$defs/schema32"
+                          },
+                          {
+                            "$ref": "#/$defs/schema46"
+                          },
+                          {
+                            "$ref": "#/$defs/schema53"
+                          }
+                        ],
+                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                        "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
+                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                        "type": "null"
                       },
                       {
                         "not": {
-                          "pattern": "[\\r\\n]"
+                          "$ref": "#/$defs/helm-truthy"
                         }
-                      },
-                      {
-                        "$ref": "#/$defs/schema46"
-                      },
-                      {
-                        "$ref": "#/$defs/schema32"
-                      },
-                      {
-                        "$ref": "#/$defs/schema48"
-                      },
-                      {
-                        "$ref": "#/$defs/schema55"
                       }
                     ],
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "string"
-                  },
-                  {
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
                   }
-                ],
-                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema28"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema28"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "object"
-                        }
-                      ]
-                    }
+                    "$ref": "#/$defs/schema26"
                   }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "$ref": "#/$defs/schema26"
-              }
-            }
+            ]
           }
         },
         {
@@ -2481,56 +2224,80 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/schema7"
-                },
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-                "items": {
-                  "$ref": "#/$defs/schema7"
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/$defs/schema28"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/$defs/schema28"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/schema7"
+                    },
+                    "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                    "items": {
+                      "$ref": "#/$defs/schema7"
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                    "items": {},
+                    "type": "array"
+                  }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-                "items": {},
-                "type": "array"
-              }
-            }
           }
         }
       ],
@@ -2615,13 +2382,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema55"
+            },
+            {
+              "$ref": "#/$defs/schema56"
             },
             {
               "$ref": "#/$defs/schema58"
-            },
-            {
-              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -2634,16 +2401,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema46"
+              "$ref": "#/$defs/schema44"
             },
             {
               "$ref": "#/$defs/schema32"
             },
             {
-              "$ref": "#/$defs/schema48"
+              "$ref": "#/$defs/schema46"
             },
             {
-              "$ref": "#/$defs/schema55"
+              "$ref": "#/$defs/schema53"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -2693,7 +2460,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema42"
         }
       ]
     },
@@ -2735,7 +2502,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema54"
+                    "$ref": "#/$defs/schema52"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2757,7 +2524,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema54"
+                    "$ref": "#/$defs/schema52"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2822,7 +2589,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema42"
                   }
                 ]
               }
@@ -2863,7 +2630,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/schema44"
+              "$ref": "#/$defs/schema42"
             }
           ]
         },
@@ -2872,13 +2639,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema55"
+                },
+                {
+                  "$ref": "#/$defs/schema56"
                 },
                 {
                   "$ref": "#/$defs/schema58"
-                },
-                {
-                  "$ref": "#/$defs/schema60"
                 },
                 {
                   "not": {
@@ -2891,16 +2658,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "$ref": "#/$defs/schema32"
                 },
                 {
-                  "$ref": "#/$defs/schema48"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema55"
+                  "$ref": "#/$defs/schema53"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -2931,7 +2698,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema51"
                 }
               },
               {
@@ -2955,13 +2722,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema55"
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -2974,16 +2741,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema46"
+                        "$ref": "#/$defs/schema44"
                       },
                       {
                         "$ref": "#/$defs/schema32"
                       },
                       {
-                        "$ref": "#/$defs/schema48"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
-                        "$ref": "#/$defs/schema55"
+                        "$ref": "#/$defs/schema53"
                       }
                     ],
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -3023,13 +2790,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema55"
+                },
+                {
+                  "$ref": "#/$defs/schema56"
                 },
                 {
                   "$ref": "#/$defs/schema58"
-                },
-                {
-                  "$ref": "#/$defs/schema60"
                 },
                 {
                   "not": {
@@ -3042,16 +2809,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "$ref": "#/$defs/schema32"
                 },
                 {
-                  "$ref": "#/$defs/schema48"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema55"
+                  "$ref": "#/$defs/schema53"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

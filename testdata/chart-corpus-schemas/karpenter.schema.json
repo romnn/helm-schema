@@ -326,52 +326,69 @@
         "null"
       ]
     },
-    "schema101": {
-      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-      "format": "int32",
-      "type": "integer"
+    "schema100": {
+      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+      "type": "string"
     },
     "schema106": {
-      "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "labelSelector": {}
+        },
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "schema108": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema107": {
-      "additionalProperties": {},
-      "properties": {
-        "preferredDuringSchedulingIgnoredDuringExecution": {},
-        "requiredDuringSchedulingIgnoredDuringExecution": {}
+    "schema109": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema108": {
-      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+    "schema112": {
+      "description": "Level is SELinux level label that applies to the container.",
       "type": [
-        "boolean",
+        "string",
         "null"
       ]
     },
     "schema113": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Additional sidecarContainer config"
+      "description": "Role is a SELinux role label that applies to the container.",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "schema114": {
-      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-      "type": "string"
+      "description": "Type is a SELinux type label that applies to the container.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema115": {
+      "description": "User is a SELinux user label that applies to the container.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema116": {
+      "items": {
+        "additionalProperties": {},
+        "properties": {
+          "labelSelector": {}
+        },
+        "type": "object"
+      },
+      "type": "array"
     },
     "schema12": {
       "allOf": [
@@ -424,65 +441,52 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema120": {
-      "additionalProperties": {
-        "additionalProperties": {},
-        "properties": {
-          "labelSelector": {}
-        },
-        "type": "object"
-      },
-      "type": "object"
-    },
-    "schema122": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "schema123": {
+    "schema130": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema126": {
-      "description": "Level is SELinux level label that applies to the container.",
-      "type": [
-        "string",
-        "null"
-      ]
+    "schema131": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
     },
-    "schema127": {
-      "description": "Role is a SELinux role label that applies to the container.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "schema128": {
-      "description": "Type is a SELinux type label that applies to the container.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "schema129": {
-      "description": "User is a SELinux user label that applies to the container.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "schema130": {
-      "items": {
-        "additionalProperties": {},
+    "schema132": {
+      "not": {
         "properties": {
-          "labelSelector": {}
+          "affinity": {}
         },
+        "required": [
+          "affinity"
+        ],
         "type": "object"
+      }
+    },
+    "schema138": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema139": {
+      "properties": {
+        "create": {}
       },
-      "type": "array"
+      "required": [
+        "create"
+      ],
+      "type": "object"
     },
     "schema14": {
       "additionalProperties": false,
@@ -514,54 +518,7 @@
         "null"
       ]
     },
-    "schema144": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
-    },
-    "schema145": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema146": {
-      "not": {
-        "properties": {
-          "affinity": {}
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      }
-    },
-    "schema152": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "integer",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema153": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema154": {
+    "schema140": {
       "oneOf": [
         {
           "type": [
@@ -577,17 +534,17 @@
         }
       ]
     },
-    "schema155": {
+    "schema141": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema161": {
+    "schema147": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema162": {
+    "schema148": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -669,68 +626,6 @@
         }
       ],
       "type": "string"
-    },
-    "schema19": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "affinity": {
-                  "properties": {
-                    "podAntiAffinity": {
-                      "properties": {
-                        "preferredDuringSchedulingIgnoredDuringExecution": {}
-                      },
-                      "required": [
-                        "preferredDuringSchedulingIgnoredDuringExecution"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podAntiAffinity"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "affinity"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAntiAffinity": {
-                    "properties": {
-                      "preferredDuringSchedulingIgnoredDuringExecution": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "preferredDuringSchedulingIgnoredDuringExecution"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podAntiAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          }
-        ]
-      }
     },
     "schema2": {
       "additionalProperties": false,
@@ -896,69 +791,7 @@
         "null"
       ]
     },
-    "schema21": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "affinity": {
-                  "properties": {
-                    "podAffinity": {
-                      "properties": {
-                        "preferredDuringSchedulingIgnoredDuringExecution": {}
-                      },
-                      "required": [
-                        "preferredDuringSchedulingIgnoredDuringExecution"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podAffinity"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "affinity"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAffinity": {
-                    "properties": {
-                      "preferredDuringSchedulingIgnoredDuringExecution": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "preferredDuringSchedulingIgnoredDuringExecution"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "schema24": {
+    "schema20": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -996,7 +829,7 @@
         "null"
       ]
     },
-    "schema29": {
+    "schema25": {
       "additionalProperties": {},
       "properties": {
         "preferredDuringSchedulingIgnoredDuringExecution": {
@@ -1210,7 +1043,7 @@
         "null"
       ]
     },
-    "schema37": {
+    "schema33": {
       "additionalProperties": {
         "oneOf": [
           {
@@ -1233,7 +1066,7 @@
         "null"
       ]
     },
-    "schema40": {
+    "schema36": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -1248,7 +1081,7 @@
       "properties": {},
       "type": "object"
     },
-    "schema41": {
+    "schema37": {
       "additionalProperties": {},
       "properties": {
         "preferredDuringSchedulingIgnoredDuringExecution": {
@@ -1292,11 +1125,11 @@
         }
       }
     },
-    "schema43": {
+    "schema39": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "schema44": {
+    "schema40": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
@@ -1314,7 +1147,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema45": {
+    "schema41": {
       "additionalProperties": {},
       "properties": {
         "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -1350,7 +1183,7 @@
         }
       }
     },
-    "schema47": {
+    "schema43": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -1364,6 +1197,59 @@
       "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
       "properties": {},
       "type": "object"
+    },
+    "schema47": {
+      "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema49": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAffinity": {}
+                  },
+                  "required": [
+                    "podAffinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      }
     },
     "schema5": {
       "additionalProperties": false,
@@ -1456,58 +1342,32 @@
         "null"
       ]
     },
-    "schema51": {
-      "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-      "type": [
-        "string",
-        "null"
-      ]
+    "schema54": {
+      "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+      "type": "string"
     },
-    "schema53": {
-      "not": {
-        "anyOf": [
+    "schema55": {
+      "additionalProperties": {
+        "oneOf": [
           {
-            "not": {
-              "properties": {
-                "affinity": {
-                  "properties": {
-                    "podAffinity": {}
-                  },
-                  "required": [
-                    "podAffinity"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "affinity"
-              ],
-              "type": "object"
-            }
+            "type": [
+              "string",
+              "null"
+            ]
           },
           {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAffinity": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
+            "type": [
+              "number",
+              "null"
+            ]
           }
         ]
-      }
+      },
+      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "schema6": {
       "additionalProperties": false,
@@ -1575,30 +1435,30 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema61": {
-      "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-      "type": "string"
+    "schema62": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
     },
-    "schema65": {
-      "additionalProperties": {
-        "oneOf": [
-          {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          {
-            "type": [
-              "number",
-              "null"
-            ]
-          }
-        ]
-      },
-      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+    "schema63": {
+      "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
+      "format": "date-time",
       "type": [
-        "object",
+        "string",
+        "null"
+      ]
+    },
+    "schema64": {
+      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema66": {
+      "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+      "type": [
+        "string",
         "null"
       ]
     },
@@ -1639,32 +1499,54 @@
         "null"
       ]
     },
-    "schema73": {
+    "schema75": {
       "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+        "properties": {
+          "affinity": {
+            "properties": {
+              "podAntiAffinity": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podAntiAffinity"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "affinity"
+        ],
+        "type": "object"
       }
     },
-    "schema74": {
-      "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
-      "format": "date-time",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "schema76": {
-      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
-      "type": [
-        "string",
-        "null"
-      ]
+    "schema77": {
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "preferredDuringSchedulingIgnoredDuringExecution"
+      ],
+      "type": "object"
     },
     "schema78": {
-      "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "properties": {
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "requiredDuringSchedulingIgnoredDuringExecution"
+      ],
+      "type": "object"
     },
     "schema8": {
       "additionalProperties": false,
@@ -1731,28 +1613,57 @@
         "null"
       ]
     },
-    "schema89": {
+    "schema81": {
+      "properties": {
+        "settings": {
+          "properties": {
+            "clusterName": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "settings"
+      ],
+      "type": "object"
+    },
+    "schema82": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema84": {
       "not": {
         "properties": {
-          "affinity": {
+          "serviceAccount": {
             "properties": {
-              "podAntiAffinity": {
-                "enum": [
-                  null
-                ]
-              }
+              "create": {}
             },
             "required": [
-              "podAntiAffinity"
+              "create"
             ],
             "type": "object"
           }
         },
         "required": [
-          "affinity"
+          "serviceAccount"
         ],
         "type": "object"
       }
+    },
+    "schema87": {
+      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+      "format": "int32",
+      "type": "integer"
     },
     "schema9": {
       "additionalProperties": false,
@@ -1792,65 +1703,52 @@
         "null"
       ]
     },
+    "schema91": {
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {}
+      },
+      "required": [
+        "preferredDuringSchedulingIgnoredDuringExecution"
+      ],
+      "type": "object"
+    },
     "schema92": {
-      "properties": {
-        "requiredDuringSchedulingIgnoredDuringExecution": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "requiredDuringSchedulingIgnoredDuringExecution"
-      ],
-      "type": "object"
-    },
-    "schema95": {
-      "properties": {
-        "settings": {
-          "properties": {
-            "clusterName": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "clusterName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "settings"
-      ],
-      "type": "object"
-    },
-    "schema96": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
-        "string",
+        "boolean",
         "null"
       ]
     },
-    "schema97": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
+    "schema93": {
+      "additionalProperties": {},
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {},
+        "requiredDuringSchedulingIgnoredDuringExecution": {}
       }
+    },
+    "schema94": {
+      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "schema99": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Additional sidecarContainer config"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1864,7 +1762,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -1965,7 +1863,7 @@
           "additionalAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema36"
               },
               {
                 "not": {
@@ -1985,7 +1883,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema97"
+            "$ref": "#/$defs/schema84"
           },
           {
             "properties": {
@@ -2009,127 +1907,183 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "additionalLabels": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "additionalLabels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema43"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional labels to add into metadata.\napp: karpenter"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Overrides the chart's computed fullname."
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema18"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Overrides the chart's name."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema132"
               },
               {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema49"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {
+                            "$ref": "#/$defs/schema91"
+                          }
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAffinity": {
+                          "$ref": "#/$defs/schema77"
+                        }
+                      },
+                      "required": [
+                        "podAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
                 }
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional labels to add into metadata.\napp: karpenter"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema146"
-              },
-              {
-                "properties": {
-                  "affinity": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "affinity"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema53"
-          },
-          {
-            "$ref": "#/$defs/schema21"
+              ]
+            }
           }
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAffinity": {
-                "$ref": "#/$defs/schema29"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema146"
-              },
-              {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
                 "properties": {
-                  "affinity": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
+                  "podAffinity": {
+                    "$ref": "#/$defs/schema25"
                   }
-                },
-                "required": [
-                  "affinity"
-                ],
-                "type": "object"
+                }
               }
-            ]
+            }
           },
           {
-            "$ref": "#/$defs/schema53"
-          },
-          {
-            "$ref": "#/$defs/schema21"
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAffinity": {
+                    "$ref": "#/$defs/schema37"
+                  }
+                }
+              }
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAffinity": {
-                "$ref": "#/$defs/schema41"
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -2138,7 +2092,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema146"
+                "$ref": "#/$defs/schema132"
               },
               {
                 "properties": {
@@ -2161,7 +2115,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema53"
+            "$ref": "#/$defs/schema49"
           },
           {
             "not": {
@@ -2198,7 +2152,7 @@
                     "affinity": {
                       "properties": {
                         "podAffinity": {
-                          "$ref": "#/$defs/schema92"
+                          "$ref": "#/$defs/schema78"
                         }
                       },
                       "required": [
@@ -2225,7 +2179,7 @@
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -2238,7 +2192,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema146"
+                "$ref": "#/$defs/schema132"
               },
               {
                 "properties": {
@@ -2261,7 +2215,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema53"
+            "$ref": "#/$defs/schema49"
           }
         ]
       },
@@ -2293,7 +2247,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema146"
+                "$ref": "#/$defs/schema132"
               },
               {
                 "properties": {
@@ -2316,26 +2270,87 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema89"
+            "$ref": "#/$defs/schema75"
           },
           {
-            "$ref": "#/$defs/schema19"
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAntiAffinity": {
+                            "$ref": "#/$defs/schema91"
+                          }
+                        },
+                        "required": [
+                          "podAntiAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAntiAffinity": {
+                          "$ref": "#/$defs/schema77"
+                        }
+                      },
+                      "required": [
+                        "podAntiAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           }
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "podAntiAffinity": {
-                "$ref": "#/$defs/schema29"
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/schema25"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/schema37"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2344,7 +2359,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema146"
+                "$ref": "#/$defs/schema132"
               },
               {
                 "properties": {
@@ -2367,58 +2382,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema89"
-          },
-          {
-            "$ref": "#/$defs/schema19"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAntiAffinity": {
-                "$ref": "#/$defs/schema41"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema146"
-              },
-              {
-                "properties": {
-                  "affinity": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "affinity"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema89"
+            "$ref": "#/$defs/schema75"
           },
           {
             "not": {
@@ -2426,7 +2390,7 @@
                 "affinity": {
                   "properties": {
                     "podAntiAffinity": {
-                      "$ref": "#/$defs/schema92"
+                      "$ref": "#/$defs/schema78"
                     }
                   },
                   "required": [
@@ -2451,7 +2415,7 @@
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -2464,7 +2428,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema146"
+                "$ref": "#/$defs/schema132"
               },
               {
                 "properties": {
@@ -2487,7 +2451,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema89"
+            "$ref": "#/$defs/schema75"
           }
         ]
       },
@@ -2517,7 +2481,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema146"
+            "$ref": "#/$defs/schema132"
           },
           {
             "properties": {
@@ -2564,7 +2528,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema146"
+                    "$ref": "#/$defs/schema132"
                   },
                   {
                     "properties": {
@@ -2587,7 +2551,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema53"
+                "$ref": "#/$defs/schema49"
               }
             ]
           },
@@ -2596,7 +2560,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema146"
+                    "$ref": "#/$defs/schema132"
                   },
                   {
                     "properties": {
@@ -2619,7 +2583,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema89"
+                "$ref": "#/$defs/schema75"
               }
             ]
           }
@@ -2756,7 +2720,7 @@
           "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
           "properties": {
             "sidecarContainer": {
-              "$ref": "#/$defs/schema113"
+              "$ref": "#/$defs/schema99"
             }
           }
         }
@@ -2768,55 +2732,6 @@
         "controller": {
           "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
           "type": "object"
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema97"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Overrides the chart's computed fullname."
-          }
         }
       }
     },
@@ -2882,55 +2797,6 @@
           "logLevel": {
             "$ref": "#/$defs/helm-double-quoted-safe",
             "description": "Global log level, defaults to 'info'"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema97"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema18"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's name."
           }
         }
       }
@@ -3008,7 +2874,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "not": {
@@ -3097,7 +2963,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema97"
+                "$ref": "#/$defs/schema84"
               },
               {
                 "properties": {
@@ -3165,7 +3031,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "not": {
@@ -3448,10 +3314,10 @@
           "topologySpreadConstraints": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema130"
+                "$ref": "#/$defs/schema116"
               },
               {
-                "$ref": "#/$defs/schema120"
+                "$ref": "#/$defs/schema106"
               },
               {
                 "maximum": 0,
@@ -3514,10 +3380,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema95"
+            "$ref": "#/$defs/schema81"
           },
           {
-            "$ref": "#/$defs/schema95"
+            "$ref": "#/$defs/schema81"
           }
         ]
       },
@@ -3533,7 +3399,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema36"
         },
         {
           "not": {
@@ -3646,7 +3512,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema47"
+          "$ref": "#/$defs/schema43"
         },
         {
           "not": {
@@ -3664,10 +3530,10 @@
       "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
       "properties": {
         "podAffinity": {
-          "$ref": "#/$defs/schema107"
+          "$ref": "#/$defs/schema93"
         },
         "podAntiAffinity": {
-          "$ref": "#/$defs/schema107"
+          "$ref": "#/$defs/schema93"
         }
       }
     },
@@ -3791,7 +3657,7 @@
             "additionalProperties": {},
             "properties": {
               "sidecarContainer": {
-                "$ref": "#/$defs/schema113"
+                "$ref": "#/$defs/schema99"
               }
             }
           }
@@ -3813,104 +3679,87 @@
                     ]
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "seLinuxOptions": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": false,
-                            "description": "SELinuxOptions are the labels to be applied to the container",
-                            "properties": {
-                              "level": {
-                                "$ref": "#/$defs/schema126"
-                              },
-                              "role": {
-                                "$ref": "#/$defs/schema127"
-                              },
-                              "type": {
-                                "$ref": "#/$defs/schema128"
-                              },
-                              "user": {
-                                "$ref": "#/$defs/schema129"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "SELinux options for the controller container."
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "securityContext": {
-              "allOf": [
-                {
-                  "if": {
-                    "anyOf": [
+                    "allOf": [
                       {
-                        "type": "object"
+                        "additionalProperties": {},
+                        "properties": {
+                          "seLinuxOptions": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": false,
+                                "description": "SELinuxOptions are the labels to be applied to the container",
+                                "properties": {
+                                  "level": {
+                                    "$ref": "#/$defs/schema112"
+                                  },
+                                  "role": {
+                                    "$ref": "#/$defs/schema113"
+                                  },
+                                  "type": {
+                                    "$ref": "#/$defs/schema114"
+                                  },
+                                  "user": {
+                                    "$ref": "#/$defs/schema115"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "SELinux options for the controller container."
+                          }
+                        }
                       },
                       {
-                        "$ref": "#/$defs/helm-truthy"
+                        "additionalProperties": {},
+                        "properties": {
+                          "seccompProfile": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": false,
+                                "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+                                "properties": {
+                                  "localhostProfile": {
+                                    "$ref": "#/$defs/schema47"
+                                  },
+                                  "type": {
+                                    "$ref": "#/$defs/schema54"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "type": "object",
+                                "x-kubernetes-unions": [
+                                  {
+                                    "discriminator": "type",
+                                    "fields-to-discriminateBy": {
+                                      "localhostProfile": "LocalhostProfile"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Seccomp profile for the controller container."
+                          }
+                        }
                       }
                     ]
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "seccompProfile": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": false,
-                            "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-                            "properties": {
-                              "localhostProfile": {
-                                "$ref": "#/$defs/schema51"
-                              },
-                              "type": {
-                                "$ref": "#/$defs/schema61"
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "type": "object",
-                            "x-kubernetes-unions": [
-                              {
-                                "discriminator": "type",
-                                "fields-to-discriminateBy": {
-                                  "localhostProfile": "LocalhostProfile"
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Seccomp profile for the controller container."
-                      }
-                    }
                   }
                 }
               ]
@@ -4007,10 +3856,10 @@
             "port": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema101"
+                  "$ref": "#/$defs/schema87"
                 },
                 {
-                  "$ref": "#/$defs/schema114"
+                  "$ref": "#/$defs/schema100"
                 }
               ],
               "description": "The container port to use for http health probe."
@@ -4043,7 +3892,7 @@
                   "type": "integer"
                 },
                 {
-                  "$ref": "#/$defs/schema114"
+                  "$ref": "#/$defs/schema100"
                 }
               ],
               "description": "The container port to use for metrics."
@@ -4061,16 +3910,16 @@
                   "$ref": "#/$defs/schema17"
                 },
                 "limits": {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema55"
                 },
                 "requests": {
-                  "$ref": "#/$defs/schema37"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema145"
+              "$ref": "#/$defs/schema131"
             },
             {
               "not": {
@@ -4193,7 +4042,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema145"
+          "$ref": "#/$defs/schema131"
         },
         {
           "not": {
@@ -4211,10 +4060,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema161"
+              "$ref": "#/$defs/schema147"
             },
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema148"
             },
             {
               "not": {
@@ -4232,16 +4081,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema123"
+              "$ref": "#/$defs/schema109"
             },
             {
-              "$ref": "#/$defs/schema73"
+              "$ref": "#/$defs/schema62"
             },
             {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema130"
             },
             {
-              "$ref": "#/$defs/schema155"
+              "$ref": "#/$defs/schema141"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4340,7 +4189,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema108"
+                    "$ref": "#/$defs/schema94"
                   }
                 },
                 "required": [
@@ -4357,7 +4206,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/schema106"
+                    "$ref": "#/$defs/schema92"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -4413,7 +4262,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   },
                   "user": {
                     "description": "user is optional: User is the rados user name, default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
@@ -4450,7 +4299,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   },
                   "volumeID": {
                     "description": "volumeID used to identify the volume in cinder. More info: https://examples.k8s.io/mysql-cinder-pd/README.md",
@@ -4481,10 +4330,10 @@
                     "$ref": "#/$defs/schema7"
                   },
                   "name": {
-                    "$ref": "#/$defs/schema96"
+                    "$ref": "#/$defs/schema82"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema122"
+                    "$ref": "#/$defs/schema108"
                   }
                 },
                 "type": [
@@ -4508,7 +4357,7 @@
                     ]
                   },
                   "nodePublishSecretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   },
                   "readOnly": {
                     "description": "readOnly specifies a read-only configuration for the volume. Defaults to false (read/write).",
@@ -4579,7 +4428,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema154"
+                    "$ref": "#/$defs/schema140"
                   }
                 },
                 "type": [
@@ -4613,7 +4462,7 @@
                             ]
                           },
                           "creationTimestamp": {
-                            "$ref": "#/$defs/schema74"
+                            "$ref": "#/$defs/schema63"
                           },
                           "deletionGracePeriodSeconds": {
                             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -4624,7 +4473,7 @@
                             ]
                           },
                           "deletionTimestamp": {
-                            "$ref": "#/$defs/schema74"
+                            "$ref": "#/$defs/schema63"
                           },
                           "finalizers": {
                             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -4717,7 +4566,7 @@
                                   ]
                                 },
                                 "time": {
-                                  "$ref": "#/$defs/schema74"
+                                  "$ref": "#/$defs/schema63"
                                 }
                               },
                               "type": [
@@ -4849,7 +4698,7 @@
                             "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/schema76"
+                                "$ref": "#/$defs/schema64"
                               },
                               "kind": {
                                 "description": "Kind is the type of resource being referenced",
@@ -4874,7 +4723,7 @@
                             "additionalProperties": false,
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/schema76"
+                                "$ref": "#/$defs/schema64"
                               },
                               "kind": {
                                 "description": "Kind is the type of resource being referenced",
@@ -4906,10 +4755,10 @@
                             "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                             "properties": {
                               "limits": {
-                                "$ref": "#/$defs/schema65"
+                                "$ref": "#/$defs/schema55"
                               },
                               "requests": {
-                                "$ref": "#/$defs/schema37"
+                                "$ref": "#/$defs/schema33"
                               }
                             },
                             "type": [
@@ -4971,7 +4820,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/schema78"
+                    "$ref": "#/$defs/schema66"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -5056,7 +4905,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   }
                 },
                 "required": [
@@ -5283,7 +5132,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   },
                   "targetPortal": {
                     "description": "targetPortal is iSCSI Target Portal. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).",
@@ -5362,7 +5211,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/schema78"
+                    "$ref": "#/$defs/schema66"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -5389,7 +5238,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema106"
+                    "$ref": "#/$defs/schema92"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -5471,10 +5320,10 @@
                               "$ref": "#/$defs/schema7"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema96"
+                              "$ref": "#/$defs/schema82"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema122"
+                              "$ref": "#/$defs/schema108"
                             }
                           },
                           "type": [
@@ -5517,7 +5366,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/schema96"
+                              "$ref": "#/$defs/schema82"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -5678,7 +5527,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   },
                   "user": {
                     "description": "user is the rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
@@ -5720,14 +5569,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema108"
+                    "$ref": "#/$defs/schema94"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/schema96"
+                        "$ref": "#/$defs/schema82"
                       }
                     },
                     "type": "object",
@@ -5823,13 +5672,13 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/schema78"
+                    "$ref": "#/$defs/schema66"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema106"
+                    "$ref": "#/$defs/schema92"
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema40"
                   },
                   "volumeName": {
                     "description": "volumeName is the human-readable name of the StorageOS volume.  Volume names are only unique within a namespace.",
@@ -5929,10 +5778,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema161"
+              "$ref": "#/$defs/schema147"
             },
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema148"
             },
             {
               "not": {
@@ -5950,16 +5799,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema123"
+              "$ref": "#/$defs/schema109"
             },
             {
-              "$ref": "#/$defs/schema73"
+              "$ref": "#/$defs/schema62"
             },
             {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema130"
             },
             {
-              "$ref": "#/$defs/schema155"
+              "$ref": "#/$defs/schema141"
             }
           ],
           "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -5977,7 +5826,7 @@
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/schema44"
+            "$ref": "#/$defs/schema40"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
@@ -5997,7 +5846,7 @@
     "initContainers": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema145"
+          "$ref": "#/$defs/schema131"
         },
         {
           "description": "List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
@@ -6097,7 +5946,7 @@
                   "description": "ContainerPort represents a network port in a single container.",
                   "properties": {
                     "containerPort": {
-                      "$ref": "#/$defs/schema101"
+                      "$ref": "#/$defs/schema87"
                     },
                     "hostIP": {
                       "description": "What host IP to bind the external port to.",
@@ -6190,10 +6039,10 @@
                     "$ref": "#/$defs/schema17"
                   },
                   "limits": {
-                    "$ref": "#/$defs/schema65"
+                    "$ref": "#/$defs/schema55"
                   },
                   "requests": {
-                    "$ref": "#/$defs/schema37"
+                    "$ref": "#/$defs/schema33"
                   }
                 },
                 "type": [
@@ -6300,17 +6149,17 @@
                     ]
                   },
                   "seLinuxOptions": {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema20"
                   },
                   "seccompProfile": {
                     "additionalProperties": false,
                     "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                     "properties": {
                       "localhostProfile": {
-                        "$ref": "#/$defs/schema51"
+                        "$ref": "#/$defs/schema47"
                       },
                       "type": {
-                        "$ref": "#/$defs/schema61"
+                        "$ref": "#/$defs/schema54"
                       }
                     },
                     "required": [
@@ -6507,10 +6356,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema145"
+          "$ref": "#/$defs/schema131"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema36"
         },
         {
           "not": {
@@ -6533,10 +6382,10 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/schema161"
+                      "$ref": "#/$defs/schema147"
                     },
                     {
-                      "$ref": "#/$defs/schema162"
+                      "$ref": "#/$defs/schema148"
                     },
                     {
                       "not": {
@@ -6554,10 +6403,10 @@
                       }
                     },
                     {
-                      "$ref": "#/$defs/schema123"
+                      "$ref": "#/$defs/schema109"
                     },
                     {
-                      "$ref": "#/$defs/schema155"
+                      "$ref": "#/$defs/schema141"
                     }
                   ],
                   "type": "string"
@@ -6570,7 +6419,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema114"
+                  "$ref": "#/$defs/schema100"
                 },
                 {
                   "type": "integer"
@@ -6588,7 +6437,7 @@
               "$ref": "#/$defs/schema12"
             },
             {
-              "$ref": "#/$defs/schema43"
+              "$ref": "#/$defs/schema39"
             }
           ]
         }
@@ -6598,10 +6447,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema145"
+          "$ref": "#/$defs/schema131"
         },
         {
-          "$ref": "#/$defs/schema47"
+          "$ref": "#/$defs/schema43"
         },
         {
           "not": {
@@ -6663,7 +6512,7 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema20"
             },
             "seccompProfile": {
               "anyOf": [
@@ -6672,10 +6521,10 @@
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
-                      "$ref": "#/$defs/schema51"
+                      "$ref": "#/$defs/schema47"
                     },
                     "type": {
-                      "$ref": "#/$defs/schema61"
+                      "$ref": "#/$defs/schema54"
                     }
                   },
                   "required": [
@@ -6772,7 +6621,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema114"
+          "$ref": "#/$defs/schema100"
         }
       ],
       "description": "Number of replicas."
@@ -6790,7 +6639,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema114"
+          "$ref": "#/$defs/schema100"
         }
       ],
       "description": "The number of old ReplicaSets to retain to allow rollback."
@@ -6815,7 +6664,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema153"
+                  "$ref": "#/$defs/schema139"
                 }
               },
               {
@@ -6840,7 +6689,7 @@
                     "$ref": "#/$defs/schema12"
                   },
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema39"
                   },
                   {
                     "not": {
@@ -7021,12 +6870,12 @@
                   "description": "Spec to control the desired behavior of rolling update.",
                   "properties": {
                     "maxSurge": {
-                      "$ref": "#/$defs/schema152"
+                      "$ref": "#/$defs/schema138"
                     },
                     "maxUnavailable": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema152"
+                          "$ref": "#/$defs/schema138"
                         },
                         {
                           "type": "integer"
@@ -7080,7 +6929,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema114"
+          "$ref": "#/$defs/schema100"
         },
         {
           "type": "null"

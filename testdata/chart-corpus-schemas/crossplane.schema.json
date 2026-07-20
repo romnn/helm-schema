@@ -720,22 +720,20 @@
       "type": "object"
     },
     "schema157": {
-      "not": {
-        "properties": {
-          "deploy": {}
-        },
-        "required": [
-          "deploy"
-        ],
-        "type": "object"
-      }
-    },
-    "schema158": {
       "properties": {
         "enabled": {}
       },
       "required": [
         "enabled"
+      ],
+      "type": "object"
+    },
+    "schema159": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
       ],
       "type": "object"
     },
@@ -777,16 +775,16 @@
         "null"
       ]
     },
-    "schema161": {
+    "schema160": {
       "properties": {
-        "create": {}
+        "deploy": {}
       },
       "required": [
-        "create"
+        "deploy"
       ],
       "type": "object"
     },
-    "schema162": {
+    "schema161": {
       "oneOf": [
         {
           "type": [
@@ -802,15 +800,19 @@
         }
       ]
     },
-    "schema163": {
+    "schema162": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema169": {
+    "schema168": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
+    },
+    "schema169": {
+      "additionalProperties": {},
+      "type": "object"
     },
     "schema17": {
       "additionalProperties": false,
@@ -863,15 +865,11 @@
       ]
     },
     "schema170": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "schema171": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema173": {
+    "schema172": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3071,71 +3069,192 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "extraEnvVarsRBACManager": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "$ref": "#/$defs/schema121"
+            "additionalProperties": {},
+            "properties": {
+              "extraEnvVarsRBACManager": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+              }
+            }
           },
           {
+            "additionalProperties": {},
+            "properties": {
+              "extraEnvVarsRBACManager": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "podSecurityContextRBACManager": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add a custom `securityContext` to the RBAC Manager pod."
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
             "properties": {
               "rbacManager": {
+                "additionalProperties": {},
                 "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "args": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Add custom arguments to the RBAC Manager pod."
                   }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
+                }
               }
-            },
-            "required": [
-              "rbacManager"
-            ],
-            "type": "object"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "rbacManager": {
+                "additionalProperties": {},
+                "properties": {
+                  "leaderElection": {
+                    "$ref": "#/$defs/helm-double-quoted-safe",
+                    "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "resourcesRBACManager": {
+                "$ref": "#/$defs/schema10"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "securityContextRBACManager": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+                    "properties": {
+                      "allowPrivilegeEscalation": {
+                        "description": "Enable `allowPrivilegeEscalation` for the RBAC Manager pod.",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "capabilities": {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      "privileged": {
+                        "$ref": "#/$defs/schema92"
+                      },
+                      "procMount": {
+                        "$ref": "#/$defs/schema76"
+                      },
+                      "readOnlyRootFilesystem": {
+                        "description": "Set the RBAC Manager pod root file system as read-only.",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "runAsGroup": {
+                        "description": "The group ID used by the RBAC Manager pod.",
+                        "format": "int64",
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "runAsNonRoot": {
+                        "$ref": "#/$defs/schema56"
+                      },
+                      "runAsUser": {
+                        "description": "The user ID used by the RBAC Manager pod.",
+                        "format": "int64",
+                        "type": [
+                          "integer",
+                          "null"
+                        ]
+                      },
+                      "seLinuxOptions": {
+                        "$ref": "#/$defs/schema43"
+                      },
+                      "seccompProfile": {
+                        "$ref": "#/$defs/schema22"
+                      },
+                      "windowsOptions": {
+                        "$ref": "#/$defs/schema16"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "extraEnvVarsRBACManager": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
-          }
-        }
       }
     },
     {
@@ -3353,125 +3472,41 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "imagePullSecrets": {
-            "additionalProperties": {
-              "$ref": "#/$defs/schema23"
-            },
-            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
-            "items": {
-              "$ref": "#/$defs/schema23"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema121"
-                  },
-                  {
-                    "properties": {
-                      "rbacManager": {
-                        "properties": {
-                          "deploy": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "deploy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbacManager"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "imagePullSecrets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
+            "additionalProperties": {},
+            "properties": {
+              "imagePullSecrets": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/schema23"
                 },
-                "required": [
-                  "imagePullSecrets"
-                ],
-                "type": "object"
+                "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
+                "items": {
+                  "$ref": "#/$defs/schema23"
+                }
               }
-            ]
+            }
           },
           {
-            "allOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "imagePullSecrets": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema115"
+                    "type": "array"
                   },
                   {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
                     "type": "object"
+                  },
+                  {
+                    "type": "null"
                   }
-                ]
-              },
-              {
-                "properties": {
-                  "imagePullSecrets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "imagePullSecrets"
                 ],
-                "type": "object"
+                "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
               }
-            ]
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "imagePullSecrets": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
-          }
-        }
       }
     },
     {
@@ -3697,55 +3732,6 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema121"
-          },
-          {
-            "properties": {
-              "rbacManager": {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbacManager"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podSecurityContextRBACManager": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema3"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add a custom `securityContext` to the RBAC Manager pod."
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "provider": {
@@ -3806,103 +3792,6 @@
                 }
               ],
               "description": "A list of Provider packages to install."
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema121"
-          },
-          {
-            "properties": {
-              "rbacManager": {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbacManager"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rbacManager": {
-            "additionalProperties": {},
-            "properties": {
-              "args": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add custom arguments to the RBAC Manager pod."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema121"
-          },
-          {
-            "properties": {
-              "rbacManager": {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbacManager"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rbacManager": {
-            "additionalProperties": {},
-            "properties": {
-              "leaderElection": {
-                "$ref": "#/$defs/helm-double-quoted-safe",
-                "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
-              }
             }
           }
         }
@@ -3999,188 +3888,32 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "registryCaBundleConfig": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "key": {
-                "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
-                "not": {
-                  "type": "null"
+              "registryCaBundleConfig": {
+                "additionalProperties": {},
+                "properties": {
+                  "key": {
+                    "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "registryCaBundleConfig": {
-            "properties": {
-              "name": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "name"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "registryCaBundleConfig"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "registryCaBundleConfig": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema121"
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "rbacManager": {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
+              "registryCaBundleConfig": {
                 "type": "object"
               }
-            },
-            "required": [
-              "rbacManager"
-            ],
-            "type": "object"
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resourcesRBACManager": {
-            "$ref": "#/$defs/schema10"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema121"
-          },
-          {
-            "properties": {
-              "rbacManager": {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbacManager"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "securityContextRBACManager": {
-            "anyOf": [
-              {
-                "additionalProperties": false,
-                "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
-                "properties": {
-                  "allowPrivilegeEscalation": {
-                    "description": "Enable `allowPrivilegeEscalation` for the RBAC Manager pod.",
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "capabilities": {
-                    "$ref": "#/$defs/schema73"
-                  },
-                  "privileged": {
-                    "$ref": "#/$defs/schema92"
-                  },
-                  "procMount": {
-                    "$ref": "#/$defs/schema76"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "description": "Set the RBAC Manager pod root file system as read-only.",
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "runAsGroup": {
-                    "description": "The group ID used by the RBAC Manager pod.",
-                    "format": "int64",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "runAsNonRoot": {
-                    "$ref": "#/$defs/schema56"
-                  },
-                  "runAsUser": {
-                    "description": "The user ID used by the RBAC Manager pod.",
-                    "format": "int64",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "seLinuxOptions": {
-                    "$ref": "#/$defs/schema43"
-                  },
-                  "seccompProfile": {
-                    "$ref": "#/$defs/schema22"
-                  },
-                  "windowsOptions": {
-                    "$ref": "#/$defs/schema16"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
       }
     },
     {
@@ -4211,30 +3944,46 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "customAnnotations": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "customAnnotations": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
                     "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
                   }
-                ],
-                "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
+                ]
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4314,46 +4063,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema126"
-          },
-          {
-            "properties": {
-              "webhooks": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhooks"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "not": {
           "anyOf": [
             {
@@ -4382,58 +4091,32 @@
         }
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "name": {
-                "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`",
-                "not": {
-                  "type": "null"
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "not": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/schema115"
-            },
-            {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "create": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "type": "object"
+              }
             }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "type": "object"
           }
-        }
+        ]
       }
     },
     {
@@ -4628,13 +4311,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema169"
+              "$ref": "#/$defs/schema168"
             },
             {
-              "$ref": "#/$defs/schema171"
+              "$ref": "#/$defs/schema170"
             },
             {
-              "$ref": "#/$defs/schema173"
+              "$ref": "#/$defs/schema172"
             },
             {
               "not": {
@@ -4656,7 +4339,7 @@
               "$ref": "#/$defs/schema151"
             },
             {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema162"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
@@ -4674,13 +4357,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema169"
+              "$ref": "#/$defs/schema168"
             },
             {
-              "$ref": "#/$defs/schema171"
+              "$ref": "#/$defs/schema170"
             },
             {
-              "$ref": "#/$defs/schema173"
+              "$ref": "#/$defs/schema172"
             },
             {
               "not": {
@@ -4702,7 +4385,7 @@
               "$ref": "#/$defs/schema151"
             },
             {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema162"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4723,7 +4406,7 @@
     "extraEnvVarsCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema170"
+          "$ref": "#/$defs/schema169"
         },
         {
           "items": {},
@@ -4733,7 +4416,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema170"
+          "$ref": "#/$defs/schema169"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -4741,7 +4424,7 @@
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema170"
+          "$ref": "#/$defs/schema169"
         },
         {
           "items": {},
@@ -4751,7 +4434,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema170"
+          "$ref": "#/$defs/schema169"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -4776,7 +4459,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema170"
+          "$ref": "#/$defs/schema169"
         }
       ],
       "description": "To add arbitrary Kubernetes Objects during a Helm Install"
@@ -5129,7 +4812,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema162"
+                    "$ref": "#/$defs/schema161"
                   }
                 },
                 "type": [
@@ -6507,51 +6190,40 @@
             }
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "medium": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema25"
-                  },
-                  {
-                    "$ref": "#/$defs/schema86"
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "medium": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema25"
+                      },
+                      {
+                        "$ref": "#/$defs/schema86"
+                      }
+                    ],
+                    "description": "Set to `Memory` to hold the function cache in a RAM backed file system. Useful for Crossplane development."
                   }
-                ],
-                "description": "Set to `Memory` to hold the function cache in a RAM backed file system. Useful for Crossplane development."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "properties": {
-                "pvc": {
-                  "$ref": "#/$defs/helm-truthy"
                 }
               },
-              "required": [
-                "pvc"
-              ],
-              "type": "object"
-            }
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "sizeLimit": {
-                "description": "The size limit for the function cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
-                "oneOf": [
-                  {
-                    "$ref": "#/$defs/schema79"
-                  },
-                  {
-                    "$ref": "#/$defs/schema64"
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "sizeLimit": {
+                    "description": "The size limit for the function cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/schema79"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      }
+                    ]
                   }
-                ]
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -6616,13 +6288,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema169"
+                  "$ref": "#/$defs/schema168"
                 },
                 {
-                  "$ref": "#/$defs/schema171"
+                  "$ref": "#/$defs/schema170"
                 },
                 {
-                  "$ref": "#/$defs/schema173"
+                  "$ref": "#/$defs/schema172"
                 },
                 {
                   "not": {
@@ -6644,7 +6316,7 @@
                   "$ref": "#/$defs/schema151"
                 },
                 {
-                  "$ref": "#/$defs/schema163"
+                  "$ref": "#/$defs/schema162"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6836,68 +6508,40 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "medium": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema25"
-                  },
-                  {
-                    "$ref": "#/$defs/schema86"
-                  }
-                ],
-                "description": "Set to `Memory` to hold the package cache in a RAM backed file system. Useful for Crossplane development."
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "configMap": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "configMap"
-                  ],
-                  "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "medium": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema25"
+                      },
+                      {
+                        "$ref": "#/$defs/schema86"
+                      }
+                    ],
+                    "description": "Set to `Memory` to hold the package cache in a RAM backed file system. Useful for Crossplane development."
+                  }
                 }
               },
               {
-                "not": {
-                  "properties": {
-                    "pvc": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "pvc"
-                  ],
-                  "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "sizeLimit": {
+                    "description": "The size limit for the package cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/schema79"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      }
+                    ]
+                  }
                 }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "sizeLimit": {
-                "description": "The size limit for the package cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
-                "oneOf": [
-                  {
-                    "$ref": "#/$defs/schema79"
-                  },
-                  {
-                    "$ref": "#/$defs/schema64"
-                  }
-                ]
-              }
-            }
           }
         }
       ],
@@ -7005,7 +6649,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema157"
+                "not": {
+                  "$ref": "#/$defs/schema160"
+                }
               },
               {
                 "properties": {
@@ -7021,325 +6667,189 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "affinity": {
-                "anyOf": [
-                  {
-                    "allOf": [
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/providerShared1"
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/providerShared1"
+                          }
+                        ],
+                        "description": "Affinity is a group of affinity scheduling rules."
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
                       }
                     ],
-                    "description": "Affinity is a group of affinity scheduling rules."
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
+                    "description": "Add `affinities` to the RBAC Manager pod deployment."
                   }
-                ],
-                "description": "Add `affinities` to the RBAC Manager pod deployment."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "args": {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/schema37"
+                    },
+                    "description": "Add custom arguments to the RBAC Manager pod.",
+                    "items": {
+                      "$ref": "#/$defs/schema37"
+                    }
                   }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "args": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/schema37"
-                },
-                "description": "Add custom arguments to the RBAC Manager pod.",
-                "items": {
-                  "$ref": "#/$defs/schema37"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "args": {
+                    "anyOf": [
+                      {
+                        "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Add custom arguments to the RBAC Manager pod."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "nodeSelector": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema74"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "replicas": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema111"
+                      },
+                      {
+                        "$ref": "#/$defs/schema112"
+                      },
+                      {
+                        "$ref": "#/$defs/schema132"
+                      }
+                    ],
+                    "description": "The number of RBAC Manager pod `replicas` to deploy."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "revisionHistoryLimit": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema105"
+                      },
+                      {
+                        "$ref": "#/$defs/schema106"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema132"
+                      }
+                    ],
+                    "description": "The number of RBAC Manager ReplicaSets to retain."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tolerations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema12"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Add `tolerations` to the RBAC Manager pod deployment."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "topologySpreadConstraints": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
+                  }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "args": {
-                "anyOf": [
-                  {
-                    "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-                    "items": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add custom arguments to the RBAC Manager pod."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema74"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "replicas": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema111"
-                  },
-                  {
-                    "$ref": "#/$defs/schema112"
-                  },
-                  {
-                    "$ref": "#/$defs/schema132"
-                  }
-                ],
-                "description": "The number of RBAC Manager pod `replicas` to deploy."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "revisionHistoryLimit": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema105"
-                  },
-                  {
-                    "$ref": "#/$defs/schema106"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema132"
-                  }
-                ],
-                "description": "The number of RBAC Manager ReplicaSets to retain."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tolerations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema12"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add `tolerations` to the RBAC Manager pod deployment."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema157"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "topologySpreadConstraints": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
-              }
-            }
           }
         }
       ],
@@ -7433,13 +6943,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
+                        "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema173"
+                        "$ref": "#/$defs/schema172"
                       },
                       {
                         "not": {
@@ -7466,7 +6976,7 @@
                         "$ref": "#/$defs/schema151"
                       },
                       {
-                        "$ref": "#/$defs/schema163"
+                        "$ref": "#/$defs/schema162"
                       }
                     ],
                     "type": "string"
@@ -7531,7 +7041,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema162"
+                    "$ref": "#/$defs/schema161"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7555,7 +7065,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema162"
+                    "$ref": "#/$defs/schema161"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7742,7 +7252,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema161"
+                  "$ref": "#/$defs/schema159"
                 }
               },
               {
@@ -7786,7 +7296,7 @@
               "anyOf": [
                 {
                   "not": {
-                    "$ref": "#/$defs/schema161"
+                    "$ref": "#/$defs/schema159"
                   }
                 },
                 {
@@ -8397,7 +7907,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema158"
+                  "$ref": "#/$defs/schema157"
                 }
               },
               {
@@ -8433,13 +7943,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema169"
+                                "$ref": "#/$defs/schema168"
                               },
                               {
-                                "$ref": "#/$defs/schema171"
+                                "$ref": "#/$defs/schema170"
                               },
                               {
-                                "$ref": "#/$defs/schema173"
+                                "$ref": "#/$defs/schema172"
                               },
                               {
                                 "not": {
@@ -8455,7 +7965,7 @@
                                 "$ref": "#/$defs/schema138"
                               },
                               {
-                                "$ref": "#/$defs/schema163"
+                                "$ref": "#/$defs/schema162"
                               }
                             ],
                             "type": "string"

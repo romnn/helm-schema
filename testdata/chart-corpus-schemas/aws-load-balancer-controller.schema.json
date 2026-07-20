@@ -383,29 +383,16 @@
       "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
       "type": "string"
     },
-    "schema105": {
-      "not": {
-        "properties": {
-          "ingressValidationNamespaceSelector": {}
-        },
-        "required": [
-          "ingressValidationNamespaceSelector"
-        ],
-        "type": "object"
-      }
+    "schema107": {
+      "properties": {
+        "ingressValidationNamespaceSelector": {}
+      },
+      "required": [
+        "ingressValidationNamespaceSelector"
+      ],
+      "type": "object"
     },
-    "schema108": {
-      "not": {
-        "properties": {
-          "ingressValidationObjectSelector": {}
-        },
-        "required": [
-          "ingressValidationObjectSelector"
-        ],
-        "type": "object"
-      }
-    },
-    "schema112": {
+    "schema110": {
       "not": {
         "properties": {
           "enableServiceMutatorWebhook": {}
@@ -416,7 +403,16 @@
         "type": "object"
       }
     },
-    "schema115": {
+    "schema111": {
+      "properties": {
+        "ingressValidationObjectSelector": {}
+      },
+      "required": [
+        "ingressValidationObjectSelector"
+      ],
+      "type": "object"
+    },
+    "schema113": {
       "not": {
         "properties": {
           "createIngressClassResource": {}
@@ -427,14 +423,14 @@
         "type": "object"
       }
     },
-    "schema117": {
+    "schema115": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema118": {
+    "schema116": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -490,7 +486,7 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema128": {
+    "schema126": {
       "additionalProperties": {},
       "properties": {
         "matchExpressions": {},
@@ -540,7 +536,7 @@
         "null"
       ]
     },
-    "schema135": {
+    "schema133": {
       "properties": {
         "maxReplicas": {
           "enum": [
@@ -553,16 +549,16 @@
       ],
       "type": "object"
     },
-    "schema136": {
+    "schema134": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema137": {
+    "schema135": {
       "description": "key is the label key that the selector applies to.",
       "type": "string"
     },
-    "schema138": {
+    "schema136": {
       "not": {
         "properties": {
           "certManager": {}
@@ -573,7 +569,7 @@
         "type": "object"
       }
     },
-    "schema139": {
+    "schema137": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
@@ -621,18 +617,16 @@
         "null"
       ]
     },
-    "schema143": {
-      "not": {
-        "properties": {
-          "create": {}
-        },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
+    "schema141": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
     },
-    "schema145": {
+    "schema142": {
       "oneOf": [
         {
           "type": [
@@ -648,7 +642,7 @@
         }
       ]
     },
-    "schema146": {
+    "schema143": {
       "oneOf": [
         {
           "type": [
@@ -664,12 +658,12 @@
         }
       ]
     },
-    "schema147": {
+    "schema144": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema148": {
+    "schema145": {
       "anyOf": [
         {
           "type": "array"
@@ -681,6 +675,14 @@
           "type": "null"
         }
       ]
+    },
+    "schema148": {
+      "if": {
+        "type": "boolean"
+      },
+      "then": {
+        "type": "boolean"
+      }
     },
     "schema15": {
       "additionalProperties": false,
@@ -714,15 +716,7 @@
         }
       ]
     },
-    "schema151": {
-      "if": {
-        "type": "boolean"
-      },
-      "then": {
-        "type": "boolean"
-      }
-    },
-    "schema153": {
+    "schema150": {
       "anyOf": [
         {
           "type": "string"
@@ -732,22 +726,22 @@
         }
       ]
     },
-    "schema154": {
+    "schema151": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema155": {
+    "schema152": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema156": {
+    "schema153": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema159": {
+    "schema156": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -2071,7 +2065,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -2170,7 +2164,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema113"
                   },
                   {
                     "properties": {
@@ -2271,98 +2265,46 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "additionalLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ],
-            "description": "additionalLabels -- Labels to add to each object of the chart."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "autoscaling": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "autoscaling"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "annotations": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema44"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "autoscaling": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "autoscaling"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "autoscaling": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "AWS LBC only has 1 main working pod, other pods are just standby\nthe purpose of enable hpa is to survive load induced failure by the calls to the aws-load-balancer-webhook-service\nsince the calls from kube-apiserver are sent round-robin to all replicas, and the failure policy on those webhooks is Fail\nif the pods become overloaded and do not respond within the timeout that could block the creation of pods, targetgroupbindings or ingresses\nPlease keep in mind that the controller pods have `priorityClassName: system-cluster-critical`, enabling HPA may lead to the eviction of other low-priority pods in the node",
             "properties": {
-              "maxReplicas": {
-                "not": {
-                  "type": "null"
-                }
+              "additionalLabels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "additionalLabels -- Labels to add to each object of the chart."
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema28"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2386,13 +2328,48 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "autoscaling": {
-            "description": "AWS LBC only has 1 main working pod, other pods are just standby\nthe purpose of enable hpa is to survive load induced failure by the calls to the aws-load-balancer-webhook-service\nsince the calls from kube-apiserver are sent round-robin to all replicas, and the failure policy on those webhooks is Fail\nif the pods become overloaded and do not respond within the timeout that could block the creation of pods, targetgroupbindings or ingresses\nPlease keep in mind that the controller pods have `priorityClassName: system-cluster-critical`, enabling HPA may lead to the eviction of other low-priority pods in the node",
-            "type": "object"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema44"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "autoscaling": {
+                "additionalProperties": {},
+                "description": "AWS LBC only has 1 main working pod, other pods are just standby\nthe purpose of enable hpa is to survive load induced failure by the calls to the aws-load-balancer-webhook-service\nsince the calls from kube-apiserver are sent round-robin to all replicas, and the failure policy on those webhooks is Fail\nif the pods become overloaded and do not respond within the timeout that could block the creation of pods, targetgroupbindings or ingresses\nPlease keep in mind that the controller pods have `priorityClassName: system-cluster-critical`, enabling HPA may lead to the eviction of other low-priority pods in the node",
+                "properties": {
+                  "maxReplicas": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "autoscaling": {
+                "description": "AWS LBC only has 1 main working pod, other pods are just standby\nthe purpose of enable hpa is to survive load induced failure by the calls to the aws-load-balancer-webhook-service\nsince the calls from kube-apiserver are sent round-robin to all replicas, and the failure policy on those webhooks is Fail\nif the pods become overloaded and do not respond within the timeout that could block the creation of pods, targetgroupbindings or ingresses\nPlease keep in mind that the controller pods have `priorityClassName: system-cluster-critical`, enabling HPA may lead to the eviction of other low-priority pods in the node",
+                "type": "object"
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -2408,43 +2385,60 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "certManager": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Overrideable variables when enableCertManager is set to true",
             "properties": {
-              "issuerRef": {
+              "certManager": {
+                "additionalProperties": {},
+                "description": "Overrideable variables when enableCertManager is set to true",
+                "properties": {
+                  "issuerRef": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Reference to the issuer responsible for issuing the certificate.\nIf the issuer is namespace-scoped, it must be in the same namespace\nas the Certificate. If the issuer is cluster-scoped, it can be used\nfrom any namespace.\n\nThe `name` field of the reference must always be specified.",
+                        "properties": {
+                          "group": {
+                            "description": "Group of the issuer being referred to.\nDefaults to 'cert-manager.io'.",
+                            "type": "string"
+                          },
+                          "kind": {
+                            "description": "Kind of the issuer being referred to.\nDefaults to 'Issuer'.",
+                            "type": "string"
+                          },
+                          "name": {
+                            "description": "Name of the issuer being referred to.",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
                 "anyOf": [
                   {
-                    "additionalProperties": false,
-                    "description": "Reference to the issuer responsible for issuing the certificate.\nIf the issuer is namespace-scoped, it must be in the same namespace\nas the Certificate. If the issuer is cluster-scoped, it can be used\nfrom any namespace.\n\nThe `name` field of the reference must always be specified.",
-                    "properties": {
-                      "group": {
-                        "description": "Group of the issuer being referred to.\nDefaults to 'cert-manager.io'.",
-                        "type": "string"
-                      },
-                      "kind": {
-                        "description": "Kind of the issuer being referred to.\nDefaults to 'Issuer'.",
-                        "type": "string"
-                      },
-                      "name": {
-                        "description": "Name of the issuer being referred to.",
-                        "type": "string"
-                      }
-                    },
                     "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
                   }
-                ]
+                ],
+                "description": "cluster contains configurations specific to the kubernetes cluster"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2464,7 +2458,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema138"
+                "$ref": "#/$defs/schema136"
               },
               {
                 "properties": {
@@ -2489,135 +2483,97 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "certManager": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Overrideable variables when enableCertManager is set to true",
             "properties": {
-              "renewBefore": {
-                "anyOf": [
-                  {
-                    "allOf": [
+              "certManager": {
+                "additionalProperties": {},
+                "description": "Overrideable variables when enableCertManager is set to true",
+                "properties": {
+                  "renewBefore": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema154"
-                      },
-                      {
-                        "$ref": "#/$defs/schema156"
-                      },
-                      {
-                        "$ref": "#/$defs/schema159"
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema151"
+                          },
+                          {
+                            "$ref": "#/$defs/schema153"
+                          },
+                          {
+                            "$ref": "#/$defs/schema156"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema152"
+                          },
+                          {
+                            "$ref": "#/$defs/schema116"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "$ref": "#/$defs/schema134"
+                          },
+                          {
+                            "$ref": "#/$defs/schema144"
+                          }
+                        ],
+                        "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
+                        "type": "string"
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema155"
-                      },
-                      {
-                        "$ref": "#/$defs/schema118"
-                      },
-                      {
-                        "$ref": "#/$defs/schema69"
-                      },
-                      {
-                        "$ref": "#/$defs/schema136"
-                      },
-                      {
-                        "$ref": "#/$defs/schema147"
                       }
                     ],
-                    "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "30 days"
                   }
-                ],
-                "description": "30 days"
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "enableCertManager": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableCertManager"
-            ],
-            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema138"
-              },
-              {
+            "additionalProperties": {},
+            "properties": {
+              "certManager": {
+                "additionalProperties": {},
+                "description": "Overrideable variables when enableCertManager is set to true",
                 "properties": {
-                  "certManager": {
+                  "revisionHistoryLimit": {
                     "anyOf": [
                       {
-                        "type": "object"
+                        "description": "The maximum number of CertificateRequest revisions that are maintained in\nthe Certificate's history. Each revision represents a single `CertificateRequest`\ncreated by this Certificate, either when it was created, renewed, or Spec\nwas changed. Revisions will be removed by oldest first if the number of\nrevisions exceeds this number.\n\nIf set, revisionHistoryLimit must be a value of `1` or greater.\nDefault value is `1`.",
+                        "format": "int32",
+                        "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/helm-truthy"
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema104"
                       }
                     ]
                   }
-                },
-                "required": [
-                  "certManager"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "certManager": {
-            "additionalProperties": {},
-            "description": "Overrideable variables when enableCertManager is set to true",
-            "properties": {
-              "revisionHistoryLimit": {
-                "anyOf": [
-                  {
-                    "description": "The maximum number of CertificateRequest revisions that are maintained in\nthe Certificate's history. Each revision represents a single `CertificateRequest`\ncreated by this Certificate, either when it was created, renewed, or Spec\nwas changed. Revisions will be removed by oldest first if the number of\nrevisions exceeds this number.\n\nIf set, revisionHistoryLimit must be a value of `1` or greater.\nDefault value is `1`.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema104"
-                  }
-                ]
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2658,23 +2614,36 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "certManager": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Overrideable variables when enableCertManager is set to true",
             "properties": {
-              "rootCert": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "certManager": {
+                "additionalProperties": {},
+                "description": "Overrideable variables when enableCertManager is set to true",
+                "properties": {
+                  "rootCert": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Root CA certificate configuration"
                   }
-                ],
-                "description": "Root CA certificate configuration"
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "certManager": {
+                "description": "Overrideable variables when enableCertManager is set to true",
+                "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -2685,7 +2654,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -2767,7 +2736,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -2849,7 +2818,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -2908,7 +2877,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -3044,53 +3013,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "enableCertManager": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableCertManager"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "certManager": {
-                  "properties": {
-                    "issuerRef": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "issuerRef"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "certManager"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "certManager": {
-            "description": "Overrideable variables when enableCertManager is set to true",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "not": {
               "allOf": [
                 {
@@ -3211,32 +3133,6 @@
     {
       "if": {
         "properties": {
-          "enableCertManager": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "enableCertManager"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ],
-            "description": "cluster contains configurations specific to the kubernetes cluster"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "clusterName": {
             "$ref": "#/$defs/helm-truthy"
           }
@@ -3291,17 +3187,81 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "clusterSecretsPermissions": {
-            "anyOf": [
-              {
-                "type": "object"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "clusterSecretsPermissions": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "clusterSecretsPermissions lets you configure RBAC permissions for secret resources\nAccess to secrets resource is required only if you use the OIDC feature, and instead of\nenabling access to all secrets, we recommend configuring namespaced role/rolebinding.\nThis option is for backwards compatibility only, and will potentially be deprecated in future."
               }
-            ],
-            "description": "clusterSecretsPermissions lets you configure RBAC permissions for secret resources\nAccess to secrets resource is required only if you use the OIDC feature, and instead of\nenabling access to all secrets, we recommend configuring namespaced role/rolebinding.\nThis option is for backwards compatibility only, and will potentially be deprecated in future."
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema151"
+                          },
+                          {
+                            "$ref": "#/$defs/schema153"
+                          },
+                          {
+                            "$ref": "#/$defs/schema156"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema152"
+                          },
+                          {
+                            "$ref": "#/$defs/schema116"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "$ref": "#/$defs/schema134"
+                          },
+                          {
+                            "$ref": "#/$defs/schema144"
+                          }
+                        ],
+                        "description": "Name of the object being referenced.",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                  }
+                }
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -3375,7 +3335,7 @@
         "additionalProperties": {},
         "properties": {
           "creator": {
-            "$ref": "#/$defs/schema153"
+            "$ref": "#/$defs/schema150"
           }
         }
       }
@@ -3471,91 +3431,52 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "env": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/$defs/helm-double-quoted-safe"
-                },
-                "type": "array"
-              },
-              {
-                "additionalProperties": {
-                  "$ref": "#/$defs/helm-double-quoted-safe"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
+            "additionalProperties": {},
             "properties": {
               "env": {
-                "$ref": "#/$defs/helm-truthy"
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/$defs/helm-double-quoted-safe"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/helm-double-quoted-safe"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
               }
-            },
-            "required": [
-              "env"
-            ],
-            "type": "object"
+            }
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "env": {
-                    "$ref": "#/$defs/helm-truthy"
+            "additionalProperties": {},
+            "properties": {
+              "env": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
                   }
-                },
-                "required": [
-                  "env"
                 ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "envSecretName": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "envSecretName"
-                ],
-                "type": "object"
+                "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
               }
-            ]
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "env": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
-          }
-        }
       }
     },
     {
@@ -3586,107 +3507,83 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "env": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
+            "additionalProperties": {},
             "properties": {
               "env": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "env"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "envSecretName": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "envSecretName"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "envSecretName": {
-            "anyOf": [
-              {
-                "allOf": [
+                "anyOf": [
                   {
-                    "$ref": "#/$defs/schema154"
+                    "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema156"
+                    "maxItems": 0,
+                    "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema159"
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema118"
-                  },
-                  {
-                    "$ref": "#/$defs/schema69"
-                  },
-                  {
-                    "$ref": "#/$defs/schema136"
-                  },
-                  {
-                    "$ref": "#/$defs/schema147"
+                    "type": "null"
                   }
                 ],
-                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                "type": "string"
-              },
-              {
-                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                "type": "null"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+                "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "envSecretName": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema151"
+                      },
+                      {
+                        "$ref": "#/$defs/schema153"
+                      },
+                      {
+                        "$ref": "#/$defs/schema156"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema116"
+                      },
+                      {
+                        "$ref": "#/$defs/schema69"
+                      },
+                      {
+                        "$ref": "#/$defs/schema134"
+                      },
+                      {
+                        "$ref": "#/$defs/schema144"
+                      }
+                    ],
+                    "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                    "type": "string"
+                  },
+                  {
+                    "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                    "type": "null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -3821,7 +3718,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema153"
+            "$ref": "#/$defs/schema150"
           }
         }
       }
@@ -3858,7 +3755,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -3978,7 +3875,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -4050,7 +3947,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema115"
+            "$ref": "#/$defs/schema113"
           },
           {
             "properties": {
@@ -4066,53 +3963,37 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingressClass": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema12"
-              },
-              {
-                "$ref": "#/$defs/schema47"
-              }
-            ],
-            "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "$ref": "#/$defs/schema115"
+            "additionalProperties": {},
+            "properties": {
+              "ingressClass": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema12"
+                  },
+                  {
+                    "$ref": "#/$defs/schema47"
+                  }
+                ],
+                "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb"
+              }
+            }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "createIngressClassResource": {
-                "$ref": "#/$defs/helm-truthy"
+              "ingressClassConfig": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "ingressClassConfig contains configurations specific to the ingress class"
               }
-            },
-            "required": [
-              "createIngressClassResource"
-            ],
-            "type": "object"
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingressClassConfig": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ],
-            "description": "ingressClassConfig contains configurations specific to the ingress class"
-          }
-        }
       }
     },
     {
@@ -4121,7 +4002,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -4222,13 +4103,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema154"
+                        "$ref": "#/$defs/schema151"
+                      },
+                      {
+                        "$ref": "#/$defs/schema153"
                       },
                       {
                         "$ref": "#/$defs/schema156"
-                      },
-                      {
-                        "$ref": "#/$defs/schema159"
                       },
                       {
                         "not": {
@@ -4241,19 +4122,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema155"
+                        "$ref": "#/$defs/schema152"
                       },
                       {
-                        "$ref": "#/$defs/schema118"
+                        "$ref": "#/$defs/schema116"
                       },
                       {
                         "$ref": "#/$defs/schema69"
                       },
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema134"
                       },
                       {
-                        "$ref": "#/$defs/schema147"
+                        "$ref": "#/$defs/schema144"
                       }
                     ],
                     "description": "name is the name of resource being referenced.",
@@ -4278,7 +4159,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -4322,345 +4203,299 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingressClassParams": {
-            "additionalProperties": {},
-            "description": "ingressClassParams specify the IngressCLassParams that enforce settings for a set of Ingresses when using with ingress Controller.",
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema28"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "The name of ingressClassParams resource will be referred in ingressClass"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema115"
-              },
-              {
+            "additionalProperties": {},
+            "properties": {
+              "ingressClassParams": {
+                "additionalProperties": {},
+                "description": "ingressClassParams specify the IngressCLassParams that enforce settings for a set of Ingresses when using with ingress Controller.",
                 "properties": {
-                  "createIngressClassResource": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema28"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "The name of ingressClassParams resource will be referred in ingressClass"
                   }
-                },
-                "required": [
-                  "createIngressClassResource"
-                ],
-                "type": "object"
+                }
               }
-            ]
+            }
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema87"
-              },
-              {
-                "properties": {
-                  "ingressClassParams": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingressClassParams"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingressClassParams": {
             "additionalProperties": {},
-            "description": "ingressClassParams specify the IngressCLassParams that enforce settings for a set of Ingresses when using with ingress Controller.",
             "properties": {
-              "spec": {
-                "anyOf": [
-                  {
-                    "description": "IngressClassParamsSpec defines the desired state of IngressClassParams",
-                    "properties": {
-                      "PrefixListsIDs": {
-                        "description": "PrefixListsIDsLegacy defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.\nNot Recommended, Use PrefixListsIDs (prefixListsIDs in JSON) instead",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "certificateArn": {
-                        "description": "CertificateArn specifies the ARN of the certificates for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "group": {
-                        "description": "Group defines the IngressGroup for all Ingresses that belong to IngressClass with this IngressClassParams.",
+              "ingressClassParams": {
+                "additionalProperties": {},
+                "description": "ingressClassParams specify the IngressCLassParams that enforce settings for a set of Ingresses when using with ingress Controller.",
+                "properties": {
+                  "spec": {
+                    "anyOf": [
+                      {
+                        "description": "IngressClassParamsSpec defines the desired state of IngressClassParams",
                         "properties": {
-                          "name": {
-                            "description": "Name is the name of IngressGroup.",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "type": "object"
-                      },
-                      "inboundCIDRs": {
-                        "description": "InboundCIDRs specifies the CIDRs that are allowed to access the Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "ipAddressType": {
-                        "description": "IPAddressType defines the ip address type for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "enum": [
-                          "ipv4",
-                          "dualstack",
-                          "dualstack-without-public-ipv4"
-                        ],
-                        "type": "string"
-                      },
-                      "ipamConfiguration": {
-                        "description": "IPAMConfiguration defines the IPAM settings for a Load Balancer.",
-                        "properties": {
-                          "ipv4IPAMPoolId": {
-                            "description": "IPv4IPAMPoolId defines the IPAM pool ID used for IPv4 Addresses on the ALB.",
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "listeners": {
-                        "description": "Listeners define a list of listeners with their protocol, port and attributes.",
-                        "items": {
-                          "properties": {
-                            "listenerAttributes": {
-                              "description": "The attributes of the listener",
-                              "items": {
-                                "$ref": "#/$defs/schema64"
-                              },
-                              "type": "array"
-                            },
-                            "port": {
-                              "description": "The port of the listener",
-                              "format": "int32",
-                              "type": "integer"
-                            },
-                            "protocol": {
-                              "description": "The protocol of the listener",
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "loadBalancerAttributes": {
-                        "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
-                        "items": {
-                          "$ref": "#/$defs/schema64"
-                        },
-                        "type": "array"
-                      },
-                      "loadBalancerName": {
-                        "description": "LoadBalancerName defines the name of the load balancer that will be created with this IngressClassParams.",
-                        "type": "string"
-                      },
-                      "minimumLoadBalancerCapacity": {
-                        "description": "MinimumLoadBalancerCapacity define the capacity reservation for LoadBalancers for all Ingress that belong to IngressClass with this IngressClassParams.",
-                        "properties": {
-                          "capacityUnits": {
-                            "description": "The Capacity Units Value.",
-                            "format": "int32",
-                            "type": "integer"
-                          }
-                        },
-                        "required": [
-                          "capacityUnits"
-                        ],
-                        "type": "object"
-                      },
-                      "namespaceSelector": {
-                        "description": "NamespaceSelector restrict the namespaces of Ingresses that are allowed to specify the IngressClass with this IngressClassParams.\n* if absent or present but empty, it selects all namespaces.",
-                        "properties": {
-                          "matchExpressions": {
-                            "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                          "PrefixListsIDs": {
+                            "description": "PrefixListsIDsLegacy defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.\nNot Recommended, Use PrefixListsIDs (prefixListsIDs in JSON) instead",
                             "items": {
-                              "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "certificateArn": {
+                            "description": "CertificateArn specifies the ARN of the certificates for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "group": {
+                            "description": "Group defines the IngressGroup for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "properties": {
+                              "name": {
+                                "description": "Name is the name of IngressGroup.",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          "inboundCIDRs": {
+                            "description": "InboundCIDRs specifies the CIDRs that are allowed to access the Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "ipAddressType": {
+                            "description": "IPAddressType defines the ip address type for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "enum": [
+                              "ipv4",
+                              "dualstack",
+                              "dualstack-without-public-ipv4"
+                            ],
+                            "type": "string"
+                          },
+                          "ipamConfiguration": {
+                            "description": "IPAMConfiguration defines the IPAM settings for a Load Balancer.",
+                            "properties": {
+                              "ipv4IPAMPoolId": {
+                                "description": "IPv4IPAMPoolId defines the IPAM pool ID used for IPv4 Addresses on the ALB.",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "listeners": {
+                            "description": "Listeners define a list of listeners with their protocol, port and attributes.",
+                            "items": {
                               "properties": {
-                                "key": {
-                                  "$ref": "#/$defs/schema137"
+                                "listenerAttributes": {
+                                  "description": "The attributes of the listener",
+                                  "items": {
+                                    "$ref": "#/$defs/schema64"
+                                  },
+                                  "type": "array"
                                 },
-                                "operator": {
-                                  "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                                "port": {
+                                  "description": "The port of the listener",
+                                  "format": "int32",
+                                  "type": "integer"
+                                },
+                                "protocol": {
+                                  "description": "The protocol of the listener",
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "loadBalancerAttributes": {
+                            "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
+                            "items": {
+                              "$ref": "#/$defs/schema64"
+                            },
+                            "type": "array"
+                          },
+                          "loadBalancerName": {
+                            "description": "LoadBalancerName defines the name of the load balancer that will be created with this IngressClassParams.",
+                            "type": "string"
+                          },
+                          "minimumLoadBalancerCapacity": {
+                            "description": "MinimumLoadBalancerCapacity define the capacity reservation for LoadBalancers for all Ingress that belong to IngressClass with this IngressClassParams.",
+                            "properties": {
+                              "capacityUnits": {
+                                "description": "The Capacity Units Value.",
+                                "format": "int32",
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "capacityUnits"
+                            ],
+                            "type": "object"
+                          },
+                          "namespaceSelector": {
+                            "description": "NamespaceSelector restrict the namespaces of Ingresses that are allowed to specify the IngressClass with this IngressClassParams.\n* if absent or present but empty, it selects all namespaces.",
+                            "properties": {
+                              "matchExpressions": {
+                                "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                                "items": {
+                                  "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                                  "properties": {
+                                    "key": {
+                                      "$ref": "#/$defs/schema135"
+                                    },
+                                    "operator": {
+                                      "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                                      "type": "string"
+                                    },
+                                    "values": {
+                                      "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "type": "array",
+                                      "x-kubernetes-list-type": "atomic"
+                                    }
+                                  },
+                                  "required": [
+                                    "key",
+                                    "operator"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array",
+                                "x-kubernetes-list-type": "atomic"
+                              },
+                              "matchLabels": {
+                                "additionalProperties": {
                                   "type": "string"
                                 },
-                                "values": {
-                                  "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                                "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                                "type": "object"
+                              }
+                            },
+                            "type": "object",
+                            "x-kubernetes-map-type": "atomic"
+                          },
+                          "prefixListsIDs": {
+                            "description": "PrefixListsIDs defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "scheme": {
+                            "description": "Scheme defines the scheme for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "enum": [
+                              "internal",
+                              "internet-facing"
+                            ],
+                            "type": "string"
+                          },
+                          "sslPolicy": {
+                            "description": "SSLPolicy specifies the SSL Policy for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "type": "string"
+                          },
+                          "sslRedirectPort": {
+                            "description": "SSLRedirectPort specifies the SSL Redirect Port for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "type": "string"
+                          },
+                          "subnets": {
+                            "description": "Subnets defines the subnets for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "properties": {
+                              "ids": {
+                                "description": "IDs specify the resource IDs of subnets. Exactly one of this or `tags` must be specified.",
+                                "items": {
+                                  "description": "SubnetID specifies a subnet ID.",
+                                  "pattern": "subnet-[0-9a-f]+",
+                                  "type": "string"
+                                },
+                                "minItems": 1,
+                                "type": "array"
+                              },
+                              "tags": {
+                                "additionalProperties": {
                                   "items": {
                                     "type": "string"
                                   },
-                                  "type": "array",
-                                  "x-kubernetes-list-type": "atomic"
+                                  "type": "array"
+                                },
+                                "description": "Tags specifies subnets in the load balancer's VPC where each\ntag specified in the map key contains one of the values in the corresponding\nvalue list.\nExactly one of this or `ids` must be specified.",
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "tags": {
+                            "description": "Tags defines list of Tags on AWS resources provisioned for Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "items": {
+                              "description": "Tag defines a AWS Tag on resources.",
+                              "properties": {
+                                "key": {
+                                  "description": "The key of the tag.",
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "description": "The value of the tag.",
+                                  "type": "string"
                                 }
                               },
                               "required": [
                                 "key",
-                                "operator"
+                                "value"
                               ],
                               "type": "object"
                             },
-                            "type": "array",
-                            "x-kubernetes-list-type": "atomic"
+                            "type": "array"
                           },
-                          "matchLabels": {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                            "type": "object"
+                          "targetType": {
+                            "description": "TargetType defines the target type of target groups for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                            "enum": [
+                              "instance",
+                              "ip"
+                            ],
+                            "type": "string"
+                          },
+                          "wafv2AclArn": {
+                            "description": "WAFv2ACLArn specifies ARN for the Amazon WAFv2 web ACL.",
+                            "type": "string"
+                          },
+                          "wafv2AclName": {
+                            "description": "WAFv2ACLName specifies name of the Amazon WAFv2 web ACL.",
+                            "type": "string"
                           }
                         },
                         "type": "object",
-                        "x-kubernetes-map-type": "atomic"
-                      },
-                      "prefixListsIDs": {
-                        "description": "PrefixListsIDs defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      },
-                      "scheme": {
-                        "description": "Scheme defines the scheme for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "enum": [
-                          "internal",
-                          "internet-facing"
-                        ],
-                        "type": "string"
-                      },
-                      "sslPolicy": {
-                        "description": "SSLPolicy specifies the SSL Policy for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "type": "string"
-                      },
-                      "sslRedirectPort": {
-                        "description": "SSLRedirectPort specifies the SSL Redirect Port for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "type": "string"
-                      },
-                      "subnets": {
-                        "description": "Subnets defines the subnets for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "properties": {
-                          "ids": {
-                            "description": "IDs specify the resource IDs of subnets. Exactly one of this or `tags` must be specified.",
-                            "items": {
-                              "description": "SubnetID specifies a subnet ID.",
-                              "pattern": "subnet-[0-9a-f]+",
-                              "type": "string"
-                            },
-                            "minItems": 1,
-                            "type": "array"
-                          },
-                          "tags": {
-                            "additionalProperties": {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            },
-                            "description": "Tags specifies subnets in the load balancer's VPC where each\ntag specified in the map key contains one of the values in the corresponding\nvalue list.\nExactly one of this or `ids` must be specified.",
-                            "type": "object"
+                        "x-kubernetes-validations": [
+                          {
+                            "message": "cannot specify both 'prefixListsIDs' and 'PrefixListsIDs' fields",
+                            "rule": "!(has(self.prefixListsIDs) && has(self.PrefixListsIDs))"
                           }
-                        },
-                        "type": "object"
+                        ]
                       },
-                      "tags": {
-                        "description": "Tags defines list of Tags on AWS resources provisioned for Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "items": {
-                          "description": "Tag defines a AWS Tag on resources.",
-                          "properties": {
-                            "key": {
-                              "description": "The key of the tag.",
-                              "type": "string"
-                            },
-                            "value": {
-                              "description": "The value of the tag.",
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "key",
-                            "value"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      "targetType": {
-                        "description": "TargetType defines the target type of target groups for all Ingresses that belong to IngressClass with this IngressClassParams.",
-                        "enum": [
-                          "instance",
-                          "ip"
-                        ],
-                        "type": "string"
-                      },
-                      "wafv2AclArn": {
-                        "description": "WAFv2ACLArn specifies ARN for the Amazon WAFv2 web ACL.",
-                        "type": "string"
-                      },
-                      "wafv2AclName": {
-                        "description": "WAFv2ACLName specifies name of the Amazon WAFv2 web ACL.",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object",
-                    "x-kubernetes-validations": [
                       {
-                        "message": "cannot specify both 'prefixListsIDs' and 'PrefixListsIDs' fields",
-                        "rule": "!(has(self.prefixListsIDs) && has(self.PrefixListsIDs))"
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    ],
+                    "description": "Due to dependency issue, the validation webhook ignores this particular ingressClassParams resource.\nWe recommend creating ingressClassParams resources separately after installing this chart and the\ncontroller is functional.\nYou can set the specifications in the `helm install` command through `--set` or `--set-string`\nIf you do want to specify in the values.yaml, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'spec:'\nnamespaceSelector:\nmatchLabels:\ngroup:\nscheme:\nipAddressType:\ntags:\nloadBalancerAttributes:\n- key:\nvalue:"
                   }
-                ],
-                "description": "Due to dependency issue, the validation webhook ignores this particular ingressClassParams resource.\nWe recommend creating ingressClassParams resources separately after installing this chart and the\ncontroller is functional.\nYou can set the specifications in the `helm install` command through `--set` or `--set-string`\nIf you do want to specify in the values.yaml, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'spec:'\nnamespaceSelector:\nmatchLabels:\ngroup:\nscheme:\nipAddressType:\ntags:\nloadBalancerAttributes:\n- key:\nvalue:"
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4669,7 +4504,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -4689,7 +4524,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema113"
                   },
                   {
                     "properties": {
@@ -4737,7 +4572,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema113"
                   },
                   {
                     "properties": {
@@ -4806,7 +4641,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema113"
                   },
                   {
                     "properties": {
@@ -4849,7 +4684,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema113"
                   },
                   {
                     "properties": {
@@ -5076,7 +4911,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema115"
+                "$ref": "#/$defs/schema113"
               },
               {
                 "properties": {
@@ -5168,132 +5003,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema115"
-                  },
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema87"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "enableCertManager": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableCertManager"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "certManager": {
-                      "properties": {
-                        "issuerRef": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "issuerRef"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "certManager"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -5308,7 +5017,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema153"
+            "$ref": "#/$defs/schema150"
           }
         }
       }
@@ -5391,210 +5100,53 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema103"
+            "$ref": "#/$defs/schema110"
           },
           {
             "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "rbac"
+              "enableServiceMutatorWebhook"
             ],
             "type": "object"
           }
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "allOf": [
+              "serviceMutatorWebhookConfig": {
+                "additionalProperties": {},
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+                "properties": {
+                  "failurePolicy": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema154"
+                        "$ref": "#/$defs/schema23"
                       },
                       {
-                        "$ref": "#/$defs/schema156"
-                      },
-                      {
-                        "$ref": "#/$defs/schema159"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema155"
-                      },
-                      {
-                        "$ref": "#/$defs/schema118"
-                      },
-                      {
-                        "$ref": "#/$defs/schema69"
-                      },
-                      {
-                        "$ref": "#/$defs/schema136"
-                      },
-                      {
-                        "$ref": "#/$defs/schema147"
+                        "$ref": "#/$defs/schema85"
                       }
                     ],
-                    "description": "Name of the object being referenced.",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "whether or not to fail the service creation if the webhook fails"
                   }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema112"
           },
           {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
             "additionalProperties": {},
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
             "properties": {
-              "failurePolicy": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema23"
-                  },
-                  {
-                    "$ref": "#/$defs/schema85"
-                  }
-                ],
-                "description": "whether or not to fail the service creation if the webhook fails"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema112"
-          },
-          {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
-            "additionalProperties": {},
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
-            "properties": {
-              "namespaceSelectors": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema19"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "key: value\narray of namespace selectors for the service mutator webhook"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema112"
-          },
-          {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
-            "additionalProperties": {},
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
-            "properties": {
-              "objectSelector": {
+              "serviceMutatorWebhookConfig": {
                 "additionalProperties": {},
-                "description": "limit webhook to only mutate services matching the objectSelector",
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
                 "properties": {
-                  "matchExpressions": {
+                  "namespaceSelectors": {
                     "anyOf": [
                       {
                         "$ref": "#/$defs/schema19"
@@ -5607,66 +5159,104 @@
                       {
                         "type": "null"
                       }
-                    ]
+                    ],
+                    "description": "key: value\narray of namespace selectors for the service mutator webhook"
                   }
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema112"
           },
           {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
             "additionalProperties": {},
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
             "properties": {
-              "objectSelector": {
+              "serviceMutatorWebhookConfig": {
                 "additionalProperties": {},
-                "description": "limit webhook to only mutate services matching the objectSelector",
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
                 "properties": {
-                  "matchLabels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema55"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
+                  "objectSelector": {
+                    "additionalProperties": {},
+                    "description": "limit webhook to only mutate services matching the objectSelector",
+                    "properties": {
+                      "matchExpressions": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema19"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMutatorWebhookConfig": {
+                "additionalProperties": {},
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+                "properties": {
+                  "objectSelector": {
+                    "additionalProperties": {},
+                    "description": "limit webhook to only mutate services matching the objectSelector",
+                    "properties": {
+                      "matchLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema55"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMutatorWebhookConfig": {
+                "additionalProperties": {},
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+                "properties": {
+                  "operations": {
+                    "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
                     ],
-                    "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>"
+                    "x-kubernetes-list-type": "atomic"
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -5675,7 +5265,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema112"
+                "$ref": "#/$defs/schema110"
               },
               {
                 "properties": {
@@ -5695,7 +5285,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema110"
                   },
                   {
                     "properties": {
@@ -5744,7 +5334,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema110"
                   },
                   {
                     "properties": {
@@ -5791,68 +5381,36 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
             "properties": {
-              "objectSelector": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "serviceMutatorWebhookConfig": {
+                "additionalProperties": {},
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+                "properties": {
+                  "objectSelector": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "limit webhook to only mutate services matching the objectSelector"
                   }
-                ],
-                "description": "limit webhook to only mutate services matching the objectSelector"
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema112"
           },
           {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
             "additionalProperties": {},
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
             "properties": {
-              "operations": {
-                "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook",
-                "items": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "type": [
-                  "array",
-                  "null"
-                ],
-                "x-kubernetes-list-type": "atomic"
+              "serviceMutatorWebhookConfig": {
+                "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
+                "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -5861,7 +5419,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema112"
+                "$ref": "#/$defs/schema110"
               },
               {
                 "properties": {
@@ -5881,7 +5439,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema110"
                   },
                   {
                     "properties": {
@@ -5922,7 +5480,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema110"
                   },
                   {
                     "properties": {
@@ -5971,7 +5529,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema110"
                   },
                   {
                     "properties": {
@@ -6027,137 +5585,6 @@
               }
             ],
             "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema112"
-              },
-              {
-                "properties": {
-                  "enableServiceMutatorWebhook": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableServiceMutatorWebhook"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema112"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "serviceMutatorWebhookConfig": {
-                    "properties": {
-                      "objectSelector": {
-                        "properties": {
-                          "matchExpressions": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "matchExpressions"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "objectSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMutatorWebhookConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema112"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "serviceMutatorWebhookConfig": {
-                    "properties": {
-                      "objectSelector": {
-                        "properties": {
-                          "matchLabels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "matchLabels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "objectSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMutatorWebhookConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMutatorWebhookConfig": {
-            "description": "serviceMutatorWebhook contains configurations specific to the service mutator webhook",
-            "type": "object"
           }
         }
       }
@@ -7351,18 +6778,50 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhookTLS": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
-              "caCert": {
-                "$ref": "#/$defs/schema153"
+              "webhookTLS": {
+                "additionalProperties": {},
+                "description": "webhookTLS specifies TLS cert/key for the webhook",
+                "properties": {
+                  "caCert": {
+                    "$ref": "#/$defs/schema150"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "webhookTLS": {
+                "additionalProperties": {},
+                "description": "webhookTLS specifies TLS cert/key for the webhook",
+                "properties": {
+                  "cert": {
+                    "$ref": "#/$defs/schema150"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "webhookTLS": {
+                "additionalProperties": {},
+                "description": "webhookTLS specifies TLS cert/key for the webhook",
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/schema150"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -7490,83 +6949,6 @@
             "type": "object"
           },
           {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "key": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "key"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhookTLS": {
-            "additionalProperties": {},
-            "description": "webhookTLS specifies TLS cert/key for the webhook",
-            "properties": {
-              "cert": {
-                "$ref": "#/$defs/schema153"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "caCert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "caCert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "cert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "cert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
             "not": {
               "properties": {
                 "enableCertManager": {
@@ -7602,83 +6984,6 @@
                     "type": "string"
                   }
                 ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "caCert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "caCert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "cert": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "cert"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "webhookTLS": {
-                "properties": {
-                  "key": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "key"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhookTLS": {
-            "additionalProperties": {},
-            "description": "webhookTLS specifies TLS cert/key for the webhook",
-            "properties": {
-              "key": {
-                "$ref": "#/$defs/schema153"
               }
             }
           }
@@ -7889,7 +7194,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "not": {
@@ -7922,139 +7227,104 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "autoscaleBehavior": {
-                "anyOf": [
-                  {
-                    "additionalProperties": false,
-                    "description": "HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).",
-                    "properties": {
-                      "scaleDown": {
-                        "$ref": "#/$defs/schema5"
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "autoscaleBehavior": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).",
+                        "properties": {
+                          "scaleDown": {
+                            "$ref": "#/$defs/schema5"
+                          },
+                          "scaleUp": {
+                            "$ref": "#/$defs/schema5"
+                          }
+                        },
+                        "type": "object"
                       },
-                      "scaleUp": {
-                        "$ref": "#/$defs/schema5"
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
                       }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
+                    ]
                   }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "maxReplicas": {
-                "anyOf": [
-                  {
-                    "description": "maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "$ref": "#/$defs/schema104"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "maxReplicas": {
+                    "anyOf": [
+                      {
+                        "description": "maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/$defs/schema104"
+                      }
+                    ]
                   }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "minReplicas": {
-                "anyOf": [
-                  {
-                    "description": "minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.",
-                    "format": "int32",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/schema104"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "minReplicas": {
+                    "anyOf": [
+                      {
+                        "description": "minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "description": "minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.",
+                        "format": "int32",
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/schema104"
+                      }
+                    ]
                   }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "targetCPUUtilizationPercentage": {
-                "anyOf": [
-                  {
-                    "description": "averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "description": "averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type",
-                    "format": "int32",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema104"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "targetCPUUtilizationPercentage": {
+                    "anyOf": [
+                      {
+                        "description": "averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "description": "averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type",
+                        "format": "int32",
+                        "type": "null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema104"
+                      }
+                    ]
                   }
-                ]
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -8087,10 +7357,10 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema135"
+                    "$ref": "#/$defs/schema133"
                   },
                   {
-                    "$ref": "#/$defs/schema135"
+                    "$ref": "#/$defs/schema133"
                   }
                 ]
               }
@@ -8232,7 +7502,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema148"
+                    "$ref": "#/$defs/schema145"
                   }
                 }
               ],
@@ -8281,7 +7551,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "$ref": "#/$defs/schema148"
+            "$ref": "#/$defs/schema145"
           }
         }
       ],
@@ -8294,7 +7564,7 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "$ref": "#/$defs/schema44"
@@ -8313,7 +7583,7 @@
     "disableIngressClassAnnotation": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default"
@@ -8321,7 +7591,7 @@
     "disableIngressGroupNameAnnotation": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default"
@@ -8329,7 +7599,7 @@
     "disableRestrictedSecurityGroupRules": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic"
@@ -8339,13 +7609,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema154"
+              "$ref": "#/$defs/schema151"
+            },
+            {
+              "$ref": "#/$defs/schema153"
             },
             {
               "$ref": "#/$defs/schema156"
-            },
-            {
-              "$ref": "#/$defs/schema159"
             },
             {
               "not": {
@@ -8358,16 +7628,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema118"
+              "$ref": "#/$defs/schema116"
             },
             {
               "$ref": "#/$defs/schema69"
             },
             {
-              "$ref": "#/$defs/schema136"
+              "$ref": "#/$defs/schema134"
             },
             {
-              "$ref": "#/$defs/schema147"
+              "$ref": "#/$defs/schema144"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -8391,7 +7661,7 @@
     "enableBackendSecurityGroup": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)"
@@ -8412,7 +7682,7 @@
     "enableEndpointSlices": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)"
@@ -8420,7 +7690,7 @@
     "enableManageBackendSecurityGroupRules": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)"
@@ -8428,7 +7698,7 @@
     "enablePodReadinessGateInject": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)"
@@ -8449,7 +7719,7 @@
     "enableShield": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "Enable Shield addon for ALB (default true)"
@@ -8457,7 +7727,7 @@
     "enableWaf": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "Enable WAF addon for ALB (default true)"
@@ -8465,7 +7735,7 @@
     "enableWafv2": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "Enable WAF V2 addon for ALB (default true)"
@@ -8844,7 +8114,7 @@
                     "$ref": "#/$defs/schema90"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema117"
+                    "$ref": "#/$defs/schema115"
                   }
                 },
                 "type": [
@@ -8939,7 +8209,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema146"
+                    "$ref": "#/$defs/schema143"
                   }
                 },
                 "type": [
@@ -9834,7 +9104,7 @@
                               "$ref": "#/$defs/schema90"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema117"
+                              "$ref": "#/$defs/schema115"
                             }
                           },
                           "type": [
@@ -10297,13 +9567,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema154"
+                  "$ref": "#/$defs/schema151"
+                },
+                {
+                  "$ref": "#/$defs/schema153"
                 },
                 {
                   "$ref": "#/$defs/schema156"
-                },
-                {
-                  "$ref": "#/$defs/schema159"
                 },
                 {
                   "not": {
@@ -10316,16 +9586,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema118"
+                  "$ref": "#/$defs/schema116"
                 },
                 {
                   "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema136"
+                  "$ref": "#/$defs/schema134"
                 },
                 {
-                  "$ref": "#/$defs/schema147"
+                  "$ref": "#/$defs/schema144"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -10503,7 +9773,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "additionalProperties": {
@@ -10567,7 +9837,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "$ref": "#/$defs/schema44"
@@ -10585,7 +9855,7 @@
     "podDisruptionBudget": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "additionalProperties": {},
@@ -10602,7 +9872,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "$ref": "#/$defs/schema51"
@@ -10894,13 +10164,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema154"
+              "$ref": "#/$defs/schema151"
+            },
+            {
+              "$ref": "#/$defs/schema153"
             },
             {
               "$ref": "#/$defs/schema156"
-            },
-            {
-              "$ref": "#/$defs/schema159"
             },
             {
               "not": {
@@ -10913,16 +10183,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema118"
+              "$ref": "#/$defs/schema116"
             },
             {
               "$ref": "#/$defs/schema69"
             },
             {
-              "$ref": "#/$defs/schema136"
+              "$ref": "#/$defs/schema134"
             },
             {
-              "$ref": "#/$defs/schema147"
+              "$ref": "#/$defs/schema144"
             }
           ],
           "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
@@ -11069,7 +10339,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "not": {
+                  "$ref": "#/$defs/schema141"
+                }
               },
               {
                 "properties": {
@@ -11085,108 +10357,72 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema44"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Annotations to add to the service account"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema44"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations to add to the service account"
+                  }
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "automountServiceAccountToken": {
+                    "anyOf": [
+                      {
+                        "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                        "type": "boolean"
+                      },
+                      {
+                        "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                        "type": "null"
+                      },
+                      {
+                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Automount API credentials for a Service Account."
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "automountServiceAccountToken": {
-                "anyOf": [
-                  {
-                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-                    "type": "null"
-                  },
-                  {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-                    "type": "string"
-                  }
-                ],
-                "description": "Automount API credentials for a Service Account."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema143"
+                }
               },
               {
+                "additionalProperties": {},
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema12"
+                      },
+                      {
+                        "$ref": "#/$defs/schema47"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
                   }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema12"
-                  },
-                  {
-                    "$ref": "#/$defs/schema47"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
           }
         }
       ],
@@ -11218,13 +10454,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema154"
+                  "$ref": "#/$defs/schema151"
+                },
+                {
+                  "$ref": "#/$defs/schema153"
                 },
                 {
                   "$ref": "#/$defs/schema156"
-                },
-                {
-                  "$ref": "#/$defs/schema159"
                 },
                 {
                   "not": {
@@ -11237,16 +10473,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema118"
+                  "$ref": "#/$defs/schema116"
                 },
                 {
                   "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema136"
+                  "$ref": "#/$defs/schema134"
                 },
                 {
-                  "$ref": "#/$defs/schema147"
+                  "$ref": "#/$defs/schema144"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -11273,7 +10509,7 @@
     "serviceAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "$ref": "#/$defs/schema44"
@@ -11308,264 +10544,203 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "additionalLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "Labels to add to the service monitor"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "interval": {
-                "anyOf": [
-                  {
-                    "allOf": [
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalLabels": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema154"
-                      },
-                      {
-                        "$ref": "#/$defs/schema156"
-                      },
-                      {
-                        "$ref": "#/$defs/schema159"
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema155"
-                      },
-                      {
-                        "$ref": "#/$defs/schema118"
-                      },
-                      {
-                        "$ref": "#/$defs/schema69"
-                      },
-                      {
-                        "$ref": "#/$defs/schema136"
-                      },
-                      {
-                        "$ref": "#/$defs/schema147"
                       }
                     ],
-                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "Labels to add to the service monitor"
                   }
-                ],
-                "description": "Prometheus scrape interval"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                    "items": {
-                      "$ref": "#/$defs/schema4"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "Metric relabelings to apply to samples before ingestion"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema28"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "Namespace to create the service monitor in"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "relabelings": {
-                "anyOf": [
-                  {
-                    "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                    "items": {
-                      "$ref": "#/$defs/schema4"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "Relabelings to apply to samples before ingestion"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "scrapeTimeout": {
-                "anyOf": [
-                  {
-                    "allOf": [
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "interval": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema154"
-                      },
-                      {
-                        "$ref": "#/$defs/schema156"
-                      },
-                      {
-                        "$ref": "#/$defs/schema159"
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema151"
+                          },
+                          {
+                            "$ref": "#/$defs/schema153"
+                          },
+                          {
+                            "$ref": "#/$defs/schema156"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema152"
+                          },
+                          {
+                            "$ref": "#/$defs/schema116"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "$ref": "#/$defs/schema134"
+                          },
+                          {
+                            "$ref": "#/$defs/schema144"
+                          }
+                        ],
+                        "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
                       },
                       {
                         "not": {
-                          "pattern": "[ \\t]#"
+                          "$ref": "#/$defs/helm-truthy"
                         }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema155"
-                      },
-                      {
-                        "$ref": "#/$defs/schema118"
-                      },
-                      {
-                        "$ref": "#/$defs/schema69"
-                      },
-                      {
-                        "$ref": "#/$defs/schema136"
-                      },
-                      {
-                        "$ref": "#/$defs/schema147"
                       }
                     ],
-                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "Prometheus scrape interval"
                   }
-                ],
-                "description": "Prometheus scrape timeout"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metricRelabelings": {
+                    "anyOf": [
+                      {
+                        "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+                        "items": {
+                          "$ref": "#/$defs/schema4"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Metric relabelings to apply to samples before ingestion"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema28"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Namespace to create the service monitor in"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "relabelings": {
+                    "anyOf": [
+                      {
+                        "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                        "items": {
+                          "$ref": "#/$defs/schema4"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Relabelings to apply to samples before ingestion"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "scrapeTimeout": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema151"
+                          },
+                          {
+                            "$ref": "#/$defs/schema153"
+                          },
+                          {
+                            "$ref": "#/$defs/schema156"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema152"
+                          },
+                          {
+                            "$ref": "#/$defs/schema116"
+                          },
+                          {
+                            "$ref": "#/$defs/schema69"
+                          },
+                          {
+                            "$ref": "#/$defs/schema134"
+                          },
+                          {
+                            "$ref": "#/$defs/schema144"
+                          }
+                        ],
+                        "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+                        "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Prometheus scrape timeout"
+                  }
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -11676,7 +10851,7 @@
     "tolerateNonExistentBackendAction": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)"
@@ -11684,7 +10859,7 @@
     "tolerateNonExistentBackendService": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema151"
+          "$ref": "#/$defs/schema148"
         }
       ],
       "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)"
@@ -11853,10 +11028,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema145"
+                  "$ref": "#/$defs/schema142"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema145"
+                  "$ref": "#/$defs/schema142"
                 }
               },
               "type": [
@@ -11875,7 +11050,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema139"
+          "$ref": "#/$defs/schema137"
         },
         {
           "not": {
@@ -11898,7 +11073,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "$ref": "#/$defs/schema148"
+            "$ref": "#/$defs/schema145"
           }
         }
       ],
@@ -11968,7 +11143,9 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema105"
+                    "not": {
+                      "$ref": "#/$defs/schema107"
+                    }
                   },
                   {
                     "properties": {
@@ -12006,100 +11183,60 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressValidationNamespaceSelector": {
-                "additionalProperties": {},
-                "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector.",
-                "properties": {
-                  "matchExpressions": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema19"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema105"
-                  },
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressValidationNamespaceSelector": {
+                    "additionalProperties": {},
+                    "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector.",
                     "properties": {
-                      "ingressValidationNamespaceSelector": {
+                      "matchExpressions": {
                         "anyOf": [
                           {
-                            "type": "object"
+                            "$ref": "#/$defs/schema19"
                           },
                           {
-                            "$ref": "#/$defs/helm-truthy"
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
                           }
                         ]
                       }
-                    },
-                    "required": [
-                      "ingressValidationNamespaceSelector"
-                    ],
-                    "type": "object"
+                    }
                   }
-                ]
+                }
               },
               {
-                "not": {
-                  "properties": {
-                    "disableIngressValidation": {
-                      "$ref": "#/$defs/helm-truthy"
+                "additionalProperties": {},
+                "properties": {
+                  "ingressValidationNamespaceSelector": {
+                    "additionalProperties": {},
+                    "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector.",
+                    "properties": {
+                      "matchLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema55"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
                     }
-                  },
-                  "required": [
-                    "disableIngressValidation"
-                  ],
-                  "type": "object"
+                  }
                 }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressValidationNamespaceSelector": {
-                "additionalProperties": {},
-                "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector.",
-                "properties": {
-                  "matchLabels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema55"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
           }
         },
         {
@@ -12108,7 +11245,9 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema108"
+                    "not": {
+                      "$ref": "#/$defs/schema111"
+                    }
                   },
                   {
                     "properties": {
@@ -12146,100 +11285,60 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressValidationObjectSelector": {
-                "additionalProperties": {},
-                "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector",
-                "properties": {
-                  "matchExpressions": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema19"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema108"
-                  },
-                  {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressValidationObjectSelector": {
+                    "additionalProperties": {},
+                    "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector",
                     "properties": {
-                      "ingressValidationObjectSelector": {
+                      "matchExpressions": {
                         "anyOf": [
                           {
-                            "type": "object"
+                            "$ref": "#/$defs/schema19"
                           },
                           {
-                            "$ref": "#/$defs/helm-truthy"
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
                           }
                         ]
                       }
-                    },
-                    "required": [
-                      "ingressValidationObjectSelector"
-                    ],
-                    "type": "object"
+                    }
                   }
-                ]
+                }
               },
               {
-                "not": {
-                  "properties": {
-                    "disableIngressValidation": {
-                      "$ref": "#/$defs/helm-truthy"
+                "additionalProperties": {},
+                "properties": {
+                  "ingressValidationObjectSelector": {
+                    "additionalProperties": {},
+                    "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector",
+                    "properties": {
+                      "matchLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema55"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
                     }
-                  },
-                  "required": [
-                    "disableIngressValidation"
-                  ],
-                  "type": "object"
+                  }
                 }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressValidationObjectSelector": {
-                "additionalProperties": {},
-                "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector",
-                "properties": {
-                  "matchLabels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema55"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
           }
         }
       ],
@@ -12253,7 +11352,7 @@
         "ingressValidationNamespaceSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema128"
+              "$ref": "#/$defs/schema126"
             },
             {
               "not": {
@@ -12266,7 +11365,7 @@
         "ingressValidationObjectSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema128"
+              "$ref": "#/$defs/schema126"
             },
             {
               "not": {

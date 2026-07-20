@@ -717,6 +717,16 @@ pub(super) fn eval_merge(
     merge_arg_values(args, env, resolver, &mut values, &mut effects);
     // A Go pipeline passes the piped subject as the LAST argument.
     values.extend(piped_values);
+    // A definitely-empty literal destination (`mergeOverwrite (dict) a b`)
+    // supplies no keys in any state, so it neither shadows nor contributes:
+    // dropping it keeps the remaining operands eligible for the ordered
+    // layer form (KPS's fresh-dict annotation merges).
+    let dropped_empty_literals = values
+        .iter()
+        .filter(|value| matches!(value, AbstractValue::Dict(entries) if entries.is_empty()))
+        .count();
+    values.retain(|value| !matches!(value, AbstractValue::Dict(entries) if entries.is_empty()));
+    let operand_count = operand_count - dropped_empty_literals;
     // Each identity-bearing operand's splice rows tolerate Helm-falsy
     // inputs: the strict map contract rides the operand's own fail
     // implication, not the merged value's render. Recorded even when the

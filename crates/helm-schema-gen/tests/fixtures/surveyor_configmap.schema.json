@@ -58,80 +58,200 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "jetstream": {
+              "config": {
                 "additionalProperties": {},
                 "properties": {
-                  "accounts": {
+                  "jetstream": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "accounts": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "name": {},
+                                "password": {
+                                  "type": "string"
+                                },
+                                "tls": {
+                                  "additionalProperties": {},
+                                  "properties": {
+                                    "ca": {},
+                                    "cert": {},
+                                    "key": {}
+                                  },
+                                  "type": "object"
+                                },
+                                "username": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "name": {},
+                                "password": {
+                                  "type": "string"
+                                },
+                                "tls": {
+                                  "additionalProperties": {},
+                                  "properties": {
+                                    "ca": {},
+                                    "cert": {},
+                                    "key": {}
+                                  },
+                                  "type": "object"
+                                },
+                                "username": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
                     "anyOf": [
                       {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "password": {
-                              "type": "string"
-                            },
-                            "tls": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "ca": {},
-                                "cert": {},
-                                "key": {}
-                              },
-                              "type": "object"
-                            },
-                            "username": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
                         "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "password": {
-                              "type": "string"
-                            },
-                            "tls": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "ca": {},
-                                "cert": {},
-                                "key": {}
-                              },
-                              "type": "object"
-                            },
-                            "username": {
-                              "type": "string"
-                            }
-                          },
-                          "type": "object"
+                          "type": "string"
                         },
+                        "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                        "properties": {},
                         "type": "object"
                       },
                       {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       }
                     ]
                   }
                 }
               }
             }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -139,55 +259,6 @@
       "properties": {
         "config": {
           "type": "object"
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "config": {
-            "properties": {
-              "jetstream": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
         }
       }
     },
@@ -246,62 +317,6 @@
                 "type": "null"
               }
             ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "config": {
-            "properties": {
-              "jetstream": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
           }
         }
       }
@@ -375,104 +390,6 @@
             "anyOf": [
               {
                 "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "config": {
-            "properties": {
-              "jetstream": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
               }
             ]
           }

@@ -80,169 +80,86 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
+            "additionalProperties": {},
             "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+              "commonAnnotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                ]
               }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
+            }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "metrics": {
-                "properties": {
-                  "prometheusRule": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
                     },
-                    "required": [
-                      "enabled"
-                    ],
                     "type": "object"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "required": [
-                  "prometheusRule"
-                ],
-                "type": "object"
+                ]
               }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
+            }
           },
           {
+            "additionalProperties": {},
             "properties": {
-              "metrics": {
-                "properties": {
-                  "prometheusRule": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
                   }
-                },
-                "required": [
-                  "prometheusRule"
-                ],
-                "type": "object"
+                ]
               }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
           }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
       }
     },
     {
@@ -475,250 +392,33 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "metrics": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "prometheusRule": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "metrics": {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheusRule": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "metrics": {
+                "type": "object"
               }
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "prometheusRule": {
-                        "properties": {
-                          "additionalLabels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "additionalLabels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheusRule"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "prometheusRule": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheusRule"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "prometheusRule": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheusRule"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              }
-            ]
-          }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "metrics": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "prometheusRule": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheusRule"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
       }
     },
     {
@@ -921,144 +621,112 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "prometheusRule": {
-                "additionalProperties": {},
-                "properties": {
-                  "additionalLabels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "prometheusRule": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheusRule"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "prometheusRule": {
                 "additionalProperties": {},
                 "properties": {
-                  "rules": {
-                    "anyOf": [
-                      {
-                        "description": "List of alerting and recording rules.",
-                        "items": {
-                          "additionalProperties": false,
-                          "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                          "properties": {
-                            "alert": {
-                              "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
+                  "prometheusRule": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "additionalLabels": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
                               "type": "string"
                             },
-                            "annotations": {
-                              "additionalProperties": {
-                                "type": "string"
-                              },
-                              "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                              "type": "object"
-                            },
-                            "expr": {
-                              "anyOf": [
-                                {
-                                  "type": "integer"
-                                },
-                                {
-                                  "type": "string"
-                                }
-                              ],
-                              "description": "PromQL expression to evaluate.",
-                              "x-kubernetes-int-or-string": true
-                            },
-                            "for": {
-                              "description": "Alerts are considered firing once they have been returned for this long.",
-                              "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                              "type": "string"
-                            },
-                            "keep_firing_for": {
-                              "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                              "minLength": 1,
-                              "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                              "type": "string"
-                            },
-                            "labels": {
-                              "additionalProperties": {
-                                "type": "string"
-                              },
-                              "description": "Labels to add or overwrite.",
-                              "type": "object"
-                            },
-                            "record": {
-                              "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                              "type": "string"
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
                             }
                           },
-                          "required": [
-                            "expr"
-                          ],
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "type": "string"
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
-                    ]
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheusRule": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "rules": {
+                        "anyOf": [
+                          {
+                            "description": "List of alerting and recording rules.",
+                            "items": {
+                              "additionalProperties": false,
+                              "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
+                              "properties": {
+                                "alert": {
+                                  "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
+                                  "type": "string"
+                                },
+                                "annotations": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
+                                  "type": "object"
+                                },
+                                "expr": {
+                                  "anyOf": [
+                                    {
+                                      "type": "integer"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ],
+                                  "description": "PromQL expression to evaluate.",
+                                  "x-kubernetes-int-or-string": true
+                                },
+                                "for": {
+                                  "description": "Alerts are considered firing once they have been returned for this long.",
+                                  "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                                  "type": "string"
+                                },
+                                "keep_firing_for": {
+                                  "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
+                                  "minLength": 1,
+                                  "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                                  "type": "string"
+                                },
+                                "labels": {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "description": "Labels to add or overwrite.",
+                                  "type": "object"
+                                },
+                                "record": {
+                                  "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "expr"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
                   }
                 }
               }
-            }
+            ]
           }
         }
       ],

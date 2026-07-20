@@ -4,7 +4,7 @@
 
 use indoc::indoc;
 
-use super::{parse_ir, schema_accepts_instance, schema_for_values_yaml};
+use super::{parse_ir, parse_ir_with_helpers, schema_accepts_instance, schema_for_values_yaml};
 
 /// The velero shape: the deprecated `securityContext` merges beneath
 /// `podSecurityContext` into a Deployment's pod security context. A legacy
@@ -175,6 +175,142 @@ fn merge_overwrite_reverses_layer_precedence() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "mergeOverwrite flips which layer is shadowed: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// The KPS rule-annotation shape: dig- and default-derived locals merged
+/// over a fresh-dict destination reach a dynamic-member provider slot
+/// (`metadata.annotations`). The empty literal destination drops out of
+/// the layer order, `if $merged` decodes to the layers' disjunction, the
+/// TOP layer types its members under its own truthiness, and the shadowed
+/// layer types only where the top layer is Helm-empty — the per-key
+/// correlation over dynamic names stays open (documented F93 bound).
+#[test]
+fn fresh_dict_merge_layers_type_dynamic_members_with_shadow_refinement() {
+    let src = indoc! {r#"
+        {{- $ruleAnnotations := dig "MyAlert" (dict) .Values.additionalRuleAnnotations }}
+        {{- $groupAnnotations := default (dict) .Values.additionalRuleGroupAnnotations.mygroup }}
+        {{- $additionalAnnotations := mergeOverwrite (dict) $groupAnnotations $ruleAnnotations }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- if $additionalAnnotations }}
+          annotations:
+        {{ toYaml $additionalAnnotations | indent 4 }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("additionalRuleAnnotations: {}\nadditionalRuleGroupAnnotations: {}\n"),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "additionalRuleAnnotations": { "MyAlert": { "foo": 7 } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalRuleAnnotations": { "MyAlert": { "foo": "x" } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "additionalRuleGroupAnnotations": { "mygroup": { "foo": 7 } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalRuleGroupAnnotations": { "mygroup": { "foo": "x" } } }),
+            true,
+        ),
+        // Shadowed corner: the rule layer supplies the same key with a
+        // string, so the group's numeric member never renders.
+        (
+            serde_json::json!({
+                "additionalRuleGroupAnnotations": { "mygroup": { "foo": 7 } },
+                "additionalRuleAnnotations": { "MyAlert": { "foo": "x" } }
+            }),
+            true,
+        ),
+        // A numeric group member beside an unrelated-key rule map abstains
+        // (documented widening: per-key correlation over dynamic names).
+        (
+            serde_json::json!({
+                "additionalRuleGroupAnnotations": { "mygroup": { "foo": 7 } },
+                "additionalRuleAnnotations": { "MyAlert": { "bar": "x" } }
+            }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "fresh-dict merge layers bind dynamic-member payloads per layer: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// The airflow scope-list candidate helper (range over `(list LOCAL $)`
+/// with `hasKey`+truthy checks and `break`) resolves to guarded values
+/// candidates, so an include splice at a provider slot types each
+/// candidate's members. Pins the DECODED half of the F80 securityContext
+/// lane: the real chart still abstains behind the nil-scrubbed celery
+/// merge layer, which is the recorded residual.
+#[test]
+fn candidate_selection_helper_binds_provider_payload_through_scope_list() {
+    let helpers = indoc! {r#"
+        {{- define "test.podSecurityContext" }}
+          {{- $ := last . }}
+          {{- $result := dict }}
+          {{- range . }}
+            {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod }}
+              {{- $result = .securityContexts.pod }}
+              {{- break }}
+            {{- end }}
+            {{- if and (hasKey . "securityContext") .securityContext }}
+              {{- $result = .securityContext }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+          {{- if $result }}
+            {{- toYaml $result | print }}
+          {{- else }}
+        runAsUser: {{ $.uid }}
+          {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        {{- $securityContext := include "test.podSecurityContext" (list .Values.workers .Values) }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              securityContext: {{ $securityContext | nindent 8 }}
+              containers:
+                - name: main
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(
+            "uid: 50000\nworkers:\n  securityContexts: {}\n  securityContext: {}\nsecurityContexts: {}\nsecurityContext: {}\n",
+        ),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": "oops" } } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": 50000 } } } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "scope-list candidate selection keeps provider member typing: \
              instance={instance}; want={want}; schema={schema}"
         );
     }

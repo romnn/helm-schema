@@ -501,11 +501,15 @@ fn record_contract_use_conjunction(
         });
     // A merge layer's sink typing rides its OWN truthiness: whichever layer
     // made the `with` gate truthy, this layer's keys render exactly when
-    // the layer itself is (its falsy states contribute nothing).
+    // the layer itself is (its falsy states contribute nothing). The
+    // ORIGINAL decoded gates still scope the synthesized layer arms — a
+    // dormant render gate must silence them — so they travel on the
+    // provider use itself.
     let merge_layered = contract_use
         .merge_layers
         .as_ref()
         .filter(|merge| merge.layers.get(merge.position) == Some(&contract_use.source_expr));
+    let merge_outer_guards = merge_layered.is_some().then(|| lowerable_guards.clone());
     let lowerable_guards = if merge_layered.is_some() {
         Some(vec![ConditionalGuard::Truthy {
             path: contract_use.source_expr.clone(),
@@ -700,9 +704,26 @@ fn record_contract_use_conjunction(
         } else {
             (provider_use, None)
         };
-        if let Some(layered) = merge_layer_provider_use {
+        if let Some(mut layered) = merge_layer_provider_use {
+            // Decoded render gates scope the synthesized layer arms — a
+            // dormant gate must silence them (KPS's `defaultRules.create:
+            // false`). Gates that cannot lower (member-local wildcard
+            // conditions on airflow's per-set rows) keep the ungated arms
+            // instead of dropping verified typing; their exact encoding is
+            // the F80 existential member-guard residual.
+            layered.outer_guards = merge_outer_guards.flatten().unwrap_or_default();
             acc.facts.record_provider_schema_use(layered);
         }
+        // The sink's metadata field kind is layer-scoped the same way: a
+        // shadowed layer's member reaches the rendered map only where the
+        // earlier layers leave it visible, so the string-map typing rides
+        // the synthesized layer arms, never the base lanes (KPS's
+        // group-level rule annotations beneath the per-alert layer).
+        let metadata_field_kind = if merge_layered.is_some() {
+            None
+        } else {
+            metadata_field_kind
+        };
         // A structural dispatch arm splits its facts: the PATH keeps only the
         // dispatch tolerance (the arm must not hard-type the whole domain its
         // partition merely selects from), while the BRANCH keeps the real
@@ -2879,6 +2900,7 @@ fn provider_schema_use(
                 .0
                 .last()
                 .is_none_or(|segment| !segment.ends_with("[*]")),
+        outer_guards: Vec::new(),
     })
 }
 

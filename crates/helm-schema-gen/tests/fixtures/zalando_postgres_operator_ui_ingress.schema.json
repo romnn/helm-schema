@@ -49,24 +49,288 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "fullnameOverride": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "host": {},
+                            "paths": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "host": {},
+                            "paths": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -122,248 +386,6 @@
     },
     {
       "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "host": {},
-                        "paths": {
-                          "anyOf": [
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "host": {},
-                        "paths": {
-                          "anyOf": [
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -467,96 +489,6 @@
                 ]
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
           }
         }
       }
@@ -611,39 +543,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
     }
   ],
   "properties": {
@@ -664,602 +563,456 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                        "properties": {},
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
                     "additionalProperties": {
-                      "type": "string"
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "additionalProperties": {
+                            "allOf": [
+                              {
+                                "not": {
+                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(|~|null|Null|NULL)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                }
+                              }
+                            ],
+                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                            "type": "string"
+                          },
+                          "items": {
+                            "allOf": [
+                              {
+                                "not": {
+                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(|~|null|Null|NULL)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                }
+                              }
+                            ],
+                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                            "type": "string"
+                          }
+                        }
+                      }
                     },
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "additionalProperties": {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          }
-                        ],
-                        "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                        "type": "string"
-                      },
-                      "items": {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          }
-                        ],
-                        "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                        "type": "string"
-                      }
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "additionalProperties": {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          }
-                        ],
-                        "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                        "type": "string"
-                      },
-                      "items": {
-                        "allOf": [
-                          {
-                            "not": {
-                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[-?:]([ \\t]|$)"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": ":[ \\t]|:$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[ \\t]#"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "[\\r\\n]"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(|~|null|Null|NULL)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                            }
-                          },
-                          {
-                            "not": {
-                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                            }
-                          }
-                        ],
-                        "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {},
-                  "type": "object"
-                },
-                "type": "array"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressClassName": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      }
-                    ],
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
-                          "items": {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "additionalProperties": {
+                            "allOf": [
+                              {
+                                "not": {
+                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(|~|null|Null|NULL)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                }
+                              }
+                            ],
+                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
                             "type": "string"
                           },
-                          "type": "array",
-                          "x-kubernetes-list-type": "atomic"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
                           "items": {
+                            "allOf": [
+                              {
+                                "not": {
+                                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(|~|null|Null|NULL)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                                }
+                              }
+                            ],
+                            "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
                             "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressClassName": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
                           },
-                          "type": "array",
-                          "x-kubernetes-list-type": "atomic"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                            }
                           }
-                        },
-                        {
-                          "type": "object"
+                        ],
+                        "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
-                      ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
                     }
                   }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            ]
           }
         },
         {
@@ -1290,170 +1043,203 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "secretName": {
-                      "allOf": [
-                        {
-                          "not": {
-                            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^[-?:]([ \\t]|$)"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": ":[ \\t]|:$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[ \\t]#"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[\\r\\n]"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^(|~|null|Null|NULL)$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                          }
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array",
+                              "x-kubernetes-list-type": "atomic"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
                         }
-                      ],
-                      "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-                      "type": "string"
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "secretName": {
-                      "allOf": [
-                        {
-                          "not": {
-                            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^[-?:]([ \\t]|$)"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": ":[ \\t]|:$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[ \\t]#"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[\\r\\n]"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^(|~|null|Null|NULL)$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                          }
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array",
+                              "x-kubernetes-list-type": "atomic"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
                         }
-                      ],
-                      "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-                      "type": "string"
+                      }
                     }
                   }
                 }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
               },
               {
+                "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "secretName": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^[-?:]([ \\t]|$)"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^(|~|null|Null|NULL)$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                              }
+                            }
+                          ],
+                          "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "secretName": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^[-?:]([ \\t]|$)"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^(|~|null|Null|NULL)$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                              }
+                            }
+                          ],
+                          "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+                          "type": "string"
+                        }
+                      }
+                    }
                   }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "items": {},
+                    "type": "array"
+                  }
+                }
               }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "items": {},
-                "type": "array"
-              }
-            }
           }
         }
       ],

@@ -791,7 +791,7 @@
         "null"
       ]
     },
-    "schema123": {
+    "schema124": {
       "not": {
         "properties": {
           "provider": {
@@ -1270,7 +1270,7 @@
         "type": "object"
       }
     },
-    "schema168": {
+    "schema169": {
       "properties": {
         "webhook": {
           "properties": {
@@ -1561,29 +1561,16 @@
       "properties": {},
       "type": "object"
     },
-    "schema216": {
-      "not": {
-        "properties": {
-          "webhook": {}
-        },
-        "required": [
-          "webhook"
-        ],
-        "type": "object"
-      }
-    },
     "schema217": {
-      "not": {
-        "properties": {
-          "create": {}
-        },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "webhook": {}
+      },
+      "required": [
+        "webhook"
+      ],
+      "type": "object"
     },
-    "schema221": {
+    "schema219": {
       "oneOf": [
         {
           "type": [
@@ -1599,7 +1586,16 @@
         }
       ]
     },
-    "schema223": {
+    "schema220": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema221": {
       "oneOf": [
         {
           "type": [
@@ -1615,18 +1611,18 @@
         }
       ]
     },
-    "schema224": {
+    "schema222": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema229": {
+    "schema227": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema233": {
+    "schema230": {
       "anyOf": [
         {
           "type": "null"
@@ -1636,17 +1632,17 @@
         }
       ]
     },
-    "schema234": {
+    "schema231": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema236": {
+    "schema233": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema239": {
+    "schema236": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3927,95 +3923,36 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAffinity": {
-                "$ref": "#/$defs/schema52"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "properties": {
-              "affinity": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAffinity": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAffinity": {
-                    "properties": {
-                      "preferredDuringSchedulingIgnoredDuringExecution": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "preferredDuringSchedulingIgnoredDuringExecution"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
             "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "podAffinity": {
-                "$ref": "#/$defs/schema58"
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAffinity": {
+                    "$ref": "#/$defs/schema52"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAffinity": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4193,22 +4130,38 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "podAffinity": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAffinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4274,95 +4227,36 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAntiAffinity": {
-                "$ref": "#/$defs/schema52"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "properties": {
-              "affinity": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAntiAffinity": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "podAntiAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAntiAffinity": {
-                    "properties": {
-                      "preferredDuringSchedulingIgnoredDuringExecution": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "preferredDuringSchedulingIgnoredDuringExecution"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podAntiAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
             "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "podAntiAffinity": {
-                "$ref": "#/$defs/schema58"
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/schema52"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4540,22 +4434,38 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "podAntiAffinity": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "affinity": {
+                "additionalProperties": {},
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "properties": {
+                  "podAntiAffinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4580,102 +4490,6 @@
               }
             ],
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "affinity": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAffinity": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "required": [
-              "podAffinity"
-            ],
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "affinity": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "affinity": {
-                "properties": {
-                  "podAntiAffinity": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "podAntiAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "required": [
-              "podAntiAffinity"
-            ],
-            "type": "object"
           }
         }
       }
@@ -4731,25 +4545,71 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema84"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema84"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels to add to all chart resources."
               }
-            ],
-            "description": "Labels to add to all chart resources."
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema48"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "(string) Override the name of the chart."
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema24"
+                  },
+                  {
+                    "$ref": "#/$defs/schema71"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace."
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -4808,7 +4668,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema229"
+                "$ref": "#/$defs/schema227"
               },
               {
                 "not": {
@@ -4889,7 +4749,7 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/schema229"
+                "$ref": "#/$defs/schema227"
               },
               {
                 "type": "null"
@@ -5362,7 +5222,7 @@
                           ]
                         },
                         "sizeLimit": {
-                          "$ref": "#/$defs/schema223"
+                          "$ref": "#/$defs/schema221"
                         }
                       },
                       "type": [
@@ -7026,78 +6886,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "secretConfiguration": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "secretConfiguration"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema151"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema48"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "(string) Override the name of the chart."
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "serviceMonitor": {
             "properties": {
@@ -7117,22 +6905,44 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema45"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema45"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "(string) Override the name of the chart."
               }
-            ],
-            "description": "(string) Override the name of the chart."
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaceOverride": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema45"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace."
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -7168,117 +6978,6 @@
       "if": {
         "anyOf": [
           {
-            "properties": {
-              "secretConfiguration": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "secretConfiguration"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema151"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema24"
-              },
-              {
-                "$ref": "#/$defs/schema71"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ],
-            "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "serviceMonitor": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema45"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ],
-            "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "$ref": "#/$defs/schema167"
           },
           {
@@ -7303,20 +7002,63 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaced": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "namespaced": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "if `true`, _ExternalDNS_ will run in a namespaced scope (`Role`` and `Rolebinding`` will be namespaced too)."
               }
-            ],
-            "description": "if `true`, _ExternalDNS_ will run in a namespaced scope (`Role`` and `Rolebinding`` will be namespaced too)."
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "(string) If this is set and `serviceAccount.create` is `true` this will be used for the created `ServiceAccount` name, if set and `serviceAccount.create` is `false` then this will define an existing `ServiceAccount` to use."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sources": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "_Kubernetes_ resources to monitor for DNS entries."
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -7575,20 +7317,368 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "webhook": {
+              "provider": {
                 "additionalProperties": {},
                 "properties": {
-                  "service": {
+                  "webhook": {
                     "additionalProperties": {},
                     "properties": {
-                      "port": {
-                        "not": {
-                          "type": "null"
+                      "service": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "port": {
+                            "not": {
+                              "type": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "service": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "service": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema124"
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema72"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "bearerTokenFile": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema36"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "interval": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema30"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "metricRelabelings": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema9"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "relabelings": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema8"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "scheme": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema37"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "scrapeTimeout": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema21"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceMonitor": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "tlsConfig": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": {},
+                                "type": "object"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          }
                         }
                       }
                     }
@@ -7597,861 +7687,7 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema129"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "service": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
         ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema129"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "service": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "service": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "bearerTokenFile": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema36"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "interval": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema30"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "metricRelabelings": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema9"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "relabelings": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema8"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "scheme": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema37"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "scrapeTimeout": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema123"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tlsConfig": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {},
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -8514,7 +7750,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema123"
+                "$ref": "#/$defs/schema124"
               },
               {
                 "properties": {
@@ -8629,7 +7865,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema123"
+                "$ref": "#/$defs/schema124"
               },
               {
                 "properties": {
@@ -8856,21 +8092,33 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "webhook": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "provider": {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "provider": {
+                "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -8929,7 +8177,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema123"
+                    "$ref": "#/$defs/schema124"
                   },
                   {
                     "properties": {
@@ -9210,156 +8458,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema163"
-                  },
-                  {
-                    "properties": {
-                      "provider": {
-                        "properties": {
-                          "webhook": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "provider"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "extraVolumeMounts": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "extraVolumeMounts"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema72"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema163"
-                  },
-                  {
-                    "properties": {
-                      "provider": {
-                        "properties": {
-                          "webhook": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "provider"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema72"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "serviceMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema72"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema72"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -9466,7 +8564,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema229"
+                    "$ref": "#/$defs/schema227"
                   },
                   {
                     "type": "null"
@@ -9637,103 +8735,48 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "secretConfiguration": {
-            "additionalProperties": {},
-            "properties": {
-              "mountPath": {
-                "description": "Mount path for the `Secret`, this can be templated.",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "properties": {
-              "secretConfiguration": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "secretConfiguration"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "extraVolumeMounts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "extraVolumeMounts"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "secretConfiguration": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "secretConfiguration"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "secretConfiguration": {
             "additionalProperties": {},
             "properties": {
-              "subPath": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountPath": {
+                    "description": "Mount path for the `Secret`, this can be templated.",
                     "type": "string"
                   }
-                ],
-                "description": "Sub-path for mounting the `Secret`, this can be templated."
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "subPath": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Sub-path for mounting the `Secret`, this can be templated."
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -9905,158 +8948,60 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "$ref": "#/$defs/schema229"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema151"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
+            "additionalProperties": {},
             "properties": {
               "serviceAccount": {
+                "additionalProperties": {},
                 "properties": {
                   "annotations": {
-                    "$ref": "#/$defs/helm-truthy"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/schema227"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`"
                   }
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "maxItems": 0,
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`"
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema167"
           },
           {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
             "additionalProperties": {},
             "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "string"
+              "serviceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "maxItems": 0,
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`"
                   }
-                ],
-                "description": "(string) If this is set and `serviceAccount.create` is `true` this will be used for the created `ServiceAccount` name, if set and `serviceAccount.create` is `false` then this will define an existing `ServiceAccount` to use."
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -10200,50 +9145,6 @@
               }
             ],
             "description": "Source namespace to watch for Kubernetes resources other than Gateway API gateways.\nUsed only when `namespaced=true`. Defaults to Release.Namespace"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema167"
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "sources": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "_Kubernetes_ resources to monitor for DNS entries."
           }
         }
       }
@@ -11276,10 +10177,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema221"
+                  "$ref": "#/$defs/schema219"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema221"
+                  "$ref": "#/$defs/schema219"
                 }
               },
               "type": [
@@ -11388,13 +10289,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema234"
+              "$ref": "#/$defs/schema231"
+            },
+            {
+              "$ref": "#/$defs/schema233"
             },
             {
               "$ref": "#/$defs/schema236"
-            },
-            {
-              "$ref": "#/$defs/schema239"
             },
             {
               "not": {
@@ -11416,7 +10317,7 @@
               "$ref": "#/$defs/schema206"
             },
             {
-              "$ref": "#/$defs/schema224"
+              "$ref": "#/$defs/schema222"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -11508,31 +10409,30 @@
             "type": "array"
           },
           "then": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        {
-          "if": {
-            "type": "array"
-          },
-          "then": {
-            "anyOf": [
+            "allOf": [
               {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "items": {
+                  "type": "string"
                 }
               },
               {
-                "type": "array"
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  }
+                ]
               }
             ]
           }
@@ -11946,7 +10846,9 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema216"
+                    "not": {
+                      "$ref": "#/$defs/schema217"
+                    }
                   },
                   {
                     "properties": {
@@ -11974,455 +10876,221 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "args": {
-                    "anyOf": [
-                      {
-                        "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-                        "items": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
                 "additionalProperties": {},
                 "properties": {
-                  "env": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema5"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "extraVolumeMounts": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema15"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "image": {
+                  "webhook": {
                     "additionalProperties": {},
                     "properties": {
-                      "pullPolicy": {
-                        "$ref": "#/$defs/schema20"
+                      "args": {
+                        "anyOf": [
+                          {
+                            "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+                            "items": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "env": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema5"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema15"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "image": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "pullPolicy": {
+                            "$ref": "#/$defs/schema20"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "livenessProbe": {
+                        "$ref": "#/$defs/providerSchema3"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "readinessProbe": {
+                        "$ref": "#/$defs/providerSchema3"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "resources": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema13"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "webhook": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "securityContext": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+                            "properties": {
+                              "allowPrivilegeEscalation": {
+                                "$ref": "#/$defs/schema78"
+                              },
+                              "capabilities": {
+                                "$ref": "#/$defs/schema89"
+                              },
+                              "privileged": {
+                                "$ref": "#/$defs/schema110"
+                              },
+                              "procMount": {
+                                "$ref": "#/$defs/schema91"
+                              },
+                              "readOnlyRootFilesystem": {
+                                "$ref": "#/$defs/schema140"
+                              },
+                              "runAsGroup": {
+                                "$ref": "#/$defs/schema86"
+                              },
+                              "runAsNonRoot": {
+                                "$ref": "#/$defs/schema70"
+                              },
+                              "runAsUser": {
+                                "$ref": "#/$defs/schema80"
+                              },
+                              "seLinuxOptions": {
+                                "$ref": "#/$defs/schema53"
+                              },
+                              "seccompProfile": {
+                                "$ref": "#/$defs/schema29"
+                              },
+                              "windowsOptions": {
+                                "$ref": "#/$defs/schema18"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     }
                   }
                 }
               }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
             ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "livenessProbe": {
-                    "$ref": "#/$defs/providerSchema3"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "readinessProbe": {
-                    "$ref": "#/$defs/providerSchema3"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "resources": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema13"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema216"
-                  },
-                  {
-                    "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema141"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "securityContext": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
-                        "properties": {
-                          "allowPrivilegeEscalation": {
-                            "$ref": "#/$defs/schema78"
-                          },
-                          "capabilities": {
-                            "$ref": "#/$defs/schema89"
-                          },
-                          "privileged": {
-                            "$ref": "#/$defs/schema110"
-                          },
-                          "procMount": {
-                            "$ref": "#/$defs/schema91"
-                          },
-                          "readOnlyRootFilesystem": {
-                            "$ref": "#/$defs/schema140"
-                          },
-                          "runAsGroup": {
-                            "$ref": "#/$defs/schema86"
-                          },
-                          "runAsNonRoot": {
-                            "$ref": "#/$defs/schema70"
-                          },
-                          "runAsUser": {
-                            "$ref": "#/$defs/schema80"
-                          },
-                          "seLinuxOptions": {
-                            "$ref": "#/$defs/schema53"
-                          },
-                          "seccompProfile": {
-                            "$ref": "#/$defs/schema29"
-                          },
-                          "windowsOptions": {
-                            "$ref": "#/$defs/schema18"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
           }
         },
         {
@@ -12432,7 +11100,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema168"
+                      "$ref": "#/$defs/schema169"
                     }
                   },
                   {
@@ -12640,7 +11308,7 @@
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema233"
+                            "$ref": "#/$defs/schema230"
                           },
                           "type": "array"
                         },
@@ -12791,13 +11459,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema231"
+                },
+                {
+                  "$ref": "#/$defs/schema233"
                 },
                 {
                   "$ref": "#/$defs/schema236"
-                },
-                {
-                  "$ref": "#/$defs/schema239"
                 },
                 {
                   "not": {
@@ -12819,7 +11487,7 @@
                   "$ref": "#/$defs/schema206"
                 },
                 {
-                  "$ref": "#/$defs/schema224"
+                  "$ref": "#/$defs/schema222"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -12863,7 +11531,9 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema217"
+                    "not": {
+                      "$ref": "#/$defs/schema220"
+                    }
                   },
                   {
                     "properties": {
@@ -12892,152 +11562,41 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema217"
-                  },
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
+                "additionalProperties": {},
                 "properties": {
                   "annotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "additionalProperties": {},
-                "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`",
-                "type": "object"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema217"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "automountServiceAccountToken": {
-                "anyOf": [
-                  {
-                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/schema179"
-                  }
-                ],
-                "description": "Set this to `false` to [opt out of API credential automounting](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#opt-out-of-api-credential-automounting) for the `ServiceAccount`."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema217"
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema84"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`",
+                    "items": {
+                      "type": "string"
                     }
-                  },
-                  {
-                    "type": "null"
                   }
-                ],
-                "description": "Labels to add to the service account."
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "additionalProperties": {},
+                    "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`",
+                    "type": "object"
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema217"
+                "not": {
+                  "$ref": "#/$defs/schema220"
+                }
               },
               {
                 "properties": {
@@ -13053,60 +11612,106 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "allOf": [
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "automountServiceAccountToken": {
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema234"
+                        "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                        "type": "boolean"
                       },
                       {
-                        "$ref": "#/$defs/schema236"
+                        "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                        "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema239"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema182"
-                      },
-                      {
-                        "$ref": "#/$defs/schema115"
-                      },
-                      {
-                        "$ref": "#/$defs/schema206"
-                      },
-                      {
-                        "$ref": "#/$defs/schema224"
+                        "$ref": "#/$defs/schema179"
                       }
                     ],
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                    "type": "string"
-                  },
-                  {
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "description": "Set this to `false` to [opt out of API credential automounting](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#opt-out-of-api-credential-automounting) for the `ServiceAccount`."
                   }
-                ],
-                "description": "(string) If this is set and `serviceAccount.create` is `true` this will be used for the created `ServiceAccount` name, if set and `serviceAccount.create` is `false` then this will define an existing `ServiceAccount` to use."
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema84"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Labels to add to the service account."
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema231"
+                          },
+                          {
+                            "$ref": "#/$defs/schema233"
+                          },
+                          {
+                            "$ref": "#/$defs/schema236"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/schema182"
+                          },
+                          {
+                            "$ref": "#/$defs/schema115"
+                          },
+                          {
+                            "$ref": "#/$defs/schema206"
+                          },
+                          {
+                            "$ref": "#/$defs/schema222"
+                          }
+                        ],
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                      },
+                      {
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "(string) If this is set and `serviceAccount.create` is `true` this will be used for the created `ServiceAccount` name, if set and `serviceAccount.create` is `false` then this will define an existing `ServiceAccount` to use."
+                  }
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -13138,13 +11743,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema231"
+                },
+                {
+                  "$ref": "#/$defs/schema233"
                 },
                 {
                   "$ref": "#/$defs/schema236"
-                },
-                {
-                  "$ref": "#/$defs/schema239"
                 },
                 {
                   "not": {
@@ -13166,7 +11771,7 @@
                   "$ref": "#/$defs/schema206"
                 },
                 {
-                  "$ref": "#/$defs/schema224"
+                  "$ref": "#/$defs/schema222"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -13206,343 +11811,217 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "additionalLabels": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema229"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalLabels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema227"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Additional labels for the `ServiceMonitor`."
                   }
-                ],
-                "description": "Additional labels for the `ServiceMonitor`."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema229"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema227"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Annotations to add to the `ServiceMonitor`."
                   }
-                ],
-                "description": "Annotations to add to the `ServiceMonitor`."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "bearerTokenFile": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema36"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "bearerTokenFile": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema36"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "(string) Provide a bearer token file for the `ServiceMonitor`."
                   }
-                ],
-                "description": "(string) Provide a bearer token file for the `ServiceMonitor`."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "interval": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema30"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "interval": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema30"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "(string) If set override the _Prometheus_ default interval."
                   }
-                ],
-                "description": "(string) If set override the _Prometheus_ default interval."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema9"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "metricRelabelings": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema9"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "[Metric relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs) to apply to samples before ingestion."
                   }
-                ],
-                "description": "[Metric relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs) to apply to samples before ingestion."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema45"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "namespace": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema45"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "(string) If set create the `ServiceMonitor` in an alternate namespace."
                   }
-                ],
-                "description": "(string) If set create the `ServiceMonitor` in an alternate namespace."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "relabelings": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema8"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "relabelings": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema8"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "[Relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) to apply to samples before ingestion."
                   }
-                ],
-                "description": "[Relabel configs](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config) to apply to samples before ingestion."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "scheme": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema37"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "scheme": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema37"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "(string) If set overrides the _Prometheus_ default scheme."
                   }
-                ],
-                "description": "(string) If set overrides the _Prometheus_ default scheme."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "scrapeTimeout": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema21"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "scrapeTimeout": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema21"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "(string) If set override the _Prometheus_ default scrape timeout."
                   }
-                ],
-                "description": "(string) If set override the _Prometheus_ default scrape timeout."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "targetLabels": {
-                "anyOf": [
-                  {
-                    "description": "targetLabels defines the labels which are transferred from the\nassociated Kubernetes `Service` object onto the ingested metrics.",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "targetLabels": {
+                    "anyOf": [
+                      {
+                        "description": "targetLabels defines the labels which are transferred from the\nassociated Kubernetes `Service` object onto the ingested metrics.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "Provide target labels for the `ServiceMonitor`."
                   }
-                ],
-                "description": "Provide target labels for the `ServiceMonitor`."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tlsConfig": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "tlsConfig": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig)."
                   }
-                ],
-                "description": "Configure the `ServiceMonitor` [TLS config](https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig)."
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -13738,21 +12217,20 @@
                 "$ref": "#/$defs/helm-truthy"
               },
               "then": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/providerSource_k8s_1189b51ca7c0"
-                },
-                "items": {
-                  "$ref": "#/$defs/providerSource_k8s_1189b51ca7c0"
-                }
-              }
-            },
-            {
-              "if": {
-                "$ref": "#/$defs/helm-truthy"
-              },
-              "then": {
-                "items": {},
-                "type": "array"
+                "allOf": [
+                  {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/providerSource_k8s_1189b51ca7c0"
+                    },
+                    "items": {
+                      "$ref": "#/$defs/providerSource_k8s_1189b51ca7c0"
+                    }
+                  },
+                  {
+                    "items": {},
+                    "type": "array"
+                  }
+                ]
               }
             }
           ]

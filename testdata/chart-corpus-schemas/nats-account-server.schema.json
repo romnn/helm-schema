@@ -94,29 +94,12 @@
         }
       }
     },
-    "schema12": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "key": {},
-            "name": {}
-          }
-        }
-      }
-    },
-    "schema13": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "schema15": {
+    "schema11": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema16": {
+    "schema12": {
       "additionalProperties": {},
       "properties": {
         "configMap": {
@@ -128,92 +111,43 @@
         }
       }
     },
-    "schema18": {
-      "properties": {
-        "type": {
-          "enum": [
-            "file"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "schema19": {
+    "schema14": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema20": {
-      "properties": {
-        "type": {}
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "schema21": {
+    "schema15": {
       "additionalProperties": {},
       "properties": {
         "key": {},
         "name": {}
       }
     },
-    "schema23": {
+    "schema17": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema5": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "store": {
-                "properties": {
-                  "type": {}
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "store"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "store": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    "file"
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "store"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "schema6": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "schema8": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "key": {},
+            "name": {}
+          }
+        }
+      }
+    },
+    "schema9": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     }
   },
@@ -233,15 +167,36 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nats": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "credentials": {
+              "nats": {
                 "additionalProperties": {},
                 "properties": {
-                  "secret": {
+                  "credentials": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
                     "anyOf": [
                       {
                         "type": "object"
@@ -251,29 +206,27 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nats": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nats"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nats": {
+          },
+          {
             "additionalProperties": {},
             "properties": {
-              "credentials": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
+                    "required": [
+                      "secret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
                 "anyOf": [
                   {
                     "type": "object"
@@ -281,86 +234,19 @@
                 ]
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nats": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nats"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nats": {
+          },
+          {
             "additionalProperties": {},
             "properties": {
-              "credentials": {
+              "nats": {
                 "required": [
-                  "secret"
+                  "credentials"
                 ],
                 "type": "object"
               }
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nats": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nats"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nats": {
-            "anyOf": [
-              {
-                "type": "object"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nats": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nats"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nats": {
-            "required": [
-              "credentials"
-            ],
-            "type": "object"
-          }
-        }
+        ]
       }
     },
     {
@@ -414,152 +300,65 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "operatorjwt": {
-                "$ref": "#/$defs/schema16"
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "operatorjwt": {
+                    "$ref": "#/$defs/schema12"
+                  }
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "operator": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
           },
           {
-            "allOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
                 "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "operatorjwt": {
-                        "$ref": "#/$defs/helm-truthy"
+                  "operatorjwt": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       }
-                    },
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "operatorjwt": {
                     "required": [
-                      "operatorjwt"
+                      "configMap"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "properties": {
-              "operatorjwt": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "operator": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "operatorjwt": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "operatorjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
             "additionalProperties": {},
             "properties": {
-              "operatorjwt": {
+              "operator": {
                 "required": [
-                  "configMap"
+                  "operatorjwt"
                 ],
                 "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -613,152 +412,65 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "systemaccountjwt": {
-                "$ref": "#/$defs/schema16"
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "systemaccountjwt": {
+                    "$ref": "#/$defs/schema12"
+                  }
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "operator": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
           },
           {
-            "allOf": [
-              {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
                 "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "systemaccountjwt": {
-                        "$ref": "#/$defs/helm-truthy"
+                  "systemaccountjwt": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       }
-                    },
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "operator": {
+                "additionalProperties": {},
+                "properties": {
+                  "systemaccountjwt": {
                     "required": [
-                      "systemaccountjwt"
+                      "configMap"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "properties": {
-              "systemaccountjwt": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "operator": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "systemaccountjwt": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "systemaccountjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
             "additionalProperties": {},
             "properties": {
-              "systemaccountjwt": {
+              "operator": {
                 "required": [
-                  "configMap"
+                  "systemaccountjwt"
                 ],
                 "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -790,146 +502,75 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "store": {
+                  "properties": {
+                    "type": {}
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "store"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "operator": {
-                "$ref": "#/$defs/helm-truthy"
+              "store": {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "file"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "operator"
+              "store"
             ],
             "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "operatorjwt": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "operatorjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
           }
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "required": [
-              "operatorjwt"
-            ],
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "properties": {
-              "operator": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "systemaccountjwt": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "systemaccountjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "required": [
-              "systemaccountjwt"
-            ],
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "store": {
             "additionalProperties": {},
             "properties": {
-              "file": {
-                "anyOf": [
-                  {
-                    "type": "object"
+              "store": {
+                "additionalProperties": {},
+                "properties": {
+                  "file": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "store": {
+                "type": "object"
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -951,19 +592,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "store": {
-            "type": "object"
-          }
-        }
-      }
     }
   ],
   "properties": {
@@ -976,7 +604,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema17"
                 },
                 {
                   "not": {
@@ -999,16 +627,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema13"
+                  "$ref": "#/$defs/schema9"
                 },
                 {
-                  "$ref": "#/$defs/schema6"
+                  "$ref": "#/$defs/schema5"
                 },
                 {
-                  "$ref": "#/$defs/schema15"
+                  "$ref": "#/$defs/schema11"
                 },
                 {
-                  "$ref": "#/$defs/schema19"
+                  "$ref": "#/$defs/schema14"
                 }
               ],
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
@@ -1025,7 +653,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema17"
                 },
                 {
                   "not": {
@@ -1048,16 +676,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema13"
+                  "$ref": "#/$defs/schema9"
                 },
                 {
-                  "$ref": "#/$defs/schema6"
+                  "$ref": "#/$defs/schema5"
                 },
                 {
-                  "$ref": "#/$defs/schema15"
+                  "$ref": "#/$defs/schema11"
                 },
                 {
-                  "$ref": "#/$defs/schema19"
+                  "$ref": "#/$defs/schema14"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -1177,7 +805,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema23"
+                                "$ref": "#/$defs/schema17"
                               },
                               {
                                 "not": {
@@ -1200,16 +828,16 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema13"
+                                "$ref": "#/$defs/schema9"
                               },
                               {
-                                "$ref": "#/$defs/schema6"
+                                "$ref": "#/$defs/schema5"
                               },
                               {
-                                "$ref": "#/$defs/schema15"
+                                "$ref": "#/$defs/schema11"
                               },
                               {
-                                "$ref": "#/$defs/schema19"
+                                "$ref": "#/$defs/schema14"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -1234,7 +862,7 @@
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema15"
             }
           }
         },
@@ -1303,10 +931,10 @@
       ],
       "properties": {
         "operatorjwt": {
-          "$ref": "#/$defs/schema12"
+          "$ref": "#/$defs/schema8"
         },
         "systemaccountjwt": {
-          "$ref": "#/$defs/schema12"
+          "$ref": "#/$defs/schema8"
         }
       }
     },
@@ -1318,11 +946,27 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema20"
+                  "properties": {
+                    "type": {}
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
                 }
               },
               {
-                "$ref": "#/$defs/schema18"
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "file"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -1339,7 +983,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema23"
+                                "$ref": "#/$defs/schema17"
                               },
                               {
                                 "not": {
@@ -1362,7 +1006,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema13"
+                                "$ref": "#/$defs/schema9"
                               }
                             ],
                             "type": "string"

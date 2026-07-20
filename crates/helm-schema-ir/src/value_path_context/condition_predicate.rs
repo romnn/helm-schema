@@ -118,6 +118,13 @@ impl ValuePathContext<'_> {
                 if self.get_binding_truthy_predicate(name).is_some() {
                     return true;
                 }
+                // Layered merges decode through their own disjunction lane;
+                // the all-paths conjunction below is not faithful for them.
+                if let Some(AbstractValue::MergedLayers(layers)) =
+                    eval_expr(expr, &self.expression_eval_env()).value
+                {
+                    return merged_layers_truthy_predicate(&layers).is_some();
+                }
                 let paths = self.paths_for_expr(expr);
                 if paths.is_empty() {
                     return false;
@@ -158,6 +165,9 @@ impl ValuePathContext<'_> {
                 "empty" => self.empty_predicate(args).is_some(),
                 "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
                 "default" => self.default_truthy_predicate(args).is_some(),
+                "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
+                    self.merge_truthy_predicate(args).is_some()
+                }
                 "dig" => self.dig_truthy_predicate(args).is_some(),
                 "toString" => args.len() == 1 && self.tostring_truthy_predicate(&args[0]).is_some(),
                 "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
@@ -318,6 +328,9 @@ impl ValuePathContext<'_> {
             "typeIs" | "kindIs" => self.type_is_predicate(args),
             "coalesce" => self.coalesce_truthy_predicate(args),
             "default" => self.default_truthy_predicate(args),
+            "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
+                self.merge_truthy_predicate(args)
+            }
             "dig" => self
                 .dig_truthy_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
@@ -580,6 +593,28 @@ impl ValuePathContext<'_> {
     fn exact_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         self.condition_lowering_is_faithful(expr)
             .then(|| self.condition_predicate_expr(expr))
+    }
+
+    /// An ordered map merge unions its operands' keys, so the RESULT is
+    /// nonempty exactly when some operand is. A definitely-empty literal
+    /// destination (`mergeOverwrite (dict) a b`) contributes no keys and
+    /// drops out; every remaining operand must decode exactly or the whole
+    /// condition abstains.
+    fn merge_truthy_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        if args.len() < 2 {
+            return None;
+        }
+        let mut arms = Vec::new();
+        for arg in args {
+            if let TemplateExpr::Call { function, args } = arg.deparen()
+                && function == "dict"
+                && args.is_empty()
+            {
+                continue;
+            }
+            arms.push(self.exact_truthy_predicate(arg)?);
+        }
+        (!arms.is_empty()).then(|| predicate_any(arms))
     }
 
     /// `coalesce` returns its first non-empty argument, so the RESULT is
@@ -1289,6 +1324,17 @@ impl ValuePathContext<'_> {
             && let Some(predicate) = self.get_binding_truthy_predicate(name)
         {
             return Some(predicate);
+        }
+        // A local holding an ordered merge is nonempty exactly when SOME
+        // layer is (KPS's `if $additionalAnnotations` over a fresh-dict
+        // `mergeOverwrite`): the all-paths conjunction below would demand
+        // every layer at once. Undecodable layers abstain to the
+        // approximate lane instead of riding that wrong conjunction.
+        if let TemplateExpr::Variable(_) = expr.deparen()
+            && let Some(AbstractValue::MergedLayers(layers)) =
+                eval_expr(expr, &self.expression_eval_env()).value
+        {
+            return merged_layers_truthy_predicate(&layers);
         }
         let paths = self.paths_for_expr(expr);
         if paths.is_empty() {
@@ -2646,6 +2692,30 @@ fn escape_regex_literal(value: &str) -> String {
         escaped.push(character);
     }
     escaped
+}
+
+/// Helm truthiness of an ordered merge: nonempty exactly when some layer
+/// is. A nonempty literal layer decides the whole merge; identity layers
+/// contribute their own truthiness; any other layer kind abstains.
+fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate> {
+    let mut arms = Vec::new();
+    for layer in layers {
+        match layer {
+            AbstractValue::Dict(entries) => {
+                if !entries.is_empty() {
+                    return Some(Predicate::True);
+                }
+            }
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                arms.push(Predicate::truthy_path(path));
+            }
+            AbstractValue::MergedLayers(nested) => {
+                arms.push(merged_layers_truthy_predicate(nested)?);
+            }
+            _ => return None,
+        }
+    }
+    Some(predicate_any(arms))
 }
 
 fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
