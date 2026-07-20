@@ -21,6 +21,7 @@ pub(super) fn eval_expr_result_with_bound_helpers(
 pub(super) struct BoundHelperValueResolverParams<'a, 'context, 'seen> {
     pub(super) fragment_locals: &'a HashMap<String, AbstractValue>,
     pub(super) outer: Option<&'a HashMap<String, AbstractValue>>,
+    pub(super) outer_root_facts: crate::analysis_db::OuterRootFacts<'a>,
     pub(super) current_dot: Option<&'a AbstractValue>,
     pub(super) context: FragmentEvalContext<'context>,
     pub(super) seen: &'seen mut HashSet<String>,
@@ -49,6 +50,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             name,
             arg,
             self.params.outer,
+            self.params.outer_root_facts,
             self.params.current_dot,
             self.params.fragment_locals,
             self.params.context,
@@ -65,6 +67,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             chart_default_paths: summary.chart_defaults.clone(),
             root_set_mutations: summary.root_set_mutations.clone(),
             root_set_predicates: summary.root_set_predicates.clone(),
+            root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
             values_default_sources: summary.values_default_sources.clone(),
             type_hints: summary.type_hints.clone(),
             guarded_type_hints: summary.guarded_type_hints.clone(),
@@ -101,6 +104,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         // field is the value visible after the call returns.
         for key in summary.root_set_mutations.keys() {
             effects.root_set_predicates.remove(key);
+            effects.root_set_value_dispatches.remove(key);
         }
         effects
             .root_set_mutations
@@ -108,6 +112,9 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         effects
             .root_set_predicates
             .extend(summary.root_set_predicates.clone());
+        effects
+            .root_set_value_dispatches
+            .extend(summary.root_set_value_dispatches.clone());
         Some(EvalResult::with_effects(summary.value.clone(), effects))
     }
 

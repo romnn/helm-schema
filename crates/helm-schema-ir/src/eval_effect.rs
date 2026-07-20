@@ -77,6 +77,8 @@ pub(crate) struct Effects {
     pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
     /// Root-field truth predicates already decoded inside called helpers.
     pub(crate) root_set_predicates: BTreeMap<String, helm_schema_core::Predicate>,
+    /// Root-field value dispatches already joined inside called helpers.
+    pub(crate) root_set_value_dispatches: BTreeMap<String, RootValueDispatch>,
     /// Chart value subtrees that supply defaults to a replaced effective `.Values` tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// Helper names through which the values ROOT was replaced
@@ -104,6 +106,17 @@ pub(crate) struct Effects {
     /// reads. Their outer predicates remain attached so only accesses that
     /// imply the mutation's execution may accept the converted input kind.
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
+}
+
+/// The exhaustive value alternatives of one root-context field assigned
+/// across the arms of an if/else chain (`$_ := set . "mode" "…"` in every
+/// arm). The arm conditions are mutually exclusive and total by
+/// construction — each carries the negations of every earlier arm — so an
+/// equality on the field decodes as the exact disjunction of the arms
+/// assigning the compared literal (vault's `ne .mode "external"` gates).
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct RootValueDispatch {
+    pub(crate) arms: Vec<(helm_schema_core::Predicate, helm_schema_core::GuardValue)>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -267,6 +280,7 @@ impl Effects {
             local_set_mutations,
             root_set_mutations,
             root_set_predicates,
+            root_set_value_dispatches,
             values_default_sources,
             values_root_helper_includes,
             helper_reads,
@@ -309,9 +323,12 @@ impl Effects {
         }
         for key in root_set_mutations.keys() {
             self.root_set_predicates.remove(key);
+            self.root_set_value_dispatches.remove(key);
         }
         self.root_set_mutations.extend(root_set_mutations);
         self.root_set_predicates.extend(root_set_predicates);
+        self.root_set_value_dispatches
+            .extend(root_set_value_dispatches);
         self.values_default_sources.extend(values_default_sources);
         self.values_root_helper_includes
             .extend(values_root_helper_includes);
@@ -404,6 +421,7 @@ impl Effects {
             local_set_mutations,
             root_set_mutations,
             root_set_predicates,
+            root_set_value_dispatches,
             values_default_sources,
             values_root_helper_includes,
             helper_reads,
@@ -446,6 +464,7 @@ impl Effects {
             local_set_mutations,
             root_set_mutations,
             root_set_predicates,
+            root_set_value_dispatches,
             values_default_sources,
             values_root_helper_includes,
             helper_reads,

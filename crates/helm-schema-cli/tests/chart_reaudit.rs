@@ -3282,3 +3282,98 @@ fn airflow_worker_set_overrides_bind_strict_member_kinds() -> color_eyre::eyre::
         ],
     )
 }
+
+/// vault's `.mode` is assigned across the five arms of `vault.mode`
+/// (`$_ := set . "mode" "…"`), and the HTTPRoute / redundancy-zone fails
+/// sit behind `ne .mode "external"` / `eq .mode …` gates over that
+/// dispatch. The joined root-set value dispatch decodes those gates
+/// exactly: the parentRefs and redundancy-zone requirements bind under
+/// the internal modes, while an external vault address keeps every gated
+/// document dormant (helm-verified each way). The corpus policy version
+/// is v1.29, below the redundancy feature's `>= 1.35` cluster-version
+/// fail, so even the otherwise-complete combination aborts
+/// (`helm template --kube-version 1.29.0` fails with "requires
+/// Kubernetes >= 1.35") — the capabilities-semver lane binds it.
+#[test]
+fn vault_mode_dispatch_binds_httproute_and_redundancy_zone_fails() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "vault",
+        vec![
+            SemanticCase::rejected(
+                "an enabled httproute without parentRefs aborts",
+                "",
+                json!({ "server": { "httproute": { "enabled": true } } }),
+            ),
+            SemanticCase::accepted(
+                "an enabled httproute with parentRefs renders",
+                json!({ "server": { "httproute": { "enabled": true,
+                    "parentRefs": [ { "name": "gw" } ] } } }),
+            ),
+            SemanticCase::accepted(
+                "external mode keeps the httproute gate dormant",
+                json!({ "injector": { "externalVaultAddr": "https://vault.example.com" },
+                    "server": { "httproute": { "enabled": true } } }),
+            ),
+            SemanticCase::rejected(
+                "redundancy zones without ha mode abort",
+                "",
+                json!({ "server": { "ha": { "raft": {
+                    "redundancyZones": { "enabled": true } } } } }),
+            ),
+            SemanticCase::rejected(
+                "redundancy zones with ha but without raft abort",
+                "",
+                json!({ "server": { "ha": { "enabled": true, "raft": {
+                    "redundancyZones": { "enabled": true } } } } }),
+            ),
+            SemanticCase::rejected(
+                "the full combination still aborts below the required cluster version",
+                "",
+                json!({ "server": { "ha": { "enabled": true, "raft": {
+                    "enabled": true,
+                    "config": "storage \"raft\" {\n  autopilot_redundancy_zone = \"VAULT_REDUNDANCY_ZONE\"\n}\n",
+                    "redundancyZones": { "enabled": true } } } } }),
+            ),
+            SemanticCase::accepted(
+                "external mode keeps the redundancy-zone gates dormant",
+                json!({ "injector": { "externalVaultAddr": "https://vault.example.com" },
+                    "server": { "ha": { "raft": {
+                        "redundancyZones": { "enabled": true } } } } }),
+            ),
+        ],
+    )
+}
+
+/// kube-prometheus-stack's grafana dashboard documents are gated on
+/// `semverCompare` tests over `default .Capabilities.KubeVersion.GitVersion
+/// .Values.kubeTargetVersionOverride`: under the corpus policy version the
+/// gates hold constantly, so the operator lane's matchLabels fail binds,
+/// while a pre-1.14 override turns every dashboard document off exactly
+/// (helm-verified each way).
+#[test]
+fn kube_prometheus_stack_dashboard_gates_decode_the_version_policy() -> color_eyre::eyre::Result<()>
+{
+    assert_chart_cases(
+        "kube-prometheus-stack",
+        vec![
+            SemanticCase::rejected(
+                "the operator dashboards without matchLabels abort",
+                "",
+                json!({ "grafana": { "operator": {
+                    "dashboardsConfigMapRefEnabled": true } } }),
+            ),
+            SemanticCase::accepted(
+                "operator dashboards with matchLabels render",
+                json!({ "grafana": { "operator": {
+                    "dashboardsConfigMapRefEnabled": true,
+                    "matchLabels": { "app": "grafana" } } } }),
+            ),
+            SemanticCase::accepted(
+                "a pre-1.14 version override keeps the dashboards dormant",
+                json!({ "grafana": { "operator": {
+                    "dashboardsConfigMapRefEnabled": true } },
+                    "kubeTargetVersionOverride": "1.13.0" }),
+            ),
+        ],
+    )
+}

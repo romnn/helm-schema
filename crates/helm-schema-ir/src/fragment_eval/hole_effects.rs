@@ -274,6 +274,10 @@ impl Interpreter<'_> {
                 &env,
                 &env.locals,
                 Some(&self.root_bindings),
+                crate::analysis_db::OuterRootFacts {
+                    truthy_predicates: Some(&self.root_truthy_predicates),
+                    value_dispatches: Some(&self.root_value_dispatches),
+                },
                 current_dot.as_ref(),
                 context,
                 &mut seen,
@@ -376,7 +380,11 @@ impl Interpreter<'_> {
 
     pub(super) fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
         self.absorb_member_host_conversions(&effects.member_host_conversions);
-        self.apply_root_set_mutations(&effects.root_set_mutations, &effects.root_set_predicates);
+        self.apply_root_set_mutations(
+            &effects.root_set_mutations,
+            &effects.root_set_predicates,
+            &effects.root_set_value_dispatches,
+        );
         self.values_default_sources_observed
             .extend(effects.values_default_sources.iter().cloned());
         self.values_root_helper_includes_observed
@@ -522,10 +530,16 @@ impl Interpreter<'_> {
         &mut self,
         mutations: &std::collections::BTreeMap<String, AbstractValue>,
         predicates: &std::collections::BTreeMap<String, Predicate>,
+        dispatches: &std::collections::BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     ) {
         for (key, value) in mutations {
             self.root_truthy_predicates.remove(key);
             self.root_set_predicates_observed.remove(key);
+            // A plain overwrite invalidates any earlier joined dispatch for
+            // the key; the incoming dispatch (if the mutation came from a
+            // joined chain) is re-installed below.
+            self.root_value_dispatches.remove(key);
+            self.root_value_dispatches_observed.remove(key);
             self.root_bindings.insert(key.clone(), value.clone());
             self.root_set_mutations_observed
                 .insert(key.clone(), value.clone());
@@ -534,6 +548,12 @@ impl Interpreter<'_> {
                     .insert(key.clone(), predicate.clone());
                 self.root_set_predicates_observed
                     .insert(key.clone(), predicate.clone());
+            }
+            if let Some(dispatch) = dispatches.get(key) {
+                self.root_value_dispatches
+                    .insert(key.clone(), dispatch.clone());
+                self.root_value_dispatches_observed
+                    .insert(key.clone(), dispatch.clone());
             }
         }
     }

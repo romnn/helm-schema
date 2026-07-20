@@ -67,7 +67,14 @@ impl PreparedSession {
             opts.include_subchart_values,
             &opts.values_files,
         )?;
-        let chart_analysis = analyze_charts(charts, &defines, opts.include_tests, &values_roots)?;
+        let kubernetes_version = primary_kubernetes_version(opts);
+        let chart_analysis = analyze_charts(
+            charts,
+            &defines,
+            opts.include_tests,
+            &values_roots,
+            kubernetes_version.as_deref(),
+        )?;
 
         Ok(Self {
             analysis: Analysis {
@@ -348,4 +355,28 @@ fn normalize_values_path(path: &str) -> String {
     } else {
         path.to_string()
     }
+}
+
+/// The normalized numeric core of the primary configured Kubernetes
+/// version (`v1.29.0-standalone-strict` → `1.29.0`): the value
+/// `.Capabilities.KubeVersion` conditions evaluate against under this
+/// run's provider policy. `None` when no version is configured — the
+/// capabilities lanes then abstain instead of guessing a cluster.
+fn primary_kubernetes_version(opts: &GenerateOptions) -> Option<String> {
+    let token = opts.provider.k8s_versions.first()?;
+    let token = token.trim().strip_prefix('v').unwrap_or(token.trim());
+    let core: String = token
+        .chars()
+        .take_while(|c| c.is_ascii_digit() || *c == '.')
+        .collect();
+    let parts: Vec<&str> = core.split('.').collect();
+    if parts.is_empty()
+        || parts.len() > 3
+        || parts
+            .iter()
+            .any(|part| part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()))
+    {
+        return None;
+    }
+    Some(core)
 }

@@ -209,27 +209,18 @@ impl Predicate {
 
     /// Whether [`Self::contract_guards`] represents this predicate
     /// EXACTLY: the flattened guard conjunction selects the same states.
-    /// Complex negations (`¬(a ∨ (b ∧ c))`) flatten to NOTHING, which an
-    /// `And` flatten silently drops — a fail conjunction missing such a
-    /// conjunct negates into states the validator never rejects, so
-    /// callers keep inexact conjuncts as raw predicates instead.
+    /// Negations distribute by De Morgan down to negatable guard leaves;
+    /// a negation reaching a leaf the vocabulary cannot flip flattens to
+    /// NOTHING, which an `And` flatten would silently drop — a fail
+    /// conjunction missing such a conjunct negates into states the
+    /// validator never rejects, so callers keep those conjuncts as raw
+    /// predicates instead.
     #[must_use]
     pub fn contract_guards_are_exact(&self) -> bool {
         match self {
             Self::True | Self::Guard(_) => true,
             Self::False | Self::Approximate { .. } => false,
-            Self::Not(inner) => match inner.as_ref() {
-                Self::Guard(
-                    Guard::Truthy { .. }
-                    | Guard::With { .. }
-                    | Guard::Eq { .. }
-                    | Guard::NotEq { .. }
-                    | Guard::TypeIs { .. }
-                    | Guard::NotTypeIs { .. },
-                ) => true,
-                Self::Not(inner) => inner.contract_guards_are_exact(),
-                _ => false,
-            },
+            Self::Not(inner) => negation_flattens_exactly(inner),
             Self::And(predicates) | Self::Or(predicates) => {
                 predicates.iter().all(Self::contract_guards_are_exact)
             }
@@ -352,11 +343,39 @@ impl Predicate {
     }
 }
 
+/// Whether [`negated_contract_guards`] flattens `¬inner` exactly: every
+/// De Morgan leaf must be a negatable guard (`True`/`False` leaves are
+/// excluded — the guard vocabulary cannot spell a constant).
+fn negation_flattens_exactly(inner: &Predicate) -> bool {
+    match inner {
+        Predicate::Guard(
+            Guard::Truthy { .. }
+            | Guard::With { .. }
+            | Guard::Not { .. }
+            | Guard::Or { .. }
+            | Guard::Eq { .. }
+            | Guard::NotEq { .. }
+            | Guard::TypeIs { .. }
+            | Guard::NotTypeIs { .. },
+        ) => true,
+        Predicate::Not(inner) => inner.contract_guards_are_exact(),
+        Predicate::And(predicates) | Predicate::Or(predicates) => {
+            predicates.iter().all(negation_flattens_exactly)
+        }
+        _ => false,
+    }
+}
+
 fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
     match inner {
         Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) => {
             vec![Guard::Not { path: path.clone() }]
         }
+        Predicate::Guard(Guard::Not { path }) => vec![Guard::Truthy { path: path.clone() }],
+        Predicate::Guard(Guard::Or { paths }) => paths
+            .iter()
+            .map(|path| Guard::Not { path: path.clone() })
+            .collect(),
         Predicate::Guard(Guard::Eq { path, value }) => vec![Guard::NotEq {
             path: path.clone(),
             value: value.clone(),
@@ -374,12 +393,39 @@ fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
             schema_type: schema_type.clone(),
         }],
         Predicate::Not(inner) => inner.contract_guards(),
+        // ¬(p₁ ∨ … ∨ pₙ) = ¬p₁ ∧ … ∧ ¬pₙ: a plain conjunction, exact only
+        // when every disjunct negates exactly (an empty flatten anywhere
+        // abstains the whole negation instead of silently dropping it).
+        Predicate::Or(predicates) => {
+            let mut guards = Vec::new();
+            for predicate in predicates {
+                let negated = negated_contract_guards(predicate);
+                if negated.is_empty() {
+                    return Vec::new();
+                }
+                guards.extend(negated);
+            }
+            guards
+        }
+        // ¬(p₁ ∧ … ∧ pₙ) = ¬p₁ ∨ … ∨ ¬pₙ: one alternative per conjunct,
+        // sharing the disjunction normalization of the positive `Or` lane.
+        Predicate::And(predicates) => {
+            let mut alternatives = Vec::new();
+            for predicate in predicates {
+                let negated = negated_contract_guards(predicate);
+                if negated.is_empty() {
+                    return Vec::new();
+                }
+                alternatives.push(negated);
+            }
+            alternatives_to_guards(alternatives)
+        }
         _ => Vec::new(),
     }
 }
 
 fn or_contract_guards(predicates: &[Predicate]) -> Vec<Guard> {
-    let mut alternatives = predicates
+    let alternatives = predicates
         .iter()
         .map(Predicate::contract_guards)
         .collect::<Vec<_>>();
@@ -387,6 +433,13 @@ fn or_contract_guards(predicates: &[Predicate]) -> Vec<Guard> {
     if alternatives.iter().any(Vec::is_empty) {
         return Vec::new();
     }
+    alternatives_to_guards(alternatives)
+}
+
+/// Normalize a disjunction of guard conjunctions into guard form: a single
+/// alternative collapses to its conjunction, all-truthy alternatives become
+/// the flat [`Guard::Or`], anything else the general [`Guard::AnyOf`].
+fn alternatives_to_guards(mut alternatives: Vec<Vec<Guard>>) -> Vec<Guard> {
     for alternative in &mut alternatives {
         alternative.sort();
         alternative.dedup();

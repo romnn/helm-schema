@@ -107,6 +107,7 @@ pub(crate) fn document_result_from_expr(
     env: &EvalEnv,
     fragment_locals: &HashMap<String, AbstractValue>,
     outer: Option<&HashMap<String, AbstractValue>>,
+    outer_root_facts: crate::analysis_db::OuterRootFacts<'_>,
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
@@ -117,6 +118,7 @@ pub(crate) fn document_result_from_expr(
         BoundHelperValueResolverParams {
             fragment_locals,
             outer,
+            outer_root_facts,
             current_dot,
             context,
             seen,
@@ -140,6 +142,7 @@ pub(crate) fn helper_result_from_expr_with_fragment_locals(
         BoundHelperValueResolverParams {
             fragment_locals,
             outer,
+            outer_root_facts: crate::analysis_db::OuterRootFacts::default(),
             current_dot,
             context,
             seen,

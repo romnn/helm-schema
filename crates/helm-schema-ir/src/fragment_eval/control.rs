@@ -4,14 +4,16 @@
 //! bindings join across branches with the same rules as the symbolic
 //! walker.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr, TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
+use crate::eval_effect::RootValueDispatch;
 use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::value_path_context::{guard_value_is_truthy, predicate_any};
 use crate::{Guard, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
 
@@ -57,6 +59,15 @@ impl Interpreter<'_> {
         let entry_predicates = self.active_predicates.len();
         let entry_dots = self.dot_stack.len();
         let entry_ranged = self.active_direct_ranged_paths.len();
+        // Root-context `set` state joins across if/else arms like locals:
+        // each arm evaluates from the entry state (arms are mutually
+        // exclusive at runtime, so one arm's mutation must not leak into a
+        // sibling's evaluation), and the outcomes join after the region —
+        // complete literal-assignment chains into an exact value dispatch
+        // (vault's five-arm `vault.mode`). Non-If regions keep the
+        // sequential accumulation.
+        let entry_root = (region.kind == ControlKind::If).then(|| self.capture_root_set_state());
+        let mut root_arm_states: Vec<(Predicate, bool, RootSetState)> = Vec::new();
 
         let mut out = Contributions::default();
         let mut outcomes = Vec::new();
@@ -70,6 +81,9 @@ impl Interpreter<'_> {
             self.active_predicates.truncate(entry_predicates);
             self.dot_stack.truncate(entry_dots);
             self.active_direct_ranged_paths.truncate(entry_ranged);
+            if let Some(entry_root) = &entry_root {
+                self.restore_root_set_state(entry_root);
+            }
 
             let mut arm_condition = Predicate::True;
             // Later arms run under the negations of every earlier decoded
@@ -97,6 +111,15 @@ impl Interpreter<'_> {
             let (own_condition, extra, iterations) =
                 self.activate_arm(&arm, nodes, region.span.start, index);
             self.current_site = previous_site;
+            // The value-dispatch join needs mutually exclusive, total arm
+            // conditions: an If arm whose header failed to decode (or a
+            // with/range arm inside the chain) leaves later negations
+            // incomplete.
+            let arm_decoded = match &arm {
+                ArmSpec::Else => true,
+                ArmSpec::If(_) => own_condition.is_some(),
+                _ => false,
+            };
             if let Some(own) = own_condition {
                 arm_condition = and_conditions(arm_condition, own.clone());
                 if !matches!(arm, ArmSpec::Range { .. }) {
@@ -180,6 +203,13 @@ impl Interpreter<'_> {
             self.locals
                 .conjoin_changed_truthy_reductions(&entry_locals, &arm_condition);
             outcomes.push(self.locals.clone());
+            if entry_root.is_some() {
+                root_arm_states.push((
+                    arm_condition.clone(),
+                    arm_decoded,
+                    self.capture_root_set_state(),
+                ));
+            }
 
             contributions.extend(extra);
             contributions.guard_all(&arm_condition);
@@ -190,6 +220,10 @@ impl Interpreter<'_> {
         self.active_predicates.truncate(entry_predicates);
         self.dot_stack.truncate(entry_dots);
         self.active_direct_ranged_paths.truncate(entry_ranged);
+        if let Some(entry_root) = &entry_root {
+            self.restore_root_set_state(entry_root);
+            self.join_root_set_arms(entry_root, root_arm_states, has_unconditional_else);
+        }
         if promote_body_outcome {
             // A statically nonempty exact range definitely ran its body:
             // bindings written there survive without an entry-state merge.
@@ -1646,5 +1680,162 @@ fn attach_reassignment_exclusion(
                 .collect(),
         ),
         other => other.clone(),
+    }
+}
+
+/// Snapshot of the interpreter's root-context `set` state: live bindings,
+/// truthiness predicates, value dispatches, and the summary-exported
+/// observed maps.
+pub(super) struct RootSetState {
+    bindings: HashMap<String, AbstractValue>,
+    truthy: HashMap<String, Predicate>,
+    dispatches: HashMap<String, RootValueDispatch>,
+    mutations_observed: BTreeMap<String, AbstractValue>,
+    predicates_observed: BTreeMap<String, Predicate>,
+    dispatches_observed: BTreeMap<String, RootValueDispatch>,
+}
+
+impl Interpreter<'_> {
+    pub(super) fn capture_root_set_state(&self) -> RootSetState {
+        RootSetState {
+            bindings: self.root_bindings.clone(),
+            truthy: self.root_truthy_predicates.clone(),
+            dispatches: self.root_value_dispatches.clone(),
+            mutations_observed: self.root_set_mutations_observed.clone(),
+            predicates_observed: self.root_set_predicates_observed.clone(),
+            dispatches_observed: self.root_value_dispatches_observed.clone(),
+        }
+    }
+
+    fn restore_root_set_state(&mut self, state: &RootSetState) {
+        self.root_bindings = state.bindings.clone();
+        self.root_truthy_predicates = state.truthy.clone();
+        self.root_value_dispatches = state.dispatches.clone();
+        self.root_set_mutations_observed = state.mutations_observed.clone();
+        self.root_set_predicates_observed = state.predicates_observed.clone();
+        self.root_value_dispatches_observed = state.dispatches_observed.clone();
+    }
+
+    /// Join per-arm root `set` outcomes after an if/else region.
+    ///
+    /// The replay applies each arm's changed keys in source order, matching
+    /// the last-write-wins accumulation the pipeline had before the per-arm
+    /// entry restore. When the chain is COMPLETE — an unconditional else and
+    /// every arm condition decoded without approximation — and every arm
+    /// leaves a key holding one scalar literal, the key additionally joins
+    /// into an exact [`RootValueDispatch`]: root-field equalities decode as
+    /// the disjunction of the arms assigning the compared literal, and the
+    /// key's truthiness becomes the disjunction of the arms assigning a
+    /// truthy literal.
+    fn join_root_set_arms(
+        &mut self,
+        entry: &RootSetState,
+        arms: Vec<(Predicate, bool, RootSetState)>,
+        has_unconditional_else: bool,
+    ) {
+        let mut keys: BTreeSet<String> = BTreeSet::new();
+        for (_, _, state) in &arms {
+            for (key, value) in &state.mutations_observed {
+                if entry.mutations_observed.get(key) != Some(value) {
+                    keys.insert(key.clone());
+                }
+            }
+        }
+        if keys.is_empty() {
+            return;
+        }
+        for (_, _, state) in &arms {
+            for key in &keys {
+                let Some(value) = state.mutations_observed.get(key) else {
+                    continue;
+                };
+                if entry.mutations_observed.get(key) == Some(value) {
+                    continue;
+                }
+                self.root_truthy_predicates.remove(key);
+                self.root_set_predicates_observed.remove(key);
+                self.root_value_dispatches.remove(key);
+                self.root_value_dispatches_observed.remove(key);
+                self.root_bindings.insert(key.clone(), value.clone());
+                self.root_set_mutations_observed
+                    .insert(key.clone(), value.clone());
+                if let Some(predicate) = state.predicates_observed.get(key) {
+                    self.root_truthy_predicates
+                        .insert(key.clone(), predicate.clone());
+                    self.root_set_predicates_observed
+                        .insert(key.clone(), predicate.clone());
+                }
+                if let Some(dispatch) = state.dispatches_observed.get(key) {
+                    self.root_value_dispatches
+                        .insert(key.clone(), dispatch.clone());
+                    self.root_value_dispatches_observed
+                        .insert(key.clone(), dispatch.clone());
+                }
+            }
+        }
+        let complete = has_unconditional_else
+            && arms
+                .iter()
+                .all(|(condition, decoded, _)| *decoded && !condition.contains_approximation());
+        if !complete {
+            return;
+        }
+        'keys: for key in &keys {
+            let mut dispatch_arms = Vec::new();
+            let mut joined_values: BTreeSet<AbstractValue> = BTreeSet::new();
+            let mut truthy_conditions = Vec::new();
+            for (condition, _, state) in &arms {
+                let value = state
+                    .mutations_observed
+                    .get(key)
+                    .or_else(|| entry.mutations_observed.get(key));
+                let Some(value) = value else {
+                    continue 'keys;
+                };
+                let Some(literal) = root_dispatch_literal(value) else {
+                    continue 'keys;
+                };
+                if guard_value_is_truthy(&literal) {
+                    truthy_conditions.push(condition.clone());
+                }
+                dispatch_arms.push((condition.clone(), literal));
+                joined_values.insert(value.clone());
+            }
+            let truthy = predicate_any(truthy_conditions);
+            let joined_value = if joined_values.len() == 1 {
+                joined_values
+                    .into_iter()
+                    .next()
+                    .unwrap_or(AbstractValue::Unknown)
+            } else {
+                AbstractValue::Choice(joined_values)
+            };
+            self.root_bindings.insert(key.clone(), joined_value.clone());
+            self.root_set_mutations_observed
+                .insert(key.clone(), joined_value);
+            self.root_truthy_predicates
+                .insert(key.clone(), truthy.clone());
+            self.root_set_predicates_observed
+                .insert(key.clone(), truthy);
+            let dispatch = RootValueDispatch {
+                arms: dispatch_arms,
+            };
+            self.root_value_dispatches
+                .insert(key.clone(), dispatch.clone());
+            self.root_value_dispatches_observed
+                .insert(key.clone(), dispatch);
+        }
+    }
+}
+
+/// The scalar literal one dispatch arm assigns (`set . "mode" "ha"`); only
+/// singleton string literals qualify — anything else keeps the key on the
+/// replayed last-write state.
+fn root_dispatch_literal(value: &AbstractValue) -> Option<GuardValue> {
+    match value {
+        AbstractValue::StringSet(values) if values.len() == 1 => {
+            values.first().map(GuardValue::string)
+        }
+        _ => None,
     }
 }

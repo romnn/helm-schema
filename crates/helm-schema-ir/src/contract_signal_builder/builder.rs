@@ -3184,12 +3184,45 @@ fn guard_to_conditional_guard(
                 key: key.clone(),
             })
         }
-        Guard::Range { .. }
-        | Guard::With { .. }
-        | Guard::Default { .. }
-        | Guard::Not { .. }
-        | Guard::Or { .. }
-        | Guard::AnyOf { .. } => None,
+        // The De Morgan flatten emits falsiness and disjunction guards
+        // (`¬(a ∨ b)` → two `Not`s; `¬(a ∧ b)` → an `AnyOf`); each has a
+        // direct conditional-guard encoding, so a mode-dispatch condition
+        // (vault's `ne .mode "external"`) keys arms instead of dropping
+        // the whole access or row.
+        Guard::Not { path: value_path } => {
+            Some(ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                path: path(value_path)?,
+            })))
+        }
+        Guard::Or { paths } => Some(ConditionalGuard::AnyOf(
+            paths
+                .iter()
+                .map(|value_path| {
+                    Some(ConditionalGuard::Truthy {
+                        path: path(value_path)?,
+                    })
+                })
+                .collect::<Option<Vec<_>>>()?,
+        )),
+        Guard::AnyOf { alternatives } => Some(ConditionalGuard::AnyOf(
+            alternatives
+                .iter()
+                .map(|alternative| {
+                    let mut guards = alternative
+                        .iter()
+                        .map(|guard| guard_to_conditional_guard(guard, target_value_path))
+                        .collect::<Option<Vec<_>>>()?;
+                    guards.sort();
+                    guards.dedup();
+                    match guards.as_slice() {
+                        [] => None,
+                        [guard] => Some(guard.clone()),
+                        _ => Some(ConditionalGuard::AllOf(guards)),
+                    }
+                })
+                .collect::<Option<Vec<_>>>()?,
+        )),
+        Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => None,
     }
 }
 

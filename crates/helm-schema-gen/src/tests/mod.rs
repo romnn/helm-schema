@@ -82,6 +82,18 @@ fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
     SymbolicIrContext::new(&idx).generate_contract_ir(src)
 }
 
+/// Like [`parse_ir_with_helpers`], with an analysis-policy Kubernetes
+/// version so `.Capabilities.KubeVersion` conditions evaluate.
+fn parse_ir_with_kubernetes_version(src: &str, kubernetes_version: &str) -> ContractIr {
+    let idx = DefineIndex::new();
+    SymbolicIrContext::with_policy(
+        &idx,
+        std::collections::BTreeMap::new(),
+        Some(kubernetes_version.to_string()),
+    )
+    .generate_contract_ir(src)
+}
+
 fn with_type_hints(mut contract: ContractIr, hints: &[(&str, &str)]) -> ContractIr {
     for (path, schema_type) in hints {
         contract.add_type_hint(*path, *schema_type);

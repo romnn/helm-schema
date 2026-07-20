@@ -199,6 +199,7 @@ impl<'a> Interpreter<'a> {
         self.apply_root_set_mutations(
             &nested.root_set_mutations_observed,
             &nested.root_set_predicates_observed,
+            &nested.root_value_dispatches_observed,
         );
         self.values_default_sources_observed
             .extend(nested.values_default_sources_observed);

@@ -22,13 +22,19 @@ enum ComparisonOp {
 /// Lowers a `semverCompare` constraint to a regex matching exactly the
 /// version strings that satisfy it.
 ///
-/// Returns `None` for constraint shapes outside the supported subset: only a
-/// single `<`/`<=`/`>`/`>=` comparator against a plain numeric bound is
-/// encoded. Constraints carrying prerelease or build components, wildcards,
-/// ranges, or comparator lists change Masterminds' matching rules (a bare
-/// comparator never matches prerelease versions, while a `-0` suffix opts
-/// them in), so they abstain rather than risk an inexact encoding. The
-/// produced pattern likewise never matches prerelease versions.
+/// Returns `None` for constraint shapes outside the supported subset: a
+/// single `<`/`<=`/`>`/`>=` comparator against a plain numeric bound, plus
+/// the two prerelease-FLOOR idioms charts use to opt prereleases in:
+/// `>=X-0` (every version whose core satisfies `>= X`, prereleases
+/// included — no prerelease identifier sorts below `0`) and `<X-D` with a
+/// single-digit prerelease `D` (every version whose core satisfies `< X`,
+/// prereleases included, plus the prereleases of `X` itself whose first
+/// identifier is a numeric below `D` — longer numerics and alphanumerics
+/// sort above any single digit). Other prerelease bounds, wildcards,
+/// ranges, and comparator lists change Masterminds' matching rules and
+/// abstain rather than risk an inexact encoding. Without a prerelease
+/// suffix the produced pattern never matches prerelease versions,
+/// mirroring Masterminds' bare-comparator rule.
 #[must_use]
 pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
     let text = constraint.trim();
@@ -43,10 +49,14 @@ pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
     };
     let version = rest.trim();
     let version = version.strip_prefix('v').unwrap_or(version);
-    if version.contains(['-', '+']) {
+    if version.contains('+') {
         return None;
     }
-    let parts: Vec<&str> = version.split('.').collect();
+    let (core, prerelease) = match version.split_once('-') {
+        Some((core, prerelease)) => (core, Some(prerelease)),
+        None => (version, None),
+    };
+    let parts: Vec<&str> = core.split('.').collect();
     if parts.len() > 3 {
         return None;
     }
@@ -57,14 +67,94 @@ pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
         }
         bound[position] = part.parse().ok()?;
     }
-    let alternatives = core_alternatives(op, bound);
-    if alternatives.is_empty() {
-        return None;
-    }
+    let body = match prerelease {
+        None => {
+            let alternatives = core_alternatives(op, bound);
+            if alternatives.is_empty() {
+                return None;
+            }
+            alternatives.join("|")
+        }
+        Some(prerelease) => prerelease_floor_body(op, bound, prerelease)?,
+    };
     Some(format!(
-        "^v?(?:{})(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
-        alternatives.join("|")
+        "^v?(?:{body})(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     ))
+}
+
+/// One semver prerelease tail (`-alpha.1`): a dash followed by dot-separated
+/// alphanumeric identifiers.
+const PRERELEASE_TAIL: &str = "-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*";
+
+/// The alternation body for the prerelease-floor comparators (see
+/// [`semver_constraint_match_pattern`]).
+fn prerelease_floor_body(op: ComparisonOp, bound: [u64; 3], prerelease: &str) -> Option<String> {
+    match op {
+        // `>= X-0`: the core decides alone — every prerelease of a
+        // satisfying core (X itself included) sorts at or above `X-0`.
+        ComparisonOp::Ge if prerelease == "0" => {
+            let alternatives = core_alternatives(ComparisonOp::Ge, bound);
+            if alternatives.is_empty() {
+                return None;
+            }
+            Some(format!(
+                "(?:{})(?:{PRERELEASE_TAIL})?",
+                alternatives.join("|")
+            ))
+        }
+        // `< X-D` (single digit D): cores below X with any prerelease,
+        // plus X's own prereleases whose FIRST identifier is a numeric
+        // below D. A multi-digit numeric is at least ten and an
+        // alphanumeric identifier sorts above every numeric, so "one
+        // digit in [0, D)" is the exact first-identifier language; any
+        // continuation after a decided first identifier stays below.
+        ComparisonOp::Lt
+            if prerelease.len() == 1 && prerelease.bytes().all(|byte| byte.is_ascii_digit()) =>
+        {
+            let alternatives = core_alternatives(ComparisonOp::Lt, bound);
+            if alternatives.is_empty() && prerelease == "0" {
+                return None;
+            }
+            let mut body = if alternatives.is_empty() {
+                Vec::new()
+            } else {
+                vec![format!(
+                    "(?:{})(?:{PRERELEASE_TAIL})?",
+                    alternatives.join("|")
+                )]
+            };
+            if let Some(limit) = prerelease.parse::<u32>().ok().filter(|limit| *limit > 0) {
+                for core in equal_cores(bound) {
+                    body.push(format!(
+                        "{core}-{}(?:\\.[0-9A-Za-z-]+)*",
+                        digit_span(0, limit - 1)
+                    ));
+                }
+            }
+            if body.is_empty() {
+                return None;
+            }
+            Some(body.join("|"))
+        }
+        _ => None,
+    }
+}
+
+/// The written core forms whose numeric value equals `bound` (missing
+/// components read as zero).
+fn equal_cores(bound: [u64; 3]) -> Vec<String> {
+    let mut cores = Vec::new();
+    for written in 1..=3usize {
+        if bound[written..].iter().all(|component| *component == 0) {
+            let components: Vec<String> = bound[..written]
+                .iter()
+                .copied()
+                .map(decimal_eq_pattern)
+                .collect();
+            cores.push(components.join("\\."));
+        }
+    }
+    cores
 }
 
 /// Version-core alternations satisfying `value OP bound`.

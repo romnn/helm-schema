@@ -626,6 +626,7 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
         "json.roundtrip",
         args.get(1),
         None,
+        crate::analysis_db::OuterRootFacts::default(),
         None,
         &locals,
         context,

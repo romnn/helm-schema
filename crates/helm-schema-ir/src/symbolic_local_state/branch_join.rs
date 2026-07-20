@@ -29,6 +29,11 @@ pub(super) fn joined_branch_outcomes(
         ),
         typeof_sources: join_map(&outcomes, |state| &state.typeof_sources, join_if_equal),
         int_cast_sources: join_map(&outcomes, |state| &state.int_cast_sources, join_if_equal),
+        kube_version_sources: join_map(
+            &outcomes,
+            |state| &state.kube_version_sources,
+            join_if_equal,
+        ),
         range_member_values: join_map(
             &outcomes,
             |state| &state.range_member_values,

@@ -10334,9 +10334,12 @@
             "type": "object"
           },
           {
-            "not": {
-              "allOf": [
-                {
+            "$ref": "#/$defs/schema68"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
                     "env": {
                       "$ref": "#/$defs/helm-truthy"
@@ -10346,8 +10349,10 @@
                     "env"
                   ],
                   "type": "object"
-                },
-                {
+                }
+              },
+              {
+                "not": {
                   "properties": {
                     "env": {
                       "properties": {
@@ -10366,11 +10371,8 @@
                   ],
                   "type": "object"
                 }
-              ]
-            }
-          },
-          {
-            "$ref": "#/$defs/schema68"
+              }
+            ]
           },
           {
             "anyOf": [

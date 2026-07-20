@@ -74,6 +74,7 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> color_eyr
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let signals = contract_schema_signals!(collection);
     let evidence = signals
@@ -125,7 +126,7 @@ fn loki_selected_htpasswd_default_program_reaches_required_credentials()
             .contains_key("gateway.basicAuth.htpasswd"),
         "the composed values document must preserve the chart-authored program"
     );
-    let collection = analyze_charts(&charts, &defines, false, &values_roots)?;
+    let collection = analyze_charts(&charts, &defines, false, &values_roots, None)?;
     let signals = contract_schema_signals!(collection);
 
     for path in ["gateway.basicAuth.username", "gateway.basicAuth.password"] {
@@ -184,6 +185,7 @@ spec:
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "kid.controller.ingressClassResource.parameters";
 
@@ -214,6 +216,7 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
@@ -277,6 +280,7 @@ fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "clickhouse.clickhouseOperator.image.repository";
 
@@ -309,6 +313,7 @@ fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> color_eyr
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "image.tag";
     let signals = contract_schema_signals!(collection);
@@ -344,6 +349,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "signoz.smtpVars.existingSecret.name";
@@ -454,6 +460,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "clickhouse.clickhouseOperator.serviceAccount.name";
@@ -547,6 +554,7 @@ fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> color_ey
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "deployment.hostUsers";
     let signals = contract_schema_signals!(collection);
@@ -580,6 +588,7 @@ fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> color_eyre::e
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "server.namespaces";
     let signals = contract_schema_signals!(collection);
@@ -610,6 +619,7 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "signoz.serviceAccount.name";
@@ -683,6 +693,7 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref()),
+        None,
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "signoz-otel-gateway.serviceAccount.name";
@@ -737,6 +748,7 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref()),
+        None,
     )?;
     let projection = collection.contract.clone().finalize();
     let path = "clickhouse.securityContext";
@@ -835,6 +847,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let projection = collection.contract.clone().finalize();
     let name_override_uses = projection
@@ -873,6 +886,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let path = "fullnameOverride";
     let projection = collection.contract.clone().finalize();
@@ -912,6 +926,7 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment()
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref()),
+        None,
     )?;
     let path = "webhook";
     let signals = contract_schema_signals!(collection);
@@ -1016,6 +1031,7 @@ data:
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let projection = collection.contract.finalize();
     let uses = projection
@@ -1155,6 +1171,7 @@ spec:
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef::concrete("example.com/v1".to_string(), "Widget".to_string());
@@ -1228,6 +1245,7 @@ spec:
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
     let provider = ChartLocalCrdSchemaProvider::new(collection.local_schema_universe);
     let resource = ResourceRef::concrete("example.com/v1".to_string(), "Widget".to_string());
@@ -1302,6 +1320,7 @@ child: auth.enabled
         &defines,
         false,
         &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
     )?;
 
     let terminal_clauses = contract_schema_signals!(collection)

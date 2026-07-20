@@ -144,6 +144,7 @@ impl ValuePathContext<'_> {
                 }
                 "eq" => self.value_comparison_predicate(args, false).is_some(),
                 "ne" => self.value_comparison_predicate(args, true).is_some(),
+                "semverCompare" => self.semver_capabilities_predicate(args).is_some(),
                 "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args).is_some(),
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
@@ -312,6 +313,7 @@ impl ValuePathContext<'_> {
             "or" => self.or_predicate(args),
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
+            "semverCompare" => self.semver_capabilities_predicate(args),
             "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args),
             "typeIs" | "kindIs" => self.type_is_predicate(args),
             "coalesce" => self.coalesce_truthy_predicate(args),
@@ -1331,6 +1333,60 @@ impl ValuePathContext<'_> {
         explicit_root.then_some(Predicate::False)
     }
 
+    fn root_field_dispatch_predicate(
+        &self,
+        left: &TemplateExpr,
+        right: &TemplateExpr,
+        negated: bool,
+    ) -> Option<Predicate> {
+        let (field, value) = match (self.root_dispatch_field(left), guard_value_literal(right)) {
+            (Some(field), Some(value)) => (field, value),
+            _ => match (self.root_dispatch_field(right), guard_value_literal(left)) {
+                (Some(field), Some(value)) => (field, value),
+                _ => return None,
+            },
+        };
+        let dispatch = self.root_value_dispatches.get(field)?;
+        let selected = predicate_any(
+            dispatch
+                .arms
+                .iter()
+                .filter(|(_, literal)| *literal == value)
+                .map(|(condition, _)| condition.clone())
+                .collect(),
+        );
+        Some(if negated {
+            selected.negated()
+        } else {
+            selected
+        })
+    }
+
+    /// A single-segment root-context field (`.mode`) under a root (or
+    /// unresolved) dot that carries a joined value dispatch.
+    fn root_dispatch_field<'expr>(&self, expr: &'expr TemplateExpr) -> Option<&'expr str> {
+        if !self
+            .current_dot_binding
+            .as_ref()
+            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+        {
+            return None;
+        }
+        let field = match expr.deparen() {
+            TemplateExpr::Field(path) => path.as_slice(),
+            TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
+                path.as_slice()
+            }
+            _ => return None,
+        };
+        let [field] = field else {
+            return None;
+        };
+        self.root_value_dispatches
+            .contains_key(field)
+            .then_some(field.as_str())
+    }
+
     fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
         let binding = self.get_bindings.get(name.trim_start_matches('$'))?;
         let keys = self.range_domains.get(&binding.key_var)?;
@@ -1854,6 +1910,102 @@ impl ValuePathContext<'_> {
     /// or a local bound to exactly that shape. Any other subject transform
     /// breaks the "a raw JSON integer at the path reaches the comparison
     /// unchanged" argument the raw-integer subsets rely on.
+    /// `semverCompare "<constraint>" SUBJECT` where SUBJECT is the policy
+    /// Kubernetes version, optionally shadowed by a values-path override
+    /// (`default .Capabilities.KubeVersion.X .Values.kubeTargetVersionOverride`,
+    /// directly or through a bound local). The constraint's exact version
+    /// language comes from the semver pattern encoder; the policy arm
+    /// evaluates it against the configured version, and the override arm
+    /// tests the raw override text — both exact, so the negated form stays
+    /// faithful.
+    fn semver_capabilities_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [constraint_expr, subject] = args else {
+            return None;
+        };
+        let TemplateExpr::Literal(Literal::String(constraint) | Literal::RawString(constraint)) =
+            constraint_expr.deparen()
+        else {
+            return None;
+        };
+        let source = self.kube_version_subject(subject)?;
+        let policy = self.fragment_context.analysis_db.kubernetes_version()?;
+        let pattern = helm_schema_ast::semver_constraint_match_pattern(constraint)?;
+        let regex = regex::Regex::new(&pattern).ok()?;
+        let policy_matches = regex.is_match(policy);
+        Some(match source.override_path {
+            None => bool_predicate(policy_matches),
+            Some(path) => {
+                let truthy = Predicate::truthy_path(path.clone());
+                let matches = Predicate::from(Guard::MatchesPattern {
+                    path,
+                    pattern,
+                    templated: false,
+                });
+                if policy_matches {
+                    // A falsy override renders the (satisfying) policy
+                    // version; a truthy override must satisfy on its own.
+                    predicate_any(vec![
+                        truthy.negated(),
+                        Predicate::all(vec![truthy, matches]),
+                    ])
+                } else {
+                    Predicate::all(vec![truthy, matches])
+                }
+            }
+        })
+    }
+
+    fn kube_version_subject(
+        &self,
+        expr: &TemplateExpr,
+    ) -> Option<crate::symbolic_local_state::KubeVersionSource> {
+        if let TemplateExpr::Variable(name) = expr.deparen() {
+            return self
+                .kube_version_bindings
+                .get(name.trim_start_matches('$'))
+                .cloned();
+        }
+        self.kube_version_operand(expr)
+    }
+
+    /// The Kubernetes-version identity of an expression: a bare
+    /// `.Capabilities.KubeVersion.Version|GitVersion` selector, or a
+    /// `default` of that fallback with a DIRECT values-path override (a
+    /// transformed override no longer carries the path's raw text).
+    pub(crate) fn kube_version_operand(
+        &self,
+        expr: &TemplateExpr,
+    ) -> Option<crate::symbolic_local_state::KubeVersionSource> {
+        let expr = expr.deparen();
+        if capabilities_kube_version_selector(expr) {
+            return Some(crate::symbolic_local_state::KubeVersionSource {
+                override_path: None,
+            });
+        }
+        let TemplateExpr::Call { function, args } = expr else {
+            return None;
+        };
+        if function != "default" {
+            return None;
+        }
+        let [fallback, subject] = args.as_slice() else {
+            return None;
+        };
+        if !capabilities_kube_version_selector(fallback.deparen()) {
+            return None;
+        }
+        if !matches!(
+            subject.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            return None;
+        }
+        let path = self.single_resolved_values_path_expr(subject)?;
+        Some(crate::symbolic_local_state::KubeVersionSource {
+            override_path: Some(path),
+        })
+    }
+
     pub(crate) fn int_cast_operand(
         &self,
         expr: &TemplateExpr,
@@ -1936,6 +2088,15 @@ impl ValuePathContext<'_> {
         // `eq $key "name"` over a destructured range key selects exactly the
         // member with that key (prometheus's serverFiles dispatch).
         if let Some(predicate) = self.range_key_equals_predicate(left, right, negated) {
+            return Some(predicate);
+        }
+        // A root-context field assigned across a COMPLETE if/else chain
+        // compares through its joined value dispatch: the equality selects
+        // exactly the arms assigning the compared literal (vault's
+        // `eq .mode "ha"` / `ne .mode "external"` gates). The arm conditions
+        // are mutually exclusive and total, so the negated form is the
+        // exact complement.
+        if let Some(predicate) = self.root_field_dispatch_predicate(left, right, negated) {
             return Some(predicate);
         }
         // Only a DIRECT selector operand claims a value equality: seeing
@@ -2436,7 +2597,7 @@ fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
     values
 }
 
-fn predicate_any(predicates: Vec<Predicate>) -> Predicate {
+pub(crate) fn predicate_any(predicates: Vec<Predicate>) -> Predicate {
     if predicates
         .iter()
         .any(|predicate| matches!(predicate, Predicate::True))
@@ -2625,7 +2786,7 @@ fn default_call_operand(expr: &TemplateExpr) -> Option<(GuardValue, &TemplateExp
 
 /// Helm truthiness of a literal guard value (sprig `empty` complement):
 /// nil, `""`, `0`, `0.0`, and `false` are falsy.
-fn guard_value_is_truthy(value: &GuardValue) -> bool {
+pub(crate) fn guard_value_is_truthy(value: &GuardValue) -> bool {
     match value {
         GuardValue::String(text) => !text.is_empty(),
         GuardValue::Bool(value) => *value,
@@ -2633,6 +2794,25 @@ fn guard_value_is_truthy(value: &GuardValue) -> bool {
         GuardValue::Float(text) => text.parse::<f64>().is_ok_and(|value| value != 0.0),
         GuardValue::Null => false,
     }
+}
+
+/// A `.Capabilities.KubeVersion.Version` / `.GitVersion` selector (also the
+/// `$.`-rooted spelling).
+fn capabilities_kube_version_selector(expr: &TemplateExpr) -> bool {
+    let path = match expr {
+        TemplateExpr::Field(path) => path.as_slice(),
+        TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
+            path.as_slice()
+        }
+        _ => return false,
+    };
+    matches!(
+        path,
+        [first, second, third]
+            if first == "Capabilities"
+                && second == "KubeVersion"
+                && (third == "Version" || third == "GitVersion")
+    )
 }
 
 fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {

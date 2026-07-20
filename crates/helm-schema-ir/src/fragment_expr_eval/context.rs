@@ -49,6 +49,7 @@ impl<'a> FragmentEvalContext<'a> {
             BoundHelperValueResolverParams {
                 fragment_locals: locals,
                 outer: None,
+                outer_root_facts: crate::analysis_db::OuterRootFacts::default(),
                 current_dot: current_dot_helper.as_ref(),
                 context: *self,
                 seen,

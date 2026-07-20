@@ -78,6 +78,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
     /// Truth predicates for root-context fields replaced by the helper.
     pub(crate) root_set_predicates: BTreeMap<String, Predicate>,
+    /// Joined per-arm value alternatives for root-context fields the helper
+    /// set across complete if/else chains.
+    pub(crate) root_set_value_dispatches: BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     /// Chart value subtrees supplying defaults to a replaced effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// Helper names through which the values root was replaced.
@@ -118,6 +121,8 @@ pub(crate) fn eval_bound_helper_fragment(
     interpreter.helper_scope = true;
     interpreter.helper_seen = seen.clone();
     interpreter.root_bindings = resolution.bindings.clone();
+    interpreter.root_truthy_predicates = resolution.root_truthy_predicates.clone();
+    interpreter.root_value_dispatches = resolution.root_value_dispatches.clone();
     interpreter.root_value_dot = resolution.dot.helper.clone();
     interpreter.dot_stack.push(resolution.dot.fragment.clone());
     interpreter.locals = SymbolicLocalState::default();
@@ -160,6 +165,7 @@ pub(crate) fn eval_bound_helper_fragment(
         chart_defaults: interpreter.chart_defaults_observed,
         root_set_mutations: interpreter.root_set_mutations_observed,
         root_set_predicates: interpreter.root_set_predicates_observed,
+        root_set_value_dispatches: interpreter.root_value_dispatches_observed,
         values_default_sources: interpreter.values_default_sources_observed,
         values_root_helper_includes: interpreter.values_root_helper_includes_observed,
     };

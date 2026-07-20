@@ -32,6 +32,12 @@ pub(crate) struct SymbolicLocalState {
     /// comparisons on the local may strengthen through the raw-integer
     /// sound subsets exactly as the inline cast expression would.
     pub(crate) int_cast_sources: HashMap<String, IntCastSource>,
+    /// Locals bound to a Capabilities-defaulted Kubernetes version
+    /// (`$v := default .Capabilities.KubeVersion.GitVersion
+    /// .Values.kubeTargetVersionOverride`): `semverCompare` conditions on
+    /// the local evaluate the policy version when the override is unset and
+    /// the override's own text when it is.
+    pub(crate) kube_version_sources: HashMap<String, KubeVersionSource>,
     /// Range variables bound to the MEMBER identity of a directly ranged
     /// path (`$v` in `range $k, $v := .Values.x` holds each `x.*` value).
     /// Conditions and assignments resolve through these; hole rendering
@@ -57,6 +63,14 @@ pub(crate) struct IntCastSource {
     pub(crate) default_int: Option<i64>,
 }
 
+/// A Kubernetes-version subject: the policy version, optionally shadowed by
+/// a truthy values-path override (`default .Capabilities.KubeVersion.X
+/// OVERRIDE`; a bare Capabilities selector has no override).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct KubeVersionSource {
+    pub(crate) override_path: Option<String>,
+}
+
 #[derive(Clone, Debug, Default)]
 struct LocalScopeFrame {
     previous_values: HashMap<String, VariableLocalState>,
@@ -73,6 +87,7 @@ struct VariableLocalState {
     truthy_reduction: Option<Predicate>,
     typeof_source: Option<BTreeMap<String, HelperOutputMeta>>,
     int_cast_source: Option<IntCastSource>,
+    kube_version_source: Option<KubeVersionSource>,
     range_member_value: Option<AbstractValue>,
 }
 
@@ -194,6 +209,7 @@ impl SymbolicLocalState {
             truthy_reduction: self.truthy_reductions.get(variable).cloned(),
             typeof_source: self.typeof_sources.get(variable).cloned(),
             int_cast_source: self.int_cast_sources.get(variable).cloned(),
+            kube_version_source: self.kube_version_sources.get(variable).cloned(),
             range_member_value: self.range_member_values.get(variable).cloned(),
         }
     }
@@ -207,6 +223,7 @@ impl SymbolicLocalState {
             || self.truthy_reductions.contains_key(variable)
             || self.typeof_sources.contains_key(variable)
             || self.int_cast_sources.contains_key(variable)
+            || self.kube_version_sources.contains_key(variable)
             || self.range_member_values.contains_key(variable)
     }
 
@@ -238,6 +255,11 @@ impl SymbolicLocalState {
             previous.int_cast_source,
         );
         restore_map_entry(
+            &mut self.kube_version_sources,
+            variable,
+            previous.kube_version_source,
+        );
+        restore_map_entry(
             &mut self.range_member_values,
             variable,
             previous.range_member_value,
@@ -263,6 +285,7 @@ impl SymbolicLocalState {
         self.truthy_reductions.remove(variable);
         self.typeof_sources.remove(variable);
         self.int_cast_sources.remove(variable);
+        self.kube_version_sources.remove(variable);
         self.range_member_values.remove(variable);
     }
 }

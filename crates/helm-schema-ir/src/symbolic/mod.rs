@@ -39,11 +39,25 @@ impl SymbolicIrContext {
         defines: &DefineIndex,
         chart_default_strings: BTreeMap<String, String>,
     ) -> Self {
+        Self::with_policy(defines, chart_default_strings, None)
+    }
+
+    /// Build a context carrying analysis policy inputs: the chart-authored
+    /// string defaults plus the normalized Kubernetes version
+    /// (`.Capabilities.KubeVersion` conditions evaluate against it; `None`
+    /// abstains them).
+    #[must_use]
+    pub fn with_policy(
+        defines: &DefineIndex,
+        chart_default_strings: BTreeMap<String, String>,
+        kubernetes_version: Option<String>,
+    ) -> Self {
         Self {
             inner: Rc::new(SymbolicIrContextInner {
-                analysis_db: IrAnalysisDb::with_chart_default_strings(
+                analysis_db: IrAnalysisDb::with_policy(
                     defines,
                     chart_default_strings,
+                    kubernetes_version,
                 ),
             }),
         }

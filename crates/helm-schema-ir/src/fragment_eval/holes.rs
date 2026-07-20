@@ -414,6 +414,10 @@ impl Interpreter<'_> {
             &name,
             arg,
             Some(&self.root_bindings),
+            crate::analysis_db::OuterRootFacts {
+                truthy_predicates: Some(&self.root_truthy_predicates),
+                value_dispatches: Some(&self.root_value_dispatches),
+            },
             current_dot.as_ref(),
             &helper_locals,
             FragmentEvalContext::new(self.db),
@@ -483,7 +487,11 @@ impl Interpreter<'_> {
         self.range_modes.merge(&summary.range_modes);
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
-        self.apply_root_set_mutations(&summary.root_set_mutations, &summary.root_set_predicates);
+        self.apply_root_set_mutations(
+            &summary.root_set_mutations,
+            &summary.root_set_predicates,
+            &summary.root_set_value_dispatches,
+        );
         self.values_default_sources_observed
             .extend(summary.values_default_sources.iter().cloned());
         self.values_root_helper_includes_observed

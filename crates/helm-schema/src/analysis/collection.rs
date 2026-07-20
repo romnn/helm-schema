@@ -26,6 +26,7 @@ pub(crate) fn analyze_charts(
     defines: &DefineIndex,
     include_tests: bool,
     values_roots: &ValuesRoots,
+    kubernetes_version: Option<&str>,
 ) -> EngineResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_schema_universe = collect_static_crd_universe(charts)?;
@@ -47,9 +48,10 @@ pub(crate) fn analyze_charts(
         if chart.is_library {
             continue;
         }
-        let symbolic_context = SymbolicIrContext::with_chart_default_strings(
+        let symbolic_context = SymbolicIrContext::with_policy(
             defines,
             values_roots.string_defaults_for_prefix(&chart.values_prefix),
+            kubernetes_version.map(str::to_string),
         );
         let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, defines);
         let ManifestContractAnalysis {

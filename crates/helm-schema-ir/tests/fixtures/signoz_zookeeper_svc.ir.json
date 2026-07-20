@@ -1443,6 +1443,29 @@
             "path": "service.type",
             "type": "eq",
             "value": "ClusterIP"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.nodePorts.tls",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "not_eq",
+                  "value": "LoadBalancer"
+                },
+                {
+                  "path": "service.type",
+                  "type": "not_eq",
+                  "value": "NodePort"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
@@ -1454,6 +1477,29 @@
             "path": "service.type",
             "type": "eq",
             "value": "ClusterIP"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.nodePorts.client",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "service.type",
+                  "type": "not_eq",
+                  "value": "LoadBalancer"
+                },
+                {
+                  "path": "service.type",
+                  "type": "not_eq",
+                  "value": "NodePort"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [

@@ -12630,9 +12630,173 @@
             }
           },
           {
-            "not": {
-              "allOf": [
-                {
+            "anyOf": [
+              {
+                "properties": {
+                  "alphaConfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alphaConfig"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "configFile": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configFile"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "existingConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "existingConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema443"
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "forceLegacyConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "forceLegacyConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "alphaConfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "alphaConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema443"
+                        },
+                        {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "forceLegacyConfig": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "forceLegacyConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema443"
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "forceLegacyConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "forceLegacyConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
                   "properties": {
                     "alphaConfig": {
                       "properties": {
@@ -12650,267 +12814,85 @@
                     "alphaConfig"
                   ],
                   "type": "object"
-                },
-                {
-                  "not": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema443"
-                      },
-                      {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "forceLegacyConfig": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "forceLegacyConfig"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
                 }
-              ]
-            }
+              }
+            ]
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
                       "properties": {
-                        "config": {
-                          "properties": {
-                            "existingConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "existingConfig"
-                          ],
-                          "type": "object"
+                        "existingConfig": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "config"
+                        "existingConfig"
                       ],
                       "type": "object"
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "alphaConfig": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "alphaConfig"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/$defs/schema443"
-                                },
-                                {
-                                  "properties": {
-                                    "config": {
-                                      "properties": {
-                                        "forceLegacyConfig": {
-                                          "$ref": "#/$defs/helm-truthy"
-                                        }
-                                      },
-                                      "required": [
-                                        "forceLegacyConfig"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "config"
-                                  ],
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          }
-                        ]
-                      }
                     }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "alphaConfig": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "alphaConfig"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "not": {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "configFile": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "configFile"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "not": {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "existingConfig": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "existingConfig"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema443"
-                          },
-                          {
-                            "properties": {
-                              "config": {
-                                "properties": {
-                                  "forceLegacyConfig": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "forceLegacyConfig"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "config"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "alphaConfig": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "alphaConfig"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/$defs/schema443"
-                                },
-                                {
-                                  "properties": {
-                                    "config": {
-                                      "properties": {
-                                        "forceLegacyConfig": {
-                                          "$ref": "#/$defs/helm-truthy"
-                                        }
-                                      },
-                                      "required": [
-                                        "forceLegacyConfig"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "config"
-                                  ],
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
                 }
-              ]
-            }
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "alphaConfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "alphaConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema443"
+                        },
+                        {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "forceLegacyConfig": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "forceLegacyConfig"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ]
       },

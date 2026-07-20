@@ -98,6 +98,7 @@ fn condition_context_with_output_meta(
     ValuePathContext {
         root_bindings,
         root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
+        root_value_dispatches: Box::leak(Box::new(HashMap::new())),
         template_bindings,
         range_domains,
         get_bindings,
@@ -106,6 +107,7 @@ fn condition_context_with_output_meta(
         template_truthy_reductions,
         typeof_bindings,
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
+        kube_version_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,
@@ -625,6 +627,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     let context = ValuePathContext {
         root_bindings: Box::leak(Box::new(HashMap::new())),
         root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
+        root_value_dispatches: Box::leak(Box::new(HashMap::new())),
         template_bindings: HashMap::new(),
         range_domains: Box::leak(Box::new(HashMap::new())),
         get_bindings: Box::leak(Box::new(HashMap::new())),
@@ -633,6 +636,7 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
         template_truthy_reductions: Box::leak(Box::new(HashMap::new())),
         typeof_bindings: Box::leak(Box::new(HashMap::new())),
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
+        kube_version_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,

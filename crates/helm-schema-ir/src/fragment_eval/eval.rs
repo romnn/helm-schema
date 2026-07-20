@@ -528,9 +528,15 @@ pub(super) struct Interpreter<'a> {
     pub(super) root_value_dot: Option<AbstractValue>,
     pub(super) root_bindings: HashMap<String, AbstractValue>,
     pub(super) root_truthy_predicates: HashMap<String, Predicate>,
+    /// Exhaustive per-arm value alternatives for root-context fields set
+    /// across complete if/else chains (see [`RootValueDispatch`]); condition
+    /// decoding resolves root-field equalities through them.
+    pub(super) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
     /// Root-context replacements observed in source order and exported by helper summaries.
     pub(super) root_set_mutations_observed: BTreeMap<String, AbstractValue>,
     pub(super) root_set_predicates_observed: BTreeMap<String, Predicate>,
+    pub(super) root_value_dispatches_observed:
+        BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
     pub(super) values_root_helper_includes_observed: BTreeSet<String>,
     pub(super) active_predicates: Vec<Predicate>,
@@ -633,8 +639,10 @@ impl<'a> Interpreter<'a> {
             root_value_dot: None,
             root_bindings: HashMap::new(),
             root_truthy_predicates: HashMap::new(),
+            root_value_dispatches: HashMap::new(),
             root_set_mutations_observed: BTreeMap::new(),
             root_set_predicates_observed: BTreeMap::new(),
+            root_value_dispatches_observed: BTreeMap::new(),
             values_default_sources_observed: BTreeSet::new(),
             values_root_helper_includes_observed: BTreeSet::new(),
             active_predicates: Vec::new(),
@@ -839,6 +847,7 @@ impl<'a> Interpreter<'a> {
         ValuePathContext {
             root_bindings: &self.root_bindings,
             root_truthy_predicates: &self.root_truthy_predicates,
+            root_value_dispatches: &self.root_value_dispatches,
             template_bindings,
             range_domains: &self.locals.range_domains,
             get_bindings: &self.locals.get_bindings,
@@ -847,6 +856,7 @@ impl<'a> Interpreter<'a> {
             template_truthy_reductions: &self.locals.truthy_reductions,
             typeof_bindings: &self.locals.typeof_sources,
             int_cast_bindings: &self.locals.int_cast_sources,
+            kube_version_bindings: &self.locals.kube_version_sources,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment: self.current_dot_fragment(),
             current_dot_binding: self.current_value_dot(),

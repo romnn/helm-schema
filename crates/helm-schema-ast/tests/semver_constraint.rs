@@ -122,9 +122,10 @@ fn encoded_comparators_match_reference_semantics() {
     }
 }
 
-/// Constraint shapes beyond one bare numeric comparator change Masterminds'
-/// matching rules (prerelease opt-in, ranges, wildcards) and must abstain
-/// instead of guessing.
+/// Constraint shapes beyond one bare numeric comparator (or the two
+/// supported prerelease-floor idioms) change Masterminds' matching rules
+/// (general prerelease bounds, ranges, wildcards) and must abstain instead
+/// of guessing.
 #[test]
 fn unsupported_constraint_shapes_abstain() {
     let unsupported = [
@@ -135,9 +136,13 @@ fn unsupported_constraint_shapes_abstain() {
         "!=1.2.3",
         "~1.2",
         "^1.2",
-        ">=1.33-0",
-        "<9.9.9-9",
-        ">= 1.23-0",
+        ">1.33-0",
+        "<=1.33-0",
+        ">=1.33-1",
+        ">=1.33-alpha",
+        "<1.33-10",
+        "<1.33-alpha",
+        "<0.0.0-0",
         ">=1.2 <2.0",
         ">=1.2, <2",
         ">=1.2 || >=3",
@@ -152,5 +157,79 @@ fn unsupported_constraint_shapes_abstain() {
             semver_constraint_match_pattern(constraint).is_none(),
             "constraint {constraint:?} must abstain"
         );
+    }
+}
+
+/// The prerelease-floor idioms (`>=X-0`, `<X-D`) match exactly the versions
+/// Sprig's `semverCompare` accepts; every row below is differential-verified
+/// against `helm template` renderings of the same call.
+#[test]
+fn prerelease_floor_constraints_match_the_semver_compare_language() {
+    use test_util::prelude::sim_assert_eq;
+    let cases: &[(&str, &[(&str, bool)])] = &[
+        (
+            ">=1.14.0-0",
+            &[
+                ("1.14.0", true),
+                ("v1.14.0", true),
+                ("1.14.1", true),
+                ("2.0.0", true),
+                ("1.14.0-alpha", true),
+                ("1.15.0-rc.1", true),
+                ("1.14", true),
+                ("1.14-0", true),
+                ("1.13.9", false),
+                ("1.13.9-rc.1", false),
+                ("0.9", false),
+                ("junk", false),
+            ],
+        ),
+        (
+            "<9.9.9-9",
+            &[
+                ("1.29.0", true),
+                ("v1.31.2", true),
+                ("9.9.8", true),
+                ("9.9.8-alpha", true),
+                ("9.9.9-0", true),
+                ("9.9.9-8.junk", true),
+                ("0.1", true),
+                ("9.9.9", false),
+                ("9.9.9-9", false),
+                ("9.9.9-10", false),
+                ("9.9.9-alpha", false),
+                ("10.0.0", false),
+                ("9.9.9-9.0", false),
+            ],
+        ),
+        (
+            "< 1.35-0",
+            &[
+                ("1.29.0", true),
+                ("1.34.99", true),
+                ("1.34.0-rc.0", true),
+                ("1.35.0", false),
+                ("1.35.0-0", false),
+                ("1.35.1", false),
+                ("2.0.0", false),
+            ],
+        ),
+        (
+            ">= 1.23-0",
+            &[("1.23.0", true), ("1.23.0-rc.1", true), ("1.22.9", false)],
+        ),
+    ];
+    for (constraint, rows) in cases {
+        let pattern = semver_constraint_match_pattern(constraint)
+            .unwrap_or_else(|| panic!("constraint {constraint:?} must encode"));
+        let regex = regex::Regex::new(&pattern)
+            .unwrap_or_else(|error| panic!("pattern {pattern:?} must compile: {error}"));
+        for (version, want) in *rows {
+            sim_assert_eq!(
+                have: regex.is_match(version),
+                want: *want,
+                "constraint={constraint} version={version} pattern={pattern}"
+            );
+        }
     }
 }

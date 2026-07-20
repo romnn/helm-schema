@@ -1882,3 +1882,147 @@ fn helper_terminals_keep_caller_guards_and_boolean_include_arms() {
         );
     }
 }
+
+/// A root-context key assigned a literal in EVERY arm of a complete
+/// if/else chain (vault's five-arm `vault.mode`) joins into a value
+/// dispatch: `ne .mode "external"` / `eq .mode "ha"` decode as the exact
+/// disjunction of the assigning arms. Fails behind those guards reach the
+/// schema, and a configuration selecting the "external" arm keeps the
+/// gated documents dormant.
+#[test]
+fn root_set_literal_chains_decode_as_value_dispatch_guards() {
+    let helpers = indoc! {r#"
+        {{- define "repro.mode" -}}
+          {{- if .Values.externalAddr -}}
+            {{- $_ := set . "mode" "external" -}}
+          {{- else if eq (.Values.ha.enabled | toString) "true" -}}
+            {{- $_ := set . "mode" "ha" -}}
+          {{- else -}}
+            {{- $_ := set . "mode" "standalone" -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{ template "repro.mode" . }}
+        {{- if ne .mode "external" }}
+        {{- if .Values.route.enabled }}
+        {{- if not .Values.route.parentRefs }}
+        {{- fail "route.parentRefs must be set when route is enabled" -}}
+        {{- end }}
+        {{- end }}
+        {{- if eq .mode "ha" }}
+        {{- if not .Values.ha.replicas }}
+        {{- fail "ha mode requires ha.replicas" -}}
+        {{- end }}
+        {{- end }}
+        kind: ConfigMap
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        externalAddr: ""
+        ha:
+          enabled: false
+          replicas: 0
+        route:
+          enabled: false
+          parentRefs: []
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults skip every gate"),
+        (
+            serde_json::json!({ "route": { "enabled": true } }),
+            false,
+            "an enabled route without parentRefs aborts in standalone mode",
+        ),
+        (
+            serde_json::json!({ "route": { "enabled": true,
+                "parentRefs": [ { "name": "gw" } ] } }),
+            true,
+            "an enabled route with parentRefs renders",
+        ),
+        (
+            serde_json::json!({ "route": { "enabled": true },
+                "externalAddr": "https://vault.example.com" }),
+            true,
+            "the external arm keeps the gated document dormant",
+        ),
+        (
+            serde_json::json!({ "ha": { "enabled": true } }),
+            false,
+            "ha mode without replicas aborts through the eq dispatch",
+        ),
+        (
+            serde_json::json!({ "ha": { "enabled": true, "replicas": 3 } }),
+            true,
+            "ha mode with replicas renders",
+        ),
+        (
+            serde_json::json!({ "ha": { "enabled": true },
+                "externalAddr": "https://vault.example.com" }),
+            true,
+            "the external arm outranks the ha arm in the chain",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "root-set value dispatch ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// `semverCompare` over a Capabilities-defaulted version local decodes
+/// against the analysis-policy Kubernetes version: with the override unset
+/// the policy version decides the gate constantly, and a truthy override
+/// substitutes its own exact constraint language (kube-prometheus-stack's
+/// grafana dashboard document gates; helm-verified with
+/// `--kube-version` / `kubeTargetVersionOverride` probes).
+#[test]
+fn capabilities_defaulted_semver_gates_decode_against_the_policy_version() {
+    let src = indoc! {r#"
+        {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.versionOverride }}
+        {{- if and .Values.gate (semverCompare ">=1.14.0-0" $kubeTargetVersion) }}
+        {{- if not .Values.selector }}
+        {{- fail "selector must be specified" }}
+        {{- end }}
+        kind: ConfigMap
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        gate: false
+        versionOverride: ""
+        selector: {}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_kubernetes_version(src, "1.29.0"),
+        Some(values_yaml),
+    );
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults keep the gate off"),
+        (
+            serde_json::json!({ "gate": true }),
+            false,
+            "the policy version satisfies the constraint, so the fail binds",
+        ),
+        (
+            serde_json::json!({ "gate": true, "selector": { "app": "x" } }),
+            true,
+            "a selector satisfies the terminal",
+        ),
+        (
+            serde_json::json!({ "gate": true, "versionOverride": "1.13.0" }),
+            true,
+            "an old override turns the gate off exactly",
+        ),
+        (
+            serde_json::json!({ "gate": true, "versionOverride": "1.20.0" }),
+            false,
+            "a satisfying override keeps the fail bound",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "capabilities semver gate ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}

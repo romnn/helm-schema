@@ -12,6 +12,7 @@ pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) root_fields: HashMap<String, AbstractValue>,
     pub(crate) root_truthy_predicates: HashMap<String, Predicate>,
+    pub(crate) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
     pub(crate) locals: HashMap<String, AbstractValue>,
     pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,

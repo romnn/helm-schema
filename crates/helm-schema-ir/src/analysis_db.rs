@@ -35,6 +35,11 @@ pub(crate) struct IrAnalysisDb {
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
     custom_merge_helpers: RefCell<HashMap<String, bool>>,
+    /// The analysis-policy Kubernetes version (normalized core, e.g.
+    /// `1.29.0`): the value `.Capabilities.KubeVersion` renders under this
+    /// run's provider policy. `None` abstains every capabilities-version
+    /// condition instead of guessing a cluster.
+    kubernetes_version: Option<String>,
 }
 
 pub(crate) struct BoundHelperCallSummary {
@@ -45,12 +50,20 @@ pub(crate) struct BoundHelperCallSummary {
 impl IrAnalysisDb {
     #[tracing::instrument(skip_all)]
     pub(crate) fn new(defines: &DefineIndex) -> Self {
-        Self::with_chart_default_strings(defines, BTreeMap::new())
+        Self::with_policy(defines, BTreeMap::new(), None)
     }
 
     pub(crate) fn with_chart_default_strings(
         defines: &DefineIndex,
         chart_default_strings: BTreeMap<String, String>,
+    ) -> Self {
+        Self::with_policy(defines, chart_default_strings, None)
+    }
+
+    pub(crate) fn with_policy(
+        defines: &DefineIndex,
+        chart_default_strings: BTreeMap<String, String>,
+        kubernetes_version: Option<String>,
     ) -> Self {
         let mut define_bodies = HashMap::new();
         let mut implicit_template_names = BTreeMap::new();
@@ -89,7 +102,12 @@ impl IrAnalysisDb {
             body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
             custom_merge_helpers: RefCell::new(HashMap::new()),
+            kubernetes_version,
         }
+    }
+
+    pub(crate) fn kubernetes_version(&self) -> Option<&str> {
+        self.kubernetes_version.as_deref()
     }
 
     pub(crate) fn has_helper(&self, name: &str) -> bool {
@@ -499,6 +517,7 @@ impl IrAnalysisDb {
         name: &str,
         arg: Option<&TemplateExpr>,
         outer_bindings: Option<&HashMap<String, AbstractValue>>,
+        outer_root_facts: OuterRootFacts<'_>,
         current_dot: Option<&AbstractValue>,
         fragment_locals: &HashMap<String, AbstractValue>,
         context: FragmentEvalContext<'_>,
@@ -515,6 +534,7 @@ impl IrAnalysisDb {
             helper_name: name,
             arg,
             outer_bindings,
+            outer_root_facts,
             current_dot,
             fragment_locals,
             context,
@@ -568,6 +588,13 @@ pub(crate) struct DotFrame {
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,
     pub(crate) dot: DotFrame,
+    /// The caller's root-field truth predicates and value dispatches,
+    /// threaded only when the helper dot IS the caller's root context: a
+    /// helper body reading `.mode` then decodes the caller's `set`-key
+    /// facts (vault's `ne .mode "dev"` volume-claim gates). A dict-bound
+    /// call keeps them empty — its "root" fields are the argument's.
+    pub(crate) root_truthy_predicates: HashMap<String, helm_schema_core::Predicate>,
+    pub(crate) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
 }
 
 struct ResolvedBoundHelperCall {
@@ -579,10 +606,19 @@ struct ResolveBoundHelperCallParams<'a, 'context> {
     helper_name: &'a str,
     arg: Option<&'a TemplateExpr>,
     outer_bindings: Option<&'a HashMap<String, AbstractValue>>,
+    outer_root_facts: OuterRootFacts<'a>,
     current_dot: Option<&'a AbstractValue>,
     fragment_locals: &'a HashMap<String, AbstractValue>,
     context: FragmentEvalContext<'context>,
     seen: &'a HashSet<String>,
+}
+
+/// The caller's root-field condition facts (truth predicates and value
+/// dispatches), passed alongside the plain bindings.
+#[derive(Clone, Copy, Default)]
+pub(crate) struct OuterRootFacts<'a> {
+    pub(crate) truthy_predicates: Option<&'a HashMap<String, helm_schema_core::Predicate>>,
+    pub(crate) value_dispatches: Option<&'a HashMap<String, crate::eval_effect::RootValueDispatch>>,
 }
 
 fn resolve_bound_helper_call(
@@ -637,6 +673,26 @@ fn resolve_bound_helper_call(
         helper_fragment_dot = helper_fragment_dot.map(abstract_config_entry_in_binding);
     }
 
+    // Root condition facts apply only when the body's dot IS the caller's
+    // root context: only then does a body-level `.field` read resolve
+    // against the caller's root `set` state.
+    let root_passthrough = matches!(helper_body_dot, Some(AbstractValue::RootContext));
+    let (root_truthy_predicates, root_value_dispatches) = if root_passthrough {
+        (
+            params
+                .outer_root_facts
+                .truthy_predicates
+                .cloned()
+                .unwrap_or_default(),
+            params
+                .outer_root_facts
+                .value_dispatches
+                .cloned()
+                .unwrap_or_default(),
+        )
+    } else {
+        (HashMap::new(), HashMap::new())
+    };
     ResolvedBoundHelperCall {
         resolution: BoundHelperCallResolution {
             bindings,
@@ -644,6 +700,8 @@ fn resolve_bound_helper_call(
                 helper: helper_body_dot,
                 fragment: helper_fragment_dot,
             },
+            root_truthy_predicates,
+            root_value_dispatches,
         },
         argument_effects,
     }
@@ -682,6 +740,8 @@ struct BoundHelperCallCacheKey {
     name: String,
     bindings: BTreeMap<String, AbstractValue>,
     dot: DotFrame,
+    root_truthy_predicates: BTreeMap<String, helm_schema_core::Predicate>,
+    root_value_dispatches: BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     seen: BTreeSet<String>,
 }
 
@@ -699,6 +759,16 @@ impl BoundHelperCallCacheKey {
                 .map(|(key, value)| (key.clone(), value.clone()))
                 .collect(),
             dot: resolution.dot.clone(),
+            root_truthy_predicates: resolution
+                .root_truthy_predicates
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
+            root_value_dispatches: resolution
+                .root_value_dispatches
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
             seen,
         }
     }

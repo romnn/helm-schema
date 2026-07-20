@@ -892,6 +892,7 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
     effects.local_set_mutations.clear();
     effects.root_set_mutations.clear();
     effects.root_set_predicates.clear();
+    effects.root_set_value_dispatches.clear();
 }
 
 fn eval_helper_call(
