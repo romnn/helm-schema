@@ -8231,3 +8231,148 @@ member-access re-typing class, spot-adjudicated by twelve helm checks
 (every probe rejected: template navigation errors or chart-shipped
 schema rejections) plus datadog's unguarded deep-navigation error for
 the falsy sub-class.
+
+## Root-dispatch round (2026-07-20, sixteenth round)
+
+### F107 vault half — branch-conditioned root-set value dispatch
+
+The vault residual named one machinery gap: `.mode` is assigned a
+literal across the five if/else arms of `vault.mode`
+(`$_ := set . "mode" "…"`), and the root-set machinery kept one value
+and one truthiness predicate per key, so `ne .mode "external"` /
+`eq .mode "ha"` could not decode and every capture under them
+abstained. Four pieces landed together:
+
+1. **Per-arm root-set state with a join.** If/else regions previously
+   let each arm's root mutations leak into the next arm's evaluation
+   and kept the LAST arm's value and predicate (for `vault.mode`, the
+   else arm's `""` with a constant-false truthiness — a latent wrong
+   predicate). Arms now evaluate from the entry state; the join
+   replays changed keys in source order for incomplete chains, and a
+   COMPLETE chain — unconditional else, every arm condition decoded
+   without approximation, scalar literal assignments throughout —
+   joins into a `RootValueDispatch` of mutually exclusive, total
+   (condition, literal) arms, with the truthiness rebuilt as the
+   disjunction of the truthy-literal arms and the value joined as a
+   `Choice`.
+
+2. **Equality decode through the dispatch.** A single-segment root
+   field under a root (or unresolved) dot compares through its
+   dispatch: `eq` selects the arms assigning the compared literal,
+   `ne` negates exactly (totality makes the complement exact). Both
+   feed `condition_lowering_is_faithful` through the existing eq/ne
+   arms.
+
+3. **De Morgan completion of the guard negation algebra.**
+   `Predicate::contract_guards` previously flattened `Not(Or …)` /
+   `Not(And …)` to NOTHING, so the new exact predicates fell back to
+   raw conjuncts and — worse — the member-access and row lanes dropped
+   whole captures. `¬(a ∨ b)` now flattens to the conjunction of the
+   negated disjuncts, `¬(a ∧ b)` to one `AnyOf` alternative per
+   conjunct (sharing the positive `Or` lane's normalization), each
+   abstaining whole when any leaf cannot flip; `negation_flattens_exactly`
+   mirrors the recursion for the exactness contract, and
+   `Guard::Not`/`Or`/`AnyOf` gained `ConditionalGuard` encodings so the
+   flattened guards key member-access arms instead of vetoing them.
+
+4. **Caller root facts inside helper bodies.** The statefulset's
+   volume-claim gates (`if and (ne .mode "dev") (or
+   .Values.server.dataStorage.enabled …)`) live in HELPER bodies, whose
+   interpreters received the caller's root BINDINGS but not its
+   truthiness predicates or dispatches — the mode conditions stayed
+   approximate and vetoed all 52 statefulset member-access captures.
+   `BoundHelperCallResolution` now carries both maps whenever the
+   helper dot IS the caller's root context, the memo key includes
+   them, and the two call sites (hole includes and expression
+   resolvers) thread the interpreter's live maps.
+
+Validation went through three probe iterations: the first exposed the
+De Morgan gap (`.ui.*` and `dataStorage` typing silently lost), the
+second the helper-context gap (statefulset captures vetoed by
+approximate mode conjuncts), and the third settled at 112 flips — all
+vault. Adjudication: thirteen tightened statefulset payload classes
+(extraContainers/volumes/extraPorts/extraSecretEnvironmentVars/
+extraVolumes abort `helm template`; annotations/nodeSelector/
+tolerations/resources/hostAliases/topologySpreadConstraints render
+manifests kubeconform v1.29-strict rejects), twelve widenings verified
+rendering template-only — the `ui.*` service ports are the flagship:
+`ui.enabled: false` (the default) frees them because the templates
+never read them (vault's SHIPPED `values.schema.json` rejects, but a
+shipped schema is deliberately not analyzer evidence), while
+`ui.enabled: true` still rejects a string port. `server.dataStorage`
+keeps its declared-default object typing (policy), restored by piece 4
+after the mid-fix probes flagged it. The eight other re-encoded charts
+(airflow, cilium, datadog, falco, istiod, loki, oauth2-proxy, signoz)
+show zero acceptance flips — their drift is condition re-encoding
+under the completed negation algebra.
+
+Residuals: the redundancy-zone cluster-version fail and KPS's Grafana
+dashboards gates need the Capabilities/semver machinery (still In
+progress); the HCL config placeholder fail cannot encode (`(?m)` has
+no Draft-07 ECMA-pattern equivalent) and stays open by design.
+
+Pinned by `vault_mode_dispatch_binds_httproute_and_redundancy_zone_fails`
+(CLI, seven polarities) and
+`root_set_literal_chains_decode_as_value_dispatch_guards` (gen, seven
+cases). 9 CLI + 3 IR + 1 gen fixtures adopted from one clean dump run;
+full suite 1326/1326; doc tests, `task lint`, and the downstream luup2
+`check:local` all pass.
+
+### F107 capabilities half — the version policy in condition lowering
+
+The second F107 gap named the machinery exactly: KPS's dashboard and
+rule documents gate on `semverCompare` over
+`default .Capabilities.KubeVersion.GitVersion
+.Values.kubeTargetVersionOverride`, and vault's redundancy-zone
+cluster-version fail rides `semverCompare "< 1.35-0"
+.Capabilities.KubeVersion.Version`. Three pieces landed:
+
+1. **The policy version as an analysis input.** The session normalizes
+   the primary `--k8s-version` token to its numeric core and threads it
+   through `SymbolicIrContext::with_policy` into `IrAnalysisDb`; no
+   version configured means every capabilities condition abstains
+   instead of guessing a cluster.
+
+2. **Prerelease-floor constraints in the semver encoder.** The exact
+   pattern encoder previously abstained on any prerelease component;
+   `>=X-0` and `<X-D` (single-digit D) now encode exactly — the first
+   is "core ≥ X with prereleases included" (no prerelease identifier
+   sorts below `0`), the second adds X's own prereleases whose first
+   identifier is a numeric below D (one digit: longer numerics and
+   alphanumerics sort above). Every expectation row in the new ast test
+   is differential-verified against `helm template` renderings of
+   `semverCompare`, including the `9.9.9-10` / `9.9.9-8.junk` /
+   `9.9.9-9.0` boundaries.
+
+3. **The condition lane.** `semverCompare "<constraint>" SUBJECT`
+   decodes when SUBJECT is the policy version — bare Capabilities
+   selector (constant truth from the policy match) or the
+   `default`-with-override form, directly or through a local tracked by
+   the new `kube_version_sources` binding channel: the falsy-override
+   arm is the policy constant, the truthy-override arm the constraint's
+   `MatchesPattern` language.
+
+Chart flips: the KPS operator dashboards without `matchLabels` abort
+while a pre-1.14 `kubeTargetVersionOverride` disables every dashboard
+document exactly, and a junk override still rejects through the semver
+lexical domain; vault's full redundancy-zone combination now
+version-rejects at policy v1.29 exactly as
+`helm template --kube-version 1.29.0` does. Ten fixtures adopted; the
+82 probe flips adjudicate to declared-type-hint properties on
+newly-live reads (policy), provider tightenings (nfs tolerations
+template-fail, vault `persistentVolumeClaimRetentionPolicy`
+kubeconform-invalid), and template-verified widenings (cilium's
+dormant preflight PDB, vault's `ui.*` service fields).
+
+Two KPS widenings stay documented residuals: `customRules` /
+`additionalRuleAnnotations` falsy hosts and non-rangeable
+`additionalAggregationLabels` abort helm but now pass — their old
+rejections were over-broad unconditional typing the exact gates
+correctly scoped away. An exact replacement (unconditional dig-subject
+contract plus a factored member-host fold lifting the guard-set cap)
+was built, restored `customRules` exactly — including the
+`defaultRules.create: false` escape the old typing falsely rejected —
+but dropped truthy-arm typing at unrelated image hosts through the
+fail lane's self-scoping requirement, so it was reverted for a
+dedicated round instead of adopting a ~50-chart unadjudicated
+re-typing.

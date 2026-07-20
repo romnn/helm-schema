@@ -1,7 +1,13 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-19 after the helper-terminal round (fifteenth
-round — F107's helper-terminal decode lanes with the oauth2-proxy and
+Last reconciled 2026-07-20 after the root-dispatch round (sixteenth
+round — branch-conditioned root-set VALUE dispatch with the vault
+httproute/redundancy-zone flips, the De Morgan completion of the
+contract-guard negation algebra, caller root-fact threading into
+bound-helper resolutions, and the Capabilities/semver policy lane that
+closes F107 with the kube-prometheus-stack dashboard flips; minimal
+gen reproducers beside the vault and KPS pins). The fifteenth was the helper-terminal round (F107's
+helper-terminal decode lanes with the oauth2-proxy and
 datadog chart flips, F32's defaulted-pipeline and negated-disjunction
 decodes with the cilium flips, and the member-access fanout regression
 fix that keeps unconditional navigation typing immune to the guard-set
@@ -595,6 +601,87 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   checks all reject the probes, and the falsy sub-class is pinned by
   datadog's `agent-services.yaml` unguarded deep navigation
   (`can't evaluate field receiver` on `otlp: false`).
+- F107 vault half — branch-conditioned root-set value dispatch
+  (sixteenth round): a root-context key assigned a scalar literal in
+  EVERY arm of a complete if/else chain (vault's five-arm `vault.mode`)
+  now joins into a `RootValueDispatch` — mutually exclusive, total
+  (condition, literal) arms — so `eq .mode "ha"` / `ne .mode
+  "external"` decode as the exact disjunction of the assigning arms
+  (negation exact by totality). Four machinery pieces landed together:
+  (a) if/else regions evaluate each arm from the ENTRY root-set state
+  (one arm's `set` no longer leaks into a sibling's evaluation) and
+  join outcomes after the region — a last-write replay for incomplete
+  chains, the exact dispatch when the chain has an unconditional else,
+  every arm condition decoded without approximation, and scalar
+  literals throughout; the joined truthiness (disjunction of
+  truthy-literal arms) replaces the old wrong last-arm predicate.
+  (b) The contract-guard negation algebra is complete under De Morgan:
+  `¬(a ∨ b)` flattens to the guard conjunction of the negations,
+  `¬(a ∧ b)` to one `AnyOf` alternative per conjunct — abstaining
+  whole (never dropping a leaf) when any leaf cannot flip — and
+  `Guard::Not`/`Or`/`AnyOf` gained `ConditionalGuard` encodings so
+  mode-dispatch conditions key member-access arms and rows instead of
+  vetoing them. (c) The caller's root truth predicates and value
+  dispatches thread into bound-helper resolutions when the helper dot
+  IS the caller's root context (memoization keys include them), so
+  helper bodies like vault's volume-claims decode `ne .mode "dev"`.
+  Chart flips, all helm-verified: httproute enabled without
+  `parentRefs` aborts while the parentRefs and external-mode variants
+  render; redundancy zones without `server.ha.enabled` (and with ha
+  but without raft) abort while the full combination and the
+  external-mode variant render; the `ui.*` service ports became
+  EXACTLY conditional — `ui.enabled: false` (the default) frees
+  `externalPort`/`targetPort` to any shape the templates never read
+  (the shipped `values.schema.json` is deliberately not evidence),
+  while `ui.enabled: true` still rejects a string port; thirteen
+  statefulset payload classes tightened under the now-decoded internal
+  modes (extraContainers/volumes/extraPorts/extraSecretEnvironmentVars/
+  extraVolumes template-fail; annotations/nodeSelector/tolerations/
+  resources/hostAliases/topologySpreadConstraints kubeconform-invalid
+  against v1.29 strict). The redundancy-zone CONFIG placeholder fail
+  (`regexMatch "(?m)^…autopilot_redundancy_zone…"`) stays open by
+  design: Go's `(?m)` flag has no Draft-07 ECMA-pattern encoding.
+  Pinned by
+  `vault_mode_dispatch_binds_httproute_and_redundancy_zone_fails`
+  (CLI) and `root_set_literal_chains_decode_as_value_dispatch_guards`
+  (gen); 9 CLI + 3 IR + 1 gen fixtures adopted, the probe battery's
+  112 flips (all vault) adjudicated as above — the eight other
+  re-encoded charts show zero acceptance flips.
+- F107 capabilities half — the Kubernetes version policy in IR condition
+  lowering (sixteenth round — closes F107): the analysis session threads
+  the normalized primary `--k8s-version` core (`v1.29.0-standalone-strict`
+  → `1.29.0`) into `SymbolicIrContext::with_policy`, and `semverCompare`
+  conditions over Capabilities-defaulted subjects decode exactly. The
+  subject lanes: a bare `.Capabilities.KubeVersion.Version|GitVersion`
+  selector evaluates the constraint against the policy version as a
+  CONSTANT; `default .Capabilities.KubeVersion.X <values-path>` (directly
+  or through a bound local, tracked by the new `kube_version_sources`
+  channel) splits into the falsy-override policy arm and the
+  truthy-override `MatchesPattern` arm over the constraint's exact regex
+  language. The semver pattern encoder gained the two prerelease-FLOOR
+  idioms charts actually use — `>=X-0` (core ≥ X, prereleases included)
+  and `<X-D` with a single-digit prerelease (core < X plus X's own
+  prereleases whose first identifier is a numeric below D) — each row
+  differential-verified against `helm template` renderings of
+  `semverCompare` (including `9.9.9-10` vs `-8.junk` boundaries).
+  Chart flips: KPS's grafana operator dashboards without
+  `matchLabels` abort under the corpus policy while a pre-1.14
+  `kubeTargetVersionOverride` turns every dashboard document off
+  exactly; vault's redundancy-zone combination now version-rejects at
+  policy v1.29 (`helm template --kube-version 1.29.0` fails with
+  "requires Kubernetes >= 1.35") while external mode stays dormant.
+  Pinned by
+  `kube_prometheus_stack_dashboard_gates_decode_the_version_policy`
+  (CLI), the re-scoped vault pin's cluster-version case, and
+  `capabilities_defaulted_semver_gates_decode_against_the_policy_version`
+  (gen). Ten corpus fixtures adopted; the probe battery's 82 flips
+  adjudicate to: the KPS declared-type-hint properties on newly-live
+  dashboard reads (established declared-shape policy), the
+  nfs-subdir/vault provider tightenings (template-fail /
+  kubeconform-invalid at v1.29 strict), and template-verified widenings
+  (cilium's dormant preflight PDB, vault's `ui.*` service fields under
+  the disabled UI). Two KPS widenings are documented residuals in the
+  tolerated direction (see the F107 residual entry).
 - F56 self-ranged collection map lane (twelfth round, bounded): a
   self-ranged Scalar row at an array provider slot
   (`ForeignSchemaRestriction::ScalarCollection`) keeps an OPEN map lane
@@ -715,26 +802,36 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `set . "Values" (tplYaml …)` rewrite (lines 72-73) but reads
   `natsBox.contexts` AFTER it, and excluding wrappers from every path
   the engine helper reads would falsely reject valid post-rewrite
-  wrappers. The gap is a widening only (no false rejection).
-- **F107 residual — terminal contracts behind root-mutation and
-  capabilities guards.** The helper-terminal decode lanes landed in the
-  fifteenth round (see the Completed entry): OAuth2 Proxy standalone Redis
-  without `connectionUrl` and Datadog's `unix:`/portless OTLP gRPC
-  endpoints now reject. The remaining verified schema-accept/Helm-fail
-  cases are blocked on two named machinery gaps: Vault's HTTPRoute
-  `parentRefs` and redundancy-zone fails sit under `ne .mode "external"` /
-  `.serverEnabled` guards over root-dot keys SET across `vault.mode`'s
-  if/else arms — the root-set machinery keeps one value and one truthiness
-  predicate per key, so a VALUE comparison over a branch-conditioned root
-  mutation cannot decode (the same branch-conditioned root-value tracking
-  the F104 wrapper-engine ordering needs); Kube Prometheus Stack's Grafana
-  dashboards `matchLabels`/folder fails ride
-  `semverCompare … (default .Capabilities.KubeVersion …
-  .Values.kubeTargetVersionOverride)` document gates, which need the
-  Kubernetes version policy threaded into IR condition lowering plus a
-  Masterminds-compatible constraint evaluator. The vault pipeline-toString
-  gates themselves DO decode now (pinned at the gen level); only the
-  enclosing `.mode` guards abstain the captures.
+  wrappers. The gap is a widening only (no false rejection). The
+  sixteenth round's per-arm root-set state discipline is the natural
+  substrate for ordering-aware tracking, but the pre/post-rewrite
+  split inside one helper body remains unbuilt.
+- **F107 residual — dig/merge falsy hosts behind now-decoded gates
+  (widening only).** Both F107 halves are Completed (the root-set value
+  dispatch and the Capabilities/semver policy lane). What remains is a
+  KPS widening class the version decode exposed: `customRules`,
+  `defaultRules.additionalRuleAnnotations`, and
+  `defaultRules.additionalAggregationLabels` accept Helm-falsy (and for
+  the labels, non-rangeable) spellings that abort `helm template` —
+  their old rejections were over-broad unconditional typing that the
+  now-exact per-rule-file gates correctly scope, but the EXACT
+  replacement needs two pieces: dig's SUBJECT contract is unconditional
+  ("must be a map when the dig executes" — Sprig type-asserts, so even
+  a nulled `customRules` aborts) while the recorded capture is
+  truthy-scoped, and the member-host fold caps out at
+  `MEMBER_ACCESS_GUARD_FANOUT = 8` where KPS's ~30 per-rule-file gates
+  land 30 distinct guard sets. A factoring attempt (shared-conjunct
+  extraction plus a raised cap) restored `customRules` exactly —
+  including the `defaultRules.create: false` escape the old typing
+  falsely rejected — but the unscoped dig capture also dropped
+  truthy-arm typing at unrelated image hosts (the fail lane needs a
+  self-scoping conjunct), so both changes were reverted rather than
+  adopt an unadjudicated corpus-wide re-typing. Re-landing needs: the
+  dig subject to record BOTH the truthy-scoped and unscoped claims with
+  the fail lane lowering the unscoped one where it can, plus the
+  factored fold — then the ~50-chart drift adjudicated in its own
+  round. The vault HCL CONFIG placeholder fail stays open by design
+  (Go `(?m)` has no Draft-07 pattern encoding).
 - **F108 residual — NATS JSON Patch grammar through the helper range.**
   The direct-range enum lane landed in the fourteenth round (see the
   Completed entry), and `[{}]` items are covered at the gen level for
