@@ -518,6 +518,36 @@ fn record_contract_use_conjunction(
         // lane) rely on the branch alternatives the rerouting suppresses.
         .filter(|merge| {
             !merge.via_binding || merge.nil_scrubbed_layers.iter().any(|scrubbed| *scrubbed)
+        })
+        // Positive row conditions the ungated arm drops only widen its
+        // firing states within the render's own selection facts (the
+        // documented member-local-wildcard widening). A dropped HARD
+        // NEGATION is different: the row renders only while some OTHER
+        // candidate family is dormant, and an arm that fires regardless
+        // rejects states whose renders never consume this row (airflow's
+        // deprecated `securityContext` fallback behind a live
+        // `securityContexts.pod`). Rows whose unlowerable conditions
+        // negate foreign-family selections keep the pre-layered routing,
+        // whose ambient approximates abstain instead of narrowing.
+        .filter(|merge| {
+            lowerable_guards.is_some()
+                || predicates.iter().all(|predicate| {
+                    let mut guards = Vec::new();
+                    if extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut guards)
+                        .is_some()
+                    {
+                        return true;
+                    }
+                    let mut negated_paths = BTreeSet::new();
+                    hard_negation_paths(predicate, &mut negated_paths);
+                    negated_paths.iter().all(|path| {
+                        merge.layers.iter().any(|layer| {
+                            path == layer
+                                || helm_schema_core::values_path_is_descendant(path, layer)
+                                || helm_schema_core::values_path_is_descendant(layer, path)
+                        })
+                    })
+                })
         });
     let merge_outer_guards = merge_layered.is_some().then(|| lowerable_guards.clone());
     let lowerable_guards = if merge_layered.is_some() {
@@ -2836,6 +2866,25 @@ fn conditional_guard_predicates(predicates: &[Predicate]) -> Vec<ConditionalGuar
     guards.sort();
     guards.dedup();
     guards
+}
+
+/// Paths tested under a HARD negation of the predicate: every
+/// `Predicate::Not` subtree except plain presence (`¬Absent`), whose
+/// positive reading keeps it out of the dormancy class.
+fn hard_negation_paths(predicate: &Predicate, out: &mut BTreeSet<String>) {
+    match predicate {
+        Predicate::Not(inner) => {
+            if !matches!(inner.as_ref(), Predicate::Guard(Guard::Absent { .. })) {
+                out.extend(inner.value_paths());
+            }
+        }
+        Predicate::And(items) | Predicate::Or(items) => {
+            for item in items {
+                hard_negation_paths(item, out);
+            }
+        }
+        _ => {}
+    }
 }
 
 fn lowerable_conditional_guard_set(

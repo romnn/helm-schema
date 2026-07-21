@@ -59,13 +59,27 @@ pub(super) fn eval_default(
     if let Some(primary_path) = primary_identity {
         let overlaps_fallback = fallback_paths.remove(&primary_path);
         if !overlaps_fallback {
-            effects
+            let meta = effects
                 .local_output_meta
                 .entry(primary_path.clone())
-                .or_default()
-                .conjoin_branches(&BTreeSet::from([Predicate::truthy_path(
-                    primary_path.clone(),
-                )]));
+                .or_default();
+            meta.conjoin_branches(&BTreeSet::from([Predicate::truthy_path(
+                primary_path.clone(),
+            )]));
+            // A scalar literal fallback is the binding's exact value on
+            // every Helm-falsy input; equality decoding needs the literal
+            // itself to spell the fallback arm. Floats abstain (their
+            // file-vs-`--set` channels compare differently).
+            if let [fallback] = fallback_args {
+                meta.default_fallback = match fallback.deparen() {
+                    TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+                        Some(GuardValue::string(value.clone()))
+                    }
+                    TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
+                    TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
+                    _ => None,
+                };
+            }
         }
         let fallback_condition = BTreeSet::from([Predicate::truthy_path(primary_path).negated()]);
         for path in fallback_paths {

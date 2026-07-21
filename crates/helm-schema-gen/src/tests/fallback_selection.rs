@@ -313,3 +313,75 @@ fn falsy_reassignment_to_another_source_scopes_the_parser_to_truthy_values() {
         );
     }
 }
+
+/// cilium's hubble-ui tag gate strips a digest suffix and a leading `v`
+/// before comparing (`regexReplaceAll "@.*$" TAG "" | trimPrefix "v" |
+/// semverCompare "<0.9.0"` → fail). Both reject lanes compose through the
+/// ordered chain exactly: an unparseable core aborts `semverCompare`
+/// itself, a parseable version below the bound hits the `fail`, and valid
+/// versions — optionally v-prefixed, optionally digest-suffixed — render,
+/// as does the `ne "latest"`-excluded sentinel.
+#[test]
+fn digest_strip_and_v_trim_compose_the_semver_bound_exactly() {
+    let src = indoc! {r#"
+        {{- if ne .Values.tag "latest" }}
+        {{- if regexReplaceAll "@.*$" .Values.tag "" | trimPrefix "v" | semverCompare "<0.9.0" }}
+        {{- fail "tag must be >= v0.9.0" }}
+        {{- end }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cm
+        data:
+          tag: {{ .Values.tag | quote }}
+    "#};
+    let values_yaml = indoc! {r#"
+        tag: "latest"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (tag, want, label) in [
+        (
+            serde_json::json!("v0.13.5"),
+            true,
+            "a valid version renders",
+        ),
+        (
+            serde_json::json!("v0.13.5@sha256:abc"),
+            true,
+            "the digest suffix is stripped before parsing",
+        ),
+        (serde_json::json!("0.9.0"), true, "the bound itself passes"),
+        (
+            serde_json::json!("latest"),
+            true,
+            "the ne-excluded sentinel never reaches the gate",
+        ),
+        (
+            serde_json::json!("garbage"),
+            false,
+            "an unparseable core aborts semverCompare",
+        ),
+        (
+            serde_json::json!("v0.1.0"),
+            false,
+            "a version below the bound hits the fail",
+        ),
+        (
+            serde_json::json!("0.1.0@sha256:abc"),
+            false,
+            "the bound applies to the digest-stripped core",
+        ),
+        (
+            serde_json::json!("vv0.8.0"),
+            false,
+            "one trimmed v still leaves a below-bound version",
+        ),
+    ] {
+        let instance = serde_json::json!({ "tag": tag });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "digest-strip/v-trim semver bound ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}

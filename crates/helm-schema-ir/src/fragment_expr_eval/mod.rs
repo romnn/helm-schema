@@ -93,7 +93,13 @@ pub(crate) fn locals_with_roots(
 ) -> HashMap<String, AbstractValue> {
     let mut locals = template_bindings.clone();
     for (key, value) in root_bindings {
-        locals.insert(key.clone(), value.to_context_value());
+        // A template binding keeps its name: `$patch` is the range member
+        // even when the helper's call dict carries a same-named `patch`
+        // field (nats' jsonpatch engine) — variable lookups never resolve
+        // to dot fields, which ride the dot/root-fields channels instead.
+        locals
+            .entry(key.clone())
+            .or_insert_with(|| value.to_context_value());
     }
     locals
 }

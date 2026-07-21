@@ -35,6 +35,11 @@ pub enum LexicalEscape {
     TrimPrefix(String),
     /// `trimSuffix TOKEN` — the suffix mirror of [`Self::TrimPrefix`].
     TrimSuffix(String),
+    /// `regexReplaceAll "TOKEN.*$" … ""` — everything from the first TOKEN
+    /// to the end of the string is erased before the capture's check runs,
+    /// so the accepted raw language is the capture language optionally
+    /// followed by a TOKEN-opened tail (cilium's `@digest` strip).
+    CutAtToken(String),
 }
 
 /// The facts one rendered path carries out of a helper body: the branch
@@ -128,6 +133,14 @@ pub(crate) struct HelperOutputMeta {
     /// `coalesce $stringValueKPR "false"`). Consumed by equality decoding;
     /// see [`EmptyRescue`].
     pub(crate) empty_rescue: Option<EmptyRescue>,
+    /// The literal fallback a `default` substituted for this path's
+    /// Helm-falsy states while producing the binding's value (`$mode :=
+    /// .Values.x | default "lit"`). Equality decoding adds the exact
+    /// fallback arm: comparing against the literal also holds wherever the
+    /// path is falsy, and comparing against anything else certainly fails
+    /// there (external-secrets' deleted `renderMode` must select the
+    /// default literal's branch, not the invalid-mode `fail`).
+    pub(crate) default_fallback: Option<GuardValue>,
 }
 
 impl HelperOutputMeta {
@@ -178,6 +191,8 @@ impl HelperOutputMeta {
             other.empty_fold_spellings.clone(),
         );
         self.empty_rescue = merge_exact_fact(self.empty_rescue.take(), other.empty_rescue.clone());
+        self.default_fallback =
+            merge_exact_fact(self.default_fallback.take(), other.default_fallback.clone());
     }
 
     pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {
@@ -284,17 +299,18 @@ pub(crate) fn insert_type_hint(
 
 /// Projects a lexical capture pattern through its escapes.
 ///
-/// A single trim-affix escape composes EXACTLY: the runtime strips at most
-/// one affix occurrence before the check runs, so the raw language is the
-/// capture language optionally wearing the affix (`^P$` becomes
-/// `^(?:P)(?:-jmx)?$` for `trimSuffix "-jmx"`; a capture-valid string that
-/// itself ends in the affix is trimmed first, so admitting it is a bounded
-/// widening, never a rejection). `Contains` tokens — and any escape MIX the
-/// affix composition cannot order — weaken to exemption alternatives: a raw
-/// string containing the token diverged from the observed value before the
-/// check ran, so the capture accepts it unconditionally (JSON Schema
-/// `pattern` is an unanchored search, so a bare token alternative matches
-/// any string containing it).
+/// Edge escapes compose: each wraps its own side of an anchored pattern
+/// (`^P$` becomes `^(?:P)(?:-jmx)?$` for `trimSuffix "-jmx"`, `^(?:v)?(?:P)$`
+/// for `trimPrefix "v"`, `^(?:P)(?:@.*)?$` for a `CutAtToken("@")` erasure),
+/// so a set with at most one escape per position — leading affix, trailing
+/// affix, cut tail — composes in ANY application order into a superset of
+/// the ordered preimage (a capture-valid string that itself wears an affix
+/// is transformed first, so admitting it is a bounded widening, never a
+/// rejection). `Contains` tokens — and any escape mix beyond one per edge —
+/// weaken to exemption alternatives: a raw string containing the token
+/// diverged from the observed value before the check ran, so the capture
+/// accepts it unconditionally (JSON Schema `pattern` is an unanchored
+/// search, so a bare token alternative matches any string containing it).
 pub(crate) fn pattern_with_lexical_escapes(
     pattern: &str,
     escapes: &BTreeSet<LexicalEscape>,
@@ -302,29 +318,59 @@ pub(crate) fn pattern_with_lexical_escapes(
     if escapes.is_empty() {
         return pattern.to_string();
     }
-    if let [escape] = escapes.iter().collect::<Vec<_>>().as_slice()
-        && let Some(anchored) = pattern.strip_prefix('^').and_then(|p| p.strip_suffix('$'))
-    {
-        match escape {
-            LexicalEscape::TrimPrefix(token) => {
-                return format!("^(?:{})?(?:{anchored})$", regex_literal(token));
-            }
-            LexicalEscape::TrimSuffix(token) => {
-                return format!("^(?:{anchored})(?:{})?$", regex_literal(token));
-            }
-            LexicalEscape::Contains(_) => {}
-        }
+    if let Some(composed) = composed_edge_escape_pattern(pattern, escapes) {
+        return composed;
     }
     let mut alternatives: Vec<String> = escapes
         .iter()
         .map(|escape| match escape {
             LexicalEscape::Contains(token)
             | LexicalEscape::TrimPrefix(token)
-            | LexicalEscape::TrimSuffix(token) => regex_literal(token),
+            | LexicalEscape::TrimSuffix(token)
+            | LexicalEscape::CutAtToken(token) => regex_literal(token),
         })
         .collect();
     alternatives.push(format!("(?:{pattern})"));
     alternatives.join("|")
+}
+
+/// The exact edge composition of `pattern_with_lexical_escapes`, or `None`
+/// when the escape set holds a `Contains` token, more than one escape per
+/// edge position, or the pattern is not anchored on both sides.
+fn composed_edge_escape_pattern(
+    pattern: &str,
+    escapes: &BTreeSet<LexicalEscape>,
+) -> Option<String> {
+    let anchored = pattern
+        .strip_prefix('^')
+        .and_then(|p| p.strip_suffix('$'))?;
+    let mut prefix = None;
+    let mut suffix = None;
+    let mut cut = None;
+    for escape in escapes {
+        let slot = match escape {
+            LexicalEscape::Contains(_) => return None,
+            LexicalEscape::TrimPrefix(token) => (&mut prefix, token),
+            LexicalEscape::TrimSuffix(token) => (&mut suffix, token),
+            LexicalEscape::CutAtToken(token) => (&mut cut, token),
+        };
+        if slot.0.replace(slot.1).is_some() {
+            return None;
+        }
+    }
+    let mut composed = String::from("^");
+    if let Some(token) = prefix {
+        composed.push_str(&format!("(?:{})?", regex_literal(token)));
+    }
+    composed.push_str(&format!("(?:{anchored})"));
+    if let Some(token) = suffix {
+        composed.push_str(&format!("(?:{})?", regex_literal(token)));
+    }
+    if let Some(token) = cut {
+        composed.push_str(&format!("(?:{}.*)?", regex_literal(token)));
+    }
+    composed.push('$');
+    Some(composed)
 }
 
 fn regex_literal(text: &str) -> String {

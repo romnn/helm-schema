@@ -377,26 +377,23 @@ pub(super) fn trim_affix_transformed_value(
 /// The transformed value of a `regexReplaceAll`-family call whose pattern
 /// has a mandatory literal: the replacement is the identity on strings not
 /// containing that literal, so raw-identity arms keep their path qualified
-/// by it as a lexical escape. `None` when the subject is not a clean raw
-/// identity.
+/// by `escape` — the exact `CutAtToken` erasure when the call strips a
+/// token-opened tail, the `Contains` exemption otherwise. `None` when the
+/// subject is not a clean raw identity.
 pub(super) fn regex_replace_transformed_value(
     value: &AbstractValue,
     effects: &crate::eval_effect::Effects,
-    token: &str,
+    escape: &crate::helper_meta::LexicalEscape,
 ) -> Option<AbstractValue> {
     match value {
         AbstractValue::Choice(choices) => {
             let mapped = choices
                 .iter()
-                .map(|choice| regex_replace_transformed_value(choice, effects, token))
+                .map(|choice| regex_replace_transformed_value(choice, effects, escape))
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
-        other => escape_wrapped_identity(
-            other,
-            effects,
-            crate::helper_meta::LexicalEscape::Contains(token.to_string()),
-        ),
+        other => escape_wrapped_identity(other, effects, escape.clone()),
     }
 }
 

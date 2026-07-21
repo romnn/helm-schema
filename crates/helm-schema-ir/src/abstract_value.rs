@@ -296,8 +296,27 @@ impl AbstractValue {
                 // per-path rows the binding produces must keep the layer
                 // scoping (shadowed members stay open, scrubbed layers
                 // null-relax) instead of typing each path unconditionally.
-                let identities: Option<Vec<String>> =
-                    layers.iter().map(Self::merge_layer_identity).collect();
+                // Nested merges flatten in precedence order — nesting is
+                // associative, so an inner merge's layers slot into the
+                // outer order where the inner merge stood (airflow's
+                // per-set merge over the celery-merged workers base).
+                fn flat_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
+                    let mut flat = Vec::new();
+                    for layer in layers {
+                        match layer {
+                            AbstractValue::MergedLayers(inner) => {
+                                flat.extend(flat_layers(inner));
+                            }
+                            other => flat.push(other),
+                        }
+                    }
+                    flat
+                }
+                let layers = flat_layers(layers);
+                let identities: Option<Vec<String>> = layers
+                    .iter()
+                    .map(|layer| layer.merge_layer_identity())
+                    .collect();
                 if let Some(layer_paths) = identities
                     && layer_paths.len() > 1
                     && layer_paths.iter().all(|path| !path.is_empty())

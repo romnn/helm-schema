@@ -182,24 +182,30 @@ impl BoundHelperValueResolver<'_, '_, '_> {
         if input_layer.paths().is_empty() && overwrite_layer.paths().is_empty() {
             return None;
         }
-        // A scrubbed layer merged against a RANGE-member operand (airflow's
-        // per-worker-set merge over the scrubbed celery base) keeps the
-        // scrub OUT of the layered value: the ranged capture machinery owns
-        // those member lanes, and the scrubbed identity would displace the
-        // existential encodings its arms ride. The scrub survives in the
-        // set-free half of the chain (the first workers/celery merge).
-        let wildcard_operand = input_layer
-            .paths()
-            .iter()
-            .chain(overwrite_layer.paths().iter())
-            .any(|path| path.split('.').any(|segment| segment == "*"));
-        let (input_layer, overwrite_layer) = if wildcard_operand {
-            (
-                input_layer.without_nil_scrub_markers(),
-                overwrite_layer.without_nil_scrub_markers(),
-            )
+        // A scrubbed identity inside a RANGE-member operand (a wildcard
+        // path) keeps the scrub OUT of that layer: the ranged capture
+        // machinery owns those member lanes, and the scrubbed identity
+        // would displace the existential encodings its arms ride. The
+        // OTHER operand keeps its scrub — airflow's per-worker-set merge
+        // layers each `sets[]` member over the celery-scrubbed workers
+        // base, and the base's layered typing must survive the per-set
+        // round (the reroot chain reads the merged value back through
+        // `.Values.workers`).
+        let has_wildcard_path = |layer: &AbstractValue| {
+            layer
+                .paths()
+                .iter()
+                .any(|path| path.split('.').any(|segment| segment == "*"))
+        };
+        let input_layer = if has_wildcard_path(&input_layer) {
+            input_layer.without_nil_scrub_markers()
         } else {
-            (input_layer, overwrite_layer)
+            input_layer
+        };
+        let overwrite_layer = if has_wildcard_path(&overwrite_layer) {
+            overwrite_layer.without_nil_scrub_markers()
+        } else {
+            overwrite_layer
         };
         let value = AbstractValue::MergedLayers(vec![overwrite_layer, input_layer]);
         let mut effects = Effects::default();

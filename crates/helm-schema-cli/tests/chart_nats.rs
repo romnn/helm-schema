@@ -260,6 +260,59 @@ fn nats_jsonpatch_ops_bind_through_the_helper_range() -> color_eyre::eyre::Resul
     Ok(())
 }
 
+/// The jsonpatch engine's per-op requirements bind through the helper
+/// range: `copy`/`move` without `from` and `add`/`replace`/`test` without
+/// `value` abort every render, while complete patches of each op render —
+/// all polarities verified under `helm template` on the vendored chart.
+#[test]
+fn nats_jsonpatch_per_op_requirements_bind_through_the_helper_range() -> color_eyre::eyre::Result<()>
+{
+    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+    for (patch, want) in [
+        (
+            serde_json::json!({ "op": "copy", "path": "/spec/selector2", "from": "/spec/selector" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "op": "move", "path": "/spec/selector2", "from": "/spec/selector" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "op": "remove", "path": "/spec/selector" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "op": "add", "path": "/metadata/labels/x", "value": "y" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "op": "copy", "path": "/spec/selector2" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "op": "move", "path": "/spec/selector2" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "op": "add", "path": "/metadata/labels/x" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "op": "test", "path": "/spec/selector" }),
+            false,
+        ),
+    ] {
+        let overrides = serde_json::json!({ "service": { "patch": [patch] } });
+        let instance = chart_instances::with_override("nats", overrides.clone())?;
+        assert!(
+            validator.is_valid(&instance) == want,
+            "per-op requirements bind through the helper range: overrides={overrides}; want={want}"
+        );
+    }
+    Ok(())
+}
+
 /// Wrapper consumers BEFORE the tree rewrite (F104 residual):
 /// `nats.defaultValues` calls `nats.fullname` — which truncs
 /// `nameOverride`/`fullnameOverride` raw — BEFORE the `$tplYaml` engine

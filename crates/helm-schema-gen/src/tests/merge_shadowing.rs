@@ -452,3 +452,302 @@ fn nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads() {
         );
     }
 }
+
+/// The airflow worker chain THROUGH the per-set reroot: each
+/// `workers.celery.sets[]` entry merges over the celery-merged workers map,
+/// `set $globals.Values "workers" $workers` rebinds the values context,
+/// and the with-body's `.Values.workers` selectors feed the
+/// candidate-selection helper. The layered identities must survive the
+/// reroot — string `runAsUser` rejects through the base and celery layers
+/// — while the per-set member kinds keep their round-8/17 capture arms
+/// (scalar `labels` in a set terminates the merge recursion).
+#[test]
+fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
+    let helpers = indoc! {r#"
+        {{- define "test.podSecurityContext" }}
+          {{- $ := last . }}
+          {{- $result := dict }}
+          {{- range . }}
+            {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod }}
+              {{- $result = .securityContexts.pod }}
+              {{- break }}
+            {{- end }}
+            {{- if and (hasKey . "securityContext") .securityContext }}
+              {{- $result = .securityContext }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+          {{- if $result }}
+            {{- toYaml $result | print }}
+          {{- else }}
+        runAsUser: {{ $.uid }}
+        fsGroup: {{ $.gid }}
+          {{- end }}
+        {{- end }}
+        {{- define "removeNilFields" -}}
+          {{- $newValues := dict -}}
+          {{- range $key, $val := . -}}
+            {{- if kindIs "map" $val -}}
+              {{- $nested := include "removeNilFields" $val | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $newValues $key $nested -}}
+              {{- end -}}
+            {{- else if not (kindIs "invalid" $val) -}}
+              {{- $_ := set $newValues $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $newValues -}}
+        {{- end -}}
+        {{- define "workersMergeValues" -}}
+          {{- $inputMap := index . 0 -}}
+          {{- $overwriteMap := index . 1 -}}
+          {{- $sectionName := index . 2 -}}
+          {{- $orBoolean := index . 3 -}}
+          {{- $outputMap := dict -}}
+          {{- $fullOverwrite := list "annotations" "podAnnotations" "securityContext" "resources" "nodeSelector" "affinity" "labels" -}}
+          {{- range $key, $val := $inputMap -}}
+            {{- if and (hasKey $overwriteMap $key) (has $key $fullOverwrite) -}}
+              {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+            {{- else if and (hasKey $overwriteMap $key) (kindIs "map" $val) -}}
+              {{- $nested := include "workersMergeValues" (list $val (get $overwriteMap $key) $key $orBoolean) | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $outputMap $key $nested -}}
+              {{- end -}}
+            {{- else if and (hasKey $overwriteMap $key) (not (and (kindIs "slice" (get $overwriteMap $key)) (eq (len (get $overwriteMap $key)) 0))) -}}
+              {{- if and (kindIs "bool" $val) (has $sectionName $orBoolean) -}}
+                {{- $_ := set $outputMap $key (or $val (get $overwriteMap $key)) -}}
+              {{- else -}}
+                {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+              {{- end -}}
+            {{- else -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- range $key, $val := $overwriteMap -}}
+            {{- if not (hasKey $inputMap $key) -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $outputMap -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $globals := deepCopy . -}}
+        {{- $filteredCelery := include "removeNilFields" .Values.workers.celery | fromYaml -}}
+        {{- $mergedWorkers := include "workersMergeValues" (list .Values.workers $filteredCelery "" list) | fromYaml -}}
+        {{- $_ := unset $mergedWorkers "celery" -}}
+        {{- $workerSets := .Values.workers.celery.sets | default list -}}
+        {{- range $workerSet := $workerSets -}}
+        {{- $workers := include "workersMergeValues" (list $mergedWorkers $workerSet "" list) | fromYaml -}}
+        {{- $_ := set $globals.Values "workers" $workers -}}
+        {{- with $globals -}}
+        {{- if or (contains "CeleryExecutor" .Values.executor) (contains "CeleryKubernetesExecutor" .Values.executor) }}
+        {{- $securityContext := include "test.podSecurityContext" (list .Values.workers .Values) }}
+        ---
+        apiVersion: apps/v1
+        kind: {{ if .Values.workers.persistence.enabled }}StatefulSet{{ else }}Deployment{{ end }}
+        metadata:
+          name: test-{{ $workerSet.name }}
+          labels:
+        {{- if or .Values.labels .Values.workers.labels }}
+          {{- mustMerge .Values.workers.labels .Values.labels | toYaml | nindent 4 }}
+        {{- end }}
+        spec:
+          template:
+            spec:
+              securityContext: {{ $securityContext | nindent 8 }}
+              containers:
+                - name: main
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(indoc! {r#"
+            uid: 50000
+            gid: 0
+            executor: "CeleryExecutor"
+            securityContext: {}
+            securityContexts:
+              pod: {}
+            workers:
+              securityContext: {}
+              securityContexts:
+                pod: {}
+                container: {}
+              labels: {}
+              persistence:
+                enabled: false
+              celery:
+                enableDefault: true
+                sets: []
+                securityContext: {}
+                securityContexts:
+                  pod: {}
+                  container: {}
+        "#}),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": "oops" } } } }),
+            false,
+            "base-layer string runAsUser reaches the rendered pod context",
+        ),
+        (
+            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": 50000 } } } }),
+            true,
+            "base-layer integer runAsUser renders",
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": "oops" } } } } }),
+            false,
+            "celery-layer string runAsUser reaches the rendered pod context",
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": null } } } } }),
+            true,
+            "the scrub drops null members before the sink",
+        ),
+        (
+            serde_json::json!({ "workers": {
+                "securityContexts": { "pod": { "runAsUser": "oops" } },
+                "celery": { "securityContexts": { "pod": { "runAsUser": 50000 } } } } }),
+            true,
+            "the celery layer shadows the base member",
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "sets": [
+                { "name": "heavy", "labels": "oops" }
+            ] } } }),
+            false,
+            "scalar labels in a worker set terminates the merge recursion",
+        ),
+        (
+            serde_json::json!({ "workers": { "celery": { "sets": [
+                { "name": "heavy", "labels": { "tier": "heavy" } }
+            ] } } }),
+            true,
+            "map labels override renders",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "rerooted worker-set layers ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// The per-set merge consumed DIRECTLY (no reroot): layering a
+/// `sets[]` range member over the celery-scrubbed workers base keeps the
+/// base's layered identity — the scrub marker survives on the set-free
+/// operand — so the candidate-selection payload types exactly.
+#[test]
+fn per_set_merge_layers_bind_without_the_reroot() {
+    let helpers = indoc! {r#"
+        {{- define "test.podSecurityContext" }}
+          {{- $ := last . }}
+          {{- $result := dict }}
+          {{- range . }}
+            {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod }}
+              {{- $result = .securityContexts.pod }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+          {{- if $result }}
+            {{- toYaml $result | print }}
+          {{- else }}
+        runAsUser: {{ $.uid }}
+          {{- end }}
+        {{- end }}
+        {{- define "removeNilFields" -}}
+          {{- $newValues := dict -}}
+          {{- range $key, $val := . -}}
+            {{- if kindIs "map" $val -}}
+              {{- $nested := include "removeNilFields" $val | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $newValues $key $nested -}}
+              {{- end -}}
+            {{- else if not (kindIs "invalid" $val) -}}
+              {{- $_ := set $newValues $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $newValues -}}
+        {{- end -}}
+        {{- define "workersMergeValues" -}}
+          {{- $inputMap := index . 0 -}}
+          {{- $overwriteMap := index . 1 -}}
+          {{- $sectionName := index . 2 -}}
+          {{- $orBoolean := index . 3 -}}
+          {{- $outputMap := dict -}}
+          {{- $fullOverwrite := list "labels" "securityContext" "resources" -}}
+          {{- range $key, $val := $inputMap -}}
+            {{- if and (hasKey $overwriteMap $key) (has $key $fullOverwrite) -}}
+              {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+            {{- else if and (hasKey $overwriteMap $key) (kindIs "map" $val) -}}
+              {{- $nested := include "workersMergeValues" (list $val (get $overwriteMap $key) $key $orBoolean) | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $outputMap $key $nested -}}
+              {{- end -}}
+            {{- else if and (hasKey $overwriteMap $key) (not (and (kindIs "slice" (get $overwriteMap $key)) (eq (len (get $overwriteMap $key)) 0))) -}}
+              {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+            {{- else -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- range $key, $val := $overwriteMap -}}
+            {{- if not (hasKey $inputMap $key) -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $outputMap -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $filteredCelery := include "removeNilFields" .Values.workers.celery | fromYaml -}}
+        {{- $mergedWorkers := include "workersMergeValues" (list .Values.workers $filteredCelery "" list) | fromYaml -}}
+        {{- $_ := unset $mergedWorkers "celery" -}}
+        {{- range $workerSet := .Values.workers.celery.sets -}}
+        {{- $workers := include "workersMergeValues" (list $mergedWorkers $workerSet "" list) | fromYaml -}}
+        {{- $securityContext := include "test.podSecurityContext" (list $workers $.Values) }}
+        ---
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test-{{ $workerSet.name }}
+        spec:
+          template:
+            spec:
+              securityContext: {{ $securityContext | nindent 8 }}
+              containers:
+                - name: main
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(
+            "uid: 50000\nworkers:\n  securityContexts: {}\n  celery:\n    sets: []\n    securityContexts: {}\n",
+        ),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "workers": {
+                "securityContexts": { "pod": { "runAsUser": "oops" } },
+                "celery": { "sets": [ { "name": "a" } ] } } }),
+            false,
+            "base-layer string runAsUser",
+        ),
+        (
+            serde_json::json!({ "workers": {
+                "securityContexts": { "pod": { "runAsUser": 50000 } },
+                "celery": { "sets": [ { "name": "a" } ] } } }),
+            true,
+            "base-layer integer runAsUser",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "per-set direct consumption ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

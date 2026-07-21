@@ -230,6 +230,20 @@ impl ValuePathContext<'_> {
         negated: bool,
     ) -> Predicate {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
+            // A pipeline condition may still admit a positive sound
+            // strengthening (cilium's transformed `… | semverCompare
+            // "<0.9.0"` fail gate) even though the pipeline itself stays
+            // approximate.
+            if !negated {
+                let subset = self.comparison_sound_subset(expr);
+                if !subset.is_empty() {
+                    return Predicate::approximate_with_sound_subset(
+                        marker,
+                        self.resolved_values_paths_from_expr(expr),
+                        subset,
+                    );
+                }
+            }
             let leaf = Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
             // The stand-in covers the unknown condition in BOTH polarities:
             // an Approximate marker is never negated downstream, so the
@@ -1982,36 +1996,142 @@ impl ValuePathContext<'_> {
     /// EXACT strengthening: the comparator lowers to a pattern matching
     /// precisely the version strings that satisfy it, so a fail-arm keyed
     /// on the pattern fires exactly where the guard held (airflow
-    /// `semverCompare "<3.0.0" .Values.airflowVersion`). Only direct
-    /// selectors qualify — a transformed operand no longer carries the
-    /// path's own text, and a fallback chain selects other sources.
+    /// `semverCompare "<3.0.0" .Values.airflowVersion`). The pipeline form
+    /// admits the digest-strip / v-trim transform chain — cilium's
+    /// `regexReplaceAll "@.*$" TAG "" | trimPrefix "v" | semverCompare
+    /// "<0.9.0"` — whose edge wraps compose the constraint language
+    /// EXACTLY (see [`Self::semver_transformed_operand`]); any other
+    /// transformed operand no longer carries the path's own text and
+    /// abstains, as does a fallback chain selecting other sources.
     fn semver_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
-        let TemplateExpr::Call { function, args } = expr.deparen() else {
-            return Vec::new();
-        };
-        if function != "semverCompare" || args.len() != 2 {
-            return Vec::new();
-        }
-        let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
-            return Vec::new();
-        };
-        if !matches!(
-            args[1].deparen(),
-            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-        ) {
-            return Vec::new();
-        }
-        let Some(path) = self.single_resolved_values_path_expr(&args[1]) else {
-            return Vec::new();
+        let (constraint, path, escapes) = match expr.deparen() {
+            TemplateExpr::Call { function, args }
+                if function == "semverCompare" && args.len() == 2 =>
+            {
+                let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+                    return Vec::new();
+                };
+                if !matches!(
+                    args[1].deparen(),
+                    TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+                ) {
+                    return Vec::new();
+                }
+                let Some(path) = self.single_resolved_values_path_expr(&args[1]) else {
+                    return Vec::new();
+                };
+                (constraint, path, BTreeSet::new())
+            }
+            TemplateExpr::Pipeline(stages) => {
+                let Some((last, transforms)) = stages.split_last() else {
+                    return Vec::new();
+                };
+                let TemplateExpr::Call { function, args } = last.deparen() else {
+                    return Vec::new();
+                };
+                if function != "semverCompare" || args.len() != 1 {
+                    return Vec::new();
+                }
+                let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+                    return Vec::new();
+                };
+                let Some((path, escapes)) = self.semver_transformed_operand(transforms) else {
+                    return Vec::new();
+                };
+                (constraint, path, escapes)
+            }
+            _ => return Vec::new(),
         };
         let Some(pattern) = helm_schema_ast::semver_constraint_match_pattern(constraint) else {
             return Vec::new();
         };
         vec![Guard::MatchesPattern {
             path,
-            pattern,
+            pattern: crate::helper_meta::pattern_with_lexical_escapes(&pattern, &escapes),
             templated: false,
         }]
+    }
+
+    /// The `(path, escapes)` of a transformed `semverCompare` version
+    /// operand whose chain composes the constraint language EXACTLY — the
+    /// requirement for a fail-position guard, where a mere widening would
+    /// reject renders that succeed. Admitted stages: an innermost
+    /// `regexReplaceAll "TOKEN.*$" SELECTOR ""` erasure whose literal
+    /// token holds a character no semver spelling contains (the constraint
+    /// language is token-free, so the cut tail is the exact preimage), and
+    /// at most one piped `trimPrefix "v"` (the constraint pattern is
+    /// `v?`-normalized, so a valid string wearing the prefix trims to a
+    /// valid string — the wrap loses nothing). Anything else abstains.
+    fn semver_transformed_operand(
+        &self,
+        transforms: &[TemplateExpr],
+    ) -> Option<(String, BTreeSet<crate::helper_meta::LexicalEscape>)> {
+        use crate::helper_meta::LexicalEscape;
+        let (first, rest) = transforms.split_first()?;
+        let mut escapes = BTreeSet::new();
+        for stage in rest {
+            let TemplateExpr::Call { function, args } = stage.deparen() else {
+                return None;
+            };
+            if function != "trimPrefix" || args.len() != 1 {
+                return None;
+            }
+            let token = literal_string(&args[0])?;
+            if token != "v" || !escapes.insert(LexicalEscape::TrimPrefix(token.to_string())) {
+                return None;
+            }
+        }
+        let subject = match first.deparen() {
+            TemplateExpr::Call { function, args }
+                if matches!(
+                    function.as_str(),
+                    "regexReplaceAll"
+                        | "mustRegexReplaceAll"
+                        | "regexReplaceAllLiteral"
+                        | "mustRegexReplaceAllLiteral"
+                ) && args.len() == 3 =>
+            {
+                let pattern = literal_string(&args[0])?;
+                let replacement = literal_string(&args[2])?;
+                let token = pattern.strip_suffix(".*$")?;
+                let token_is_regex_literal = !token.is_empty()
+                    && token.chars().all(|character| {
+                        !matches!(
+                            character,
+                            '\\' | '.'
+                                | '^'
+                                | '$'
+                                | '|'
+                                | '?'
+                                | '*'
+                                | '+'
+                                | '('
+                                | ')'
+                                | '['
+                                | ']'
+                                | '{'
+                                | '}'
+                        )
+                    });
+                let token_outside_semver = token.chars().any(|character| {
+                    !character.is_ascii_alphanumeric() && !matches!(character, '.' | '-' | '+')
+                });
+                if !replacement.is_empty() || !token_is_regex_literal || !token_outside_semver {
+                    return None;
+                }
+                escapes.insert(LexicalEscape::CutAtToken(token.to_string()));
+                &args[1]
+            }
+            _ => first,
+        };
+        if !matches!(
+            subject.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            return None;
+        }
+        let path = self.single_resolved_values_path_expr(subject)?;
+        (!escapes.is_empty()).then_some((path, escapes))
     }
 
     /// `gt (int64 x) N` / `gt (int x) N` and the mirrored below-bound forms
@@ -2538,6 +2658,28 @@ impl ValuePathContext<'_> {
                                 conjuncts.push(comparison.clone());
                                 alternatives.push(Predicate::all(conjuncts));
                             }
+                            // A recorded literal `default` fallback IS the
+                            // binding's value on every Helm-falsy input, so
+                            // the comparison decodes exactly there too:
+                            // `eq $mode FALLBACK` also holds where the path
+                            // is falsy, and `ne $mode OTHER` does likewise.
+                            // Bounded to the pure `PATH | default LIT`
+                            // binding (its single truthy-path branch, no
+                            // value transform), where the falsy-arm
+                            // condition is exactly `¬truthy(path)`.
+                            if let Some(fallback) = &candidate.default_fallback
+                                && !candidate.stringified
+                                && !candidate.shape_erased
+                                && !candidate.derived_text
+                                && !candidate.json_serialized
+                                && (fallback == &value) != negated
+                                && candidate.predicates
+                                    == BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+                                        path.clone(),
+                                    )])])
+                            {
+                                alternatives.push(Predicate::truthy_path(path.clone()).negated());
+                            }
                         }
                         _ => alternatives.push(comparison),
                     }
@@ -2911,9 +3053,32 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         }
         // The merged map contains the key exactly when some layer does.
         AbstractValue::MergedLayers(layers) => {
+            // Within the layer union, a CHOICE layer's constant-False
+            // alternatives are the OR identity: a literal member lacking
+            // the key contributes nothing in the iterations that select
+            // it (airflow's `concat (list (dict "name" "default"))
+            // .Values.workers.celery.sets` per-set layer), so presence
+            // reads from the remaining agreeing alternatives.
+            let layer_has_key = |layer: &AbstractValue| match layer {
+                AbstractValue::Choice(choices) => {
+                    let mut resolved = choices
+                        .iter()
+                        .map(|choice| value_has_key(choice, key))
+                        .collect::<Option<Vec<_>>>()?;
+                    resolved.retain(|predicate| !matches!(predicate, Predicate::False));
+                    resolved.sort();
+                    resolved.dedup();
+                    match resolved.as_slice() {
+                        [] => Some(Predicate::False),
+                        [predicate] => Some(predicate.clone()),
+                        _ => None,
+                    }
+                }
+                layer => value_has_key(layer, key),
+            };
             let mut resolved = layers
                 .iter()
-                .map(|layer| value_has_key(layer, key))
+                .map(layer_has_key)
                 .collect::<Option<Vec<_>>>()?;
             resolved.sort();
             resolved.dedup();
@@ -2938,6 +3103,34 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
             })
             .negated(),
         ),
+        // A JSON-roundtripped identity keeps map keys exactly, so key
+        // presence reads from the raw path (nats' jsonpatch members reach
+        // their `hasKey` gates as `service.patch.*` through the
+        // toJson/fromJson call boundary). Any value transform, branch
+        // condition, or key removal breaks that identity and abstains.
+        AbstractValue::OutputPath(path, meta)
+            if !path.is_empty()
+                && !meta.shape_erased
+                && !meta.nil_omitted
+                && !meta.stringified
+                && !meta.yaml_serialized
+                && !meta.derived_text
+                && !meta.partial_text
+                && meta.merge_layers.is_none()
+                && meta.predicates.is_empty()
+                && meta.capture_exclusions.is_empty()
+                && meta.lexical_escapes.is_empty()
+                && meta.omitted_keys.is_empty()
+                && meta.empty_rescue.is_none()
+                && meta.default_fallback.is_none() =>
+        {
+            Some(
+                Predicate::from(Guard::Absent {
+                    path: helm_schema_core::append_value_path(path, key),
+                })
+                .negated(),
+            )
+        }
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)

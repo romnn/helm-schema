@@ -2664,6 +2664,76 @@ fn external_secrets_omitted_security_context_keys_scope_their_typing()
     )
 }
 
+/// cilium's hubble-ui gate strips a digest suffix and a leading `v` from
+/// each image tag before comparing (`regexReplaceAll "@.*$" TAG "" |
+/// trimPrefix "v" | semverCompare "<0.9.0"` → fail): junk cores abort the
+/// parse, versions below the bound hit the fail, and valid v-prefixed or
+/// digest-suffixed tags render (helm-verified with
+/// `hubble.relay.enabled=true hubble.ui.enabled=true`).
+#[test]
+fn cilium_hubble_ui_tag_binds_the_transformed_semver_bound() -> color_eyre::eyre::Result<()> {
+    let with_tag = |tag: &str| {
+        json!({
+            "hubble": {
+                "relay": { "enabled": true },
+                "ui": { "enabled": true, "backend": { "image": { "tag": tag } } },
+            },
+        })
+    };
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::accepted("v-prefixed valid version", with_tag("v0.13.5")),
+            SemanticCase::accepted(
+                "digest-suffixed valid version",
+                with_tag("v0.13.5@sha256:abc"),
+            ),
+            SemanticCase::accepted("the ne-excluded latest sentinel", with_tag("latest")),
+            SemanticCase::rejected(
+                "unparseable core aborts semverCompare",
+                "/hubble/ui/backend/image/tag",
+                with_tag("garbage"),
+            ),
+            SemanticCase::rejected(
+                "version below the bound hits the fail",
+                "/hubble/ui/backend/image/tag",
+                with_tag("v0.1.0"),
+            ),
+        ],
+    )
+}
+
+/// external-secrets' `shouldRenderServiceMonitor` binds `$mode :=
+/// .Values.serviceMonitor.renderMode | default "skipIfMissing"` and
+/// `fail`s on any unlisted mode. The deletion state (`renderMode: null`)
+/// maps onto the DEFAULT literal's arm, so the invalid-mode capture must
+/// carry `truthy(renderMode)` positively instead of rejecting absence;
+/// junk modes still abort every render (the helper runs unconditionally
+/// at template headers). Each polarity helm-verified with
+/// `--skip-schema-validation`.
+#[test]
+fn external_secrets_deleted_render_mode_selects_the_default_literal_arm()
+-> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "external-secrets",
+        vec![
+            SemanticCase::accepted(
+                "null renderMode deletes the key and selects the default",
+                json!({ "serviceMonitor": { "renderMode": null } }),
+            ),
+            SemanticCase::accepted(
+                "explicit non-default mode",
+                json!({ "serviceMonitor": { "renderMode": "alwaysRender" } }),
+            ),
+            SemanticCase::rejected(
+                "unlisted mode aborts every render",
+                "",
+                json!({ "serviceMonitor": { "renderMode": "junkMode" } }),
+            ),
+        ],
+    )
+}
+
 /// oauth2-proxy's `deprecation.yaml` aborts rendering when a legacy
 /// `ingress.extraPaths[].backend.serviceName`/`servicePort` is set while
 /// the capability helper resolves the `networking.k8s.io/v1` Ingress api.
@@ -3281,6 +3351,49 @@ fn airflow_worker_set_overrides_bind_strict_member_kinds() -> color_eyre::eyre::
                       "persistence": { "enabled": true },
                       "resources": { "requests": { "cpu": "1" } } }
                 ] } } }),
+            ),
+        ],
+    )
+}
+
+/// airflow's worker deployment re-roots `.Values` per worker set (`set
+/// $globals.Values "workers" $workers` under the `range` over
+/// `$workerSets`), and the layered identities survive the reroot: the
+/// candidate-selection helper binds `workers.securityContexts.pod` (and
+/// the celery layer shadowing it) to the provider's pod securityContext,
+/// so a string `runAsUser` rejects through either layer while integers,
+/// null-scrubbed celery members, and the shadowed corner render
+/// (helm-render verified; the string spelling reaches the rendered pod
+/// context, which the strict apps/v1 Deployment schema rejects).
+#[test]
+fn airflow_rerooted_worker_lanes_bind_layered_provider_payloads() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "base-layer string runAsUser reaches the rendered pod context",
+                "/workers/securityContexts/pod/runAsUser",
+                json!({ "workers": { "securityContexts": { "pod": { "runAsUser": "oops" } } } }),
+            ),
+            SemanticCase::accepted(
+                "base-layer integer runAsUser",
+                json!({ "workers": { "securityContexts": { "pod": { "runAsUser": 50000 } } } }),
+            ),
+            SemanticCase::rejected(
+                "celery-layer string runAsUser reaches the rendered pod context",
+                "/workers/celery/securityContexts/pod/runAsUser",
+                json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": "oops" } } } } }),
+            ),
+            SemanticCase::accepted(
+                "the scrub drops null celery members before the sink",
+                json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": null } } } } }),
+            ),
+            SemanticCase::accepted(
+                "the celery layer shadows the base member",
+                json!({ "workers": {
+                    "securityContexts": { "pod": { "runAsUser": "oops" } },
+                    "celery": { "securityContexts": { "pod": { "runAsUser": 50000 } } },
+                } }),
             ),
         ],
     )

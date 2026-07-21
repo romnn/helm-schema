@@ -1208,80 +1208,10 @@
             "jsonpatch"
           ],
           "span": {
-            "end": 496,
-            "start": 400
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 830,
-            "start": 730
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 1042,
-            "start": 835
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
             "end": 1228,
             "start": 1047
           },
           "template_path": "<inline:1>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "config.patch.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
-            "path": "config.patch",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 4215,
-            "start": 4104
-          },
-          "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "<inline:0>"
         },
         {
           "helper_chain": [
@@ -3429,6 +3359,20 @@
             "type": "truthy"
           },
           {
+            "path": "config.patch.*.op",
+            "type": "absent"
+          }
+        ],
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "path": "config.patch",
+            "type": "truthy"
+          },
+          {
             "alternatives": [
               [
                 {
@@ -3628,6 +3572,16 @@
             "jsonpatch"
           ],
           "span": {
+            "end": 496,
+            "start": 400
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
             "end": 725,
             "start": 501
           },
@@ -3788,6 +3742,16 @@
             "jsonpatch"
           ],
           "span": {
+            "end": 830,
+            "start": 730
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
             "end": 2031,
             "start": 1869
           },
@@ -3888,6 +3852,46 @@
             "type": "eq",
             "value": "test"
           }
+        ],
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          },
+          {
+            "path": "config.patch",
+            "type": "truthy"
+          },
+          {
+            "path": "config.patch.*.value",
+            "type": "absent"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "config.patch.*.op",
+                  "type": "eq",
+                  "value": "add"
+                }
+              ],
+              [
+                {
+                  "path": "config.patch.*.op",
+                  "type": "eq",
+                  "value": "replace"
+                }
+              ],
+              [
+                {
+                  "path": "config.patch.*.op",
+                  "type": "eq",
+                  "value": "test"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -3912,6 +3916,16 @@
             "start": 8496
           },
           "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
+            "end": 1042,
+            "start": 835
+          },
+          "template_path": "<inline:1>"
         },
         {
           "helper_chain": [
@@ -5287,74 +5301,10 @@
             "jsonpatch"
           ],
           "span": {
-            "end": 496,
-            "start": 400
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 830,
-            "start": 730
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 1042,
-            "start": 835
-          },
-          "template_path": "<inline:1>"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
             "end": 1228,
             "start": 1047
           },
           "template_path": "<inline:1>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.patch.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "<inline:0>"
         },
         {
           "helper_chain": [
@@ -7536,6 +7486,24 @@
             "type": "truthy"
           },
           {
+            "path": "service.patch.*.op",
+            "type": "absent"
+          },
+          {
+            "path": "service",
+            "type": "with"
+          }
+        ],
+        [
+          {
+            "path": "service.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "service.patch",
+            "type": "truthy"
+          },
+          {
             "alternatives": [
               [
                 {
@@ -7745,6 +7713,16 @@
             "jsonpatch"
           ],
           "span": {
+            "end": 496,
+            "start": 400
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
             "end": 725,
             "start": 501
           },
@@ -7899,6 +7877,16 @@
             "jsonpatch"
           ],
           "span": {
+            "end": 830,
+            "start": 730
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
             "end": 2031,
             "start": 1869
           },
@@ -7997,6 +7985,50 @@
             "path": "service",
             "type": "with"
           }
+        ],
+        [
+          {
+            "path": "service.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "service.patch",
+            "type": "truthy"
+          },
+          {
+            "path": "service.patch.*.value",
+            "type": "absent"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "service.patch.*.op",
+                  "type": "eq",
+                  "value": "add"
+                }
+              ],
+              [
+                {
+                  "path": "service.patch.*.op",
+                  "type": "eq",
+                  "value": "replace"
+                }
+              ],
+              [
+                {
+                  "path": "service.patch.*.op",
+                  "type": "eq",
+                  "value": "test"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "path": "service",
+            "type": "with"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -8011,6 +8043,16 @@
             "start": 8496
           },
           "template_path": "<inline:0>"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
+            "end": 1042,
+            "start": 835
+          },
+          "template_path": "<inline:1>"
         },
         {
           "helper_chain": [

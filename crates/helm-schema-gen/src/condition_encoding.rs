@@ -308,12 +308,30 @@ fn build_single_condition_fragment(
                 ),
             )
         }
-        ConditionalGuard::Not(inner) => Some(SchemaNode::not(build_single_condition_fragment(
-            inner,
-            ancestor_segments,
-            values_yaml_doc,
-            subchart_defaults_doc,
-        )?)),
+        ConditionalGuard::Not(inner) => {
+            let negated = SchemaNode::not(build_single_condition_fragment(
+                inner,
+                ancestor_segments,
+                values_yaml_doc,
+                subchart_defaults_doc,
+            )?);
+            // A negated MEMBER-quantified guard admits a second exact arm:
+            // beside "not every member satisfies it" (which is vacuously
+            // FALSE on an empty or absent collection), "every member
+            // violates it" holds vacuously TRUE there. Both arms fire only
+            // on states where some iteration escapes the guard, so the
+            // disjunction stays inside the if-position discipline — an arm
+            // firing on fewer states than the real per-member condition is
+            // safe — while covering airflow's default empty
+            // `workers.celery.sets`, whose per-set merge leaves every
+            // deeper layer unshadowed.
+            if ancestor_segments.is_empty()
+                && let Some(quantified) = negated_member_guard_fragment(inner)
+            {
+                return Some(SchemaNode::any_of(vec![negated, quantified]));
+            }
+            Some(negated)
+        }
         ConditionalGuard::AllOf(guards) => {
             let clauses = build_condition_clauses(
                 guards,
@@ -718,6 +736,41 @@ pub(crate) fn helm_truthy_definition_schema() -> Value {
         SchemaNode::object().min_properties(1),
     ])
     .into_value()
+}
+
+/// The "every member VIOLATES the guard" fragment of a member-quantified
+/// leaf guard (`Truthy`/`With`/`HasKey` at a `parent.*.suffix` path):
+/// the chain above the star carries no presence requirement — an absent
+/// or empty collection satisfies the universal vacuously — while each
+/// member's suffix keeps the positive fragment's requirements under the
+/// negation, so a member that satisfies the guard falsifies the whole
+/// fragment. `None` for guards outside the supported leaves or without a
+/// member wildcard.
+fn negated_member_guard_fragment(guard: &ConditionalGuard) -> Option<SchemaNode> {
+    let (path, leaf) = match guard {
+        ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
+            (path, helm_truthy_condition_schema())
+        }
+        ConditionalGuard::HasKey { path, key } => (path, SchemaNode::object().require(key.clone())),
+        _ => return None,
+    };
+    let segments = split_value_path(path);
+    let star = segments.iter().position(|segment| segment == "*")?;
+    let suffix = &segments[star + 1..];
+    let member_positive = if suffix.is_empty() {
+        leaf
+    } else {
+        build_required_condition_fragment(suffix, leaf)?
+    };
+    let member = SchemaNode::not(member_positive).into_value();
+    let mut fragment = SchemaNode::foreign(serde_json::json!({
+        "additionalProperties": member,
+        "items": member,
+    }));
+    for segment in segments[..star].iter().rev() {
+        fragment = SchemaNode::object().property(segment.clone(), fragment);
+    }
+    Some(fragment)
 }
 
 fn build_required_condition_fragment(

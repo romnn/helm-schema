@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use helm_schema_ast::TemplateExpr;
+use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::{AbstractValue, path_is_encoded};
 use crate::eval_effect::{Effects, EvalResult};
@@ -760,8 +760,10 @@ pub(super) fn eval_trim_affix_pipeline(
 /// `regexReplaceAll REGEX SUBJECT REPLACEMENT` (and its literal/must
 /// variants): when the pattern carries a mandatory literal, the call is the
 /// identity on subjects not containing it, so a raw-identity subject keeps
-/// its path qualified by that literal as a lexical escape (cilium's
-/// `regexReplaceAll "@.*$" tag ""` digest strip).
+/// its path qualified by that literal as a lexical escape. The
+/// `TOKEN.*$`-with-empty-replacement shape is the exact cut-at-token
+/// erasure (cilium's `regexReplaceAll "@.*$" tag ""` digest strip); other
+/// patterns keep the contains-token exemption.
 pub(super) fn eval_regex_replace(
     function: &str,
     args: &[TemplateExpr],
@@ -777,14 +779,27 @@ pub(super) fn eval_regex_replace(
     let mut effects = subject.effects;
     let (string_paths, raw_range_key_paths) =
         super::strict_operands::string_call_operand_facts(function, args, env, resolver);
-    let token = value_strings(&pattern.value)
+    let pattern_strings = value_strings(&pattern.value);
+    let escape = pattern_strings
         .iter()
         .next()
-        .filter(|_| value_strings(&pattern.value).len() == 1)
-        .and_then(|pattern| super::value_facts::regex_mandatory_literal(pattern));
-    if let Some(token) = token
+        .filter(|_| pattern_strings.len() == 1)
+        .and_then(|pattern| {
+            let token = super::value_facts::regex_mandatory_literal(pattern)?;
+            let erases_to_empty = matches!(
+                args[2].deparen(),
+                TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text))
+                    if text.is_empty()
+            );
+            if erases_to_empty && pattern.strip_prefix(token.as_str()) == Some(".*$") {
+                Some(crate::helper_meta::LexicalEscape::CutAtToken(token))
+            } else {
+                Some(crate::helper_meta::LexicalEscape::Contains(token))
+            }
+        });
+    if let Some(escape) = escape
         && let Some(value) = subject.value.as_ref().and_then(|value| {
-            super::value_facts::regex_replace_transformed_value(value, &subject_effects, &token)
+            super::value_facts::regex_replace_transformed_value(value, &subject_effects, &escape)
         })
     {
         super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);

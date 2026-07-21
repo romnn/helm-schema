@@ -2435,3 +2435,115 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
         );
     }
 }
+
+/// A per-op requirement fail over a DIRECT range (`and (or (eq .op …))
+/// (not (hasKey . "from"))` → fail) negates to the exact per-member
+/// disjunction: complete patches of the gated ops render while a gated op
+/// missing its companion key aborts (the nats jsonpatch engine's
+/// `copy`/`move`-without-`from` shape).
+#[test]
+fn per_op_requirement_binds_in_a_direct_range() {
+    let src = indoc! {r#"
+        {{- range $patch := .Values.service.patch }}
+        {{- if and (or (eq $patch.op "copy") (eq $patch.op "move")) (not (hasKey $patch "from")) }}
+        {{- fail "missing from" }}
+        {{- end }}
+        {{- end }}
+        config:
+          ok: true
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("service:\n  patch: []\n"));
+    for (item, want, label) in [
+        (
+            serde_json::json!({ "op": "copy", "from": "/x" }),
+            true,
+            "copy with from",
+        ),
+        (
+            serde_json::json!({ "op": "add" }),
+            true,
+            "add needs no from",
+        ),
+        (
+            serde_json::json!({ "op": "copy" }),
+            false,
+            "copy without from",
+        ),
+        (
+            serde_json::json!({ "op": "move" }),
+            false,
+            "move without from",
+        ),
+    ] {
+        let instance = serde_json::json!({ "service": { "patch": [item] } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "per-op requirement direct range ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The same per-op requirement binds through the helper JSON roundtrip
+/// (`$params := fromJson (toJson .)` + `range $params.patch`): the
+/// roundtripped member keeps its identity, so the `hasKey` conjuncts
+/// decode instead of poisoning the capture with approximates — the
+/// helper's call-dict `patch` field must not shadow the range variable of
+/// the same name.
+#[test]
+fn per_op_requirement_binds_through_the_helper_roundtrip() {
+    let helpers = indoc! {r#"
+        {{- define "repro.jsonpatch" -}}
+        {{- $params := fromJson (toJson .) -}}
+        {{- $patches := $params.patch -}}
+        {{- $docContainer := pick $params "doc" -}}
+        {{- range $patch := $patches -}}
+        {{- if not (hasKey $patch "op") -}}{{- fail "missing op" -}}{{- end -}}
+        {{- if and (or (eq $patch.op "copy") (eq $patch.op "move")) (not (hasKey $patch "from")) -}}
+        {{- fail "missing from" -}}
+        {{- end -}}
+        {{- end -}}
+        {{- toJson $docContainer -}}
+        {{- end -}}
+
+        {{- define "repro.load" -}}
+        {{- $doc := dict -}}
+        {{- get (include "repro.jsonpatch" (dict "doc" $doc "patch" (.patch | default list)) | fromJson ) "doc" | toYaml -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cm
+        data:
+          out: {{ include "repro.load" (dict "patch" .Values.service.patch) | quote }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("service:\n  patch: []\n"),
+    );
+    for (item, want, label) in [
+        (
+            serde_json::json!({ "op": "copy", "from": "/x" }),
+            true,
+            "copy with from",
+        ),
+        (
+            serde_json::json!({ "op": "add" }),
+            true,
+            "add needs no from",
+        ),
+        (serde_json::json!({ "path": "/x" }), false, "missing op"),
+        (
+            serde_json::json!({ "op": "copy" }),
+            false,
+            "copy without from",
+        ),
+    ] {
+        let instance = serde_json::json!({ "service": { "patch": [item] } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "per-op requirement helper roundtrip ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}

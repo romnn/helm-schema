@@ -534,6 +534,93 @@ fn output_meta_comparison_preserves_typed_predicates() {
     );
 }
 
+/// A binding defaulted from a literal (`$mode := .Values.x | default
+/// "skipIfMissing"`) compares exactly: against the fallback literal the
+/// falsy states also satisfy the equality, and against any other literal
+/// the falsy states certainly satisfy the negation (external-secrets'
+/// deleted `renderMode` selects the default arm, not the invalid-mode
+/// `fail`).
+#[test]
+fn defaulted_binding_comparison_carries_the_fallback_arm() {
+    let path = "serviceMonitor.renderMode";
+    let context = || {
+        let mut meta = HelperOutputMeta::default();
+        meta.predicates
+            .insert(std::collections::BTreeSet::from([Predicate::truthy_path(
+                path.to_string(),
+            )]));
+        meta.default_fallback = Some(GuardValue::string("skipIfMissing"));
+        condition_context_with_output_meta(
+            HashMap::from([(
+                "mode".to_string(),
+                AbstractValue::ValuesPath(path.to_string()),
+            )]),
+            HashMap::from([(
+                "mode".to_string(),
+                BTreeMap::from([(path.to_string(), meta)]),
+            )]),
+        )
+    };
+    let parse = |text: &str| {
+        let wrapped = format!("{{{{ {text} }}}}");
+        parse_action_expressions(&wrapped)
+            .into_iter()
+            .next()
+            .expect("condition expression")
+    };
+    let truthy = Predicate::truthy_path(path.to_string());
+
+    sim_assert_eq!(
+        have: context().condition_predicate_expr(&parse(r#"eq $mode "skipIfMissing""#)),
+        want: Predicate::Or(vec![
+            Predicate::And(vec![
+                truthy.clone(),
+                Predicate::from(Guard::Eq {
+                    path: path.to_string(),
+                    value: GuardValue::string("skipIfMissing"),
+                }),
+            ]),
+            truthy.negated(),
+        ]),
+    );
+
+    sim_assert_eq!(
+        have: context().condition_predicate_expr(&parse(r#"eq $mode "alwaysRender""#)),
+        want: Predicate::And(vec![
+            truthy.clone(),
+            Predicate::from(Guard::Eq {
+                path: path.to_string(),
+                value: GuardValue::string("alwaysRender"),
+            }),
+        ]),
+    );
+
+    sim_assert_eq!(
+        have: context().condition_predicate_expr(&parse(r#"ne $mode "alwaysRender""#)),
+        want: Predicate::Or(vec![
+            Predicate::And(vec![
+                truthy.clone(),
+                Predicate::from(Guard::NotEq {
+                    path: path.to_string(),
+                    value: GuardValue::string("alwaysRender"),
+                }),
+            ]),
+            truthy.negated(),
+        ]),
+    );
+
+    sim_assert_eq!(
+        have: context().condition_predicate_expr(&parse(r#"ne $mode "skipIfMissing""#)),
+        want: Predicate::And(vec![
+            truthy.clone(),
+            Predicate::from(Guard::NotEq {
+                path: path.to_string(),
+                value: GuardValue::string("skipIfMissing"),
+            }),
+        ]),
+    );
+}
+
 #[test]
 fn alias_or_predicate_projects_to_path_disjunction() {
     let aliases = HashMap::from([(
