@@ -8554,3 +8554,98 @@ and fourteen corpus schemas (the nats fixtures from the twenty-second
 round regenerate byte-identical — the intermediate drift resolved back
 under the final identity gates). The luup2 `check:local` downstream gate
 passes with the installed binary.
+
+## Selection-chain round (2026-07-21, twenty-fourth round)
+
+Closes the remaining open note: the kyverno `global.imagePullSecrets`
+truthy-scalar widening — the `with A | default B` dot ranged by
+`kyverno.sortedImagePullSecrets` needed candidate-selection provenance
+the unordered `Choice` loses.
+
+### Provenance carrier
+
+`eval_default` now builds `AbstractValue::FirstTruthy(Vec<_>)`: ordered
+candidates, first Helm-truthy selected, the last returned verbatim when
+none is (nested chains flatten; all-equal chains collapse). The variant
+behaves exactly like `Choice` at every existing consumer — mirror arms
+across the value model, expression evaluators, lowering, and summaries —
+under one parity rule: shape-preserving per-candidate transforms keep the
+chain, candidate-dropping transforms and member projections degrade back
+to `Choice` so no stale ordering claim survives a transform that could
+change selection. The twenty-third round's failed in-value
+selection-meta wrap perturbed sibling lanes precisely because it changed
+what existing consumers saw; the new variant is invisible to them
+(one interim parity break — the escape-qualified replace/split chain
+fell into an identity fallback — surfaced immediately as a gen test
+failure and got its mirror arms).
+
+### Per-candidate claims
+
+A range whose iterable resolves to a chain of RAW path identities (the
+bare helper dot through the include boundary, a variable binding, or the
+direct pipeline expr) records one `CaptureKind::RangeSelection` fail
+capture per candidate: `truthy(A) ⇒ iterable(A)`, `¬truthy(A) ∧
+truthy(B) ⇒ iterable(B)`. The own-truthiness conjunct keeps the last
+candidate sound for `default` and `coalesce` tails alike (a falsy
+`default` fallback that would abort stays accepted — the widening
+direction), and the prior negations keep a truthy scalar beside a
+selected collection accepted. The claims ride the fail-capture lane: a
+read row's strictly-narrower condition is absorbed into the co-sited
+with-header read by `union_absorbing` at canonicalization, so the read
+lane structurally cannot carry them.
+
+### Condition exactness
+
+Two companions keep the claims lowerable and sound. First, chain
+truthiness decodes exactly: `first_truthy_truthy_predicate` yields the
+disjunction of candidate truthiness (raw identities plus
+statically-decided literal tails), replacing the generic all-paths
+conjunction that could never co-hold with the selection's own
+negations. Second, the disjunctive with-header's marker stamp
+(`with_context_predicates` emits a conjunctive `With` marker per path
+beside the real `Or`) is handled at both lowering surfaces: the
+RangeSelection lowering strips markers over its own chain paths
+(kind-scoped, so genuine enclosing conditions survive), and rows
+carrying the stamp — two or more markers whose paths one `Or`/`AnyOf`
+conjunct covers — abstain from range-requirement lowering
+(`has_selection_chain_marker_stamp`). The abstention is what the full
+kyverno chart demanded: its reports-server→postgresql dependency
+direct-ranges `global.imagePullSecrets` (bitnami `common.images`), and
+with the path direct chart-wide, a stamped accumulator-guard row lowered
+into a both-candidates-truthy implication that rejected exactly the
+selected-list-beside-truthy-scalar states helm renders. The abstention
+is scoped to requirement lowering; marker-stamped overlay keys keep
+their pre-existing conjunctive encoding.
+
+### Adjudication
+
+Nine corpus charts re-encode; every flip helm-adjudicated. kyverno:
+`global.imagePullSecrets` junk/bool tighten (the target; helm aborts),
+per-controller empty string/map widenings remove false rejections (helm
+renders through the with-skip), integer spellings ride the F38/F72/F95
+input-channel policy, and the all-lists-beside-truthy-scalar state stays
+accepted (helm renders the main templates; the test-template abort is
+outside the excluded-tests analysis scope). bitnami postgresql/redis:
+`storageClass`/`defaultStorageClass` int/bool tighten (helm aborts).
+keda `image.keda.registry` int/bool widenings remove false rejections
+(helm renders). external-secrets/argo-cd `topologySpreadConstraints`
+integer widenings ride the input-channel policy; argo-cd
+`commitServer.topologySpreadConstraints` junk renders while the
+component is dormant (false rejection removed). argo-cd
+`configs.params.create`/member typing is the F80/F12 declared-default
+policy newly reachable through the exact chain-truthiness decode (the
+old build emits the identical typing once its guard set decodes —
+verified against the previous binary on a minimal chart). falco and
+airflow re-encode with zero flips. KPS keeps one residual:
+`defaultRules.runbookUrl: []` re-widened by a single probe state (helm
+aborts on the composed `runbook_url` splice; accept-direction loss from
+the re-encoded conditions). datadog's corpus schema is unchanged (the
+real chart abstains at its own fanout) while the gen reproducer pins the
+sharpened variable-binding lane.
+
+### Validation
+
+`task test` green (1385 tests, including the nine regenerated corpus
+fixtures, the two new selection-chain gen reproducers, the sharpened
+datadog reproducer, and the kyverno CLI pin battery). The luup2
+`check:local` downstream gate passes with the installed binary.

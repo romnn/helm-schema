@@ -1,40 +1,49 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-21 after the zookeeper-capture round
-(twenty-third round), which closed the remaining open note: the F32
-signoz `global.imagePullSecrets` re-widening. Notable mechanisms: a
-helper-scope range header's READ carries `Guard::Range` when the range
-iterates the path's IDENTITY (selector-direct, identity-bound variable,
-or identity bare dot), so the iterable claim survives shared-accumulator
-joins that bury rendered rows' range conjuncts inside `any_of`
-alternatives (bitnami's `common.images.pullSecrets`); the identity
-discipline gates the claim exactly — fallback-selected bindings
-(`$crs := X | default list`) and bare dots over derived collections
-(kyverno's labels-merge list) keep bare reads; nested subcharts carry
-their FULL dependency-activation chain (ancestor-first
-`ChartContext::dependency_activation_chain`, guard sets composed as the
-per-level cross product), and the member-access fold factors
-complementary `Truthy(p) ∨ Absent(p)` activation pairs back out so the
-product cannot cross the fanout cap on clone count alone (the cap flip
-previously leaked an unconditional host typing past a dormant nested
-chain). signoz now matches helm exactly on `global.imagePullSecrets` in
-both states (every scalar — falsy included — rejects while the
-clickhouse→zookeeper chain is live; falsy scalars render with clickhouse
-off while truthy scalars still abort through the parent's own guarded
-range). Helm-verified collateral: KPS `grafana.sidecar.dashboards` and
-prometheus `alertmanager.persistence` scalars/lists now reject
-exactly-when-live, and the jaeger `spark.image`, kyverno
-`resourceFilters*: {}`, and signoz `clickhouseOperator.logger`
-false rejections are gone. The remaining open note is the kyverno
-`global.imagePullSecrets` truthy-scalar widening: its old rejection rode
-the mis-scoped nested-postgresql arm the activation chain now correctly
-gates, and the real consumer (`kyverno.sortedImagePullSecrets`, a bare
-`range .` over a `with A | default B` dot) needs candidate-selection
-provenance on choice values to decode — the ordering the unordered
-`Choice` set loses today. The coalesced-document doctrine stands
-unchanged: the generated schema validates the COALESCED values document,
-absence semantics follow the parent-declared/dependency-owned ownership
-rule, and every pin composes its override over the chart defaults
+Last reconciled 2026-07-21 after the selection-chain round
+(twenty-fourth round), which closed the remaining open note: the kyverno
+`global.imagePullSecrets` truthy-scalar widening. Notable mechanisms:
+`default` chains now carry candidate-selection provenance in the value
+itself — `AbstractValue::FirstTruthy(Vec<_>)`, the ordered first-truthy
+selection that behaves exactly like the unordered `Choice` at every
+existing consumer (candidate-dropping transforms degrade back to the
+choice so no stale ordering claim survives) — and a range over a
+selection chain of raw path identities claims per-candidate iterable
+domains on the fail-capture lane (`CaptureKind::RangeSelection`):
+`truthy(A) ⇒ iterable(A)` and `¬truthy(A) ∧ truthy(B) ⇒ iterable(B)`,
+never the self-truthy approximation that would reject a truthy scalar
+beside a selected collection. Two condition-exactness companions keep
+the claims lowerable and sound: the truthiness of a chain value decodes
+to the exact disjunction of its candidates' truthiness (the old
+all-paths conjunction could never co-hold with the chain's own `¬truthy`
+selection conjuncts), and the disjunctive with-header's conjunctive
+`With`-marker stamp is stripped kind-scoped at capture lowering while
+marker-stamped ROWS abstain from range-requirement lowering entirely
+(the kyverno reports-server→postgresql dependency direct-ranges
+`global.imagePullSecrets`, which would otherwise un-poison a stamped row
+into a both-candidates-truthy implication — rejecting exactly the
+selected-list-beside-truthy-scalar states helm renders). kyverno now
+rejects truthy scalars at `global.imagePullSecrets` and every
+per-controller `imagePullSecrets` exactly-when-selected, accepts falsy
+spellings (empty string/map render through the with-skip), and keeps a
+truthy scalar global beside selected lists everywhere accepted — all
+helm-verified. Helm-verified collateral: datadog's
+`orchestratorExplorer.customResources` truthy scalars now reject at the
+gen lane, bitnami postgresql/redis `storageClass` int/bool spellings
+reject (helm aborts), keda `image.keda.registry` int/bool false
+rejections are gone, argo-cd `commitServer.topologySpreadConstraints`
+junk renders while dormant, and argo-cd `configs.params` members gained
+their declared-default typing (the F80/F12 policy lane, newly reachable
+through the exact chain-truthiness decode). Bounded residuals: integer
+spellings of ranged slots stay accepted under the documented
+F38/F72/F95 input-channel policy (now also visible at
+topologySpreadConstraints and pull-secret slots), and KPS
+`defaultRules.runbookUrl: []` re-widened by one probe state (an
+accept-direction re-encoding loss; helm aborts on the composed
+`runbook_url` splice). The coalesced-document doctrine stands unchanged:
+the generated schema validates the COALESCED values document, absence
+semantics follow the parent-declared/dependency-owned ownership rule,
+and every pin composes its override over the chart defaults
 (`chart_instances::with_override`). Green corpus tests are a baseline,
 not completion evidence. The F80 quantifier corners stay documented
 bounds.
@@ -1051,20 +1060,63 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   (`shared_accumulator_helper_ranges_bind_each_source_iterable_domain`,
   `fallback_selected_bindings_leave_the_source_unranged`,
   `bare_dot_ranges_over_derived_lists_leave_influences_open`).
-  REMAINING (documented residual): kyverno's `global.imagePullSecrets`
-  truthy scalars re-widened — the old rejection rode the mis-scoped
-  nested-postgresql arm this round's activation chain correctly gates,
-  and the live consumer (`kyverno.sortedImagePullSecrets`, a bare
-  `range .` over a `with A | default B` dot) needs candidate-selection
-  provenance on choice values to decode: the unordered `Choice` set
-  loses which candidate the default picked, and the sound per-candidate
-  claim (`truthy(A) ⇒ Range(A)`; `¬truthy(A) ∧ truthy(B) ⇒ Range(B)`)
-  must not ride the self-truthy approximation (a truthy scalar B beside
-  a selected list A would falsely reject). Integer spellings of ranged
-  slots stay accepted under the documented F38/F72/F95 input-channel
-  policy, and the zookeeper `metrics` live tightening abstains at the
-  chart's real fanout (the cap keeps the guarded arm out; the dormant
-  state stays open either way).
+  The kyverno `global.imagePullSecrets` remainder (formerly noted here)
+  closed in the twenty-fourth round — see its own entry below. Integer
+  spellings of ranged slots stay accepted under the documented
+  F38/F72/F95 input-channel policy, and the zookeeper `metrics` live
+  tightening abstains at the chart's real fanout (the cap keeps the
+  guarded arm out; the dormant state stays open either way).
+- **F32 kyverno selection chains (twenty-fourth round; closes the
+  remaining open note).** `default` chains keep candidate-selection
+  provenance in the VALUE: `eval_default` builds
+  `AbstractValue::FirstTruthy(Vec<_>)` — ordered candidates, first
+  Helm-truthy selected, the last returned verbatim when none is — which
+  behaves exactly like the unordered `Choice` at every existing consumer
+  (mirror arms throughout; candidate-dropping transforms and member
+  projections degrade back to `Choice` so no stale ordering claim
+  survives a transform that could change selection). A range whose
+  iterable resolves to a chain of RAW path identities (`with A |
+  default B` dots through the helper-call boundary, `range $x` bindings,
+  direct `range (A | default B)`) records per-candidate
+  `CaptureKind::RangeSelection` fail captures: `truthy(A) ⇒
+  iterable(A)`, `¬truthy(A) ∧ truthy(B) ⇒ iterable(B)` — the
+  own-truthiness conjunct keeps the last candidate sound for both
+  `default` and `coalesce`-style tails (a falsy `default` fallback that
+  would abort stays accepted: the widening direction), and the claims
+  ride the capture lane because a read row's strictly-narrower condition
+  is absorbed into the co-sited with-header read at canonicalization.
+  Companions: (a) chain truthiness decodes EXACTLY as the disjunction of
+  candidate truthiness (`first_truthy_truthy_predicate`) — the generic
+  all-paths conjunction could never co-hold with the selection's own
+  negations; (b) the with-header's conjunctive `With`-marker stamp for a
+  disjunctive chain header is stripped kind-scoped at RangeSelection
+  lowering, and rows carrying the stamp (2+ markers whose paths one
+  `Or`/`AnyOf` conjunct covers) abstain from range-REQUIREMENT lowering
+  (`has_selection_chain_marker_stamp`): kyverno's
+  reports-server→postgresql dependency direct-ranges
+  `global.imagePullSecrets` chart-wide, and a stamped row would
+  otherwise lower into a both-candidates-truthy implication that rejects
+  exactly the selected-list-beside-truthy-scalar states helm renders.
+  kyverno matches helm on every adjudicated state: truthy
+  scalars/booleans reject at `global.imagePullSecrets` and at each
+  controller's `imagePullSecrets` exactly-when-selected, empty
+  string/map render through the with-skip, and a truthy scalar global
+  beside selected lists everywhere stays accepted. Collateral
+  (helm-verified): datadog `customResources` truthy scalars reject at
+  the gen lane (the real chart abstains at its own fanout), bitnami
+  postgresql/redis `storageClass` int/bool reject, keda
+  `image.keda.registry` int/bool false rejections are gone, argo-cd
+  `commitServer.topologySpreadConstraints` junk renders while dormant,
+  and argo-cd `configs.params` members gained declared-default typing
+  (F80/F12 policy, newly reachable). Pinned by
+  `kyverno_image_pull_secret_chains_bind_per_candidate_iterables` (CLI),
+  `selection_chain_dots_bind_per_candidate_iterable_domains`,
+  `inline_selection_chain_ranges_bind_per_candidate_iterable_domains`,
+  the sharpened `fallback_selected_bindings_leave_the_source_unranged`,
+  and nine regenerated corpus fixtures. Bounded residuals: F38/F72/F95
+  integer spellings stay accepted on the newly-claimed slots, and KPS
+  `defaultRules.runbookUrl: []` re-widened by one probe state (helm
+  aborts on the composed splice; accept-direction re-encoding loss).
 - **F74 residual — parser exactness and transformed comparisons (bounded;
   seventeenth round).** (a) The `urlParse` operand pattern is now Go
   `url.Parse`'s accepted language, differential-verified against ~900k
