@@ -1,36 +1,43 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-21 after the open-items round (twenty-second
-round), which closed the four items the twenty-first round left: the F32
-defaulted-comparison residual, the F74 transformed-semver bound, the F108
-per-op requirement bound, and the F80 reroot chain. Notable mechanisms: a
-defaulted binding carries its literal fallback
-(`HelperOutputMeta::default_fallback`), so `eq $mode FALLBACK` decodes
-the exact `eq ∨ ¬truthy` arm (external-secrets' deleted `renderMode`
-selects the default arm instead of the invalid-mode `fail`); lexical
-escapes gained the `CutAtToken` erasure (`regexReplaceAll "TOK.*$" X ""`)
-and one-escape-per-edge sets compose exactly, which also lets
-`semverCompare` bounds project through cilium's digest-strip/v-trim
-pipeline as fail-position sound subsets; helper-dict root fields no
-longer shadow same-named range variables and JSON-roundtripped member
-identities decode `hasKey`, which binds the nats jsonpatch per-op
-`value`/`from` requirements; and the airflow reroot chain landed in four
-pieces — the scrub marker survives on the set-free merge operand, nested
-`MergedLayers` flatten in precedence order for identity extraction, a
-choice layer's constant-False `hasKey` alternatives drop as OR
-identities, and negated member-quantified guards encode the
-`anyOf[¬∀, ∀¬]` pair so empty per-set collections leave deeper layers
-unshadowed. Rerouted layer arms whose unlowerable conditions HARD-NEGATE
-foreign-family selections keep the pre-layered routing (airflow's
-deprecated `securityContext` fallback stays open behind a live
-`securityContexts.pod`). The coalesced-document doctrine stands
+Last reconciled 2026-07-21 after the zookeeper-capture round
+(twenty-third round), which closed the remaining open note: the F32
+signoz `global.imagePullSecrets` re-widening. Notable mechanisms: a
+helper-scope range header's READ carries `Guard::Range` when the range
+iterates the path's IDENTITY (selector-direct, identity-bound variable,
+or identity bare dot), so the iterable claim survives shared-accumulator
+joins that bury rendered rows' range conjuncts inside `any_of`
+alternatives (bitnami's `common.images.pullSecrets`); the identity
+discipline gates the claim exactly — fallback-selected bindings
+(`$crs := X | default list`) and bare dots over derived collections
+(kyverno's labels-merge list) keep bare reads; nested subcharts carry
+their FULL dependency-activation chain (ancestor-first
+`ChartContext::dependency_activation_chain`, guard sets composed as the
+per-level cross product), and the member-access fold factors
+complementary `Truthy(p) ∨ Absent(p)` activation pairs back out so the
+product cannot cross the fanout cap on clone count alone (the cap flip
+previously leaked an unconditional host typing past a dormant nested
+chain). signoz now matches helm exactly on `global.imagePullSecrets` in
+both states (every scalar — falsy included — rejects while the
+clickhouse→zookeeper chain is live; falsy scalars render with clickhouse
+off while truthy scalars still abort through the parent's own guarded
+range). Helm-verified collateral: KPS `grafana.sidecar.dashboards` and
+prometheus `alertmanager.persistence` scalars/lists now reject
+exactly-when-live, and the jaeger `spark.image`, kyverno
+`resourceFilters*: {}`, and signoz `clickhouseOperator.logger`
+false rejections are gone. The remaining open note is the kyverno
+`global.imagePullSecrets` truthy-scalar widening: its old rejection rode
+the mis-scoped nested-postgresql arm the activation chain now correctly
+gates, and the real consumer (`kyverno.sortedImagePullSecrets`, a bare
+`range .` over a `with A | default B` dot) needs candidate-selection
+provenance on choice values to decode — the ordering the unordered
+`Choice` set loses today. The coalesced-document doctrine stands
 unchanged: the generated schema validates the COALESCED values document,
 absence semantics follow the parent-declared/dependency-owned ownership
 rule, and every pin composes its override over the chart defaults
-(`chart_instances::with_override`). The remaining open note is the F32
-signoz `global.imagePullSecrets` re-widening (needs its own
-zookeeper-side capture); the F80 quantifier corners are documented
-bounds. Green corpus tests are a baseline, not completion evidence.
+(`chart_instances::with_override`). Green corpus tests are a baseline,
+not completion evidence. The F80 quantifier corners stay documented
+bounds.
 Where a finding has both a completed bounded part and a remainder, the
 completed part is listed below with a "(bounded)" marker and the residual is
 classified separately. Per-finding history lives in
@@ -1003,11 +1010,61 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   (helm-verified both ways; pinned by
   `defaulted_binding_comparison_carries_the_fallback_arm` and
   `external_secrets_deleted_render_mode_selects_the_default_literal_arm`).
-  REMAINING (separate note): signoz's `global.imagePullSecrets` scalar
-  rejections (a nineteenth-round F30 win) re-widened — their arm's
-  condition rode an `Absent(signoz-otel-gateway.postgresql.enabled)`
-  disjunct that the subchart-default semantics correctly narrowed; the
-  zookeeper-side abort needs its own capture to reject again.
+  The signoz `global.imagePullSecrets` re-widening (formerly noted here)
+  closed in the twenty-third round — see its own entry below.
+- **F32 signoz zookeeper capture (twenty-third round; closes the
+  re-widening note).** The zookeeper-side abort has its own capture: a
+  helper-scope range header's READ carries `Guard::Range` whenever the
+  range iterates the path's IDENTITY — a resolved selector
+  (`range .global.imagePullSecrets` through the call-dict field), an
+  identity-bound variable, or an identity bare dot — so the iterable
+  claim survives the shared-accumulator join that buries the rendered
+  rows' range conjuncts inside `any_of` alternatives (bitnami's
+  `common.images.pullSecrets` appends both the global and per-image
+  loops into one `$pullSecrets`). The identity discipline bounds the
+  claim exactly: a fallback-selected binding (`$crs := X | default
+  list`) iterates the FALLBACK on Helm-falsy inputs (datadog's
+  orchestrator custom resources keep `""` accepted), and a bare dot over
+  a derived collection (kyverno's labels-merge `list ... (toYaml
+  .Values.customLabels)`) iterates the derivation — neither marks the
+  influencing path ranged (the bare-dot mark previously mis-fired
+  pre-round too). The scoping half: a nested subchart carries its FULL
+  activation chain (`ChartContext::dependency_activation_chain`,
+  ancestor-first; guard sets composed as the per-level cross product),
+  and `record_member_access_implications` factors complementary
+  `Truthy(p) ∨ Absent(p)` activation pairs back out
+  (`factor_guard_sets`) so the clone product cannot cross the
+  member-access fanout cap — the cap flip previously dropped the
+  guarded-only arm AND leaked the declared-shape host typing
+  unconditionally past a dormant nested chain (zookeeper's
+  `metrics: junk` under `clickhouse.enabled: false` must render).
+  signoz matches helm exactly in both states; KPS
+  `grafana.sidecar.dashboards` and prometheus `alertmanager.persistence`
+  scalars/lists reject exactly-when-live as collateral, and the jaeger
+  `spark.image`, kyverno `resourceFilters*: {}`, and signoz
+  `clickhouseOperator.logger` false rejections are gone (all
+  helm-verified). Pinned by the extended
+  `signoz_signoz_schema_semantics_hold` (falsy-scalar rejections, both
+  dormant escapes),
+  `nested_dependency_activation_carries_the_ancestor_conditions`, the
+  chain-shape discovery test, and the three gen reproducers
+  (`shared_accumulator_helper_ranges_bind_each_source_iterable_domain`,
+  `fallback_selected_bindings_leave_the_source_unranged`,
+  `bare_dot_ranges_over_derived_lists_leave_influences_open`).
+  REMAINING (documented residual): kyverno's `global.imagePullSecrets`
+  truthy scalars re-widened — the old rejection rode the mis-scoped
+  nested-postgresql arm this round's activation chain correctly gates,
+  and the live consumer (`kyverno.sortedImagePullSecrets`, a bare
+  `range .` over a `with A | default B` dot) needs candidate-selection
+  provenance on choice values to decode: the unordered `Choice` set
+  loses which candidate the default picked, and the sound per-candidate
+  claim (`truthy(A) ⇒ Range(A)`; `¬truthy(A) ∧ truthy(B) ⇒ Range(B)`)
+  must not ride the self-truthy approximation (a truthy scalar B beside
+  a selected list A would falsely reject). Integer spellings of ranged
+  slots stay accepted under the documented F38/F72/F95 input-channel
+  policy, and the zookeeper `metrics` live tightening abstains at the
+  chart's real fanout (the cap keeps the guarded arm out; the dormant
+  state stays open either way).
 - **F74 residual — parser exactness and transformed comparisons (bounded;
   seventeenth round).** (a) The `urlParse` operand pattern is now Go
   `url.Parse`'s accepted language, differential-verified against ~900k

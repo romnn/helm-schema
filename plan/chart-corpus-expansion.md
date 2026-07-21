@@ -8465,3 +8465,92 @@ kube-prometheus-stack, kyverno, nats — the grafana/datadog/KPS churn is
 the new `anyOf[¬∀, ∀¬]` encoding and edge-composed escape patterns
 applied to their existing arms). The luup2 `check:local` downstream
 gate passes with the installed binary.
+
+## Zookeeper-capture round (2026-07-21, twenty-third round)
+
+Closed the remaining open note: the F32 signoz `global.imagePullSecrets`
+re-widening. The chart-level truth: bitnami's `common.images.pullSecrets`
+ranges `.global.imagePullSecrets` behind `if .global` with NO truthiness
+guard on the secrets themselves, so EVERY scalar spelling — falsy
+included — aborts `helm template` while signoz's default
+clickhouse→zookeeper chain is active, and the parent's own
+`signoz.imagePullSecrets` (or-guarded) keeps only truthy scalars fatal
+once clickhouse is off.
+
+### The capture half: identity range headers carry the guard (landed)
+
+The old evaluator dropped `Guard::Range` from helper-scope
+non-destructured range-header READS (a leftover of the pre-single-
+interpreter summary lane), so the iterable claim survived only on
+rendered rows — and `common.images.pullSecrets` joins the global and
+per-image loops into one `$pullSecrets` accumulator, burying those rows'
+range conjuncts inside `any_of` alternatives. The read now carries the
+guard exactly when the range iterates the path's IDENTITY:
+
+- a resolved selector (`range .global.imagePullSecrets` through the
+  call-dict field, F92 provenance),
+- a variable bound to a pure identity (`ValuesPath`/`JsonDecodedPath`/
+  `OutputPath` — NOT a fallback-selected `Choice`), or
+- a bare dot whose value IS the path.
+
+The identity discipline is load-bearing in both directions: a
+fallback-selected binding (`$crs := .Values.x | default list`) iterates
+the FALLBACK on Helm-falsy inputs, so datadog's orchestrator
+custom-resources `""` stays accepted, and a bare dot over a derived
+collection (kyverno's labels-merge `list ... (toYaml .Values.x)`)
+iterates the derivation, so the influencing path stays open — the
+bare-dot `mark_direct` mis-fire predates this round and is gated too.
+The permissive single-path form still marks member identities (nats'
+jsonpatch fail captures need the ranged member to survive the fallback
+wrapper); only the READ guard demands strict identity.
+
+### The scoping half: nested activation chains and pair factoring (landed)
+
+`ChartContext` now carries the FULL ancestor-first activation chain
+(one `ChartDependencyActivation` per condition/tag-carrying dependency
+edge), and `chart_activation_guard_sets` composes the per-level guard
+sets as their cross product — zookeeper's uses are gated on
+`clickhouse.enabled` AND `clickhouse.zookeeper.enabled` (helm evaluates
+every ancestor's condition). The optional-dependency helper lane uses
+the chain suffix RELATIVE to the including chart, since the including
+chart's own activation is appended afterwards. The clone product would
+have crossed the member-access fanout cap on clone count alone
+(3 access shapes × 4 activation alternatives = 12 > 8), and the cap
+flip both dropped the guarded-only arm and let the declared-shape host
+typing bind unconditionally — a dormant-chain false rejection
+(zookeeper `metrics: junk` with `clickhouse.enabled: false` renders).
+`factor_guard_sets` folds the complementary
+`Truthy(p) ∨ Absent(p)` pairs back out — exact Boolean factoring,
+deliberately bounded to the activation shape after a general
+single-difference folding produced ~90 unadjudicated encoding flips.
+
+### Adjudication
+
+The full corpus probe battery (old fixture vs new dump, three probe
+granularities over every declared path) across the fourteen re-encoded
+charts: nine charts re-encode with zero acceptance flips; KPS
+`grafana.sidecar.dashboards` and prometheus `alertmanager.persistence`
+scalars/lists now reject exactly-when-live with the dormant escapes
+open (helm-verified both ways — newly-uncapped guarded arms); jaeger
+`spark.image`, kyverno `resourceFilters*: {}`, and signoz
+`clickhouseOperator.logger` falsy/empty spellings render and are no
+longer rejected (old false rejections); kyverno
+`resourceFilters*` integer spellings ride the documented F38/F72/F95
+input-channel policy. The one deliberate residual: kyverno's
+`global.imagePullSecrets` truthy scalars re-widened — the old rejection
+came from the mis-scoped nested-postgresql arm (extensionally right
+only because the undecoded `kyverno.sortedImagePullSecrets` lane aborts
+everywhere), and the exact decode needs candidate-selection provenance
+on `Choice` values (`with A | default B` + `range .`): the unordered
+set loses which candidate the default picked, and an in-value
+selection-meta wrap measurably perturbed sibling provider lanes, so the
+lane is recorded as the next open item instead of shipping a risky
+carrier.
+
+### Validation
+
+`task test` green, including the regenerated zookeeper IR/gen fixtures
+and fourteen corpus schemas (the nats fixtures from the twenty-second
+round regenerate byte-identical — the intermediate drift resolved back
+under the final identity gates). The luup2 `check:local` downstream gate
+passes with the installed binary.
