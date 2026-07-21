@@ -44,25 +44,33 @@ dependencies:
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string()])
         .ok_or_else(|| color_eyre::eyre::eyre!("discover child chart"))?;
+    sim_assert_eq!(have: child.dependency_activation_chain.len(), want: 1);
     sim_assert_eq!(
-        have: child.dependency_activation.condition_paths,
+        have: child.dependency_activation_chain[0].condition_paths,
         want: vec!["kid.enabled".to_string(), "global.kidEnabled".to_string()]
     );
     sim_assert_eq!(
-        have: child.dependency_activation.tag_paths,
+        have: child.dependency_activation_chain[0].tag_paths,
         want: vec!["tags.observability".to_string()]
     );
 
+    // The nested leaf inherits the kid edge's level AND carries its own:
+    // helm only renders it while every ancestor condition activates too.
     let leaf = charts
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string(), "leaf".to_string()])
         .ok_or_else(|| color_eyre::eyre::eyre!("discover nested leaf chart"))?;
+    sim_assert_eq!(have: leaf.dependency_activation_chain.len(), want: 2);
     sim_assert_eq!(
-        have: leaf.dependency_activation.condition_paths,
+        have: leaf.dependency_activation_chain[0].condition_paths,
+        want: vec!["kid.enabled".to_string(), "global.kidEnabled".to_string()]
+    );
+    sim_assert_eq!(
+        have: leaf.dependency_activation_chain[1].condition_paths,
         want: vec!["kid.leaf.enabled".to_string()]
     );
     sim_assert_eq!(
-        have: leaf.dependency_activation.tag_paths,
+        have: leaf.dependency_activation_chain[1].tag_paths,
         want: vec!["tags.nested".to_string()]
     );
 

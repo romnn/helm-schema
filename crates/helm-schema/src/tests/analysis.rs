@@ -1117,6 +1117,112 @@ data:
     Ok(())
 }
 
+/// Helm renders a doubly-nested dependency only while EVERY level's
+/// condition activates: the leaf's contract uses must carry the ancestor's
+/// condition beside its own (signoz's clickhouse→zookeeper chain — the
+/// zookeeper templates must not constrain values while `clickhouse.enabled`
+/// is false).
+#[test]
+fn nested_dependency_activation_carries_the_ancestor_conditions() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc::indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: mid
+                version: 0.1.0
+                condition: mid.enabled
+        "},
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/mid/Chart.yaml")?,
+        indoc::indoc! {"
+            apiVersion: v2
+            name: mid
+            version: 0.1.0
+            dependencies:
+              - name: leaf
+                version: 0.1.0
+                condition: leaf.enabled
+        "},
+    )?;
+    test_util::write(&chart_dir.join("charts/mid/values.yaml")?, "{}\n")?;
+    test_util::write(
+        &chart_dir.join("charts/mid/charts/leaf/Chart.yaml")?,
+        "apiVersion: v2\nname: leaf\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/mid/charts/leaf/values.yaml")?,
+        "enabled: true\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/mid/charts/leaf/templates/configmap.yaml")?,
+        r#"apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+data:
+  enabled: "{{ .Values.enabled }}"
+"#,
+    )?;
+
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
+    )?;
+    let projection = collection.contract.finalize();
+    let uses = projection
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == "mid.leaf.enabled")
+        .cloned()
+        .collect::<Vec<_>>();
+
+    assert!(
+        uses.iter().any(|use_| {
+            use_.condition.guard_conjunctions().iter().any(|guards| {
+                guards.as_slice()
+                    == [
+                        Guard::Truthy {
+                            path: "mid.enabled".to_string(),
+                        },
+                        Guard::Truthy {
+                            path: "mid.leaf.enabled".to_string(),
+                        },
+                    ]
+                    .as_slice()
+            })
+        }),
+        "expected the both-conditions-truthy activation branch, got {uses:#?}"
+    );
+    assert!(
+        uses.iter().all(|use_| {
+            use_.condition.guard_conjunctions().iter().all(|guards| {
+                guards.iter().any(|guard| {
+                    matches!(
+                        guard,
+                        Guard::Truthy { path } | Guard::Absent { path }
+                            if path == "mid.enabled"
+                    )
+                })
+            })
+        }),
+        "every activation branch must carry the ancestor's condition, got {uses:#?}"
+    );
+
+    Ok(())
+}
+
 #[test]
 fn literal_crd_template_populates_chart_local_schema_universe() -> color_eyre::eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());

@@ -17,7 +17,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
 ) -> EngineResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
-    let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation);
+    let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation_chain);
 
     let manifests = chart::files_with_role(
         &chart.chart_dir,
@@ -116,7 +116,35 @@ fn apply_chart_activation_guard_sets(
     activated_contract
 }
 
-fn chart_activation_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
+/// The activation alternatives for a whole ancestor chain: a nested chart
+/// renders only while EVERY level activates, so the alternatives are the
+/// cross product of the per-level guard sets. An empty result means the
+/// chart is unconditionally active.
+fn chart_activation_guard_sets(chain: &[chart::ChartDependencyActivation]) -> Vec<Vec<Guard>> {
+    let mut product: Vec<Vec<Guard>> = Vec::new();
+    for level in chain {
+        let level_sets = level_activation_guard_sets(level);
+        if level_sets.is_empty() {
+            continue;
+        }
+        if product.is_empty() {
+            product = level_sets;
+            continue;
+        }
+        let mut next = Vec::new();
+        for prefix in &product {
+            for set in &level_sets {
+                let mut combined = prefix.clone();
+                combined.extend(set.iter().cloned());
+                next.push(combined);
+            }
+        }
+        product = next;
+    }
+    product
+}
+
+fn level_activation_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
     let condition_paths = normalized_ordered_paths(&activation.condition_paths);
     let tag_paths = normalized_sorted_paths(&activation.tag_paths);
 
@@ -238,7 +266,16 @@ pub(crate) fn optional_dependency_helpers_for_chart(
         if !direct_child {
             continue;
         }
-        let activation_sets = chart_activation_guard_sets(&dependency.dependency_activation);
+        // The including chart's own activation guards are appended to its
+        // whole contract (terminal clauses included) AFTER these predicates
+        // are added, so the inactive predicate must cover only the edge
+        // RELATIVE to the including chart: the dependency's chain minus the
+        // parent's prefix.
+        let relative_chain = dependency
+            .dependency_activation_chain
+            .get(chart.dependency_activation_chain.len()..)
+            .unwrap_or_default();
+        let activation_sets = chart_activation_guard_sets(relative_chain);
         if activation_sets.is_empty() {
             continue;
         }

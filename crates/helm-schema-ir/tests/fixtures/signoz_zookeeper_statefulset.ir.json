@@ -6888,6 +6888,10 @@
           {
             "path": "global",
             "type": "truthy"
+          },
+          {
+            "path": "global.imagePullSecrets",
+            "type": "range"
           }
         ],
         [
@@ -8731,7 +8735,62 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "path": "image.pullSecrets",
+            "type": "range"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imagePullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "image.pullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.pullSecrets",
+                  "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -22638,7 +22697,62 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "path": "volumePermissions.image.pullSecrets",
+            "type": "range"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imagePullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
+                  "path": "image.pullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.pullSecrets",
+                  "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [],

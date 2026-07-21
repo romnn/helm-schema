@@ -3205,18 +3205,18 @@
             "properties": {
               "frrk8s": {
                 "properties": {
-                  "livenessProbe": {
+                  "serviceAccount": {
                     "properties": {
-                      "enabled": {}
+                      "create": {}
                     },
                     "required": [
-                      "enabled"
+                      "create"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "livenessProbe"
+                  "serviceAccount"
                 ],
                 "type": "object"
               }
@@ -3240,18 +3240,18 @@
             "properties": {
               "frrk8s": {
                 "properties": {
-                  "serviceAccount": {
+                  "livenessProbe": {
                     "properties": {
-                      "create": {}
+                      "enabled": {}
                     },
                     "required": [
-                      "create"
+                      "enabled"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "livenessProbe"
                 ],
                 "type": "object"
               }
@@ -3784,7 +3784,7 @@
       "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
       "type": "string"
     },
-    "schema283": {
+    "schema284": {
       "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
       "type": "string"
     },
@@ -4225,10 +4225,10 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema342": {
+    "schema341": {
       "description": "Number of failures before the probe is considered failed."
     },
-    "schema343": {
+    "schema342": {
       "additionalProperties": {},
       "properties": {
         "port": {
@@ -4238,7 +4238,7 @@
         }
       }
     },
-    "schema346": {
+    "schema345": {
       "oneOf": [
         {
           "type": [
@@ -4254,41 +4254,41 @@
         }
       ]
     },
-    "schema349": {
+    "schema348": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema350": {
+    "schema349": {
       "description": "How often (in seconds) to perform the probe."
     },
-    "schema351": {
+    "schema350": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema356": {
+    "schema355": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema357": {
+    "schema356": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema358": {
+    "schema357": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema361": {
+    "schema360": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema362": {
+    "schema361": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -5981,7 +5981,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/schema343"
+                    "$ref": "#/$defs/schema342"
                   }
                 }
               }
@@ -6251,7 +6251,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/schema343"
+                    "$ref": "#/$defs/schema342"
                   }
                 }
               }
@@ -6962,7 +6962,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema351"
+                            "$ref": "#/$defs/schema350"
                           },
                           {
                             "not": {
@@ -7467,15 +7467,6 @@
                 }
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "type": "object"
-              }
-            }
           }
         ]
       }
@@ -7529,6 +7520,36 @@
                 "type": "object"
               },
               {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
                 "properties": {
                   "frrk8s": {
                     "properties": {
@@ -7546,80 +7567,11 @@
                   "frrk8s"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "frr-k8s": {
-                    "properties": {
-                      "frrk8s": {
-                        "properties": {
-                          "frr": {
-                            "properties": {
-                              "image": {
-                                "properties": {
-                                  "pullPolicy": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "pullPolicy"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "image"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frrk8s"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frr-k8s"
-                ],
-                "type": "object"
               },
               {
                 "$ref": "#/$defs/schema158"
               }
             ]
-          },
-          {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema158"
           }
         ]
       },
@@ -7897,7 +7849,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema351"
+                                "$ref": "#/$defs/schema350"
                               },
                               {
                                 "not": {
@@ -8073,7 +8025,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -8138,7 +8090,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -8436,7 +8388,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -8501,7 +8453,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -8702,9 +8654,348 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "frr": {
+                            "properties": {
+                              "image": {
+                                "properties": {
+                                  "pullPolicy": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "pullPolicy"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "image"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema165"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "livenessProbe": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "livenessProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema167"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "startupProbe": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "startupProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "frrk8s": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frrk8s"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema158"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "additionalProperties": {},
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "properties": {
+              "frrk8s": {
+                "additionalProperties": {},
+                "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                "properties": {
+                  "frr": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "frr contains configuration specific to the FRR container,"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -8769,7 +9060,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -9075,6 +9366,36 @@
                     "type": "object"
                   },
                   {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
                       "frrk8s": {
                         "properties": {
@@ -9092,80 +9413,11 @@
                       "frrk8s"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "frr-k8s": {
-                        "properties": {
-                          "frrk8s": {
-                            "properties": {
-                              "frr": {
-                                "properties": {
-                                  "image": {
-                                    "properties": {
-                                      "pullPolicy": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "pullPolicy"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "image"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "frr"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frrk8s"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr-k8s"
-                    ],
-                    "type": "object"
                   },
                   {
                     "$ref": "#/$defs/schema158"
                   }
                 ]
-              },
-              {
-                "properties": {
-                  "frrk8s": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema158"
               }
             ]
           }
@@ -9241,6 +9493,36 @@
                 ]
               },
               {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
                 "properties": {
                   "frrk8s": {
                     "properties": {
@@ -9258,79 +9540,11 @@
                   "frrk8s"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema163"
-                  },
-                  {
-                    "properties": {
-                      "frr-k8s": {
-                        "properties": {
-                          "frrk8s": {
-                            "properties": {
-                              "frrStatus": {
-                                "properties": {
-                                  "pollInterval": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "pollInterval"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "frrStatus"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frrk8s"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr-k8s"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "$ref": "#/$defs/schema158"
               }
             ]
-          },
-          {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema158"
           }
         ]
       },
@@ -9400,6 +9614,36 @@
                 "type": "object"
               },
               {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
                 "properties": {
                   "frrk8s": {
                     "properties": {
@@ -9417,72 +9661,11 @@
                   "frrk8s"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "frr-k8s": {
-                    "properties": {
-                      "frrk8s": {
-                        "properties": {
-                          "image": {
-                            "properties": {
-                              "pullPolicy": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "pullPolicy"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "image"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frrk8s"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frr-k8s"
-                ],
-                "type": "object"
               },
               {
                 "$ref": "#/$defs/schema158"
               }
             ]
-          },
-          {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema158"
           }
         ]
       },
@@ -9519,7 +9702,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -9584,7 +9767,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -9759,7 +9942,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema165"
                   },
                   {
                     "properties": {
@@ -9798,6 +9981,36 @@
                   }
                 ]
               },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
               {
                 "properties": {
                   "frrk8s": {
@@ -9816,79 +10029,11 @@
                   "frrk8s"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema164"
-                  },
-                  {
-                    "properties": {
-                      "frr-k8s": {
-                        "properties": {
-                          "frrk8s": {
-                            "properties": {
-                              "livenessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frrk8s"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr-k8s"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "$ref": "#/$defs/schema158"
               }
             ]
-          },
-          {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema158"
           }
         ]
       },
@@ -10205,6 +10350,36 @@
                 ]
               },
               {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
                 "properties": {
                   "frrk8s": {
                     "properties": {
@@ -10222,79 +10397,11 @@
                   "frrk8s"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema162"
-                  },
-                  {
-                    "properties": {
-                      "frr-k8s": {
-                        "properties": {
-                          "frrk8s": {
-                            "properties": {
-                              "readinessProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "readinessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frrk8s"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr-k8s"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "$ref": "#/$defs/schema158"
               }
             ]
-          },
-          {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema158"
           }
         ]
       },
@@ -10331,7 +10438,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema165"
+                    "$ref": "#/$defs/schema164"
                   },
                   {
                     "properties": {
@@ -10396,7 +10503,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema165"
+                    "$ref": "#/$defs/schema164"
                   },
                   {
                     "properties": {
@@ -10670,6 +10777,602 @@
               {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema164"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "serviceAccount": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceAccount"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema223"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema164"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "serviceAccount": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceAccount"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema164"
+                    },
+                    {
+                      "properties": {
+                        "frr-k8s": {
+                          "properties": {
+                            "frrk8s": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "create": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "create"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "frrk8s"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "frr-k8s"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema164"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "serviceAccount": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceAccount"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema223"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema164"
+                    },
+                    {
+                      "properties": {
+                        "frr-k8s": {
+                          "properties": {
+                            "frrk8s": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "create": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "create"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "frrk8s"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "frr-k8s"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema223"
+                  },
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema164"
+                    },
+                    {
+                      "properties": {
+                        "frr-k8s": {
+                          "properties": {
+                            "frrk8s": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "create": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "create"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "frrk8s"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "frr-k8s"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "frrk8s": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frrk8s"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema158"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "additionalProperties": {},
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "properties": {
+              "frrk8s": {
+                "additionalProperties": {},
+                "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                "properties": {
+                  "serviceAccount": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
                     "$ref": "#/$defs/schema167"
                   },
                   {
@@ -10874,6 +11577,36 @@
                 ]
               },
               {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
                 "properties": {
                   "frrk8s": {
                     "properties": {
@@ -10891,79 +11624,11 @@
                   "frrk8s"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema167"
-                  },
-                  {
-                    "properties": {
-                      "frr-k8s": {
-                        "properties": {
-                          "frrk8s": {
-                            "properties": {
-                              "startupProbe": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "startupProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frrk8s"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr-k8s"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "$ref": "#/$defs/schema158"
               }
             ]
-          },
-          {
-            "properties": {
-              "frrk8s": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "frrk8s"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema158"
           }
         ]
       },
@@ -11225,9 +11890,82 @@
               {
                 "allOf": [
                   {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "frr": {
+                                "properties": {
+                                  "image": {
+                                    "properties": {
+                                      "pullPolicy": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "pullPolicy"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "image"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "frr"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema163"
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "properties": {
@@ -11235,20 +11973,20 @@
                             "properties": {
                               "frrk8s": {
                                 "properties": {
-                                  "frrStatus": {
+                                  "livenessProbe": {
                                     "properties": {
-                                      "pollInterval": {
+                                      "enabled": {
                                         "$ref": "#/$defs/helm-truthy"
                                       }
                                     },
                                     "required": [
-                                      "pollInterval"
+                                      "enabled"
                                     ],
                                     "type": "object"
                                   }
                                 },
                                 "required": [
-                                  "frrStatus"
+                                  "livenessProbe"
                                 ],
                                 "type": "object"
                               }
@@ -11267,6 +12005,173 @@
                     ]
                   },
                   {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema167"
+                      },
+                      {
+                        "properties": {
+                          "frr-k8s": {
+                            "properties": {
+                              "frrk8s": {
+                                "properties": {
+                                  "startupProbe": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "startupProbe"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "frrk8s"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr-k8s"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "prometheus": {
+                            "properties": {
+                              "serviceMonitor": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceMonitor"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "prometheus"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
                       "frrk8s": {
                         "properties": {
@@ -11284,9 +12189,16 @@
                       "frrk8s"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
                   }
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "anyOf": [
               {
                 "allOf": [
                   {
@@ -11332,31 +12244,58 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/schema158"
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
                   }
                 ]
               },
               {
-                "properties": {
-                  "frrk8s": {
+                "anyOf": [
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "frrk8s"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
                   }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema158"
+                ]
               }
             ]
           },
@@ -11400,6 +12339,36 @@
                     "type": "object"
                   },
                   {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
                       "frrk8s": {
                         "properties": {
@@ -11417,72 +12386,11 @@
                       "frrk8s"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "frr-k8s": {
-                        "properties": {
-                          "frrk8s": {
-                            "properties": {
-                              "image": {
-                                "properties": {
-                                  "pullPolicy": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "pullPolicy"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "image"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frrk8s"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frr-k8s"
-                    ],
-                    "type": "object"
                   },
                   {
                     "$ref": "#/$defs/schema158"
                   }
                 ]
-              },
-              {
-                "properties": {
-                  "frrk8s": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema158"
               }
             ]
           },
@@ -11493,7 +12401,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema164"
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "properties": {
@@ -11532,6 +12440,36 @@
                       }
                     ]
                   },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
                   {
                     "properties": {
                       "frrk8s": {
@@ -11550,79 +12488,11 @@
                       "frrk8s"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema164"
-                      },
-                      {
-                        "properties": {
-                          "frr-k8s": {
-                            "properties": {
-                              "frrk8s": {
-                                "properties": {
-                                  "livenessProbe": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "livenessProbe"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "frrk8s"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr-k8s"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   },
                   {
                     "$ref": "#/$defs/schema158"
                   }
                 ]
-              },
-              {
-                "properties": {
-                  "frrk8s": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema158"
               }
             ]
           },
@@ -11673,6 +12543,36 @@
                     ]
                   },
                   {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
                       "frrk8s": {
                         "properties": {
@@ -11690,15 +12590,22 @@
                       "frrk8s"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
                   }
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "anyOf": [
               {
                 "allOf": [
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema162"
+                        "$ref": "#/$defs/schema164"
                       },
                       {
                         "properties": {
@@ -11706,20 +12613,20 @@
                             "properties": {
                               "frrk8s": {
                                 "properties": {
-                                  "readinessProbe": {
+                                  "serviceAccount": {
                                     "properties": {
-                                      "enabled": {
+                                      "create": {
                                         "$ref": "#/$defs/helm-truthy"
                                       }
                                     },
                                     "required": [
-                                      "enabled"
+                                      "create"
                                     ],
                                     "type": "object"
                                   }
                                 },
                                 "required": [
-                                  "readinessProbe"
+                                  "serviceAccount"
                                 ],
                                 "type": "object"
                               }
@@ -11738,31 +12645,526 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/schema158"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema223"
+                      },
+                      {
+                        "properties": {
+                          "frr-k8s": {
+                            "properties": {
+                              "rbac": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "rbac"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr-k8s"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
                   }
                 ]
               },
               {
-                "properties": {
-                  "frrk8s": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema164"
+                      },
+                      {
+                        "properties": {
+                          "frr-k8s": {
+                            "properties": {
+                              "frrk8s": {
+                                "properties": {
+                                  "serviceAccount": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "serviceAccount"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "frrk8s"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr-k8s"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema164"
+                        },
+                        {
+                          "properties": {
+                            "frr-k8s": {
+                              "properties": {
+                                "frrk8s": {
+                                  "properties": {
+                                    "serviceAccount": {
+                                      "properties": {
+                                        "create": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "create"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "serviceAccount"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "frrk8s"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "frr-k8s"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema164"
+                      },
+                      {
+                        "properties": {
+                          "frr-k8s": {
+                            "properties": {
+                              "frrk8s": {
+                                "properties": {
+                                  "serviceAccount": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "serviceAccount"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "frrk8s"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr-k8s"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema223"
+                      },
+                      {
+                        "properties": {
+                          "frr-k8s": {
+                            "properties": {
+                              "rbac": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "rbac"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr-k8s"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema164"
+                        },
+                        {
+                          "properties": {
+                            "frr-k8s": {
+                              "properties": {
+                                "frrk8s": {
+                                  "properties": {
+                                    "serviceAccount": {
+                                      "properties": {
+                                        "create": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "create"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "serviceAccount"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "frrk8s"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "frr-k8s"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema223"
+                      },
+                      {
+                        "properties": {
+                          "frr-k8s": {
+                            "properties": {
+                              "rbac": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "rbac"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frr-k8s"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema164"
+                        },
+                        {
+                          "properties": {
+                            "frr-k8s": {
+                              "properties": {
+                                "frrk8s": {
+                                  "properties": {
+                                    "serviceAccount": {
+                                      "properties": {
+                                        "create": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "create"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "serviceAccount"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "frrk8s"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "frr-k8s"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "frrk8s"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
                   }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema158"
+                ]
               }
             ]
           },
@@ -11813,6 +13215,36 @@
                     ]
                   },
                   {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
                       "frrk8s": {
                         "properties": {
@@ -11830,79 +13262,11 @@
                       "frrk8s"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema167"
-                      },
-                      {
-                        "properties": {
-                          "frr-k8s": {
-                            "properties": {
-                              "frrk8s": {
-                                "properties": {
-                                  "startupProbe": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "startupProbe"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "frrk8s"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "frr-k8s"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   },
                   {
                     "$ref": "#/$defs/schema158"
                   }
                 ]
-              },
-              {
-                "properties": {
-                  "frrk8s": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frrk8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema158"
               }
             ]
           }
@@ -12028,7 +13392,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema165"
+                    "$ref": "#/$defs/schema164"
                   },
                   {
                     "properties": {
@@ -12130,7 +13494,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema165"
+                    "$ref": "#/$defs/schema164"
                   },
                   {
                     "properties": {
@@ -12963,7 +14327,7 @@
                                 "type": "boolean"
                               },
                               "keyFile": {
-                                "$ref": "#/$defs/schema283"
+                                "$ref": "#/$defs/schema284"
                               },
                               "keySecret": {
                                 "$ref": "#/$defs/schema63"
@@ -12993,6 +14357,583 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "cipherSuites": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "cipherSuites"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "curvePreferences": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "curvePreferences"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "metricsTLSSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "metricsTLSSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "minVersion": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "minVersion"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "frrk8s": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frrk8s"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema158"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "additionalProperties": {},
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "frrk8s": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frrk8s"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema158"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "cipherSuites": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "cipherSuites"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "curvePreferences": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "curvePreferences"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "metricsTLSSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "metricsTLSSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "frr-k8s": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "minVersion": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "minVersion"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frr-k8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "frrk8s": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "frrk8s"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/schema158"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema158"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "type": "object"
           }
         }
       }
@@ -14213,13 +16154,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema356"
+                    "$ref": "#/$defs/schema355"
                   },
                   {
-                    "$ref": "#/$defs/schema358"
+                    "$ref": "#/$defs/schema357"
                   },
                   {
-                    "$ref": "#/$defs/schema361"
+                    "$ref": "#/$defs/schema360"
                   },
                   {
                     "not": {
@@ -14227,10 +16168,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema362"
+                    "$ref": "#/$defs/schema361"
                   },
                   {
-                    "$ref": "#/$defs/schema357"
+                    "$ref": "#/$defs/schema356"
                   },
                   {
                     "$ref": "#/$defs/schema294"
@@ -14242,7 +16183,7 @@
                     "$ref": "#/$defs/schema330"
                   },
                   {
-                    "$ref": "#/$defs/schema349"
+                    "$ref": "#/$defs/schema348"
                   }
                 ],
                 "type": "string"
@@ -16548,7 +18489,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema351"
+                                "$ref": "#/$defs/schema350"
                               },
                               {
                                 "not": {
@@ -19634,7 +21575,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/schema343"
+                    "$ref": "#/$defs/schema342"
                   }
                 }
               }
@@ -20145,13 +22086,13 @@
                       "mlSecretKeyPath": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema356"
+                            "$ref": "#/$defs/schema355"
                           },
                           {
-                            "$ref": "#/$defs/schema358"
+                            "$ref": "#/$defs/schema357"
                           },
                           {
-                            "$ref": "#/$defs/schema361"
+                            "$ref": "#/$defs/schema360"
                           },
                           {
                             "not": {
@@ -20159,10 +22100,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema362"
+                            "$ref": "#/$defs/schema361"
                           },
                           {
-                            "$ref": "#/$defs/schema357"
+                            "$ref": "#/$defs/schema356"
                           },
                           {
                             "$ref": "#/$defs/schema294"
@@ -20174,7 +22115,7 @@
                             "$ref": "#/$defs/schema330"
                           },
                           {
-                            "$ref": "#/$defs/schema349"
+                            "$ref": "#/$defs/schema348"
                           }
                         ],
                         "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
@@ -20378,7 +22319,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/schema343"
+                    "$ref": "#/$defs/schema342"
                   }
                 }
               }
@@ -20576,13 +22517,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema356"
+                        "$ref": "#/$defs/schema355"
                       },
                       {
-                        "$ref": "#/$defs/schema358"
+                        "$ref": "#/$defs/schema357"
                       },
                       {
-                        "$ref": "#/$defs/schema361"
+                        "$ref": "#/$defs/schema360"
                       },
                       {
                         "not": {
@@ -20590,7 +22531,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema362"
+                        "$ref": "#/$defs/schema361"
                       },
                       {
                         "$ref": "#/$defs/schema294"
@@ -20602,7 +22543,7 @@
                         "$ref": "#/$defs/schema330"
                       },
                       {
-                        "$ref": "#/$defs/schema349"
+                        "$ref": "#/$defs/schema348"
                       }
                     ],
                     "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -21928,7 +23869,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema351"
+                        "$ref": "#/$defs/schema350"
                       },
                       {
                         "not": {
@@ -22085,10 +24026,10 @@
                             "description": "Spec to control the desired behavior of rolling update.",
                             "properties": {
                               "maxSurge": {
-                                "$ref": "#/$defs/schema346"
+                                "$ref": "#/$defs/schema345"
                               },
                               "maxUnavailable": {
-                                "$ref": "#/$defs/schema346"
+                                "$ref": "#/$defs/schema345"
                               }
                             },
                             "type": [
@@ -22536,13 +24477,13 @@
                   "description": "Enable liveness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema342"
+                  "$ref": "#/$defs/schema341"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before liveness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema350"
+                  "$ref": "#/$defs/schema349"
                 },
                 "successThreshold": {
                   "$ref": "#/$defs/schema325"
@@ -22578,13 +24519,13 @@
                   "description": "Enable readiness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema342"
+                  "$ref": "#/$defs/schema341"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before readiness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema350"
+                  "$ref": "#/$defs/schema349"
                 },
                 "successThreshold": {
                   "$ref": "#/$defs/schema325"
@@ -22634,8 +24575,7 @@
                 "name": {
                   "description": "The name of the ServiceAccount to use. If not set and create is true, a name is generated using the fullname template."
                 }
-              },
-              "type": "object"
+              }
             },
             "startupProbe": {
               "additionalProperties": {},
@@ -22654,10 +24594,10 @@
                   "description": "Enable startup probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema342"
+                  "$ref": "#/$defs/schema341"
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema350"
+                  "$ref": "#/$defs/schema349"
                 }
               }
             },
@@ -22803,8 +24743,7 @@
             "minVersion": {
               "$ref": "#/$defs/schema315"
             }
-          },
-          "type": "object"
+          }
         }
       },
       "type": "object"
@@ -23130,7 +25069,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema351"
+                                "$ref": "#/$defs/schema350"
                               },
                               {
                                 "not": {
@@ -23148,7 +25087,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema351"
+                                "$ref": "#/$defs/schema350"
                               },
                               {
                                 "not": {
@@ -23247,7 +25186,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema351"
+                                "$ref": "#/$defs/schema350"
                               },
                               {
                                 "not": {
@@ -23265,7 +25204,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema351"
+                                "$ref": "#/$defs/schema350"
                               },
                               {
                                 "not": {
@@ -23772,7 +25711,7 @@
                               "additionalLabels": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/schema351"
+                                    "$ref": "#/$defs/schema350"
                                   },
                                   {
                                     "not": {
@@ -24504,7 +26443,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema351"
+                        "$ref": "#/$defs/schema350"
                       },
                       {
                         "not": {

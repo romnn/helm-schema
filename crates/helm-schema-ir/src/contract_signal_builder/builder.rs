@@ -2463,6 +2463,69 @@ fn record_member_access_capture(
 /// rather than exploding umbrella-chart schemas.
 type MemberAccessGuardSets = BTreeMap<Vec<String>, BTreeSet<Vec<ConditionalGuard>>>;
 
+/// Exact Boolean factoring over a disjunction of guard conjunctions,
+/// deliberately bounded to the dependency-activation shape: two
+/// conjunctions differing ONLY in `Truthy(p)` versus `Absent(p)` of one
+/// path fold to `X ∧ (Truthy(p) ∨ Absent(p))` — Helm's "condition path
+/// set-truthy or missing" activation state. Applied to fixpoint so a
+/// nested activation product collapses to one conjunction per access
+/// shape instead of crossing the fanout cap on clone count alone.
+fn factor_guard_sets(sets: BTreeSet<Vec<ConditionalGuard>>) -> BTreeSet<Vec<ConditionalGuard>> {
+    let mut sets: Vec<Vec<ConditionalGuard>> = sets.into_iter().collect();
+    loop {
+        let mut merged = None;
+        'search: for left in 0..sets.len() {
+            for right in left + 1..sets.len() {
+                if let Some(folded) = fold_activation_pair(&sets[left], &sets[right]) {
+                    merged = Some((left, right, folded));
+                    break 'search;
+                }
+            }
+        }
+        let Some((left, right, folded)) = merged else {
+            break;
+        };
+        sets.remove(right);
+        sets[left] = folded;
+    }
+    sets.into_iter().collect()
+}
+
+fn fold_activation_pair(
+    left: &[ConditionalGuard],
+    right: &[ConditionalGuard],
+) -> Option<Vec<ConditionalGuard>> {
+    let only_left: Vec<&ConditionalGuard> =
+        left.iter().filter(|guard| !right.contains(guard)).collect();
+    let only_right: Vec<&ConditionalGuard> =
+        right.iter().filter(|guard| !left.contains(guard)).collect();
+    let ([left_guard], [right_guard]) = (only_left.as_slice(), only_right.as_slice()) else {
+        return None;
+    };
+    let activation_pair = |a: &ConditionalGuard, b: &ConditionalGuard| match (a, b) {
+        (
+            ConditionalGuard::Truthy { path: truthy_path },
+            ConditionalGuard::Absent { path: absent_path },
+        ) => (truthy_path == absent_path).then(|| {
+            let mut alternatives = vec![a.clone(), b.clone()];
+            alternatives.sort();
+            ConditionalGuard::AnyOf(alternatives)
+        }),
+        _ => None,
+    };
+    let folded_guard = activation_pair(left_guard, right_guard)
+        .or_else(|| activation_pair(right_guard, left_guard))?;
+    let mut folded: Vec<ConditionalGuard> = left
+        .iter()
+        .filter(|guard| guard != left_guard)
+        .cloned()
+        .collect();
+    folded.push(folded_guard);
+    folded.sort();
+    folded.dedup();
+    Some(folded)
+}
+
 fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAccumulator>) {
     const MEMBER_ACCESS_GUARD_FANOUT: usize = 8;
     let pending: Vec<(String, MemberAccessGuardSets)> = paths
@@ -2470,7 +2533,19 @@ fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAc
         .filter(|(path, acc)| {
             !acc.member_access_guard_sets.is_empty() && !path_contains_wildcard(path)
         })
-        .map(|(path, acc)| (path.clone(), acc.member_access_guard_sets.clone()))
+        .map(|(path, acc)| {
+            // Factor before counting fanout: dependency-activation clones
+            // multiply every access shape by the per-level truthy/absent
+            // alternatives, and a doubly-nested subchart (signoz's
+            // clickhouse→zookeeper) would cross the cap on clone count
+            // alone, silently dropping the guarded-only arm.
+            let factored = acc
+                .member_access_guard_sets
+                .iter()
+                .map(|(kinds, sets)| (kinds.clone(), factor_guard_sets(sets.clone())))
+                .collect();
+            (path.clone(), factored)
+        })
         .collect();
     for (path, grouped_guard_sets) in pending {
         // The cap bounds the ANY-OF arm built from guarded-only accesses.

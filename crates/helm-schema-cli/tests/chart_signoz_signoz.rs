@@ -321,6 +321,77 @@ fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
         ),
         "disabled otelCollector ingress annotations should not be constrained by guarded-only metadata evidence: {schema}"
     );
+    // The zookeeper subchart's `common.images.pullSecrets` ranges
+    // `.global.imagePullSecrets` with no truthiness guard, so EVERY scalar
+    // spelling — falsy included — aborts `helm template` while the chart's
+    // default clickhouse→zookeeper chain is active (`range can't iterate
+    // over ""`). Collections and null-deletion render.
+    for (value, label) in [
+        (serde_json::json!("oops"), "a truthy scalar"),
+        (serde_json::json!(""), "the empty string"),
+        (serde_json::json!(false), "a raw false"),
+    ] {
+        assert!(
+            !schema_validates_instance(
+                &schema,
+                &serde_json::json!({ "global": { "imagePullSecrets": value } })
+            ),
+            "global.imagePullSecrets: {label} cannot be ranged by the zookeeper pull-secrets helper: {schema}"
+        );
+    }
+    for (value, label) in [
+        (serde_json::json!(["regcred"]), "an array"),
+        (serde_json::json!({ "a": "b" }), "a map"),
+        (serde_json::json!(null), "a null deletion"),
+    ] {
+        assert!(
+            schema_validates_instance(
+                &schema,
+                &serde_json::json!({ "global": { "imagePullSecrets": value } })
+            ),
+            "global.imagePullSecrets: {label} renders: {schema}"
+        );
+    }
+    // With clickhouse disabled the zookeeper chain is dormant: only the
+    // parent's truthiness-guarded `signoz.imagePullSecrets` range remains
+    // live, so falsy scalars render while truthy scalars still abort —
+    // the nested activation chain must scope the zookeeper-side claim.
+    assert!(
+        schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "clickhouse": { "enabled": false },
+                "externalClickhouse": { "host": "ch.example.com", "cluster": "cluster" },
+                "global": { "imagePullSecrets": "" }
+            })
+        ),
+        "a falsy scalar renders once the clickhouse chain is dormant: {schema}"
+    );
+    assert!(
+        !schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "clickhouse": { "enabled": false },
+                "externalClickhouse": { "host": "ch.example.com", "cluster": "cluster" },
+                "global": { "imagePullSecrets": "oops" }
+            })
+        ),
+        "a truthy scalar still aborts through the parent's own pull-secrets range: {schema}"
+    );
+    // The zookeeper templates' `.Values.metrics.*` navigations ride the
+    // same chain: junk under a disabled clickhouse renders (the
+    // doubly-nested activation product must not cross the member-access
+    // fanout cap and leak an unconditional host typing).
+    assert!(
+        schema_validates_instance(
+            &schema,
+            &serde_json::json!({
+                "clickhouse": { "enabled": false, "zookeeper": { "metrics": "junk" } },
+                "externalClickhouse": { "host": "ch.example.com", "cluster": "cluster" }
+            })
+        ),
+        "zookeeper metrics junk renders while clickhouse is disabled: {schema}"
+    );
     for field in ["pullPolicy", "repository", "tag"] {
         if field == "pullPolicy" {
             // pullPolicy is spliced plainly into `imagePullPolicy:`, so it

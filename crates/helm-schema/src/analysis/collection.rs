@@ -32,10 +32,9 @@ pub(crate) fn analyze_charts(
     let mut local_schema_universe = collect_static_crd_universe(charts)?;
     for chart in charts {
         for path in chart
-            .dependency_activation
-            .condition_paths
+            .dependency_activation_chain
             .iter()
-            .chain(chart.dependency_activation.tag_paths.iter())
+            .flat_map(|level| level.condition_paths.iter().chain(level.tag_paths.iter()))
         {
             let path = path.trim();
             if !path.is_empty() {

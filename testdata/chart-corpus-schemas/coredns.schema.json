@@ -3100,6 +3100,19 @@
       ],
       "type": "object"
     },
+    "schema208": {
+      "additionalProperties": {},
+      "properties": {
+        "plugins": {
+          "items": {
+            "additionalProperties": {},
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        }
+      }
+    },
     "schema21": {
       "description": "If specified, the pod's tolerations.",
       "items": {
@@ -3150,7 +3163,7 @@
       },
       "type": "array"
     },
-    "schema210": {
+    "schema211": {
       "additionalProperties": {},
       "properties": {
         "plugins": {
@@ -3171,7 +3184,7 @@
         }
       }
     },
-    "schema211": {
+    "schema212": {
       "additionalProperties": {},
       "properties": {
         "contents": {},
@@ -3186,7 +3199,7 @@
       },
       "type": "object"
     },
-    "schema215": {
+    "schema216": {
       "not": {
         "properties": {
           "serviceType": {
@@ -3200,7 +3213,7 @@
         "type": "object"
       }
     },
-    "schema219": {
+    "schema220": {
       "not": {
         "properties": {
           "serviceType": {
@@ -3214,7 +3227,7 @@
         "type": "object"
       }
     },
-    "schema220": {
+    "schema221": {
       "properties": {
         "serviceType": {
           "pattern": "LoadBalancer",
@@ -3225,24 +3238,6 @@
         "serviceType"
       ],
       "type": "object"
-    },
-    "schema222": {
-      "additionalProperties": {},
-      "properties": {
-        "plugins": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
     },
     "schema225": {
       "additionalProperties": {},
@@ -3472,6 +3467,11 @@
         "object",
         "null"
       ]
+    },
+    "schema272": {
+      "additionalProperties": {},
+      "properties": {},
+      "type": "object"
     },
     "schema279": {
       "not": {
@@ -7349,6 +7349,20 @@
             "properties": {
               "servers": {
                 "additionalProperties": {
+                  "$ref": "#/$defs/schema208"
+                },
+                "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
+                "items": {
+                  "$ref": "#/$defs/schema208"
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "servers": {
+                "additionalProperties": {
                   "$ref": "#/$defs/schema225"
                 },
                 "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
@@ -7393,9 +7407,7 @@
               "servers": {
                 "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {},
-                  "type": "object"
+                  "$ref": "#/$defs/schema272"
                 },
                 "type": "array"
               }
@@ -8128,13 +8140,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema211"
+                      "$ref": "#/$defs/schema212"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema211"
+                      "$ref": "#/$defs/schema212"
                     },
                     "type": "object"
                   },
@@ -12831,25 +12843,11 @@
             "properties": {
               "servers": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema210"
+                  "$ref": "#/$defs/schema211"
                 },
                 "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
                 "items": {
-                  "$ref": "#/$defs/schema210"
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "servers": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/schema222"
-                },
-                "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
-                "items": {
-                  "$ref": "#/$defs/schema222"
+                  "$ref": "#/$defs/schema211"
                 }
               }
             }
@@ -13043,10 +13041,10 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema215"
+                "$ref": "#/$defs/schema216"
               },
               {
-                "$ref": "#/$defs/schema219"
+                "$ref": "#/$defs/schema220"
               }
             ]
           },
@@ -13064,7 +13062,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema220"
+                "$ref": "#/$defs/schema221"
               },
               {
                 "not": {
@@ -13080,7 +13078,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema219"
+                "$ref": "#/$defs/schema220"
               }
             ]
           },
@@ -14308,10 +14306,10 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema215"
+                "$ref": "#/$defs/schema216"
               },
               {
-                "$ref": "#/$defs/schema219"
+                "$ref": "#/$defs/schema220"
               }
             ]
           },
@@ -14329,7 +14327,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema220"
+                "$ref": "#/$defs/schema221"
               },
               {
                 "not": {
@@ -14358,7 +14356,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema219"
+                "$ref": "#/$defs/schema220"
               }
             ]
           },

@@ -790,7 +790,13 @@ impl Interpreter<'_> {
             }
             _ => None,
         };
-        let (source_paths, direct_path, direct_variable_path, json_decoded_path) = {
+        let (
+            source_paths,
+            direct_path,
+            direct_variable_path,
+            identity_variable_path,
+            json_decoded_path,
+        ) = {
             let context = self.value_path_context();
             let direct_path = context.single_direct_iterable_range_path_expr(range_source);
             let json_decoded_direct_path =
@@ -814,6 +820,28 @@ impl Interpreter<'_> {
                     .and_then(|paths| paths.into_iter().next()),
                 _ => None,
             };
+            // The read-guard lane below needs the strictly-IDENTITY form: a
+            // fallback-selected binding (`$crs := .Values.x | default
+            // list`) also exposes exactly one path, but the range iterates
+            // the FALLBACK on every Helm-falsy input, so the path itself
+            // owes no iterable shape (datadog's orchestrator
+            // custom-resources list). Member-identity marking above stays
+            // on the permissive form — fail captures keyed on the ranged
+            // member must survive the fallback wrapper (nats' jsonpatch).
+            let identity_variable_path = match (&direct_path, range_source) {
+                (None, TemplateExpr::Variable(name)) => context
+                    .template_bindings
+                    .get(name)
+                    .cloned()
+                    .and_then(AbstractValue::without_widened)
+                    .and_then(|value| match value {
+                        AbstractValue::ValuesPath(path)
+                        | AbstractValue::JsonDecodedPath(path)
+                        | AbstractValue::OutputPath(path, _) => Some(path),
+                        _ => None,
+                    }),
+                _ => None,
+            };
             let json_decoded_variable_path = match (&direct_path, range_source) {
                 (None, TemplateExpr::Variable(name)) => context
                     .template_bindings
@@ -828,7 +856,25 @@ impl Interpreter<'_> {
                     .collect::<Vec<_>>(),
                 direct_path,
                 direct_variable_path,
+                identity_variable_path,
                 json_decoded_direct_path.or(json_decoded_variable_path),
+            )
+        };
+        // A bare-dot range (`range .`) resolves through the dot VALUE,
+        // which may be a derived collection merely INFLUENCED by one path
+        // (kyverno's labels-merge list of rendered fragments): only an
+        // identity dot ranges the path itself, so only that form may carry
+        // the read guard below.
+        let bare_dot_range =
+            matches!(range_source.deparen(), TemplateExpr::Field(fields) if fields.is_empty());
+        let dot_is_identity_of = |path: &str| {
+            matches!(
+                &iterable_value,
+                Some(
+                    AbstractValue::ValuesPath(value_path)
+                        | AbstractValue::JsonDecodedPath(value_path)
+                        | AbstractValue::OutputPath(value_path, _)
+                ) if value_path == path
             )
         };
         let shape = self.range_body_shape(nodes);
@@ -839,8 +885,13 @@ impl Interpreter<'_> {
             destructured && !shape.emits_sequence_items && shape.has_dynamic_entries;
         // Structural claims about the ranged path hold only when the range
         // iterates the path ITSELF: `range until (int .Values.n)` iterates a
-        // DERIVED list, so it says nothing about the path's own shape.
-        if let Some(path) = &direct_path {
+        // DERIVED list, so it says nothing about the path's own shape. The
+        // same discipline gates the bare dot — `range .` over a derived
+        // collection merely influenced by one path (kyverno's labels-merge
+        // list of rendered fragments) must not mark that path ranged.
+        if let Some(path) = &direct_path
+            && (!bare_dot_range || dot_is_identity_of(path))
+        {
             self.range_modes.mark_direct(path);
             if destructured {
                 self.range_modes.mark_destructured(path);
@@ -855,22 +906,32 @@ impl Interpreter<'_> {
         if let Some(path) = &json_decoded_path {
             self.range_modes.mark_json_decoded(path);
         }
-
         let mut own = Vec::new();
         let mut extra = Contributions::default();
         for path in &source_paths {
             let predicate = Predicate::from(Guard::Range { path: path.clone() });
             if emit_header_read && !renders_scalar_items {
-                if self.helper_scope {
-                    if destructured {
-                        let guard = Guard::Range { path: path.clone() };
-                        self.push_read(path, std::slice::from_ref(&guard));
-                    } else {
-                        self.push_read(path, &[]);
-                    }
-                } else {
+                // A helper-scope read carries the range guard only when the
+                // range iterates the path ITSELF (or the destructured form):
+                // executing the helper executes the header, which aborts on
+                // a non-rangeable subject no matter what the body renders,
+                // so the iterable claim must not depend on rendered rows —
+                // a shared accumulator joining several ranged sources buries
+                // those rows' range conjuncts inside `any_of` alternatives
+                // (the bitnami `common.images.pullSecrets` shape). A DERIVED
+                // iterable's influencing paths keep the bare read: guarding
+                // them would recondition strict captures riding the same
+                // read identity on rangeability the source never has.
+                let identity_range_of_path = direct_path.as_deref() == Some(path.as_str())
+                    && (!bare_dot_range || dot_is_identity_of(path));
+                let direct_range_of_path = destructured
+                    || identity_range_of_path
+                    || identity_variable_path.as_deref() == Some(path.as_str());
+                if !self.helper_scope || direct_range_of_path {
                     let guard = Guard::Range { path: path.clone() };
                     self.push_read(path, std::slice::from_ref(&guard));
+                } else {
+                    self.push_read(path, &[]);
                 }
             }
             if derived_range_condition.is_none() {

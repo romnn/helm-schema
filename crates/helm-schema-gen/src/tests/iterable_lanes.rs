@@ -224,3 +224,164 @@ fn approximate_guard_hints_stay_branch_scoped() {
          stringification renders: {schema}"
     );
 }
+
+/// bitnami's `common.images.pullSecrets` shape: a helper that ranges a
+/// call-dict field's MEMBER (`.global.imagePullSecrets`) and then feeds a
+/// SHARED accumulator from a second loop. The range header aborts on a
+/// non-rangeable subject no matter what the body renders, so the iterable
+/// claim must ride the header READ — the accumulator join buries the
+/// rendered rows' range conjuncts inside `any_of` alternatives (the signoz
+/// zookeeper re-widening).
+#[test]
+fn shared_accumulator_helper_ranges_bind_each_source_iterable_domain() {
+    let helpers = indoc! {r#"
+        {{- define "repro.pullSecrets" -}}
+          {{- $pullSecrets := list }}
+          {{- if .global }}
+            {{- range .global.imagePullSecrets -}}
+              {{- $pullSecrets = append $pullSecrets . -}}
+            {{- end -}}
+          {{- end }}
+          {{- range .images -}}
+            {{- range .pullSecrets -}}
+              {{- $pullSecrets = append $pullSecrets . -}}
+            {{- end -}}
+          {{- end -}}
+          {{- if (not (empty $pullSecrets)) }}
+        imagePullSecrets:
+            {{- range $pullSecrets | uniq }}
+          - name: {{ . }}
+            {{- end }}
+          {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: StatefulSet
+        metadata:
+          name: repro
+        spec:
+          template:
+            spec:
+              {{- include "repro.pullSecrets" (dict "images" (list .Values.image) "global" .Values.global) | nindent 6 }}
+              containers:
+                - name: repro
+                  image: {{ .Values.image.repository }}
+    "#};
+    let values_yaml = "global:\n  imageRegistry: \"\"\nimage:\n  repository: docker.io/repro\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (value, label) in [
+        (serde_json::json!("oops"), "a truthy scalar"),
+        (serde_json::json!(""), "the empty string"),
+        (serde_json::json!(false), "a raw false"),
+    ] {
+        let instance = serde_json::json!({
+            "global": { "imageRegistry": "", "imagePullSecrets": value },
+            "image": { "repository": "docker.io/repro" },
+        });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "{label} cannot be ranged; rendering aborts: instance={instance}; schema={schema}"
+        );
+    }
+    for (value, label) in [
+        (serde_json::json!(["secret"]), "an array"),
+        (serde_json::json!({ "a": "b" }), "a map"),
+        (serde_json::json!(null), "an explicit null"),
+    ] {
+        let instance = serde_json::json!({
+            "global": { "imageRegistry": "", "imagePullSecrets": value },
+            "image": { "repository": "docker.io/repro" },
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label} iterates (or skips) cleanly: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// datadog's orchestrator custom-resources shape: a range over a binding
+/// that SELECTS a fallback (`$crs := .Values.x | default list`) iterates
+/// the fallback on every Helm-falsy input, so the source path owes no
+/// iterable shape — the empty string renders through the empty-list arm.
+#[test]
+fn fallback_selected_bindings_leave_the_source_unranged() {
+    let helpers = indoc! {r#"
+        {{- define "repro.customResources" -}}
+        {{- $customResources := .Values.custom.resources | default list -}}
+        {{- range $cr := $customResources -}}
+        - {{ $cr }}
+        {{ end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: repro
+        data:
+          resources: |
+        {{ include "repro.customResources" . | indent 4 }}
+    "#};
+    let values_yaml = "custom:\n  resources: []\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (value, label) in [
+        (serde_json::json!(""), "the empty string"),
+        (serde_json::json!(false), "a raw false"),
+        (serde_json::json!(0), "a raw zero"),
+        (serde_json::json!(["a"]), "an array"),
+    ] {
+        let instance = serde_json::json!({ "custom": { "resources": value } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label} selects the list fallback (or iterates); rendering \
+             proceeds: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// kyverno's labels-merge shape: a helper ranging its BARE DOT over a
+/// derived list of rendered fragments (`list ... (toYaml .Values.x)`)
+/// iterates the derivation, not the influencing path — a scalar there
+/// serializes fine and must stay accepted.
+#[test]
+fn bare_dot_ranges_over_derived_lists_leave_influences_open() {
+    let helpers = indoc! {r#"
+        {{- define "repro.labels.merge" -}}
+        {{- $labels := dict -}}
+        {{- range . -}}
+          {{- $labels = merge $labels (fromYaml .) -}}
+        {{- end -}}
+        {{- with $labels -}}
+          {{- toYaml $labels -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: repro
+          labels:
+            {{- include "repro.labels.merge" (list "app: repro" (toYaml .Values.customLabels)) | nindent 4 }}
+        data:
+          a: "1"
+    "#};
+    let values_yaml = "customLabels: {}\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (value, label) in [
+        (serde_json::json!("__junk__"), "a scalar"),
+        (serde_json::json!(""), "the empty string"),
+        (serde_json::json!({ "team": "x" }), "a map"),
+    ] {
+        let instance = serde_json::json!({ "customLabels": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label} only feeds toYaml; the range iterates the literal \
+             list: instance={instance}; schema={schema}"
+        );
+    }
+}
