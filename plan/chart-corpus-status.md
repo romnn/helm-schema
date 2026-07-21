@@ -1,26 +1,25 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-21 after the nil-scrub round (nineteenth round),
-which closed F110 and F111 and landed F80's scrub half. F111: nack's root
-`global` — read only through the nil-safe grouped `((.Values.global).labels)`
-— no longer pins `type: object` (helm's null-deletion renders `global:
-null`); the declared-default base widens to `object|null` and the
-presence-guarded member-host arm carries the strict typing. F110: provider
-RE2 spellings normalize at fragment ingestion — a leading global `(?i)`
-case-folds exactly (`^(?i)(abort|warn)?$` → per-letter classes, Unicode
-simple-fold partners included) — and a new dialect gate compiles every
-committed fixture's patterns under a real ECMA-262 engine plus the
-metaschema. F80's scrub half: the `removeNilFields` define shape is
-recognized structurally and its call substitutes the operand's identity
-with a scrubbed marker; merged-member truthiness decodes member-wise
-through selector projections; binding-carried layer facts ride helper
-summaries into layered sink typing (scrub-involving merges only), and the
-scrubbed layer's synthesized arms null-relax members at every depth. The
-full scrub → custom-merge → candidate-selection chain is pinned at gen
-level. The seventeenth round's audit reopens stand: F30, F31, F32, F53,
-F56, F65, F68, and F98 keep verified residuals below; F80's remaining
-half is re-scoped in its entry. Green corpus tests are a baseline, not
-completion evidence.
+Last reconciled 2026-07-21 after the coalesced-document round (twentieth
+round), which closed F30, F31, and F68 and landed F32's core. The round's
+architectural decision: the generated schema validates the COALESCED
+values document — the exact document helm 4 feeds `values.schema.json`
+validation (verified empirically: a shipped schema requiring subchart
+defaults fails, and a null-deleted key surfaces to the validator as a
+MISSING key, never as a literal null). Absence semantics follow from that
+doctrine everywhere: a parent-declared key can only go missing through
+helm null-deletion and reads as nil at render; a dependency-owned key
+reads as its subchart's declared default (which fills at the subchart's
+own coalesce stage — null-deletion of a parent default does NOT resurrect
+through it when the parent also declares the key); chart-internal root
+merges (`set $ "Values" (mustMergeOverwrite defaults .Values)`) fill
+their defaults after any deletion. Sparse documents are therefore no
+longer a supported validation target — every pin and probe composes its
+override over the chart defaults (`chart_instances::with_override`), and
+raw-file editor UX is explicitly out of scope. F30/F31/F68/F32 details
+live in their entries. F53, F56, F65, and F98 keep verified residuals
+below; F74/F80/F108 residuals stand as re-scoped. Green corpus tests are
+a baseline, not completion evidence.
 Where a finding has both a completed bounded part and a remainder, the
 completed part is listed below with a "(bounded)" marker and the residual is
 classified separately. Per-finding history lives in
@@ -31,6 +30,75 @@ classified separately. Per-finding history lives in
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
 
+- **F30 — guarded `required` absence (twentieth round).** The `Absent`
+  guard condition encodes the coalesced document uniformly:
+  `anyOf[missing, explicit-null]` regardless of declared defaults —
+  coalescing already filled every parent default, so a missing key always
+  means nil at render (the old `declared_default_fills` branch encoded
+  the raw-user-file view, where the state was unreachable and the
+  conditions were dead). AWS LBC: `autoscaling.enabled: true` with
+  `maxReplicas: null` (deleted) now rejects at validation while the
+  default-filled, dormant, and explicit-value states render — all
+  helm-verified. The ten corpus flips were each verified as real aborts:
+  trivy-operator's four `required` image/compliance keys, kyverno's four
+  `required` repository/create chains, and signoz's
+  `externalClickhouse.{host,cluster}` requirements (the signoz pin's
+  disabled-clickhouse instance now carries both, as any helm-accepted
+  coalesced document must). Pinned by
+  `guarded_required_rejects_null_deleted_declared_defaults` plus the
+  regenerated fixtures.
+- **F31 — base-0 cast preimages (twentieth round).** The int-cast string
+  preimage languages are now exact for clean spellings:
+  `magnitude_windows_above` builds per-position digit windows in every
+  radix Go's base-0 parse accepts (decimal unpadded; hex/binary/octal
+  with `0*` padding; legacy leading-zero octal), capped where int64
+  overflow starts coercing to 0, and the Excluding escape language is the
+  windows plus bounded residues (underscored spellings, the one
+  boundary length per family where overflow is spelling-dependent).
+  `ne (int X) L` decodes to a REGION DISJUNCTION
+  (`IntLt{L} ∨ IntGt{L}` as strengthened approximates, with the
+  call-level `default` collision exclusions), so string spellings ride
+  the same window encodings as raw integers. Integer provider slots also
+  accept the octal-fallback integral-float family ("08" renders as a
+  YAML float that marshals back to JSON 8). All verified: cilium's DNS
+  proxy `"0"`/`"00"`/`"0x0"`/unparseable spellings, `cluster.id: "1"`
+  under the default name, `maxConnectedClusters: "300"` (each aborts
+  helm) and their `"10094"`/`"0x1ff"`/`"255"` accept-controls; jenkins
+  `"05"`/`"0x5"` abort while `"08"` renders. A differential test
+  (`int_cast_preimages_agree_with_the_reference_coercion`) checks every
+  claim direction against a reference Sprig coercion
+  (`strconv.ParseInt` base 0 over `trimZeroDecimal`, underscore rules
+  included) over an exhaustive short-spelling corpus plus boundary
+  spellings across nine bounds. Chart pin:
+  `cilium_int_cast_validators_bind_base0_string_preimages`.
+- **F68 — provider constraints on ranged keys (twentieth round).**
+  `synthesized_range_key_implications` projects the provider key-slot's
+  own string constraints — `pattern` plus the new `StringLengthBounds`
+  requirement for `minLength`/`maxLength` — onto the ranged source map's
+  `propertyNames`, scoped to the use's branch guards. Traefik:
+  `gateway.listeners.Audit` violates the Gateway CRD's lowercase
+  SectionName pattern (helm renders it; the committed provider is the
+  rejecting stage), 254-char and empty keys violate the length window,
+  and lowercase keys plus both dormant states stay open — pinned by
+  `traefik_listener_keys_carry_the_provider_section_name_domain`.
+- **F32 core — coalesced-document absence semantics (twentieth round).**
+  Condition encoding reads absence through the ownership rule stated in
+  the header: `build_default_aware_leaf_condition_fragment` takes
+  `absent_holds` = "does the guard hold at the value the render reads
+  when the key is missing" — nil for parent-owned paths (Truthy/With and
+  HasKey never hold; Eq only against the null literal; NotEq against
+  every non-null literal; the int regions exactly when 0 lands inside;
+  TypeIs only for "null"; AtMostOneMember vacuously) and the subchart
+  default for dependency-owned paths (`build_dependency_values_yaml`:
+  the dependency charts' composed defaults MINUS parent-declared paths,
+  threaded into the encoders as `subchart_defaults_doc`, with
+  chart-internal root-merge defaults copied in). Cluster Autoscaler's
+  `minAvailable`-alone false-reject is gone, cilium's tproxy+netkit
+  exclusion decodes through the new piped-membership lane, and the
+  kvstoreMode/cluster-name validators now reject null-deletion states
+  exactly. Roughly thirty pins migrated from raw-file shorthand to
+  coalesced instances (composing over chart defaults via
+  `chart_instances::with_override`).
 - F1 dotted values keys split into fabricated nested paths
 - F2 guarded overlays closing objects to the observed member subset
 - F3 self-truthy-guarded typed leaves keeping value facets unconditionally
@@ -814,22 +882,28 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   service terminal still abstains — its fail sits under the `$services`
   local-dict range (`set $services "default" (omit …)`) whose header
   stays undecoded, so only the gen-level shape is pinned.
-- **F30 residual — guarded `required` absence.** AWS Load Balancer Controller
-  accepts autoscaling with `maxReplicas` absent, while Helm's live HPA branch
-  aborts at `templates/hpa.yaml:21`; `maxReplicas: 5` passes. Preserve missing
-  as a failing preimage of `required` under the resource guard.
-- **F31 residual — cast preimages after nested guards.** Cilium accepts
-  string-cast failures such as DNS proxy ports `"0"`/`"00"`/`"0x0"`,
-  `cluster.id: "1"`, and `maxConnectedClusters: "300"` although Helm aborts;
-  their allowed controls pass. Jenkins also accepts failing `"05"`/`"0x5"`
-  replicas but rejects Helm's parse-failure-to-zero `"08"`. Complete exact
-  base-0 coercion preimages and retain them through cross-path guards.
-- **F32 residual — cross-path implication exactness.** Cilium accepts
-  `bpf.tproxy: true` with `datapathMode: netkit`, which Helm rejects; the
-  `veth` control passes. Cluster Autoscaler has the opposite error:
-  `minAvailable` alone is schema-rejected although Helm/provider accept it,
-  while the chart fails only when both PDB bounds are truthy. Preserve nested
-  membership tests and missing/falsy polarity when negating terminal guards.
+- **F32 residual — defaulted-comparison fallback literals (bounded;
+  twentieth round).** The core landed: the CA `minAvailable`-alone
+  false-reject is gone (a null-deleted `maxUnavailable` reads as nil, so
+  the both-bounds terminal no longer fires on absence), and the positive
+  piped membership `list "netkit" "netkit-l2" | has X` decodes to its
+  exact equality disjunction in predicate, faithfulness, AND `not`
+  position (the truthy-negation fallback was rejecting every falsy
+  subject) — cilium's tproxy+netkit exclusion rejects both netkit modes
+  while veth/dormant states stay open, helm-verified. REMAINING:
+  external-secrets' `serviceMonitor: {renderMode: null}` deletion state
+  falsely rejects — the invalid-renderMode capture spells its else-arm as
+  `¬(truthy(renderMode) ∧ eq-arm)` conjuncts, but `$mode :=
+  .Values.serviceMonitor.renderMode | default "skipIfMissing"` maps the
+  deleted state onto the DEFAULT literal's arm, so the negated
+  default-literal arm must carry `truthy(renderMode)` positively. Local
+  bindings record default PATHS but not the fallback LITERAL; the fix is
+  to carry the literal on the binding into comparison decodes. Also
+  noted: signoz's `global.imagePullSecrets` scalar rejections (a
+  nineteenth-round F30 win) re-widened — their arm's condition rode an
+  `Absent(signoz-otel-gateway.postgresql.enabled)` disjunct that the
+  subchart-default semantics correctly narrowed; the zookeeper-side abort
+  needs its own capture to reject again.
 - **F53 residual — helper-local `tpl` operands.** OAuth2 Proxy accepts maps at
   `config.existingSecret`, `cookieSecret`, `clientSecret`, and `clientID`, but
   the helper-local `tpl` calls reject them. The last three contracts are gated
@@ -847,11 +921,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   effective root, then Helm aborts reading `.Values.env.MCS_API_GROUP` in
   `reader-clusterrole.yaml:3`. A map passes. Project effective-root contracts
   back through `mustMergeOverwrite` to the user-facing `pilot` source.
-- **F68 residual — provider constraints on ranged keys.** Traefik accepts and
-  renders `gateway.listeners.Audit`, but the committed Gateway provider rejects
-  the uppercase listener name; lowercase `audit` passes all three stages.
-  Project provider patterns/lengths from a rendered range key onto the source
-  map's `propertyNames`.
 - **F74 residual — parser exactness and transformed comparisons (bounded;
   seventeenth round).** (a) The `urlParse` operand pattern is now Go
   `url.Parse`'s accepted language, differential-verified against ~900k
