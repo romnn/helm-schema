@@ -2879,11 +2879,23 @@ fn provider_schema_use(
     contract_use: &ContractUse,
     self_range_guarded: bool,
 ) -> Option<ProviderSchemaUse> {
+    // A nil-omitting stringification (Sprig `quote`/`squote` skip nil
+    // operands) of a RANGED member leaf still forces an explicit null
+    // into the slot on a missing source: its use survives — with the
+    // Serialized kind, so slot typing keeps abstaining — solely to carry
+    // provider requiredness to the ranged-member presence synthesis
+    // (traefik's `mountPath: {{ $plugin.mountPath | quote }}`).
+    let nil_omitting_ranged_leaf = contract_use.kind == ValueKind::Serialized
+        && contract_use.nil_omitting
+        && contract_use
+            .source_expr
+            .split('.')
+            .any(|segment| segment == "*");
     if contract_use.source_expr.trim().is_empty()
-        || matches!(
+        || (matches!(
             contract_use.kind,
             ValueKind::PartialScalar | ValueKind::Serialized
-        )
+        ) && !nil_omitting_ranged_leaf)
         || contract_use.path.0.is_empty()
         // A string-consuming transform produced this rendered text, so the
         // slot observes the TRANSFORM's output, never the raw spelling: a
@@ -2910,6 +2922,7 @@ fn provider_schema_use(
         split_segment: contract_use.split_segment.clone(),
         merge_layers: contract_use.merge_layers.clone(),
         range_key: contract_use.range_key,
+        nil_omitting: contract_use.nil_omitting,
         omitted_members: contract_use
             .omitted_members
             .iter()
@@ -3208,6 +3221,13 @@ fn guard_to_conditional_guard(
         } => Some(ConditionalGuard::HasKey {
             path: path(value_path)?,
             key: key.clone(),
+        }),
+        Guard::ContainsEquals {
+            path: value_path,
+            value,
+        } => Some(ConditionalGuard::ContainsEquals {
+            path: path(value_path)?,
+            value: value.clone(),
         }),
         Guard::MatchesPattern {
             path: value_path,

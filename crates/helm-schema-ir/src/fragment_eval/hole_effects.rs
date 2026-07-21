@@ -342,6 +342,9 @@ impl Interpreter<'_> {
                 }
                 | Guard::HasKey {
                     path: guard_path, ..
+                }
+                | Guard::ContainsEquals {
+                    path: guard_path, ..
                 } => !guard_path.trim().is_empty() && foreign(guard_path),
                 // A type test PARTITIONS its subject: hints observed under
                 // it hold only for the tested types, even on the hinted
@@ -387,6 +390,8 @@ impl Interpreter<'_> {
         );
         self.values_default_sources_observed
             .extend(effects.values_default_sources.iter().cloned());
+        self.values_root_overlay_prefixes_observed
+            .extend(effects.values_root_overlay_prefixes.iter().cloned());
         // The first values-root wrapper rewrite freezes the strict-consumer
         // snapshot: string contracts recorded so far ran on RAW values, so
         // a wrapper map at those paths aborts before the engine rewrites it

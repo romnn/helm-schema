@@ -398,6 +398,7 @@ impl Interpreter<'_> {
                     merge_operand_paths: &hole.effects.merge_operand_paths,
                     yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
                     shape_erased_paths: &hole.effects.shape_erased_paths,
+                    nil_omitting_paths: &hole.effects.nil_omitting_paths,
                     string_contract_paths: row_string_contract_paths,
                     json_serialized_paths: &hole.effects.json_serialized_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,

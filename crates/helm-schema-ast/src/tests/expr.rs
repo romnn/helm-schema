@@ -628,3 +628,55 @@ fn tpl_of_plain_value_inside_printf_is_not_definite_fragment_render() {
         "tpl's context does not prove that its string input renders YAML structure: {exprs:?}"
     );
 }
+
+#[test]
+fn unspaced_argument_pipe_splits_the_enclosing_command() {
+    // Go's tokenizer emits `)` and `|` as separate tokens regardless of
+    // spacing: `print (include "a" .)| sha256sum` pipes the WHOLE print
+    // command, never its last argument (redis-ha's checksum annotation).
+    let spaced =
+        parse_action_expressions(r#"{{ print (include "a" .) (include "b" .) | sha256sum }}"#);
+    let unspaced =
+        parse_action_expressions(r#"{{ print (include "a" .) (include "b" .)| sha256sum }}"#);
+    sim_assert_eq!(have: &unspaced, want: &spaced);
+    let TemplateExpr::Pipeline(stages) = &unspaced[0] else {
+        panic!("expected Pipeline, got {unspaced:?}");
+    };
+    sim_assert_eq!(have: stages.len(), want: 2);
+    assert!(
+        matches!(&stages[0], TemplateExpr::Call { function, args } if function == "print" && args.len() == 2),
+        "first stage is the whole print command: {stages:?}"
+    );
+    assert!(
+        matches!(&stages[1], TemplateExpr::Call { function, .. } if function == "sha256sum"),
+        "second stage is the digest: {stages:?}"
+    );
+}
+
+#[test]
+fn unspaced_selector_pipe_splits_the_enclosing_command() {
+    // The same tokenization rule for a bare selector argument:
+    // `default "x" .Values.y|quote` pipes the whole default call.
+    let spaced = parse_action_expressions(r#"{{ default "x" .Values.y | quote }}"#);
+    let unspaced = parse_action_expressions(r#"{{ default "x" .Values.y|quote }}"#);
+    sim_assert_eq!(have: &unspaced, want: &spaced);
+}
+
+#[test]
+fn parenthesized_pipeline_argument_stays_an_argument() {
+    // A REAL pipeline argument is parenthesized; the unfold must leave it
+    // in place.
+    let exprs = parse_action_expressions(r#"{{ print (list 1 2 | join ",") }}"#);
+    assert!(
+        matches!(
+            &exprs[0],
+            TemplateExpr::Call { function, args }
+                if function == "print"
+                    && matches!(
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Pipeline(_))
+                    )
+        ),
+        "parenthesized pipeline argument survives: {exprs:?}"
+    );
+}

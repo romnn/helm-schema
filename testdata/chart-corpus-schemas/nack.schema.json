@@ -1226,49 +1226,99 @@
       }
     },
     {
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "jetstream": {
-              "additionalProperties": {},
+      "if": {
+        "anyOf": [
+          {
+            "not": {
               "properties": {
-                "additionalArgs": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "null"
+                "jetstream": {
+                  "properties": {
+                    "controlLoop": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  "required": [
+                    "controlLoop"
                   ],
-                  "description": "Additional arguments to pass to the controller process"
+                  "type": "object"
                 }
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "controlLoop": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "controlLoop"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "additionalArgs": {
+                        "contains": {
+                          "enum": [
+                            "--control-loop"
+                          ]
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "additionalArgs"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "additionalArgs": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional arguments to pass to the controller process"
               }
             }
           }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "nameOverride": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/schema21"
-                },
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          }
         }
-      ]
+      }
     },
     {
       "additionalProperties": {},
@@ -1885,6 +1935,26 @@
       "properties": {
         "jetstream": {
           "type": "object"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "nameOverride": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema21"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },

@@ -291,20 +291,20 @@ fn collect_from_node(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr>) {
 /// the node's source text — never panics, never drops information.
 fn convert_pipeline(node: Node<'_>, src: &str) -> TemplateExpr {
     match node.kind() {
-        "function_call" => TemplateExpr::Call {
-            function: field_text(node, "function", src).to_string(),
-            args: convert_args(node, src),
-        },
+        "function_call" => call_with_unfolded_pipe(
+            field_text(node, "function", src).to_string(),
+            convert_args(node, src),
+        ),
         "method_call" => {
             // `(.x.y).Method arg1 ...` — model as a Call where the
             // function "name" is the selector text (with leading dots).
             // Extractors that care about specific functions check bare
             // identifiers like `"include"` / `"default"`, so a method
             // call name like `".x.y.Method"` never collides.
-            TemplateExpr::Call {
-                function: field_text(node, "method", src).to_string(),
-                args: convert_args(node, src),
-            }
+            call_with_unfolded_pipe(
+                field_text(node, "method", src).to_string(),
+                convert_args(node, src),
+            )
         }
         "chained_pipeline" => {
             // The grammar nests `chained_pipeline` left-associatively:
@@ -421,6 +421,30 @@ fn convert_value_field(node: Node<'_>, src: &str) -> TemplateExpr {
     )
 }
 
+/// Rebuild a call whose LAST argument absorbed an un-spaced pipe.
+///
+/// Go's tokenizer emits `)` and `|` as separate tokens regardless of
+/// spacing, and an argument-position pipeline is only legal when
+/// parenthesized — a pipe always splits the ENCLOSING command. The
+/// tree-sitter grammar instead attaches `(include "x" .)| sha256sum`'s
+/// pipe to the last argument, so a BARE pipeline argument is always that
+/// mis-parse: its first stage is the real argument and the remaining
+/// stages pipe the whole call (redis-ha's checksum annotation spells its
+/// digest exactly this way).
+fn call_with_unfolded_pipe(function: String, mut args: Vec<TemplateExpr>) -> TemplateExpr {
+    if matches!(args.last(), Some(TemplateExpr::Pipeline(stages)) if stages.len() >= 2)
+        && let Some(TemplateExpr::Pipeline(mut stages)) = args.pop()
+    {
+        let first = stages.remove(0);
+        args.push(first);
+        let mut out = Vec::with_capacity(stages.len() + 1);
+        out.push(TemplateExpr::Call { function, args });
+        out.append(&mut stages);
+        return TemplateExpr::Pipeline(out);
+    }
+    TemplateExpr::Call { function, args }
+}
+
 fn convert_args(node: Node<'_>, src: &str) -> Vec<TemplateExpr> {
     let Some(list) = node.child_by_field_name("arguments") else {
         return Vec::new();
@@ -451,7 +475,13 @@ fn collect_pipeline_stages(node: Node<'_>, src: &str, out: &mut Vec<TemplateExpr
         if ch.kind() == "chained_pipeline" {
             collect_pipeline_stages(ch, src, out);
         } else {
-            out.push(convert_pipeline(ch, src));
+            match convert_pipeline(ch, src) {
+                // A stage that unfolded an un-spaced argument pipe (see
+                // `call_with_unfolded_pipe`) is itself a pipeline; Go
+                // reads the whole chain as one flat stage list.
+                TemplateExpr::Pipeline(stages) => out.extend(stages),
+                stage => out.push(stage),
+            }
         }
     }
 }

@@ -203,6 +203,8 @@ impl<'a> Interpreter<'a> {
         );
         self.values_default_sources_observed
             .extend(nested.values_default_sources_observed);
+        self.values_root_overlay_prefixes_observed
+            .extend(nested.values_root_overlay_prefixes_observed);
         self.values_root_helper_includes_observed
             .extend(nested.values_root_helper_includes_observed);
         self.pre_rewrite_strict_paths

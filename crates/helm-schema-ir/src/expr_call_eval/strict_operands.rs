@@ -26,7 +26,13 @@ pub(super) fn record_string_transform_effects(
         // Sprig's `strval` fallback renders ANY input (maps, lists, nil), so
         // a total stringification constrains nothing about its input and the
         // sink observes only the rendered text, never the input shape.
-        record_total_conversion_effects(influence_paths, effects);
+        record_total_conversion_effects(influence_paths.clone(), effects);
+        // Sprig `quote`/`squote` SKIP nil operands entirely: a missing or
+        // null source renders an explicit YAML null into the sink, unlike
+        // `toString`'s always-text image.
+        if matches!(function, "quote" | "squote") {
+            effects.nil_omitting_paths.extend(influence_paths);
+        }
         // Only `toString` returns the exact `%v` rendering of its operand
         // (`quote`/`squote`/`urlquery` decorate or rewrite the text), and
         // only a pure identity operand pins that image to a path: a derived

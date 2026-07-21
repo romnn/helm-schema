@@ -43,6 +43,12 @@ pub(crate) struct SymbolicLocalState {
     /// Conditions and assignments resolve through these; hole rendering
     /// does not, so member reads do not manufacture placed rows.
     pub(crate) range_member_values: HashMap<String, AbstractValue>,
+    /// For a range variable bound over a local-dict OVERLAY (`$services :=
+    /// .Values.service.additionalServices` + `set $services "default"
+    /// (omit …)`): one literal entry the range DEFINITELY iterates on
+    /// every render. Unfaithful member conditions re-decode under this
+    /// binding as a sound subset (positive-polarity consumers only).
+    pub(crate) definite_range_member_values: HashMap<String, AbstractValue>,
     /// Locals whose CURRENT value came from a guarded self-advance
     /// (`$x = index $x $k` under a `hasKey $x $k` presence conjunct): one
     /// traversal step into a member. The branch join keeps the advanced
@@ -89,6 +95,7 @@ struct VariableLocalState {
     int_cast_source: Option<IntCastSource>,
     kube_version_source: Option<KubeVersionSource>,
     range_member_value: Option<AbstractValue>,
+    definite_range_member_value: Option<AbstractValue>,
 }
 
 impl SymbolicLocalState {
@@ -211,6 +218,7 @@ impl SymbolicLocalState {
             int_cast_source: self.int_cast_sources.get(variable).cloned(),
             kube_version_source: self.kube_version_sources.get(variable).cloned(),
             range_member_value: self.range_member_values.get(variable).cloned(),
+            definite_range_member_value: self.definite_range_member_values.get(variable).cloned(),
         }
     }
 
@@ -264,6 +272,11 @@ impl SymbolicLocalState {
             variable,
             previous.range_member_value,
         );
+        restore_map_entry(
+            &mut self.definite_range_member_values,
+            variable,
+            previous.definite_range_member_value,
+        );
     }
 
     fn set_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
@@ -287,6 +300,7 @@ impl SymbolicLocalState {
         self.int_cast_sources.remove(variable);
         self.kube_version_sources.remove(variable);
         self.range_member_values.remove(variable);
+        self.definite_range_member_values.remove(variable);
     }
 }
 

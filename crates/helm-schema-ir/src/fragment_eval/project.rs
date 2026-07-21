@@ -77,6 +77,8 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
     contract.extend_string_contract_value_paths(document.string_contract_paths.iter().cloned());
     contract.merge_range_modes(&document.range_modes);
     contract.extend_values_default_sources(document.values_default_sources.iter().cloned());
+    contract
+        .extend_values_root_overlay_prefixes(document.values_root_overlay_prefixes.iter().cloned());
     contract.extend_fail_conditions(document.fail_conditions.iter().cloned());
     contract
 }
@@ -375,6 +377,7 @@ fn splice_row(
     row.template_supplied_member_keys = member_sibling_keys.clone();
     row.split_segment = splice.meta.split_segment.clone();
     row.range_key = splice.meta.range_key;
+    row.nil_omitting = splice.meta.nil_omitted;
     row.merge_layers = splice.meta.merge_layers.clone();
     row.omitted_members = splice.meta.omitted_members.clone();
     row.digest = splice.meta.digest;

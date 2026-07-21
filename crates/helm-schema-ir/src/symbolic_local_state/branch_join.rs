@@ -39,6 +39,14 @@ pub(super) fn joined_branch_outcomes(
             |state| &state.range_member_values,
             join_value_choice,
         ),
+        // A definite entry binding survives a join only where EVERY branch
+        // kept the same one: a branch-dependent binding is no longer a
+        // certainly-iterated member.
+        definite_range_member_values: join_map(
+            &outcomes,
+            |state| &state.definite_range_member_values,
+            join_if_equal,
+        ),
         chart_value_defaults: intersect_chart_defaults(&outcomes),
         local_scopes: entry.local_scopes.clone(),
     }

@@ -647,6 +647,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         digest: false,
         merge_operand: false,
@@ -692,6 +693,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         digest: false,
         merge_operand: false,
@@ -1027,6 +1029,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            nil_omitting: false,
             omitted_members: Default::default(),
             digest: false,
             merge_operand: false,
@@ -1052,6 +1055,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            nil_omitting: false,
             omitted_members: Default::default(),
             digest: false,
             merge_operand: false,
@@ -1119,6 +1123,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            nil_omitting: false,
             omitted_members: Default::default(),
             digest: false,
             merge_operand: false,
@@ -1135,6 +1140,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            nil_omitting: false,
             omitted_members: Default::default(),
             digest: false,
             merge_operand: false,
@@ -1188,6 +1194,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         digest: false,
         merge_operand: false,
@@ -1800,6 +1807,70 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "ranged required leaf ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The helper-projection variant of the presence binding: the range lives
+/// in a pod-template helper consumed through `include … | fromYaml |
+/// toYaml`, and the leaf renders through Sprig `quote` — which SKIPS nil
+/// operands, so a missing or null source still forces an explicit null
+/// into the provider-required VolumeMount `mountPath` (traefik's local
+/// plugins).
+#[test]
+fn quoted_ranged_leaves_bind_presence_through_the_pod_template_projection() {
+    let helpers = indoc! {r#"
+        {{- define "test.podTemplate" }}
+        metadata:
+          labels:
+            app: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              volumeMounts:
+              {{- range $name, $plugin := .Values.plugins }}
+              - name: {{ $name | replace "." "-" }}
+                mountPath: {{ $plugin.mountPath | quote }}
+              {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template: {{ include "test.podTemplate" . | fromYaml | toYaml | nindent 4 }}
+    "#};
+    let values_yaml = indoc! {r#"
+        plugins: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "plugins": { "p": { "mountPath": "/x" } } }),
+            true,
+            "a member with mountPath renders",
+        ),
+        (
+            serde_json::json!({ "plugins": { "p": {} } }),
+            false,
+            "a member without mountPath renders null",
+        ),
+        (
+            serde_json::json!({ "plugins": { "p": { "mountPath": null } } }),
+            false,
+            "an explicit null mountPath renders null",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "quoted ranged required leaf ({label}): instance={instance}; schema={schema}"
         );
     }
 }

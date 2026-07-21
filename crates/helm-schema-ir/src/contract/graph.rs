@@ -40,6 +40,9 @@ pub struct ContractIr {
     range_modes: crate::range_modes::RangeModes,
     /// Chart value subtrees supplying defaults to effective values subtrees.
     values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    /// Values subtrees merged in place over the values root; root contracts
+    /// project back onto the prefixed spellings.
+    values_root_overlay_prefixes: BTreeSet<String>,
     values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
     /// Values paths whose nodes must NOT gain a wrapper alternative: a
     /// strict string consumer reads them BEFORE the engine's values-root
@@ -131,6 +134,8 @@ impl ContractIr {
         self.range_modes.merge(&other.range_modes);
         self.values_default_sources
             .append(&mut other.values_default_sources);
+        self.values_root_overlay_prefixes
+            .append(&mut other.values_root_overlay_prefixes);
         self.values_program_wrappers
             .append(&mut other.values_program_wrappers);
         self.values_program_wrapper_exclusions
@@ -185,6 +190,7 @@ impl ContractIr {
         // of the schema-signal vocabulary, so abstain instead of leaking them.
         if !guards.is_empty() {
             self.values_default_sources.clear();
+            self.values_root_overlay_prefixes.clear();
             // A path-wide runtime string contract is unconditional only
             // within its own chart's rendering: under activation guards the
             // consumer may never run, so the fact must not type the base.
@@ -265,6 +271,10 @@ impl ContractIr {
                 target_path: map(&source.target_path),
                 source_path: map(&source.source_path),
             })
+            .collect();
+        self.values_root_overlay_prefixes = std::mem::take(&mut self.values_root_overlay_prefixes)
+            .into_iter()
+            .map(|path| map(&path))
             .collect();
         self.values_program_wrappers = std::mem::take(&mut self.values_program_wrappers)
             .into_iter()
@@ -421,6 +431,13 @@ impl ContractIr {
         self.values_default_sources.extend(sources);
     }
 
+    pub(crate) fn extend_values_root_overlay_prefixes(
+        &mut self,
+        prefixes: impl IntoIterator<Item = String>,
+    ) {
+        self.values_root_overlay_prefixes.extend(prefixes);
+    }
+
     pub(crate) fn extend_values_program_wrappers(
         &mut self,
         wrappers: impl IntoIterator<Item = helm_schema_core::ValuesProgramWrapper>,
@@ -502,6 +519,7 @@ impl ContractIr {
             string_contract_value_paths,
             range_modes,
             values_default_sources,
+            values_root_overlay_prefixes,
             values_program_wrappers,
             values_program_wrapper_exclusions,
             mut fail_conditions,
@@ -535,6 +553,7 @@ impl ContractIr {
             string_contract_value_paths,
             range_modes,
             values_default_sources,
+            values_root_overlay_prefixes,
             values_program_wrappers,
             values_program_wrapper_exclusions,
             fail_conditions,

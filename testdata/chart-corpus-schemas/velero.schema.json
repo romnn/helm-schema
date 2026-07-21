@@ -5596,12 +5596,25 @@
       "description": "Default indicates this location is the default backup storage location.",
       "type": "boolean"
     },
-    "schema421": {
+    "schema418": {
+      "properties": {
+        "schedule": {
+          "not": {
+            "type": "null"
+          }
+        }
+      },
+      "required": [
+        "schedule"
+      ],
+      "type": "object"
+    },
+    "schema422": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema423": {
+    "schema424": {
       "anyOf": [
         {
           "items": {},
@@ -5613,7 +5626,7 @@
         }
       ]
     },
-    "schema424": {
+    "schema425": {
       "anyOf": [
         {
           "type": "array"
@@ -5629,21 +5642,21 @@
         }
       ]
     },
-    "schema426": {
+    "schema427": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema427": {
+    "schema428": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "schema428": {
+    "schema429": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "schema431": {
+    "schema432": {
       "additionalProperties": {},
       "properties": {
         "key": {},
@@ -5651,7 +5664,7 @@
       },
       "type": "object"
     },
-    "schema434": {
+    "schema435": {
       "oneOf": [
         {
           "type": [
@@ -5667,29 +5680,29 @@
         }
       ]
     },
-    "schema436": {
+    "schema437": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema441": {
+    "schema442": {
       "additionalProperties": {},
       "properties": {},
       "type": "object"
     },
-    "schema442": {
+    "schema443": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema443": {
+    "schema444": {
       "required": [
         "fs-restore-action-config"
       ],
       "type": "object"
     },
-    "schema446": {
+    "schema447": {
       "anyOf": [
         {
           "not": {
@@ -5700,11 +5713,6 @@
           "type": "string"
         }
       ]
-    },
-    "schema449": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
     },
     "schema45": {
       "additionalProperties": {},
@@ -5833,7 +5841,7 @@
     },
     "schema450": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema451": {
@@ -5842,15 +5850,20 @@
     },
     "schema452": {
       "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema453": {
+      "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema455": {
+    "schema456": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema456": {
+    "schema457": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -8191,7 +8204,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema442"
+                              "$ref": "#/$defs/schema443"
                             },
                             {
                               "not": {
@@ -8209,7 +8222,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema442"
+                              "$ref": "#/$defs/schema443"
                             },
                             {
                               "not": {
@@ -8534,16 +8547,20 @@
                               ]
                             },
                             "annotations": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "backupSyncPeriod": {},
-                            "bucket": {},
+                            "bucket": {
+                              "not": {
+                                "type": "null"
+                              }
+                            },
                             "caCert": {},
                             "config": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "credential": {
-                              "$ref": "#/$defs/schema431"
+                              "$ref": "#/$defs/schema432"
                             },
                             "default": {
                               "anyOf": [
@@ -8560,7 +8577,142 @@
                             "name": {},
                             "prefix": {},
                             "provider": {
-                              "$ref": "#/$defs/schema446"
+                              "type": "string"
+                            },
+                            "validationFrequency": {}
+                          },
+                          "required": [
+                            "bucket"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "accessMode": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            },
+                            "annotations": {
+                              "$ref": "#/$defs/schema424"
+                            },
+                            "backupSyncPeriod": {},
+                            "bucket": {
+                              "not": {
+                                "type": "null"
+                              }
+                            },
+                            "caCert": {},
+                            "config": {
+                              "$ref": "#/$defs/schema424"
+                            },
+                            "credential": {
+                              "$ref": "#/$defs/schema432"
+                            },
+                            "default": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            "name": {},
+                            "prefix": {},
+                            "provider": {
+                              "type": "string"
+                            },
+                            "validationFrequency": {}
+                          },
+                          "required": [
+                            "bucket"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configuration": {
+                "additionalProperties": {},
+                "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+                "properties": {
+                  "backupStorageLocation": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "accessMode": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            },
+                            "annotations": {
+                              "$ref": "#/$defs/schema424"
+                            },
+                            "backupSyncPeriod": {},
+                            "bucket": {},
+                            "caCert": {},
+                            "config": {
+                              "$ref": "#/$defs/schema424"
+                            },
+                            "credential": {
+                              "$ref": "#/$defs/schema432"
+                            },
+                            "default": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            "name": {},
+                            "prefix": {},
+                            "provider": {
+                              "$ref": "#/$defs/schema447"
                             },
                             "validationFrequency": {}
                           },
@@ -8588,16 +8740,16 @@
                               ]
                             },
                             "annotations": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "backupSyncPeriod": {},
                             "bucket": {},
                             "caCert": {},
                             "config": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "credential": {
-                              "$ref": "#/$defs/schema431"
+                              "$ref": "#/$defs/schema432"
                             },
                             "default": {
                               "anyOf": [
@@ -8614,7 +8766,7 @@
                             "name": {},
                             "prefix": {},
                             "provider": {
-                              "$ref": "#/$defs/schema446"
+                              "$ref": "#/$defs/schema447"
                             },
                             "validationFrequency": {}
                           },
@@ -8665,16 +8817,16 @@
                               ]
                             },
                             "annotations": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "backupSyncPeriod": {},
                             "bucket": {},
                             "caCert": {},
                             "config": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "credential": {
-                              "$ref": "#/$defs/schema431"
+                              "$ref": "#/$defs/schema432"
                             },
                             "default": {
                               "anyOf": [
@@ -8716,16 +8868,16 @@
                               ]
                             },
                             "annotations": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "backupSyncPeriod": {},
                             "bucket": {},
                             "caCert": {},
                             "config": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema424"
                             },
                             "credential": {
-                              "$ref": "#/$defs/schema431"
+                              "$ref": "#/$defs/schema432"
                             },
                             "default": {
                               "anyOf": [
@@ -9367,10 +9519,10 @@
                             "description": "Spec to control the desired behavior of daemon set rolling update.",
                             "properties": {
                               "maxSurge": {
-                                "$ref": "#/$defs/schema434"
+                                "$ref": "#/$defs/schema435"
                               },
                               "maxUnavailable": {
-                                "$ref": "#/$defs/schema434"
+                                "$ref": "#/$defs/schema435"
                               }
                             },
                             "type": [
@@ -10320,7 +10472,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema442"
+                              "$ref": "#/$defs/schema443"
                             },
                             {
                               "not": {
@@ -10338,7 +10490,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema442"
+                              "$ref": "#/$defs/schema443"
                             },
                             {
                               "not": {
@@ -10882,7 +11034,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema442"
+                        "$ref": "#/$defs/schema443"
                       },
                       {
                         "type": "null"
@@ -10910,7 +11062,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema442"
+                        "$ref": "#/$defs/schema443"
                       },
                       {
                         "type": "null"
@@ -17080,6 +17232,89 @@
         "schedules": {
           "anyOf": [
             {
+              "items": {
+                "additionalProperties": {},
+                "anyOf": [
+                  {
+                    "properties": {
+                      "disabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema418"
+                  }
+                ],
+                "properties": {
+                  "annotations": {},
+                  "disabled": {},
+                  "labels": {},
+                  "paused": {},
+                  "schedule": {},
+                  "skipImmediately": {},
+                  "template": {},
+                  "useOwnerReferencesInBackup": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "anyOf": [
+                  {
+                    "properties": {
+                      "disabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema418"
+                  }
+                ],
+                "properties": {
+                  "annotations": {},
+                  "disabled": {},
+                  "labels": {},
+                  "paused": {},
+                  "schedule": {},
+                  "skipImmediately": {},
+                  "template": {},
+                  "useOwnerReferencesInBackup": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Backup schedules to create.\nEg:\nschedules:\nmybackup:\ndisabled: false\nlabels:\nmyenv: foo\nannotations:\nmyenv: foo\nschedule: \"0 0 * * *\"\nuseOwnerReferencesInBackup: false\npaused: false\nskipImmediately: false\ntemplate:\nttl: \"240h\"\nstorageLocation: default\nincludedNamespaces:\n- foo\nSee: https://velero.io/docs/v1.14/resource-filtering/#excludes\nexcludedNamespaceScopedResources:\n- persistentVolumeClaims\nexcludedClusterScopedResources:\n- persistentVolumes"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "schedules": {
+          "anyOf": [
+            {
               "$ref": "#/$defs/schema270"
             },
             {
@@ -18173,13 +18408,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema449"
+                            "$ref": "#/$defs/schema450"
                           },
                           {
-                            "$ref": "#/$defs/schema452"
+                            "$ref": "#/$defs/schema453"
                           },
                           {
-                            "$ref": "#/$defs/schema455"
+                            "$ref": "#/$defs/schema456"
                           },
                           {
                             "not": {
@@ -18187,10 +18422,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema456"
+                            "$ref": "#/$defs/schema457"
                           },
                           {
-                            "$ref": "#/$defs/schema450"
+                            "$ref": "#/$defs/schema452"
                           },
                           {
                             "$ref": "#/$defs/schema388"
@@ -18199,10 +18434,10 @@
                             "$ref": "#/$defs/schema248"
                           },
                           {
-                            "$ref": "#/$defs/schema421"
+                            "$ref": "#/$defs/schema422"
                           },
                           {
-                            "$ref": "#/$defs/schema436"
+                            "$ref": "#/$defs/schema437"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -19068,7 +19303,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema441"
+          "$ref": "#/$defs/schema442"
         },
         {
           "not": {
@@ -19084,7 +19319,7 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema426"
+          "$ref": "#/$defs/schema427"
         },
         {
           "$ref": "#/$defs/schema178"
@@ -19130,7 +19365,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/schema443"
+            "$ref": "#/$defs/schema444"
           },
           "then": {
             "anyOf": [
@@ -19653,7 +19888,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema441"
+          "$ref": "#/$defs/schema442"
         },
         {
           "not": {
@@ -19892,7 +20127,7 @@
           "$ref": "#/$defs/schema75"
         },
         {
-          "$ref": "#/$defs/schema426"
+          "$ref": "#/$defs/schema427"
         },
         {
           "not": {
@@ -19997,7 +20232,7 @@
                         "$ref": "#/$defs/schema47"
                       },
                       {
-                        "$ref": "#/$defs/schema424"
+                        "$ref": "#/$defs/schema425"
                       }
                     ]
                   }
@@ -20452,7 +20687,7 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema426"
+          "$ref": "#/$defs/schema427"
         },
         {
           "$ref": "#/$defs/schema202"
@@ -20484,7 +20719,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema426"
+          "$ref": "#/$defs/schema427"
         },
         {
           "not": {
@@ -20555,13 +20790,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema449"
+                                "$ref": "#/$defs/schema450"
                               },
                               {
-                                "$ref": "#/$defs/schema452"
+                                "$ref": "#/$defs/schema453"
                               },
                               {
-                                "$ref": "#/$defs/schema455"
+                                "$ref": "#/$defs/schema456"
                               },
                               {
                                 "not": {
@@ -20569,7 +20804,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema456"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
                                 "$ref": "#/$defs/schema388"
@@ -20578,10 +20813,10 @@
                                 "$ref": "#/$defs/schema248"
                               },
                               {
-                                "$ref": "#/$defs/schema421"
+                                "$ref": "#/$defs/schema422"
                               },
                               {
-                                "$ref": "#/$defs/schema436"
+                                "$ref": "#/$defs/schema437"
                               }
                             ],
                             "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
@@ -20615,13 +20850,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema449"
+                                "$ref": "#/$defs/schema450"
                               },
                               {
-                                "$ref": "#/$defs/schema452"
+                                "$ref": "#/$defs/schema453"
                               },
                               {
-                                "$ref": "#/$defs/schema455"
+                                "$ref": "#/$defs/schema456"
                               },
                               {
                                 "not": {
@@ -20629,7 +20864,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema456"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
                                 "$ref": "#/$defs/schema388"
@@ -20638,10 +20873,10 @@
                                 "$ref": "#/$defs/schema248"
                               },
                               {
-                                "$ref": "#/$defs/schema421"
+                                "$ref": "#/$defs/schema422"
                               },
                               {
-                                "$ref": "#/$defs/schema436"
+                                "$ref": "#/$defs/schema437"
                               }
                             ],
                             "description": "InternalTrafficPolicy describes how nodes distribute service traffic they receive on the ClusterIP. If set to \"Local\", the proxy will assume that pods only want to talk to endpoints of the service on the same node as the pod, dropping the traffic if there are no local endpoints. The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features).",
@@ -20709,13 +20944,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema449"
+                                "$ref": "#/$defs/schema450"
                               },
                               {
-                                "$ref": "#/$defs/schema452"
+                                "$ref": "#/$defs/schema453"
                               },
                               {
-                                "$ref": "#/$defs/schema455"
+                                "$ref": "#/$defs/schema456"
                               },
                               {
                                 "not": {
@@ -20723,7 +20958,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema456"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
                                 "$ref": "#/$defs/schema388"
@@ -20732,10 +20967,10 @@
                                 "$ref": "#/$defs/schema248"
                               },
                               {
-                                "$ref": "#/$defs/schema421"
+                                "$ref": "#/$defs/schema422"
                               },
                               {
-                                "$ref": "#/$defs/schema436"
+                                "$ref": "#/$defs/schema437"
                               }
                             ],
                             "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -20795,13 +21030,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema449"
+                                "$ref": "#/$defs/schema450"
                               },
                               {
-                                "$ref": "#/$defs/schema452"
+                                "$ref": "#/$defs/schema453"
                               },
                               {
-                                "$ref": "#/$defs/schema455"
+                                "$ref": "#/$defs/schema456"
                               },
                               {
                                 "not": {
@@ -20809,7 +21044,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema456"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
                                 "$ref": "#/$defs/schema388"
@@ -20818,10 +21053,10 @@
                                 "$ref": "#/$defs/schema248"
                               },
                               {
-                                "$ref": "#/$defs/schema421"
+                                "$ref": "#/$defs/schema422"
                               },
                               {
-                                "$ref": "#/$defs/schema436"
+                                "$ref": "#/$defs/schema437"
                               }
                             ],
                             "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -21282,7 +21517,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema441"
+          "$ref": "#/$defs/schema442"
         },
         {
           "$ref": "#/$defs/schema210"
@@ -21402,13 +21637,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema449"
+                            "$ref": "#/$defs/schema450"
                           },
                           {
-                            "$ref": "#/$defs/schema452"
+                            "$ref": "#/$defs/schema453"
                           },
                           {
-                            "$ref": "#/$defs/schema455"
+                            "$ref": "#/$defs/schema456"
                           },
                           {
                             "not": {
@@ -21416,7 +21651,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema456"
+                            "$ref": "#/$defs/schema457"
                           },
                           {
                             "$ref": "#/$defs/schema388"
@@ -21425,10 +21660,10 @@
                             "$ref": "#/$defs/schema248"
                           },
                           {
-                            "$ref": "#/$defs/schema421"
+                            "$ref": "#/$defs/schema422"
                           },
                           {
-                            "$ref": "#/$defs/schema436"
+                            "$ref": "#/$defs/schema437"
                           }
                         ],
                         "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
@@ -21480,7 +21715,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema426"
+          "$ref": "#/$defs/schema427"
         },
         {
           "$ref": "#/$defs/schema202"
@@ -21551,13 +21786,13 @@
               "clusterAdministratorName": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema449"
+                    "$ref": "#/$defs/schema450"
                   },
                   {
-                    "$ref": "#/$defs/schema452"
+                    "$ref": "#/$defs/schema453"
                   },
                   {
-                    "$ref": "#/$defs/schema455"
+                    "$ref": "#/$defs/schema456"
                   },
                   {
                     "not": {
@@ -21565,10 +21800,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema456"
+                    "$ref": "#/$defs/schema457"
                   },
                   {
-                    "$ref": "#/$defs/schema450"
+                    "$ref": "#/$defs/schema452"
                   },
                   {
                     "$ref": "#/$defs/schema388"
@@ -21577,10 +21812,10 @@
                     "$ref": "#/$defs/schema248"
                   },
                   {
-                    "$ref": "#/$defs/schema421"
+                    "$ref": "#/$defs/schema422"
                   },
                   {
-                    "$ref": "#/$defs/schema436"
+                    "$ref": "#/$defs/schema437"
                   }
                 ],
                 "description": "Name of the ClusterRole.",
@@ -21648,7 +21883,7 @@
           "$ref": "#/$defs/schema53"
         },
         {
-          "$ref": "#/$defs/schema426"
+          "$ref": "#/$defs/schema427"
         },
         {
           "not": {
@@ -21724,7 +21959,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema442"
+                              "$ref": "#/$defs/schema443"
                             },
                             {
                               "not": {
@@ -21741,7 +21976,7 @@
                         "labels": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema442"
+                              "$ref": "#/$defs/schema443"
                             },
                             {
                               "not": {
@@ -21994,7 +22229,7 @@
                                 "metadata": {
                                   "properties": {
                                     "labels": {
-                                      "$ref": "#/$defs/schema442"
+                                      "$ref": "#/$defs/schema443"
                                     }
                                   },
                                   "type": "object"
@@ -22033,10 +22268,10 @@
                                       "type": "string"
                                     },
                                     "kind": {
-                                      "$ref": "#/$defs/schema427"
+                                      "$ref": "#/$defs/schema428"
                                     },
                                     "name": {
-                                      "$ref": "#/$defs/schema428"
+                                      "$ref": "#/$defs/schema429"
                                     }
                                   },
                                   "required": [

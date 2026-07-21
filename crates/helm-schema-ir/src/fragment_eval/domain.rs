@@ -300,6 +300,10 @@ pub struct SpliceMeta {
     /// `toString`, `join`): any input type renders, so the sink neither
     /// constrains nor reveals the input shape.
     pub shape_erased: bool,
+    /// The stringification is Sprig `quote`/`squote`, which SKIP nil
+    /// operands: a missing or null source renders an explicit YAML null
+    /// into the sink, so provider-required slots still reject absence.
+    pub nil_omitted: bool,
     /// The rendered fragment is the result of `toYaml`: every input kind can
     /// be serialized, but its placement can still require sequence shape.
     pub yaml_serialized: bool,

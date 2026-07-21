@@ -257,6 +257,25 @@ fn build_single_condition_fragment(
                 ),
             )
         }
+        // Sprig `has` over a values list: false on nil, abort on
+        // non-lists, so the guard holds exactly for arrays carrying the
+        // literal. A missing parent-owned key reads as nil (never a
+        // member); a dependency-owned key reads as its subchart default
+        // list.
+        ConditionalGuard::ContainsEquals { path, value } => {
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(serde_json::json!({
+                    "type": "array",
+                    "contains": guard_value_enum_schema(value)?.into_value(),
+                })),
+                declared_list_contains_value(
+                    yaml_value_at_path(subchart_defaults_doc, path),
+                    value,
+                ),
+            )
+        }
         // A non-collection value never iterates, so the "at most one
         // member" bound constrains only maps and lists; both size keywords
         // are no-ops on other instance types.
@@ -791,6 +810,10 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             member,
             value,
         )),
+        ConditionalGuard::ContainsEquals { path, value } => Some(declared_list_contains_value(
+            yaml_value_at_path(values_yaml_doc, path),
+            value,
+        )),
         ConditionalGuard::AtMostOneMember { path } => {
             Some(match yaml_value_at_path(values_yaml_doc, path) {
                 Some(YamlValue::Mapping(mapping)) => mapping.len() <= 1,
@@ -812,6 +835,15 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             .collect::<Option<Vec<_>>>()
             .map(|results| results.into_iter().any(|result| result)),
     }
+}
+
+/// Whether the declared list carries an item equal to the scalar literal
+/// (Sprig `has` deep equality; non-lists never hold a member).
+fn declared_list_contains_value(yaml: Option<&YamlValue>, value: &GuardValue) -> bool {
+    matches!(yaml, Some(YamlValue::Sequence(items))
+        if items
+            .iter()
+            .any(|item| guard_value_matches_optional_yaml(value, Some(item))))
 }
 
 /// Whether the declared collection already carries an iterated item whose

@@ -38,6 +38,7 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         outer_guards: Vec::new(),
     }
@@ -528,6 +529,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         outer_guards: Vec::new(),
     };
@@ -569,6 +571,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         outer_guards: Vec::new(),
     };

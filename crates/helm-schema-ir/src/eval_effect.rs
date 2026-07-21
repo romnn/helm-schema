@@ -29,6 +29,11 @@ pub(crate) struct Effects {
     pub(crate) json_serialized_paths: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) shape_erased_paths: BTreeSet<String>,
+    /// Paths rendered through Sprig `quote`/`squote` in this expression:
+    /// unlike every other total stringification, those SKIP nil operands
+    /// entirely, so a missing or null source renders an explicit YAML
+    /// null into the sink (traefik's `mountPath: {{ … | quote }}`).
+    pub(crate) nil_omitting_paths: BTreeSet<String>,
     /// Paths whose value in this expression IS the exact Go `%v` rendering
     /// of the path (`toString .Values.x` over a single identity operand).
     /// Unlike `shape_erased_paths` — which also covers `quote`, `join`,
@@ -81,6 +86,11 @@ pub(crate) struct Effects {
     pub(crate) root_set_value_dispatches: BTreeMap<String, RootValueDispatch>,
     /// Chart value subtrees that supply defaults to a replaced effective `.Values` tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    /// Values subtrees merged IN PLACE over the values root
+    /// (`mustMergeOverwrite $.Values .Values.pilot`): members written under
+    /// the prefix overwrite their effective-root twins for the rest of the
+    /// render, so root contracts project back onto the prefixed spellings.
+    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
     /// Helper names through which the values ROOT was replaced
     /// (`set . "Values" (get (include NAME …) …)`); the symbolic context
     /// decides whether a name is a program-wrapper engine.
@@ -272,6 +282,7 @@ impl Effects {
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            nil_omitting_paths,
             stringified_paths,
             derived_text_paths,
             merge_operand_paths,
@@ -289,6 +300,7 @@ impl Effects {
             root_set_predicates,
             root_set_value_dispatches,
             values_default_sources,
+            values_root_overlay_prefixes,
             values_root_helper_includes,
             helper_reads,
             helper_rendered,
@@ -305,6 +317,7 @@ impl Effects {
         self.json_serialized_paths.extend(json_serialized_paths);
         self.encoded_paths.extend(encoded_paths);
         self.shape_erased_paths.extend(shape_erased_paths);
+        self.nil_omitting_paths.extend(nil_omitting_paths);
         self.stringified_paths.extend(stringified_paths);
         self.derived_text_paths.extend(derived_text_paths);
         self.merge_operand_paths.extend(merge_operand_paths);
@@ -337,6 +350,8 @@ impl Effects {
         self.root_set_value_dispatches
             .extend(root_set_value_dispatches);
         self.values_default_sources.extend(values_default_sources);
+        self.values_root_overlay_prefixes
+            .extend(values_root_overlay_prefixes);
         self.values_root_helper_includes
             .extend(values_root_helper_includes);
         for read in helper_reads {
@@ -407,6 +422,7 @@ impl Effects {
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            nil_omitting_paths,
             // Describes the value returned by the expression, not its
             // evaluation: the argument value does not render at the call
             // site.
@@ -430,6 +446,7 @@ impl Effects {
             root_set_predicates,
             root_set_value_dispatches,
             values_default_sources,
+            values_root_overlay_prefixes,
             values_root_helper_includes,
             helper_reads,
             helper_rendered,
@@ -456,6 +473,7 @@ impl Effects {
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            nil_omitting_paths,
             stringified_paths: BTreeSet::new(),
             derived_text_paths,
             merge_operand_paths: BTreeSet::new(),
@@ -473,6 +491,7 @@ impl Effects {
             root_set_predicates,
             root_set_value_dispatches,
             values_default_sources,
+            values_root_overlay_prefixes,
             values_root_helper_includes,
             helper_reads,
             helper_rendered: Vec::new(),

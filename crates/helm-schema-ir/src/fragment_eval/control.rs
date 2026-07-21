@@ -441,6 +441,52 @@ impl Interpreter<'_> {
         }
     }
 
+    /// A member condition re-decoded with each range variable bound to a
+    /// DEFINITELY-ITERATED entry of its overlay iterable (the `set
+    /// $services "default" (omit …)` member): that entry iterates on every
+    /// render, so a faithful decode under the binding is a sound SUBSET of
+    /// "the condition holds for some iteration" — usable only where firing
+    /// less often is safe (fail terminals, positive-polarity captures).
+    fn definite_member_condition_sound_subset(&mut self, expr: &TemplateExpr) -> Vec<Guard> {
+        let definite: Vec<(String, AbstractValue)> = self
+            .locals
+            .definite_range_member_values
+            .iter()
+            .map(|(variable, value)| (variable.clone(), value.clone()))
+            .collect();
+        if definite.is_empty() {
+            return Vec::new();
+        }
+        let mut saved = Vec::new();
+        for (variable, value) in definite {
+            saved.push((
+                variable.clone(),
+                self.locals.range_member_values.insert(variable, value),
+            ));
+        }
+        let (predicate, faithful) = {
+            let context = self.value_path_context();
+            (
+                context.condition_predicate_expr(expr),
+                context.condition_lowering_is_faithful(expr),
+            )
+        };
+        for (variable, previous) in saved {
+            match previous {
+                Some(previous) => {
+                    self.locals.range_member_values.insert(variable, previous);
+                }
+                None => {
+                    self.locals.range_member_values.remove(&variable);
+                }
+            }
+        }
+        if !faithful || !predicate.contract_guards_are_exact() {
+            return Vec::new();
+        }
+        predicate.contract_guards()
+    }
+
     /// Absorb a truthy⇒string fail capture for each path: a condition's
     /// string consumer fails template evaluation when the raw value is
     /// present (truthy) but not a string. Ambient guards join through the
@@ -492,15 +538,18 @@ impl Interpreter<'_> {
         let helper_paths = self.absorb_header_execution_effects(header.expr());
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            let dedup_subset = self.first_iteration_dedup_sound_subset(header.expr());
-            predicate = if dedup_subset.is_empty() {
+            let mut sound_subset = self.first_iteration_dedup_sound_subset(header.expr());
+            if sound_subset.is_empty() {
+                sound_subset = self.definite_member_condition_sound_subset(header.expr());
+            }
+            predicate = if sound_subset.is_empty() {
                 self.value_path_context()
                     .approximate_condition_predicate_expr(header.expr(), &marker)
             } else {
                 let paths = self
                     .value_path_context()
                     .resolved_values_paths_from_expr(header.expr());
-                Predicate::approximate_with_sound_subset(marker, paths, dedup_subset)
+                Predicate::approximate_with_sound_subset(marker, paths, sound_subset)
             };
         }
         for path in &bound_values {
@@ -944,8 +993,24 @@ impl Interpreter<'_> {
             None if !destructured => helm_schema_ast::range_variable_name_expr(header.expr()),
             None => None,
         };
-        if let Some((variable, binding)) = member_variable.zip(dot.clone()) {
+        if let Some((variable, binding)) = member_variable.clone().zip(dot.clone()) {
             self.locals.range_member_values.insert(variable, binding);
+        }
+        // A local dict assembled by an unconditional `set` over a
+        // values-backed map iterates its literal entries on EVERY render
+        // (`$services := .Values.service.additionalServices` followed by
+        // `set $services "default" (omit …)`). One such entry becomes the
+        // member variable's DEFINITE binding: unfaithful conditions over
+        // the member re-decode under it as a sound subset — traefik's
+        // http3 terminal reaches its fail through the always-present
+        // "default" service.
+        if let Some(AbstractValue::Overlay { entries, .. }) = &iterable_value
+            && let Some(variable) = member_variable
+            && let Some(entry) = entries.values().next()
+        {
+            self.locals
+                .definite_range_member_values
+                .insert(variable, entry.clone());
         }
         if let Some((variable, path)) = key_variable.zip(range_binding_path) {
             self.locals

@@ -1267,6 +1267,23 @@ impl ValuePathContext<'_> {
                     .collect(),
             ));
         }
+        // The dual direction: a literal needle probed against a VALUES
+        // list (`has "cookie-secret" .Values.config.requiredSecretKeys`).
+        // Sprig `has` returns false on a nil haystack and aborts on
+        // non-lists, so the guard holds exactly for arrays carrying the
+        // literal (oauth2-proxy's requiredSecretKeys gates).
+        if matches!(
+            haystack.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) && let Some(value) = literal_guard_value(needle)
+        {
+            let mut paths = self.paths_for_expr(haystack).into_iter();
+            let path = paths.next()?;
+            if paths.next().is_some() {
+                return None;
+            }
+            return Some(Predicate::from(Guard::ContainsEquals { path, value }));
+        }
         let targets: Vec<String> = match haystack.deparen() {
             TemplateExpr::Call { function, args } if function == "list" && !args.is_empty() => args
                 .iter()

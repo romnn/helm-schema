@@ -83,6 +83,7 @@ pub(crate) struct FragmentSummary {
     pub(crate) root_set_value_dispatches: BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     /// Chart value subtrees supplying defaults to a replaced effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
     /// Helper names through which the values root was replaced.
     pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// Strictly string-consumed paths whose consumers ran before the
@@ -170,6 +171,7 @@ pub(crate) fn eval_bound_helper_fragment(
         root_set_predicates: interpreter.root_set_predicates_observed,
         root_set_value_dispatches: interpreter.root_value_dispatches_observed,
         values_default_sources: interpreter.values_default_sources_observed,
+        values_root_overlay_prefixes: interpreter.values_root_overlay_prefixes_observed,
         values_root_helper_includes: interpreter.values_root_helper_includes_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
     };
@@ -301,6 +303,7 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
     let mut meta = HelperOutputMeta {
         defaulted: splice.meta.defaulted,
         shape_erased: splice.meta.shape_erased,
+        nil_omitted: splice.meta.nil_omitted,
         string_contract: splice.meta.string_contract,
         json_serialized: splice.meta.json_serialized,
         json_decoded: splice.meta.json_decoded,

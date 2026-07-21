@@ -1724,6 +1724,70 @@ fn ranged_not_equals_chains_negate_to_the_field_enum() {
     }
 }
 
+/// A fail nested under a range over a LOCAL-DICT overlay (`$services :=
+/// .Values.service.additionalServices` + `set $services "default"
+/// (omit …)`) still terminates: the overlay's literal entry iterates on
+/// every render, so the member gate re-decodes under that DEFINITE
+/// binding as a sound subset and the inner terminal binds (traefik's
+/// http3-without-tls abort under the always-present "default" service).
+#[test]
+fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
+    let src = indoc! {r#"
+        {{- $services := .Values.service.additionalServices -}}
+        {{- $services = set $services "default" (omit .Values.service "additionalServices") }}
+        {{- range $name, $service := $services -}}
+        {{- if ne $service.enabled false -}}
+        {{- range $portName, $config := $.Values.ports -}}
+          {{- if $config -}}
+            {{- if ($config.http3).enabled -}}
+              {{- if (not ($config.http).tls.enabled) -}}
+                {{- fail "ERROR: You cannot enable http3 without enabling tls" -}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+        kind: Service
+        apiVersion: v1
+        metadata:
+          name: {{ $name }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        service:
+          enabled: true
+          additionalServices: {}
+        ports:
+          web:
+            port: 8000
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "ports": { "web": { "http3": { "enabled": true } } } }),
+            false,
+            "http3 without tls aborts through the default service",
+        ),
+        (
+            serde_json::json!({ "ports": { "web": { "http3": { "enabled": true },
+                "http": { "tls": { "enabled": true } } } } }),
+            true,
+            "http3 with tls renders",
+        ),
+        (
+            serde_json::json!({ "service": { "enabled": false },
+                "ports": { "web": { "http3": { "enabled": true } } } }),
+            true,
+            "a disabled default service keeps the terminal dormant",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "overlay-range terminal ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A ranged fail whose test CONJOINS several member conditions negates to
 /// the disjunction of their negations, per member: an equality on a member
 /// field flips to the absence-tolerant `FieldNotEquals`, a negated

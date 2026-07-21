@@ -100,6 +100,9 @@ pub struct EvaluatedDocument {
     pub(crate) range_modes: crate::range_modes::RangeModes,
     /// Chart value subtrees supplying defaults to the effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    /// Values subtrees merged in place over the values root: root contracts
+    /// project back onto the prefixed spellings.
+    pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
     /// Helper names through which the values root was replaced.
     pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// Strictly string-consumed paths whose consumers execute BEFORE the
@@ -156,6 +159,7 @@ pub(crate) fn eval_document(
         string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
         values_default_sources: interpreter.values_default_sources_observed,
+        values_root_overlay_prefixes: interpreter.values_root_overlay_prefixes_observed,
         values_root_helper_includes: interpreter.values_root_helper_includes_observed,
         pre_rewrite_strict_paths: interpreter.pre_rewrite_strict_paths,
         fail_conditions: interpreter.fail_conditions,
@@ -543,6 +547,7 @@ pub(super) struct Interpreter<'a> {
     pub(super) root_value_dispatches_observed:
         BTreeMap<String, crate::eval_effect::RootValueDispatch>,
     pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
+    pub(super) values_root_overlay_prefixes_observed: BTreeSet<String>,
     pub(super) values_root_helper_includes_observed: BTreeSet<String>,
     /// Values paths with a strict STRING consumer that executed before the
     /// first values-root program-wrapper rewrite in this source: a wrapper
@@ -663,6 +668,7 @@ impl<'a> Interpreter<'a> {
             root_set_predicates_observed: BTreeMap::new(),
             root_value_dispatches_observed: BTreeMap::new(),
             values_default_sources_observed: BTreeSet::new(),
+            values_root_overlay_prefixes_observed: BTreeSet::new(),
             values_root_helper_includes_observed: BTreeSet::new(),
             pre_rewrite_strict_paths: BTreeSet::new(),
             active_predicates: Vec::new(),

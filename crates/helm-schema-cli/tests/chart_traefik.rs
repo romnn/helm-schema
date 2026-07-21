@@ -53,6 +53,120 @@ fn traefik_plugin_validator_holds() -> color_eyre::eyre::Result<()> {
     Ok(())
 }
 
+/// The http3-without-tls fail sits under the `$services` local-dict range
+/// (`set $services "default" (omit .Values.service "additionalServices")`).
+/// The "default" entry iterates on every render, so its `ne
+/// $service.enabled false` gate re-decodes as a sound subset and the
+/// terminal binds: http3 without `http.tls.enabled` aborts while a
+/// disabled default service keeps the terminal dormant.
+#[test]
+fn traefik_http3_terminal_binds_through_the_services_overlay() -> color_eyre::eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+
+    let bad_port = serde_json::json!({
+        "http3": { "enabled": true },
+        "http": { "tls": { "enabled": false } }
+    });
+    for (override_, want, label) in [
+        (
+            serde_json::json!({ "ports": { "websecure": bad_port.clone() } }),
+            false,
+            "http3 without tls aborts through the default service",
+        ),
+        (
+            serde_json::json!({ "ports": { "websecure": { "http3": { "enabled": true } } } }),
+            true,
+            "http3 with the declared tls renders",
+        ),
+        (
+            serde_json::json!({
+                "service": { "enabled": false },
+                "ports": { "websecure": bad_port.clone() }
+            }),
+            true,
+            "a disabled default service keeps the terminal dormant",
+        ),
+    ] {
+        let instance =
+            chart_instances::with_override("traefik", override_).expect("compose instance");
+        assert!(
+            validator.is_valid(&instance) == want,
+            "{label}: instance={instance}"
+        );
+    }
+    Ok(())
+}
+
+/// Each `experimental.localPlugins` member renders a Deployment
+/// volumeMount whose `mountPath` splices `{{ $plugin.mountPath | quote }}`
+/// through the pod-template projection. Sprig `quote` SKIPS nil operands,
+/// so a member without `mountPath` renders an explicit null into the
+/// provider-REQUIRED VolumeMount field — helm renders it, the committed
+/// provider bundle is the rejecting stage.
+#[test]
+fn traefik_local_plugin_mount_paths_bind_provider_presence() -> color_eyre::eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+
+    let plugins = |value: serde_json::Value| {
+        chart_instances::with_override(
+            "traefik",
+            serde_json::json!({ "experimental": { "localPlugins": value } }),
+        )
+        .expect("compose instance")
+    };
+    for (instance, want, label) in [
+        (
+            plugins(serde_json::json!({
+                "p": { "moduleName": "github.com/x/y", "hostPath": "/plugins" }
+            })),
+            false,
+            "a legacy hostPath plugin without mountPath renders a null mount",
+        ),
+        (
+            plugins(serde_json::json!({
+                "p": {
+                    "moduleName": "github.com/x/y",
+                    "hostPath": "/plugins",
+                    "mountPath": "/plugins-storage/p"
+                }
+            })),
+            true,
+            "a legacy hostPath plugin with mountPath renders",
+        ),
+        (
+            plugins(serde_json::json!({
+                "p": {
+                    "moduleName": "github.com/x/y",
+                    "type": "hostPath",
+                    "hostPath": "/plugins"
+                }
+            })),
+            false,
+            "a typed plugin without mountPath renders a null mount",
+        ),
+        (
+            plugins(serde_json::json!({
+                "p": {
+                    "moduleName": "github.com/x/y",
+                    "type": "hostPath",
+                    "hostPath": "/plugins",
+                    "mountPath": "/plugins-storage/p"
+                }
+            })),
+            true,
+            "a typed plugin with mountPath renders",
+        ),
+    ] {
+        assert!(
+            validator.is_valid(&instance) == want,
+            "{label}: instance={instance}"
+        );
+    }
+    Ok(())
+}
+
 /// Each `gateway.listeners` KEY renders as the Gateway CRD's
 /// `spec.listeners[].name`, a SectionName with a lowercase RFC-1123
 /// pattern plus a 1..=253 length window. Helm itself renders any key

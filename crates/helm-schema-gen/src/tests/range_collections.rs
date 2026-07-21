@@ -458,6 +458,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         split_segment: None,
         merge_layers: None,
         range_key: false,
+        nil_omitting: false,
         omitted_members: Default::default(),
         digest: false,
         merge_operand: false,

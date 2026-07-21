@@ -199,6 +199,13 @@ pub enum Guard {
     /// rendering of an explicit null). Contrast [`Guard::Absent`], which
     /// counts explicit null as absent for the nil-safe selector lanes.
     HasKey { path: String, key: String },
+    /// SOME item of the list at `path` deep-equals the scalar literal —
+    /// Sprig `has LITERAL .Values.list`, the dual of the literal-list
+    /// membership (`has .Values.x (list …)`). `has` returns false on a
+    /// nil haystack and aborts rendering on non-lists, so the guard holds
+    /// exactly for arrays carrying the literal (oauth2-proxy gates its
+    /// secret keys on `has "cookie-secret" .Values.config.requiredSecretKeys`).
+    ContainsEquals { path: String, value: GuardValue },
 }
 
 impl Guard {
@@ -241,7 +248,8 @@ impl Guard {
             | Self::IntLt { .. }
             | Self::AtMostOneMember { .. }
             | Self::MinMembers { .. }
-            | Self::HasKey { .. } => {}
+            | Self::HasKey { .. }
+            | Self::ContainsEquals { .. } => {}
         }
     }
 
@@ -267,7 +275,8 @@ impl Guard {
             | Guard::IntLt { path, .. }
             | Guard::AtMostOneMember { path }
             | Guard::MinMembers { path, .. }
-            | Guard::HasKey { path, .. } => {
+            | Guard::HasKey { path, .. }
+            | Guard::ContainsEquals { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -358,6 +367,10 @@ impl Guard {
             Guard::HasKey { path, key } => Guard::HasKey {
                 path: map(&path),
                 key,
+            },
+            Guard::ContainsEquals { path, value } => Guard::ContainsEquals {
+                path: map(&path),
+                value,
             },
         }
     }

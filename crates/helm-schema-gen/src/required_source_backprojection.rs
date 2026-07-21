@@ -154,8 +154,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
             // missing source; only the direct scalar hole forces the null.
             // Self-`default` fallbacks surface as nullability, exactly as
             // in the direct lane above.
-            if facts.used_as_serialized
-                || facts.used_as_yaml_serialized
+            if facts.used_as_yaml_serialized
                 || facts.used_as_fragment
                 || facts.used_as_pathless_fragment
                 || facts.is_partial_scalar_value_path
@@ -165,7 +164,17 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                 continue;
             }
             let renders_into_required_field = uses.iter().any(|use_| {
-                use_.kind == ValueKind::Scalar
+                // A bare scalar hole forces the null directly; a Sprig
+                // `quote`/`squote` render does too — the transform SKIPS
+                // nil operands, emitting nothing where the slot demands a
+                // value (traefik's local-plugin `mountPath`). Every other
+                // serialized form stays tolerant.
+                let null_forcing = match use_.kind {
+                    ValueKind::Scalar => !facts.used_as_serialized,
+                    ValueKind::Serialized => use_.nil_omitting,
+                    _ => false,
+                };
+                null_forcing
                     && !use_.is_self_range_collection
                     && !use_.range_key
                     && use_.split_segment.is_none()

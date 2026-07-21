@@ -62,6 +62,15 @@ pub enum ConditionalGuard {
         member: String,
         value: GuardValue,
     },
+    /// SOME item of the list at `path` deep-equals the scalar literal —
+    /// Sprig `has LITERAL .Values.list`. `has` returns false on a nil
+    /// haystack and aborts on non-lists, so the guard holds exactly for
+    /// arrays carrying the literal; lowers to `contains` with a `const`
+    /// item.
+    ContainsEquals {
+        path: String,
+        value: GuardValue,
+    },
     /// The collection at `path` has at most one entry — the document-level
     /// form of "every iteration of this range is the first" (an
     /// empty-initialized dedup accumulator cannot have shadowed anything).
@@ -88,6 +97,79 @@ impl ConditionalGuard {
         paths
     }
 
+    /// Rewrite the values paths carried by this guard (and every nested
+    /// guard).
+    #[must_use]
+    pub fn map_value_paths<F>(self, map: &mut F) -> Self
+    where
+        F: FnMut(&str) -> String,
+    {
+        match self {
+            Self::Truthy { path } => Self::Truthy { path: map(&path) },
+            Self::With { path } => Self::With { path: map(&path) },
+            Self::Eq { path, value } => Self::Eq {
+                path: map(&path),
+                value,
+            },
+            Self::NotEq { path, value } => Self::NotEq {
+                path: map(&path),
+                value,
+            },
+            Self::Absent { path } => Self::Absent { path: map(&path) },
+            Self::TypeIs { path, schema_type } => Self::TypeIs {
+                path: map(&path),
+                schema_type,
+            },
+            Self::MatchesPattern { path, pattern } => Self::MatchesPattern {
+                path: map(&path),
+                pattern,
+            },
+            Self::IntGt { path, bound } => Self::IntGt {
+                path: map(&path),
+                bound,
+            },
+            Self::IntLt { path, bound } => Self::IntLt {
+                path: map(&path),
+                bound,
+            },
+            Self::HasKey { path, key } => Self::HasKey {
+                path: map(&path),
+                key,
+            },
+            Self::ContainsMemberEquals {
+                path,
+                member,
+                value,
+            } => Self::ContainsMemberEquals {
+                path: map(&path),
+                member,
+                value,
+            },
+            Self::ContainsEquals { path, value } => Self::ContainsEquals {
+                path: map(&path),
+                value,
+            },
+            Self::AtMostOneMember { path } => Self::AtMostOneMember { path: map(&path) },
+            Self::MinMembers { path, bound } => Self::MinMembers {
+                path: map(&path),
+                bound,
+            },
+            Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),
+            Self::AllOf(guards) => Self::AllOf(
+                guards
+                    .into_iter()
+                    .map(|guard| guard.map_value_paths(map))
+                    .collect(),
+            ),
+            Self::AnyOf(guards) => Self::AnyOf(
+                guards
+                    .into_iter()
+                    .map(|guard| guard.map_value_paths(map))
+                    .collect(),
+            ),
+        }
+    }
+
     fn collect_value_paths(&self, paths: &mut BTreeSet<String>) {
         match self {
             Self::Truthy { path }
@@ -101,6 +183,7 @@ impl ConditionalGuard {
             | Self::IntLt { path, .. }
             | Self::HasKey { path, .. }
             | Self::ContainsMemberEquals { path, .. }
+            | Self::ContainsEquals { path, .. }
             | Self::AtMostOneMember { path }
             | Self::MinMembers { path, .. } => {
                 paths.insert(path.clone());
@@ -505,6 +588,79 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn values_default_sources(&self) -> &BTreeSet<ValuesDefaultSource> {
         &self.values_default_sources
+    }
+
+    /// Projects fail-grade contracts on effective-root paths onto their
+    /// prefixed spellings for every in-place root overlay
+    /// (`mustMergeOverwrite $.Values (index $.Values "pilot")`): a member
+    /// the user writes under the prefix overwrites its effective-root twin
+    /// before any consumer reads it, so the same abort-grade requirements
+    /// bind the prefixed path (istiod's `pilot.env: "oops"` aborts exactly
+    /// like `env: "oops"`). Guards about the subject path or its
+    /// descendants move to the prefixed spelling; foreign guard paths keep
+    /// their root spellings — a bounded reading that assumes cross-path
+    /// conditions are supplied at the root, not through the same overlay.
+    #[must_use]
+    pub fn with_root_overlay_fail_implications(
+        mut self,
+        prefixes: impl IntoIterator<Item = String>,
+    ) -> Self {
+        for prefix in prefixes {
+            if prefix.trim().is_empty() {
+                continue;
+            }
+            let twins: Vec<(String, Vec<ContractFailImplication>)> = self
+                .schema_evidence_by_value_path
+                .iter()
+                .filter(|(path, evidence)| {
+                    !evidence.fail_implications.is_empty()
+                        && path.as_str() != prefix
+                        && !crate::values_path_is_descendant(path, &prefix)
+                        && !crate::values_path_is_descendant(&prefix, path)
+                })
+                .map(|(path, evidence)| {
+                    let implications = evidence
+                        .fail_implications
+                        .iter()
+                        .map(|implication| {
+                            let mut twin = implication.clone();
+                            twin.outer_guards = twin
+                                .outer_guards
+                                .into_iter()
+                                .map(|guard| {
+                                    guard.map_value_paths(&mut |guard_path: &str| {
+                                        if guard_path == path
+                                            || crate::values_path_is_descendant(guard_path, path)
+                                        {
+                                            format!("{prefix}.{guard_path}")
+                                        } else {
+                                            guard_path.to_string()
+                                        }
+                                    })
+                                })
+                                .collect();
+                            twin
+                        })
+                        .collect();
+                    (format!("{prefix}.{path}"), implications)
+                })
+                .collect();
+            for (twin_path, implications) in twins {
+                let entry = self
+                    .schema_evidence_by_value_path
+                    .entry(twin_path.clone())
+                    .or_insert_with(|| ContractPathSchemaEvidence {
+                        value_path: twin_path,
+                        ..ContractPathSchemaEvidence::default()
+                    });
+                for implication in implications {
+                    if !entry.fail_implications.contains(&implication) {
+                        entry.fail_implications.push(implication);
+                    }
+                }
+            }
+        }
+        self
     }
 
     /// Attaches chart-authored program-wrapper conventions.

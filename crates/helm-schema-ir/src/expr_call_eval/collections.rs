@@ -717,6 +717,21 @@ pub(super) fn eval_merge(
     merge_arg_values(args, env, resolver, &mut values, &mut effects);
     // A Go pipeline passes the piped subject as the LAST argument.
     values.extend(piped_values);
+    // An overwrite-merge whose destination is the LITERAL values root
+    // mutates the shared map in place: members under each source prefix
+    // overwrite their effective-root twins for the rest of the render
+    // (istiod's `mustMergeOverwrite $.Values (index $.Values "pilot")`
+    // descope). Only the direct `$.Values`/`.Values` spelling qualifies —
+    // a copied destination (`deepCopy $.Values`) mutates nothing shared.
+    if matches!(function, "mergeOverwrite" | "mustMergeOverwrite")
+        && args.first().is_some_and(expr_is_direct_values_root)
+    {
+        for source in values.iter().skip(1) {
+            if let Some(path) = source.unique_path().filter(|path| !path.is_empty()) {
+                effects.values_root_overlay_prefixes.insert(path);
+            }
+        }
+    }
     // A definitely-empty literal destination (`mergeOverwrite (dict) a b`)
     // supplies no keys in any state, so it neither shadows nor contributes:
     // dropping it keeps the remaining operands eligible for the ordered
@@ -751,6 +766,19 @@ pub(super) fn eval_merge(
         return EvalResult::with_effects(Some(AbstractValue::MergedLayers(layers)), effects);
     }
     EvalResult::with_effects(AbstractValue::merge_all(values), effects)
+}
+
+/// Whether the expression IS the shared values root (`$.Values` or
+/// `.Values` at document scope), not a copy or a subtree.
+fn expr_is_direct_values_root(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Field(path) => path.as_slice() == ["Values"],
+        TemplateExpr::Selector { operand, path } => {
+            path.as_slice() == ["Values"]
+                && matches!(operand.as_ref(), TemplateExpr::Variable(name) if name.is_empty())
+        }
+        _ => false,
+    }
 }
 
 /// The merge operands as ordered layers, highest precedence first, when

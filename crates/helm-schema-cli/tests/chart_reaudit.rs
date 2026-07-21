@@ -2350,7 +2350,8 @@ fn traefik_local_plugins_keep_their_alternative_shapes() -> color_eyre::eyre::Re
             SemanticCase::accepted(
                 "legacy hostPath shape",
                 json!({ "experimental": { "localPlugins": { "my-plugin": {
-                    "moduleName": "github.com/x/y", "hostPath": "/plugins/y"
+                    "moduleName": "github.com/x/y", "hostPath": "/plugins/y",
+                    "mountPath": "/plugins-storage/y"
                 } } } }),
             ),
             SemanticCase::accepted(
@@ -2358,6 +2359,7 @@ fn traefik_local_plugins_keep_their_alternative_shapes() -> color_eyre::eyre::Re
                 json!({ "experimental": { "localPlugins": { "my-plugin": {
                     "moduleName": "github.com/x/y",
                     "type": "inlinePlugin",
+                    "mountPath": "/plugins-storage/y",
                     "source": { "main.go": "package main" }
                 } } } }),
             ),
@@ -2366,7 +2368,8 @@ fn traefik_local_plugins_keep_their_alternative_shapes() -> color_eyre::eyre::Re
                 json!({ "experimental": { "localPlugins": { "my-plugin": {
                     "moduleName": "github.com/x/y",
                     "type": "hostPath",
-                    "hostPath": "/plugins/y"
+                    "hostPath": "/plugins/y",
+                    "mountPath": "/plugins-storage/y"
                 } } } }),
             ),
             SemanticCase::rejected(

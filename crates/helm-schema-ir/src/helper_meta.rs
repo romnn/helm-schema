@@ -48,6 +48,9 @@ pub(crate) struct HelperOutputMeta {
     /// The binding's value is a total stringification (`quote`, `toString`,
     /// `join`) of this path, so splices rendering it expose no input shape.
     pub(crate) shape_erased: bool,
+    /// The stringification is Sprig `quote`/`squote`, which skip nil
+    /// operands: a missing or null source renders an explicit YAML null.
+    pub(crate) nil_omitted: bool,
     /// The binding's value is the exact Go `%v` rendering of this path
     /// (`toString` over the path identity): an equality on the binding
     /// projects its literal back through the `toString` preimage. A join
@@ -132,6 +135,7 @@ impl HelperOutputMeta {
         self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
         self.shape_erased |= other.shape_erased;
+        self.nil_omitted |= other.nil_omitted;
         self.stringified |= other.stringified;
         self.yaml_serialized |= other.yaml_serialized;
         self.derived_text |= other.derived_text;

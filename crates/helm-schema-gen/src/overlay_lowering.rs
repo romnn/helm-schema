@@ -791,6 +791,7 @@ fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> 
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => {}
         }
@@ -1152,6 +1153,7 @@ fn implication_guards_supported(
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => true,
             ConditionalGuard::Not(inner) => implication_guards_supported(
@@ -1192,6 +1194,7 @@ fn guards_supported_with_self_path(
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => true,
             ConditionalGuard::Not(inner) => guards_supported_with_self_path(
@@ -1271,6 +1274,7 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::IntLt { .. }
         | ConditionalGuard::HasKey { .. }
         | ConditionalGuard::ContainsMemberEquals { .. }
+        | ConditionalGuard::ContainsEquals { .. }
         | ConditionalGuard::MinMembers { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
         ConditionalGuard::NotEq { .. }

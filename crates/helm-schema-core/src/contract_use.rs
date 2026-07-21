@@ -78,6 +78,11 @@ pub struct ContractUse {
     /// its value: the sink constrains the key domain only.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub range_key: bool,
+    /// The rendered text is a Sprig `quote`/`squote` of the value, which
+    /// skips nil operands: a missing or null source renders an explicit
+    /// YAML null into the sink (see [`ProviderSchemaUse::nil_omitting`]).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub nil_omitting: bool,
     /// Literal member keys a guard-scoped `omit` may remove from the
     /// rendered map before the sink reads it. Each key maps to the sound
     /// RETAIN guards under which the key certainly survives (the omitting
@@ -125,6 +130,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             #[serde(default)]
             range_key: bool,
             #[serde(default)]
+            nil_omitting: bool,
+            #[serde(default)]
             omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
             #[serde(default)]
             digest: bool,
@@ -145,6 +152,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             split_segment: wire.split_segment,
             merge_layers: wire.merge_layers,
             range_key: wire.range_key,
+            nil_omitting: wire.nil_omitting,
             omitted_members: wire.omitted_members,
             digest: wire.digest,
             merge_operand: wire.merge_operand,
@@ -202,6 +210,7 @@ impl ContractUse {
             split_segment: None,
             merge_layers: None,
             range_key: false,
+            nil_omitting: false,
             omitted_members: std::collections::BTreeMap::new(),
             digest: false,
             merge_operand: false,
