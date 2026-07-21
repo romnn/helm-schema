@@ -1,25 +1,26 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-21 after the coalesced-document round (twentieth
-round), which closed F30, F31, and F68 and landed F32's core. The round's
-architectural decision: the generated schema validates the COALESCED
-values document — the exact document helm 4 feeds `values.schema.json`
-validation (verified empirically: a shipped schema requiring subchart
-defaults fails, and a null-deleted key surfaces to the validator as a
-MISSING key, never as a literal null). Absence semantics follow from that
-doctrine everywhere: a parent-declared key can only go missing through
-helm null-deletion and reads as nil at render; a dependency-owned key
-reads as its subchart's declared default (which fills at the subchart's
-own coalesce stage — null-deletion of a parent default does NOT resurrect
-through it when the parent also declares the key); chart-internal root
-merges (`set $ "Values" (mustMergeOverwrite defaults .Values)`) fill
-their defaults after any deletion. Sparse documents are therefore no
-longer a supported validation target — every pin and probe composes its
-override over the chart defaults (`chart_instances::with_override`), and
-raw-file editor UX is explicitly out of scope. F30/F31/F68/F32 details
-live in their entries. F53, F56, F65, and F98 keep verified residuals
-below; F74/F80/F108 residuals stand as re-scoped. Green corpus tests are
-a baseline, not completion evidence.
+Last reconciled 2026-07-21 after the residual-sweep round (twenty-first
+round), which closed F53, F56, F65, F98, and the F28/F51 remainder in one
+pass. Notable mechanisms: Sprig `has LITERAL .Values.list` decodes to the
+new `ContainsEquals` guard (`contains` + `const`); the tree-sitter
+go-template grammar's un-spaced-pipe mis-parse (`(include "a" .)| f`
+binding the pipe to the last ARGUMENT instead of the whole command) is
+unfolded back to Go semantics at AST conversion, which fixed the F56
+digest lane wholesale; in-place root overlays (`mustMergeOverwrite
+$.Values .Values.pilot`) project fail-grade contracts onto the prefixed
+user-facing spellings; Sprig `quote`/`squote` carry a `nil_omitting`
+marker so quoted ranged leaves in provider-required slots bind presence;
+and a local-dict overlay range's literal entry becomes a DEFINITE member
+binding whose faithful gate re-decode is a sound subset for terminal
+lowering. The coalesced-document doctrine from the twentieth round stands
+unchanged: the generated schema validates the COALESCED values document,
+absence semantics follow the parent-declared/dependency-owned ownership
+rule, and every pin composes its override over the chart defaults
+(`chart_instances::with_override`). F74/F108 residuals stand as
+documented bounds; F80's reroot chain and the F32 defaulted-comparison
+residual remain the open items. Green corpus tests are a baseline, not
+completion evidence.
 Where a finding has both a completed bounded part and a remainder, the
 completed part is listed below with a "(bounded)" marker and the residual is
 classified separately. Per-finding history lives in
@@ -30,6 +31,97 @@ classified separately. Per-finding history lives in
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
 
+- **F53 — helper-local `tpl` operands (twenty-first round; closes the
+  residual).** Sprig `has LITERAL .Values.list` decodes to the new
+  `ContainsEquals` guard (the dual of the literal-list membership):
+  `has` returns false on a nil haystack and aborts on non-lists, so the
+  guard holds exactly for arrays carrying the literal and encodes as
+  `{type: array, contains: {const: L}}` with coalesced absence read from
+  the subchart-defaults doc. With the gate decodable, the helper-internal
+  truthy⇒string captures from `tpl` operands bind back to callers:
+  oauth2-proxy rejects maps/ints/bools at `config.existingSecret` (its
+  own truthy self-guard) and at `config.{cookieSecret,clientSecret,
+  clientID}` under `has "…" .Values.config.requiredSecretKeys`, while
+  empty and partial membership lists keep each tpl dormant — every
+  polarity helm-verified. Collateral wins: external-dns's five
+  `has "gateway-*" .Values.sources` RBAC gates, harbor's
+  `jobLoggers`/`proxy.components` membership arms (the jobservice PVC's
+  provider typing now binds: accessModes/claimName/size/annotations
+  reject junk, each landing in a strictly-typed PVC field), and nack's
+  `--control-loop` argument probe. Pinned by
+  `oauth2_proxy_helper_tpl_operands_bind_string_contracts` plus four
+  regenerated fixtures. Null-deleted secrets under a live gate stay
+  accepted (the truthy⇒string lane's documented widening; `tpl nil`
+  aborts).
+- **F56 — helper text inside adopted block scalars (twenty-first round;
+  closes the residual).** The false-reject was a PARSER bug, not an
+  adoption bug: the tree-sitter go-template grammar attaches an
+  un-spaced pipe to the last ARGUMENT (`print (include "a" .)| sha256sum`
+  parsed as `print((include "a" .) | sha256sum)`), while Go's tokenizer
+  emits `)` and `|` identically with or without whitespace — the pipe
+  always splits the enclosing command, and argument-position pipelines
+  are only legal parenthesized. `call_with_unfolded_pipe` restores the
+  Go reading at AST conversion (nested stages flatten), so redis-ha's
+  checksum annotation (`print (include …) …)| sha256sum`) decodes as a
+  digest again and every script-helper read rides the Serialized lane
+  instead of leaking a provider plain-scalar-string domain. With
+  redis-ha live, oauth2-proxy and argo-cd accept numeric
+  `sentinel.quorum`, `splitBrainDetection.{interval,retryInterval}`,
+  `ro_replicas`, and numeric `tls.certFile` — all helm-verified renders.
+  Pinned by the `unspaced_argument_pipe_*` AST cases (the
+  `default "x" .Values.y|quote` idiom included) and
+  `oauth2_proxy_redis_script_reads_stay_partial_text`.
+- **F65 — accepted inputs through root rewrite (twenty-first round;
+  closes the residual).** An overwrite-merge whose destination is the
+  LITERAL values root (`mustMergeOverwrite $.Values (index $.Values
+  "pilot")` — istiod's zzy descope; a copied destination like `deepCopy
+  $.Values` deliberately does not qualify) records a
+  `values_root_overlay_prefixes` fact that rides interpreter → contract
+  → signals, and `with_root_overlay_fail_implications` twins every
+  fail-grade implication onto the prefixed spelling: guards about the
+  subject path move with it, foreign guard paths keep their root
+  spellings (the documented bound — cross-path conditions supplied
+  through the same overlay may mis-scope a twin). istiod now rejects
+  `pilot.env: "oops"` and `pilot.env: [1]` exactly like the root
+  spellings while `pilot.env` maps and the descope-style overrides
+  render — helm-verified each way. A conditionally-activated subchart
+  clears its prefixes (same abstention as conditional default sources).
+  Pinned by `istiod_pilot_overlay_carries_root_contracts`.
+- **F98 — required leaves through helper projections (twenty-first
+  round; closes the residual).** Sprig `quote`/`squote` SKIP nil
+  operands — unlike every other total stringification they render
+  NOTHING for a missing source, forcing an explicit YAML null into the
+  slot — so quoted splices now carry a `nil_omitting` marker through
+  splice meta, helper summaries, and `ContractUse` into
+  `ProviderSchemaUse`. A nil-omitting Serialized use of a RANGED member
+  leaf survives provider-use construction (typing still abstains — any
+  input quotes) solely so `synthesized_ranged_member_required_implications`
+  can bind the `FieldPresentNotNull` presence requirement when the slot
+  is provider-required. Traefik: both local-plugin alternatives now
+  require `mountPath` (helm renders the null volumeMount; the committed
+  provider bundle is the rejecting stage), with the reaudit alternatives
+  pin migrated to carry it. Collateral wins: velero's Schedule
+  `schedule` and BackupStorageLocation `bucket` presence (both
+  CRD-required, quote-rendered). Pinned by
+  `quoted_ranged_leaves_bind_presence_through_the_pod_template_projection`
+  and `traefik_local_plugin_mount_paths_bind_provider_presence`.
+- **F28/F51 — ranged terminals and accumulator state (twenty-first
+  round; closes the remainder).** The traefik http3 service terminal now
+  binds: a range over a local-dict OVERLAY (`$services :=
+  .Values.service.additionalServices` + unconditional `set $services
+  "default" (omit …)`) records one literal entry as the member
+  variable's DEFINITE binding (`definite_range_member_values`, joined
+  across branches only when identical), and an unfaithful member
+  condition re-decodes under that binding into a sound subset
+  (`approximate_with_sound_subset`) — the entry iterates on every
+  render, so "the condition holds for the definite member" implies "it
+  holds for some iteration", usable exactly where firing less often is
+  safe (the terminal-clause subset lane). Traefik: http3 without
+  `http.tls.enabled` now rejects through the always-present "default"
+  service, http3 with tls renders, and `service.enabled: false` keeps
+  the terminal dormant — helm-verified each way. Pinned by
+  `overlay_range_member_gates_carry_definite_entry_sound_subsets` and
+  `traefik_http3_terminal_binds_through_the_services_overlay`.
 - **F30 — guarded `required` absence (twentieth round).** The `Absent`
   guard condition encodes the coalesced document uniformly:
   `anyOf[missing, explicit-null]` regardless of declared defaults —
@@ -878,10 +970,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   approximate conjunct on CAPTURE conjunctions only — rows keep the
   ordinary join — so a conditional `$opPathKeys` append cannot bind
   `from` on every patch member while kyverno's caller-joined label-merge
-  lists keep their exact rows. REMAINING: the real traefik `http3`
-  service terminal still abstains — its fail sits under the `$services`
-  local-dict range (`set $services "default" (omit …)`) whose header
-  stays undecoded, so only the gen-level shape is pinned.
+  lists keep their exact rows. The traefik `http3` remainder closed in
+  the twenty-first round (definite overlay-entry sound subsets; see the
+  Completed entry).
 - **F32 residual — defaulted-comparison fallback literals (bounded;
   twentieth round).** The core landed: the CA `minAvailable`-alone
   false-reject is gone (a null-deleted `maxUnavailable` reads as nil, so
@@ -904,23 +995,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `Absent(signoz-otel-gateway.postgresql.enabled)` disjunct that the
   subchart-default semantics correctly narrowed; the zookeeper-side abort
   needs its own capture to reject again.
-- **F53 residual — helper-local `tpl` operands.** OAuth2 Proxy accepts maps at
-  `config.existingSecret`, `cookieSecret`, `clientSecret`, and `clientID`, but
-  the helper-local `tpl` calls reject them. The last three contracts are gated
-  by literal membership in `requiredSecretKeys`; an empty-list dormant control
-  renders. Bind strict helper operands back to callers without globalizing
-  their guard.
-- **F56 residual — helper text inside adopted block scalars.** With redis-ha
-  live, OAuth2 Proxy and Argo CD reject numeric `sentinel.quorum` and
-  `splitBrainDetection.interval` in the generated schema although Helm embeds
-  them into ConfigMap script text and the manifests validate. Adoption at the
-  include site is fixed, but helper-internal YAML lexical/provider evidence
-  must also remain partial text.
-- **F65 residual — accepted inputs through root rewrite.** Istiod accepts
-  `pilot.env: "oops"`; `zzy_descope_legacy.yaml:1-3` merges `.pilot` into the
-  effective root, then Helm aborts reading `.Values.env.MCS_API_GROUP` in
-  `reader-clusterrole.yaml:3`. A map passes. Project effective-root contracts
-  back through `mustMergeOverwrite` to the user-facing `pilot` source.
 - **F74 residual — parser exactness and transformed comparisons (bounded;
   seventeenth round).** (a) The `urlParse` operand pattern is now Go
   `url.Parse`'s accepted language, differential-verified against ~900k
@@ -1015,12 +1089,6 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   a bounded widening; helm aborts ranging a scalar), and the
   bitnami/redis/keda condition spellings re-encode with zero acceptance
   flips across the probe batteries.
-- **F98 residual — required leaves through helper projections.** Both Traefik
-  local-plugin alternatives accept a member without `mountPath`; Helm renders
-  a null Deployment `volumeMount.mountPath`, which strict provider validation
-  rejects. Supplying `mountPath` passes. Carry provider-required ranged leaves
-  through the included/fromYaml pod-template projection; F109's shape
-  alternatives themselves remain correct.
 - **F104 residual — wrapper consumers before tree rewrite (seventeenth
   round; closes the residual).** The interpreter snapshots
   `strict_string_capture_paths()` — string contracts plus
