@@ -1,26 +1,36 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-21 after the residual-sweep round (twenty-first
-round), which closed F53, F56, F65, F98, and the F28/F51 remainder in one
-pass. Notable mechanisms: Sprig `has LITERAL .Values.list` decodes to the
-new `ContainsEquals` guard (`contains` + `const`); the tree-sitter
-go-template grammar's un-spaced-pipe mis-parse (`(include "a" .)| f`
-binding the pipe to the last ARGUMENT instead of the whole command) is
-unfolded back to Go semantics at AST conversion, which fixed the F56
-digest lane wholesale; in-place root overlays (`mustMergeOverwrite
-$.Values .Values.pilot`) project fail-grade contracts onto the prefixed
-user-facing spellings; Sprig `quote`/`squote` carry a `nil_omitting`
-marker so quoted ranged leaves in provider-required slots bind presence;
-and a local-dict overlay range's literal entry becomes a DEFINITE member
-binding whose faithful gate re-decode is a sound subset for terminal
-lowering. The coalesced-document doctrine from the twentieth round stands
+Last reconciled 2026-07-21 after the open-items round (twenty-second
+round), which closed the four items the twenty-first round left: the F32
+defaulted-comparison residual, the F74 transformed-semver bound, the F108
+per-op requirement bound, and the F80 reroot chain. Notable mechanisms: a
+defaulted binding carries its literal fallback
+(`HelperOutputMeta::default_fallback`), so `eq $mode FALLBACK` decodes
+the exact `eq ∨ ¬truthy` arm (external-secrets' deleted `renderMode`
+selects the default arm instead of the invalid-mode `fail`); lexical
+escapes gained the `CutAtToken` erasure (`regexReplaceAll "TOK.*$" X ""`)
+and one-escape-per-edge sets compose exactly, which also lets
+`semverCompare` bounds project through cilium's digest-strip/v-trim
+pipeline as fail-position sound subsets; helper-dict root fields no
+longer shadow same-named range variables and JSON-roundtripped member
+identities decode `hasKey`, which binds the nats jsonpatch per-op
+`value`/`from` requirements; and the airflow reroot chain landed in four
+pieces — the scrub marker survives on the set-free merge operand, nested
+`MergedLayers` flatten in precedence order for identity extraction, a
+choice layer's constant-False `hasKey` alternatives drop as OR
+identities, and negated member-quantified guards encode the
+`anyOf[¬∀, ∀¬]` pair so empty per-set collections leave deeper layers
+unshadowed. Rerouted layer arms whose unlowerable conditions HARD-NEGATE
+foreign-family selections keep the pre-layered routing (airflow's
+deprecated `securityContext` fallback stays open behind a live
+`securityContexts.pod`). The coalesced-document doctrine stands
 unchanged: the generated schema validates the COALESCED values document,
 absence semantics follow the parent-declared/dependency-owned ownership
 rule, and every pin composes its override over the chart defaults
-(`chart_instances::with_override`). F74/F108 residuals stand as
-documented bounds; F80's reroot chain and the F32 defaulted-comparison
-residual remain the open items. Green corpus tests are a baseline, not
-completion evidence.
+(`chart_instances::with_override`). The remaining open note is the F32
+signoz `global.imagePullSecrets` re-widening (needs its own
+zookeeper-side capture); the F80 quantifier corners are documented
+bounds. Green corpus tests are a baseline, not completion evidence.
 Where a finding has both a completed bounded part and a remainder, the
 completed part is listed below with a "(bounded)" marker and the residual is
 classified separately. Per-finding history lives in
@@ -973,28 +983,31 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   lists keep their exact rows. The traefik `http3` remainder closed in
   the twenty-first round (definite overlay-entry sound subsets; see the
   Completed entry).
-- **F32 residual — defaulted-comparison fallback literals (bounded;
-  twentieth round).** The core landed: the CA `minAvailable`-alone
-  false-reject is gone (a null-deleted `maxUnavailable` reads as nil, so
-  the both-bounds terminal no longer fires on absence), and the positive
-  piped membership `list "netkit" "netkit-l2" | has X` decodes to its
-  exact equality disjunction in predicate, faithfulness, AND `not`
-  position (the truthy-negation fallback was rejecting every falsy
-  subject) — cilium's tproxy+netkit exclusion rejects both netkit modes
-  while veth/dormant states stay open, helm-verified. REMAINING:
-  external-secrets' `serviceMonitor: {renderMode: null}` deletion state
-  falsely rejects — the invalid-renderMode capture spells its else-arm as
-  `¬(truthy(renderMode) ∧ eq-arm)` conjuncts, but `$mode :=
-  .Values.serviceMonitor.renderMode | default "skipIfMissing"` maps the
-  deleted state onto the DEFAULT literal's arm, so the negated
-  default-literal arm must carry `truthy(renderMode)` positively. Local
-  bindings record default PATHS but not the fallback LITERAL; the fix is
-  to carry the literal on the binding into comparison decodes. Also
-  noted: signoz's `global.imagePullSecrets` scalar rejections (a
-  nineteenth-round F30 win) re-widened — their arm's condition rode an
-  `Absent(signoz-otel-gateway.postgresql.enabled)` disjunct that the
-  subchart-default semantics correctly narrowed; the zookeeper-side abort
-  needs its own capture to reject again.
+- **F32 residual — defaulted-comparison fallback literals (twenty-second
+  round; closes the residual).** The core landed in the twentieth round:
+  the CA `minAvailable`-alone false-reject is gone (a null-deleted
+  `maxUnavailable` reads as nil, so the both-bounds terminal no longer
+  fires on absence), and the positive piped membership
+  `list "netkit" "netkit-l2" | has X` decodes to its exact equality
+  disjunction in predicate, faithfulness, AND `not` position — cilium's
+  tproxy+netkit exclusion rejects both netkit modes while veth/dormant
+  states stay open, helm-verified. The twenty-second round closed the
+  remainder: a `$mode := PATH | default LIT` binding records the literal
+  fallback (`HelperOutputMeta::default_fallback`, exact-fact merge), and
+  equality decoding adds the fallback arm — `eq $mode LIT` also holds
+  where the path is falsy (`eq ∨ ¬truthy`), `ne $mode OTHER` likewise —
+  bounded to the pure single-truthy-branch binding with no value
+  transform. external-secrets' `serviceMonitor: {renderMode: null}`
+  deletion state now selects the default literal's arm instead of the
+  invalid-mode `fail`, while junk modes still abort every render
+  (helm-verified both ways; pinned by
+  `defaulted_binding_comparison_carries_the_fallback_arm` and
+  `external_secrets_deleted_render_mode_selects_the_default_literal_arm`).
+  REMAINING (separate note): signoz's `global.imagePullSecrets` scalar
+  rejections (a nineteenth-round F30 win) re-widened — their arm's
+  condition rode an `Absent(signoz-otel-gateway.postgresql.enabled)`
+  disjunct that the subchart-default semantics correctly narrowed; the
+  zookeeper-side abort needs its own capture to reject again.
 - **F74 residual — parser exactness and transformed comparisons (bounded;
   seventeenth round).** (a) The `urlParse` operand pattern is now Go
   `url.Parse`'s accepted language, differential-verified against ~900k
@@ -1013,9 +1026,21 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   of the contains-token exemption, so datadog's derived tag rejects
   mid-string `-jmx` spellings while suffixed versions trim-parse
   (`trim_suffix_projects_the_parser_domain_through_the_affix_preimage`,
-  helm-verified). REMAINING: cilium's `>=0.9.0` predicate through
-  `regexReplaceAll | trimPrefix` (multi-escape chains fall back to the
-  exemption by design — unordered affixes cannot compose exactly).
+  helm-verified). (c) The twenty-second round closed the multi-escape
+  remainder: `regexReplaceAll "TOK.*$" X ""` records the typed
+  `CutAtToken` erasure, and escape sets with at most one escape per edge
+  position (leading affix, trailing affix, cut tail) compose as edge
+  wraps in any application order — cilium's digest-strip/v-trim tag
+  parse now projects `^(?:v)?(?:P)(?:@.*)?$` instead of the
+  contains-token exemption. The `<0.9.0` comparator additionally
+  projects through the same chain as a fail-position sound subset
+  (`semver_transformed_operand`: the constraint pattern is
+  `v?`-normalized and token-free, so both wraps are exact preimages):
+  `v0.1.0` and digest-suffixed below-bound tags reject, `garbage` aborts
+  the parse, and valid/digest/`latest` spellings render — helm-verified
+  (`digest_strip_and_v_trim_compose_the_semver_bound_exactly`,
+  `cilium_hubble_ui_tag_binds_the_transformed_semver_bound`). Escape
+  mixes beyond one per edge keep the exemption fallback.
 - **F80 residual — merge selection and provider attribution (bounded;
   eighteenth–nineteenth rounds).** The ordered-merge half landed in
   four pieces.
@@ -1070,18 +1095,34 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads`:
   string `runAsUser` rejects through either layer, the fully-shadowed
   corner stays open, and null members stay accepted.
-  REMAINING: the real airflow chart's worker lanes still abstain — the
-  deployment re-roots `.Values` per worker set (`set $globals.Values
-  "workers" $workers` under a `range` over `$workerSets`), and the
-  scrubbed identity deliberately degrades at that per-set merge, so
-  `workers.securityContexts.pod` string `runAsUser` keeps accepting.
-  Landing the chart flip needs the root-reroot chain to carry layered
-  identities without displacing the round-8/17 per-set capture arms
-  (`airflow_worker_set_overrides_bind_strict_member_kinds` pins those).
-  Also open: gates that cannot lower at the document root (member-local
-  wildcard conditions on airflow's per-set rows) keep their pre-existing
-  ungated arms — exact scoping needs the existential member-guard
-  encoding in the conditional-overlay vocabulary. Adjudication notes:
+  (h) The reroot chain landed in the twenty-second round, closing the
+  chart flip: the scrub marker now survives on the set-free operand of a
+  wildcard-involving merge (only the RANGE-member operand strips), nested
+  `MergedLayers` flatten in precedence order for identity extraction
+  (nesting is associative) in both the splice lowering and the
+  binding-carried meta, a choice layer's constant-False `hasKey`
+  alternatives drop as OR identities inside the layer union (the
+  `concat (list (dict "name" "default")) sets` literal entry), and
+  negated member-quantified guards encode as `anyOf[¬∀, ∀¬]` — the
+  `∀ members violate` arm holds vacuously on airflow's default empty
+  `sets: []`, so the deeper layers' synthesized arms fire there. Rerouted
+  arms whose unlowerable row conditions HARD-NEGATE foreign-family
+  selections keep the pre-layered routing instead (the deprecated
+  `workers.securityContext` scalar stays open behind a live
+  `securityContexts.pod` — `hard_negation_paths` in the signal builder).
+  The real chart now rejects string `runAsUser` through the base and
+  celery layers after the per-set reroot while the shadowed corner,
+  null-scrubbed members, and the per-set capture arms all hold
+  (`airflow_rerooted_worker_lanes_bind_layered_provider_payloads`,
+  `rerooted_worker_set_merges_keep_layered_provider_payloads`,
+  `per_set_merge_layers_bind_without_the_reroot`; the round-8/17 pins in
+  `airflow_worker_set_overrides_bind_strict_member_kinds` and the
+  fallback-priority pin stay green). REMAINING (documented quantifier
+  bounds): the `∀¬` arm under-fires on mixed member sets (a set member
+  supplying the key hides the sibling members' unshadowed iterations —
+  accept-direction), and with `enableDefault: false` beside empty `sets`
+  the ungated arm can still fire for renders that never happen (the
+  pre-existing member-local-wildcard widening class). Adjudication notes:
   signoz's clickhouse `settings`/`profiles` payload reference loss
   (eighteenth round) stands — polarities unchanged; the nineteenth
   round's scrub short-circuit drops the summary-derived iterable arm on
@@ -1147,10 +1188,20 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   scaffolding fields (`fromKey`, `pathLastMap`, …) stay IR-internal and
   mint no schema properties, and sentinel-keyed evidence is scrubbed at
   contract finalization so the recursive walker's `$tplYaml` probes no
-  longer seed root values properties. REMAINING (widening only): the
-  per-op `value`/`from` requirements ride the conditionally-appended
-  `$opPathKeys` alternative, whose capture-only approximate conjunct
-  soundly abstains — `{"op": "copy"}` without `from` stays accepted.
+  longer seed root values properties. The twenty-second round closed the
+  per-op remainder: helper-dict root fields no longer shadow same-named
+  range variables (`locals_with_roots` keeps template bindings — the
+  call dict's `patch` field was displacing the `$patch` member), and
+  `value_has_key` decodes a JSON-roundtripped OutputPath identity (keys
+  survive the roundtrip; any transform, branch condition, or key removal
+  abstains), so the `and (or (eq .op …)) (not (hasKey . KEY))` fails
+  negate to their exact `AnyOf[[FieldNotEquals…], [HasMember]]` arms:
+  `copy`/`move` without `from` and `add`/`replace`/`test` without
+  `value` reject on `service.patch` members while complete patches of
+  every op render — all helm-verified
+  (`nats_jsonpatch_per_op_requirements_bind_through_the_helper_range`,
+  `per_op_requirement_binds_in_a_direct_range`,
+  `per_op_requirement_binds_through_the_helper_roundtrip`).
 
 ## Rejected (invalid or won't fix by design)
 

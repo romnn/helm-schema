@@ -8376,3 +8376,92 @@ but dropped truthy-arm typing at unrelated image hosts through the
 fail lane's self-scoping requirement, so it was reverted for a
 dedicated round instead of adopting a ~50-chart unadjudicated
 re-typing.
+
+## Open-items round (2026-07-21, twenty-second round)
+
+Closed the four items the twenty-first round left open: the F32
+defaulted-comparison residual, the F74 transformed-semver bound, the
+F108 per-op requirement bound, and the F80 reroot chain.
+
+### F32 — defaulted-binding fallback literals (landed)
+
+`eval_default` records a scalar literal fallback on the primary path's
+binding meta (`HelperOutputMeta::default_fallback`, exact-fact merge),
+and `value_comparison_predicate` adds the fallback arm when the meta is
+the pure `PATH | default LIT` shape (single truthy-path branch, no value
+transform): `eq $mode LIT` also holds where the path is falsy, `ne $mode
+OTHER` likewise, and the negations stay exact. external-secrets'
+`serviceMonitor: {renderMode: null}` deletion selects the default
+literal's arm instead of the invalid-mode `fail`; junk modes abort every
+render (helm-verified with `--skip-schema-validation`).
+
+### F74 — ordered escape composition and the transformed semver bound (landed)
+
+`regexReplaceAll "TOK.*$" X ""` records the typed
+`LexicalEscape::CutAtToken` erasure, and `pattern_with_lexical_escapes`
+composes escape sets with at most one escape per edge position (leading
+affix / trailing affix / cut tail) as edge wraps — sound in any
+application order, exact for the cilium chain. The `<0.9.0` comparator
+projects through the same chain as a fail-position sound subset
+(`semver_transformed_operand`, reached from the new pipeline routing in
+`approximate_condition_parts`): the constraint pattern is
+`v?`-normalized and token-free, so the trim and cut wraps are exact
+preimages. `garbage` aborts the parse, `v0.1.0` and `0.1.0@sha…` hit the
+fail, valid/digest/`latest` tags render — all helm-verified.
+
+### F108 — per-op requirements through the helper roundtrip (landed)
+
+Two independent blockers: `locals_with_roots` let a helper call-dict
+field shadow a same-named range variable (nats binds `$patch` over a
+dict carrying a `patch` member), and `value_has_key` had no arm for a
+JSON-roundtripped `OutputPath` member identity. With both fixed, the
+`and (or (eq .op "copy") (eq .op "move")) (not (hasKey . "from"))`
+fails decode exactly and negate to
+`AnyOf[[FieldNotEquals(op, copy), FieldNotEquals(op, move)],
+[HasMember(from)]]`: `copy`/`move` without `from` and
+`add`/`replace`/`test` without `value` reject on `service.patch`
+members; complete patches of every op render (helm-verified).
+
+### F80 — the reroot chain (landed, with quantifier bounds)
+
+Four pieces carried the layered identities through
+`set $globals.Values "workers" $workers` + `with $globals`:
+
+1. The scrub strip at wildcard-involving custom merges became
+   one-sided — only the RANGE-member operand degrades, so the
+   celery-scrubbed base keeps its layered identity through the per-set
+   merge.
+2. Nested `MergedLayers` flatten in precedence order for identity
+   extraction (associativity), in both the splice lowering and
+   `collect_output_meta`, so the three-deep
+   `[sets member, scrubbed celery, workers]` chain yields layer facts.
+3. `value_has_key`'s layer union drops a choice layer's constant-False
+   alternatives as OR identities (the `concat (list (dict "name"
+   "default")) sets` literal entry), unblocking the candidate-selection
+   decodes that previously poisoned the summary rows with approximates.
+4. Negated member-quantified guards encode as `anyOf[¬∀, ∀¬]`
+   (`negated_member_guard_fragment`): the `∀ members violate` arm holds
+   vacuously on the default empty `sets: []`, so deeper layers'
+   synthesized arms fire there.
+
+A new signal-builder bound keeps the rerouting honest: rows whose
+unlowerable conditions HARD-NEGATE foreign-family selections
+(`hard_negation_paths`) keep the pre-layered routing, so airflow's
+deprecated `workers.securityContext` scalar stays open behind a live
+`securityContexts.pod` while the pod-family arms keep their documented
+ungated widening. Chart flips: string `runAsUser` rejects through the
+base and celery layers on the real chart, the shadowed corner and
+null-scrubbed members stay open, and the round-8/17 per-set capture
+arms hold. Remaining bounds: the `∀¬` arm under-fires on mixed member
+sets (accept direction), and `enableDefault: false` beside empty `sets`
+can still fire the ungated arm for renders that never happen.
+
+### Validation
+
+`task test` green (1378 tests), including regenerated fixtures for the
+two nats IR/gen corpus cases and the eight drifted chart-corpus schemas
+(airflow, cilium, datadog, external-secrets, grafana,
+kube-prometheus-stack, kyverno, nats — the grafana/datadog/KPS churn is
+the new `anyOf[¬∀, ∀¬]` encoding and edge-composed escape patterns
+applied to their existing arms). The luup2 `check:local` downstream
+gate passes with the installed binary.
