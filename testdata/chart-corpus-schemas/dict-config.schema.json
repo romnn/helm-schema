@@ -77,7 +77,7 @@
         {
           "anyOf": [
             {
-              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -106,37 +106,22 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
+        "properties": {
+          "ingress": {
+            "anyOf": [
+              {
+                "type": "object"
               },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
+              {
+                "$ref": "#/$defs/helm-truthy"
               }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            ]
           }
-        ]
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},

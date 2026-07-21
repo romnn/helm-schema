@@ -46,6 +46,13 @@ pub struct ValuesSchemaInput<'a> {
     pub contract_schema_signals: &'a ContractSchemaSignals,
     pub provider: &'a dyn ResourceSchemaOracle,
     pub values_yaml: Option<&'a str>,
+    /// ONLY the dependency charts' declared defaults, composed under
+    /// their value prefixes. A key present here fills at the SUBCHART's
+    /// coalesce stage even when the parent-level document misses it —
+    /// including after a parent-level null-deletion — so absence at such
+    /// paths reads as the subchart default instead of nil. When absent,
+    /// every missing key reads as nil.
+    pub dependency_values_yaml: Option<&'a str>,
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
 }
 
@@ -58,12 +65,18 @@ impl<'a> ValuesSchemaInput<'a> {
             contract_schema_signals,
             provider,
             values_yaml: None,
+            dependency_values_yaml: None,
             values_descriptions: None,
         }
     }
 
     pub fn with_values_yaml(mut self, values_yaml: Option<&'a str>) -> Self {
         self.values_yaml = values_yaml;
+        self
+    }
+
+    pub fn with_dependency_values_yaml(mut self, dependency_values_yaml: Option<&'a str>) -> Self {
+        self.dependency_values_yaml = dependency_values_yaml;
         self
     }
 
@@ -98,10 +111,24 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         &mut values_yaml_doc,
         input.contract_schema_signals.values_default_sources(),
     );
+    let mut subchart_defaults_doc = input
+        .dependency_values_yaml
+        .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
+        .unwrap_or(YamlValue::Null);
+    // Chart-internal root merges (`set $ "Values" (mustMergeOverwrite
+    // defaults .Values)`) fill their defaults at RENDER time, after any
+    // null-deletion, so absence at such paths reads as the merged default
+    // exactly like a dependency-owned key reads as its subchart default.
+    values_yaml::copy_values_default_sources(
+        &mut subchart_defaults_doc,
+        &values_yaml_doc,
+        input.contract_schema_signals.values_default_sources(),
+    );
 
     let root_schema = build_root_schema(
         input.contract_schema_signals,
         &values_yaml_doc,
+        &subchart_defaults_doc,
         values_descriptions,
         input.provider,
     );
@@ -131,6 +158,7 @@ pub(crate) fn runtime_iterable_schema(allow_integer: bool) -> serde_json::Value 
 fn build_root_schema(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
     values_descriptions: &BTreeMap<String, String>,
     provider: &dyn ResourceSchemaOracle,
 ) -> Value {
@@ -177,11 +205,17 @@ fn build_root_schema(
         }
     }
     drop(base_span);
-    append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
+    append_conditional_schemas(
+        &mut root_schema,
+        conditional_schemas,
+        values_yaml_doc,
+        subchart_defaults_doc,
+    );
     append_terminal_clauses(
         &mut root_schema,
         contract_schema_signals.terminal_clauses(),
         values_yaml_doc,
+        subchart_defaults_doc,
     );
     // A serialized path's schema is deliberately unconstrained; the
     // declared-default filler must keep the slot present without re-typing

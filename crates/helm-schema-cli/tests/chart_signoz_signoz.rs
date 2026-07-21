@@ -6,6 +6,8 @@
 
 use std::collections::BTreeSet;
 
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/descriptions.rs"]
 mod descriptions;
 #[path = "common/helm_samples.rs"]
@@ -72,8 +74,13 @@ fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
         ],
     )?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
-    let schema_validates_instance =
-        |_: &serde_json::Value, instance: &serde_json::Value| validator.is_valid(instance);
+    // Helm validates the coalesced document, so every probe composes its
+    // sparse override over the chart defaults first.
+    let schema_validates_instance = |_: &serde_json::Value, instance: &serde_json::Value| {
+        let composed = chart_instances::with_override("signoz-signoz", instance.clone())
+            .expect("compose instance over chart defaults");
+        validator.is_valid(&composed)
+    };
     assert!(
         !schema_validates_instance(
             &schema,
@@ -522,11 +529,15 @@ fn clickhouse_operator_image_field_instance(
     root.insert("clickhouse".to_string(), Value::Object(clickhouse));
     if enabled == Some(false) {
         // Disabling the clickhouse subchart makes `externalClickhouse.host`
-        // a hard requirement (`required "externalClickhouse.host is
-        // required if not clickhouse.enabled"`), so a helm-valid disabled
-        // instance must provide it.
+        // AND `externalClickhouse.cluster` hard requirements (`required
+        // "... is required if not clickhouse.enabled"`). The schema
+        // validates the coalesced document helm renders from, where the
+        // declared `cluster: cluster` default always fills the key — its
+        // absence would mean the user null-deleted it, which aborts — so a
+        // helm-valid disabled instance must carry both.
         let mut external = Map::new();
         external.insert("host".to_string(), Value::String("ch.example".to_string()));
+        external.insert("cluster".to_string(), Value::String("cluster".to_string()));
         root.insert("externalClickhouse".to_string(), Value::Object(external));
     }
     Value::Object(root)

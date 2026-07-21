@@ -182,6 +182,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Pipeline(stages) => {
                 self.default_pipeline_truthy_predicate(stages).is_some()
                     || self.tostring_pipeline_truthy_predicate(stages).is_some()
+                    || self.pipeline_membership_predicate(stages).is_some()
             }
             _ => false,
         }
@@ -280,16 +281,93 @@ impl ValuePathContext<'_> {
                 }
                 self.approximate_condition_parts(&args[0], &format!("{marker}:!"), !negated)
             }
-            _ => Predicate::approximate_with_sound_subset(
-                marker,
-                self.resolved_values_paths_from_expr(expr),
-                if negated {
-                    self.negated_comparison_sound_subset(expr)
-                } else {
-                    self.comparison_sound_subset(expr)
-                },
-            ),
+            _ => {
+                if let Some(predicate) = self.int_cast_region_disjunction(expr, marker, negated) {
+                    return predicate;
+                }
+                Predicate::approximate_with_sound_subset(
+                    marker,
+                    self.resolved_values_paths_from_expr(expr),
+                    if negated {
+                        self.negated_comparison_sound_subset(expr)
+                    } else {
+                        self.comparison_sound_subset(expr)
+                    },
+                )
+            }
         }
+    }
+
+    /// `ne (int X) L` (and the negated `eq`) certainly holds when the
+    /// coercion certainly lands strictly below OR strictly above the
+    /// literal, so the claim carries BOTH region arms as a disjunction of
+    /// strengthened approximates instead of the raw-integer-only
+    /// conjunction: each arm's `IntGt`/`IntLt` guard contributes its exact
+    /// base-0 string preimage at encoding time (cilium rejects
+    /// `cluster.id: "1"` under the default cluster name, and
+    /// `maxConnectedClusters` spellings outside {255, 511}).
+    fn int_cast_region_disjunction(
+        &self,
+        expr: &TemplateExpr,
+        marker: &str,
+        negated: bool,
+    ) -> Option<Predicate> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return None;
+        };
+        match (function.as_str(), negated) {
+            ("ne", false) | ("eq", true) => {}
+            _ => return None,
+        }
+        let [left, right] = args.as_slice() else {
+            return None;
+        };
+        let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
+            (cast, TemplateExpr::Literal(Literal::Int(literal))) => (cast, *literal),
+            (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
+            _ => return None,
+        };
+        let source = self.int_cast_operand(cast_expr)?;
+        let paths = self.resolved_values_paths_from_expr(expr);
+        // A literal `default` substitutes for every Helm-falsy input
+        // BEFORE the comparison: when the fallback equals the literal, a
+        // raw 0 and the empty string no longer satisfy `ne`, so both arms
+        // exclude them (the other falsy spellings match no arm encoding).
+        let default_collides = literal != 0 && source.default_int == Some(literal);
+        let arm = |guard: Guard, tag: &str| {
+            let mut guards = vec![guard];
+            if default_collides {
+                guards.push(Guard::NotEq {
+                    path: source.path.clone(),
+                    value: helm_schema_core::GuardValue::Int(0),
+                });
+                guards.push(Guard::NotEq {
+                    path: source.path.clone(),
+                    value: helm_schema_core::GuardValue::string(""),
+                });
+            }
+            Predicate::approximate_with_sound_subset(
+                format!("{marker}:{tag}"),
+                paths.clone(),
+                guards,
+            )
+        };
+        Some(Predicate::Or(vec![
+            arm(
+                Guard::IntLt {
+                    path: source.path.clone(),
+                    bound: literal,
+                },
+                "lt",
+            ),
+            arm(
+                Guard::IntGt {
+                    path: source.path.clone(),
+                    bound: literal,
+                },
+                "gt",
+            ),
+        ]))
     }
 
     pub(crate) fn with_condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
@@ -303,7 +381,8 @@ impl ValuePathContext<'_> {
         if let TemplateExpr::Pipeline(stages) = expr.deparen() {
             return self
                 .default_pipeline_truthy_predicate(stages)
-                .or_else(|| self.tostring_pipeline_truthy_predicate(stages));
+                .or_else(|| self.tostring_pipeline_truthy_predicate(stages))
+                .or_else(|| self.pipeline_membership_predicate(stages));
         }
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return self.truthy_predicate(expr);
@@ -771,6 +850,17 @@ impl ValuePathContext<'_> {
                     self.single_truthy_predicate(arg)
                         .map(|predicate| predicate.negated())
                 }),
+            // The piped membership spelling negates the same equality
+            // disjunction as the call form; the general fallback below
+            // would degrade it to a negated truthiness, which fires on
+            // FALSY subjects that are perfectly valid members' complements
+            // (cilium's kvstoreMode must-be-internal-or-external check).
+            TemplateExpr::Pipeline(stages)
+                if self.pipeline_membership_predicate(stages).is_some() =>
+            {
+                self.pipeline_membership_predicate(stages)
+                    .map(|predicate| predicate.negated())
+            }
             TemplateExpr::Call { function, args } if function == "and" => {
                 self.and_predicate(args).map(|p| p.negated())
             }
@@ -1117,6 +1207,23 @@ impl ValuePathContext<'_> {
         let predicate = self.literal_dispatch_arms_predicate(&arms, &|arm| !arm.literal.is_empty());
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
         predicate
+    }
+
+    /// The piped membership spelling `list L1 L2 … | has X`: the pipeline
+    /// passes the literal list as `has`'s LAST argument, so it decodes to
+    /// the same equality disjunction as the call form (cilium's
+    /// netkit-datapath tproxy exclusion tests membership positively).
+    fn pipeline_membership_predicate(&self, stages: &[TemplateExpr]) -> Option<Predicate> {
+        let [haystack, has] = stages else {
+            return None;
+        };
+        let TemplateExpr::Call { function, args } = has.deparen() else {
+            return None;
+        };
+        if function != "has" || args.len() != 1 {
+            return None;
+        }
+        self.helper_literal_membership_predicate(&[args[0].clone(), haystack.clone()])
     }
 
     fn helper_literal_membership_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {

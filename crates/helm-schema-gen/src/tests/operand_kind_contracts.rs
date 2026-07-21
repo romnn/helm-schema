@@ -1636,9 +1636,20 @@ fn int_cast_guard_keeps_strict_operand_contract_alive() {
             "boolean operands and dead partitions render: instance={instance}; schema={schema}"
         );
     }
+    // The coalesced document carries the declared `master.count: 1`; a
+    // missing count was null-deleted and coerces to 0, closing the outer
+    // gate.
     for instance in [
-        serde_json::json!({ "auth": { "enabled": "true" } }),
-        serde_json::json!({ "architecture": "standalone", "auth": { "enabled": "true" } }),
+        serde_json::json!({
+            "master": { "count": 1 },
+            "architecture": "replication",
+            "auth": { "enabled": "true" }
+        }),
+        serde_json::json!({
+            "master": { "count": 1 },
+            "architecture": "standalone",
+            "auth": { "enabled": "true" }
+        }),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),
@@ -1740,8 +1751,14 @@ fn ranged_member_field_contract_survives_foreign_key_selected_range() {
         );
     }
     for instance in [
-        serde_json::json!({ "server": { "remoteWrite": [{ "url": 7 }] } }),
-        serde_json::json!({ "server": { "remoteWrite": [{}] } }),
+        serde_json::json!({
+            "serverFiles": { "prometheus.yml": {} },
+            "server": { "remoteWrite": [{ "url": 7 }] },
+        }),
+        serde_json::json!({
+            "serverFiles": { "prometheus.yml": {} },
+            "server": { "remoteWrite": [{}] },
+        }),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),
@@ -1997,11 +2014,19 @@ fn semver_guarded_string_contract_binds_conditionally() {
     for (instance, want) in [
         // Live version branch: the tpl subject must be a string.
         (
-            serde_json::json!({ "airflowVersion": "2.11.0", "baseUrl": { "a": "b" } }),
+            serde_json::json!({
+                "webserver": { "enabled": true },
+                "airflowVersion": "2.11.0",
+                "baseUrl": { "a": "b" }
+            }),
             false,
         ),
         (
-            serde_json::json!({ "airflowVersion": "v2.9", "baseUrl": { "a": "b" } }),
+            serde_json::json!({
+                "webserver": { "enabled": true },
+                "airflowVersion": "v2.9",
+                "baseUrl": { "a": "b" }
+            }),
             false,
         ),
         (

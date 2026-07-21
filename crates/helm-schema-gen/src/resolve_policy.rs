@@ -64,12 +64,17 @@ const PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN: &str =
 /// NaNs only — "+.nan" is absent from the resolver table and stays a string.
 pub(crate) const PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN: &str =
     r"^([+-]?\.(inf|Inf|INF)|\.(nan|NaN|NAN))$";
-/// Tokens the resolver provably reads as `!!int` within `int64`/`uint64`:
-/// optionally signed decimal without a leading zero (underscores stripped),
-/// or a bounded radix-prefixed/legacy-octal literal. Float-tagged spellings
-/// that merely have an integral value ("09", "4e2", "1.") stay out — a
-/// float64 in an integer manifest slot is not reliably accepted.
-const PLAIN_SCALAR_INTEGER_TOKEN_PATTERN: &str = r"^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$";
+/// Tokens an INTEGER manifest slot accepts: spellings the resolver
+/// provably reads as `!!int` within `int64`/`uint64` — optionally signed
+/// decimal without a leading zero (underscores stripped), or a bounded
+/// radix-prefixed/legacy-octal literal — plus the one float-tagged family
+/// that still lands as an integer: a leading-zero decimal whose octal
+/// read fails on an 8/9 digit falls back to the resolver's float path,
+/// and the integral float64 marshals back to a plain JSON integer
+/// downstream ("08" reaches an int32 slot as 8). Digit counts stay far
+/// below float64's exact-integer cliff; dot/exponent spellings and
+/// underscored octal-fallback forms stay out.
+const PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$";
 /// Tokens the resolver provably reads as any numeric tag with a
 /// JSON-representable value: the integer lane plus the decimal float lanes.
 /// Infinities and NaNs are excluded — they have no JSON encoding, so a
@@ -860,7 +865,7 @@ fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
     let string_schema = scalar_string_preimage(
         object,
         if integer {
-            PLAIN_SCALAR_INTEGER_TOKEN_PATTERN
+            PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN
         } else {
             PLAIN_SCALAR_NUMBER_TOKEN_PATTERN
         },

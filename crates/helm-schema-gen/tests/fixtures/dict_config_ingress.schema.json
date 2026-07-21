@@ -30,37 +30,22 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
+        "properties": {
+          "ingress": {
+            "anyOf": [
+              {
+                "type": "object"
               },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
+              {
+                "$ref": "#/$defs/helm-truthy"
               }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            ]
           }
-        ]
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},

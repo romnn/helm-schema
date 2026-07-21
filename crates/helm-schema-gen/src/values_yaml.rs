@@ -37,6 +37,50 @@ pub(crate) fn apply_values_default_sources(
     }
 }
 
+/// Copy each unique root-merge default from `source_doc` into `target_doc`
+/// at its target path, creating intermediate mappings: the
+/// absence-semantics document needs these render-time defaults even when
+/// nothing else declares the subtree.
+pub(crate) fn copy_values_default_sources(
+    target_doc: &mut YamlValue,
+    source_doc: &YamlValue,
+    sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
+) {
+    let mut by_target: BTreeMap<&str, Vec<&helm_schema_core::ValuesDefaultSource>> =
+        BTreeMap::new();
+    for source in sources {
+        by_target
+            .entry(&source.target_path)
+            .or_default()
+            .push(source);
+    }
+    for sources in by_target.values() {
+        // Only a unique source per target is safe to apply; see
+        // `apply_values_default_sources`.
+        let [source] = sources.as_slice() else {
+            continue;
+        };
+        let Some(defaults) = yaml_value_at_path(source_doc, &source.source_path).cloned() else {
+            continue;
+        };
+        if !matches!(target_doc, YamlValue::Mapping(_)) {
+            *target_doc = YamlValue::Mapping(serde_yaml::Mapping::default());
+        }
+        let target_segments = crate::split_value_path(&source.target_path);
+        let mut current = &mut *target_doc;
+        for segment in &target_segments {
+            let YamlValue::Mapping(mapping) = current else {
+                break;
+            };
+            let key = YamlValue::String(segment.clone());
+            current = mapping
+                .entry(key)
+                .or_insert_with(|| YamlValue::Mapping(serde_yaml::Mapping::default()));
+        }
+        merge_missing_yaml_values(current, defaults);
+    }
+}
+
 fn yaml_value_at_segments_mut<'a>(
     doc: &'a mut YamlValue,
     path_segments: &[String],

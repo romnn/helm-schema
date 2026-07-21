@@ -20,6 +20,7 @@ use helm_schema_core::{
     ContractFailImplication, ContractRequirementTarget, ContractSchemaSignals,
     FailValueRequirement, ProviderSchemaUse, ResourceSchemaOracle, ValueKind,
 };
+use serde_json::Value;
 
 pub(crate) fn synthesized_required_source_implications(
     contract_schema_signals: &ContractSchemaSignals,
@@ -327,6 +328,23 @@ pub(crate) fn synthesized_range_key_implications(
             {
                 continue;
             }
+            let mut requirements = vec![FailValueRequirement::SchemaType("string".to_string())];
+            // The slot's own string constraints hold for every rendered
+            // key, so they project onto the collection's key domain
+            // (traefik's Gateway listener names must spell the CRD's
+            // lowercase SectionName). Only top-level keywords project:
+            // union-shaped fragments keep the plain string typing.
+            if let Some(pattern) = fragment.schema().get("pattern").and_then(Value::as_str) {
+                requirements.push(FailValueRequirement::MatchesPattern {
+                    pattern: pattern.to_string(),
+                    templated: false,
+                });
+            }
+            let min = fragment.schema().get("minLength").and_then(Value::as_u64);
+            let max = fragment.schema().get("maxLength").and_then(Value::as_u64);
+            if min.is_some() || max.is_some() {
+                requirements.push(FailValueRequirement::StringLengthBounds { min, max });
+            }
             // No self-truthy guard: the Keys encoding itself leaves the
             // empty-array, null, and (vacuously) absent lanes open, and a
             // self-truthy guard would trip the base-replacement rule for
@@ -337,7 +355,7 @@ pub(crate) fn synthesized_range_key_implications(
                 ContractFailImplication {
                     outer_guards: branch_guards.to_vec(),
                     target: ContractRequirementTarget::Keys,
-                    requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
+                    requirements,
                 },
             );
         }

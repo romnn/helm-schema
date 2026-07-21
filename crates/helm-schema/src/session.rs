@@ -50,6 +50,7 @@ pub struct ValuePathExplanation {
 struct PreparedSession {
     analysis: Analysis,
     values_yaml: Option<String>,
+    dependency_values_yaml: Option<String>,
     explicit_value_paths: BTreeSet<String>,
     values_descriptions: BTreeMap<String, String>,
     subchart_value_prefixes: Vec<Vec<String>>,
@@ -61,6 +62,16 @@ impl PreparedSession {
 
         let defines = chart::build_define_index(charts, opts.include_tests)?;
         let values_yaml = chart::build_composed_values_yaml(charts, opts.include_subchart_values)?;
+        // The dependency charts' own declared defaults: schema generation
+        // distinguishes parent-owned absence (helm null-deletion, nil at
+        // render) from subchart-declared absence (the subchart's default
+        // fills at its own coalesce stage, even after a parent-level
+        // null-deletion).
+        let dependency_values_yaml = if opts.include_subchart_values {
+            chart::build_dependency_values_yaml(charts)?
+        } else {
+            None
+        };
         let values_roots = values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref());
         let values_descriptions = chart::build_composed_values_descriptions(
             charts,
@@ -82,6 +93,7 @@ impl PreparedSession {
                 local_schemas: chart_analysis.local_schema_universe,
             },
             values_yaml,
+            dependency_values_yaml,
             explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
             subchart_value_prefixes: charts
@@ -314,6 +326,7 @@ impl AnalysisSession {
             let schema = generate_values_schema(
                 ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
                     .with_values_yaml(prepared.values_yaml.as_deref())
+                    .with_dependency_values_yaml(prepared.dependency_values_yaml.as_deref())
                     .with_values_descriptions(&prepared.values_descriptions),
             );
 

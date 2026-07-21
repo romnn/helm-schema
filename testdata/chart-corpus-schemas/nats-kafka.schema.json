@@ -758,29 +758,29 @@
       ]
     },
     "schema40": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "schema41": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema43": {
+    "schema44": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema44": {
+    "schema45": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
-    },
-    "schema46": {
-      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-      "type": "string"
     },
     "schema48": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
@@ -2028,7 +2028,7 @@
                         ]
                       },
                       "readOnly": {
-                        "$ref": "#/$defs/schema44"
+                        "$ref": "#/$defs/schema45"
                       }
                     },
                     "required": [
@@ -2045,7 +2045,7 @@
                     "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                     "properties": {
                       "readOnly": {
-                        "$ref": "#/$defs/schema43"
+                        "$ref": "#/$defs/schema44"
                       },
                       "secretName": {
                         "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -2169,7 +2169,7 @@
                         "$ref": "#/$defs/schema6"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema40"
+                        "$ref": "#/$defs/schema41"
                       },
                       "optional": {
                         "$ref": "#/$defs/schema48"
@@ -3077,7 +3077,7 @@
                         ]
                       },
                       "readOnly": {
-                        "$ref": "#/$defs/schema43"
+                        "$ref": "#/$defs/schema44"
                       },
                       "volumeID": {
                         "description": "volumeID uniquely identifies a Portworx volume",
@@ -3159,7 +3159,7 @@
                                   "$ref": "#/$defs/schema6"
                                 },
                                 "name": {
-                                  "$ref": "#/$defs/schema40"
+                                  "$ref": "#/$defs/schema41"
                                 },
                                 "optional": {
                                   "$ref": "#/$defs/schema48"
@@ -3205,7 +3205,7 @@
                                   ]
                                 },
                                 "name": {
-                                  "$ref": "#/$defs/schema40"
+                                  "$ref": "#/$defs/schema41"
                                 },
                                 "optional": {
                                   "description": "optional field specify whether the Secret or its key must be defined",
@@ -3408,14 +3408,14 @@
                         ]
                       },
                       "readOnly": {
-                        "$ref": "#/$defs/schema44"
+                        "$ref": "#/$defs/schema45"
                       },
                       "secretRef": {
                         "additionalProperties": false,
                         "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                         "properties": {
                           "name": {
-                            "$ref": "#/$defs/schema40"
+                            "$ref": "#/$defs/schema41"
                           }
                         },
                         "type": "object",
@@ -3514,7 +3514,7 @@
                         "$ref": "#/$defs/schema36"
                       },
                       "readOnly": {
-                        "$ref": "#/$defs/schema43"
+                        "$ref": "#/$defs/schema44"
                       },
                       "secretRef": {
                         "$ref": "#/$defs/schema25"
@@ -3894,7 +3894,7 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema46"
+                          "$ref": "#/$defs/schema40"
                         },
                         {
                           "type": "integer"
@@ -4172,7 +4172,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema46"
+          "$ref": "#/$defs/schema40"
         }
       ]
     },

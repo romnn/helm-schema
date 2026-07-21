@@ -175,8 +175,11 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             .with_values_yaml(Some("feature:\n  enabled: true\n")),
     );
 
+    // Helm validates the coalesced document: the declared default only
+    // goes missing through null-deletion, which reads as nil — falsy —
+    // so the omitted state leaves the guarded branch dormant.
     assert!(
-        !schema_accepts_instance(
+        schema_accepts_instance(
             &schema,
             &serde_json::json!({
                 "feature": {
@@ -184,7 +187,19 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
                 }
             })
         ),
-        "omitted default-true guard should still activate the guarded host schema: {schema}"
+        "a null-deleted default-true guard leaves the guarded host open: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "feature": {
+                    "enabled": true,
+                    "host": 7
+                }
+            })
+        ),
+        "explicit true guard should activate the guarded host schema: {schema}"
     );
     assert!(
         schema_accepts_instance(
@@ -356,12 +371,14 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
     );
 
     sim_assert_eq!(
-        have: schema.pointer("/properties/feature/allOf/0/if/anyOf/1/properties/enabled/enum"),
+        have: schema.pointer("/properties/feature/allOf/0/if/properties/enabled/enum"),
         want: Some(&serde_json::json!([false])),
         "exact false equality should lower to a typed enum, not truthiness: {schema}"
     );
+    // The coalesced document reads an absent guard as null-deleted: at
+    // render `eq nil false` is FALSE, so the branch stays dormant.
     assert!(
-        !schema_accepts_instance(
+        schema_accepts_instance(
             &schema,
             &serde_json::json!({
                 "feature": {
@@ -369,7 +386,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
                 }
             })
         ),
-        "omitted default-false guard should activate the guarded host schema: {schema}"
+        "a null-deleted equal-false guard leaves the guarded host open: {schema}"
     );
     assert!(
         !schema_accepts_instance(
@@ -873,12 +890,11 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         permits_type(guarded_host, "string"),
         "the mode-guarded branch should carry the string typing: {schema}"
     );
-    // The `if` uses the default-aware form (absent mode falls back to the
-    // truthy declared default), so the mode key sits inside its anyOf arms.
+    // Helm validates the coalesced document, where an absent mode was
+    // null-deleted and reads as nil (Helm-falsy), so the `if` keys the
+    // mode's own truthiness directly.
     assert!(
-        schema
-            .pointer("/allOf/0/if/anyOf/1/properties/mode")
-            .is_some(),
+        schema.pointer("/allOf/0/if/properties/mode").is_some(),
         "the overlay must key on the mode condition: {schema}"
     );
 }

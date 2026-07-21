@@ -104,12 +104,12 @@ fn literal_table_traversal_binds_pattern_validators() {
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
         (
-            serde_json::json!({ "app.ini": { "database": { "password": 7 } } }),
+            serde_json::json!({ "assertNoLeakedSecrets": true, "app.ini": { "database": { "password": 7 } } }),
             false,
             "regexMatch rejects a non-string sensitive value",
         ),
         (
-            serde_json::json!({ "app.ini": { "database": { "password": "hunter2" } } }),
+            serde_json::json!({ "assertNoLeakedSecrets": true, "app.ini": { "database": { "password": "hunter2" } } }),
             false,
             "a plaintext sensitive value hits the fail",
         ),
@@ -119,7 +119,7 @@ fn literal_table_traversal_binds_pattern_validators() {
             "variable expansion renders",
         ),
         (
-            serde_json::json!({ "app.ini": { "auth.basic": { "password": "leak" } } }),
+            serde_json::json!({ "assertNoLeakedSecrets": true, "app.ini": { "auth.basic": { "password": "leak" } } }),
             false,
             "dotted path segments stay atomic",
         ),
@@ -488,6 +488,62 @@ fn required_subjects_bind_nonempty_requirements() {
             serde_json::json!({ "clusterName": "prod", "gate": { "enabled": false, "target": "" } }),
             true,
             "guarded subject stays free when the guard is off",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A guarded `required` subject with a declared non-null default rejects
+/// the ABSENT document state: helm validates the coalesced values — the
+/// same document the templates render from — so the key can only be
+/// missing there when the user's explicit `null` deleted the declared
+/// default, and the live branch then aborts at the `required` call (the
+/// AWS Load Balancer Controller HPA's `maxReplicas`). A document carrying
+/// the key stays accepted, and the dormant guard keeps every spelling
+/// open.
+#[test]
+fn guarded_required_rejects_null_deleted_declared_defaults() {
+    let src = indoc! {r#"
+        {{- if .Values.autoscaling.enabled }}
+        apiVersion: autoscaling/v2
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: example
+        spec:
+          maxReplicas: {{ required "a valid maxReplicas value is required" .Values.autoscaling.maxReplicas }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        autoscaling:
+          enabled: false
+          maxReplicas: 5
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "autoscaling": { "enabled": true } }),
+            false,
+            "null-deleted subject fails under the live guard",
+        ),
+        (
+            serde_json::json!({ "autoscaling": { "enabled": true, "maxReplicas": "" } }),
+            false,
+            "empty subject fails under the live guard",
+        ),
+        (
+            serde_json::json!({ "autoscaling": { "enabled": true, "maxReplicas": 5 } }),
+            true,
+            "filled subject renders",
+        ),
+        (
+            serde_json::json!({ "autoscaling": { "enabled": false } }),
+            true,
+            "dormant guard keeps the absent state open",
         ),
     ] {
         assert!(
@@ -986,10 +1042,20 @@ fn ranged_member_name_equality_fail_forbids_the_literal_names() {
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (instance, want, label) in [
+        // The coalesced document carries the declared `enabled: true`; a
+        // document missing it had the guard null-deleted and stays open.
         (
-            serde_json::json!({ "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }] }),
+            serde_json::json!({
+                "k8sClientExponentialBackoff": { "enabled": true },
+                "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }]
+            }),
             false,
             "forbidden name under the live guard",
+        ),
+        (
+            serde_json::json!({ "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }] }),
+            true,
+            "forbidden name under a null-deleted guard",
         ),
         (
             serde_json::json!({ "extraEnv": [{ "name": "OTHER", "value": "1" }] }),
@@ -1081,15 +1147,49 @@ fn scalar_domain_fail_guards_lower_through_sound_subsets() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (instance, want) in [
-        (serde_json::json!({ "clusterName": "123456789" }), false),
-        (serde_json::json!({ "clusterName": "12345678" }), true),
-        (serde_json::json!({ "maxClusters": 300 }), false),
-        (serde_json::json!({ "maxClusters": 511 }), true),
-        // A numeric string coerces to the same bound and stays outside
-        // the raw-integer subset.
-        (serde_json::json!({ "maxClusters": "255" }), true),
-        (serde_json::json!({ "mode": "bogus" }), false),
-        (serde_json::json!({ "mode": "external" }), true),
+        (
+            serde_json::json!({ "clusterName": "123456789", "maxClusters": 255, "mode": "internal" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "clusterName": "12345678", "maxClusters": 255, "mode": "internal" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "maxClusters": 300, "mode": "internal" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "maxClusters": 511, "mode": "internal" }),
+            true,
+        ),
+        // A numeric string coerces exactly like the raw integer: the
+        // region disjunction claims spellings certainly parsing outside
+        // {255, 511} while the bound spellings stay accepted.
+        (
+            serde_json::json!({ "maxClusters": "255", "mode": "internal" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "maxClusters": "0x1ff", "mode": "internal" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "maxClusters": "300", "mode": "internal" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "maxClusters": "bogus", "mode": "internal" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "mode": "bogus", "maxClusters": 255 }),
+            false,
+        ),
+        (
+            serde_json::json!({ "mode": "external", "maxClusters": 255 }),
+            true,
+        ),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
@@ -1152,11 +1252,20 @@ fn variable_bound_coercion_fail_guards_lower_through_sound_subsets() {
             serde_json::json!({ "controller": { "replicas": "1" } }),
             true,
         ),
-        // A leading zero flips ParseInt's base detection to octal, so the
-        // spelling stays outside the claimed decimal preimage.
+        // A leading zero flips ParseInt's base detection to octal: "09"
+        // is a parse ERROR coercing to 0 — inside the domain — while
+        // valid octal and hex spellings coerce beyond it and reject.
         (
             serde_json::json!({ "controller": { "replicas": "09" } }),
             true,
+        ),
+        (
+            serde_json::json!({ "controller": { "replicas": "05" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "controller": { "replicas": "0x5" } }),
+            false,
         ),
     ] {
         assert!(
@@ -1495,13 +1604,21 @@ fn int_cast_string_preimages_cover_radix_and_complement_lanes() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some("count: 0\nfloor: 5\nneg: 1\n"));
     for (instance, want, label) in [
-        (serde_json::json!({ "count": "0x10" }), false, "hex above 0"),
         (
-            serde_json::json!({ "count": "017" }),
+            serde_json::json!({ "count": "0x10", "floor": 5 }),
+            false,
+            "hex above 0",
+        ),
+        (
+            serde_json::json!({ "count": "017", "floor": 5 }),
             false,
             "legacy octal above 0",
         ),
-        (serde_json::json!({ "count": "0" }), true, "zero renders"),
+        (
+            serde_json::json!({ "count": "0", "floor": 5 }),
+            true,
+            "zero renders",
+        ),
         (
             serde_json::json!({ "floor": "abc" }),
             false,
@@ -1527,36 +1644,36 @@ fn int_cast_string_preimages_cover_radix_and_complement_lanes() {
             true,
             "boundary parse escapes",
         ),
-        // "2" coerces below the floor and aborts Helm, but it matches the
-        // overapproximated escape language — the complement lane claims
-        // only spellings that CERTAINLY stay below (documented widening).
+        // "2" coerces below the floor and aborts Helm: the exact escape
+        // windows see it certainly parsing below 3, so the complement
+        // lane claims it (the old char-count escape widened here).
         (
             serde_json::json!({ "floor": "2" }),
-            true,
-            "in-language low parse stays a sound abstention",
+            false,
+            "in-language low parse is claimed exactly",
         ),
         (
-            serde_json::json!({ "neg": "-018" }),
+            serde_json::json!({ "neg": "-018", "floor": 5 }),
             true,
             "invalid octal digit coerces to 0 and renders",
         ),
         (
-            serde_json::json!({ "neg": "-09" }),
+            serde_json::json!({ "neg": "-09", "floor": 5 }),
             true,
             "invalid octal 9 coerces to 0 and renders",
         ),
         (
-            serde_json::json!({ "neg": "-017" }),
+            serde_json::json!({ "neg": "-017", "floor": 5 }),
             false,
             "valid zero-padded octal parses negative",
         ),
         (
-            serde_json::json!({ "neg": "-0x10" }),
+            serde_json::json!({ "neg": "-0x10", "floor": 5 }),
             false,
             "negative hex parses negative",
         ),
         (
-            serde_json::json!({ "neg": "-5" }),
+            serde_json::json!({ "neg": "-5", "floor": 5 }),
             false,
             "clean negative decimal",
         ),
@@ -2208,12 +2325,12 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
         (
-            serde_json::json!({ "customRules": null }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": null }),
             false,
             "a null dig subject aborts the type assertion",
         ),
         (
-            serde_json::json!({ "customRules": "junk" }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": "junk" }),
             false,
             "a scalar dig subject aborts",
         ),
@@ -2233,12 +2350,12 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
             "a nil intermediate step falls back to the default",
         ),
         (
-            serde_json::json!({ "trivy": { "resources": false } }),
+            serde_json::json!({ "rules": { "create": true }, "trivy": { "resources": false } }),
             false,
             "a falsy non-nil intermediate aborts",
         ),
         (
-            serde_json::json!({ "trivy": { "resources": "junk" } }),
+            serde_json::json!({ "rules": { "create": true }, "trivy": { "resources": "junk" } }),
             false,
             "a scalar intermediate aborts",
         ),

@@ -539,9 +539,9 @@ pub const CERT_MANAGER_DEPLOYMENT_BEHAVIOR: SchemaBehaviorCase<'static> = Schema
     schema_case: CERT_MANAGER_DEPLOYMENT,
     expectations: &[
         SchemaExpectation {
-            instance: r#"{"livenessProbe":{"failureThreshold":"eight"}}"#,
+            instance: r#"{"livenessProbe":{"enabled":true,"failureThreshold":"eight"}}"#,
             accepted: false,
-            message: "livenessProbe.failureThreshold must stay integer-like because livenessProbe.enabled defaults to true",
+            message: "livenessProbe.failureThreshold must stay integer-like while livenessProbe is enabled",
         },
         SchemaExpectation {
             instance: r#"{"livenessProbe":{"enabled":false,"failureThreshold":"eight"}}"#,
@@ -555,9 +555,9 @@ pub const CERT_MANAGER_SERVICE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBeh
     schema_case: CERT_MANAGER_SERVICE,
     expectations: &[
         SchemaExpectation {
-            instance: r#"{"serviceAnnotations":{"example.com/bad":7}}"#,
+            instance: r#"{"prometheus":{"enabled":true},"serviceAnnotations":{"example.com/bad":7}}"#,
             accepted: false,
-            message: "serviceAnnotations must stay a string map when the Service renders by default",
+            message: "serviceAnnotations must stay a string map when the Service renders",
         },
         SchemaExpectation {
             instance: r#"{"prometheus":{"enabled":false},"serviceAnnotations":{"example.com/bad":7}}"#,
@@ -587,9 +587,9 @@ pub const NATS_SERVICE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCas
     schema_case: NATS_SERVICE,
     expectations: &[
         SchemaExpectation {
-            instance: r#"{"service":{"name":7}}"#,
+            instance: r#"{"service":{"enabled":true,"name":7}}"#,
             accepted: false,
-            message: "service.name must stay string-like when service.enabled defaults to true",
+            message: "service.name must stay string-like when the Service is enabled",
         },
         SchemaExpectation {
             instance: r#"{"nameOverride":7}"#,
@@ -633,12 +633,12 @@ pub const SIGNOZ_POSTGRESQL_SECRETS_BEHAVIOR: SchemaBehaviorCase<'static> = Sche
     schema_case: SIGNOZ_POSTGRESQL_SECRETS,
     expectations: &[
         SchemaExpectation {
-            instance: r#"{"serviceBindings":{"enabled":true},"architecture":"replication","primary":{"name":7}}"#,
+            instance: r#"{"serviceBindings":{"enabled":true},"architecture":"replication","auth":{},"primary":{"name":7}}"#,
             accepted: true,
             message: "primary.name is explicitly stringified by the fullname helper",
         },
         SchemaExpectation {
-            instance: r#"{"serviceBindings":{"enabled":false},"architecture":"replication","primary":{"name":7}}"#,
+            instance: r#"{"serviceBindings":{"enabled":false},"architecture":"replication","auth":{},"primary":{"name":7}}"#,
             accepted: true,
             message: "primary.name should remain unconstrained when service bindings are disabled",
         },
@@ -648,9 +648,9 @@ pub const SIGNOZ_POSTGRESQL_SECRETS_BEHAVIOR: SchemaBehaviorCase<'static> = Sche
 pub const SIGNOZ_ZOOKEEPER_STATEFULSET_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCase {
     schema_case: SIGNOZ_ZOOKEEPER_STATEFULSET,
     expectations: &[SchemaExpectation {
-        instance: r#"{"containerSecurityContext":{"runAsUser":"root"}}"#,
+        instance: r#"{"containerSecurityContext":{"enabled":true,"runAsUser":"root"}}"#,
         accepted: false,
-        message: "containerSecurityContext.runAsUser must stay integer-like because containerSecurityContext.enabled defaults to true",
+        message: "containerSecurityContext.runAsUser must stay integer-like while the context is enabled",
     }],
 };
 
@@ -680,9 +680,9 @@ pub const ZALANDO_POSTGRES_OPERATOR_CLUSTERROLEBINDING_BEHAVIOR: SchemaBehaviorC
         schema_case: ZALANDO_POSTGRES_OPERATOR_CLUSTERROLEBINDING,
         expectations: &[
             SchemaExpectation {
-                instance: r#"{"serviceAccount":{"name":7}}"#,
+                instance: r#"{"rbac":{"create":true},"serviceAccount":{"name":7}}"#,
                 accepted: false,
-                message: "serviceAccount.name must stay string-like when rbac.create defaults to true",
+                message: "serviceAccount.name must stay string-like when rbac.create is live",
             },
             SchemaExpectation {
                 instance: r#"{"rbac":{"create":false},"serviceAccount":{"name":7}}"#,
@@ -697,9 +697,9 @@ pub const ZALANDO_POSTGRES_OPERATOR_CLUSTERROLE_BEHAVIOR: SchemaBehaviorCase<'st
         schema_case: ZALANDO_POSTGRES_OPERATOR_CLUSTERROLE,
         expectations: &[
             SchemaExpectation {
-                instance: r#"{"serviceAccount":{"name":7}}"#,
+                instance: r#"{"rbac":{"create":true},"serviceAccount":{"name":7}}"#,
                 accepted: false,
-                message: "serviceAccount.name must stay string-like when rbac.create defaults to true",
+                message: "serviceAccount.name must stay string-like when rbac.create is live",
             },
             SchemaExpectation {
                 instance: r#"{"rbac":{"create":false},"serviceAccount":{"name":7}}"#,
@@ -715,14 +715,14 @@ pub const ZALANDO_POSTGRES_OPERATOR_POSTGRES_POD_PRIORITY_CLASS_BEHAVIOR: Schema
     schema_case: ZALANDO_POSTGRES_OPERATOR_POSTGRES_POD_PRIORITY_CLASS,
     expectations: &[
         SchemaExpectation {
-            instance: r#"{"podPriorityClassName":{"name":7}}"#,
+            instance: r#"{"podPriorityClassName":{"create":true,"name":7}}"#,
             accepted: false,
-            message: "podPriorityClassName.name must stay string-like when create defaults to true",
+            message: "podPriorityClassName.name must stay string-like when create is live",
         },
         SchemaExpectation {
-            instance: r#"{"podPriorityClassName":{"priority":"high"}}"#,
+            instance: r#"{"podPriorityClassName":{"create":true,"priority":"high"}}"#,
             accepted: false,
-            message: "podPriorityClassName.priority must stay integer-like when create defaults to true",
+            message: "podPriorityClassName.priority must stay integer-like when create is live",
         },
         SchemaExpectation {
             instance: r#"{"podPriorityClassName":{"create":false,"name":7,"priority":"high"}}"#,

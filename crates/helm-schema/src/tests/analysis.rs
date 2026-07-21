@@ -1381,7 +1381,10 @@ stringData:
     .generated_schema()?
     .schema;
     let validator = jsonschema::validator_for(&schema)?;
+    // The coalesced document carries the declared `enabled: true`; a
+    // document missing it had the gate null-deleted and stays dormant.
     let default_auth = json!({
+        "enabled": true,
         "username": "",
         "password": "",
         "program": program
@@ -1393,6 +1396,7 @@ stringData:
     );
     assert!(validator.is_valid(&json!({
         "auth": {
+            "enabled": true,
             "username": "user",
             "password": "pass",
             "program": program
@@ -1406,7 +1410,7 @@ stringData:
     );
     assert!(
         !validator.is_valid(&json!({
-            "auth": { "username": "", "password": "", "program": program }
+            "auth": { "enabled": true, "username": "", "password": "", "program": program }
         })),
         "explicitly selecting the same program keeps its requirements: {schema}"
     );

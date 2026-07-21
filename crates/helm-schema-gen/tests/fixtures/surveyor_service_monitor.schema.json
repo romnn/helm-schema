@@ -242,17 +242,32 @@
           },
           {
             "not": {
-              "properties": {
-                "global": {
-                  "enum": [
-                    null
-                  ]
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "global": {}
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
                 }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
+              ]
             }
           }
         ]

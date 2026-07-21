@@ -1184,17 +1184,32 @@
     {
       "if": {
         "not": {
-          "properties": {
-            "global": {
-              "enum": [
-                null
-              ]
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "global": {}
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "global": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
             }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
+          ]
         }
       },
       "then": {
@@ -1279,53 +1294,30 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "jetstream": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jetstream"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "jetstream": {
                 "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "image": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 },
                 "required": [
-                  "jetstream"
+                  "image"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -1675,78 +1667,39 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "jetstream": {
-                          "properties": {
-                            "tls": {
-                              "properties": {
-                                "settings": {
-                                  "properties": {
-                                    "client_ca": {}
-                                  },
-                                  "required": [
-                                    "client_ca"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "settings"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "jetstream"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "jetstream": {
                     "properties": {
-                      "jetstream": {
+                      "tls": {
                         "properties": {
-                          "tls": {
+                          "settings": {
                             "properties": {
-                              "settings": {
-                                "properties": {
-                                  "client_ca": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "client_ca"
-                                ],
-                                "type": "object"
+                              "client_ca": {
+                                "$ref": "#/$defs/helm-truthy"
                               }
                             },
                             "required": [
-                              "settings"
+                              "client_ca"
                             ],
                             "type": "object"
                           }
                         },
                         "required": [
-                          "tls"
+                          "settings"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "jetstream"
+                      "tls"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -1780,78 +1733,39 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "jetstream": {
-                          "properties": {
-                            "tls": {
-                              "properties": {
-                                "settings": {
-                                  "properties": {
-                                    "client_cert": {}
-                                  },
-                                  "required": [
-                                    "client_cert"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "settings"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "jetstream"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "jetstream": {
                     "properties": {
-                      "jetstream": {
+                      "tls": {
                         "properties": {
-                          "tls": {
+                          "settings": {
                             "properties": {
-                              "settings": {
-                                "properties": {
-                                  "client_cert": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "client_cert"
-                                ],
-                                "type": "object"
+                              "client_cert": {
+                                "$ref": "#/$defs/helm-truthy"
                               }
                             },
                             "required": [
-                              "settings"
+                              "client_cert"
                             ],
                             "type": "object"
                           }
                         },
                         "required": [
-                          "tls"
+                          "settings"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "jetstream"
+                      "tls"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -1885,78 +1799,39 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "jetstream": {
-                          "properties": {
-                            "tls": {
-                              "properties": {
-                                "settings": {
-                                  "properties": {
-                                    "client_key": {}
-                                  },
-                                  "required": [
-                                    "client_key"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "settings"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "jetstream"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "jetstream": {
                     "properties": {
-                      "jetstream": {
+                      "tls": {
                         "properties": {
-                          "tls": {
+                          "settings": {
                             "properties": {
-                              "settings": {
-                                "properties": {
-                                  "client_key": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "client_key"
-                                ],
-                                "type": "object"
+                              "client_key": {
+                                "$ref": "#/$defs/helm-truthy"
                               }
                             },
                             "required": [
-                              "settings"
+                              "client_key"
                             ],
                             "type": "object"
                           }
                         },
                         "required": [
-                          "tls"
+                          "settings"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "jetstream"
+                      "tls"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
               }
             ]
           }

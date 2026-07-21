@@ -36,6 +36,64 @@ pub fn build_composed_values_yaml(
     }
 }
 
+/// The dependency charts' declared defaults, composed under their value
+/// prefixes (with subchart `global` values hoisted like helm does), MINUS
+/// every path the parent chart's own values.yaml declares. A key present
+/// here fills at the SUBCHART's coalesce stage even when the parent-level
+/// document misses it, so schema generation reads absence at such paths
+/// as the subchart default instead of nil. Parent-declared keys are
+/// excluded because their absence can only mean helm null-deletion, which
+/// poisons the key through every later merge stage — the subchart default
+/// does NOT resurrect a deleted key.
+#[instrument(skip_all)]
+pub fn build_dependency_values_yaml(charts: &[ChartContext]) -> EngineResult<Option<String>> {
+    let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
+    let mut doc = YamlValue::Mapping(serde_yaml::Mapping::default());
+    compose_subchart_values(charts, &mut doc)?;
+    let root_values_path = root.chart_dir.join("values.yaml")?;
+    if root_values_path.is_file()? {
+        let parent = serde_yaml::from_str::<YamlValue>(&root_values_path.read_to_string()?)?;
+        doc = subtract_declared_paths(&doc, &parent);
+    }
+    let serialized = serde_yaml::to_string(&doc)?;
+    if serialized.trim().is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(serialized))
+    }
+}
+
+/// `composed` minus every path `parent` declares: keys both documents
+/// carry recurse member-wise (a parent `falco-talon: {}` stub keeps the
+/// subchart's keys underneath), keys only `composed` carries survive
+/// whole, and parent-declared leaves are removed.
+fn subtract_declared_paths(composed: &YamlValue, parent: &YamlValue) -> YamlValue {
+    match (composed, parent) {
+        (YamlValue::Mapping(composed_map), YamlValue::Mapping(parent_map)) => {
+            let mut remaining = serde_yaml::Mapping::new();
+            for (key, value) in composed_map {
+                match parent_map.get(key) {
+                    None => {
+                        remaining.insert(key.clone(), value.clone());
+                    }
+                    Some(parent_value) => {
+                        let child = subtract_declared_paths(value, parent_value);
+                        if !matches!(child, YamlValue::Null) {
+                            remaining.insert(key.clone(), child);
+                        }
+                    }
+                }
+            }
+            if remaining.is_empty() {
+                YamlValue::Null
+            } else {
+                YamlValue::Mapping(remaining)
+            }
+        }
+        _ => YamlValue::Null,
+    }
+}
+
 #[instrument(skip_all)]
 pub fn build_composed_values_descriptions(
     charts: &[ChartContext],

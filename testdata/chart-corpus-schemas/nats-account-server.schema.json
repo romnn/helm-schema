@@ -500,48 +500,25 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "store": {
-                  "properties": {
-                    "type": {}
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "store"
-              ],
-              "type": "object"
-            }
-          },
-          {
+        "properties": {
+          "store": {
             "properties": {
-              "store": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "file"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+              "type": {
+                "enum": [
+                  "file"
+                ]
               }
             },
             "required": [
-              "store"
+              "type"
             ],
             "type": "object"
           }
-        ]
+        },
+        "required": [
+          "store"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -943,32 +920,17 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "type": {}
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "file"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+            "properties": {
+              "type": {
+                "enum": [
+                  "file"
+                ]
               }
-            ]
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
           },
           "then": {
             "additionalProperties": {},

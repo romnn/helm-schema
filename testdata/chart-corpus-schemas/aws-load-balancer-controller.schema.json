@@ -360,79 +360,29 @@
         }
       ]
     },
-    "schema103": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
-    },
-    "schema104": {
-      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-      "type": "string"
-    },
-    "schema107": {
-      "properties": {
-        "ingressValidationNamespaceSelector": {}
-      },
-      "required": [
-        "ingressValidationNamespaceSelector"
-      ],
-      "type": "object"
-    },
-    "schema110": {
-      "not": {
-        "properties": {
-          "enableServiceMutatorWebhook": {}
-        },
-        "required": [
-          "enableServiceMutatorWebhook"
-        ],
-        "type": "object"
-      }
-    },
-    "schema111": {
-      "properties": {
-        "ingressValidationObjectSelector": {}
-      },
-      "required": [
-        "ingressValidationObjectSelector"
-      ],
-      "type": "object"
-    },
-    "schema113": {
-      "not": {
-        "properties": {
-          "createIngressClassResource": {}
-        },
-        "required": [
-          "createIngressClassResource"
-        ],
-        "type": "object"
-      }
-    },
-    "schema115": {
+    "schema102": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema116": {
+    "schema103": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema111": {
+      "additionalProperties": {},
+      "properties": {
+        "matchExpressions": {},
+        "matchLabels": {}
+      },
+      "type": "object"
+    },
+    "schema119": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
     "schema12": {
@@ -486,13 +436,65 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema126": {
-      "additionalProperties": {},
-      "properties": {
-        "matchExpressions": {},
-        "matchLabels": {}
-      },
+    "schema120": {
+      "description": "key is the label key that the selector applies to.",
+      "type": "string"
+    },
+    "schema121": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
       "type": "object"
+    },
+    "schema124": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema125": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema126": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema127": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "schema13": {
       "description": "A list of node selector requirements by node's fields.",
@@ -536,44 +538,43 @@
         "null"
       ]
     },
-    "schema133": {
-      "properties": {
-        "maxReplicas": {
-          "enum": [
-            null
-          ]
-        }
+    "schema130": {
+      "if": {
+        "type": "boolean"
       },
-      "required": [
-        "maxReplicas"
-      ],
-      "type": "object"
+      "then": {
+        "type": "boolean"
+      }
+    },
+    "schema132": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema133": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
     },
     "schema134": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "schema135": {
-      "description": "key is the label key that the selector applies to.",
-      "type": "string"
-    },
-    "schema136": {
       "not": {
-        "properties": {
-          "certManager": {}
-        },
-        "required": [
-          "certManager"
-        ],
-        "type": "object"
+        "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema137": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
+    "schema138": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
     },
     "schema14": {
       "description": "A list of node selector requirements by node's labels.",
@@ -617,73 +618,6 @@
         "null"
       ]
     },
-    "schema141": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema142": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "integer",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema143": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema144": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "schema145": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema148": {
-      "if": {
-        "type": "boolean"
-      },
-      "then": {
-        "type": "boolean"
-      }
-    },
     "schema15": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
@@ -715,36 +649,6 @@
           }
         }
       ]
-    },
-    "schema150": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema151": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema152": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema153": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "schema156": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
     },
     "schema16": {
       "additionalProperties": {},
@@ -1813,25 +1717,6 @@
       ]
     },
     "schema77": {
-      "not": {
-        "properties": {
-          "webhookConfig": {
-            "properties": {
-              "ingressValidationNamespaceSelector": {}
-            },
-            "required": [
-              "ingressValidationNamespaceSelector"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "webhookConfig"
-        ],
-        "type": "object"
-      }
-    },
-    "schema78": {
       "anyOf": [
         {
           "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -1844,23 +1729,32 @@
       ]
     },
     "schema79": {
-      "not": {
-        "properties": {
-          "webhookConfig": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "ingressValidationObjectSelector": {}
+              "clusterName": {}
             },
             "required": [
-              "ingressValidationObjectSelector"
+              "clusterName"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "webhookConfig"
-        ],
-        "type": "object"
-      }
+        {
+          "properties": {
+            "clusterName": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "schema8": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
@@ -1899,56 +1793,48 @@
         "null"
       ]
     },
-    "schema83": {
+    "schema80": {
       "anyOf": [
         {
           "not": {
             "properties": {
-              "clusterName": {}
+              "maxReplicas": {}
             },
             "required": [
-              "clusterName"
+              "maxReplicas"
             ],
             "type": "object"
           }
         },
         {
           "properties": {
-            "clusterName": {
+            "maxReplicas": {
               "enum": [
                 null
               ]
             }
           },
           "required": [
-            "clusterName"
+            "maxReplicas"
           ],
           "type": "object"
         }
       ]
     },
-    "schema85": {
+    "schema82": {
       "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
       "type": "null"
     },
+    "schema84": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
     "schema87": {
-      "not": {
-        "properties": {
-          "ingressClassParams": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingressClassParams"
-        ],
-        "type": "object"
-      }
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "schema9": {
       "additionalProperties": false,
@@ -1988,33 +1874,7 @@
         "null"
       ]
     },
-    "schema90": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "schema92": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
-    },
-    "schema97": {
       "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
       "format": "int32",
       "type": [
@@ -2022,14 +1882,14 @@
         "null"
       ]
     },
-    "schema98": {
+    "schema93": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema99": {
+    "schema94": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
@@ -2063,74 +1923,53 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
-              {
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "rbac": {
                 "properties": {
-                  "createIngressClassResource": {
+                  "create": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "createIngressClassResource"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema103"
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "rbac"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema92"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -2162,48 +2001,34 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema113"
-                  },
-                  {
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
                     "properties": {
-                      "createIngressClassResource": {
+                      "create": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "createIngressClassResource"
+                      "create"
                     ],
                     "type": "object"
                   }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema87"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -2456,29 +2281,22 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema136"
-              },
-              {
-                "properties": {
-                  "certManager": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
+            "properties": {
+              "certManager": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                },
-                "required": [
-                  "certManager"
-                ],
-                "type": "object"
+                ]
               }
-            ]
+            },
+            "required": [
+              "certManager"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -2496,13 +2314,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema151"
+                            "$ref": "#/$defs/schema133"
                           },
                           {
-                            "$ref": "#/$defs/schema153"
+                            "$ref": "#/$defs/schema135"
                           },
                           {
-                            "$ref": "#/$defs/schema156"
+                            "$ref": "#/$defs/schema138"
                           },
                           {
                             "not": {
@@ -2515,19 +2333,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema152"
+                            "$ref": "#/$defs/schema134"
                           },
                           {
-                            "$ref": "#/$defs/schema116"
+                            "$ref": "#/$defs/schema103"
                           },
                           {
                             "$ref": "#/$defs/schema69"
                           },
                           {
-                            "$ref": "#/$defs/schema134"
+                            "$ref": "#/$defs/schema119"
                           },
                           {
-                            "$ref": "#/$defs/schema144"
+                            "$ref": "#/$defs/schema126"
                           }
                         ],
                         "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
@@ -2565,7 +2383,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema104"
+                        "$ref": "#/$defs/schema84"
                       }
                     ]
                   }
@@ -2652,71 +2470,41 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema136"
-                  },
-                  {
-                    "properties": {
-                      "certManager": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                "properties": {
+                  "certManager": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "certManager": {
-                          "properties": {
-                            "duration": {}
-                          },
-                          "required": [
-                            "duration"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "certManager": {
                     "properties": {
-                      "certManager": {
-                        "properties": {
-                          "duration": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "duration"
-                        ],
-                        "type": "object"
+                      "duration": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "certManager"
+                      "duration"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -2734,71 +2522,41 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema136"
-                  },
-                  {
-                    "properties": {
-                      "certManager": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                "properties": {
+                  "certManager": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "certManager": {
-                          "properties": {
-                            "renewBefore": {}
-                          },
-                          "required": [
-                            "renewBefore"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "certManager": {
                     "properties": {
-                      "certManager": {
-                        "properties": {
-                          "renewBefore": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "renewBefore"
-                        ],
-                        "type": "object"
+                      "renewBefore": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "certManager"
+                      "renewBefore"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -2816,29 +2574,22 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema136"
-                  },
-                  {
-                    "properties": {
-                      "certManager": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                "properties": {
+                  "certManager": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -2875,29 +2626,22 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema136"
-                  },
-                  {
-                    "properties": {
-                      "certManager": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                "properties": {
+                  "certManager": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -3161,30 +2905,23 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema103"
-          },
-          {
+        "properties": {
+          "rbac": {
             "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "rbac"
+              "create"
             ],
             "type": "object"
           }
-        ]
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -3212,13 +2949,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema151"
+                            "$ref": "#/$defs/schema133"
                           },
                           {
-                            "$ref": "#/$defs/schema153"
+                            "$ref": "#/$defs/schema135"
                           },
                           {
-                            "$ref": "#/$defs/schema156"
+                            "$ref": "#/$defs/schema138"
                           },
                           {
                             "not": {
@@ -3231,19 +2968,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema152"
+                            "$ref": "#/$defs/schema134"
                           },
                           {
-                            "$ref": "#/$defs/schema116"
+                            "$ref": "#/$defs/schema103"
                           },
                           {
                             "$ref": "#/$defs/schema69"
                           },
                           {
-                            "$ref": "#/$defs/schema134"
+                            "$ref": "#/$defs/schema119"
                           },
                           {
-                            "$ref": "#/$defs/schema144"
+                            "$ref": "#/$defs/schema126"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -3335,7 +3072,7 @@
         "additionalProperties": {},
         "properties": {
           "creator": {
-            "$ref": "#/$defs/schema150"
+            "$ref": "#/$defs/schema132"
           }
         }
       }
@@ -3536,13 +3273,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema151"
+                        "$ref": "#/$defs/schema133"
                       },
                       {
-                        "$ref": "#/$defs/schema153"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
-                        "$ref": "#/$defs/schema156"
+                        "$ref": "#/$defs/schema138"
                       },
                       {
                         "not": {
@@ -3555,16 +3292,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema116"
+                        "$ref": "#/$defs/schema103"
                       },
                       {
                         "$ref": "#/$defs/schema69"
                       },
                       {
-                        "$ref": "#/$defs/schema134"
+                        "$ref": "#/$defs/schema119"
                       },
                       {
-                        "$ref": "#/$defs/schema144"
+                        "$ref": "#/$defs/schema126"
                       }
                     ],
                     "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -3609,56 +3346,42 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema103"
-              },
-              {
+            "properties": {
+              "rbac": {
                 "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "rbac"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema92"
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -3718,7 +3441,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema150"
+            "$ref": "#/$defs/schema132"
           }
         }
       }
@@ -3753,22 +3476,15 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
-              {
-                "properties": {
-                  "createIngressClassResource": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "createIngressClassResource"
-                ],
-                "type": "object"
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
           },
           {
             "not": {
@@ -3796,30 +3512,23 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema87"
-                      },
-                      {
+                    "properties": {
+                      "ingressClassParams": {
                         "properties": {
-                          "ingressClassParams": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "ingressClassParams"
+                          "create"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "ingressClassParams"
+                    ],
+                    "type": "object"
                   },
                   {
                     "properties": {
@@ -3873,48 +3582,34 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
-              {
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingressClassParams": {
                 "properties": {
-                  "createIngressClassResource": {
+                  "create": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "createIngressClassResource"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema87"
-              },
-              {
-                "properties": {
-                  "ingressClassParams": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingressClassParams"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "ingressClassParams"
+            ],
+            "type": "object"
           },
           {
             "not": {
@@ -3945,22 +3640,15 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema113"
-          },
-          {
-            "properties": {
-              "createIngressClassResource": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "createIngressClassResource"
-            ],
-            "type": "object"
+        "properties": {
+          "createIngressClassResource": {
+            "$ref": "#/$defs/helm-truthy"
           }
-        ]
+        },
+        "required": [
+          "createIngressClassResource"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -4000,52 +3688,38 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
-              {
-                "properties": {
-                  "createIngressClassResource": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "createIngressClassResource"
-                ],
-                "type": "object"
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
           },
           {
             "anyOf": [
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema87"
-                      },
-                      {
+                    "properties": {
+                      "ingressClassParams": {
                         "properties": {
-                          "ingressClassParams": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "ingressClassParams"
+                          "create"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "ingressClassParams"
+                    ],
+                    "type": "object"
                   },
                   {
                     "properties": {
@@ -4103,13 +3777,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema151"
+                        "$ref": "#/$defs/schema133"
                       },
                       {
-                        "$ref": "#/$defs/schema153"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
-                        "$ref": "#/$defs/schema156"
+                        "$ref": "#/$defs/schema138"
                       },
                       {
                         "not": {
@@ -4122,19 +3796,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema152"
+                        "$ref": "#/$defs/schema134"
                       },
                       {
-                        "$ref": "#/$defs/schema116"
+                        "$ref": "#/$defs/schema103"
                       },
                       {
                         "$ref": "#/$defs/schema69"
                       },
                       {
-                        "$ref": "#/$defs/schema134"
+                        "$ref": "#/$defs/schema119"
                       },
                       {
-                        "$ref": "#/$defs/schema144"
+                        "$ref": "#/$defs/schema126"
                       }
                     ],
                     "description": "name is the name of resource being referenced.",
@@ -4157,48 +3831,34 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
-              {
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingressClassParams": {
                 "properties": {
-                  "createIngressClassResource": {
+                  "create": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "createIngressClassResource"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema87"
-              },
-              {
-                "properties": {
-                  "ingressClassParams": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingressClassParams"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "ingressClassParams"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -4352,7 +4012,7 @@
                                   "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
                                   "properties": {
                                     "key": {
-                                      "$ref": "#/$defs/schema135"
+                                      "$ref": "#/$defs/schema120"
                                     },
                                     "operator": {
                                       "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
@@ -4502,10 +4162,18 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "createIngressClassResource": {
@@ -4516,102 +4184,59 @@
                   "createIngressClassResource"
                 ],
                 "type": "object"
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
               }
             ]
           },
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema113"
-                  },
-                  {
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
                     "properties": {
-                      "createIngressClassResource": {
+                      "create": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "createIngressClassResource"
+                      "create"
                     ],
                     "type": "object"
                   }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema87"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema113"
-                  },
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema87"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -4639,22 +4264,15 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema113"
-                  },
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -4682,22 +4300,15 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema113"
-                  },
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
               },
               {
                 "anyOf": [
@@ -4723,30 +4334,23 @@
                   {
                     "allOf": [
                       {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema87"
-                          },
-                          {
+                        "properties": {
+                          "ingressClassParams": {
                             "properties": {
-                              "ingressClassParams": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
                               }
                             },
                             "required": [
-                              "ingressClassParams"
+                              "create"
                             ],
                             "type": "object"
                           }
-                        ]
+                        },
+                        "required": [
+                          "ingressClassParams"
+                        ],
+                        "type": "object"
                       },
                       {
                         "properties": {
@@ -4868,30 +4472,15 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "configureDefaultAffinity": {}
-                      },
-                      "required": [
-                        "configureDefaultAffinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "configureDefaultAffinity": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "configureDefaultAffinity"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "configureDefaultAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "configureDefaultAffinity"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -4909,74 +4498,53 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema113"
-              },
-              {
+            "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "rbac": {
                 "properties": {
-                  "createIngressClassResource": {
+                  "create": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "createIngressClassResource"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema103"
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "rbac"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema92"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -5017,7 +4585,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema150"
+            "$ref": "#/$defs/schema132"
           }
         }
       }
@@ -5089,7 +4657,7 @@
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/schema104"
+                "$ref": "#/$defs/schema84"
               }
             ]
           }
@@ -5098,22 +4666,15 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema110"
-          },
-          {
-            "properties": {
-              "enableServiceMutatorWebhook": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableServiceMutatorWebhook"
-            ],
-            "type": "object"
+        "properties": {
+          "enableServiceMutatorWebhook": {
+            "$ref": "#/$defs/helm-truthy"
           }
-        ]
+        },
+        "required": [
+          "enableServiceMutatorWebhook"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -5130,7 +4691,7 @@
                         "$ref": "#/$defs/schema23"
                       },
                       {
-                        "$ref": "#/$defs/schema85"
+                        "$ref": "#/$defs/schema82"
                       }
                     ],
                     "description": "whether or not to fail the service creation if the webhook fails"
@@ -5263,10 +4824,18 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema110"
-              },
+            "properties": {
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableServiceMutatorWebhook"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "enableServiceMutatorWebhook": {
@@ -5277,28 +4846,6 @@
                   "enableServiceMutatorWebhook"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema110"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "properties": {
@@ -5332,22 +4879,15 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema110"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enableServiceMutatorWebhook": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enableServiceMutatorWebhook"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -5417,10 +4957,18 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema110"
-              },
+            "properties": {
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableServiceMutatorWebhook"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "enableServiceMutatorWebhook": {
@@ -5431,28 +4979,6 @@
                   "enableServiceMutatorWebhook"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema110"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "properties": {
@@ -5478,22 +5004,15 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema110"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enableServiceMutatorWebhook": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enableServiceMutatorWebhook"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -5527,22 +5046,15 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema110"
-                  },
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enableServiceMutatorWebhook": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enableServiceMutatorWebhook"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -5656,37 +5168,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema77"
-                  },
-                  {
+                "properties": {
+                  "webhookConfig": {
                     "properties": {
-                      "webhookConfig": {
-                        "properties": {
-                          "ingressValidationNamespaceSelector": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "ingressValidationNamespaceSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "ingressValidationNamespaceSelector"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "webhookConfig"
+                      "ingressValidationNamespaceSelector"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -5741,37 +5246,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema77"
-                  },
-                  {
+                "properties": {
+                  "webhookConfig": {
                     "properties": {
-                      "webhookConfig": {
-                        "properties": {
-                          "ingressValidationNamespaceSelector": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "ingressValidationNamespaceSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "ingressValidationNamespaceSelector"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "webhookConfig"
+                      "ingressValidationNamespaceSelector"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -5826,37 +5324,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema77"
-                  },
-                  {
+                "properties": {
+                  "webhookConfig": {
                     "properties": {
-                      "webhookConfig": {
-                        "properties": {
-                          "ingressValidationNamespaceSelector": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "ingressValidationNamespaceSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "ingressValidationNamespaceSelector"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "webhookConfig"
+                      "ingressValidationNamespaceSelector"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -5908,37 +5399,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema79"
-                  },
-                  {
+                "properties": {
+                  "webhookConfig": {
                     "properties": {
-                      "webhookConfig": {
-                        "properties": {
-                          "ingressValidationObjectSelector": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "ingressValidationObjectSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "ingressValidationObjectSelector"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "webhookConfig"
+                      "ingressValidationObjectSelector"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -5993,37 +5477,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema79"
-                  },
-                  {
+                "properties": {
+                  "webhookConfig": {
                     "properties": {
-                      "webhookConfig": {
-                        "properties": {
-                          "ingressValidationObjectSelector": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "ingressValidationObjectSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "ingressValidationObjectSelector"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "webhookConfig"
+                      "ingressValidationObjectSelector"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -6078,37 +5555,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema79"
-                  },
-                  {
+                "properties": {
+                  "webhookConfig": {
                     "properties": {
-                      "webhookConfig": {
-                        "properties": {
-                          "ingressValidationObjectSelector": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "ingressValidationObjectSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "ingressValidationObjectSelector"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "webhookConfig"
+                      "ingressValidationObjectSelector"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -6162,37 +5632,30 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema77"
-                      },
-                      {
+                    "properties": {
+                      "webhookConfig": {
                         "properties": {
-                          "webhookConfig": {
-                            "properties": {
-                              "ingressValidationNamespaceSelector": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "ingressValidationNamespaceSelector": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "ingressValidationNamespaceSelector"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "webhookConfig"
+                          "ingressValidationNamespaceSelector"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
                   },
                   {
                     "properties": {
@@ -6247,37 +5710,30 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema77"
-                      },
-                      {
+                    "properties": {
+                      "webhookConfig": {
                         "properties": {
-                          "webhookConfig": {
-                            "properties": {
-                              "ingressValidationNamespaceSelector": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "ingressValidationNamespaceSelector": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "ingressValidationNamespaceSelector"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "webhookConfig"
+                          "ingressValidationNamespaceSelector"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
                   },
                   {
                     "properties": {
@@ -6332,37 +5788,30 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema77"
-                      },
-                      {
+                    "properties": {
+                      "webhookConfig": {
                         "properties": {
-                          "webhookConfig": {
-                            "properties": {
-                              "ingressValidationNamespaceSelector": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "ingressValidationNamespaceSelector": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "ingressValidationNamespaceSelector"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "webhookConfig"
+                          "ingressValidationNamespaceSelector"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
                   },
                   {
                     "not": {
@@ -6394,37 +5843,30 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema79"
-                      },
-                      {
+                    "properties": {
+                      "webhookConfig": {
                         "properties": {
-                          "webhookConfig": {
-                            "properties": {
-                              "ingressValidationObjectSelector": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "ingressValidationObjectSelector": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "ingressValidationObjectSelector"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "webhookConfig"
+                          "ingressValidationObjectSelector"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
                   },
                   {
                     "properties": {
@@ -6479,37 +5921,30 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema79"
-                      },
-                      {
+                    "properties": {
+                      "webhookConfig": {
                         "properties": {
-                          "webhookConfig": {
-                            "properties": {
-                              "ingressValidationObjectSelector": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "ingressValidationObjectSelector": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "ingressValidationObjectSelector"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "webhookConfig"
+                          "ingressValidationObjectSelector"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
                   },
                   {
                     "properties": {
@@ -6564,37 +5999,30 @@
               {
                 "allOf": [
                   {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema79"
-                      },
-                      {
+                    "properties": {
+                      "webhookConfig": {
                         "properties": {
-                          "webhookConfig": {
-                            "properties": {
-                              "ingressValidationObjectSelector": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "ingressValidationObjectSelector": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "ingressValidationObjectSelector"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "webhookConfig"
+                          "ingressValidationObjectSelector"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
                   },
                   {
                     "not": {
@@ -6787,7 +6215,7 @@
                 "description": "webhookTLS specifies TLS cert/key for the webhook",
                 "properties": {
                   "caCert": {
-                    "$ref": "#/$defs/schema150"
+                    "$ref": "#/$defs/schema132"
                   }
                 }
               }
@@ -6801,7 +6229,7 @@
                 "description": "webhookTLS specifies TLS cert/key for the webhook",
                 "properties": {
                   "cert": {
-                    "$ref": "#/$defs/schema150"
+                    "$ref": "#/$defs/schema132"
                   }
                 }
               }
@@ -6815,7 +6243,7 @@
                 "description": "webhookTLS specifies TLS cert/key for the webhook",
                 "properties": {
                   "key": {
-                    "$ref": "#/$defs/schema150"
+                    "$ref": "#/$defs/schema132"
                   }
                 }
               }
@@ -7007,10 +6435,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema83"
+            "$ref": "#/$defs/schema79"
           },
           {
-            "$ref": "#/$defs/schema83"
+            "$ref": "#/$defs/schema79"
           }
         ]
       },
@@ -7194,7 +6622,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "not": {
@@ -7269,7 +6697,7 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/schema104"
+                        "$ref": "#/$defs/schema84"
                       }
                     ]
                   }
@@ -7291,7 +6719,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema104"
+                        "$ref": "#/$defs/schema84"
                       }
                     ]
                   }
@@ -7318,7 +6746,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema104"
+                        "$ref": "#/$defs/schema84"
                       }
                     ]
                   }
@@ -7357,10 +6785,10 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema80"
                   },
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema80"
                   }
                 ]
               }
@@ -7502,7 +6930,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema145"
+                    "$ref": "#/$defs/schema127"
                   }
                 }
               ],
@@ -7551,7 +6979,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "$ref": "#/$defs/schema145"
+            "$ref": "#/$defs/schema127"
           }
         }
       ],
@@ -7564,7 +6992,7 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "$ref": "#/$defs/schema44"
@@ -7583,7 +7011,7 @@
     "disableIngressClassAnnotation": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default"
@@ -7591,7 +7019,7 @@
     "disableIngressGroupNameAnnotation": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default"
@@ -7599,7 +7027,7 @@
     "disableRestrictedSecurityGroupRules": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic"
@@ -7609,13 +7037,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema151"
+              "$ref": "#/$defs/schema133"
             },
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema135"
             },
             {
-              "$ref": "#/$defs/schema156"
+              "$ref": "#/$defs/schema138"
             },
             {
               "not": {
@@ -7628,16 +7056,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema116"
+              "$ref": "#/$defs/schema103"
             },
             {
               "$ref": "#/$defs/schema69"
             },
             {
-              "$ref": "#/$defs/schema134"
+              "$ref": "#/$defs/schema119"
             },
             {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema126"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -7661,7 +7089,7 @@
     "enableBackendSecurityGroup": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)"
@@ -7682,7 +7110,7 @@
     "enableEndpointSlices": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)"
@@ -7690,7 +7118,7 @@
     "enableManageBackendSecurityGroupRules": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)"
@@ -7698,7 +7126,7 @@
     "enablePodReadinessGateInject": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)"
@@ -7719,7 +7147,7 @@
     "enableShield": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "Enable Shield addon for ALB (default true)"
@@ -7727,7 +7155,7 @@
     "enableWaf": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "Enable WAF addon for ALB (default true)"
@@ -7735,7 +7163,7 @@
     "enableWafv2": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "Enable WAF V2 addon for ALB (default true)"
@@ -7756,7 +7184,7 @@
                 "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/schema90"
+                    "$ref": "#/$defs/schema87"
                   },
                   "optional": {
                     "description": "Specify whether the ConfigMap must be defined",
@@ -7783,7 +7211,7 @@
                 "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/schema90"
+                    "$ref": "#/$defs/schema87"
                   },
                   "optional": {
                     "description": "Specify whether the Secret must be defined",
@@ -7970,7 +7398,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema99"
+                    "$ref": "#/$defs/schema94"
                   }
                 },
                 "required": [
@@ -7987,7 +7415,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/schema98"
+                    "$ref": "#/$defs/schema93"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -8111,10 +7539,10 @@
                     "$ref": "#/$defs/schema8"
                   },
                   "name": {
-                    "$ref": "#/$defs/schema90"
+                    "$ref": "#/$defs/schema87"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema102"
                   }
                 },
                 "type": [
@@ -8209,7 +7637,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema143"
+                    "$ref": "#/$defs/schema125"
                   }
                 },
                 "type": [
@@ -9019,7 +8447,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema98"
+                    "$ref": "#/$defs/schema93"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -9101,10 +8529,10 @@
                               "$ref": "#/$defs/schema8"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema90"
+                              "$ref": "#/$defs/schema87"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema115"
+                              "$ref": "#/$defs/schema102"
                             }
                           },
                           "type": [
@@ -9147,7 +8575,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/schema90"
+                              "$ref": "#/$defs/schema87"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -9350,14 +8778,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema99"
+                    "$ref": "#/$defs/schema94"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/schema90"
+                        "$ref": "#/$defs/schema87"
                       }
                     },
                     "type": "object",
@@ -9456,7 +8884,7 @@
                     "$ref": "#/$defs/schema73"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema98"
+                    "$ref": "#/$defs/schema93"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/schema48"
@@ -9567,13 +8995,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema151"
+                  "$ref": "#/$defs/schema133"
                 },
                 {
-                  "$ref": "#/$defs/schema153"
+                  "$ref": "#/$defs/schema135"
                 },
                 {
-                  "$ref": "#/$defs/schema156"
+                  "$ref": "#/$defs/schema138"
                 },
                 {
                   "not": {
@@ -9586,16 +9014,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema116"
+                  "$ref": "#/$defs/schema103"
                 },
                 {
                   "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema134"
+                  "$ref": "#/$defs/schema119"
                 },
                 {
-                  "$ref": "#/$defs/schema144"
+                  "$ref": "#/$defs/schema126"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -9691,7 +9119,7 @@
               "$ref": "#/$defs/schema31"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema78"
+              "$ref": "#/$defs/schema77"
             },
             "grpc": {
               "$ref": "#/$defs/schema37"
@@ -9703,7 +9131,7 @@
               "$ref": "#/$defs/schema65"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema97"
+              "$ref": "#/$defs/schema92"
             },
             "successThreshold": {
               "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -9773,7 +9201,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "additionalProperties": {
@@ -9837,7 +9265,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "$ref": "#/$defs/schema44"
@@ -9855,7 +9283,7 @@
     "podDisruptionBudget": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "additionalProperties": {},
@@ -9872,7 +9300,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "$ref": "#/$defs/schema51"
@@ -9897,7 +9325,7 @@
               "$ref": "#/$defs/schema23"
             },
             {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema82"
             }
           ],
           "description": "whether or not to fail the pod creation if the webhook fails"
@@ -10045,7 +9473,7 @@
               "$ref": "#/$defs/schema31"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema78"
+              "$ref": "#/$defs/schema77"
             },
             "grpc": {
               "$ref": "#/$defs/schema37"
@@ -10057,7 +9485,7 @@
               "$ref": "#/$defs/schema65"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema97"
+              "$ref": "#/$defs/schema92"
             },
             "successThreshold": {
               "anyOf": [
@@ -10155,7 +9583,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema104"
+          "$ref": "#/$defs/schema84"
         }
       ]
     },
@@ -10164,13 +9592,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema151"
+              "$ref": "#/$defs/schema133"
             },
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema135"
             },
             {
-              "$ref": "#/$defs/schema156"
+              "$ref": "#/$defs/schema138"
             },
             {
               "not": {
@@ -10183,16 +9611,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema116"
+              "$ref": "#/$defs/schema103"
             },
             {
               "$ref": "#/$defs/schema69"
             },
             {
-              "$ref": "#/$defs/schema134"
+              "$ref": "#/$defs/schema119"
             },
             {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema126"
             }
           ],
           "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
@@ -10337,24 +9765,15 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/schema141"
-                }
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+            "properties": {
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
           },
           "then": {
             "allOf": [
@@ -10454,13 +9873,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema151"
+                  "$ref": "#/$defs/schema133"
                 },
                 {
-                  "$ref": "#/$defs/schema153"
+                  "$ref": "#/$defs/schema135"
                 },
                 {
-                  "$ref": "#/$defs/schema156"
+                  "$ref": "#/$defs/schema138"
                 },
                 {
                   "not": {
@@ -10473,16 +9892,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema116"
+                  "$ref": "#/$defs/schema103"
                 },
                 {
                   "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema134"
+                  "$ref": "#/$defs/schema119"
                 },
                 {
-                  "$ref": "#/$defs/schema144"
+                  "$ref": "#/$defs/schema126"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -10509,7 +9928,7 @@
     "serviceAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "$ref": "#/$defs/schema44"
@@ -10574,13 +9993,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema151"
+                            "$ref": "#/$defs/schema133"
                           },
                           {
-                            "$ref": "#/$defs/schema153"
+                            "$ref": "#/$defs/schema135"
                           },
                           {
-                            "$ref": "#/$defs/schema156"
+                            "$ref": "#/$defs/schema138"
                           },
                           {
                             "not": {
@@ -10593,19 +10012,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema152"
+                            "$ref": "#/$defs/schema134"
                           },
                           {
-                            "$ref": "#/$defs/schema116"
+                            "$ref": "#/$defs/schema103"
                           },
                           {
                             "$ref": "#/$defs/schema69"
                           },
                           {
-                            "$ref": "#/$defs/schema134"
+                            "$ref": "#/$defs/schema119"
                           },
                           {
-                            "$ref": "#/$defs/schema144"
+                            "$ref": "#/$defs/schema126"
                           }
                         ],
                         "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -10692,13 +10111,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema151"
+                            "$ref": "#/$defs/schema133"
                           },
                           {
-                            "$ref": "#/$defs/schema153"
+                            "$ref": "#/$defs/schema135"
                           },
                           {
-                            "$ref": "#/$defs/schema156"
+                            "$ref": "#/$defs/schema138"
                           },
                           {
                             "not": {
@@ -10711,19 +10130,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema152"
+                            "$ref": "#/$defs/schema134"
                           },
                           {
-                            "$ref": "#/$defs/schema116"
+                            "$ref": "#/$defs/schema103"
                           },
                           {
                             "$ref": "#/$defs/schema69"
                           },
                           {
-                            "$ref": "#/$defs/schema134"
+                            "$ref": "#/$defs/schema119"
                           },
                           {
-                            "$ref": "#/$defs/schema144"
+                            "$ref": "#/$defs/schema126"
                           }
                         ],
                         "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -10843,7 +10262,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema104"
+          "$ref": "#/$defs/schema84"
         }
       ],
       "description": "Time period for the controller pod to do a graceful shutdown"
@@ -10851,7 +10270,7 @@
     "tolerateNonExistentBackendAction": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)"
@@ -10859,7 +10278,7 @@
     "tolerateNonExistentBackendService": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema148"
+          "$ref": "#/$defs/schema130"
         }
       ],
       "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)"
@@ -11028,10 +10447,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema142"
+                  "$ref": "#/$defs/schema124"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema142"
+                  "$ref": "#/$defs/schema124"
                 }
               },
               "type": [
@@ -11050,7 +10469,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema137"
+          "$ref": "#/$defs/schema121"
         },
         {
           "not": {
@@ -11073,7 +10492,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "$ref": "#/$defs/schema145"
+            "$ref": "#/$defs/schema127"
           }
         }
       ],
@@ -11095,7 +10514,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema104"
+          "$ref": "#/$defs/schema84"
         },
         {
           "type": "null"
@@ -11129,7 +10548,7 @@
                     "$ref": "#/$defs/schema23"
                   },
                   {
-                    "$ref": "#/$defs/schema85"
+                    "$ref": "#/$defs/schema82"
                   }
                 ],
                 "description": "whether or not to fail the ingress creation if the webhook fails"
@@ -11141,31 +10560,22 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/schema107"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "ingressValidationNamespaceSelector": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                "properties": {
+                  "ingressValidationNamespaceSelector": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "ingressValidationNamespaceSelector"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "ingressValidationNamespaceSelector"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -11243,31 +10653,22 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "ingressValidationObjectSelector": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                "properties": {
+                  "ingressValidationObjectSelector": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
                       }
-                    },
-                    "required": [
-                      "ingressValidationObjectSelector"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "ingressValidationObjectSelector"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -11352,7 +10753,7 @@
         "ingressValidationNamespaceSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema126"
+              "$ref": "#/$defs/schema111"
             },
             {
               "not": {
@@ -11365,7 +10766,7 @@
         "ingressValidationObjectSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema126"
+              "$ref": "#/$defs/schema111"
             },
             {
               "not": {

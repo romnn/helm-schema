@@ -88,46 +88,23 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
+        "properties": {
+          "ingress": {
             "properties": {
-              "ingress": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "ingress"
+              "enabled"
             ],
             "type": "object"
           }
-        ]
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -341,30 +318,15 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
           },
           "then": {
             "allOf": [

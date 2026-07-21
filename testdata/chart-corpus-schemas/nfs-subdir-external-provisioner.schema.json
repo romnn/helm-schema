@@ -757,23 +757,8 @@
       }
     },
     "schema39": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
     },
     "schema4": {
       "anyOf": [
@@ -834,63 +819,36 @@
         }
       ]
     },
-    "schema41": {
-      "not": {
-        "properties": {
-          "storageClass": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "storageClass"
-        ],
-        "type": "object"
-      }
-    },
-    "schema46": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
-    },
-    "schema47": {
-      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
-      "type": "string"
-    },
-    "schema50": {
+    "schema44": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema56": {
+    "schema50": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema58": {
+    "schema52": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
+    },
+    "schema55": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema58": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema59": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
     },
     "schema6": {
       "additionalProperties": {
@@ -1008,38 +966,19 @@
         ]
       }
     },
-    "schema61": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema62": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "schema65": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema66": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema67": {
+    "schema60": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema69": {
+    "schema62": {
       "not": {
         "pattern": ":[ \\t]|:$"
+      }
+    },
+    "schema63": {
+      "not": {
+        "pattern": "[\\r\\n]"
       }
     },
     "schema7": {
@@ -1079,11 +1018,6 @@
         "object",
         "null"
       ]
-    },
-    "schema70": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
     },
     "schema9": {
       "allOf": [
@@ -1201,56 +1135,42 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
+            "properties": {
+              "rbac": {
                 "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "rbac"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema39"
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           },
           {
             "not": {
@@ -1392,82 +1312,61 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema46"
-              },
-              {
+            "properties": {
+              "rbac": {
                 "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "rbac"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema39"
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema41"
-              },
-              {
+            "properties": {
+              "storageClass": {
                 "properties": {
-                  "storageClass": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "storageClass"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1631,54 +1530,6 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema41"
-              },
-              {
-                "properties": {
-                  "storageClass": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nfs": {
-            "additionalProperties": {},
-            "properties": {
-              "mountOptions": {
-                "$ref": "#/$defs/schema6"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema41"
-          },
-          {
             "properties": {
               "storageClass": {
                 "properties": {
@@ -1698,6 +1549,40 @@
             "type": "object"
           }
         ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "mountOptions": {
+                "$ref": "#/$defs/schema6"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "storageClass": {
+            "properties": {
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storageClass"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -1996,30 +1881,23 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema46"
-          },
-          {
+        "properties": {
+          "rbac": {
             "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "rbac"
+              "create"
             ],
             "type": "object"
           }
-        ]
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -2032,13 +1910,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
-                        "$ref": "#/$defs/schema69"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -2046,22 +1924,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema66"
+                        "$ref": "#/$defs/schema59"
                       },
                       {
-                        "$ref": "#/$defs/schema50"
+                        "$ref": "#/$defs/schema44"
                       },
                       {
                         "$ref": "#/$defs/schema37"
                       },
                       {
-                        "$ref": "#/$defs/schema56"
+                        "$ref": "#/$defs/schema50"
                       },
                       {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema55"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -2084,30 +1962,23 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema41"
-              },
-              {
+            "properties": {
+              "storageClass": {
                 "properties": {
-                  "storageClass": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "storageClass"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -2150,30 +2021,23 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema41"
-              },
-              {
+            "properties": {
+              "storageClass": {
                 "properties": {
-                  "storageClass": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "storageClass"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -2369,7 +2233,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema58"
+          "$ref": "#/$defs/schema52"
         },
         {
           "not": {
@@ -2396,13 +2260,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema58"
                 },
                 {
-                  "$ref": "#/$defs/schema67"
+                  "$ref": "#/$defs/schema60"
                 },
                 {
-                  "$ref": "#/$defs/schema69"
+                  "$ref": "#/$defs/schema62"
                 },
                 {
                   "not": {
@@ -2410,19 +2274,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema50"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "$ref": "#/$defs/schema37"
                 },
                 {
-                  "$ref": "#/$defs/schema56"
+                  "$ref": "#/$defs/schema50"
                 },
                 {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema55"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2558,13 +2422,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema65"
+                            "$ref": "#/$defs/schema58"
                           },
                           {
-                            "$ref": "#/$defs/schema67"
+                            "$ref": "#/$defs/schema60"
                           },
                           {
-                            "$ref": "#/$defs/schema69"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -2572,19 +2436,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema70"
+                            "$ref": "#/$defs/schema63"
                           },
                           {
-                            "$ref": "#/$defs/schema50"
+                            "$ref": "#/$defs/schema44"
                           },
                           {
                             "$ref": "#/$defs/schema37"
                           },
                           {
-                            "$ref": "#/$defs/schema56"
+                            "$ref": "#/$defs/schema50"
                           },
                           {
-                            "$ref": "#/$defs/schema62"
+                            "$ref": "#/$defs/schema55"
                           }
                         ],
                         "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
@@ -2605,13 +2469,13 @@
                   "server": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
-                        "$ref": "#/$defs/schema69"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -2619,22 +2483,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema66"
+                        "$ref": "#/$defs/schema59"
                       },
                       {
-                        "$ref": "#/$defs/schema50"
+                        "$ref": "#/$defs/schema44"
                       },
                       {
                         "$ref": "#/$defs/schema37"
                       },
                       {
-                        "$ref": "#/$defs/schema56"
+                        "$ref": "#/$defs/schema50"
                       },
                       {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema55"
                       }
                     ],
                     "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
@@ -2721,13 +2585,13 @@
         "volumeName": {
           "allOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema58"
             },
             {
-              "$ref": "#/$defs/schema67"
+              "$ref": "#/$defs/schema60"
             },
             {
-              "$ref": "#/$defs/schema69"
+              "$ref": "#/$defs/schema62"
             },
             {
               "not": {
@@ -2735,22 +2599,22 @@
               }
             },
             {
-              "$ref": "#/$defs/schema70"
+              "$ref": "#/$defs/schema63"
             },
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema59"
             },
             {
-              "$ref": "#/$defs/schema50"
+              "$ref": "#/$defs/schema44"
             },
             {
               "$ref": "#/$defs/schema37"
             },
             {
-              "$ref": "#/$defs/schema56"
+              "$ref": "#/$defs/schema50"
             },
             {
-              "$ref": "#/$defs/schema62"
+              "$ref": "#/$defs/schema55"
             }
           ],
           "type": "string"
@@ -2761,7 +2625,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema58"
+          "$ref": "#/$defs/schema52"
         },
         {
           "additionalProperties": {
@@ -2787,7 +2651,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema58"
+          "$ref": "#/$defs/schema52"
         },
         {
           "$ref": "#/$defs/schema24"
@@ -2835,13 +2699,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema65"
+                                "$ref": "#/$defs/schema58"
                               },
                               {
-                                "$ref": "#/$defs/schema67"
+                                "$ref": "#/$defs/schema60"
                               },
                               {
-                                "$ref": "#/$defs/schema69"
+                                "$ref": "#/$defs/schema62"
                               },
                               {
                                 "not": {
@@ -2849,13 +2713,13 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema70"
+                                "$ref": "#/$defs/schema63"
                               },
                               {
-                                "$ref": "#/$defs/schema50"
+                                "$ref": "#/$defs/schema44"
                               },
                               {
-                                "$ref": "#/$defs/schema62"
+                                "$ref": "#/$defs/schema55"
                               }
                             ],
                             "type": "string"
@@ -2868,7 +2732,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema47"
+                            "$ref": "#/$defs/schema39"
                           },
                           {
                             "type": "integer"
@@ -3056,7 +2920,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema47"
+          "$ref": "#/$defs/schema39"
         }
       ]
     },
@@ -3144,7 +3008,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema58"
+          "$ref": "#/$defs/schema52"
         },
         {
           "not": {
@@ -3268,24 +3132,15 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/schema61"
-                }
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+            "properties": {
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
           },
           "then": {
             "allOf": [
@@ -3357,13 +3212,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema58"
                 },
                 {
-                  "$ref": "#/$defs/schema67"
+                  "$ref": "#/$defs/schema60"
                 },
                 {
-                  "$ref": "#/$defs/schema69"
+                  "$ref": "#/$defs/schema62"
                 },
                 {
                   "not": {
@@ -3371,19 +3226,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema50"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "$ref": "#/$defs/schema37"
                 },
                 {
-                  "$ref": "#/$defs/schema56"
+                  "$ref": "#/$defs/schema50"
                 },
                 {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema55"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -3412,24 +3267,15 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/schema61"
-                }
-              },
-              {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+            "properties": {
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
           },
           "then": {
             "allOf": [
@@ -3520,13 +3366,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema65"
+                            "$ref": "#/$defs/schema58"
                           },
                           {
-                            "$ref": "#/$defs/schema67"
+                            "$ref": "#/$defs/schema60"
                           },
                           {
-                            "$ref": "#/$defs/schema69"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -3534,19 +3380,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema70"
+                            "$ref": "#/$defs/schema63"
                           },
                           {
-                            "$ref": "#/$defs/schema50"
+                            "$ref": "#/$defs/schema44"
                           },
                           {
                             "$ref": "#/$defs/schema37"
                           },
                           {
-                            "$ref": "#/$defs/schema56"
+                            "$ref": "#/$defs/schema50"
                           },
                           {
-                            "$ref": "#/$defs/schema62"
+                            "$ref": "#/$defs/schema55"
                           }
                         ],
                         "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
@@ -3569,13 +3415,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema65"
+                            "$ref": "#/$defs/schema58"
                           },
                           {
-                            "$ref": "#/$defs/schema67"
+                            "$ref": "#/$defs/schema60"
                           },
                           {
-                            "$ref": "#/$defs/schema69"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -3583,19 +3429,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema70"
+                            "$ref": "#/$defs/schema63"
                           },
                           {
-                            "$ref": "#/$defs/schema50"
+                            "$ref": "#/$defs/schema44"
                           },
                           {
                             "$ref": "#/$defs/schema37"
                           },
                           {
-                            "$ref": "#/$defs/schema56"
+                            "$ref": "#/$defs/schema50"
                           },
                           {
-                            "$ref": "#/$defs/schema62"
+                            "$ref": "#/$defs/schema55"
                           }
                         ],
                         "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
@@ -3668,13 +3514,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema58"
             },
             {
-              "$ref": "#/$defs/schema67"
+              "$ref": "#/$defs/schema60"
             },
             {
-              "$ref": "#/$defs/schema69"
+              "$ref": "#/$defs/schema62"
             },
             {
               "not": {
@@ -3682,19 +3528,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema70"
+              "$ref": "#/$defs/schema63"
             },
             {
-              "$ref": "#/$defs/schema50"
+              "$ref": "#/$defs/schema44"
             },
             {
               "$ref": "#/$defs/schema37"
             },
             {
-              "$ref": "#/$defs/schema56"
+              "$ref": "#/$defs/schema50"
             },
             {
-              "$ref": "#/$defs/schema62"
+              "$ref": "#/$defs/schema55"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

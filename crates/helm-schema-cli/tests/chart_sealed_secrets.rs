@@ -12,9 +12,11 @@ fn sealed_secrets_ranged_namespaces_domain_holds() -> color_eyre::eyre::Result<(
     let schema = schema_roundtrip::generate_chart_schema_for_path("sealed-secrets")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
+    // The coalesced document carries the declared `rbac.create: true`; a
+    // missing key was null-deleted and keeps the whole branch dormant.
     let ranged = |value: serde_json::Value| {
         serde_json::json!({
-            "rbac": { "namespacedRoles": true, "clusterRole": false },
+            "rbac": { "create": true, "namespacedRoles": true, "clusterRole": false },
             "additionalNamespaces": value
         })
     };

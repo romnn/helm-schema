@@ -472,13 +472,15 @@ fn header_member_read_requires_an_object_host_beside_body_dispatch() {
             "webhook:\n  create: true\n  podDisruptionBudget:\n    enabled: false\n    minAvailable: 1\n",
         ),
     );
+    // The coalesced document carries the declared `create: true`; with it
+    // null-deleted the header short-circuits before the member read.
     for (instance, want) in [
         (
-            serde_json::json!({ "webhook": { "podDisruptionBudget": 7 } }),
+            serde_json::json!({ "webhook": { "create": true, "podDisruptionBudget": 7 } }),
             false,
         ),
         (
-            serde_json::json!({ "webhook": { "podDisruptionBudget": [1] } }),
+            serde_json::json!({ "webhook": { "create": true, "podDisruptionBudget": [1] } }),
             false,
         ),
         (

@@ -30,6 +30,7 @@ mod fragment_projection;
 mod fragment_seeds;
 mod guard_lowering;
 mod helper_projection;
+mod int_cast_preimages;
 mod iterable_lanes;
 mod kind_partition_matrix;
 mod member_access_contracts;

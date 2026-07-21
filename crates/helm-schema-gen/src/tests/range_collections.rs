@@ -89,28 +89,20 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
             }]
         }),
     );
+    // The coalesced document reads an absent (null-deleted) collection as
+    // nil — Helm-falsy — so the range condition keys the collection's own
+    // truthiness, with the mapping-coalesce widening beside it.
     let range_condition = serde_json::json!({
-        "anyOf": [
-            {
-                "not": {
-                    "properties": { "environment": {} },
-                    "required": ["environment"],
-                    "type": "object",
-                }
-            },
-            {
-                "properties": {
-                    "environment": {
-                        "anyOf": [
-                            { "type": "object" },
-                            { "$ref": "#/$defs/helm-truthy" },
-                        ]
-                    }
-                },
-                "required": ["environment"],
-                "type": "object",
-            },
-        ]
+        "properties": {
+            "environment": {
+                "anyOf": [
+                    { "type": "object" },
+                    { "$ref": "#/$defs/helm-truthy" },
+                ]
+            }
+        },
+        "required": ["environment"],
+        "type": "object",
     });
     // The strict member implication already owns the iterable domain. The
     // remaining sibling preserves the fragment/default falsy arm without a

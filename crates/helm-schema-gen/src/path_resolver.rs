@@ -482,6 +482,16 @@ pub(crate) fn fail_requirement_schema<'a>(
                                     .push(serde_json::json!({ "not": { "pattern": pattern } }));
                             }
                         }
+                        helm_schema_core::FailValueRequirement::StringLengthBounds { min, max } => {
+                            let mut bounds = serde_json::Map::new();
+                            if let Some(min) = min {
+                                bounds.insert("minLength".to_string(), serde_json::json!(min));
+                            }
+                            if let Some(max) = max {
+                                bounds.insert("maxLength".to_string(), serde_json::json!(max));
+                            }
+                            key_schemas.push(Value::Object(bounds));
+                        }
                         _ => {}
                     }
                 }
@@ -646,7 +656,8 @@ fn requirements_allow_runtime_kind(
         }
         FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
         FailValueRequirement::MatchesPattern { .. }
-        | FailValueRequirement::NotMatchesPattern { .. } => schema_type == "string",
+        | FailValueRequirement::NotMatchesPattern { .. }
+        | FailValueRequirement::StringLengthBounds { .. } => schema_type == "string",
         FailValueRequirement::Iterable { allow_integer } => {
             matches!(schema_type, "array" | "object" | "null")
                 || schema_type == "integer" && *allow_integer
@@ -799,6 +810,17 @@ fn fail_value_requirement_schema(
                         "not": { "pattern": pattern },
                     }));
                 }
+            }
+            FailValueRequirement::StringLengthBounds { min, max } => {
+                let mut bounds = serde_json::Map::new();
+                bounds.insert("type".to_string(), serde_json::json!("string"));
+                if let Some(min) = min {
+                    bounds.insert("minLength".to_string(), serde_json::json!(min));
+                }
+                if let Some(max) = max {
+                    bounds.insert("maxLength".to_string(), serde_json::json!(max));
+                }
+                parts.push(Value::Object(bounds));
             }
             FailValueRequirement::MemberHost { handled_kinds } => {
                 let mut arms = vec![type_schema("object")];

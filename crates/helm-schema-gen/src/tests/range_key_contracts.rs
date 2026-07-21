@@ -758,13 +758,13 @@ fn capability_dispatch_scoped_member_field_fail_lowers() {
     );
     for (instance, want) in [
         (
-            serde_json::json!({ "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
+            serde_json::json!({ "checkDeprecation": true, "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
                 { "path": "/*", "backend": { "serviceName": "x" } }
             ] } }),
             false,
         ),
         (
-            serde_json::json!({ "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
+            serde_json::json!({ "checkDeprecation": true, "kubeVersion": "1.30.0", "ingress": { "extraPaths": [
                 { "path": "/*", "backend": { "servicePort": "y" } }
             ] } }),
             false,

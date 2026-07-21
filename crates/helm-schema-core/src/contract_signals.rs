@@ -389,6 +389,10 @@ pub enum FailValueRequirement {
     /// the failing test fired on matches, and its `regexMatch` still
     /// type-asserts a string subject (traefik's uppercase key gate).
     NotMatchesPattern { pattern: String },
+    /// The value must be a string whose length lies inside the window — a
+    /// provider key slot's `minLength`/`maxLength` projected onto a ranged
+    /// collection's keys (traefik's Gateway listener names).
+    StringLengthBounds { min: Option<u64>, max: Option<u64> },
     /// The value HOSTS literal member reads: it must be an object — or one
     /// of the kinds the chart's own type dispatch provably handles before
     /// the reads run (nack converts the string image form with `set`).

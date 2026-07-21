@@ -32,89 +32,43 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {
                   "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
+                    "allowExternalEgress": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   "required": [
-                    "networkPolicy"
+                    "allowExternalEgress"
                   ],
                   "type": "object"
                 }
               },
-              {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "allowExternalEgress": {}
-                        },
-                        "required": [
-                          "allowExternalEgress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "allowExternalEgress": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternalEgress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              ]
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
             }
           }
         ]
@@ -137,46 +91,23 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "networkPolicy": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
-            }
-          },
-          {
+        "properties": {
+          "networkPolicy": {
             "properties": {
-              "networkPolicy": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "networkPolicy"
+              "enabled"
             ],
             "type": "object"
           }
-        ]
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -304,7 +235,7 @@
                           {
                             "anyOf": [
                               {
-                                "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                                 "type": "string"
                               },
                               {
@@ -346,117 +277,56 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "architecture": {
+                    "enum": [
+                      "replication"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
+                        "allowExternalEgress": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "allowExternalEgress"
                       ],
                       "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -464,89 +334,43 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
+                        "allowExternal": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "allowExternal"
                       ],
                       "type": "object"
                     }
                   },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternal": {}
-                            },
-                            "required": [
-                              "allowExternal"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternal": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternal"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -585,46 +409,23 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -648,26 +449,26 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "networkPolicy": {
@@ -686,123 +487,39 @@
                   "networkPolicy"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "architecture": {
+                    "enum": [
+                      "replication"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
+                        "allowExternalEgress": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "allowExternalEgress"
                       ],
                       "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -874,46 +591,23 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -978,7 +672,7 @@
                           {
                             "anyOf": [
                               {
-                                "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                                 "type": "string"
                               },
                               {
@@ -1047,71 +741,6 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
                 "properties": {
                   "networkPolicy": {
                     "properties": {
@@ -1131,6 +760,25 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1162,46 +810,23 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1236,46 +861,23 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1299,46 +901,23 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -1361,46 +940,23 @@
           },
           {
             "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
+              "properties": {
+                "networkPolicy": {
                   "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
+                    "allowExternal": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   "required": [
-                    "networkPolicy"
+                    "allowExternal"
                   ],
                   "type": "object"
                 }
-              ]
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
             }
           },
           {
@@ -1475,46 +1031,23 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -1537,46 +1070,23 @@
           },
           {
             "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
+              "properties": {
+                "networkPolicy": {
                   "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
+                    "allowExternal": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   "required": [
-                    "networkPolicy"
+                    "allowExternal"
                   ],
                   "type": "object"
                 }
-              ]
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
             }
           },
           {
@@ -1670,46 +1180,23 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -1740,62 +1227,31 @@
           },
           {
             "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "metrics": {
-                            "properties": {
-                              "allowExternal": {}
-                            },
-                            "required": [
-                              "allowExternal"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
+              "properties": {
+                "networkPolicy": {
                   "properties": {
-                    "networkPolicy": {
+                    "metrics": {
                       "properties": {
-                        "metrics": {
-                          "properties": {
-                            "allowExternal": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternal"
-                          ],
-                          "type": "object"
+                        "allowExternal": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "metrics"
+                        "allowExternal"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "networkPolicy"
+                    "metrics"
                   ],
                   "type": "object"
                 }
-              ]
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
             }
           },
           {
@@ -1910,46 +1366,23 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -1980,62 +1413,31 @@
           },
           {
             "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "metrics": {
-                            "properties": {
-                              "allowExternal": {}
-                            },
-                            "required": [
-                              "allowExternal"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
+              "properties": {
+                "networkPolicy": {
                   "properties": {
-                    "networkPolicy": {
+                    "metrics": {
                       "properties": {
-                        "metrics": {
-                          "properties": {
-                            "allowExternal": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternal"
-                          ],
-                          "type": "object"
+                        "allowExternal": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "metrics"
+                        "allowExternal"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "networkPolicy"
+                    "metrics"
                   ],
                   "type": "object"
                 }
-              ]
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
             }
           },
           {
@@ -2152,46 +1554,23 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -2217,46 +1596,23 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -2287,62 +1643,31 @@
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "metrics": {
-                                "properties": {
-                                  "allowExternal": {}
-                                },
-                                "required": [
-                                  "allowExternal"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "metrics"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
+                        "metrics": {
                           "properties": {
-                            "metrics": {
-                              "properties": {
-                                "allowExternal": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "allowExternal"
-                              ],
-                              "type": "object"
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
                             }
                           },
                           "required": [
-                            "metrics"
+                            "allowExternal"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "metrics"
                       ],
                       "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               },
               {
@@ -2427,46 +1752,23 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -2497,62 +1799,31 @@
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "metrics": {
-                                "properties": {
-                                  "allowExternal": {}
-                                },
-                                "required": [
-                                  "allowExternal"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "metrics"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
+                        "metrics": {
                           "properties": {
-                            "metrics": {
-                              "properties": {
-                                "allowExternal": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "allowExternal"
-                              ],
-                              "type": "object"
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
                             }
                           },
                           "required": [
-                            "metrics"
+                            "allowExternal"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "metrics"
                       ],
                       "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               },
               {
@@ -2637,105 +1908,51 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
+                        "metrics": {
                           "properties": {
-                            "enabled": {}
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
                           "required": [
-                            "enabled"
+                            "allowExternal"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "metrics"
                       ],
                       "type": "object"
                     }
                   },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "metrics": {
-                                "properties": {
-                                  "allowExternal": {}
-                                },
-                                "required": [
-                                  "allowExternal"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "metrics"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "metrics": {
-                              "properties": {
-                                "allowExternal": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "allowExternal"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "metrics"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -2762,105 +1979,51 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
+                        "metrics": {
                           "properties": {
-                            "enabled": {}
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
                           "required": [
-                            "enabled"
+                            "allowExternal"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "metrics"
                       ],
                       "type": "object"
                     }
                   },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "metrics": {
-                                "properties": {
-                                  "allowExternal": {}
-                                },
-                                "required": [
-                                  "allowExternal"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "metrics"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "metrics": {
-                              "properties": {
-                                "allowExternal": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "allowExternal"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "metrics"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               },
               {
@@ -2916,105 +2079,51 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
+                        "metrics": {
                           "properties": {
-                            "enabled": {}
+                            "allowExternal": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
                           "required": [
-                            "enabled"
+                            "allowExternal"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "metrics"
                       ],
                       "type": "object"
                     }
                   },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "metrics": {
-                                "properties": {
-                                  "allowExternal": {}
-                                },
-                                "required": [
-                                  "allowExternal"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "metrics"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "metrics": {
-                              "properties": {
-                                "allowExternal": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "allowExternal"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "metrics"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               },
               {
@@ -3113,46 +2222,23 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -3234,7 +2320,7 @@
                       {
                         "anyOf": [
                           {
-                            "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                             "type": "string"
                           },
                           {
@@ -3257,46 +2343,23 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -3322,46 +2385,23 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -3383,75 +2423,37 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "properties": {
+                  "architecture": {
+                    "enum": [
+                      "replication"
+                    ]
+                  }
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "architecture": {}
+                        "allowExternalEgress": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       "required": [
-                        "architecture"
+                        "allowExternalEgress"
                       ],
                       "type": "object"
                     }
                   },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -3492,26 +2494,26 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "networkPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "networkPolicy": {
@@ -3530,52 +2532,6 @@
                   "networkPolicy"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "properties": {
@@ -3601,46 +2557,23 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -3662,75 +2595,37 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "architecture": {
+                    "enum": [
+                      "replication"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
+                        "allowExternalEgress": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "allowExternalEgress"
                       ],
                       "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -3738,117 +2633,56 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "networkPolicy": {
                     "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "architecture": {
-                        "enum": [
-                          "replication"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "architecture"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "architecture": {
+                    "enum": [
+                      "replication"
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternalEgress": {}
-                            },
-                            "required": [
-                              "allowExternalEgress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "networkPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
+                  "properties": {
+                    "networkPolicy": {
                       "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternalEgress": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternalEgress"
-                          ],
-                          "type": "object"
+                        "allowExternalEgress": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "allowExternalEgress"
                       ],
                       "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -3933,57 +2767,27 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "allowExternalEgress": {}
-                        },
-                        "required": [
-                          "allowExternalEgress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "allowExternalEgress": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternalEgress"
-                      ],
-                      "type": "object"
+                  "properties": {
+                    "allowExternalEgress": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
-                  ]
+                  },
+                  "required": [
+                    "allowExternalEgress"
+                  ],
+                  "type": "object"
                 }
               }
             ]
@@ -4171,30 +2975,15 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
           },
           "then": {
             "additionalProperties": {},
@@ -4381,30 +3170,15 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -4419,30 +3193,15 @@
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
+                  "properties": {
+                    "allowExternal": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
-                  ]
+                  },
+                  "required": [
+                    "allowExternal"
+                  ],
+                  "type": "object"
                 }
               },
               {
@@ -4496,30 +3255,15 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -4534,30 +3278,15 @@
               },
               {
                 "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "allowExternal": {}
-                        },
-                        "required": [
-                          "allowExternal"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "allowExternal": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "allowExternal"
-                      ],
-                      "type": "object"
+                  "properties": {
+                    "allowExternal": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
-                  ]
+                  },
+                  "required": [
+                    "allowExternal"
+                  ],
+                  "type": "object"
                 }
               },
               {

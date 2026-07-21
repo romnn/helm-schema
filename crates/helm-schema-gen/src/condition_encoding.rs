@@ -11,11 +11,17 @@ pub(crate) fn build_condition_clauses(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
 ) -> Vec<SchemaNode> {
     guards
         .iter()
         .filter_map(|guard| {
-            build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
+            build_single_condition_fragment(
+                guard,
+                ancestor_segments,
+                values_yaml_doc,
+                subchart_defaults_doc,
+            )
         })
         .collect()
 }
@@ -30,6 +36,7 @@ pub(crate) fn build_condition_clauses_cached(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
     cache: &mut ConditionFragmentCache,
 ) -> Vec<SchemaNode> {
     guards
@@ -38,17 +45,29 @@ pub(crate) fn build_condition_clauses_cached(
             cache
                 .entry((ancestor_segments.to_vec(), guard.clone()))
                 .or_insert_with(|| {
-                    build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
+                    build_single_condition_fragment(
+                        guard,
+                        ancestor_segments,
+                        values_yaml_doc,
+                        subchart_defaults_doc,
+                    )
                 })
                 .clone()
         })
         .collect()
 }
 
+/// `subchart_defaults_doc` carries the composed defaults MINUS everything
+/// the parent chart's own values.yaml declares: exactly the paths whose
+/// value a parent-level document supplies from a DEEPER coalesce stage
+/// when the key is missing. A missing parent-owned key was null-deleted
+/// and reads as nil; a missing dependency-owned key reads as the
+/// subchart's declared default.
 fn build_single_condition_fragment(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
 ) -> Option<SchemaNode> {
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
@@ -68,29 +87,43 @@ fn build_single_condition_fragment(
             } else {
                 helm_truthy_condition_schema()
             };
+            // A missing parent-owned key was null-deleted and reads as
+            // nil — Helm-falsy — while a missing dependency-owned key
+            // reads as the subchart's own declared default.
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
                 truthy,
-                declared.is_some_and(yaml_value_is_truthy),
+                yaml_value_at_path(subchart_defaults_doc, path).is_some_and(yaml_value_is_truthy),
             )
         }
         ConditionalGuard::Eq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
             guard_value_enum_schema(value)?,
-            guard_value_matches_optional_yaml(value, yaml_value_at_path(values_yaml_doc, path)),
+            match yaml_value_at_path(subchart_defaults_doc, path) {
+                Some(default) => guard_value_matches_optional_yaml(value, Some(default)),
+                None => matches!(value, GuardValue::Null),
+            },
         ),
+        // A missing parent-owned key reads as nil, which differs from
+        // every non-null literal; a dependency-owned key reads as its
+        // subchart default (cilium's kvstoreMode membership rejects a
+        // document whose null-deletion left the mode nil).
         ConditionalGuard::NotEq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
             guard_value_enum_schema(value).map(SchemaNode::not)?,
-            !guard_value_matches_optional_yaml(value, yaml_value_at_path(values_yaml_doc, path)),
+            match yaml_value_at_path(subchart_defaults_doc, path) {
+                Some(default) => !guard_value_matches_optional_yaml(value, Some(default)),
+                None => !matches!(value, GuardValue::Null),
+            },
         ),
         // The member key is an OPAQUE property name (it may contain dots),
         // so it becomes a literal `required` entry below the segmented
-        // collection path. An absent collection satisfies the test exactly
-        // when the declared default already ships that key.
+        // collection path. A missing parent-owned collection reads as
+        // nil, which holds no keys; a dependency-owned one holds exactly
+        // the subchart default's keys.
         ConditionalGuard::HasKey { path, key } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
@@ -99,7 +132,7 @@ fn build_single_condition_fragment(
                 "required": [key],
             })),
             matches!(
-                yaml_value_at_path(values_yaml_doc, path),
+                yaml_value_at_path(subchart_defaults_doc, path),
                 Some(YamlValue::Mapping(mapping))
                     if mapping.contains_key(YamlValue::String(key.clone()))
             ),
@@ -108,9 +141,10 @@ fn build_single_condition_fragment(
         // the explicit test admits raw integers, plus the string spellings
         // the coercion provably parses into the claimed region (jenkins'
         // `"5"` replicas abort like `5`; a mixed-sign region also collects
-        // every unparseable spelling through the complement lane). An
-        // absent key satisfies it exactly when the declared default lands
-        // in the region (the merged render is then statically decided).
+        // every unparseable spelling through the complement lane). A
+        // missing parent-owned key reads as nil and coerces to 0, so it
+        // satisfies the region exactly when 0 does; a dependency-owned
+        // key coerces its subchart default.
         ConditionalGuard::IntGt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
@@ -119,8 +153,7 @@ fn build_single_condition_fragment(
                 *bound,
                 int_region_string_preimage(true, *bound),
             ),
-            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
-                .is_some_and(|value| value > *bound),
+            absent_coerced_int(subchart_defaults_doc, path) > *bound,
         ),
         ConditionalGuard::IntLt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
@@ -130,8 +163,7 @@ fn build_single_condition_fragment(
                 *bound,
                 int_region_string_preimage(false, *bound),
             ),
-            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
-                .is_some_and(|value| value < *bound),
+            absent_coerced_int(subchart_defaults_doc, path) < *bound,
         ),
         ConditionalGuard::Absent { path } => {
             let segments = split_value_path(path);
@@ -139,12 +171,18 @@ fn build_single_condition_fragment(
             if relative_segments.is_empty() {
                 return None;
             }
-            // Render-time absence after coalescing with declared defaults:
-            // an explicit `null` deletes the key (helm null-deletion), and
-            // a missing key stays absent only when the chart declares no
-            // (non-null) default to fill it. `Absent` deliberately counts
-            // explicit null as absent — the nil-safe selector lanes
-            // (`(.Values.x).leaf`) render at null exactly like at a
+            // Helm validates the COALESCED values — the same document the
+            // templates render from — so a missing PARENT-owned key means
+            // the render reads nil: coalescing already filled every
+            // parent-declared default, and the only way such a key goes
+            // missing is the user's explicit `null` deleting it (helm
+            // null-deletion). A missing DEPENDENCY-owned key instead
+            // reads as the subchart's declared default, which fills at
+            // the subchart's own coalesce stage — only a non-null default
+            // rescues it from absence. The explicit-null arm covers every
+            // ownership: a surviving literal null reads as nil. `Absent`
+            // deliberately counts null as absent — the nil-safe selector
+            // lanes (`(.Values.x).leaf`) render at null exactly like at a
             // missing key. Strict key-presence (Sprig `hasKey`/`dig`
             // observability, where a present nil is PRESENT) is the
             // separate `HasKey` guard.
@@ -152,29 +190,29 @@ fn build_single_condition_fragment(
                 &relative_segments,
                 SchemaNode::enum_values(vec![Value::Null]),
             )?;
-            let declared_default_fills = yaml_value_at_path(values_yaml_doc, path)
-                .is_some_and(|value| !matches!(value, YamlValue::Null));
-            if declared_default_fills {
-                Some(explicit_null)
-            } else {
-                let missing = SchemaNode::not(build_required_condition_fragment(
-                    &relative_segments,
-                    SchemaNode::empty(),
-                )?);
-                Some(SchemaNode::any_of(vec![missing, explicit_null]))
+            let subchart_default_fills = matches!(yaml_value_at_path(subchart_defaults_doc, path), Some(value) if !matches!(value, YamlValue::Null));
+            if subchart_default_fills {
+                return Some(explicit_null);
             }
+            let missing = SchemaNode::not(build_required_condition_fragment(
+                &relative_segments,
+                SchemaNode::empty(),
+            )?);
+            Some(SchemaNode::any_of(vec![missing, explicit_null]))
         }
         ConditionalGuard::TypeIs { path, schema_type } => {
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
                 SchemaNode::type_named(schema_type),
-                yaml_value_at_path(values_yaml_doc, path)
-                    .is_some_and(|value| matches_yaml_schema_type(value, schema_type)),
+                match yaml_value_at_path(subchart_defaults_doc, path) {
+                    Some(default) => matches_yaml_schema_type(default, schema_type),
+                    None => schema_type == "null",
+                },
             )
         }
         ConditionalGuard::MatchesPattern { path, pattern } => {
-            let default_matches = yaml_value_at_path(values_yaml_doc, path)
+            let absent_matches = yaml_value_at_path(subchart_defaults_doc, path)
                 .and_then(YamlValue::as_str)
                 .is_some_and(|value| {
                     regex::Regex::new(pattern).is_ok_and(|regex| regex.is_match(value))
@@ -186,7 +224,7 @@ fn build_single_condition_fragment(
                     "pattern": pattern,
                     "type": "string",
                 })),
-                default_matches,
+                absent_matches,
             )
         }
         // The existential over iterated items: `contains` covers the array
@@ -213,7 +251,7 @@ fn build_single_condition_fragment(
                     ]
                 })),
                 declared_collection_contains_member_equals(
-                    yaml_value_at_path(values_yaml_doc, path),
+                    yaml_value_at_path(subchart_defaults_doc, path),
                     member,
                     value,
                 ),
@@ -222,29 +260,22 @@ fn build_single_condition_fragment(
         // A non-collection value never iterates, so the "at most one
         // member" bound constrains only maps and lists; both size keywords
         // are no-ops on other instance types.
-        ConditionalGuard::AtMostOneMember { path } => {
-            let declared_size_at_most_one = match yaml_value_at_path(values_yaml_doc, path) {
+        ConditionalGuard::AtMostOneMember { path } => build_default_aware_leaf_condition_fragment(
+            path,
+            ancestor_segments,
+            SchemaNode::foreign(serde_json::json!({
+                "maxProperties": 1,
+                "maxItems": 1,
+            })),
+            match yaml_value_at_path(subchart_defaults_doc, path) {
                 Some(YamlValue::Mapping(mapping)) => mapping.len() <= 1,
                 Some(YamlValue::Sequence(items)) => items.len() <= 1,
                 _ => true,
-            };
-            build_default_aware_leaf_condition_fragment(
-                path,
-                ancestor_segments,
-                SchemaNode::foreign(serde_json::json!({
-                    "maxProperties": 1,
-                    "maxItems": 1,
-                })),
-                declared_size_at_most_one,
-            )
-        }
+            },
+        ),
         // Exact: `keys X` aborts rendering for non-maps, so the body runs
         // only for mappings with enough members.
         ConditionalGuard::MinMembers { path, bound } => {
-            let declared_matches = matches!(
-                yaml_value_at_path(values_yaml_doc, path),
-                Some(YamlValue::Mapping(mapping)) if mapping.len() as i64 >= *bound
-            );
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
@@ -252,20 +283,34 @@ fn build_single_condition_fragment(
                     "type": "object",
                     "minProperties": bound.max(&0),
                 })),
-                declared_matches,
+                matches!(
+                    yaml_value_at_path(subchart_defaults_doc, path),
+                    Some(YamlValue::Mapping(mapping)) if mapping.len() as i64 >= *bound
+                ),
             )
         }
         ConditionalGuard::Not(inner) => Some(SchemaNode::not(build_single_condition_fragment(
             inner,
             ancestor_segments,
             values_yaml_doc,
+            subchart_defaults_doc,
         )?)),
         ConditionalGuard::AllOf(guards) => {
-            let clauses = build_condition_clauses(guards, ancestor_segments, values_yaml_doc);
+            let clauses = build_condition_clauses(
+                guards,
+                ancestor_segments,
+                values_yaml_doc,
+                subchart_defaults_doc,
+            );
             (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
-            let clauses = build_condition_clauses(guards, ancestor_segments, values_yaml_doc);
+            let clauses = build_condition_clauses(
+                guards,
+                ancestor_segments,
+                values_yaml_doc,
+                subchart_defaults_doc,
+            );
             (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
         }
     }
@@ -280,20 +325,33 @@ pub(crate) fn guard_encodes_fully(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
+    subchart_defaults_doc: &YamlValue,
 ) -> bool {
     match guard {
-        ConditionalGuard::Not(inner) => {
-            guard_encodes_fully(inner, ancestor_segments, values_yaml_doc)
-        }
+        ConditionalGuard::Not(inner) => guard_encodes_fully(
+            inner,
+            ancestor_segments,
+            values_yaml_doc,
+            subchart_defaults_doc,
+        ),
         ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
             !guards.is_empty()
-                && guards
-                    .iter()
-                    .all(|guard| guard_encodes_fully(guard, ancestor_segments, values_yaml_doc))
+                && guards.iter().all(|guard| {
+                    guard_encodes_fully(
+                        guard,
+                        ancestor_segments,
+                        values_yaml_doc,
+                        subchart_defaults_doc,
+                    )
+                })
         }
-        other => {
-            build_single_condition_fragment(other, ancestor_segments, values_yaml_doc).is_some()
-        }
+        other => build_single_condition_fragment(
+            other,
+            ancestor_segments,
+            values_yaml_doc,
+            subchart_defaults_doc,
+        )
+        .is_some(),
     }
 }
 
@@ -302,7 +360,7 @@ fn guard_value_enum_schema(value: &GuardValue) -> Option<SchemaNode> {
 }
 
 /// String spellings provably landing in (or out of) an int-cast region.
-enum IntStringPreimage {
+pub(crate) enum IntStringPreimage {
     /// Spellings certainly COERCING INTO the region (single-sign regions:
     /// the value must parse, so only clean bounded spellings qualify).
     Within(String),
@@ -341,7 +399,7 @@ fn int_bound_leaf_schema(
 /// bound, a negative `IntGt` bound) contain 0, so every spelling except
 /// a successful parse beyond the bound lands inside: they claim the
 /// COMPLEMENT of an overapproximated escape language instead.
-fn int_region_string_preimage(greater: bool, bound: i64) -> Option<IntStringPreimage> {
+pub(crate) fn int_region_string_preimage(greater: bool, bound: i64) -> Option<IntStringPreimage> {
     if greater {
         if let Some(pattern) = decimal_strings_above(bound) {
             return Some(IntStringPreimage::Within(pattern));
@@ -366,134 +424,186 @@ fn int_region_string_preimage(greater: bool, bound: i64) -> Option<IntStringPrei
 }
 
 /// Overapproximation of every spelling whose successful parse reaches a
-/// magnitude of at least `bound`: per radix family, any spelling long
-/// enough that its maximal value `radix^chars − 1` reaches the bound.
-/// Underscores and leading zeros only lower the parsed value (a leading
-/// zero flips decimals to octal), so counting raw characters is safe for
-/// an OVERapproximation — the complement lane claims only spellings that
-/// certainly stay below.
+/// magnitude of at least `bound` (`bound ≥ 1`): the EXACT clean-spelling
+/// windows strictly above `bound − 1` per radix family, plus a bounded
+/// residue for the spellings the windows deliberately abstain on —
+/// underscored forms (Go permits `2_55`) and the one boundary length per
+/// family where a maximal-length spelling may or may not overflow int64.
+/// Anything longer certainly overflows and coerces to 0, so it stays OUT
+/// of the escape and the complement lane claims it.
 fn parse_magnitude_reaching(bound: u64) -> String {
-    // (prefix, first-char class, tail-char class, radix)
-    let families: [(&str, &str, &str, u128); 4] = [
-        ("", "[0-9]", "[0-9_]", 10),
-        ("0[xX]", "[0-9a-fA-F_]", "[0-9a-fA-F_]", 16),
-        ("0[bB]", "[01_]", "[01_]", 2),
-        ("0[oO]", "[0-7_]", "[0-7_]", 8),
-    ];
-    let mut alternates = Vec::new();
-    for (prefix, first, tail, radix) in families {
-        // Smallest char count whose maximal value reaches the bound.
-        let mut chars = 1usize;
-        let mut max_value: u128 = radix - 1;
-        while max_value < u128::from(bound) {
-            max_value = max_value * radix + (radix - 1);
-            chars += 1;
-        }
-        alternates.push(match chars - 1 {
-            0 => format!("{prefix}{first}{tail}*"),
-            more => format!("{prefix}{first}{tail}{{{more},}}"),
-        });
+    let mut alternates = magnitude_windows_above(bound.saturating_sub(1));
+    // Underscored spellings parse to at most their digit reading, but the
+    // windows cannot see through the insertions, so any underscored form
+    // carrying a nonzero digit stays a possible escape.
+    for (prefix, digit, nonzero) in [
+        ("", "[0-9_]", "[1-9]"),
+        ("0[xX]", "[0-9a-fA-F_]", "[1-9a-fA-F]"),
+        ("0[bB]", "[01_]", "1"),
+        ("0[oO]?", "[0-7_]", "[1-7]"),
+    ] {
+        alternates.push(format!("{prefix}{digit}*{nonzero}{digit}*_{digit}*"));
+        alternates.push(format!("{prefix}{digit}*_{digit}*{nonzero}{digit}*"));
     }
+    // Boundary lengths: one significant digit past each family's certain
+    // cap, where the parse may still land within int64 (a 19-digit decimal
+    // reaches 9.2e18 or overflows, depending on the digits). Anything
+    // longer certainly overflows.
+    alternates.push("[1-9][0-9]{18}".to_string());
+    alternates.push("0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}".to_string());
+    alternates.push("0[bB]0*1[01]{62}".to_string());
+    alternates.push("0[oO]?0*[1-7][0-7]{20}".to_string());
     alternates.join("|")
 }
 
-/// Radix spellings (hex, binary, explicit and legacy octal) certainly
-/// parsing to a magnitude strictly above `bound`: a nonzero leading digit
-/// with enough digits that the minimal value `radix^(digits−1)` already
-/// exceeds the bound, capped where every spelling still parses without
-/// overflow. Underscored and zero-padded spellings abstain.
-fn radix_magnitudes_above(bound: u64) -> Vec<String> {
-    // (prefix, lead class, digit class, radix, max significant digits)
-    let families: [(&str, &str, &str, u128, usize); 3] = [
-        ("0[xX]", "[1-9a-fA-F]", "[0-9a-fA-F]", 16, 15),
-        ("0[bB]", "1", "[01]", 2, 62),
-        ("0[oO]?", "[1-7]", "[0-7]", 8, 20),
-    ];
+/// Exact unsigned windows strictly above `bound` across every radix
+/// family Go's base-0 parse accepts: clean decimal (no leading zero) plus
+/// zero-pad-tolerant hex, binary, and octal (explicit `0o` and legacy
+/// leading-zero) forms. Every claimed spelling certainly parses within
+/// int64, so the windows are usable in claim position.
+fn magnitude_windows_above(bound: u64) -> Vec<String> {
     let mut alternates = Vec::new();
-    for (prefix, lead, digit, radix, max_digits) in families {
-        // Smallest digit count whose minimal value exceeds the bound.
-        let mut digits = 1usize;
-        let mut min_value: u128 = 1;
-        while min_value <= u128::from(bound) {
-            min_value *= radix;
-            digits += 1;
+    alternates.extend(radix_windows_above(bound, "", 10, 18, false));
+    alternates.extend(radix_windows_above(bound, "0[xX]", 16, 15, true));
+    alternates.extend(radix_windows_above(bound, "0[bB]", 2, 62, true));
+    alternates.extend(radix_windows_above(bound, "0[oO]?", 8, 20, true));
+    alternates
+}
+
+/// Per-position digit windows matching exactly the `prefix`-family
+/// spellings whose value is strictly above `bound`, capped at `max_digits`
+/// significant digits so every match parses without int64 overflow. The
+/// zero-pad lane admits `0x0ff`-style padding, which Go reads without a
+/// value change; decimal must stay unpadded (a leading zero flips the
+/// base to octal).
+fn radix_windows_above(
+    bound: u64,
+    prefix: &str,
+    radix: u64,
+    max_digits: usize,
+    zero_padded: bool,
+) -> Vec<String> {
+    let pad = if zero_padded { "0*" } else { "" };
+    let digits = radix_digits(bound, radix);
+    let mut alternates = Vec::new();
+    // Longer spellings: a nonzero lead with more significant digits than
+    // the bound is strictly above it.
+    if digits.len() < max_digits {
+        let lead = radix_digit_range(1, radix).unwrap_or_default();
+        let any = radix_digit_range(0, radix).unwrap_or_default();
+        let low = digits.len();
+        let high = max_digits - 1;
+        let tail = if low == high {
+            format!("{any}{{{low}}}")
+        } else {
+            format!("{any}{{{low},{high}}}")
+        };
+        alternates.push(format!("{prefix}{pad}{lead}{tail}"));
+    }
+    // Same-length windows: literal bound digits up to position `i`, one
+    // digit strictly above the bound's, then any digits.
+    if digits.len() <= max_digits {
+        for index in 0..digits.len() {
+            let Some(class) = radix_digit_range(digits[index] + 1, radix) else {
+                continue;
+            };
+            let lead: String = digits[..index]
+                .iter()
+                .map(|&digit| radix_digit(digit))
+                .collect();
+            let any = radix_digit_range(0, radix).unwrap_or_default();
+            let suffix = match digits.len() - index - 1 {
+                0 => String::new(),
+                1 => any,
+                count => format!("{any}{{{count}}}"),
+            };
+            alternates.push(format!("{prefix}{pad}{lead}{class}{suffix}"));
         }
-        if digits > max_digits {
-            continue;
-        }
-        alternates.push(match (digits - 1, max_digits - 1) {
-            (0, 0) => format!("{prefix}{lead}"),
-            (0, high) => format!("{prefix}{lead}{digit}{{0,{high}}}"),
-            (low, high) if low == high => format!("{prefix}{lead}{digit}{{{low}}}"),
-            (low, high) => format!("{prefix}{lead}{digit}{{{low},{high}}}"),
-        });
     }
     alternates
+}
+
+/// The radix digits of `value`, most significant first (`[0]` for zero).
+fn radix_digits(value: u64, radix: u64) -> Vec<u64> {
+    let mut digits = Vec::new();
+    let mut rest = value;
+    loop {
+        digits.push(rest % radix);
+        rest /= radix;
+        if rest == 0 {
+            break;
+        }
+    }
+    digits.reverse();
+    digits
+}
+
+/// One literal radix digit as pattern text; hex letters match both cases.
+fn radix_digit(value: u64) -> String {
+    match value {
+        0..=9 => value.to_string(),
+        _ => {
+            let letter = char::from(b'a' + u8::try_from(value - 10).unwrap_or(0));
+            format!("[{letter}{}]", letter.to_ascii_uppercase())
+        }
+    }
+}
+
+/// The digit class `[low ..= radix-1]` as pattern text, or `None` when the
+/// range is empty; hex letter digits match both cases.
+fn radix_digit_range(low: u64, radix: u64) -> Option<String> {
+    let high = radix - 1;
+    if low > high {
+        return None;
+    }
+    if radix <= 10 {
+        return Some(match (low, high) {
+            (low, high) if low == high => low.to_string(),
+            (low, high) => format!("[{low}-{high}]"),
+        });
+    }
+    let decimal_part = match low {
+        0..=8 => format!("{low}-9"),
+        9 => "9".to_string(),
+        _ => String::new(),
+    };
+    let letter_low = char::from(b'a' + u8::try_from(low.max(10) - 10).unwrap_or(0));
+    let letter_part = if letter_low == 'f' {
+        "fF".to_string()
+    } else {
+        format!("{letter_low}-f{}-F", letter_low.to_ascii_uppercase())
+    };
+    Some(format!("[{decimal_part}{letter_part}]"))
 }
 
 // Sprig's `int`/`int64` coercion parses strings through `strconv.ParseInt`
 // with base detection, so a leading zero flips the base to octal and a
 // non-decimal spelling coerces to 0. The single-sign preimage patterns
-// below therefore claim clean spellings only — optional sign, no leading
-// zero, no underscores — whose parsed value provably lands in the claimed
-// region; ambiguous spellings abstain. Mixed-sign regions ride the
-// complement lane in `int_region_string_preimage` instead.
-
-/// Alternates matching unsigned decimal spellings with value strictly
-/// greater than `bound` (`bound >= 0`), without leading zeros.
-fn decimal_magnitude_above(bound: u64) -> String {
-    let digits: Vec<u8> = bound.to_string().bytes().map(|byte| byte - b'0').collect();
-    let mut alternates = vec![format!("[1-9][0-9]{{{},}}", digits.len())];
-    for (index, &digit) in digits.iter().enumerate() {
-        // The first digit needs no extra floor: a bound's leading digit is
-        // nonzero (or the bound is 0 itself, where digit+1 = 1).
-        let low = digit + 1;
-        if low > 9 {
-            continue;
-        }
-        let prefix: String = digits[..index]
-            .iter()
-            .map(|digit| char::from(b'0' + digit))
-            .collect();
-        let range = if low == 9 {
-            "9".to_string()
-        } else {
-            format!("[{low}-9]")
-        };
-        let suffix = match digits.len() - index - 1 {
-            0 => String::new(),
-            1 => "[0-9]".to_string(),
-            count => format!("[0-9]{{{count}}}"),
-        };
-        alternates.push(format!("{prefix}{range}{suffix}"));
-    }
-    alternates.join("|")
-}
+// below therefore claim clean spellings only — optional sign, no
+// underscores — whose parsed value provably lands in the claimed region;
+// ambiguous spellings abstain. Mixed-sign regions ride the complement
+// lane in `int_region_string_preimage` instead.
 
 /// String spellings certainly parsing strictly above `bound`; only
 /// non-negative bounds have a single-sign region.
-fn decimal_strings_above(bound: i64) -> Option<String> {
+pub(crate) fn decimal_strings_above(bound: i64) -> Option<String> {
     let bound = u64::try_from(bound).ok()?;
-    let mut alternates = vec![decimal_magnitude_above(bound)];
-    alternates.extend(radix_magnitudes_above(bound));
+    let alternates = magnitude_windows_above(bound);
+    if alternates.is_empty() {
+        return None;
+    }
     Some(format!("^\\+?({})$", alternates.join("|")))
 }
 
 /// String spellings certainly parsing strictly below `bound`; only
 /// non-positive bounds have a single-sign region.
-fn decimal_strings_below(bound: i64) -> Option<String> {
+pub(crate) fn decimal_strings_below(bound: i64) -> Option<String> {
     if bound > 0 {
         return None;
     }
-    let magnitude = bound.unsigned_abs();
-    let mut alternates = vec![decimal_magnitude_above(magnitude)];
-    alternates.extend(radix_magnitudes_above(magnitude));
-    if magnitude == 0 {
-        // Below zero the magnitude is value-free, so zero-padded VALID
-        // octal is admissible too. It must stay out of the general arm:
-        // a zero-led spelling parses as octal, where an 8 or 9 digit is
-        // a parse ERROR coercing to 0 ("-018" renders 0, not −18).
-        alternates.push("0+[1-7][0-7]{0,19}".to_string());
+    let alternates = magnitude_windows_above(bound.unsigned_abs());
+    if alternates.is_empty() {
+        return None;
     }
     Some(format!("^-({})$", alternates.join("|")))
 }
@@ -517,11 +627,26 @@ fn decimal_default_int_value(value: Option<&YamlValue>) -> Option<i64> {
     }
 }
 
+/// The Sprig `int` coercion of the value the render reads when `path` is
+/// missing from the validated document: the subchart default for
+/// dependency-owned paths, nil (0) otherwise. Non-decimal defaults
+/// coerce to 0 like every unparseable spelling.
+fn absent_coerced_int(subchart_defaults_doc: &YamlValue, path: &str) -> i64 {
+    decimal_default_int_value(yaml_value_at_path(subchart_defaults_doc, path)).unwrap_or(0)
+}
+
+/// A leaf condition over the COALESCED values document helm validates.
+/// `absent_holds` states whether the guard is satisfied when the key is
+/// MISSING there: coalescing already filled every declared default, so a
+/// missing key always reads as nil at render (helm null-deletion is the
+/// only way a declared key goes missing), and each guard decides what nil
+/// means for it — Helm-falsy for truthiness, 0 for the int-cast regions,
+/// equal only to the null literal for equalities.
 fn build_default_aware_leaf_condition_fragment(
     value_path: &str,
     ancestor_segments: &[String],
     leaf_schema: SchemaNode,
-    default_matches: bool,
+    absent_holds: bool,
 ) -> Option<SchemaNode> {
     let segments = split_value_path(value_path);
     let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
@@ -529,7 +654,7 @@ fn build_default_aware_leaf_condition_fragment(
         return Some(leaf_schema);
     }
     let explicit = build_required_condition_fragment(&relative_segments, leaf_schema)?;
-    if !default_matches {
+    if !absent_holds {
         return Some(explicit);
     }
     let absent = build_required_condition_fragment(&relative_segments, SchemaNode::empty())

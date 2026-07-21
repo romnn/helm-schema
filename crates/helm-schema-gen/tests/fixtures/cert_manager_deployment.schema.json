@@ -32,26 +32,33 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "acmesolver": {
-                      "properties": {
-                        "image": {}
+            "properties": {
+              "acmesolver": {
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "acmesolver"
-                  ],
-                  "type": "object"
-                }
-              },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "acmesolver"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "acmesolver": {
@@ -77,59 +84,6 @@
                   "acmesolver"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "acmesolver": {
-                        "properties": {
-                          "image": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "image"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "acmesolver"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "properties": {
@@ -163,53 +117,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "acmesolver": {
                     "properties": {
-                      "acmesolver": {
-                        "properties": {
-                          "image": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "image"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "acmesolver"
+                      "image"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "acmesolver"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -243,53 +174,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "acmesolver": {
                     "properties": {
-                      "acmesolver": {
-                        "properties": {
-                          "image": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "image"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "acmesolver"
+                      "image"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "acmesolver"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -414,46 +322,23 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -509,46 +394,23 @@
     {
       "if": {
         "not": {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {}
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            {
+          "properties": {
+            "serviceAccount": {
               "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "create": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                "create": {
+                  "$ref": "#/$defs/helm-truthy"
                 }
               },
               "required": [
-                "serviceAccount"
+                "create"
               ],
               "type": "object"
             }
-          ]
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
         }
       },
       "then": {
@@ -596,26 +458,33 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "leaderElection": {}
+            "properties": {
+              "global": {
+                "properties": {
+                  "leaderElection": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       },
-                      "required": [
-                        "leaderElection"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "leaderElection"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "global": {
@@ -641,59 +510,6 @@
                   "global"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "leaderElection": {}
-                          },
-                          "required": [
-                            "leaderElection"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "leaderElection": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "leaderElection"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
                 "properties": {
@@ -727,53 +543,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "leaderElection": {}
-                          },
-                          "required": [
-                            "leaderElection"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "global": {
                     "properties": {
-                      "global": {
-                        "properties": {
-                          "leaderElection": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "leaderElection": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "leaderElection"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "global"
+                      "leaderElection"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -807,53 +600,30 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "leaderElection": {}
-                          },
-                          "required": [
-                            "leaderElection"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "global": {
                     "properties": {
-                      "global": {
-                        "properties": {
-                          "leaderElection": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
+                      "leaderElection": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
                           }
-                        },
-                        "required": [
-                          "leaderElection"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
                     "required": [
-                      "global"
+                      "leaderElection"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -1107,18 +877,25 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {}
+            "properties": {
+              "livenessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
-              },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
                 "properties": {
                   "livenessProbe": {
@@ -1136,85 +913,25 @@
                   "livenessProbe"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "livenessProbe": {}
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "livenessProbe": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "livenessProbe"
-                    ],
-                    "type": "object"
-                  }
-                ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
+                "properties": {
+                  "livenessProbe": {
                     "properties": {
-                      "livenessProbe": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "livenessProbe"
+                      "enabled"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
               }
             ]
           }
@@ -1263,37 +980,22 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "nodeSelector": {}
+        "properties": {
+          "nodeSelector": {
+            "anyOf": [
+              {
+                "type": "object"
               },
-              "required": [
-                "nodeSelector"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
+              {
+                "$ref": "#/$defs/helm-truthy"
               }
-            },
-            "required": [
-              "nodeSelector"
-            ],
-            "type": "object"
+            ]
           }
-        ]
+        },
+        "required": [
+          "nodeSelector"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -1315,46 +1017,23 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "prometheus": {
                 "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "prometheus"
+                  "enabled"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
           },
           {
             "not": {
@@ -1407,46 +1086,23 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          {
+        "properties": {
+          "prometheus": {
             "properties": {
-              "prometheus": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "prometheus"
+              "enabled"
             ],
             "type": "object"
           }
-        ]
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
       },
       "then": {
         "allOf": [
@@ -4470,7 +4126,7 @@
                         "type": "integer"
                       },
                       {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       }
                     ]
@@ -4844,30 +4500,15 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               },
               {
                 "anyOf": [
@@ -4894,7 +4535,7 @@
                         "type": "integer"
                       },
                       {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       }
                     ]
@@ -4912,7 +4553,7 @@
                         "type": "integer"
                       },
                       {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       }
                     ]
@@ -4930,7 +4571,7 @@
                         "type": "integer"
                       },
                       {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       }
                     ]
@@ -4948,7 +4589,7 @@
                         "type": "integer"
                       },
                       {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       }
                     ]
@@ -4966,7 +4607,7 @@
                         "type": "integer"
                       },
                       {
-                        "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       }
                     ]
@@ -5392,7 +5033,7 @@
           "type": "integer"
         },
         {
-          "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         }
       ]
