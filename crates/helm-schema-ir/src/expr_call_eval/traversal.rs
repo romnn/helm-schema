@@ -153,9 +153,9 @@ pub(super) fn eval_index(
             values
                 .iter()
                 .map(|value| match value {
-                    AbstractValue::Choice(_) | AbstractValue::MergedLayers(_) => {
-                        without_values_root_identity(value)
-                    }
+                    AbstractValue::Choice(_)
+                    | AbstractValue::FirstTruthy(_)
+                    | AbstractValue::MergedLayers(_) => without_values_root_identity(value),
                     other => other.clone(),
                 })
                 .collect()
@@ -282,6 +282,13 @@ fn without_values_root_identity(value: &AbstractValue) -> AbstractValue {
             AbstractValue::choice(choices.iter().map(without_values_root_identity).collect())
                 .unwrap_or(AbstractValue::Unknown)
         }
+        AbstractValue::FirstTruthy(candidates) => AbstractValue::first_truthy(
+            candidates
+                .iter()
+                .map(without_values_root_identity)
+                .collect(),
+        )
+        .unwrap_or(AbstractValue::Unknown),
         AbstractValue::MergedLayers(layers) => {
             AbstractValue::MergedLayers(layers.iter().map(without_values_root_identity).collect())
         }
@@ -307,6 +314,12 @@ pub(super) fn apply_index_segment(
             choices
                 .iter()
                 .filter_map(|choice| apply_index_segment(choice, option))
+                .collect(),
+        ),
+        AbstractValue::FirstTruthy(candidates) => AbstractValue::choice(
+            candidates
+                .iter()
+                .filter_map(|candidate| apply_index_segment(candidate, option))
                 .collect(),
         ),
         _ => value.apply_to_path(&["*".to_string()]),

@@ -1496,6 +1496,22 @@ impl ValuePathContext<'_> {
         {
             return Some(predicate);
         }
+        // A first-truthy selection chain is truthy exactly when SOME
+        // candidate is (`default` returns its fallback verbatim, so a
+        // falsy chain means every candidate was falsy): the all-paths
+        // conjunction below would demand every candidate at once, and a
+        // fail capture inheriting that conjunct could never co-hold with
+        // the chain's own `¬truthy` selection conjuncts (the kyverno
+        // `imagePullSecrets | default global` helper dot).
+        if matches!(
+            expr.deparen(),
+            TemplateExpr::Variable(_) | TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) && let Some(AbstractValue::FirstTruthy(candidates)) =
+            eval_expr(expr, &self.expression_eval_env()).value
+            && let Some(predicate) = first_truthy_truthy_predicate(&candidates)
+        {
+            return Some(predicate);
+        }
         let paths = self.paths_for_expr(expr);
         if paths.is_empty() {
             return None;
@@ -3023,6 +3039,26 @@ fn merged_layers_truthy_predicate(layers: &[AbstractValue]) -> Option<Predicate>
     Some(predicate_any(arms))
 }
 
+/// Exact truthiness of a first-truthy selection chain: the disjunction of
+/// the candidates' truthiness. Only RAW path identities and statically
+/// decided shapes qualify — a transformed candidate's truthiness is not
+/// its source path's.
+fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predicate> {
+    let mut arms = Vec::new();
+    for candidate in candidates {
+        match candidate {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                if path.split('.').any(|segment| segment == "*") {
+                    return None;
+                }
+                arms.push(Predicate::truthy_path(path.clone()));
+            }
+            other => arms.push(bool_predicate(other.static_truthiness()?)),
+        }
+    }
+    Some(predicate_any(arms))
+}
+
 fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
     match value {
         AbstractValue::Dict(entries) => Some(bool_predicate(entries.contains_key(key))),
@@ -3043,6 +3079,19 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
             let mut resolved = choices
                 .iter()
                 .map(|choice| value_has_key(choice, key))
+                .collect::<Option<Vec<_>>>()?;
+            resolved.sort();
+            resolved.dedup();
+            match resolved.as_slice() {
+                [predicate] => Some(predicate.clone()),
+                _ => None,
+            }
+        }
+        // The selection chain shares the choice's agree-or-abstain rule.
+        AbstractValue::FirstTruthy(candidates) => {
+            let mut resolved = candidates
+                .iter()
+                .map(|candidate| value_has_key(candidate, key))
                 .collect::<Option<Vec<_>>>()?;
             resolved.sort();
             resolved.dedup();

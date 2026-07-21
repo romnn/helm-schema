@@ -906,6 +906,47 @@ impl Interpreter<'_> {
         if let Some(path) = &json_decoded_path {
             self.range_modes.mark_json_decoded(path);
         }
+        // A range over a first-truthy selection chain (`with A | default B`
+        // dots, `range (A | default B)`) iterates the SELECTED candidate,
+        // so each identity candidate owes an iterable shape exactly on its
+        // selected states: `truthy(A) ⇒ iterable(A)`, and `¬truthy(A) ∧
+        // truthy(B) ⇒ iterable(B)`. The own-truthiness conjunct keeps the
+        // last candidate sound too (`default` selects a falsy fallback
+        // verbatim, but a falsy scalar there is the accepted-widening
+        // direction, never a false rejection), and the prior negations keep
+        // a truthy scalar beside a selected collection accepted (kyverno's
+        // per-controller `imagePullSecrets | default global`). The claim
+        // rides the fail-capture lane: it is header-abort evidence, and a
+        // read row would be absorbed into the wider co-sited with-header
+        // read at canonicalization.
+        let selection_chain = iterable_value
+            .as_ref()
+            .and_then(AbstractValue::selection_chain_identity_paths);
+        if let Some(chain) = &selection_chain {
+            let mut prior_falsy: Vec<Predicate> = Vec::new();
+            for path in chain {
+                let mut tail = prior_falsy.clone();
+                tail.push(Predicate::truthy_path(path.clone()));
+                let capture = crate::eval_effect::FailCapture {
+                    conjunction: self.fail_capture_conjunction(tail),
+                    ranged: self.capture_ranged_modes(),
+                    kind: crate::eval_effect::CaptureKind::RangeSelection {
+                        path: path.clone(),
+                        chain: chain.clone(),
+                        allow_integer: !destructured,
+                    },
+                };
+                if !capture
+                    .conjunction
+                    .iter()
+                    .any(|p| matches!(p, Predicate::False))
+                    && !self.fail_conditions.contains(&capture)
+                {
+                    self.fail_conditions.push(capture);
+                }
+                prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
+            }
+        }
         let mut own = Vec::new();
         let mut extra = Contributions::default();
         for path in &source_paths {
@@ -1132,39 +1173,12 @@ impl Interpreter<'_> {
                     })
                     .collect::<Vec<_>>(),
             ],
-            AbstractValue::Choice(choices) => {
-                let mut alternatives = Vec::new();
-                for choice in choices {
-                    match choice {
-                        AbstractValue::List(items) => alternatives.push(
-                            items
-                                .iter()
-                                .enumerate()
-                                .map(|(ordinal, item)| {
-                                    (
-                                        AbstractValue::StringSet(BTreeSet::from([
-                                            ordinal.to_string()
-                                        ])),
-                                        item.clone(),
-                                    )
-                                })
-                                .collect(),
-                        ),
-                        AbstractValue::Dict(entries) => alternatives.push(
-                            entries
-                                .iter()
-                                .map(|(key, value)| {
-                                    (
-                                        AbstractValue::StringSet(BTreeSet::from([key.clone()])),
-                                        value.clone(),
-                                    )
-                                })
-                                .collect(),
-                        ),
-                        _ => return None,
-                    };
-                }
-                alternatives
+            AbstractValue::Choice(choices) => exact_iteration_alternatives(choices.iter())?,
+            // The selected candidate is one of the statically-known
+            // alternatives, so per-alternative exact iteration is the same
+            // over-approximation the unordered choice gets.
+            AbstractValue::FirstTruthy(candidates) => {
+                exact_iteration_alternatives(candidates.iter())?
             }
             _ => return None,
         };
@@ -1475,6 +1489,44 @@ fn header_range_source(expr: &TemplateExpr) -> &TemplateExpr {
         source = value;
     }
     source
+}
+
+/// Per-alternative exact (key, item) iteration entries for alternatives
+/// that are ALL statically-known lists or dicts; any other alternative
+/// shape abstains.
+fn exact_iteration_alternatives<'v>(
+    alternatives: impl Iterator<Item = &'v AbstractValue>,
+) -> Option<Vec<Vec<(AbstractValue, AbstractValue)>>> {
+    let mut out = Vec::new();
+    for alternative in alternatives {
+        match alternative {
+            AbstractValue::List(items) => out.push(
+                items
+                    .iter()
+                    .enumerate()
+                    .map(|(ordinal, item)| {
+                        (
+                            AbstractValue::StringSet(BTreeSet::from([ordinal.to_string()])),
+                            item.clone(),
+                        )
+                    })
+                    .collect(),
+            ),
+            AbstractValue::Dict(entries) => out.push(
+                entries
+                    .iter()
+                    .map(|(key, value)| {
+                        (
+                            AbstractValue::StringSet(BTreeSet::from([key.clone()])),
+                            value.clone(),
+                        )
+                    })
+                    .collect(),
+            ),
+            _ => return None,
+        }
+    }
+    Some(out)
 }
 
 impl Interpreter<'_> {
@@ -1825,6 +1877,12 @@ fn attach_empty_fold_spellings(
                 .map(|choice| attach_empty_fold_spellings(choice, spellings))
                 .collect(),
         ),
+        AbstractValue::FirstTruthy(candidates) => AbstractValue::FirstTruthy(
+            candidates
+                .into_iter()
+                .map(|candidate| attach_empty_fold_spellings(candidate, spellings))
+                .collect(),
+        ),
         other => other,
     }
 }
@@ -1856,6 +1914,12 @@ fn attach_reassignment_exclusion(
             choices
                 .iter()
                 .map(|choice| attach_reassignment_exclusion(choice, exclusion))
+                .collect(),
+        ),
+        AbstractValue::FirstTruthy(candidates) => AbstractValue::FirstTruthy(
+            candidates
+                .iter()
+                .map(|candidate| attach_reassignment_exclusion(candidate, exclusion))
                 .collect(),
         ),
         other => other.clone(),

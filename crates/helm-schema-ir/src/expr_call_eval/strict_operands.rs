@@ -249,6 +249,11 @@ fn parser_operand_identity_paths(
                     collect(choice, effects, total_string_preimage, paths);
                 }
             }
+            AbstractValue::FirstTruthy(candidates) => {
+                for candidate in candidates {
+                    collect(candidate, effects, total_string_preimage, paths);
+                }
+            }
             AbstractValue::MergedLayers(layers) => {
                 for layer in layers {
                     collect(layer, effects, total_string_preimage, paths);
@@ -352,6 +357,11 @@ fn parser_output_metas(
             AbstractValue::Choice(choices) => {
                 for choice in choices {
                     collect(choice, path, metas);
+                }
+            }
+            AbstractValue::FirstTruthy(candidates) => {
+                for candidate in candidates {
+                    collect(candidate, path, metas);
                 }
             }
             AbstractValue::MergedLayers(layers) => {
@@ -547,6 +557,16 @@ pub(super) fn record_collection_item_kind_result(
                 for choice in choices {
                     collect(
                         choice,
+                        collection_paths,
+                        individual_paths,
+                        direct_collection,
+                    );
+                }
+            }
+            AbstractValue::FirstTruthy(candidates) => {
+                for candidate in candidates {
+                    collect(
+                        candidate,
                         collection_paths,
                         individual_paths,
                         direct_collection,
@@ -752,6 +772,19 @@ pub(super) fn layered_strict_operand_identity_paths(
                 let mut absence_expressible = true;
                 for choice in choices {
                     let walk = collect(choice, effects, shadow, emit, layered, out);
+                    paths.extend(walk.paths);
+                    absence_expressible &= walk.absence_expressible;
+                }
+                StrictLayerWalk {
+                    paths,
+                    absence_expressible,
+                }
+            }
+            AbstractValue::FirstTruthy(candidates) => {
+                let mut paths = BTreeSet::new();
+                let mut absence_expressible = true;
+                for candidate in candidates {
+                    let walk = collect(candidate, effects, shadow, emit, layered, out);
                     paths.extend(walk.paths);
                     absence_expressible &= walk.absence_expressible;
                 }

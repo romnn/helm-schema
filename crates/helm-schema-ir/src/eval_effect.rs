@@ -187,6 +187,20 @@ pub(crate) enum CaptureKind {
     /// A scalar path must have the named JSON Schema type whenever the
     /// capture's execution predicates hold.
     ValueType { path: String, schema_type: String },
+    /// A range header iterates the first-truthy selection of the ordered
+    /// identity candidates in `chain`, and `path` is the candidate this
+    /// capture claims: it must be iterable exactly where the conjunction's
+    /// selection conjuncts pick it. `chain` lets the lowering strip the
+    /// caller's conjunctive with-marker stamp for those paths — the
+    /// header's disjunctive condition was approximated by per-path `With`
+    /// markers, which the exact selection conjuncts refine (a `¬truthy`
+    /// prior would otherwise contradict its own marker and the claim could
+    /// never fire).
+    RangeSelection {
+        path: String,
+        chain: Vec<String>,
+        allow_integer: bool,
+    },
     /// A `dig` SUBJECT step: whenever the capture's execution predicates
     /// hold, the path must be an object even when explicitly null — Sprig
     /// type-asserts the dict before any nil handling, so a null aborts
@@ -252,6 +266,10 @@ impl CaptureKind {
             | Self::ValuePattern { path, .. }
             | Self::QuotedSerialization { path, .. } => {
                 *path = map(path);
+            }
+            Self::RangeSelection { path, chain, .. } => {
+                *path = map(path);
+                *chain = chain.iter().map(|path| map(path)).collect();
             }
         }
     }

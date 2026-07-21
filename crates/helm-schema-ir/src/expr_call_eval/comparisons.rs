@@ -84,6 +84,11 @@ fn raw_condition_path(value: &AbstractValue) -> Option<String> {
             let first = paths.next()?;
             paths.all(|path| path == first).then_some(first)
         }
+        AbstractValue::FirstTruthy(candidates) => {
+            let mut paths = candidates.iter().filter_map(raw_condition_path);
+            let first = paths.next()?;
+            paths.all(|path| path == first).then_some(first)
+        }
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)

@@ -90,7 +90,11 @@ pub(super) fn eval_default(
                 .conjoin_branches(&fallback_condition);
         }
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+    // `values` holds the primary first and the fallback second exactly when
+    // both resolved, which is the ordered first-truthy selection; a missing
+    // arm leaves only the other value, where the chain collapses to it (the
+    // same result the unordered choice produced).
+    EvalResult::with_effects(AbstractValue::first_truthy(values), effects)
 }
 
 pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {
@@ -192,6 +196,7 @@ fn empty_rescue_paths(
 ) -> Option<Vec<(String, BTreeSet<GuardValue>)>> {
     let arms: Vec<&AbstractValue> = match value {
         AbstractValue::Choice(choices) => choices.iter().collect(),
+        AbstractValue::FirstTruthy(candidates) => candidates.iter().collect(),
         other => vec![other],
     };
     let is_empty_literal = |arm: &AbstractValue| matches!(arm, AbstractValue::StringSet(set) if set.len() == 1 && set.contains(""));

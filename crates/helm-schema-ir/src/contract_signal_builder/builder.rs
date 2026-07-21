@@ -870,7 +870,7 @@ fn record_contract_use_conjunction(
     if has_source && !has_approximate {
         for path in range_guard_paths {
             let direct = range_modes.mode(&path).direct;
-            let outer_guards = direct
+            let outer_guards = (direct && !has_selection_chain_marker_stamp(predicates))
                 .then(|| lowerable_range_outer_guards(&path, predicates))
                 .flatten();
             let unconditional = outer_guards.as_ref().is_some_and(Vec::is_empty);
@@ -931,6 +931,46 @@ fn record_contract_use_conjunction(
 /// fails template rendering on scalars, so inside the guarded branch the
 /// ranged path must be a collection. The branch stays render-free; overlay
 /// lowering recognizes that shape and emits the iterable domain.
+/// Whether a conjunction carries a disjunctive with-header's marker stamp:
+/// `with A | default B` stamps a conjunctive `With` marker per path beside
+/// the real `Or` condition. The markers encode as truthiness downstream, so
+/// lowering them conjunctively would scope a RANGE requirement to "every
+/// candidate truthy" — the exact state where a selected sibling collection
+/// keeps a truthy scalar co-candidate unranged — and dropping them would
+/// fire it on other unselected states instead. Only the selection-chain
+/// capture knows which candidate ranges; requirement lowering abstains on
+/// the stamp.
+fn has_selection_chain_marker_stamp(predicates: &[Predicate]) -> bool {
+    let with_marker_paths: BTreeSet<&str> = predicates
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::With { path }) => Some(path.as_str()),
+            _ => None,
+        })
+        .collect();
+    let disjunction_paths = |predicate: &Predicate| -> Option<Vec<String>> {
+        match predicate {
+            Predicate::Guard(Guard::Or { paths }) => Some(paths.clone()),
+            Predicate::Or(alternatives) => alternatives
+                .iter()
+                .map(|alternative| match alternative {
+                    Predicate::Guard(Guard::Truthy { path }) => Some(path.clone()),
+                    _ => None,
+                })
+                .collect(),
+            _ => None,
+        }
+    };
+    with_marker_paths.len() > 1
+        && predicates.iter().any(|predicate| {
+            disjunction_paths(predicate).is_some_and(|paths| {
+                with_marker_paths
+                    .iter()
+                    .all(|marker| paths.iter().any(|path| path == marker))
+            })
+        })
+}
+
 fn lowerable_range_outer_guards(
     ranged_path: &str,
     predicates: &[Predicate],
@@ -1092,6 +1132,35 @@ fn record_fail_conjunction(
             capture,
             path,
             FailValueRequirement::SchemaType(schema_type.clone()),
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::RangeSelection {
+        path,
+        chain,
+        allow_integer,
+    } = &capture.kind
+    {
+        // The chain header's own with-marker stamp is a conjunctive
+        // approximation of its disjunctive condition; the capture's exact
+        // selection conjuncts refine it, and a leftover marker for a
+        // `¬truthy` prior would contradict them (encoded as truthiness, the
+        // marker can never co-hold with the negation). Genuine enclosing
+        // conditions on OTHER paths stay.
+        let mut capture = capture.clone();
+        capture.conjunction.retain(|predicate| {
+            !matches!(
+                predicate,
+                Predicate::Guard(Guard::With { path }) if chain.contains(path)
+            )
+        });
+        record_value_requirement_capture(
+            paths,
+            &capture,
+            path,
+            FailValueRequirement::Iterable {
+                allow_integer: *allow_integer,
+            },
         );
         return;
     }
@@ -2089,6 +2158,7 @@ fn record_range_key_string_requirements(
     for path in range_key_string_paths {
         if path_contains_wildcard(path)
             || (!range_modes.mode(path).direct && !capture.ranged.mode(path).direct)
+            || has_selection_chain_marker_stamp(&capture.conjunction)
         {
             continue;
         }

@@ -303,8 +303,10 @@ fn shared_accumulator_helper_ranges_bind_each_source_iterable_domain() {
 
 /// datadog's orchestrator custom-resources shape: a range over a binding
 /// that SELECTS a fallback (`$crs := .Values.x | default list`) iterates
-/// the fallback on every Helm-falsy input, so the source path owes no
-/// iterable shape — the empty string renders through the empty-list arm.
+/// the fallback on every Helm-falsy input, so falsy scalars render through
+/// the empty-list arm — while the selection chain still binds the truthy
+/// arm exactly (`truthy(x) ⇒ iterable(x)`: a truthy scalar is selected and
+/// aborts the range).
 #[test]
 fn fallback_selected_bindings_leave_the_source_unranged() {
     let helpers = indoc! {r#"
@@ -340,6 +342,12 @@ fn fallback_selected_bindings_leave_the_source_unranged() {
              proceeds: instance={instance}; schema={schema}"
         );
     }
+    let instance = serde_json::json!({ "custom": { "resources": "oops" } });
+    assert!(
+        !schema_accepts_instance(&schema, &instance),
+        "a truthy scalar is selected past the fallback and cannot be \
+         ranged: instance={instance}; schema={schema}"
+    );
 }
 
 /// kyverno's labels-merge shape: a helper ranging its BARE DOT over a
@@ -384,4 +392,141 @@ fn bare_dot_ranges_over_derived_lists_leave_influences_open() {
              list: instance={instance}; schema={schema}"
         );
     }
+}
+
+/// kyverno's per-controller pull-secrets shape: `with A | default B`
+/// passes the SELECTED value into a helper that ranges its bare dot, so
+/// each candidate owes an iterable shape exactly on its selected states —
+/// `truthy(A) ⇒ iterable(A)` and `¬truthy(A) ∧ truthy(B) ⇒ iterable(B)`.
+/// A truthy scalar beside a selected collection stays accepted: the
+/// selection provenance on the chain value keeps the per-candidate claims
+/// off the self-truthy approximation.
+#[test]
+fn selection_chain_dots_bind_per_candidate_iterable_domains() {
+    let helpers = indoc! {r#"
+        {{- define "repro.sortedImagePullSecrets" -}}
+        {{- if . -}}
+        {{- $secrets := list -}}
+        {{- range . -}}
+        {{- $secrets = append $secrets .name -}}
+        {{- end -}}
+        {{- $sortedRefs := list -}}
+        {{- range sortAlpha $secrets -}}
+        {{- $sortedRefs = append $sortedRefs (dict "name" .) -}}
+        {{- end -}}
+        {{- toYaml $sortedRefs -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: repro
+        spec:
+          template:
+            spec:
+              {{- with .Values.admissionController.imagePullSecrets | default .Values.global.imagePullSecrets }}
+              imagePullSecrets:
+                {{- tpl (include "repro.sortedImagePullSecrets" .) $ | nindent 8 }}
+              {{- end }}
+              containers:
+                - name: repro
+                  image: nginx
+    "#};
+    let values_yaml =
+        "global:\n  imagePullSecrets: []\nadmissionController:\n  imagePullSecrets: []\n";
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (admission, global, label) in [
+        (
+            serde_json::json!("oops"),
+            serde_json::json!([]),
+            "a truthy scalar primary is selected and cannot be ranged",
+        ),
+        (
+            serde_json::json!([]),
+            serde_json::json!("oops"),
+            "a truthy scalar fallback is selected past the falsy primary",
+        ),
+    ] {
+        let instance = serde_json::json!({
+            "admissionController": { "imagePullSecrets": admission },
+            "global": { "imagePullSecrets": global },
+        });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "{label}; rendering aborts: instance={instance}; schema={schema}"
+        );
+    }
+    for (admission, global, label) in [
+        (
+            serde_json::json!([{ "name": "a" }]),
+            serde_json::json!("oops"),
+            "a truthy scalar fallback beside a selected list is never ranged",
+        ),
+        (
+            serde_json::json!([]),
+            serde_json::json!([{ "name": "b" }]),
+            "a selected list fallback iterates",
+        ),
+        (
+            serde_json::json!(""),
+            serde_json::json!(null),
+            "both candidates falsy skip the with-body",
+        ),
+    ] {
+        let instance = serde_json::json!({
+            "admissionController": { "imagePullSecrets": admission },
+            "global": { "imagePullSecrets": global },
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label}; rendering proceeds: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// the inline flavor of the selection-chain decode: a template-scope
+/// `with A | default B` whose body ranges the bare dot binds the same
+/// per-candidate iterable domains without a helper boundary.
+#[test]
+fn inline_selection_chain_ranges_bind_per_candidate_iterable_domains() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: repro
+        spec:
+          template:
+            spec:
+              {{- with .Values.controller.imagePullSecrets | default .Values.global.imagePullSecrets }}
+              imagePullSecrets:
+                {{- range . }}
+                - name: {{ .name }}
+                {{- end }}
+              {{- end }}
+              containers:
+                - name: repro
+                  image: nginx
+    "#};
+    let values_yaml = "global:\n  imagePullSecrets: []\ncontroller:\n  imagePullSecrets: []\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    let reject = serde_json::json!({
+        "controller": { "imagePullSecrets": [] },
+        "global": { "imagePullSecrets": "oops" },
+    });
+    assert!(
+        !schema_accepts_instance(&schema, &reject),
+        "the selected truthy scalar fallback cannot be ranged: schema={schema}"
+    );
+    let accept = serde_json::json!({
+        "controller": { "imagePullSecrets": [{ "name": "a" }] },
+        "global": { "imagePullSecrets": "oops" },
+    });
+    assert!(
+        schema_accepts_instance(&schema, &accept),
+        "a truthy scalar fallback beside a selected list is never ranged: schema={schema}"
+    );
 }

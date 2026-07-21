@@ -30,6 +30,11 @@ pub(super) fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<St
                     collect(choice, paths);
                 }
             }
+            AbstractValue::FirstTruthy(candidates) => {
+                for candidate in candidates {
+                    collect(candidate, paths);
+                }
+            }
             AbstractValue::MergedLayers(layers) => {
                 for layer in layers {
                     collect(layer, paths);
@@ -91,6 +96,11 @@ pub(super) fn serialization_payload_paths(value: &Option<AbstractValue>) -> BTre
             }
             AbstractValue::Choice(choices) => {
                 for value in choices {
+                    collect(value, paths);
+                }
+            }
+            AbstractValue::FirstTruthy(candidates) => {
+                for value in candidates {
                     collect(value, paths);
                 }
             }
@@ -221,6 +231,15 @@ pub(super) fn replace_transformed_value(
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
+        // Transforms change candidate truthiness, so the mapped chain
+        // degrades to the unordered choice (the pre-chain behavior).
+        AbstractValue::FirstTruthy(candidates) => {
+            let mapped = candidates
+                .iter()
+                .map(|candidate| replace_transformed_value(candidate, effects, old, new_values))
+                .collect::<Option<Vec<_>>>()?;
+            AbstractValue::choice(mapped)
+        }
         other => escape_wrapped_identity(
             other,
             effects,
@@ -268,6 +287,13 @@ pub(super) fn split_transformed_value(
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
+        AbstractValue::FirstTruthy(candidates) => {
+            let mapped = candidates
+                .iter()
+                .map(|candidate| split_transformed_value(candidate, effects, separator))
+                .collect::<Option<Vec<_>>>()?;
+            AbstractValue::choice(mapped)
+        }
         other => {
             let prefix = escape_wrapped_identity(
                 other,
@@ -308,6 +334,9 @@ pub(super) fn mark_stringified_identities(value: Option<AbstractValue>) -> Optio
             AbstractValue::Choice(choices) => {
                 AbstractValue::Choice(choices.into_iter().map(mark).collect())
             }
+            AbstractValue::FirstTruthy(candidates) => {
+                AbstractValue::FirstTruthy(candidates.into_iter().map(mark).collect())
+            }
             other => other,
         }
     }
@@ -323,6 +352,9 @@ pub(super) fn derive_value_text(value: Option<AbstractValue>) -> Option<Abstract
             }
             AbstractValue::Choice(choices) => {
                 AbstractValue::Choice(choices.into_iter().map(mark).collect())
+            }
+            AbstractValue::FirstTruthy(candidates) => {
+                AbstractValue::FirstTruthy(candidates.into_iter().map(mark).collect())
             }
             other => other,
         }
@@ -363,6 +395,13 @@ pub(super) fn trim_affix_transformed_value(
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }
+        AbstractValue::FirstTruthy(candidates) => {
+            let mapped = candidates
+                .iter()
+                .map(|candidate| trim_affix_transformed_value(candidate, effects, token, prefix))
+                .collect::<Option<Vec<_>>>()?;
+            AbstractValue::choice(mapped)
+        }
         other => {
             let escape = if prefix {
                 crate::helper_meta::LexicalEscape::TrimPrefix(token.to_string())
@@ -390,6 +429,13 @@ pub(super) fn regex_replace_transformed_value(
             let mapped = choices
                 .iter()
                 .map(|choice| regex_replace_transformed_value(choice, effects, escape))
+                .collect::<Option<Vec<_>>>()?;
+            AbstractValue::choice(mapped)
+        }
+        AbstractValue::FirstTruthy(candidates) => {
+            let mapped = candidates
+                .iter()
+                .map(|candidate| regex_replace_transformed_value(candidate, effects, escape))
                 .collect::<Option<Vec<_>>>()?;
             AbstractValue::choice(mapped)
         }

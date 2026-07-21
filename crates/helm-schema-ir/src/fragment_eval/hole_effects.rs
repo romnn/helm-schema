@@ -624,7 +624,8 @@ fn runtime_requirement_paths(
         | CaptureKind::DigSubject { path }
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
-        | CaptureKind::QuotedSerialization { path, .. } => [path.clone()].into_iter().collect(),
+        | CaptureKind::QuotedSerialization { path, .. }
+        | CaptureKind::RangeSelection { path, .. } => [path.clone()].into_iter().collect(),
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
             .conjunction
             .last()

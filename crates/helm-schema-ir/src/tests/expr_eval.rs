@@ -64,14 +64,10 @@ fn helper_value_expression_uses_shared_expression_eval() {
         have: eval_expr(&expr(".ctx.config.name | default \"x\""), &env)
             .value
             .map(|value| value.to_context_value()),
-        want: Some(AbstractValue::Choice(
-            [
-                AbstractValue::ValuesPath("serviceAccount.name".to_string()),
-                AbstractValue::StringSet(["x".to_string()].into_iter().collect()),
-            ]
-            .into_iter()
-            .collect(),
-        )),
+        want: Some(AbstractValue::FirstTruthy(vec![
+            AbstractValue::ValuesPath("serviceAccount.name".to_string()),
+            AbstractValue::StringSet(["x".to_string()].into_iter().collect()),
+        ])),
     );
 }
 

@@ -411,6 +411,12 @@ fn project_structured_taint_value(
                 .map(|choice| project_structured_taint_value(choice, outer_meta))
                 .collect(),
         ),
+        AbstractValue::FirstTruthy(candidates) => AbstractValue::FirstTruthy(
+            candidates
+                .iter()
+                .map(|candidate| project_structured_taint_value(candidate, outer_meta))
+                .collect(),
+        ),
         AbstractValue::MergedLayers(layers) => AbstractValue::MergedLayers(
             layers
                 .iter()

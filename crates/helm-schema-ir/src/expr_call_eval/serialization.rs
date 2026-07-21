@@ -583,6 +583,9 @@ fn is_structurally_rendered_yaml_value(value: &AbstractValue) -> bool {
         AbstractValue::Choice(choices) => {
             !choices.is_empty() && choices.iter().all(is_structurally_rendered_yaml_value)
         }
+        AbstractValue::FirstTruthy(candidates) => {
+            !candidates.is_empty() && candidates.iter().all(is_structurally_rendered_yaml_value)
+        }
         _ => false,
     }
 }
@@ -661,6 +664,19 @@ pub(super) fn rendered_content_value(value: AbstractValue) -> Option<AbstractVal
                 .filter_map(rendered_content_value)
                 .collect(),
         ),
+        // A chain that loses a candidate can no longer state the selection
+        // order and degrades to the unordered choice.
+        AbstractValue::FirstTruthy(candidates) => {
+            let mapped: Vec<Option<AbstractValue>> =
+                candidates.into_iter().map(rendered_content_value).collect();
+            let intact = mapped.iter().all(Option::is_some);
+            let kept: Vec<AbstractValue> = mapped.into_iter().flatten().collect();
+            if intact {
+                AbstractValue::first_truthy(kept)
+            } else {
+                AbstractValue::choice(kept)
+            }
+        }
         other => Some(other),
     }
 }

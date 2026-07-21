@@ -20301,44 +20301,6 @@
             "type": "object"
           },
           {
-            "properties": {
-              "global": {
-                "properties": {
-                  "defaultStorageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "defaultStorageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "storageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
             "not": {
               "properties": {
                 "backup": {
@@ -20395,6 +20357,83 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "backup": {
+                    "properties": {
+                      "cronjob": {
+                        "properties": {
+                          "storage": {
+                            "properties": {
+                              "storageClass": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "storageClass"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "storage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cronjob"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "backup"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "defaultStorageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "defaultStorageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
@@ -26984,41 +27023,6 @@
                 "properties": {
                   "backup": {
                     "properties": {
-                      "cronjob": {
-                        "properties": {
-                          "storage": {
-                            "properties": {
-                              "storageClass": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "storageClass"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "storage"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cronjob"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "backup"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "backup": {
-                    "properties": {
                       "enabled": {
                         "$ref": "#/$defs/helm-truthy"
                       }
@@ -27044,25 +27048,6 @@
                     },
                     "required": [
                       "defaultStorageClass"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "storageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "storageClass"
                     ],
                     "type": "object"
                   }
@@ -27108,6 +27093,83 @@
                   ],
                   "type": "object"
                 }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "backup": {
+                        "properties": {
+                          "cronjob": {
+                            "properties": {
+                              "storage": {
+                                "properties": {
+                                  "storageClass": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "storageClass"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "storage"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cronjob"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "backup"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "defaultStorageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultStorageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -27134,25 +27196,6 @@
               },
               {
                 "properties": {
-                  "global": {
-                    "properties": {
-                      "storageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "storageClass"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
                   "primary": {
                     "properties": {
                       "persistence": {
@@ -27163,33 +27206,6 @@
                         },
                         "required": [
                           "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "persistence"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "primary"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "primary": {
-                    "properties": {
-                      "persistence": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
                         ],
                         "type": "object"
                       }
@@ -27264,6 +27280,75 @@
                     }
                   ]
                 }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "defaultStorageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultStorageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "primary": {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "storageClass": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "storageClass"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "primary"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -27290,25 +27375,6 @@
               },
               {
                 "properties": {
-                  "global": {
-                    "properties": {
-                      "storageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "storageClass"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
                   "readReplicas": {
                     "properties": {
                       "persistence": {
@@ -27319,33 +27385,6 @@
                         },
                         "required": [
                           "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "persistence"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "readReplicas"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "readReplicas": {
-                    "properties": {
-                      "persistence": {
-                        "properties": {
-                          "storageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "storageClass"
                         ],
                         "type": "object"
                       }
@@ -27423,58 +27462,101 @@
                     }
                   ]
                 }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "defaultStorageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultStorageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "readReplicas": {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "storageClass": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "storageClass"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readReplicas"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
             "additionalProperties": {},
+            "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
             "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
-                "properties": {
-                  "defaultStorageClass": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Global default StorageClass for Persistent Volume(s)"
+              "defaultStorageClass": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
-                "properties": {
-                  "storageClass": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "DEPRECATED: use global.defaultStorageClass instead"
-                  }
-                }
+                ],
+                "description": "Global default StorageClass for Persistent Volume(s)"
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -32024,6 +32106,586 @@
           "properties": {
             "postgresql": {
               "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "backup": {
+                    "properties": {
+                      "cronjob": {
+                        "properties": {
+                          "storage": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "storage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cronjob"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "backup"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "backup": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "backup"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "backup": {
+                      "properties": {
+                        "cronjob": {
+                          "properties": {
+                            "storage": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "storage"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "cronjob"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "backup"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "backup": {
+                        "properties": {
+                          "cronjob": {
+                            "properties": {
+                              "storage": {
+                                "properties": {
+                                  "storageClass": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "storageClass"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "storage"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cronjob"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "backup"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "defaultStorageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultStorageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "primary": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "primary"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "primary": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "primary"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "defaultStorageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultStorageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "primary": {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "storageClass": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "storageClass"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "primary"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "readReplicas": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readReplicas"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema594"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "readReplicas": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readReplicas"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "readReplicas": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readReplicas"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "defaultStorageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultStorageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "readReplicas": {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "storageClass": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "storageClass"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readReplicas"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
+            "properties": {
+              "storageClass": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "DEPRECATED: use global.defaultStorageClass instead"
+              }
             }
           }
         }
@@ -39165,44 +39827,6 @@
         "allOf": [
           {
             "properties": {
-              "global": {
-                "properties": {
-                  "defaultStorageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "defaultStorageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "storageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
               "primary": {
                 "properties": {
                   "persistence": {
@@ -39335,6 +39959,75 @@
                 }
               ]
             }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "defaultStorageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "defaultStorageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "primary": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "primary"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
@@ -48150,44 +48843,6 @@
         "allOf": [
           {
             "properties": {
-              "global": {
-                "properties": {
-                  "defaultStorageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "defaultStorageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "storageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
               "readReplicas": {
                 "properties": {
                   "persistence": {
@@ -48323,6 +48978,75 @@
                 }
               ]
             }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "defaultStorageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "defaultStorageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "readReplicas": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "storageClass": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "storageClass"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readReplicas"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },

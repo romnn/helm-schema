@@ -37881,6 +37881,119 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "falco": {
+                "properties": {
+                  "load_plugins": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "load_plugins"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falco"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcoctl": {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "artifact": {
+                        "properties": {
+                          "install": {
+                            "properties": {
+                              "refs": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "refs"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "install"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "artifact"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcoctl"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcoctl": {
+            "additionalProperties": {},
+            "description": "falcoctl config  #",
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers.",
+                "properties": {
+                  "artifact": {
+                    "additionalProperties": {},
+                    "description": "Configuration used by the artifact commands.",
+                    "properties": {
+                      "install": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "refs": {
+                            "anyOf": [
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "List of artifacts to be installed by the falcoctl init container."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "falcoctl": {

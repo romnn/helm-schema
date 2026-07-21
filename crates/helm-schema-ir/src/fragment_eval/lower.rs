@@ -308,6 +308,30 @@ pub(crate) fn lower_value(
             }
             out
         }
+        // The rendered fragment is the SELECTED candidate's; the unordered
+        // union of the candidate arms over-approximates that soundly, the
+        // same lowering the plain choice gets.
+        AbstractValue::FirstTruthy(candidates) => {
+            let mut strings = BTreeSet::new();
+            let mut out = Guarded::empty();
+            for candidate in candidates {
+                if let AbstractValue::StringSet(members) = candidate {
+                    strings.extend(members.iter().cloned());
+                } else {
+                    out.extend(lower_value(candidate, kind, scope));
+                }
+            }
+            if !strings.is_empty() {
+                out.arms.push((
+                    Predicate::True,
+                    AbstractFragment::Scalar(AbstractString {
+                        parts: vec![StringPart::Text(strings)],
+                        suppressed: false,
+                    }),
+                ));
+            }
+            out
+        }
         AbstractValue::MergedLayers(layers) => {
             // Each layer lowers to its own splice arms; a layer's splices
             // carry the full precedence order so sink projection can scope
@@ -579,27 +603,10 @@ pub(crate) fn lower_value_scalar_arms(
             vec![(Predicate::True, vec![StringPart::Taint(taint)])]
         }
         AbstractValue::Choice(choices) => {
-            let mut base_parts = Vec::new();
-            let mut conditional_arms = Vec::new();
-            for choice in choices {
-                for (condition, parts) in lower_value_scalar_arms(choice, kind, scope) {
-                    if condition == Predicate::True {
-                        base_parts.extend(parts);
-                    } else {
-                        conditional_arms.push((condition, parts));
-                    }
-                }
-            }
-            let mut arms = Vec::new();
-            if !base_parts.is_empty() || conditional_arms.is_empty() {
-                arms.push((Predicate::True, base_parts));
-            }
-            arms.extend(conditional_arms);
-            if arms.len() > MAX_SCALAR_ARM_FANOUT {
-                let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
-                return vec![(Predicate::True, parts)];
-            }
-            arms
+            lower_alternative_scalar_arms(choices.iter(), kind, scope)
+        }
+        AbstractValue::FirstTruthy(candidates) => {
+            lower_alternative_scalar_arms(candidates.iter(), kind, scope)
         }
         AbstractValue::Widened(paths)
         | AbstractValue::SplitList {
@@ -633,6 +640,38 @@ pub(crate) fn lower_value_scalar_arms(
             arms
         }
     }
+}
+
+/// The shared scalar-arm lowering of unordered choices and first-truthy
+/// selection chains: each alternative's arms merge, unconditional parts
+/// coalesce into one base arm, and past the fanout cap everything collapses
+/// into a single unconditional part list.
+fn lower_alternative_scalar_arms<'v>(
+    alternatives: impl Iterator<Item = &'v AbstractValue>,
+    kind: ValueKind,
+    scope: &LowerScope<'_>,
+) -> Vec<(PathCondition, Vec<StringPart>)> {
+    let mut base_parts = Vec::new();
+    let mut conditional_arms = Vec::new();
+    for alternative in alternatives {
+        for (condition, parts) in lower_value_scalar_arms(alternative, kind, scope) {
+            if condition == Predicate::True {
+                base_parts.extend(parts);
+            } else {
+                conditional_arms.push((condition, parts));
+            }
+        }
+    }
+    let mut arms = Vec::new();
+    if !base_parts.is_empty() || conditional_arms.is_empty() {
+        arms.push((Predicate::True, base_parts));
+    }
+    arms.extend(conditional_arms);
+    if arms.len() > MAX_SCALAR_ARM_FANOUT {
+        let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
+        return vec![(Predicate::True, parts)];
+    }
+    arms
 }
 
 fn json_serialized_taint(value: &AbstractValue, scope: &LowerScope<'_>) -> Option<TaintPart> {

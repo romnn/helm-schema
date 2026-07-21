@@ -15880,66 +15880,8 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "keda": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "keda"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
             "not": {
-              "allOf": [
+              "anyOf": [
                 {
                   "properties": {
                     "global": {
@@ -15996,6 +15938,64 @@
                 }
               ]
             }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "registry": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "keda": {
+                        "properties": {
+                          "registry": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "keda"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
@@ -16049,83 +16049,6 @@
             "allOf": [
               {
                 "properties": {
-                  "global": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "metricsApiServer": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metricsApiServer"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metricsServer": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metricsServer"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
                   "metricsServer": {
                     "properties": {
                       "enabled": {
@@ -16145,7 +16068,7 @@
               },
               {
                 "not": {
-                  "allOf": [
+                  "anyOf": [
                     {
                       "properties": {
                         "global": {
@@ -16202,6 +16125,87 @@
                     }
                   ]
                 }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "metricsServer": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metricsServer"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "metricsApiServer": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metricsApiServer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
@@ -16254,83 +16258,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "metricsApiServer": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metricsApiServer"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "metricsServer": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metricsServer"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
             "properties": {
               "metricsServer": {
                 "properties": {
@@ -16372,7 +16299,7 @@
               },
               {
                 "not": {
-                  "allOf": [
+                  "anyOf": [
                     {
                       "properties": {
                         "global": {
@@ -16431,6 +16358,87 @@
                 }
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "metricsServer": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metricsServer"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "metricsApiServer": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metricsApiServer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -16459,83 +16467,6 @@
             "allOf": [
               {
                 "properties": {
-                  "global": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "webhooks": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhooks"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "webhooks": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhooks"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
                   "webhooks": {
                     "properties": {
                       "enabled": {
@@ -16555,7 +16486,7 @@
               },
               {
                 "not": {
-                  "allOf": [
+                  "anyOf": [
                     {
                       "properties": {
                         "global": {
@@ -16612,6 +16543,87 @@
                     }
                   ]
                 }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "webhooks": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhooks"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "webhooks": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webhooks"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
@@ -16664,83 +16676,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "webhooks": {
-                        "properties": {
-                          "registry": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhooks"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "webhooks": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhooks"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
             "properties": {
               "webhooks": {
                 "properties": {
@@ -16782,7 +16717,7 @@
               },
               {
                 "not": {
-                  "allOf": [
+                  "anyOf": [
                     {
                       "properties": {
                         "global": {
@@ -16839,6 +16774,87 @@
                     }
                   ]
                 }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "webhooks": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhooks"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "webhooks": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webhooks"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
@@ -41298,16 +41314,6 @@
           "additionalProperties": {},
           "properties": {
             "registry": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Image registry of KEDA operator"
             },
             "repository": {
@@ -41325,16 +41331,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Image registry of KEDA Metrics API Server"
                 }
               }
@@ -41401,16 +41397,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Image registry of KEDA admission-webhooks"
                 }
               }

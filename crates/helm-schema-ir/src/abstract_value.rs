@@ -28,6 +28,16 @@ pub(crate) enum AbstractValue {
         fallback: Box<AbstractValue>,
     },
     Choice(BTreeSet<AbstractValue>),
+    /// First-Helm-truthy selection among ordered candidates (a `default`
+    /// chain: `A | default B | default C`). The runtime value is the first
+    /// truthy candidate, or the LAST candidate verbatim when none is truthy
+    /// (`default` never tests its fallback). Influence-wise it behaves like
+    /// [`Self::Choice`] over the candidates; the ordering survives so a
+    /// range over the selected value can claim per-candidate iterable
+    /// domains (`truthy(A) ⇒ iterable(A)`, `¬truthy(A) ∧ truthy(B) ⇒
+    /// iterable(B)`) instead of the self-truthy approximation that would
+    /// falsely reject a truthy scalar beside a selected collection.
+    FirstTruthy(Vec<AbstractValue>),
     /// Ordered Sprig `merge` of values-backed layers, highest precedence
     /// first: an earlier layer's key shadows the same key of every later
     /// layer. Influence-wise it behaves like [`Self::Choice`] over the
@@ -101,6 +111,11 @@ impl AbstractValue {
                     value.collect_range_key_paths(out);
                 }
             }
+            Self::FirstTruthy(candidates) => {
+                for value in candidates {
+                    value.collect_range_key_paths(out);
+                }
+            }
             Self::MergedLayers(layers) => {
                 for value in layers {
                     value.collect_range_key_paths(out);
@@ -157,6 +172,11 @@ impl AbstractValue {
                     value.collect_paths(out, descend_structures, suppress_values_root);
                 }
             }
+            Self::FirstTruthy(candidates) => {
+                for value in candidates {
+                    value.collect_paths(out, descend_structures, suppress_values_root);
+                }
+            }
             Self::MergedLayers(layers) => {
                 for value in layers {
                     value.collect_paths(out, descend_structures, suppress_values_root);
@@ -200,6 +220,7 @@ impl AbstractValue {
         match self {
             Self::StringSet(strings) => strings.clone(),
             Self::Choice(choices) => choices.iter().flat_map(Self::strings).collect(),
+            Self::FirstTruthy(candidates) => candidates.iter().flat_map(Self::strings).collect(),
             _ => BTreeSet::new(),
         }
     }
@@ -258,6 +279,12 @@ impl AbstractValue {
                     .map(|value| value.with_output_meta(meta_by_path))
                     .collect(),
             ),
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(|value| value.with_output_meta(meta_by_path))
+                    .collect(),
+            ),
             other => other,
         }
     }
@@ -283,6 +310,11 @@ impl AbstractValue {
             }
             Self::Choice(choices) => {
                 for value in choices {
+                    value.collect_output_meta(out);
+                }
+            }
+            Self::FirstTruthy(candidates) => {
+                for value in candidates {
                     value.collect_output_meta(out);
                 }
             }
@@ -395,6 +427,12 @@ impl AbstractValue {
                     .map(Self::require_rendered_source_presence)
                     .collect(),
             ),
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(Self::require_rendered_source_presence)
+                    .collect(),
+            ),
             other => other,
         }
     }
@@ -412,6 +450,14 @@ impl AbstractValue {
             Self::SplitList { .. } | Self::SplitSegment { .. } => Some(Self::Unknown),
             Self::Choice(choices) => Self::choice(
                 choices
+                    .iter()
+                    .filter_map(Self::fragment_range_item)
+                    .collect(),
+            ),
+            // The item is a member of the SELECTED candidate; the unordered
+            // union over-approximates that soundly.
+            Self::FirstTruthy(candidates) => Self::choice(
+                candidates
                     .iter()
                     .filter_map(Self::fragment_range_item)
                     .collect(),
@@ -445,6 +491,9 @@ impl AbstractValue {
             Self::Choice(choices) => {
                 !choices.is_empty() && choices.iter().all(Self::definitely_nonempty_iterable)
             }
+            Self::FirstTruthy(candidates) => {
+                !candidates.is_empty() && candidates.iter().all(Self::definitely_nonempty_iterable)
+            }
             _ => false,
         }
     }
@@ -468,6 +517,15 @@ impl AbstractValue {
             Self::RootContext => Some(true),
             Self::Choice(choices) => {
                 let mut truthiness = choices.iter().map(Self::static_truthiness);
+                let first = truthiness.next()??;
+                truthiness
+                    .all(|candidate| candidate == Some(first))
+                    .then_some(first)
+            }
+            // The selected value is one of the candidates, so an agreed
+            // truthiness carries over (the same rule as `Choice`).
+            Self::FirstTruthy(candidates) => {
+                let mut truthiness = candidates.iter().map(Self::static_truthiness);
                 let first = truthiness.next()??;
                 truthiness
                     .all(|candidate| candidate == Some(first))
@@ -527,6 +585,19 @@ impl AbstractValue {
                     .filter_map(Self::without_widened)
                     .collect(),
             ),
+            // Dropping a candidate would misstate the selection order, so a
+            // chain that loses one degrades to the unordered choice.
+            Self::FirstTruthy(candidates) => {
+                let mapped: Vec<Option<Self>> =
+                    candidates.into_iter().map(Self::without_widened).collect();
+                let intact = mapped.iter().all(Option::is_some);
+                let kept: Vec<Self> = mapped.into_iter().flatten().collect();
+                if intact {
+                    Self::first_truthy(kept)
+                } else {
+                    Self::choice(kept)
+                }
+            }
             other => Some(other),
         }
     }
@@ -558,6 +629,12 @@ impl AbstractValue {
             Self::Choice(choices) => {
                 Self::Choice(choices.into_iter().map(Self::mark_json_decoded).collect())
             }
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(Self::mark_json_decoded)
+                    .collect(),
+            ),
             Self::MergedLayers(layers) => {
                 Self::MergedLayers(layers.into_iter().map(Self::mark_json_decoded).collect())
             }
@@ -604,6 +681,12 @@ impl AbstractValue {
                     .map(Self::without_nil_scrub_markers)
                     .collect(),
             ),
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(Self::without_nil_scrub_markers)
+                    .collect(),
+            ),
             Self::Dict(entries) => Self::Dict(
                 entries
                     .into_iter()
@@ -641,6 +724,9 @@ impl AbstractValue {
             }),
             Self::Choice(choices) => {
                 Self::choice(choices.iter().map(member).collect()).map(Self::mark_json_decoded)
+            }
+            Self::FirstTruthy(candidates) => {
+                Self::choice(candidates.iter().map(member).collect()).map(Self::mark_json_decoded)
             }
             _ => self.values_root_structure().map(Self::mark_json_decoded),
         }
@@ -683,6 +769,12 @@ impl AbstractValue {
                     .filter_map(Self::values_root_structure)
                     .collect(),
             ),
+            Self::FirstTruthy(candidates) => Self::choice(
+                candidates
+                    .iter()
+                    .filter_map(Self::values_root_structure)
+                    .collect(),
+            ),
             Self::MergedLayers(layers) => Self::choice(
                 layers
                     .iter()
@@ -720,6 +812,16 @@ impl AbstractValue {
                 let first = paths.next()?;
                 return paths.all(|path| path == first).then_some(first);
             }
+            Self::FirstTruthy(candidates)
+                if !candidates.is_empty()
+                    && candidates
+                        .iter()
+                        .all(|candidate| candidate.unique_json_decoded_path().is_some()) =>
+            {
+                let mut paths = candidates.iter().filter_map(Self::unique_json_decoded_path);
+                let first = paths.next()?;
+                return paths.all(|path| path == first).then_some(first);
+            }
             _ => return None,
         };
         Some(path.clone())
@@ -741,6 +843,9 @@ impl AbstractValue {
             }
             Self::Choice(choices) => {
                 !choices.is_empty() && choices.iter().all(Self::is_definitely_json_serialized)
+            }
+            Self::FirstTruthy(candidates) => {
+                !candidates.is_empty() && candidates.iter().all(Self::is_definitely_json_serialized)
             }
             Self::MergedLayers(layers) => {
                 !layers.is_empty() && layers.iter().all(Self::is_definitely_json_serialized)
@@ -793,6 +898,46 @@ impl AbstractValue {
             1 => layers.into_iter().next(),
             _ => Some(Self::MergedLayers(layers)),
         }
+    }
+
+    /// Normalizing [`Self::FirstTruthy`] constructor: nested chains flatten
+    /// (`a | default b | default c` selects exactly like the flat chain),
+    /// and a chain whose candidates are all equal IS that value.
+    pub(crate) fn first_truthy(candidates: Vec<Self>) -> Option<Self> {
+        let mut flat = Vec::new();
+        for candidate in candidates {
+            match candidate {
+                Self::FirstTruthy(inner) => flat.extend(inner),
+                other => flat.push(other),
+            }
+        }
+        flat.dedup();
+        match flat.len() {
+            0 => None,
+            1 => flat.into_iter().next(),
+            _ => Some(Self::FirstTruthy(flat)),
+        }
+    }
+
+    /// The ordered candidate paths of a selection chain whose candidates
+    /// are RAW path identities (an `OutputPath` may be a transform of its
+    /// path, whose truthiness the selection actually tested — never the
+    /// path's own). A non-identity candidate has no nameable truthiness
+    /// condition, so the per-candidate decode abstains past it; a literal
+    /// TAIL candidate is tolerated because no later candidate needs its
+    /// negation.
+    pub(crate) fn selection_chain_identity_paths(&self) -> Option<Vec<String>> {
+        let Self::FirstTruthy(candidates) = self else {
+            return None;
+        };
+        let mut paths = Vec::new();
+        for candidate in candidates {
+            match candidate {
+                Self::ValuesPath(path) | Self::JsonDecodedPath(path) => paths.push(path.clone()),
+                _ => break,
+            }
+        }
+        (!paths.is_empty()).then_some(paths)
     }
 
     pub(crate) fn apply_to_path(&self, rest: &[String]) -> Option<Self> {
@@ -851,6 +996,18 @@ impl AbstractValue {
             Self::Choice(choices) => {
                 let mut out = Vec::new();
                 for value in choices {
+                    if let Some(bound) = value.apply_to_path(rest) {
+                        out.push(bound);
+                    }
+                }
+                Self::choice(out)
+            }
+            // The member of the SELECTED candidate: selection tests the
+            // candidates' own truthiness, not the members', so the ordering
+            // does not transfer and the projection degrades to the choice.
+            Self::FirstTruthy(candidates) => {
+                let mut out = Vec::new();
+                for value in candidates {
                     if let Some(bound) = value.apply_to_path(rest) {
                         out.push(bound);
                     }
@@ -930,6 +1087,9 @@ impl AbstractValue {
                     && fallback.member_projection_is_exhaustive()
             }
             Self::Choice(choices) => choices.iter().all(Self::member_projection_is_exhaustive),
+            Self::FirstTruthy(candidates) => {
+                candidates.iter().all(Self::member_projection_is_exhaustive)
+            }
             Self::MergedLayers(layers) => layers.iter().all(Self::member_projection_is_exhaustive),
             Self::Unknown
             | Self::RangeKey(_)
@@ -962,6 +1122,7 @@ impl AbstractValue {
         while let Some(value) = pending.pop() {
             match value {
                 Self::Choice(choices) => pending.extend(choices),
+                Self::FirstTruthy(candidates) => pending.extend(candidates),
                 Self::Dict(entries) => Self::merge_entries(&mut map, entries),
                 // Top/Unknown deliberately survive as fallback members here,
                 // unlike merge_context_values, which keeps only values-backed
@@ -1014,6 +1175,9 @@ impl AbstractValue {
                 // `MergedLayers([overwrite, workers.x])`, which still IS the
                 // `workers.x` value wherever the overwrite abstains.
                 AbstractValue::Choice(choices) => choices.iter().all(arms_are_identity_or_literal),
+                AbstractValue::FirstTruthy(candidates) => {
+                    candidates.iter().all(arms_are_identity_or_literal)
+                }
                 AbstractValue::MergedLayers(layers) => {
                     layers.iter().all(arms_are_identity_or_literal)
                 }
@@ -1065,6 +1229,12 @@ impl AbstractValue {
                 choices
                     .into_iter()
                     .map(|choice| choice.omit_keys(keys))
+                    .collect(),
+            ),
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(|candidate| candidate.omit_keys(keys))
                     .collect(),
             ),
             other => other,
@@ -1157,6 +1327,21 @@ impl AbstractValue {
                     .filter_map(|choice| choice.remove_fragment_paths(remove))
                     .collect(),
             ),
+            // Like `without_widened`: a chain that loses a candidate can no
+            // longer state the selection order and degrades to the choice.
+            Self::FirstTruthy(candidates) => {
+                let mapped: Vec<Option<Self>> = candidates
+                    .into_iter()
+                    .map(|candidate| candidate.remove_fragment_paths(remove))
+                    .collect();
+                let intact = mapped.iter().all(Option::is_some);
+                let kept: Vec<Self> = mapped.into_iter().flatten().collect();
+                if intact {
+                    Self::first_truthy(kept)
+                } else {
+                    Self::choice(kept)
+                }
+            }
             Self::MergedLayers(layers) => Self::merged_layers(
                 layers
                     .into_iter()
@@ -1203,6 +1388,7 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::Choice(_)
+            | Self::FirstTruthy(_)
             | Self::MergedLayers(_)
             | Self::SplitList { .. }
             | Self::SplitSegment { .. }
