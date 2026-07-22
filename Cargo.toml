@@ -74,14 +74,15 @@ missing_docs = "warn"
 [workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
 pedantic = { level = "deny", priority = -1 }
-unwrap_used      = "deny"
-expect_used      = "deny"
-panic            = "deny"
-unreachable      = "deny"
-unimplemented    = "deny"
-todo             = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+todo = "deny"
 indexing_slicing = "deny"
 missing_errors_doc = "warn"
+await_holding_lock = "deny"
 # Every `#[allow(...)]` must carry a `reason = "..."` justifying the escape hatch.
 allow_attributes_without_reason = "deny"
 
@@ -89,6 +90,20 @@ allow_attributes_without_reason = "deny"
 map_unwrap_or = "allow"
 assigning_clones = "allow"
 struct_excessive_bools = "allow"
+
+[workspace.metadata.cargo-fc]
+install_missing_targets = true
+dedupe = true
+aggregate_targets = false
+targets = [
+  "x86_64-unknown-linux-gnu",
+  "x86_64-pc-windows-gnu",
+  "aarch64-apple-darwin",
+]
+
+[workspace.metadata.cargo-fc.subcommands.lint]
+# The workspace's `lint` alias delegates to a clippy shim that preserves structured diagnostics.
+diagnostics_only = true
 
 [workspace.package]
 version = "0.0.1"
