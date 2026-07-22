@@ -81,7 +81,7 @@ fn values_selected_kind_partitions_strategy_provider_projection() {
 /// and the body's strategy slots are guarded by the same local. The kind
 /// arms carry the selecting predicate, so rows entailed by one arm
 /// concretize to that arm's kind and the provider projection follows the
-/// partition: the Deployment arm owns `spec.strategy`, the StatefulSet arm
+/// partition: the Deployment arm owns `spec.strategy`, the `StatefulSet` arm
 /// `spec.updateStrategy`, and each rejects the shape it cannot hold.
 #[test]
 fn inline_local_kind_partition_projects_per_arm_provider_schemas() {
@@ -154,8 +154,8 @@ fn inline_local_kind_partition_projects_per_arm_provider_schemas() {
 
 /// Both arms of an inline-local kind chain write the SAME manifest slot
 /// (`spec.updateStrategy`) from different values paths, and both kinds
-/// hold that slot with different member sets (StatefulSet `partition`,
-/// DaemonSet `maxSurge`). Pointer-miss fallback cannot pick the arm here
+/// hold that slot with different member sets (`StatefulSet` `partition`,
+/// `DaemonSet` `maxSurge`). Pointer-miss fallback cannot pick the arm here
 /// — only the row conjunction entailing the arm's selecting predicate
 /// resolves each row to ITS kind's schema.
 #[test]
@@ -220,7 +220,7 @@ fn shared_slot_kind_arms_resolve_through_selecting_predicates() {
 }
 
 /// nfs-subdir-external-provisioner: `maxUnavailable` flows through
-/// `default 1` into a PodDisruptionBudget's int-or-string slot, so the
+/// `default 1` into a `PodDisruptionBudget`'s int-or-string slot, so the
 /// declared integer default documents intent without narrowing away the
 /// provider-accepted percentage string.
 #[test]

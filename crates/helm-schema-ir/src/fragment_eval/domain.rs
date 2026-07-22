@@ -126,6 +126,10 @@ pub fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathConditi
 
 /// One node of the abstract rendered document.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "boxing rendered fragments would add allocation and pointer chasing in the interpreter hot path"
+)]
 pub enum AbstractFragment {
     /// A YAML mapping.
     Mapping(Mapping),
@@ -207,6 +211,10 @@ impl AbstractString {
 
 /// One part of an [`AbstractString`].
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "string parts are traversed in hot projection loops and benefit from inline storage"
+)]
 pub enum StringPart {
     /// Literal text alternatives. A singleton set is plain source text;
     /// larger sets arise when a hole statically evaluates to a finite string
@@ -380,7 +388,7 @@ impl Default for Opaque {
 /// Stamp `site` onto every row-producing node below `guarded` that has no
 /// site yet (nested-file content arrives already stamped by its own
 /// interpreter and keeps its facts).
-pub fn stamp_fragment_sites(guarded: &mut Guarded<AbstractFragment>, site: &Option<Rc<SiteFacts>>) {
+pub fn stamp_fragment_sites(guarded: &mut Guarded<AbstractFragment>, site: Option<&Rc<SiteFacts>>) {
     if site.is_none() {
         return;
     }
@@ -389,7 +397,7 @@ pub fn stamp_fragment_sites(guarded: &mut Guarded<AbstractFragment>, site: &Opti
     }
 }
 
-fn stamp_node_sites(node: &mut AbstractFragment, site: &Option<Rc<SiteFacts>>) {
+fn stamp_node_sites(node: &mut AbstractFragment, site: Option<&Rc<SiteFacts>>) {
     match node {
         AbstractFragment::Mapping(mapping) => {
             for entry in &mut mapping.entries {
@@ -404,19 +412,19 @@ fn stamp_node_sites(node: &mut AbstractFragment, site: &Option<Rc<SiteFacts>>) {
         AbstractFragment::Scalar(scalar) => stamp_part_sites(&mut scalar.parts, site),
         AbstractFragment::Splice(splice) => {
             if splice.meta.site.is_none() {
-                splice.meta.site = site.clone();
+                splice.meta.site = site.cloned();
             }
         }
         AbstractFragment::Opaque(opaque) => {
             if opaque.site.is_none() {
-                opaque.site = site.clone();
+                opaque.site = site.cloned();
             }
         }
     }
 }
 
 /// Stamp `site` onto every splice and taint part that has no site yet.
-pub fn stamp_part_sites(parts: &mut [StringPart], site: &Option<Rc<SiteFacts>>) {
+pub fn stamp_part_sites(parts: &mut [StringPart], site: Option<&Rc<SiteFacts>>) {
     if site.is_none() {
         return;
     }
@@ -425,12 +433,12 @@ pub fn stamp_part_sites(parts: &mut [StringPart], site: &Option<Rc<SiteFacts>>) 
             StringPart::Text(_) => {}
             StringPart::Splice(splice) => {
                 if splice.meta.site.is_none() {
-                    splice.meta.site = site.clone();
+                    splice.meta.site = site.cloned();
                 }
             }
             StringPart::Taint(taint) => {
                 if taint.site.is_none() {
-                    taint.site = site.clone();
+                    taint.site = site.cloned();
                 }
             }
         }

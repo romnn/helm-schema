@@ -9,6 +9,14 @@ use crate::output_pipeline::JsonOutputFormat;
 /// `values.schema.json` counts against that limit.
 pub const HELM_MAX_CHART_FILE_BYTES: usize = 5 * 1024 * 1024;
 
+/// Serializes a schema in the requested JSON format and appends a newline.
+///
+/// Pretty output automatically falls back to compact JSON before crossing
+/// Helm's per-file size limit.
+///
+/// # Errors
+///
+/// Returns an error when JSON serialization or writing to `out` fails.
 #[tracing::instrument(skip_all, fields(format = ?format))]
 pub fn write_schema_json(
     out: &mut impl Write,

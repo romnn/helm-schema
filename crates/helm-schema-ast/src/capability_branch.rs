@@ -2,6 +2,8 @@ use helm_schema_core::CapabilityGuard;
 
 use crate::{TemplateExpr, parse_action_expressions};
 
+/// Decodes a capability condition, preserving unsupported forms as opaque guards.
+#[must_use]
 pub fn decode_guard(cond: &str) -> CapabilityGuard {
     let trimmed = cond.trim();
     let wrapped = format!("{{{{ {trimmed} }}}}");
@@ -16,6 +18,8 @@ pub fn decode_guard(cond: &str) -> CapabilityGuard {
     }
 }
 
+/// Extracts a capability guard from one typed expression when possible.
+#[must_use]
 pub fn decode_guard_expr(expr: &TemplateExpr, raw: &str) -> Option<CapabilityGuard> {
     find_capability_has(expr, false)
         .map(|(negated, api)| {

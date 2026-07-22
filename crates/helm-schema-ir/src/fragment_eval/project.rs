@@ -115,7 +115,7 @@ fn walk_guarded(
         if let Some((owner, key)) = &open_mapping_entry
             && arm_continues_open_mapping_entry(owner, key, condition, node)
         {
-            effective_path.0.push(key.to_string());
+            effective_path.0.push(key.clone());
         }
         walk_node(node, &effective_path, conditions, contract, &sibling_keys);
         if pushed {
@@ -143,8 +143,11 @@ fn find_open_mapping_entry(guarded: &Guarded<AbstractFragment>) -> Option<(Predi
                 EntryKey::Literal(key)
                     if !key.is_empty()
                         && entry.value.arms.is_empty()
-                        && mapping.entries[index + 1..]
-                            .iter()
+                        && mapping
+                            .entries
+                            .get(index + 1..)
+                            .into_iter()
+                            .flatten()
                             .all(|entry| matches!(entry.key, EntryKey::Dynamic(_))) =>
                 {
                     Some((condition.clone(), key.clone()))
@@ -401,7 +404,12 @@ fn placed_row(
         && !site.path_prefix.is_empty()
         && path.0.starts_with(&site.path_prefix)
     {
-        path = YamlPath(path.0[site.path_prefix.len()..].to_vec());
+        path = YamlPath(
+            path.0
+                .get(site.path_prefix.len()..)
+                .unwrap_or_default()
+                .to_vec(),
+        );
     }
     let mut kind = kind;
     if kind == ValueKind::PartialScalar && path.0.is_empty() {

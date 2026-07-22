@@ -1,18 +1,22 @@
-#![allow(dead_code)]
-
 use std::collections::HashMap;
 use std::sync::Mutex;
 
 use helm_schema_k8s::{FetchError, HttpFetcher};
 
+/// Scripted result returned by the mock HTTP transport.
 #[derive(Debug, Clone)]
 pub enum MockResponse {
+    /// Successful response with raw body bytes.
     Body(Vec<u8>),
+    /// Authoritative HTTP not-found response.
     NotFound,
+    /// Transport-layer failure with a diagnostic message.
     Transport(String),
+    /// Fetch rejected because network access is disabled.
     NetworkDisabled,
 }
 
+/// Deterministic URL-keyed HTTP transport used by provider integration tests.
 #[derive(Debug)]
 pub struct MockFetcher {
     responses: Mutex<HashMap<String, MockResponse>>,
@@ -27,6 +31,7 @@ impl Default for MockFetcher {
 }
 
 impl MockFetcher {
+    /// Creates a mock that returns not-found for unconfigured URLs.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -36,6 +41,7 @@ impl MockFetcher {
         }
     }
 
+    /// Configures one URL response.
     #[must_use]
     pub fn with(self, url: impl Into<String>, response: MockResponse) -> Self {
         if let Ok(mut guard) = self.responses.lock() {
@@ -44,11 +50,13 @@ impl MockFetcher {
         self
     }
 
+    /// Configures one successful URL response body.
     #[must_use]
     pub fn with_body(self, url: impl Into<String>, body: impl Into<Vec<u8>>) -> Self {
         self.with(url, MockResponse::Body(body.into()))
     }
 
+    /// Changes the response used for unconfigured URLs.
     #[must_use]
     pub fn with_default(self, response: MockResponse) -> Self {
         if let Ok(mut guard) = self.default.lock() {
@@ -57,6 +65,7 @@ impl MockFetcher {
         self
     }
 
+    /// Returns the number of fetches across all URLs.
     #[must_use]
     pub fn total_calls(&self) -> usize {
         self.call_counts
@@ -65,6 +74,7 @@ impl MockFetcher {
             .unwrap_or(0)
     }
 
+    /// Returns the number of fetches for one URL.
     #[must_use]
     pub fn calls_for(&self, url: &str) -> usize {
         self.call_counts

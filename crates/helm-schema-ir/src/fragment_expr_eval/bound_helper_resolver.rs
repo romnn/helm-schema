@@ -167,8 +167,11 @@ impl BoundHelperValueResolver<'_, '_, '_> {
                 &mut seen,
             )
         };
-        let input = eval_operand(&args[0]);
-        let overwrite = eval_operand(&args[1]);
+        let [input_expr, overwrite_expr, ..] = args.as_slice() else {
+            return None;
+        };
+        let input = eval_operand(input_expr);
+        let overwrite = eval_operand(overwrite_expr);
         let input_layer = input
             .value
             .clone()

@@ -18,35 +18,35 @@ pub struct FinalizedContract {
 impl FinalizedContract {
     #[expect(
         clippy::too_many_arguments,
-        reason = "each parameter is one interpreter fact channel; a struct would                   mirror the same fields without adding an invariant"
+        reason = "each parameter is one interpreter fact channel; a struct would mirror the same fields without adding an invariant"
     )]
     pub(in crate::contract) fn new(
         normalized_uses: Vec<ContractUse>,
-        type_hints: BTreeMap<String, BTreeSet<String>>,
-        guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
-        fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-        guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-        shape_erased_value_paths: BTreeSet<String>,
-        string_contract_value_paths: BTreeSet<String>,
-        range_modes: crate::range_modes::RangeModes,
+        type_hints: &BTreeMap<String, BTreeSet<String>>,
+        guarded_type_hints: &BTreeMap<String, BTreeSet<String>>,
+        fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
+        guarded_fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
+        shape_erased_value_paths: &BTreeSet<String>,
+        string_contract_value_paths: &BTreeSet<String>,
+        range_modes: &crate::range_modes::RangeModes,
         values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
         values_root_overlay_prefixes: BTreeSet<String>,
         values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
         values_program_wrapper_exclusions: BTreeSet<String>,
-        fail_conditions: Vec<crate::eval_effect::FailCapture>,
-        dependency_values_root_fragments: BTreeSet<String>,
+        fail_conditions: &[crate::eval_effect::FailCapture],
+        dependency_values_root_fragments: &BTreeSet<String>,
     ) -> Self {
         let schema_signals = derive_schema_signals_from_contract_parts(
             &normalized_uses,
-            &type_hints,
-            &guarded_type_hints,
-            &fallback_type_hints,
-            &guarded_fallback_type_hints,
-            &shape_erased_value_paths,
-            &string_contract_value_paths,
-            &range_modes,
-            &fail_conditions,
-            &dependency_values_root_fragments,
+            type_hints,
+            guarded_type_hints,
+            fallback_type_hints,
+            guarded_fallback_type_hints,
+            shape_erased_value_paths,
+            string_contract_value_paths,
+            range_modes,
+            fail_conditions,
+            dependency_values_root_fragments,
         )
         .with_values_default_sources(values_default_sources)
         .with_root_overlay_fail_implications(values_root_overlay_prefixes)
@@ -59,21 +59,25 @@ impl FinalizedContract {
         }
     }
 
+    /// Returns normalized contract uses in stable inspection order.
     #[must_use]
     pub fn uses(&self) -> &[ContractUse] {
         &self.uses
     }
 
+    /// Returns path-local facts prepared for schema lowering.
     #[must_use]
     pub fn schema_signals(&self) -> &ContractSchemaSignals {
         &self.schema_signals
     }
 
+    /// Builds the versioned inspection document for this contract.
     #[must_use]
     pub fn document(&self) -> ContractDocument {
         ContractDocument::from_contract_uses(self.uses.clone())
     }
 
+    /// Consumes the contract and returns its schema-lowering signals.
     #[must_use]
     pub fn into_schema_signals(self) -> ContractSchemaSignals {
         self.schema_signals

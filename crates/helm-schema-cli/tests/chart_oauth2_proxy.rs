@@ -7,18 +7,22 @@
 //! callers with the helper-internal `has` gates intact. Values
 //! validation and the full-schema pin live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 /// With redis-ha live, `sentinel.quorum` and `splitBrainDetection.*`
-/// render only into ConfigMap script text and the statefulset's
+/// render only into `ConfigMap` script text and the statefulset's
 /// `print (include …) (include …)| sha256sum` checksum digest — the
 /// un-spaced pipe reads exactly like the spaced form, so the digest
 /// keeps every spelling open and numerics stay accepted.
 #[test]
-fn oauth2_proxy_redis_script_reads_stay_partial_text() -> color_eyre::eyre::Result<()> {
+fn oauth2_proxy_redis_script_reads_stay_partial_text() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("oauth2-proxy")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -53,7 +57,7 @@ fn oauth2_proxy_redis_script_reads_stay_partial_text() -> color_eyre::eyre::Resu
 }
 
 #[test]
-fn oauth2_proxy_helper_tpl_operands_bind_string_contracts() -> color_eyre::eyre::Result<()> {
+fn oauth2_proxy_helper_tpl_operands_bind_string_contracts() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("oauth2-proxy")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

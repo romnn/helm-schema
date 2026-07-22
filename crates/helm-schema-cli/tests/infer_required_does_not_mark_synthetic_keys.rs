@@ -9,7 +9,7 @@
 
 use std::io::Read;
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
@@ -21,7 +21,7 @@ fn chart_dir(chart: &str) -> VfsPath {
     VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str))
 }
 
-fn read_values_yaml(chart_dir: &VfsPath) -> std::result::Result<String, Report> {
+fn read_values_yaml(chart_dir: &VfsPath) -> eyre::Result<String> {
     let mut out = String::new();
     chart_dir
         .join("values.yaml")
@@ -33,19 +33,19 @@ fn read_values_yaml(chart_dir: &VfsPath) -> std::result::Result<String, Report> 
     Ok(out)
 }
 
-fn top_level_values_keys(values_yaml: &str) -> Vec<String> {
-    let doc: serde_yaml::Value = serde_yaml::from_str(values_yaml).expect("parse values.yaml");
+fn top_level_values_keys(values_yaml: &str) -> eyre::Result<Vec<String>> {
+    let doc: serde_yaml::Value = serde_yaml::from_str(values_yaml)?;
     let serde_yaml::Value::Mapping(m) = doc else {
-        return Vec::new();
+        return Ok(Vec::new());
     };
-    m.into_iter()
+    Ok(m.into_iter()
         .filter_map(|(k, _)| k.as_str().map(str::to_string))
-        .collect()
+        .collect())
 }
 
 #[test]
-fn infer_required_skips_synthetic_top_level_value_keys() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn infer_required_skips_synthetic_top_level_value_keys() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let dir = chart_dir("cert-manager");
     let opts = GenerateOptions {
@@ -72,12 +72,12 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> color_eyre::eyre::Re
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     let values_yaml = read_values_yaml(&dir).wrap_err("read values.yaml")?;
     let seeded: std::collections::BTreeSet<String> =
-        top_level_values_keys(&values_yaml).into_iter().collect();
+        top_level_values_keys(&values_yaml)?.into_iter().collect();
 
     // The root schema must not declare any of the seeded top-level keys as
     // required — they're a completeness crutch, not real header references.

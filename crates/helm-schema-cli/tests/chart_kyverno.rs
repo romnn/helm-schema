@@ -4,13 +4,17 @@
 //! helper's zero-check does not decode and must not manufacture requirements.
 //! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
-fn kyverno_image_tag_validator_holds() -> color_eyre::eyre::Result<()> {
+fn kyverno_image_tag_validator_holds() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("kyverno")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -49,7 +53,7 @@ fn kyverno_image_tag_validator_holds() -> color_eyre::eyre::Result<()> {
 /// it, a truthy scalar beside a selected list never ranges, and falsy
 /// spellings skip the with-body entirely (all helm-verified).
 #[test]
-fn kyverno_image_pull_secret_chains_bind_per_candidate_iterables() -> color_eyre::eyre::Result<()> {
+fn kyverno_image_pull_secret_chains_bind_per_candidate_iterables() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("kyverno")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -107,8 +111,7 @@ fn kyverno_image_pull_secret_chains_bind_per_candidate_iterables() -> color_eyre
 }
 
 #[test]
-fn kyverno_templating_version_validator_survives_nested_helper_arguments()
--> color_eyre::eyre::Result<()> {
+fn kyverno_templating_version_validator_survives_nested_helper_arguments() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("kyverno")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

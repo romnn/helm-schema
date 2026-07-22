@@ -4,13 +4,17 @@
 //! per-member validator requirements. Values validation and the
 //! full-schema pin live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
-fn traefik_plugin_validator_holds() -> color_eyre::eyre::Result<()> {
+fn traefik_plugin_validator_holds() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -60,7 +64,7 @@ fn traefik_plugin_validator_holds() -> color_eyre::eyre::Result<()> {
 /// terminal binds: http3 without `http.tls.enabled` aborts while a
 /// disabled default service keeps the terminal dormant.
 #[test]
-fn traefik_http3_terminal_binds_through_the_services_overlay() -> color_eyre::eyre::Result<()> {
+fn traefik_http3_terminal_binds_through_the_services_overlay() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -102,10 +106,10 @@ fn traefik_http3_terminal_binds_through_the_services_overlay() -> color_eyre::ey
 /// volumeMount whose `mountPath` splices `{{ $plugin.mountPath | quote }}`
 /// through the pod-template projection. Sprig `quote` SKIPS nil operands,
 /// so a member without `mountPath` renders an explicit null into the
-/// provider-REQUIRED VolumeMount field — helm renders it, the committed
+/// provider-REQUIRED `VolumeMount` field — helm renders it, the committed
 /// provider bundle is the rejecting stage.
 #[test]
-fn traefik_local_plugin_mount_paths_bind_provider_presence() -> color_eyre::eyre::Result<()> {
+fn traefik_local_plugin_mount_paths_bind_provider_presence() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -168,13 +172,13 @@ fn traefik_local_plugin_mount_paths_bind_provider_presence() -> color_eyre::eyre
 }
 
 /// Each `gateway.listeners` KEY renders as the Gateway CRD's
-/// `spec.listeners[].name`, a SectionName with a lowercase RFC-1123
+/// `spec.listeners[].name`, a `SectionName` with a lowercase RFC-1123
 /// pattern plus a 1..=253 length window. Helm itself renders any key
 /// spelling — the committed Gateway provider is the rejecting stage — so
 /// the provider's key-slot constraints project onto the source map's
 /// `propertyNames`, scoped to the gateway-live branch.
 #[test]
-fn traefik_listener_keys_carry_the_provider_section_name_domain() -> color_eyre::eyre::Result<()> {
+fn traefik_listener_keys_carry_the_provider_section_name_domain() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

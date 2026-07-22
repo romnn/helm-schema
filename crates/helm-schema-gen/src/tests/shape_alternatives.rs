@@ -36,10 +36,10 @@ fn literal_dotted_index_and_get_keys_generate_one_root_property() {
           direct: {{ index .Values "foo.bar" | quote }}
           selected: {{ (get .Values "foo.bar").baz | quote }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         foo.bar:
           baz: value
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     assert!(
@@ -61,7 +61,7 @@ fn literal_dotted_index_and_get_keys_generate_one_root_property() {
 
 #[test]
 fn tpl_context_does_not_type_the_templated_value_as_an_object() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -70,7 +70,7 @@ fn tpl_context_does_not_type_the_templated_value_as_an_object() {
           {{- range .Values.items }}
           name: {{ tpl .name $ }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         items:
           - name: example
@@ -95,11 +95,11 @@ fn tpl_context_does_not_type_the_templated_value_as_an_object() {
 
 #[test]
 fn tpl_of_to_yaml_without_shape_evidence_stays_untyped() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.ingress.tls }}
         tls: {{ tpl (toYaml .Values.ingress.tls) $ | nindent 2 }}
         {{- end }}
-    "#};
+    "};
     let values_yaml = "ingress: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -213,12 +213,12 @@ fn structural_conversion_and_kind_guards_preserve_input_shape_alternatives() {
 
 #[test]
 fn destructured_range_over_declared_map_keeps_map_shape() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         ports:
           {{- range $name, $port := .Values.extraPorts }}
           {{ $name }}: {{ $port | quote }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("extraPorts: {}\n"));
 
     assert!(
@@ -316,7 +316,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         "type": "string"
     });
 
-    let schema = ResolvePolicy.resolve_schema_for_value_path(ValuePathSchemaInputs {
+    let schema = ResolvePolicy::resolve_schema_for_value_path(ValuePathSchemaInputs {
         facts: ValuePathSchemaFacts::new(
             ContractValuePathFacts {
                 has_render_use: true,
@@ -514,7 +514,7 @@ fn self_guarded_null_default_without_sink_type_stays_unconstrained() {
 /// as text. The input domain is unconstrained; only the OUTPUT is a string.
 #[test]
 fn quote_stringification_accepts_any_input() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -524,7 +524,7 @@ fn quote_stringification_accepts_any_input() {
           flag: {{ .Values.flag | quote }}
           count: {{ .Values.count | quote }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         flag: false
         count: 7
@@ -601,7 +601,7 @@ fn total_stringification_direct_forms_accept_any_input() {
 /// `.Values.autoscaler.coresPerReplica | float64`, and Helm renders both.
 #[test]
 fn numeric_casts_accept_any_input() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $days := int .Values.certDurationDays }}
         apiVersion: v1
         kind: ConfigMap
@@ -610,7 +610,7 @@ fn numeric_casts_accept_any_input() {
         data:
           days: {{ $days | quote }}
           cores: {{ .Values.coresPerReplica | float64 }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         certDurationDays: 365
         coresPerReplica: 256

@@ -1,3 +1,5 @@
+//! Symbolic Helm interpretation and normalized contract IR.
+
 mod abstract_value;
 mod analysis_db;
 mod bound_value_analysis;

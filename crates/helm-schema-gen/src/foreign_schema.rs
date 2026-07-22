@@ -176,37 +176,34 @@ impl ForeignSchemaRestriction {
 
     fn apply_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
         if let Some((kind, variants)) = schema.first_union() {
-            return match kind {
-                "allOf" => {
-                    let restricted = variants
-                        .into_iter()
-                        .map(|variant| self.apply(variant))
-                        .collect::<Option<Vec<_>>>()?;
-                    schema.set_keyword(kind, Value::Array(restricted));
-                    Some(schema.into_value())
+            return if kind == "allOf" {
+                let restricted = variants
+                    .into_iter()
+                    .map(|variant| self.apply(variant))
+                    .collect::<Option<Vec<_>>>()?;
+                schema.set_keyword(kind, Value::Array(restricted));
+                Some(schema.into_value())
+            } else {
+                let retained_variants: Vec<Value> = variants
+                    .into_iter()
+                    .filter_map(|variant| self.apply(variant))
+                    .collect();
+                if retained_variants.is_empty() {
+                    return None;
                 }
-                _ => {
-                    let retained_variants: Vec<Value> = variants
-                        .into_iter()
-                        .filter_map(|variant| self.apply(variant))
-                        .collect();
-                    if retained_variants.is_empty() {
-                        return None;
-                    }
-                    let mut annotations = schema.into_annotations_only();
-                    annotations.set_keyword(kind, Value::Array(retained_variants));
-                    Some(annotations.into_value())
-                }
+                let mut annotations = schema.into_annotations_only();
+                annotations.set_keyword(kind, Value::Array(retained_variants));
+                Some(annotations.into_value())
             };
         }
 
         match self {
-            Self::Scalar => self.apply_scalar_object(schema),
-            Self::ScalarCollection => self.apply_scalar_collection_object(schema),
+            Self::Scalar => Self::apply_scalar_object(schema),
+            Self::ScalarCollection => Self::apply_scalar_collection_object(schema),
         }
     }
 
-    fn apply_scalar_object(self, mut schema: ForeignSchemaObject) -> Option<Value> {
+    fn apply_scalar_object(mut schema: ForeignSchemaObject) -> Option<Value> {
         if schema.allows_type(JsonSchemaType::Array) {
             return rewrite_array_schema(schema, Self::Scalar);
         }
@@ -232,7 +229,7 @@ impl ForeignSchemaRestriction {
         }
     }
 
-    fn apply_scalar_collection_object(self, schema: ForeignSchemaObject) -> Option<Value> {
+    fn apply_scalar_collection_object(schema: ForeignSchemaObject) -> Option<Value> {
         if !schema.allows_type(JsonSchemaType::Array) {
             return None;
         }

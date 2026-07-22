@@ -21,12 +21,12 @@ fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
 #[test]
 fn detects_kind_before_api_version() {
     let resource = detect(
-        indoc! {r#"
+        indoc! {r"
             kind: NetworkPolicy
             apiVersion: networking.k8s.io/v1
             metadata:
               name: example
-        "#},
+        "},
         &DefineIndex::new(),
     )
     .expect("resource");
@@ -38,12 +38,12 @@ fn detects_kind_before_api_version() {
 #[test]
 fn preserves_inline_conditional_kind_candidates() {
     let resource = detect(
-        indoc! {r#"
+        indoc! {r"
             apiVersion: apps/v1
             kind: {{ if .Values.persistence }}StatefulSet{{ else }}Deployment{{ end }}
             metadata:
               name: example
-        "#},
+        "},
         &DefineIndex::new(),
     )
     .expect("resource");
@@ -60,13 +60,13 @@ fn records_inline_conditional_kind_branch_sources() {
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
     let spans = collect_spans(
-        indoc! {r#"
+        indoc! {r"
             {{- $stateful := and .Values.local .Values.persistence }}
             apiVersion: apps/v1
             kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}
             metadata:
               name: example
-        "#},
+        "},
         &analysis_db,
     );
 
@@ -94,12 +94,12 @@ fn incomplete_inline_kind_chains_record_no_branch_sources() {
     let defines = DefineIndex::new();
     let analysis_db = IrAnalysisDb::new(&defines);
     let spans = collect_spans(
-        indoc! {r#"
+        indoc! {r"
             apiVersion: apps/v1
             kind: {{ if .Values.persistence }}StatefulSet{{ end }}
             metadata:
               name: example
-        "#},
+        "},
         &analysis_db,
     );
 

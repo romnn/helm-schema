@@ -4,14 +4,14 @@ use super::*;
 
 #[test]
 fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: PersistentVolumeClaim
         spec:
           {{- with .Values.dataSource }}
           dataSource: {{- toYaml . | nindent 4 }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         dataSource: {}
     "};
@@ -75,7 +75,7 @@ fn self_guarded_tplvalues_render_object_union_keeps_exact_empty_object_placehold
 
 #[test]
 fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -91,7 +91,7 @@ fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
                   value: {{ .value | quote }}
                   {{- end }}
               {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         env: {}
     "};
@@ -104,7 +104,7 @@ fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
         variant.get("type").and_then(Value::as_str) == Some("object")
             && variant.get("maxProperties").and_then(Value::as_u64) == Some(0)
     })
-    .unwrap_or_else(|| panic!("exact empty object off-state missing: {env}; ir={ir:?}",));
+    .unwrap_or_else(|| panic!("exact empty object off-state missing: {env}; ir={ir:?}"));
 
     any_of_variant_matching(env, |variant| {
         variant.get("type").and_then(Value::as_str) == Some("array")
@@ -161,7 +161,7 @@ fn guard_only_empty_map_default_stays_open_object() {
 /// a round-2 state where the list typing squeezed out the declared default.
 #[test]
 fn with_guarded_whole_splice_accepts_empty_map_default_and_list_form() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -176,7 +176,7 @@ fn with_guarded_whole_splice_accepts_empty_map_default_and_list_form() {
               containers:
                 - name: app
                   image: busybox
-    "#};
+    "};
     let values_yaml = indoc! {"
         imagePullSecrets: {}
     "};
@@ -226,7 +226,7 @@ fn undeclared_self_ranged_map_stays_open() {
 /// the open arm of its off-state union hosts the members without closing.
 #[test]
 fn serialized_empty_map_union_keeps_open_arm_for_members() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.config.apiVersion }}
         apiVersion: v1
         kind: ConfigMap
@@ -245,7 +245,7 @@ fn serialized_empty_map_union_keeps_open_arm_for_members() {
           config.yaml: |
         {{ toYaml .Values.config | indent 4 }}
         {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         config: {}
     "};

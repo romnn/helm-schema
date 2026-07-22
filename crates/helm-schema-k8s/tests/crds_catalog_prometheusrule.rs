@@ -1,3 +1,6 @@
+//! CRD-catalog schema lookup regression for `PrometheusRule`.
+
+use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -5,15 +8,15 @@ use test_util::prelude::sim_assert_eq;
 
 static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
-fn make_temp_dir(group_dir: &str) -> std::path::PathBuf {
+fn make_temp_dir(group_dir: &str) -> eyre::Result<std::path::PathBuf> {
     let n = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     let dir = std::env::temp_dir().join(format!(
         "helm-schema.crds-catalog-test.{}.{}",
         std::process::id(),
         n
     ));
-    std::fs::create_dir_all(dir.join(group_dir)).expect("create temp dir");
-    dir
+    std::fs::create_dir_all(dir.join(group_dir))?;
+    Ok(dir)
 }
 
 fn materialize_schema_for_resource(
@@ -27,7 +30,7 @@ fn materialize_schema_for_resource(
 }
 
 #[test]
-fn materialize_prometheusrule() {
+fn materialize_prometheusrule() -> eyre::Result<()> {
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
 
     let r = ResourceRef::concrete(
@@ -45,7 +48,7 @@ fn materialize_prometheusrule() {
         "expected schema to be cached at {cached:?}"
     );
 
-    let root_dir = make_temp_dir("monitoring.coreos.com");
+    let root_dir = make_temp_dir("monitoring.coreos.com")?;
     std::fs::copy(&cached, root_dir.join(relative_path)).expect("copy cached schema");
 
     let local_provider = LocalSchemaProvider::new(&root_dir);
@@ -53,10 +56,11 @@ fn materialize_prometheusrule() {
         materialize_schema_for_resource(&local_provider, &r).expect("materialize");
 
     sim_assert_eq!(have: upstream_materialized, want: local_materialized);
+    Ok(())
 }
 
 #[test]
-fn prometheusrule_leaf_schema_rules_items() {
+fn prometheusrule_leaf_schema_rules_items() -> eyre::Result<()> {
     let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
 
     let r = ResourceRef::concrete(
@@ -82,7 +86,7 @@ fn prometheusrule_leaf_schema_rules_items() {
         "expected schema to be cached at {cached:?}"
     );
 
-    let root_dir = make_temp_dir("monitoring.coreos.com");
+    let root_dir = make_temp_dir("monitoring.coreos.com")?;
     std::fs::copy(&cached, root_dir.join(relative_path)).expect("copy cached schema");
 
     let local_provider = LocalSchemaProvider::new(&root_dir);
@@ -92,6 +96,7 @@ fn prometheusrule_leaf_schema_rules_items() {
         .expect("leaf schema");
 
     sim_assert_eq!(have: upstream_leaf.into_schema(), want: local_leaf.into_schema());
+    Ok(())
 }
 
 /// `has_resource` reports whether the catalog has the resource's schema
@@ -151,7 +156,7 @@ fn relative_path_handles_dot_k8s_io_suffix_groups() {
 
 /// Built-in K8s API groups stay skipped — there's no point downloading
 /// `apps/v1/Deployment` from the CRDs catalog (it 404s) and accidentally
-/// shadowing the upstream K8s OpenAPI provider for these.
+/// shadowing the upstream K8s `OpenAPI` provider for these.
 #[test]
 fn relative_path_skips_built_in_k8s_groups() {
     let provider = CrdsCatalogSchemaProvider::new();

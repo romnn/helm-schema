@@ -1,5 +1,8 @@
 mod canonicalise;
-#[allow(clippy::module_inception)]
+#[expect(
+    clippy::module_inception,
+    reason = "the private diagnostic model shares the public module's domain name"
+)]
 mod diagnostic;
 mod format_json;
 mod format_text;

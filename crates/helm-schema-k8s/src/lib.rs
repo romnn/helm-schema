@@ -12,18 +12,28 @@
 //! The per-provider modules ([`kubernetes_openapi`], [`crds_catalog`],
 //! [`local_override`], [`local_schema_universe`]) are slim composers of the above.
 
+/// Classification of built-in Kubernetes API groups.
 pub mod builtin_groups;
+/// Persistent cache layout and negative-cache primitives.
 pub mod cache;
 mod cache_write;
+/// Provider for default and mirrored CRD catalogs.
 pub mod crds_catalog;
+/// Typed user-facing diagnostics and sinks.
 pub mod diagnostic;
 mod doc_backed_schema;
+/// HTTP transport abstraction used by fetch-on-miss providers.
 pub mod fetch;
 mod filename;
+/// Bounded `apiVersion` inference and its evidence types.
 pub mod inference;
+/// Versioned `Kubernetes OpenAPI` provider.
 pub mod kubernetes_openapi;
+/// User-configured local schema override provider.
 pub mod local_override;
+/// Chart-local CRD schema universe and provider.
 pub mod local_schema_universe;
+/// Provider-chain lookup contracts, traces, and outcomes.
 pub mod lookup;
 mod metadata_enrichment;
 mod mirror_chain;

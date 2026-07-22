@@ -41,7 +41,7 @@ fn extract_bound_values(
 #[test]
 fn parse_get_binding_detects_declaration_from_ast() {
     sim_assert_eq!(
-        have: parse_get_binding(r#"{{- $value := get $.Values.config $key -}}"#),
+        have: parse_get_binding(r"{{- $value := get $.Values.config $key -}}"),
         want: Some(GetBindingPlan {
             variable: "value".to_string(),
             kind: AssignmentKind::Declaration,
@@ -56,7 +56,7 @@ fn parse_get_binding_detects_declaration_from_ast() {
 #[test]
 fn parse_get_binding_detects_assignment_from_ast() {
     sim_assert_eq!(
-        have: parse_get_binding(r#"{{- $value = get .Values.config $key -}}"#),
+        have: parse_get_binding(r"{{- $value = get .Values.config $key -}}"),
         want: Some(GetBindingPlan {
             variable: "value".to_string(),
             kind: AssignmentKind::Assignment,

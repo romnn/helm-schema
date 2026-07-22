@@ -15,6 +15,7 @@ pub struct DiagnosticSink {
 }
 
 impl DiagnosticSink {
+    /// Creates an empty deterministic diagnostic sink.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -30,7 +31,7 @@ impl DiagnosticSink {
         }
     }
 
-    /// Run a closure over the BTreeMap iterator. Held under the mutex
+    /// Run a closure over the `BTreeMap` iterator. Held under the mutex
     /// for the duration of the closure; keep it short.
     pub fn for_each<F: FnMut(&Diagnostic)>(&self, mut f: F) {
         if let Ok(guard) = self.inner.lock() {

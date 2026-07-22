@@ -1,3 +1,5 @@
+//! Semantic-version constraint lowering regressions.
+
 use helm_schema_ast::semver_constraint_match_pattern;
 use test_util::prelude::sim_assert_eq;
 
@@ -48,9 +50,12 @@ fn reference_matches(op: Op, bound: (u64, u64, u64), version: &str) -> bool {
         let Ok(parsed) = part.parse() else {
             return false;
         };
-        value[position] = parsed;
+        if let Some(slot) = value.get_mut(position) {
+            *slot = parsed;
+        }
     }
-    let value = (value[0], value[1], value[2]);
+    let [major, minor, patch] = value;
+    let value = (major, minor, patch);
     match op {
         Op::Lt => value < bound,
         Op::Le => value <= bound,

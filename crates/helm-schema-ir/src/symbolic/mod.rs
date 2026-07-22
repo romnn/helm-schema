@@ -22,6 +22,7 @@ struct SymbolicIrContextInner {
 }
 
 impl SymbolicIrContext {
+    /// Creates a reusable symbolic-analysis context for indexed chart sources.
     #[tracing::instrument(skip_all)]
     pub fn new(defines: &DefineIndex) -> Self {
         Self {
@@ -74,6 +75,7 @@ impl SymbolicIrContext {
         self.generate_contract_ir_with_provenance(src, None)
     }
 
+    /// Builds contract IR while attaching a logical template source path.
     #[must_use]
     pub fn generate_contract_ir_for_source(&self, src: &str, source_path: &str) -> ContractIr {
         self.generate_contract_ir_with_provenance(src, Some(source_path))

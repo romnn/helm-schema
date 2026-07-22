@@ -99,7 +99,7 @@ struct VariableLocalState {
 }
 
 impl SymbolicLocalState {
-    pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: Vec<Self>) {
+    pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: &[Self]) {
         *self = joined_branch_outcomes(entry, outcomes);
     }
 

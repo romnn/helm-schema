@@ -5,7 +5,7 @@ use super::*;
 /// identity (reloader `deployment.env.existing` shape).
 #[test]
 fn nested_range_over_ranged_local_requires_iterable_items() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -16,7 +16,7 @@ fn nested_range_over_ranged_local_requires_iterable_items() {
           {{ $key }}: {{ $value }}
           {{- end }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = "existing: ~\n";
     let ir = parse_ir(src);
     let signals = schema_signals_for(&ir);
@@ -107,7 +107,7 @@ fn default_guarded_string_consumer_binds_conditional_contract() {
 /// `deployment.env.secret` shape).
 #[test]
 fn range_alternative_does_not_bypass_member_contract() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -125,7 +125,7 @@ fn range_alternative_does_not_bypass_member_contract() {
           {{- if .Values.secret }}
           alert: {{ .Values.secret.ALERT_ON_RELOAD }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = "secret: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -234,7 +234,7 @@ fn slice_partition_overlay_accepts_arrays() {
 /// Pod affinity value.
 #[test]
 fn mapping_value_yaml_serialization_keeps_provider_shape() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -244,7 +244,7 @@ fn mapping_value_yaml_serialization_keeps_provider_shape() {
           affinity:
             {{- toYaml . | nindent 4 }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = "affinity: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -269,7 +269,7 @@ fn mapping_value_yaml_serialization_keeps_provider_shape() {
 /// skip values without admitting a truthy scalar into the sequence.
 #[test]
 fn sequence_fragment_keeps_provider_array_domain() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -282,7 +282,7 @@ fn sequence_fragment_keeps_provider_array_domain() {
                 {{- if .Values.extraEnvs }}
                 {{- toYaml .Values.extraEnvs | nindent 8 }}
                 {{- end }}
-    "#};
+    "};
     let signals = parse_ir(src).finalize().into_schema_signals();
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&signals, &SharedObjectProvider)
@@ -313,7 +313,7 @@ fn sequence_fragment_keeps_provider_array_domain() {
 /// arm per path, pruned where the schema tree already types the node.
 #[test]
 fn member_read_beside_serialize_requires_object_when_truthy() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.podDisruptionBudget }}
         apiVersion: policy/v1
         kind: PodDisruptionBudget
@@ -323,7 +323,7 @@ fn member_read_beside_serialize_requires_object_when_truthy() {
           selector: {{ .Values.podDisruptionBudget.selector }}
           {{- toYaml .Values.podDisruptionBudget | nindent 2 }}
         {{- end }}
-    "#};
+    "};
     let values_yaml = "podDisruptionBudget: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -354,7 +354,7 @@ fn member_read_beside_serialize_requires_object_when_truthy() {
 /// the shared input.
 #[test]
 fn serialized_fragment_does_not_bypass_independent_range_contract() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- with .Values.config }}
         apiVersion: example.com/v1
         kind: Widget
@@ -375,7 +375,7 @@ fn serialized_fragment_does_not_bypass_independent_range_contract() {
           {{ $key }}: {{ $value | quote }}
           {{- end }}
         {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("config: {}\n"));
 
     for instance in [
@@ -403,7 +403,7 @@ fn serialized_fragment_does_not_bypass_independent_range_contract() {
 
 #[test]
 fn yaml_serialization_does_not_erase_unconditional_range_domain() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: example.com/v1
         kind: Widget
         metadata:
@@ -418,7 +418,7 @@ fn yaml_serialization_does_not_erase_unconditional_range_domain() {
         metadata:
           name: ranged
         {{- end }}
-    "#};
+    "};
     let ir = parse_ir(src);
     let evidence = schema_signals_for(&ir)
         .evidence_for("config")
@@ -457,7 +457,7 @@ fn yaml_serialization_does_not_erase_unconditional_range_domain() {
 /// the access.
 #[test]
 fn ranged_member_access_rejects_falsy_members_only_when_live() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         apiVersion: v1
         kind: ConfigMap
@@ -468,7 +468,7 @@ fn ranged_member_access_rejects_falsy_members_only_when_live() {
           {{ $name }}: {{ $provider.name | quote }}
           {{- end }}
         {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("enabled: false\nproviders: {}\n"));
 
     assert!(
@@ -549,7 +549,7 @@ fn opened_empty_member_host_keeps_object_type() {
 /// (surveyor `config.credentials.secret.key` shape).
 #[test]
 fn chained_member_read_requires_intermediate_objects() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -558,7 +558,7 @@ fn chained_member_read_requires_intermediate_objects() {
           {{- if .Values.config.credentials }}
           key: {{ .Values.config.credentials.secret.key }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = "config: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -590,7 +590,7 @@ fn chained_member_read_requires_intermediate_objects() {
 /// parsed binding arity (ingress-nginx `controller.containerPort` shape).
 #[test]
 fn destructured_range_excludes_integer_iteration() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -603,7 +603,7 @@ fn destructured_range_excludes_integer_iteration() {
             - name: {{ $key }}
               containerPort: {{ $value }}
             {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         containerPort:
           http: 80
@@ -690,13 +690,13 @@ fn literal_dict_range_key_domain_decodes_get_conditions() {
     );
 }
 
-/// jenkins' JCasC config: a guarded document-level `range $key, $val`
+/// jenkins' `JCasC` config: a guarded document-level `range $key, $val`
 /// aborts rendering on scalar collections (the two-variable form never
 /// admits Go's integer ranging), so the iterable requirement binds behind
 /// the guard instead of vanishing with it.
 #[test]
 fn guarded_destructured_range_rejects_scalar_collections() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.autoReload }}
         {{- range $key, $val := .Values.configScripts }}
         {{- if $val }}
@@ -711,7 +711,7 @@ fn guarded_destructured_range_rejects_scalar_collections() {
         {{- end }}
         {{- end }}
         {{- end }}
-    "#};
+    "};
     let schema =
         schema_for_values_yaml(parse_ir(src), Some("autoReload: true\nconfigScripts: {}\n"));
     for (instance, want) in [
@@ -784,12 +784,12 @@ fn ranged_member_map_consumers_reject_scalar_members() {
 }
 
 /// jenkins ranges `configScripts` under BOTH sidecar-reload states (the
-/// jcasc ConfigMaps when auto-reload is on, the startup script when it is
+/// jcasc `ConfigMaps` when auto-reload is on, the startup script when it is
 /// off): complementary guards must compose into an unconditional iterable
 /// requirement, not cancel each other.
 #[test]
 fn complementary_guarded_ranges_keep_the_iterable_requirement() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.autoReload }}
         {{- range $key, $val := .Values.configScripts }}
         ---
@@ -814,7 +814,7 @@ fn complementary_guarded_ranges_keep_the_iterable_requirement() {
         {{ tpl $val $| indent 4 }}
           {{- end }}
         {{- end }}
-    "#};
+    "};
     let schema =
         schema_for_values_yaml(parse_ir(src), Some("autoReload: true\nconfigScripts: {}\n"));
     for (instance, want) in [

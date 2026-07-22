@@ -2,22 +2,19 @@ use std::collections::BTreeSet;
 
 use crate::abstract_value::AbstractValue;
 
-pub(super) fn value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
-    value.as_ref().map(AbstractValue::paths).unwrap_or_default()
+pub(super) fn value_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
+    value.map(AbstractValue::paths).unwrap_or_default()
 }
 
-pub(super) fn value_strings(value: &Option<AbstractValue>) -> BTreeSet<String> {
-    value
-        .as_ref()
-        .map(AbstractValue::strings)
-        .unwrap_or_default()
+pub(super) fn value_strings(value: Option<&AbstractValue>) -> BTreeSet<String> {
+    value.map(AbstractValue::strings).unwrap_or_default()
 }
 
 /// Paths whose value this abstract value may literally be. Widened influence
 /// is dataflow through an unknown call, not value identity: defaulting or
 /// type-hinting the call result (e.g. `required "..." .Values.x | quote`)
 /// says nothing about the type or defaultedness of `.Values.x` itself.
-pub(super) fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
+pub(super) fn identity_value_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     fn collect(value: &AbstractValue, paths: &mut BTreeSet<String>) {
         match value {
             AbstractValue::ValuesPath(path)
@@ -70,7 +67,7 @@ pub(super) fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<St
 /// boundaries. Serialization is different: every structurally retained leaf
 /// is part of the encoded payload and must be marked so a matching decoder
 /// can recover its runtime identity.
-pub(super) fn serialization_payload_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
+pub(super) fn serialization_payload_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     fn collect(value: &AbstractValue, paths: &mut BTreeSet<String>) {
         match value {
             AbstractValue::ValuesPath(path)
@@ -129,9 +126,8 @@ pub(super) fn serialization_payload_paths(value: &Option<AbstractValue>) -> BTre
     paths
 }
 
-pub(super) fn identity_range_key_paths(value: &Option<AbstractValue>) -> BTreeSet<String> {
+pub(super) fn identity_range_key_paths(value: Option<&AbstractValue>) -> BTreeSet<String> {
     value
-        .as_ref()
         .map(AbstractValue::range_key_paths)
         .unwrap_or_default()
 }

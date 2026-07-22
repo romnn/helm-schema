@@ -8,6 +8,7 @@ mod resource_identity;
 mod symbolic_local_state;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
+use color_eyre::eyre;
 use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, GuardDnf, Predicate};
 
 /// The raw per-branch guard stacks of one helper meta (branch predicates in
@@ -72,11 +73,11 @@ kind: Secret
 data:
   clients.json: {{ tpl (.Files.Get "config/client-auth.json") . | b64enc }}
 "#;
-    let file = r#"
+    let file = r"
 {{- range $user := .Values.users }}
 {{ $user.username }}: {{ $user.password }}
 {{- end }}
-"#;
+";
     let mut index = DefineIndex::new();
     index.add_file_source("config/client-auth.json", file);
     let ir = SymbolicIrContext::new(&index)
@@ -100,11 +101,11 @@ data:
   initialize: |-
     {{ include (print $.Template.BasePath "/_create.txt") . | nindent 4 }}
 "#;
-    let partial = r#"
+    let partial = r"
 {{- range $bucket := .Values.buckets }}
 create {{ $bucket.name }}
 {{- end }}
-"#;
+";
     let mut index = DefineIndex::new();
     index.add_file_source("templates/_create.txt", partial);
     let ir = SymbolicIrContext::new(&index)
@@ -287,13 +288,13 @@ data:
 
 #[test]
 fn document_local_coalesce_preserves_ordered_candidate_selection() {
-    let src = r#"
+    let src = r"
 {{- $selected := coalesce .Values.primary .Values.fallback -}}
 apiVersion: v1
 kind: Secret
 data:
   value: {{ $selected | b64enc | quote }}
-"#;
+";
     let ir = SymbolicIrContext::new(&DefineIndex::new())
         .generate_contract_ir(src)
         .finalize();
@@ -484,7 +485,7 @@ metadata:
 }
 
 #[test]
-fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() {
+fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -> eyre::Result<()> {
     let src = r#"
 {{- if .Values.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
@@ -503,7 +504,7 @@ spec:
         helper_template_dirs: &[("charts/common/templates", "tpl")],
         file_sources: &[],
     }
-    .load();
+    .load()?;
     for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
         idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
     }
@@ -569,6 +570,7 @@ spec:
                 .any(|guard| matches!(guard, Guard::Not { path } if path == "nameOverride"))),
         "a customLabels branch should not keep nameOverride=false after common.names.name is projected: {name_override_uses:#?}"
     );
+    Ok(())
 }
 
 #[test]
@@ -641,7 +643,7 @@ fn nonempty_choice_list_range_preserves_computed_mutation() {
 /// TEXT for the hash: every path the file splices influences the annotation
 /// but never lands there raw, so the caller-side row must carry the
 /// Serialized kind (a Scalar row would stamp the annotation slot's provider
-/// string schema onto trivy-operator's whole ConfigMap surface).
+/// string schema onto trivy-operator's whole `ConfigMap` surface).
 #[test]
 fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
     let mut idx = DefineIndex::new();

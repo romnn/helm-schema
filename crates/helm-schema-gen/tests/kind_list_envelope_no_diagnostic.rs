@@ -57,8 +57,7 @@ fn kind_list_envelope_descends_into_inner_resource() {
                     resource.kind == "Ingress" && resource.api_version == "networking.k8s.io/v1"
                 })
         }),
-        "host use must be attributed to the inner Ingress with a rebased path: {:#?}",
-        projection
+        "host use must be attributed to the inner Ingress with a rebased path: {projection:#?}"
     );
 
     let diagnostics = DiagnosticSink::new();

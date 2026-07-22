@@ -107,12 +107,15 @@ fn get_binding_plan_from_expr(
     let TemplateExpr::Call { function, args } = expr else {
         return None;
     };
-    if function != "get" || args.len() != 2 {
+    let [base, key] = args.as_slice() else {
+        return None;
+    };
+    if function != "get" {
         return None;
     }
 
-    let base = direct_values_path(args[0].deparen())?;
-    let TemplateExpr::Variable(key_var) = args[1].deparen() else {
+    let base = direct_values_path(base.deparen())?;
+    let TemplateExpr::Variable(key_var) = key.deparen() else {
         return None;
     };
     if key_var.is_empty() {
@@ -151,9 +154,12 @@ fn literal_dict_keys(expr: &TemplateExpr) -> Option<Vec<String>> {
         return None;
     }
     let keys = args
-        .chunks(2)
+        .chunks_exact(2)
         .map(|pair| {
-            string_literal_value(pair[0].deparen())
+            let [key, _] = pair else {
+                return None;
+            };
+            string_literal_value(key.deparen())
                 .filter(|key| !key.is_empty())
                 .map(str::to_string)
         })
@@ -254,9 +260,10 @@ impl ValueDomainConstraint {
 
 fn predicate_domain_constraints(expr: &TemplateExpr, truthy: bool) -> Option<DomainConstraints> {
     match expr.deparen() {
-        TemplateExpr::Call { function, args } if function == "not" && args.len() == 1 => {
-            predicate_domain_constraints(&args[0], !truthy)
-        }
+        TemplateExpr::Call { function, args } if function == "not" => match args.as_slice() {
+            [arg] => predicate_domain_constraints(arg, !truthy),
+            _ => None,
+        },
         TemplateExpr::Call { function, args } if function == "eq" => {
             eq_domain_constraints(args, truthy)
         }

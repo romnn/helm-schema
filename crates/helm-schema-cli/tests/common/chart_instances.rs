@@ -1,13 +1,10 @@
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use serde_json::Value;
 
 /// Compose a sparse values override over the chart defaults using Helm's
 /// null-deletion behavior.
-pub fn with_override(
-    chart_relative_path: &str,
-    override_value: Value,
-) -> std::result::Result<Value, Report> {
-    let values_yaml = crate::schema_roundtrip::read_values_yaml_for_path(chart_relative_path)
+pub fn with_override(chart_relative_path: &str, override_value: Value) -> eyre::Result<Value> {
+    let values_yaml = crate::values_yaml::read_values_yaml_for_path(chart_relative_path)
         .wrap_err("read values.yaml")?;
     let mut values: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;
     drop_nulls(&mut values);

@@ -117,7 +117,7 @@ fn spelling_corpus() -> Vec<String> {
     // Boundary spellings: values around each tested bound in every radix,
     // padded, signed, underscored, zero-decimal-tailed, and the parse
     // length cliffs where overflow starts coercing to 0.
-    for value in [0i64, 1, 2, 254, 255, 256, 510, 511, 512, 4294967295] {
+    for value in [0i64, 1, 2, 254, 255, 256, 510, 511, 512, 4_294_967_295] {
         for spelling in [
             format!("{value}"),
             format!("+{value}"),
@@ -161,14 +161,14 @@ fn spelling_corpus() -> Vec<String> {
 #[test]
 fn int_cast_preimages_agree_with_the_reference_coercion() {
     let corpus = spelling_corpus();
-    let bounds = [0i64, 1, 2, 255, 511, 4294967295, -1, -2, -255];
+    let bounds = [0i64, 1, 2, 255, 511, 4_294_967_295, -1, -2, -255];
     for bound in bounds {
         let above = decimal_strings_above(bound)
             .map(|pattern| regex::Regex::new(&pattern).expect("above pattern compiles"));
         let below = decimal_strings_below(bound)
             .map(|pattern| regex::Regex::new(&pattern).expect("below pattern compiles"));
-        let gt_region = int_region_string_preimage(true, bound).map(compile_preimage);
-        let lt_region = int_region_string_preimage(false, bound).map(compile_preimage);
+        let gt_region = compile_preimage(int_region_string_preimage(true, bound));
+        let lt_region = compile_preimage(int_region_string_preimage(false, bound));
         for spelling in &corpus {
             let coerced = sprig_int64(spelling);
             if let Some(above) = &above
@@ -189,17 +189,13 @@ fn int_cast_preimages_agree_with_the_reference_coercion() {
             }
             // The region preimages CLAIM a string when the Within pattern
             // matches, or when the Excluding escape does NOT match.
-            if let Some(preimage) = &gt_region
-                && preimage_claims(preimage, spelling)
-            {
+            if preimage_claims(&gt_region, spelling) {
                 assert!(
                     coerced > bound,
                     "region(>{bound}) claims {spelling:?} but it coerces to {coerced}"
                 );
             }
-            if let Some(preimage) = &lt_region
-                && preimage_claims(preimage, spelling)
-            {
+            if preimage_claims(&lt_region, spelling) {
                 assert!(
                     coerced < bound,
                     "region(<{bound}) claims {spelling:?} but it coerces to {coerced}"
@@ -252,7 +248,7 @@ fn refined_windows_claim_the_base0_families_exactly() {
             "{spelling:?} does not certainly parse above 1"
         );
     }
-    let Some(IntStringPreimage::Excluding(escape)) = int_region_string_preimage(false, 1) else {
+    let IntStringPreimage::Excluding(escape) = int_region_string_preimage(false, 1) else {
         panic!("bound 1 upper region rides the excluding lane");
     };
     let escape = regex::Regex::new(&escape).expect("escape compiles");

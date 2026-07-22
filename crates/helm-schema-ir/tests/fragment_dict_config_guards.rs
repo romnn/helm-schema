@@ -3,6 +3,7 @@
 //! compose across nested control regions. Pins the B4 regression where both
 //! were dropped (luup3 `common.*` dict-config pattern).
 
+use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::SymbolicIrContext;
 use helm_schema_ir::fragment_eval::dump_document;
@@ -133,7 +134,7 @@ fn literal_dotted_index_and_get_keys_stay_single_path_segments() {
 
 #[test]
 fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         spec:
         {{- with .Values.cfg }}
           config:
@@ -141,7 +142,7 @@ fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
         {{- $key | nindent 4 }}: {{ $value | quote }}
         {{- end }}
         {{- end }}
-    "#};
+    "};
 
     let expected = indoc! {r#"
         when always:
@@ -175,7 +176,7 @@ fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
 
 #[test]
 fn ranged_resource_with_bound_dynamic_entries_attach_below_literal_key() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         apiVersion: velero.io/v1
         kind: BackupStorageLocation
         spec:
@@ -190,7 +191,7 @@ fn ranged_resource_with_bound_dynamic_entries_attach_below_literal_key() {
         {{- end }}
         {{- end }}
         {{- end }}
-    "#};
+    "};
 
     let ir = SymbolicIrContext::new(&DefineIndex::new()).generate_contract_ir(source);
     let finalized = ir.finalize();
@@ -205,8 +206,8 @@ fn ranged_resource_with_bound_dynamic_entries_attach_below_literal_key() {
 }
 
 #[test]
-fn velero_backup_location_config_attaches_below_config_key() {
-    let source = test_util::read_testdata("charts/velero/templates/backupstoragelocation.yaml");
+fn velero_backup_location_config_attaches_below_config_key() -> eyre::Result<()> {
+    let source = test_util::read_testdata("charts/velero/templates/backupstoragelocation.yaml")?;
     let context = SymbolicIrContext::new(&DefineIndex::new());
     let fragment = context.eval_document_fragment(&source);
     let ir = context.generate_contract_ir(&source);
@@ -220,4 +221,5 @@ fn velero_backup_location_config_attaches_below_config_key() {
         "Velero's config map splice should project at spec.config:\n{}",
         dump_document(&fragment)
     );
+    Ok(())
 }

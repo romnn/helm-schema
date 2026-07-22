@@ -41,6 +41,10 @@ pub(super) struct RangeIterationBinding {
 }
 
 impl Interpreter<'_> {
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(super) fn eval_control(
         &mut self,
         region: &ControlRegion,
@@ -218,7 +222,7 @@ impl Interpreter<'_> {
                     }
                     self.locals = alternative_entry.clone();
                     self.locals
-                        .join_branch_outcomes(&alternative_entry, alternative_outcomes);
+                        .join_branch_outcomes(&alternative_entry, &alternative_outcomes);
                     all
                 }
                 None => self.eval_node_list(nodes),
@@ -227,7 +231,7 @@ impl Interpreter<'_> {
             // this branch's window evaluate here, re-attached under their
             // parent entry chain, so they carry this arm's condition.
             for spec in escaped_per_branch.get(index).into_iter().flatten() {
-                self.eval_deferred(spec.clone(), &mut contributions);
+                self.eval_deferred(spec, &mut contributions);
             }
             if matches!(arm, ArmSpec::Range { .. }) {
                 self.loop_depth -= 1;
@@ -275,7 +279,7 @@ impl Interpreter<'_> {
         self.active_direct_ranged_paths.truncate(entry_ranged);
         if let Some(entry_root) = &entry_root {
             self.restore_root_set_state(entry_root);
-            self.join_root_set_arms(entry_root, root_arm_states, has_unconditional_else);
+            self.join_root_set_arms(entry_root, &root_arm_states, has_unconditional_else);
         }
         if promote_body_outcome {
             // A statically nonempty exact range definitely ran its body:
@@ -293,7 +297,7 @@ impl Interpreter<'_> {
             );
             self.apply_omission_exclusions(&entry_locals, &mut outcomes, &arm_header_exprs);
         }
-        self.locals.join_branch_outcomes(&entry_locals, outcomes);
+        self.locals.join_branch_outcomes(&entry_locals, &outcomes);
 
         // Descendants of adopted or escaped nodes that start after the
         // region end evaluate here, outside the branch scope, re-attached
@@ -311,7 +315,7 @@ impl Interpreter<'_> {
             );
         }
         for spec in deferred_specs {
-            self.eval_deferred(spec, &mut out);
+            self.eval_deferred(&spec, &mut out);
         }
         out
     }
@@ -319,7 +323,7 @@ impl Interpreter<'_> {
     /// Evaluate one deferred descendant batch and re-attach it under its
     /// parent entry chain, letting explicitly-indented output keep floating
     /// past entries it does not render inside.
-    fn eval_deferred(&mut self, spec: DeferredNodes<'_>, out: &mut Contributions) {
+    fn eval_deferred(&mut self, spec: &DeferredNodes<'_>, out: &mut Contributions) {
         let views: Vec<NodeView<'_>> = spec
             .nodes
             .iter()
@@ -611,20 +615,26 @@ impl Interpreter<'_> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
         };
-        if function != "not" || args.len() != 1 {
+        let [arg] = args.as_slice() else {
+            return Vec::new();
+        };
+        if function != "not" {
             return Vec::new();
         }
         let TemplateExpr::Call {
             function: test,
             args: test_args,
-        } = args[0].deparen()
+        } = arg.deparen()
         else {
             return Vec::new();
         };
         if test != "hasKey" || test_args.len() != 2 {
             return Vec::new();
         }
-        let TemplateExpr::Variable(name) = test_args[0].deparen() else {
+        let Some(name_expr) = test_args.first() else {
+            return Vec::new();
+        };
+        let TemplateExpr::Variable(name) = name_expr.deparen() else {
             return Vec::new();
         };
         let accumulator_is_empty = self
@@ -735,6 +745,10 @@ impl Interpreter<'_> {
         Some(predicate)
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn activate_range(
         &mut self,
         header: Option<&TemplateHeader>,
@@ -994,7 +1008,11 @@ impl Interpreter<'_> {
         }
         if renders_scalar_items {
             for path in &source_paths {
-                extra.push_value_arm(splice_arm(path, ValueKind::Scalar, &self.current_site));
+                extra.push_value_arm(splice_arm(
+                    path,
+                    ValueKind::Scalar,
+                    self.current_site.as_ref(),
+                ));
             }
         }
         if renders_mapping_entries {
@@ -1003,7 +1021,8 @@ impl Interpreter<'_> {
             // CST can nest a shallow-marker region under a preceding open
             // entry), the same float rule as explicitly-indented output.
             for path in &source_paths {
-                let (condition, node) = splice_arm(path, ValueKind::Fragment, &self.current_site);
+                let (condition, node) =
+                    splice_arm(path, ValueKind::Fragment, self.current_site.as_ref());
                 let mut value = super::domain::Guarded::empty();
                 value.arms.push((condition, node));
                 match shape.dynamic_entry_indent {
@@ -1280,7 +1299,7 @@ impl Interpreter<'_> {
 fn splice_arm(
     path: &str,
     kind: ValueKind,
-    site: &Option<std::rc::Rc<super::domain::SiteFacts>>,
+    site: Option<&std::rc::Rc<super::domain::SiteFacts>>,
 ) -> (PathCondition, AbstractFragment) {
     (
         Predicate::True,
@@ -1288,7 +1307,7 @@ fn splice_arm(
             values_path: path.to_string(),
             kind,
             meta: SpliceMeta {
-                site: site.clone(),
+                site: site.cloned(),
                 ..SpliceMeta::default()
             },
         }),
@@ -1605,14 +1624,14 @@ impl Interpreter<'_> {
             let exclusion: BTreeSet<Predicate> = exclusions.into_iter().collect();
             let fold_spellings = fold_spellings.filter(|spellings| !spellings.is_empty());
             for index in keeping {
-                if let Some(value) = outcomes[index].fragment_values.get(name) {
-                    let mut excluded = attach_reassignment_exclusion(value, &exclusion);
+                if let Some(outcome) = outcomes.get_mut(index)
+                    && let Some(value) = outcome.fragment_values.get(name).cloned()
+                {
+                    let mut excluded = attach_reassignment_exclusion(&value, &exclusion);
                     if let Some(spellings) = &fold_spellings {
                         excluded = attach_empty_fold_spellings(excluded, spellings);
                     }
-                    outcomes[index]
-                        .fragment_values
-                        .insert(name.clone(), excluded);
+                    outcome.fragment_values.insert(name.clone(), excluded);
                 }
             }
         }
@@ -1657,8 +1676,11 @@ impl Interpreter<'_> {
                 TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_))
             )
         };
-        if !((is_local(&args[0]) && is_string_literal(&args[1]))
-            || (is_string_literal(&args[0]) && is_local(&args[1])))
+        let [left, right] = args.as_slice() else {
+            return None;
+        };
+        if !((is_local(left) && is_string_literal(right))
+            || (is_string_literal(left) && is_local(right)))
         {
             return None;
         }
@@ -1715,7 +1737,7 @@ impl Interpreter<'_> {
     /// weakens it, so negating one fires less often than negating all); a
     /// DISJUNCTION needs one negated conjunct per disjunct
     /// (external-secrets' `or (eq … "force") (and (eq … "auto") (include
-    /// …))` OpenShift gate). Empty means no sound negation was found.
+    /// …))` `OpenShift` gate). Empty means no sound negation was found.
     fn header_negation_sound_subset(&self, header: &TemplateExpr) -> Vec<Guard> {
         if let TemplateExpr::Call { function, args } = header.deparen()
             && function == "or"
@@ -1973,11 +1995,11 @@ impl Interpreter<'_> {
     fn join_root_set_arms(
         &mut self,
         entry: &RootSetState,
-        arms: Vec<(Predicate, bool, RootSetState)>,
+        arms: &[(Predicate, bool, RootSetState)],
         has_unconditional_else: bool,
     ) {
         let mut keys: BTreeSet<String> = BTreeSet::new();
-        for (_, _, state) in &arms {
+        for (_, _, state) in arms {
             for (key, value) in &state.mutations_observed {
                 if entry.mutations_observed.get(key) != Some(value) {
                     keys.insert(key.clone());
@@ -1987,7 +2009,7 @@ impl Interpreter<'_> {
         if keys.is_empty() {
             return;
         }
-        for (_, _, state) in &arms {
+        for (_, _, state) in arms {
             for key in &keys {
                 let Some(value) = state.mutations_observed.get(key) else {
                     continue;
@@ -2027,7 +2049,7 @@ impl Interpreter<'_> {
             let mut dispatch_arms = Vec::new();
             let mut joined_values: BTreeSet<AbstractValue> = BTreeSet::new();
             let mut truthy_conditions = Vec::new();
-            for (condition, _, state) in &arms {
+            for (condition, _, state) in arms {
                 let value = state
                     .mutations_observed
                     .get(key)

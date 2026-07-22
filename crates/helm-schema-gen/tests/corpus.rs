@@ -1,36 +1,42 @@
+//! Generated-schema corpus fixture regressions.
+
 #![recursion_limit = "4096"]
 
 mod common;
 
+use color_eyre::eyre::{self, OptionExt as _};
 use common::cases;
 use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
 
 #[test]
-fn schema_fixtures_match() {
+fn schema_fixtures_match() -> eyre::Result<()> {
     for case in cases::STANDARD_SCHEMA_CASES {
-        common::assert_schema_fixture(case);
+        common::assert_schema_fixture(case)?;
     }
+    Ok(())
 }
 
 #[test]
-fn values_yaml_validates_against_generated_schemas() {
+fn values_yaml_validates_against_generated_schemas() -> eyre::Result<()> {
     for case in cases::VALUES_VALIDATION_CASES {
-        common::assert_values_yaml_validates(case);
+        common::assert_values_yaml_validates(case)?;
     }
+    Ok(())
 }
 
 #[test]
-fn helm_templates_render_successfully() {
+fn helm_templates_render_successfully() -> eyre::Result<()> {
     for case in cases::HELM_RENDER_CASES {
-        common::assert_helm_render_case(case);
+        common::assert_helm_render_case(case)?;
     }
+    Ok(())
 }
 
 macro_rules! schema_behavior_test {
     ($name:ident, $case:expr) => {
         #[test]
-        fn $name() {
-            common::assert_schema_behavior_case(&$case);
+        fn $name() -> eyre::Result<()> {
+            common::assert_schema_behavior_case(&$case)
         }
     };
 }
@@ -80,8 +86,8 @@ schema_behavior_test!(
 macro_rules! rendered_manifest_validation_test {
     ($name:ident, $case:expr) => {
         #[test]
-        fn $name() {
-            common::assert_rendered_manifest_validation_case(&$case);
+        fn $name() -> eyre::Result<()> {
+            common::assert_rendered_manifest_validation_case(&$case)
         }
     };
 }
@@ -112,11 +118,11 @@ rendered_manifest_validation_test!(
 );
 
 #[test]
-fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
+fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() -> eyre::Result<()> {
     let case = cases::SURVEYOR_HPA;
-    let src = test_util::read_testdata(case.template_path);
-    let values_yaml = test_util::read_testdata(case.values_path);
-    let idx = common::build_define_index(case.define_sources, case.helper_parse_mode);
+    let src = test_util::read_testdata(case.template_path)?;
+    let values_yaml = test_util::read_testdata(case.values_path)?;
+    let idx = common::build_define_index(case.define_sources, case.helper_parse_mode)?;
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
 
     let diagnostics = DiagnosticSink::new();
@@ -145,15 +151,14 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() {
             }
             _ => None,
         })
-        .unwrap_or_else(|| {
-            panic!(
-                "expected a missing-upstream-schema warning for HPA autoscaling/v2beta1 in v1.35.0; got: {actual:?}"
-            )
-        });
+        .ok_or_eyre(format!(
+            "expected a missing-upstream-schema warning for HPA autoscaling/v2beta1 in v1.35.0; got: {actual:?}"
+        ))?;
 
     assert!(
         hint.as_deref()
             .is_some_and(|text| text.contains("removed in Kubernetes v1.25+")),
         "expected warning hint to mention removal in Kubernetes v1.25+; got: {hint:?}"
     );
+    Ok(())
 }

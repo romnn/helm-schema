@@ -4,11 +4,14 @@
 /// A half-open byte range `[start, end)` into the parsed source.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Span {
+    /// Inclusive byte offset where the range begins.
     pub start: usize,
+    /// Exclusive byte offset where the range ends.
     pub end: usize,
 }
 
 impl Span {
+    /// Creates a half-open byte range.
     #[must_use]
     pub fn new(start: usize, end: usize) -> Self {
         Self { start, end }
@@ -44,11 +47,13 @@ impl<'src> TemplatedDocument<'src> {
         crate::parse::parse_document(source, tokens)
     }
 
+    /// Returns the source text parsed into this document.
     #[must_use]
     pub fn source(&self) -> &'src str {
         self.source
     }
 
+    /// Returns the top-level CST nodes in source order.
     #[must_use]
     pub fn roots(&self) -> &[Node] {
         &self.roots
@@ -67,25 +72,37 @@ impl<'src> TemplatedDocument<'src> {
 /// appear, without affecting container structure.
 #[derive(Debug)]
 pub enum Node {
+    /// A YAML mapping entry.
     Mapping(MappingEntry),
+    /// A YAML sequence item.
     Sequence(SequenceItem),
+    /// A structured Go-template control region.
     Control(ControlRegion),
+    /// A standalone output action.
     Output(OutputAction),
+    /// A YAML comment line.
     Comment(CommentLine),
+    /// A scalar content line.
     Scalar(ScalarLine),
+    /// Source retained without a more precise structural interpretation.
     Opaque(OpaqueNode),
 }
 
 /// A scalar run split into literal text and template-action holes.
 #[derive(Debug)]
 pub struct ScalarParts {
+    /// Byte range covered by the complete scalar run.
     pub span: Span,
+    /// Literal and templated pieces in source order.
     pub parts: Vec<ScalarPart>,
 }
 
+/// One literal or templated piece of a scalar run.
 #[derive(Debug)]
 pub enum ScalarPart {
+    /// Literal source text.
     Text(Span),
+    /// A Go-template output action embedded in the scalar.
     Hole(Span),
 }
 
@@ -98,6 +115,7 @@ pub struct MappingEntry {
     /// Effective indent. Entries nested inline after a sequence dash use the
     /// line model's `dash + 2` convention rather than the literal column.
     pub indent: usize,
+    /// Parsed mapping key, including any embedded template holes.
     pub key: ScalarParts,
     /// Inline (non-block) value text, when present.
     pub value: Option<ScalarParts>,
@@ -107,6 +125,7 @@ pub struct MappingEntry {
     /// block-scalar value with a plain key). Closed or invalid-key entries
     /// never adopt children.
     pub opens_scope: bool,
+    /// Nodes structurally nested below the mapping entry.
     pub children: Vec<Node>,
 }
 
@@ -144,6 +163,7 @@ fn collect_sequence_items<'nodes>(nodes: &'nodes [Node], items: &mut Vec<&'nodes
 /// `dash + 2`.
 #[derive(Debug)]
 pub struct SequenceItem {
+    /// The sequence item's own source line.
     pub span: Span,
     /// The dash column.
     pub indent: usize,
@@ -151,6 +171,7 @@ pub struct SequenceItem {
     pub value: Option<ScalarParts>,
     /// Block-scalar header and suppressed body, for `- |` items.
     pub block: Option<BlockScalar>,
+    /// Nodes structurally nested below the sequence item.
     pub children: Vec<Node>,
 }
 
@@ -259,18 +280,26 @@ fn scalar_parts_end(parts: &ScalarParts) -> usize {
 /// suppressed holes.
 #[derive(Debug)]
 pub struct BlockScalar {
+    /// Block-scalar header token, including chomping and indentation markers.
     pub header: Span,
     /// Full body lines; empty (`start == end`) when the block has no body.
     pub body: Span,
+    /// Template actions suppressed from normal YAML layout parsing.
     pub holes: Vec<Span>,
 }
 
+/// Go-template action that owns a structured body.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ControlKind {
+    /// Conditional `if` action.
     If,
+    /// Context-selecting `with` action.
     With,
+    /// Iterating `range` action.
     Range,
+    /// Named-template `define` action.
     Define,
+    /// Overridable named-template `block` action.
     Block,
 }
 
@@ -280,8 +309,11 @@ pub enum ControlKind {
 /// closed while the branch was active.
 #[derive(Debug)]
 pub struct ControlRegion {
+    /// Kind of action that opened the region.
     pub kind: ControlKind,
+    /// Full source range from opener through closing action.
     pub span: Span,
+    /// Conditional or fallback branches in source order.
     pub branches: Vec<ControlBranch>,
     /// `false` when the region provably violates the well-nested assumption:
     /// a container opened inside a branch was still open when the branch
@@ -295,7 +327,9 @@ pub struct ControlRegion {
 /// `{{ else }}`, …) and the nodes emitted while the branch was active.
 #[derive(Debug)]
 pub struct ControlBranch {
+    /// Template action that opens this branch.
     pub header: Span,
+    /// CST nodes emitted while this branch is active.
     pub body: Vec<Node>,
 }
 
@@ -313,7 +347,9 @@ pub struct OutputAction {
 /// A YAML `#` comment line (which may itself contain template actions).
 #[derive(Debug)]
 pub struct CommentLine {
+    /// Full source range of the comment line.
     pub span: Span,
+    /// Comment content split around any template holes.
     pub content: ScalarParts,
 }
 
@@ -322,8 +358,11 @@ pub struct CommentLine {
 /// text the layout keeps only for its popping effect.
 #[derive(Debug)]
 pub struct ScalarLine {
+    /// Full source range of the scalar line.
     pub span: Span,
+    /// YAML indentation column.
     pub indent: usize,
+    /// Scalar content split around any template holes.
     pub content: ScalarParts,
 }
 
@@ -331,10 +370,13 @@ pub struct ScalarLine {
 /// they preserve the raw span so downstream can attribute conservatively.
 #[derive(Debug)]
 pub struct OpaqueNode {
+    /// Source range retained for attribution.
     pub span: Span,
+    /// Reason the source remains opaque.
     pub kind: OpaqueKind,
 }
 
+/// Classification of source retained without deeper CST structure.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OpaqueKind {
     /// A `{{/* … */}}` template comment.

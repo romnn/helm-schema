@@ -43,14 +43,14 @@ fn prefixed_argument_splice_keeps_fallback_typed_inputs_open() {
 /// start; maps render as plain `map[…]` text and stay safe.
 #[test]
 fn token_initial_splice_excludes_lists() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
           image: {{ .Values.tempo.registry }}/{{ .Values.tempo.repository }}:{{ .Values.tempo.tag }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
         Some("tempo:\n  registry: docker.io\n  repository: grafana/tempo\n  tag: latest\n"),
@@ -84,7 +84,7 @@ fn token_initial_splice_excludes_lists() {
 /// tempo's assembled image scalar).
 #[test]
 fn token_initial_splice_survives_sibling_default_arm_split() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: StatefulSet
         metadata:
@@ -97,7 +97,7 @@ fn token_initial_splice_survives_sibling_default_arm_split() {
                 - -config.file=/conf/tempo.yaml
                 image: {{ .Values.tempo.registry }}/{{ .Values.tempo.repository }}:{{ .Values.tempo.tag | default .Chart.AppVersion }}
                 name: tempo
-    "#};
+    "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
         Some("tempo:\n  registry: docker.io\n  repository: grafana/tempo\n  tag: latest\n"),
@@ -176,14 +176,14 @@ fn double_quoted_splice_excludes_invalid_quoted_content() {
 /// `envoy.log.defaultLevel`, kube-state-metrics' `prometheusScrape`).
 #[test]
 fn single_quoted_splice_excludes_undoubled_apostrophes() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
           level: 'trace|debug|{{ .Values.defaultLevel }}'
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("defaultLevel: info\n"));
     for (instance, want) in [
         (serde_json::json!({ "defaultLevel": "a'b" }), false),
@@ -204,7 +204,7 @@ fn single_quoted_splice_excludes_undoubled_apostrophes() {
 /// `- '--log-level {{ … }}'` container argument).
 #[test]
 fn single_quoted_sequence_item_excludes_undoubled_apostrophes() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -215,7 +215,7 @@ fn single_quoted_sequence_item_excludes_undoubled_apostrophes() {
               args:
                 - '-c config.json'
                 - '--log-level {{ .Values.defaultLevel }}'
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("defaultLevel: info\n"));
     for (instance, want) in [
         (serde_json::json!({ "defaultLevel": "a'b" }), false),
@@ -390,7 +390,7 @@ fn flow_quoted_splice_after_range_variable_keeps_the_contract() {
 /// scalars with their own indicator) stay valid.
 #[test]
 fn same_line_yaml_serialized_value_rejects_structured_members() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -399,7 +399,7 @@ fn same_line_yaml_serialized_value_rejects_structured_members() {
           {{- range .Values.zoneFiles }}
           {{ .filename }}: {{ toYaml .contents | indent 4 }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("zoneFiles: []\n"));
 
     for (instance, want) in [
@@ -497,7 +497,7 @@ fn double_quoted_splice_composites_require_safe_nested_strings() {
 /// same way).
 #[test]
 fn single_quoted_splice_composites_require_safe_nested_strings() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -507,7 +507,7 @@ fn single_quoted_splice_composites_require_safe_nested_strings() {
             - name: main
               args:
                 - '--log-level {{ .Values.defaultLevel }}'
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("defaultLevel: info\n"));
     for (instance, want) in [
         (serde_json::json!({ "defaultLevel": { "x": "a'b" } }), false),

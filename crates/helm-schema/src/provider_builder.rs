@@ -23,7 +23,9 @@ pub struct ProviderOptions {
     /// Bypass persistent K8s cache reads while refreshing cache writes.
     pub no_cache: bool,
 
+    /// Whether provider cache misses may access upstream sources.
     pub allow_net: bool,
+    /// Whether versioned `Kubernetes OpenAPI` providers are omitted.
     pub disable_k8s_schemas: bool,
 
     /// `crd_lookup_loose=true` activates the cross-version CRD cache

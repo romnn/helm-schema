@@ -3,8 +3,12 @@ use test_util::prelude::sim_assert_eq;
 use super::*;
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -14,7 +18,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
           {{- if .Values.strict.enabled }}
           strict: {{ .Values.strict.receiver.leaf | quote }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         grouped: {}
         strict:
@@ -227,14 +231,14 @@ fn present_key_guard_keeps_scalar_provider_schema_at_leaf() {
 /// import unrelated declared siblings into a per-template schema.
 #[test]
 fn synthetic_member_parent_does_not_seed_unreferenced_values_siblings() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
           port: {{ .Values.master.containerPorts.redis | quote }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         master:
           containerPorts:
@@ -263,7 +267,7 @@ fn synthetic_member_parent_does_not_seed_unreferenced_values_siblings() {
 /// unconditional item/value constraint.
 #[test]
 fn member_local_guard_does_not_leak_its_string_contract() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -275,7 +279,7 @@ fn member_local_guard_does_not_leak_its_string_contract() {
             {{ tpl $item.template $ }}
             {{- end }}
             {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("items: []\n"));
     // The member-local predicate cannot lower as a document guard, but its
     // `enabled` lookup still proves the structural member host in every
@@ -345,7 +349,7 @@ fn member_local_guard_does_not_leak_its_string_contract() {
 /// only the truthy states carry the leaf's iterable requirement.
 #[test]
 fn nested_with_chain_range_keeps_falsy_ancestors_valid() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -365,7 +369,7 @@ fn nested_with_chain_range_keeps_falsy_ancestors_valid() {
                   {{- end }}
               {{- end }}
               {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
         Some(
@@ -449,7 +453,7 @@ fn nested_member_range_keeps_map_lane_in_member_arm() {
 /// on the intermediate map, so a non-object host aborts rendering even
 /// though the region's own body never renders for it. The member-host arm
 /// must survive the sibling `hasKey` dispatch inside the body
-/// (external-secrets' webhook PodDisruptionBudget).
+/// (external-secrets' webhook `PodDisruptionBudget`).
 #[test]
 fn header_member_read_requires_an_object_host_beside_body_dispatch() {
     let src = indoc! {r#"
@@ -503,7 +507,7 @@ fn header_member_read_requires_an_object_host_beside_body_dispatch() {
 /// the presence-guarded member-host arm.
 #[test]
 fn nil_safe_grouped_receiver_with_declared_default_admits_null() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -513,7 +517,7 @@ fn nil_safe_grouped_receiver_with_declared_default_admits_null() {
             {{- toYaml . | nindent 4 }}
           {{- end }}
         data: {}
-    "#};
+    "};
     let values_yaml = indoc! {"
         global:
           labels: {}

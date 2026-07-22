@@ -26,6 +26,7 @@ impl std::str::FromStr for K8sVersionFallback {
     }
 }
 
+/// Kubernetes schema versions, mirrors, cache, and network options.
 #[derive(Args, Debug, Clone)]
 pub struct K8sArgs {
     /// Kubernetes minor version directory(s) to consult, in
@@ -75,13 +76,17 @@ impl K8sArgs {
     /// Resolved fallback window after applying strict mode + sanity
     /// checks. Returns `None` when no auto-fallback should apply (either
     /// because strict is set, the flag is absent, or `Window(0)`).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when automatic fallback is combined with more than
+    /// one explicitly configured Kubernetes version.
     pub fn resolved_fallback_window(&self) -> Result<Option<u32>, String> {
         if self.strict_k8s_version {
             return Ok(None);
         }
         match &self.k8s_version_fallback {
-            None => Ok(None),
-            Some(K8sVersionFallback::Window(0)) => Ok(None),
+            None | Some(K8sVersionFallback::Window(0)) => Ok(None),
             Some(K8sVersionFallback::Window(n)) => Ok(Some(*n)),
             Some(K8sVersionFallback::Auto) => {
                 if self.k8s_version.len() != 1 {

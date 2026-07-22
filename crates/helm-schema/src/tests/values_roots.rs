@@ -40,14 +40,14 @@ fn ignores_non_mapping_documents_and_empty_keys() {
 #[test]
 fn mapping_root_paths_distinguish_structured_values_roots() {
     let roots = ValuesRoots::from_values_yaml(Some(
-        r#"
+        r"
 object:
   nested: true
 empty: {}
 scalar: value
 list:
   - item
-"#,
+",
     ));
 
     sim_assert_eq!(
@@ -59,7 +59,7 @@ list:
 #[test]
 fn extracts_nested_explicit_mapping_paths() {
     let roots = ValuesRoots::from_values_yaml(Some(
-        r#"
+        r"
 controller:
   kind: Deployment
   admissionWebhooks:
@@ -67,7 +67,7 @@ controller:
 tcp: {}
 items:
   - name: first
-"#,
+",
     ));
 
     sim_assert_eq!(

@@ -52,6 +52,10 @@ use value_facts::{
     mark_stringified_identities,
 };
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn eval_call_with_helper_calls(
     function: &str,
     args: &[TemplateExpr],
@@ -65,16 +69,22 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         "set" if args.len() == 3 => eval_set_call(args, env, resolver),
-        "default" if args.len() == 2 => {
-            let primary = eval_expr_with_helper_calls(&args[1], env, resolver);
-            eval_default(primary, &args[..1], env, resolver)
+        "default" if matches!(args, [_, _]) => {
+            let [fallback, primary] = args else {
+                return EvalResult::none();
+            };
+            let primary = eval_expr_with_helper_calls(primary, env, resolver);
+            eval_default(primary, std::slice::from_ref(fallback), env, resolver)
         }
         "and" => eval_short_circuit_args(args, true, env, resolver),
         "or" => eval_short_circuit_args(args, false, env, resolver),
         "dict" => eval_dict(args, env, resolver),
         "list" | "tuple" => eval_list(args, env, resolver),
-        "deepCopy" | "mustDeepCopy" if args.len() == 1 => {
-            eval_expr_with_helper_calls(&args[0], env, resolver)
+        "deepCopy" | "mustDeepCopy" if matches!(args, [_]) => {
+            let Some(arg) = args.first() else {
+                return EvalResult::none();
+            };
+            eval_expr_with_helper_calls(arg, env, resolver)
         }
         "first" if args.len() == 1 => {
             let mut result = eval_first(args, env, resolver);
@@ -86,15 +96,27 @@ pub(crate) fn eval_call_with_helper_calls(
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
             result
         }
-        "initial" | "rest" | "compact" if args.len() == 1 => {
-            let mut result = eval_expr_with_helper_calls(&args[0], env, resolver);
+        "initial" | "rest" | "compact" if matches!(args, [_]) => {
+            let Some(arg) = args.first() else {
+                return EvalResult::none();
+            };
+            let mut result = eval_expr_with_helper_calls(arg, env, resolver);
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
             result
         }
         "slice" | "mustSlice" if (2..=3).contains(&args.len()) => {
-            let mut result = eval_expr_with_helper_calls(&args[0], env, resolver);
-            record_strict_kind_operands(&args[..1], "array", env, resolver, &mut result.effects);
-            merge_arg_effects(&args[1..], env, resolver, &mut result.effects);
+            let Some((subject, bounds)) = args.split_first() else {
+                return EvalResult::none();
+            };
+            let mut result = eval_expr_with_helper_calls(subject, env, resolver);
+            record_strict_kind_operands(
+                std::slice::from_ref(subject),
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
+            merge_arg_effects(bounds, env, resolver, &mut result.effects);
             result
         }
         "reverse" if args.len() == 1 => {
@@ -107,14 +129,14 @@ pub(crate) fn eval_call_with_helper_calls(
             record_string_call_consumers("splitList", args, env, resolver, &mut result.effects);
             result
         }
-        "split" if args.len() == 2 && is_nonempty_string_literal(&args[0]) => {
+        "split" if matches!(args.first(), Some(separator) if args.len() == 2 && is_nonempty_string_literal(separator)) => {
             eval_nonempty_split(args, env, resolver)
         }
         "append" => {
             let mut result = eval_append(args, env, resolver);
-            if args.len() == 2 {
+            if let [subject, _] = args {
                 record_strict_kind_operands(
-                    &args[..1],
+                    std::slice::from_ref(subject),
                     "array",
                     env,
                     resolver,
@@ -125,7 +147,15 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         "omit" if !args.is_empty() => {
             let mut result = eval_omit(args, env, resolver);
-            record_strict_kind_operands(&args[..1], "object", env, resolver, &mut result.effects);
+            if let Some(subject) = args.first() {
+                record_strict_kind_operands(
+                    std::slice::from_ref(subject),
+                    "object",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
+            }
             result
         }
         function if is_merge_function(function) => {
@@ -143,7 +173,9 @@ pub(crate) fn eval_call_with_helper_calls(
             for operand in &operands {
                 effects.merge(operand.effects.clone());
             }
-            record_strict_kind_result(&operands[0], "string", &mut effects);
+            if let Some(operand) = operands.first() {
+                record_strict_kind_result(operand, "string", &mut effects);
+            }
             for (index, operand) in operands.iter().enumerate().take(3).skip(1) {
                 record_strict_kind_result(operand, "array", &mut effects);
                 record_collection_item_kind_result(
@@ -153,7 +185,9 @@ pub(crate) fn eval_call_with_helper_calls(
                     &mut effects,
                 );
             }
-            record_strict_kind_result(&operands[3], "integer", &mut effects);
+            if let Some(operand) = operands.get(3) {
+                record_strict_kind_result(operand, "integer", &mut effects);
+            }
             EvalResult::with_effects(None, effects)
         }
         "eq" | "ne" if args.len() >= 2 => eval_comparison(args, env, resolver),
@@ -181,9 +215,12 @@ pub(crate) fn eval_call_with_helper_calls(
         "len" if args.len() == 1 => {
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_length_bearing_operand(args, env, resolver, &mut result.effects);
-            let subject = eval_expr_with_helper_calls(&args[0], env, resolver);
+            let Some(subject_expr) = args.first() else {
+                return result;
+            };
+            let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
             record_total_conversion_effects(
-                identity_value_paths(&subject.value),
+                identity_value_paths(subject.value.as_ref()),
                 &mut result.effects,
             );
             // A statically known collection has a constant length, which
@@ -206,7 +243,7 @@ pub(crate) fn eval_call_with_helper_calls(
             for arg in args {
                 let operand = eval_expr_with_helper_calls(arg, env, resolver);
                 record_total_conversion_effects(
-                    identity_value_paths(&operand.value),
+                    identity_value_paths(operand.value.as_ref()),
                     &mut result.effects,
                 );
             }
@@ -226,42 +263,79 @@ pub(crate) fn eval_call_with_helper_calls(
             }
             result
         }
-        "has" if args.len() == 2 => {
+        "has" if matches!(args, [_, _]) => {
+            let [_, subject_expr] = args else {
+                return EvalResult::none();
+            };
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
-            record_strict_kind_operands(&args[1..], "array", env, resolver, &mut result.effects);
-            let subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+            record_strict_kind_operands(
+                std::slice::from_ref(subject_expr),
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
+            let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
             record_total_conversion_effects(
-                identity_value_paths(&subject.value),
+                identity_value_paths(subject.value.as_ref()),
                 &mut result.effects,
             );
             result
         }
-        "prepend" if args.len() == 2 => {
+        "prepend" if matches!(args, [_, _]) => {
             let mut result = eval_prepend(args, env, resolver);
-            record_strict_kind_operands(&args[..1], "array", env, resolver, &mut result.effects);
+            if let Some(subject) = args.first() {
+                record_strict_kind_operands(
+                    std::slice::from_ref(subject),
+                    "array",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
+            }
             result
         }
-        "hasKey" if args.len() == 2 => {
+        "hasKey" if matches!(args, [_, _]) => {
+            let [subject_expr, _] = args else {
+                return EvalResult::none();
+            };
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
-            record_strict_kind_operands(&args[..1], "object", env, resolver, &mut result.effects);
-            let subject = eval_expr_with_helper_calls(&args[0], env, resolver);
+            record_strict_kind_operands(
+                std::slice::from_ref(subject_expr),
+                "object",
+                env,
+                resolver,
+                &mut result.effects,
+            );
+            let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
             record_total_conversion_effects(
-                identity_value_paths(&subject.value),
+                identity_value_paths(subject.value.as_ref()),
                 &mut result.effects,
             );
             result
         }
         "pick" if !args.is_empty() => {
             let mut result = eval_pick(args, env, resolver);
-            record_strict_kind_operands(&args[..1], "object", env, resolver, &mut result.effects);
+            if let Some(subject) = args.first() {
+                record_strict_kind_operands(
+                    std::slice::from_ref(subject),
+                    "object",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
+            }
             result
         }
         "keys" | "values" if args.len() == 1 => {
-            let operand = eval_expr_with_helper_calls(&args[0], env, resolver);
+            let Some(arg) = args.first() else {
+                return EvalResult::none();
+            };
+            let operand = eval_expr_with_helper_calls(arg, env, resolver);
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_strict_kind_result(&operand, "object", &mut result.effects);
             record_total_conversion_effects(
-                identity_value_paths(&operand.value),
+                identity_value_paths(operand.value.as_ref()),
                 &mut result.effects,
             );
             // `keys m` over a single values-backed map keeps the map
@@ -281,7 +355,10 @@ pub(crate) fn eval_call_with_helper_calls(
         // survives; other operands keep the widened-call semantics (it
         // coerces non-lists to a singleton, so it imposes no operand kind).
         "sortAlpha" if args.len() == 1 => {
-            let operand = eval_expr_with_helper_calls(&args[0], env, resolver);
+            let Some(arg) = args.first() else {
+                return EvalResult::none();
+            };
+            let operand = eval_expr_with_helper_calls(arg, env, resolver);
             match &operand.value {
                 Some(AbstractValue::KeysList(_)) => operand,
                 _ => eval_unknown_call(args, Effects::default(), env, resolver),
@@ -289,8 +366,16 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         "pluck" if args.len() >= 2 => {
             let mut result = eval_pluck(args, env, resolver);
-            record_strict_kind_operands(&args[..1], "string", env, resolver, &mut result.effects);
-            record_strict_kind_operands(&args[1..], "object", env, resolver, &mut result.effects);
+            if let Some((key, maps)) = args.split_first() {
+                record_strict_kind_operands(
+                    std::slice::from_ref(key),
+                    "string",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
+                record_strict_kind_operands(maps, "object", env, resolver, &mut result.effects);
+            }
             result
         }
         "uniq" | "mustUniq" if args.len() == 1 => {
@@ -320,7 +405,7 @@ pub(crate) fn eval_call_with_helper_calls(
                 string_call_operand_facts("repeat", args, env, resolver);
             record_string_transform_effects(
                 "repeat",
-                &result.value,
+                result.value.as_ref(),
                 &string_paths,
                 &raw_range_key_paths,
                 &mut result.effects,
@@ -332,9 +417,12 @@ pub(crate) fn eval_call_with_helper_calls(
         "index" => eval_index(args, false, env, resolver),
         "get" if args.len() == 2 => eval_index(args, true, env, resolver),
         "dig" if args.len() >= 3 => eval_dig(args, env, resolver),
-        "required" if args.len() == 2 => {
-            let message = eval_expr_with_helper_calls(&args[0], env, resolver);
-            let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+        "required" if matches!(args, [_, _]) => {
+            let [message, subject] = args else {
+                return EvalResult::none();
+            };
+            let message = eval_expr_with_helper_calls(message, env, resolver);
+            let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
             subject.effects.merge(message.effects);
             subject
         }
@@ -350,7 +438,10 @@ pub(crate) fn eval_call_with_helper_calls(
         function if is_total_numeric_cast_function(function) && args.len() == 1 => {
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
-            record_total_conversion_effects(identity_value_paths(&result.value), &mut effects);
+            record_total_conversion_effects(
+                identity_value_paths(result.value.as_ref()),
+                &mut effects,
+            );
             EvalResult::with_effects(derive_value_text(result.value), effects)
         }
         function if is_string_transform_function(function) => {
@@ -360,7 +451,7 @@ pub(crate) fn eval_call_with_helper_calls(
                 string_call_operand_facts(function, args, env, resolver);
             record_string_transform_effects(
                 function,
-                &result.value,
+                result.value.as_ref(),
                 &string_paths,
                 &raw_range_key_paths,
                 &mut effects,
@@ -438,18 +529,22 @@ fn record_values_root_helper_include(
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn eval_pipeline_with_helper_calls(
     stages: &[TemplateExpr],
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let Some(first_stage) = stages.first() else {
+    let Some((first_stage, remaining_stages)) = stages.split_first() else {
         return EvalResult::none();
     };
     let mut current = eval_expr_with_helper_calls(first_stage, env, resolver);
     let mut current_is_direct_values_path = direct_values_path(first_stage).is_some();
 
-    for stage in &stages[1..] {
+    for stage in remaining_stages {
         let TemplateExpr::Call { function, args } = stage else {
             current
                 .effects
@@ -504,7 +599,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
                 record_length_bearing_result(&operand, &mut result.effects);
                 record_total_conversion_effects(
-                    identity_value_paths(&operand.value),
+                    identity_value_paths(operand.value.as_ref()),
                     &mut result.effects,
                 );
                 if let Some(length) = operand.value.as_ref().and_then(concrete_collection_len) {
@@ -537,7 +632,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
                     args,
-                    &current.value,
+                    current.value.as_ref(),
                     &current.effects,
                     env,
                     resolver,
@@ -554,7 +649,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
                     args,
-                    &current.value,
+                    current.value.as_ref(),
                     &current.effects,
                     env,
                     resolver,
@@ -563,13 +658,13 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 for arg in args {
                     let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
                     if function == "b64enc" {
-                        effects.add_encoded_paths(identity_value_paths(&arg_result.value));
+                        effects.add_encoded_paths(identity_value_paths(arg_result.value.as_ref()));
                     }
                     effects.merge(arg_result.effects);
                 }
                 record_string_transform_effects(
                     function,
-                    &current.value,
+                    current.value.as_ref(),
                     &string_paths,
                     &raw_range_key_paths,
                     &mut effects,
@@ -587,23 +682,26 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let mut effects = current.effects;
                 // The piped value is printf's FINAL data argument; `args`
                 // hold the format plus any leading data arguments.
-                let piped = identity_value_paths(&current.value);
+                let piped = identity_value_paths(current.value.as_ref());
                 record_printf_argument_effects(false, &piped, &mut effects);
                 for (index, arg) in args.iter().enumerate() {
                     let result = eval_expr_with_helper_calls(arg, env, resolver);
-                    let identity_paths = identity_value_paths(&result.value);
+                    let identity_paths = identity_value_paths(result.value.as_ref());
                     effects.merge(result.effects);
                     record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
                 }
                 EvalResult::with_effects(current.value, effects)
             }
             "join" => eval_join_pipeline(current, args, env, resolver),
-            "split" if args.len() == 1 && is_nonempty_string_literal(&args[0]) => {
+            "split" if matches!(args.as_slice(), [separator] if is_nonempty_string_literal(separator)) => {
                 eval_nonempty_split_pipeline(current, args, env, resolver)
             }
             function if is_total_numeric_cast_function(function) => {
                 let mut effects = current.effects;
-                record_total_conversion_effects(identity_value_paths(&current.value), &mut effects);
+                record_total_conversion_effects(
+                    identity_value_paths(current.value.as_ref()),
+                    &mut effects,
+                );
                 merge_arg_effects(args, env, resolver, &mut effects);
                 EvalResult::with_effects(current.value, effects)
             }
@@ -612,11 +710,14 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             // kinds are unconstrained (`… | mulf $percentage`).
             function if is_coercing_arithmetic_function(function) => {
                 let mut effects = current.effects;
-                record_total_conversion_effects(identity_value_paths(&current.value), &mut effects);
+                record_total_conversion_effects(
+                    identity_value_paths(current.value.as_ref()),
+                    &mut effects,
+                );
                 for arg in args {
                     let operand = eval_expr_with_helper_calls(arg, env, resolver);
                     record_total_conversion_effects(
-                        identity_value_paths(&operand.value),
+                        identity_value_paths(operand.value.as_ref()),
                         &mut effects,
                     );
                     effects.merge(operand.effects);
@@ -638,7 +739,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
                     args,
-                    &current.value,
+                    current.value.as_ref(),
                     &current.effects,
                     env,
                     resolver,
@@ -687,7 +788,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
                 record_strict_kind_result(&piped_operand, "array", &mut result.effects);
                 record_total_conversion_effects(
-                    identity_value_paths(&piped_operand.value),
+                    identity_value_paths(piped_operand.value.as_ref()),
                     &mut result.effects,
                 );
                 result
@@ -697,7 +798,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
                 record_strict_kind_result(&operand, "object", &mut result.effects);
                 record_total_conversion_effects(
-                    identity_value_paths(&operand.value),
+                    identity_value_paths(operand.value.as_ref()),
                     &mut result.effects,
                 );
                 if function == "keys"
@@ -823,7 +924,7 @@ fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predi
     if predicates.is_empty() {
         return;
     }
-    for path in identity_value_paths(&result.value) {
+    for path in identity_value_paths(result.value.as_ref()) {
         result
             .effects
             .local_output_meta
@@ -928,12 +1029,13 @@ fn template_base_path_suffix(expr: &TemplateExpr) -> Option<String> {
     let TemplateExpr::Call { function, args } = expr.deparen() else {
         return None;
     };
-    if function != "print" || args.len() < 2 || !is_template_base_path(&args[0]) {
+    let (base, suffix_args) = args.split_first()?;
+    if function != "print" || suffix_args.is_empty() || !is_template_base_path(base) {
         return None;
     }
 
     let mut suffix = String::new();
-    for arg in &args[1..] {
+    for arg in suffix_args {
         let TemplateExpr::Literal(Literal::String(part) | Literal::RawString(part)) = arg.deparen()
         else {
             return None;

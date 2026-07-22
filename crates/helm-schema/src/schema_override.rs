@@ -32,6 +32,8 @@ pub fn mark_refs_for_replacement(value: &mut Value) {
     }
 }
 
+/// Merges an override into a base schema using replacement markers and schema-aware recursion.
+#[must_use]
 pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
     let (mut base_obj, mut override_obj) = match (base, override_schema) {
         (Value::Object(base_obj), Value::Object(override_obj)) => (base_obj, override_obj),

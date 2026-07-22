@@ -12,6 +12,10 @@ use helm_schema_core::{Guard, GuardValue, Predicate};
 
 use super::value_facts::{value_paths, value_strings};
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(super) fn eval_set_call(
     args: &[TemplateExpr],
     env: &EvalEnv,
@@ -22,7 +26,7 @@ pub(super) fn eval_set_call(
         .first()
         .map(|expr| eval_expr_with_helper_calls(expr, env, resolver))
         .unwrap_or_else(EvalResult::none);
-    let target_paths = value_paths(&target_result.value);
+    let target_paths = value_paths(target_result.value.as_ref());
     let root_target = matches!(target_result.value, Some(AbstractValue::RootContext));
     effects.merge(target_result.effects);
     let target = match args.first().map(TemplateExpr::deparen) {
@@ -66,7 +70,7 @@ pub(super) fn eval_set_call(
     let mut keys = BTreeSet::new();
     if let Some(expr) = args.get(1) {
         let key = eval_expr_with_helper_calls(expr, env, resolver);
-        keys = value_strings(&key.value);
+        keys = value_strings(key.value.as_ref());
         effects.merge(key.effects);
     }
     let assigned_predicate = args
@@ -100,7 +104,7 @@ pub(super) fn eval_set_call(
             value.with_overlay_entries(entries)
         });
     if let Some(target) = target {
-        effects.add_local_set_mutation(target, keys, assigned_value);
+        effects.add_local_set_mutation(target, keys, &assigned_value);
     } else if let Some((local, old_values)) = values_member_target {
         // An unresolvable assigned value must not replace the member: the
         // copy would then resolve `.Values.KEY.…` to nothing where the
@@ -115,7 +119,7 @@ pub(super) fn eval_set_call(
             effects.add_local_set_mutation(
                 local,
                 BTreeSet::from(["Values".to_string()]),
-                old_values.with_overlay_entries(entries),
+                &old_values.with_overlay_entries(entries),
             );
         }
     } else if root_target {
@@ -146,14 +150,17 @@ pub(super) fn root_set_truthy_predicate(expr: &TemplateExpr, env: &EvalEnv) -> O
         } else {
             Predicate::False
         }),
-        TemplateExpr::Field(path) if path.len() == 1 => {
-            env.root_truthy_predicates.get(&path[0]).cloned()
-        }
+        TemplateExpr::Field(path) if path.len() == 1 => path
+            .first()
+            .and_then(|field| env.root_truthy_predicates.get(field))
+            .cloned(),
         TemplateExpr::Selector { operand, path }
             if path.len() == 1
                 && matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) =>
         {
-            env.root_truthy_predicates.get(&path[0]).cloned()
+            path.first()
+                .and_then(|field| env.root_truthy_predicates.get(field))
+                .cloned()
         }
         TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
             direct_values_path(expr).map(Predicate::truthy_path)
@@ -189,16 +196,13 @@ pub(super) fn root_set_stringified_comparison(
     let [left, right] = args else {
         return None;
     };
-    let (subject, target) = match (
+    let ((Some(subject), Some(target), None, None) | (None, None, Some(subject), Some(target))) = (
         stringified_values_path(left),
         root_set_string_literal(right),
         stringified_values_path(right),
         root_set_string_literal(left),
-    ) {
-        (Some(subject), Some(target), None, None) | (None, None, Some(subject), Some(target)) => {
-            (subject, target)
-        }
-        _ => return None,
+    ) else {
+        return None;
     };
     let predicate = match target {
         "true" => root_set_predicate_any(vec![

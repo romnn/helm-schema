@@ -265,13 +265,13 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
 /// and later ranges over it accepts both null and concrete arrays.
 #[test]
 fn nullable_array_preserved_for_range_only_collection_use() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         data:
           initialize.sh: |
             exec ./entrypoint.sh {{ range .Values.snapshots }} --snapshot {{ . }} {{ end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         snapshots:
     "};
@@ -306,14 +306,14 @@ fn nullable_array_preserved_for_range_only_collection_use() {
 /// chooses an empty-string default instead of an explicit YAML null.
 #[test]
 fn truthy_guarded_scalar_allows_null_without_explicit_null_default() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Service
         metadata:
           {{- if .Values.fullnameOverride }}
           name: {{ .Values.fullnameOverride }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         fullnameOverride: \"\"
     "};

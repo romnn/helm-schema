@@ -8,34 +8,58 @@ use super::SymbolicLocalState;
 
 pub(super) fn joined_branch_outcomes(
     entry: &SymbolicLocalState,
-    outcomes: Vec<SymbolicLocalState>,
+    outcomes: &[SymbolicLocalState],
 ) -> SymbolicLocalState {
     if outcomes.is_empty() {
         return entry.clone();
     }
 
-    let (fragment_values, traversal_advances) = join_fragment_values(&outcomes);
+    let (fragment_values, traversal_advances) = join_fragment_values(outcomes);
     SymbolicLocalState {
-        range_domains: join_map(&outcomes, |state| &state.range_domains, join_literal_union),
-        get_bindings: join_map(&outcomes, |state| &state.get_bindings, join_if_equal),
+        range_domains: join_map(
+            outcomes,
+            |state| &state.range_domains,
+            |values| Some(join_literal_union(values)),
+        ),
+        get_bindings: join_map(
+            outcomes,
+            |state| &state.get_bindings,
+            |values| join_if_equal(&values),
+        ),
         fragment_values,
         traversal_advances,
-        default_paths: join_map(&outcomes, |state| &state.default_paths, join_path_union),
-        output_meta: join_map(&outcomes, |state| &state.output_meta, join_meta_by_path),
-        truthy_reductions: join_map(
-            &outcomes,
-            |state| &state.truthy_reductions,
-            join_predicate_union,
+        default_paths: join_map(
+            outcomes,
+            |state| &state.default_paths,
+            |values| Some(join_path_union(values)),
         ),
-        typeof_sources: join_map(&outcomes, |state| &state.typeof_sources, join_if_equal),
-        int_cast_sources: join_map(&outcomes, |state| &state.int_cast_sources, join_if_equal),
+        output_meta: join_map(
+            outcomes,
+            |state| &state.output_meta,
+            |values| Some(join_meta_by_path(values)),
+        ),
+        truthy_reductions: join_map(
+            outcomes,
+            |state| &state.truthy_reductions,
+            |values| Some(join_predicate_union(values)),
+        ),
+        typeof_sources: join_map(
+            outcomes,
+            |state| &state.typeof_sources,
+            |values| join_if_equal(&values),
+        ),
+        int_cast_sources: join_map(
+            outcomes,
+            |state| &state.int_cast_sources,
+            |values| join_if_equal(&values),
+        ),
         kube_version_sources: join_map(
-            &outcomes,
+            outcomes,
             |state| &state.kube_version_sources,
-            join_if_equal,
+            |values| join_if_equal(&values),
         ),
         range_member_values: join_map(
-            &outcomes,
+            outcomes,
             |state| &state.range_member_values,
             join_value_choice,
         ),
@@ -43,11 +67,11 @@ pub(super) fn joined_branch_outcomes(
         // kept the same one: a branch-dependent binding is no longer a
         // certainly-iterated member.
         definite_range_member_values: join_map(
-            &outcomes,
+            outcomes,
             |state| &state.definite_range_member_values,
-            join_if_equal,
+            |values| join_if_equal(&values),
         ),
-        chart_value_defaults: intersect_chart_defaults(&outcomes),
+        chart_value_defaults: intersect_chart_defaults(outcomes),
         local_scopes: entry.local_scopes.clone(),
     }
 }
@@ -145,7 +169,7 @@ where
     joined
 }
 
-fn join_if_equal<T: Clone + Eq>(values: Vec<&T>) -> Option<T> {
+fn join_if_equal<T: Clone + Eq>(values: &[&T]) -> Option<T> {
     let (first, rest) = values.split_first()?;
     rest.iter()
         .all(|value| value == first)
@@ -156,32 +180,32 @@ fn join_value_choice(values: Vec<&AbstractValue>) -> Option<AbstractValue> {
     AbstractValue::choice(values.into_iter().cloned().collect())
 }
 
-fn join_literal_union(domains: Vec<&Vec<String>>) -> Option<Vec<String>> {
+fn join_literal_union(domains: Vec<&Vec<String>>) -> Vec<String> {
     let literals: BTreeSet<&String> = domains.into_iter().flatten().collect();
-    Some(literals.into_iter().cloned().collect())
+    literals.into_iter().cloned().collect()
 }
 
-fn join_path_union(sets: Vec<&BTreeSet<String>>) -> Option<BTreeSet<String>> {
-    Some(sets.into_iter().flatten().cloned().collect())
+fn join_path_union(sets: Vec<&BTreeSet<String>>) -> BTreeSet<String> {
+    sets.into_iter().flatten().cloned().collect()
 }
 
 fn join_meta_by_path(
     metas: Vec<&BTreeMap<String, HelperOutputMeta>>,
-) -> Option<BTreeMap<String, HelperOutputMeta>> {
+) -> BTreeMap<String, HelperOutputMeta> {
     let mut merged: BTreeMap<String, HelperOutputMeta> = BTreeMap::new();
     for meta_by_path in metas {
         for (path, meta) in meta_by_path {
             merged.entry(path.clone()).or_default().merge(meta);
         }
     }
-    Some(merged)
+    merged
 }
 
-fn join_predicate_union(predicates: Vec<&Predicate>) -> Option<Predicate> {
+fn join_predicate_union(predicates: Vec<&Predicate>) -> Predicate {
     let mut alternatives = BTreeSet::new();
     for predicate in predicates {
         match predicate {
-            Predicate::True => return Some(Predicate::True),
+            Predicate::True => return Predicate::True,
             Predicate::False => {}
             Predicate::Or(inner) => alternatives.extend(inner.iter().cloned()),
             predicate => {
@@ -189,11 +213,11 @@ fn join_predicate_union(predicates: Vec<&Predicate>) -> Option<Predicate> {
             }
         }
     }
-    Some(match alternatives.len() {
+    match alternatives.len() {
         0 => Predicate::False,
         1 => alternatives.pop_first().unwrap_or(Predicate::False),
         _ => Predicate::Or(alternatives.into_iter().collect()),
-    })
+    }
 }
 
 fn intersect_chart_defaults(outcomes: &[SymbolicLocalState]) -> BTreeSet<String> {

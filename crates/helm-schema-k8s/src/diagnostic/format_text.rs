@@ -6,6 +6,10 @@ use super::diagnostic::Diagnostic;
 /// `"warning: …"` for diagnostics representing problems, `"info: …"`
 /// for diagnostics describing successful but noteworthy outcomes.
 #[must_use]
+#[expect(
+    clippy::too_many_lines,
+    reason = "one exhaustive match keeps every diagnostic's user-facing rendering auditable"
+)]
 pub fn format_diagnostic_text(diagnostic: &Diagnostic) -> String {
     match diagnostic {
         Diagnostic::MissingSchema {

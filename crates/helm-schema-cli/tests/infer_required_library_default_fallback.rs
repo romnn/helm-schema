@@ -20,7 +20,7 @@
 //! `_name.tpl` uses `default .Chart.Name .Values.nameOverride`. Recreated
 //! here as a minimal in-memory fixture.
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
@@ -69,8 +69,8 @@ const LIBRARY_NAME_HELPER: &str = "\
 ";
 
 #[test]
-fn library_helper_non_literal_default_suppresses_required() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn library_helper_non_literal_default_suppresses_required() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;
@@ -110,7 +110,7 @@ fn library_helper_non_literal_default_suppresses_required() -> color_eyre::eyre:
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     let required: Vec<String> = schema

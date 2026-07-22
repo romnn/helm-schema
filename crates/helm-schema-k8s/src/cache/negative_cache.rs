@@ -18,12 +18,13 @@ pub struct NegativeCache {
 }
 
 impl NegativeCache {
+    /// Creates an empty in-process negative cache.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Record a (source_id, bucket, filename) tuple as negative.
+    /// Record a (`source_id`, bucket, filename) tuple as negative.
     pub fn record(&self, source_id: &str, bucket: &str, filename: &str) {
         if let Ok(mut guard) = self.inner.lock() {
             guard.insert((

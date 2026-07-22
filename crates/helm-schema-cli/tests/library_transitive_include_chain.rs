@@ -12,7 +12,7 @@
 //! by BFS/DFS from each non-library chart's directly-called helpers,
 //! following `helper → helper` edges through the library layer.
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
@@ -86,8 +86,8 @@ nameOverride: ~
 ";
 
 #[test]
-fn transitive_library_include_chain_propagates_fallback() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn transitive_library_include_chain_propagates_fallback() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;
@@ -134,7 +134,7 @@ fn transitive_library_include_chain_propagates_fallback() -> color_eyre::eyre::R
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     // The app has an UNCONDITIONAL `if .Values.nameOverride`, but the

@@ -29,8 +29,10 @@ use test_util::prelude::sim_assert_eq;
 mod schema_roundtrip;
 #[path = "common/values_validation.rs"]
 mod values_validation;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
-use color_eyre::eyre::WrapErr as _;
+use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::Value;
 
 /// Charts whose shipped `values.yaml` fails validation against the schema
@@ -50,7 +52,7 @@ use serde_json::Value;
 // `fail` plus the bucketNames `required` chain reject the shipped values.
 const KNOWN_VALUES_REJECTIONS: &[&str] = &["aws-load-balancer-controller", "karpenter", "loki"];
 
-fn assert_chart_schema_fixture(chart: &str) -> color_eyre::eyre::Result<()> {
+fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
 
     if std::env::var("SCHEMA_DUMP").is_ok() {
@@ -92,7 +94,7 @@ fn assert_chart_schema_fixture(chart: &str) -> color_eyre::eyre::Result<()> {
 macro_rules! chart_schema_case {
     ($name:ident, $chart:literal) => {
         #[test]
-        fn $name() -> color_eyre::eyre::Result<()> {
+        fn $name() -> eyre::Result<()> {
             assert_chart_schema_fixture($chart)
         }
     };

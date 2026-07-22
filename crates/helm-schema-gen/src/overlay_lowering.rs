@@ -43,6 +43,10 @@ pub(crate) struct ConditionalResolvedSchema {
 }
 
 #[tracing::instrument(skip_all)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn collect_conditional_schemas(
     resolved_paths: &[ResolvedPathSchema],
     contract_schema_signals: &ContractSchemaSignals,
@@ -95,7 +99,7 @@ pub(crate) fn collect_conditional_schemas(
             .position(|segment| segment == "*")
         {
             member_descendants
-                .entry(&resolved.path_segments[..star])
+                .entry(resolved.path_segments.get(..star).unwrap_or_default())
                 .or_default()
                 .push(resolved);
         }
@@ -278,7 +282,10 @@ pub(crate) fn collect_conditional_schemas(
                     ));
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
-                relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
+                relative_target_segments: target_segments
+                    .get(ancestor_segments.len()..)
+                    .unwrap_or_default()
+                    .to_vec(),
                 ancestor_segments,
                 guards: implication.outer_guards.clone(),
                 target_schema,
@@ -340,7 +347,7 @@ pub(crate) fn collect_conditional_schemas(
                     &overlay,
                     values_yaml_doc,
                     branch_schema,
-                    resolved_target.values_yaml_schema.clone(),
+                    &resolved_target.values_yaml_schema,
                     resolved_target.schema.clone(),
                     active_by_defaults,
                 );
@@ -357,7 +364,9 @@ pub(crate) fn collect_conditional_schemas(
                     {
                         conditionals.push(ConditionalResolvedSchema {
                             target_value_path: target_value_path.clone(),
-                            relative_target_segments: target_segments[ancestor_segments.len()..]
+                            relative_target_segments: target_segments
+                                .get(ancestor_segments.len()..)
+                                .unwrap_or_default()
                                 .to_vec(),
                             ancestor_segments,
                             guards: overlay.guards.clone(),
@@ -378,7 +387,10 @@ pub(crate) fn collect_conditional_schemas(
 
                 conditionals.push(ConditionalResolvedSchema {
                     target_value_path: target_value_path.clone(),
-                    relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
+                    relative_target_segments: target_segments
+                        .get(ancestor_segments.len()..)
+                        .unwrap_or_default()
+                        .to_vec(),
                     ancestor_segments,
                     guards: overlay.guards.clone(),
                     target_schema,
@@ -403,7 +415,7 @@ pub(crate) fn collect_conditional_schemas(
 /// each key whose RETAIN guards lowered comes back as
 /// `if retain-guards then map.key matches the provider's member schema`
 /// (external-secrets' `adaptSecurityContext` — `runAsUser` stays
-/// integer-typed exactly where the OpenShift adaptation certainly does
+/// integer-typed exactly where the `OpenShift` adaptation certainly does
 /// not run). Keys without retain guards stay subtracted: their survival
 /// is undecidable, so their typing abstains.
 fn append_omitted_member_arms(
@@ -490,6 +502,10 @@ fn append_omitted_member_arms(
 /// `podSecurityContext`). The arms are finite — enumerated from the
 /// resolved provider payload's own properties — and the earlier layers'
 /// whole-payload typing rides its ordinary self-truthy branch.
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 fn append_merge_shadow_arms(
     conditionals: &mut Vec<ConditionalResolvedSchema>,
     contract_schema_signals: &ContractSchemaSignals,
@@ -899,25 +915,17 @@ fn fail_requirement_runtime_types(
         ])
     };
     match &implication.target {
-        ContractRequirementTarget::Members { allow_integer } => {
+        ContractRequirementTarget::Members { allow_integer }
+        | ContractRequirementTarget::MembersAt { allow_integer, .. } => {
             let mut types = BTreeSet::from(["array", "null", "object"]);
             if *allow_integer {
                 types.insert("integer");
             }
             types
         }
-        ContractRequirementTarget::MembersMatchingPrefix { .. } => {
+        ContractRequirementTarget::MembersMatchingPrefix { .. }
+        | ContractRequirementTarget::MembersWhereEquals { .. } => {
             BTreeSet::from(["array", "null", "object"])
-        }
-        ContractRequirementTarget::MembersWhereEquals { .. } => {
-            BTreeSet::from(["array", "null", "object"])
-        }
-        ContractRequirementTarget::MembersAt { allow_integer, .. } => {
-            let mut types = BTreeSet::from(["array", "null", "object"]);
-            if *allow_integer {
-                types.insert("integer");
-            }
-            types
         }
         ContractRequirementTarget::Keys => BTreeSet::from(["array", "null", "object"]),
         ContractRequirementTarget::Value => {
@@ -948,19 +956,21 @@ fn requirement_admits_runtime_type(
             runtime_type == required || required == "number" && runtime_type == "integer"
         }
         // Every runtime kind has a Helm-falsy escape spelling.
-        FailValueRequirement::TruthyImpliesSchemaType(_) => true,
+        FailValueRequirement::TruthyImpliesSchemaType(_)
+        | FailValueRequirement::HelmFalsy
+        | FailValueRequirement::FieldHelmFalsy { .. }
+        | FailValueRequirement::FieldNotEquals { .. }
+        | FailValueRequirement::NotEquals(_)
+        // Constrains rendered content, not the value's kind.
+        | FailValueRequirement::QuotedSerializationSafe { .. } => true,
         FailValueRequirement::HelmTruthy => runtime_type != "null",
-        FailValueRequirement::HelmFalsy => true,
-        FailValueRequirement::FieldHelmFalsy { .. } => true,
-        FailValueRequirement::FieldNotEquals { .. } => true,
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }
-        | FailValueRequirement::FieldHelmTruthy { .. } => runtime_type == "object",
-        FailValueRequirement::NotEquals(_) => true,
+        | FailValueRequirement::FieldHelmTruthy { .. }
+        | FailValueRequirement::HasMember(_) => runtime_type == "object",
         FailValueRequirement::NotSchemaType(rejected) => {
             runtime_type != rejected && !(rejected == "number" && runtime_type == "integer")
         }
-        FailValueRequirement::HasMember(_) => runtime_type == "object",
         FailValueRequirement::MatchesPattern { .. }
         | FailValueRequirement::NotMatchesPattern { .. }
         | FailValueRequirement::StringLengthBounds { .. } => runtime_type == "string",
@@ -977,8 +987,6 @@ fn requirement_admits_runtime_type(
         FailValueRequirement::SplitSegmentsAtLeast {
             allow_non_string, ..
         } => runtime_type == "string" || *allow_non_string,
-        // Constrains rendered content, not the value's kind.
-        FailValueRequirement::QuotedSerializationSafe { .. } => true,
         // A kind survives when SOME alternative fully admits it.
         FailValueRequirement::AnyOf(alternatives) => alternatives.iter().any(|alternative| {
             alternative
@@ -1300,7 +1308,7 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
                 None => segments,
                 Some(prefix) => {
                     let len = common_prefix_len(&prefix, &segments);
-                    prefix[..len].to_vec()
+                    prefix.get(..len).unwrap_or_default().to_vec()
                 }
             });
         }
@@ -1309,6 +1317,10 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
 }
 
 #[tracing::instrument(skip_all)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn append_conditional_schemas(
     root_schema: &mut SchemaDocument,
     mut conditionals: Vec<ConditionalResolvedSchema>,
@@ -1444,9 +1456,9 @@ pub(crate) fn append_conditional_schemas(
         );
         match emission_index.entry(key) {
             std::collections::btree_map::Entry::Occupied(entry) => {
-                emissions[*entry.get()]
-                    .2
-                    .push(SchemaNode::foreign(group.fragment));
+                if let Some((_, _, fragments)) = emissions.get_mut(*entry.get()) {
+                    fragments.push(SchemaNode::foreign(group.fragment));
+                }
             }
             std::collections::btree_map::Entry::Vacant(entry) => {
                 entry.insert(emissions.len());

@@ -33,13 +33,19 @@ fn mem_key(source_id: &str, relative_path: &str) -> MemKey {
     (source_id.to_string(), relative_path.to_string())
 }
 
+/// Fetch-on-miss provider for the default and mirrored CRD catalogs.
 #[derive(Debug)]
 pub struct CrdsCatalogSchemaProvider {
     pub(crate) mirrors: MirrorChain,
+    /// Root directory for catalog schema documents.
     pub cache_dir: PathBuf,
+    /// Whether cache misses may fetch upstream documents.
     pub allow_download: bool,
+    /// Whether diagnostics may suggest versions other than the requested one.
     pub loose: bool,
+    /// Whether bounded API-version inference is enabled.
     pub allow_api_version_guess: bool,
+    /// Whether returned fragments retain provider source ownership.
     pub record_source: bool,
 
     fetcher: Arc<dyn HttpFetcher>,
@@ -51,6 +57,7 @@ pub struct CrdsCatalogSchemaProvider {
 }
 
 impl CrdsCatalogSchemaProvider {
+    /// Creates a provider using the default catalog and cache policy.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -68,60 +75,70 @@ impl CrdsCatalogSchemaProvider {
         }
     }
 
+    /// Overrides the on-disk CRD cache root.
     #[must_use]
     pub fn with_cache_dir(mut self, dir: impl Into<PathBuf>) -> Self {
         self.cache_dir = dir.into();
         self
     }
 
+    /// Enables or disables upstream downloads on cache miss.
     #[must_use]
     pub fn with_allow_download(mut self, allow: bool) -> Self {
         self.allow_download = allow;
         self
     }
 
+    /// Configures additional catalog mirrors after the default source.
     #[must_use]
     pub fn with_mirrors(mut self, mirrors: Vec<String>) -> Self {
         self.mirrors = MirrorChain::with_mirrors(CRD_DEFAULT_BASE_URL, mirrors);
         self
     }
 
+    /// Enables or disables cross-version suggestions on final misses.
     #[must_use]
     pub fn with_loose(mut self, loose: bool) -> Self {
         self.loose = loose;
         self
     }
 
+    /// Replaces the HTTP transport, primarily for deterministic tests.
     #[must_use]
     pub fn with_fetcher(mut self, fetcher: Arc<dyn HttpFetcher>) -> Self {
         self.fetcher = fetcher;
         self
     }
 
+    /// Shares an authoritative-not-found cache with other providers.
     #[must_use]
     pub fn with_negative_cache(mut self, negative_cache: Arc<NegativeCache>) -> Self {
         self.negative_cache = negative_cache;
         self
     }
 
+    /// Shares cache-layout validation state with other providers.
     #[must_use]
     pub fn with_layout_checker(mut self, checker: Arc<LayoutChecker>) -> Self {
         self.layout_checker = checker;
         self
     }
 
+    /// Emits committed lookup diagnostics into `sink`.
     #[must_use]
     pub fn with_diagnostic_sink(mut self, sink: DiagnosticSink) -> Self {
         self.diagnostic_sink = Some(sink);
         self
     }
 
+    /// Enables or disables API-version inference for resources that omit it.
     #[must_use]
     pub fn with_api_version_guess(mut self, enabled: bool) -> Self {
         self.allow_api_version_guess = enabled;
         self
     }
 
+    /// Controls whether returned fragments retain source-document metadata.
     #[must_use]
     pub fn with_record_source(mut self, record: bool) -> Self {
         self.record_source = record;
@@ -172,7 +189,7 @@ impl CrdsCatalogSchemaProvider {
         relative_path: &str,
     ) -> Option<SchemaDoc> {
         load_source_schema_doc(
-            CachedSchemaDocRequest {
+            &CachedSchemaDocRequest {
                 local: crd_cache_path(&self.cache_dir, &source.source_id, relative_path),
                 url: source_url(&source.base_url, relative_path),
                 source_id: &source.source_id,
@@ -191,7 +208,6 @@ impl CrdsCatalogSchemaProvider {
     }
 
     fn source_for_leaf(
-        &self,
         loaded: &LoadedCrdSchemaDoc,
         leaf: &LocalSchemaLeaf,
     ) -> Option<ProviderSchemaSource> {
@@ -231,7 +247,7 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
             return ProviderLookupResult::NotOwned;
         };
         lookup_root_metadata_path(&loaded.doc, path, |leaf| {
-            self.source_for_leaf(&loaded, leaf)
+            Self::source_for_leaf(&loaded, leaf)
         })
     }
 

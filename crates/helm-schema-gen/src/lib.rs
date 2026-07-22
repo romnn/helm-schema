@@ -1,3 +1,5 @@
+//! JSON Schema lowering from normalized Helm contract signals.
+
 mod base_schema;
 mod condition_encoding;
 mod foreign_schema;
@@ -42,9 +44,13 @@ use schema_tree::{SchemaDocument, draft07_root_document};
 /// optional structural signals collected by earlier analysis phases.
 /// Values-file descriptions are metadata only: they are applied only to schema
 /// nodes that already exist from template or values evidence.
+#[derive(Clone, Copy)]
 pub struct ValuesSchemaInput<'a> {
+    /// Path-local static-analysis facts prepared by contract finalization.
     pub contract_schema_signals: &'a ContractSchemaSignals,
+    /// Resource-schema oracle used to constrain rendered Kubernetes fields.
     pub provider: &'a dyn ResourceSchemaOracle,
+    /// Composed chart values defaults, when available.
     pub values_yaml: Option<&'a str>,
     /// ONLY the dependency charts' declared defaults, composed under
     /// their value prefixes. A key present here fills at the SUBCHART's
@@ -53,10 +59,12 @@ pub struct ValuesSchemaInput<'a> {
     /// paths reads as the subchart default instead of nil. When absent,
     /// every missing key reads as nil.
     pub dependency_values_yaml: Option<&'a str>,
+    /// Documentation strings keyed by canonical values path.
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
 }
 
 impl<'a> ValuesSchemaInput<'a> {
+    /// Creates schema input with contract signals and a resource provider.
     pub fn new(
         contract_schema_signals: &'a ContractSchemaSignals,
         provider: &'a dyn ResourceSchemaOracle,
@@ -70,16 +78,22 @@ impl<'a> ValuesSchemaInput<'a> {
         }
     }
 
+    /// Attaches composed chart values defaults.
+    #[must_use]
     pub fn with_values_yaml(mut self, values_yaml: Option<&'a str>) -> Self {
         self.values_yaml = values_yaml;
         self
     }
 
+    /// Attaches dependency defaults composed beneath subchart prefixes.
+    #[must_use]
     pub fn with_dependency_values_yaml(mut self, dependency_values_yaml: Option<&'a str>) -> Self {
         self.dependency_values_yaml = dependency_values_yaml;
         self
     }
 
+    /// Attaches values-file descriptions as output metadata.
+    #[must_use]
     pub fn with_values_descriptions(
         mut self,
         values_descriptions: &'a BTreeMap<String, String>,
@@ -155,6 +169,10 @@ pub(crate) fn runtime_iterable_schema(allow_integer: bool) -> serde_json::Value 
 }
 
 #[tracing::instrument(skip_all)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 fn build_root_schema(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,

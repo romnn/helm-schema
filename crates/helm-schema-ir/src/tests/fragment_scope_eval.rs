@@ -75,13 +75,13 @@ fn apply_local_set_mutations(
     )
 }
 
-fn empty_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+fn empty_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
     FragmentEvalContext::new(analysis_db)
 }
 
 #[test]
 fn parse_helper_assignment_detects_declaration_from_ast() {
-    let Some(assignment) = parse_helper_assignment(r#"{{- $image := .Values.image.repository -}}"#)
+    let Some(assignment) = parse_helper_assignment(r"{{- $image := .Values.image.repository -}}")
     else {
         panic!("parse helper assignment");
     };
@@ -101,8 +101,7 @@ fn parse_helper_assignment_detects_declaration_from_ast() {
 
 #[test]
 fn parse_helper_assignment_detects_assignment_from_ast() {
-    let Some(assignment) = parse_helper_assignment(r#"{{- $image = .Values.global.image -}}"#)
-    else {
+    let Some(assignment) = parse_helper_assignment(r"{{- $image = .Values.global.image -}}") else {
         panic!("parse helper assignment");
     };
 

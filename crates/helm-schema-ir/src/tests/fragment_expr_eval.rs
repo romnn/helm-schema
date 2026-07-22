@@ -184,7 +184,7 @@ fn single_expr(action: &str) -> TemplateExpr {
     exprs.into_iter().next().expect("expression exists")
 }
 
-fn empty_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+fn empty_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
     FragmentEvalContext::new(analysis_db)
 }
 
@@ -231,7 +231,7 @@ fn printf_resolves_literal_fragment_local() {
     );
 }
 
-fn helper_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
+fn helper_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
     empty_context(analysis_db)
 }
 
@@ -286,7 +286,7 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
 #[test]
 fn helper_value_fragment_local_selector_uses_shared_expression_eval() {
     let binding = helper_value_from_fragment_locals(
-        r#"$ctx.config.name | toYaml | fromYaml"#,
+        r"$ctx.config.name | toYaml | fromYaml",
         &context_local(),
     );
 

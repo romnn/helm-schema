@@ -116,6 +116,10 @@ fn contract_ir_nullable_paths_require_every_render_use_to_be_tolerant() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete evidence scenario is clearest as one contiguous test"
+)]
 fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
     let signals = signals_for(vec![
         ContractUse::new(
@@ -273,6 +277,10 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete evidence scenario is clearest as one contiguous test"
+)]
 fn contract_ir_path_evidence_preserves_values_decidable_guard_predicate_shapes() {
     let signals = signals_for(vec![
         ContractUse::new(
@@ -689,6 +697,10 @@ fn contract_ir_conditional_path_overlays_ignore_self_default_guards_beside_boole
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete overlay scenario is clearest as one contiguous test"
+)]
 fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() {
     let signals = signals_for(vec![
         ContractUse::new(
@@ -804,8 +816,7 @@ fn contract_ir_conditional_path_overlays_preserve_values_decidable_not_and_or() 
     );
     assert!(
         overlays.iter().all(|overlay| !overlay.preserve_base_schema),
-        "guarded-only branches must not preserve branch-specific evidence on the global base path: {:?}",
-        overlays
+        "guarded-only branches must not preserve branch-specific evidence on the global base path: {overlays:?}"
     );
 }
 
@@ -915,8 +926,7 @@ fn contract_ir_unconditional_use_subsumes_matching_guarded_overlay() {
         !overlays
             .iter()
             .any(|overlay| overlay.target_value_path == "other.path"),
-        "unsupported range-guarded paths must still stay on the wide/base path: {:?}",
-        overlays
+        "unsupported range-guarded paths must still stay on the wide/base path: {overlays:?}"
     );
 }
 
@@ -970,8 +980,7 @@ fn contract_ir_conditional_path_overlays_drop_base_only_for_complete_boolean_par
     );
     assert!(
         overlays.iter().all(|overlay| !overlay.preserve_base_schema),
-        "a complete truthy/not partition should be allowed to replace the base schema entirely: {:?}",
-        overlays
+        "a complete truthy/not partition should be allowed to replace the base schema entirely: {overlays:?}"
     );
 }
 
@@ -1034,8 +1043,7 @@ fn contract_ir_conditional_path_overlays_drop_base_for_partition_with_common_pre
     );
     assert!(
         overlays.iter().all(|overlay| !overlay.preserve_base_schema),
-        "a shared broad branch plus a truthy/not partition should still replace the base schema: {:?}",
-        overlays
+        "a shared broad branch plus a truthy/not partition should still replace the base schema: {overlays:?}"
     );
 }
 
@@ -1086,6 +1094,10 @@ fn contract_ir_derives_schema_signals_without_projection_detour() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete requiredness scenario is clearest as one contiguous test"
+)]
 fn contract_ir_requiredness_evidence_is_path_local() {
     let signals = ContractIr::from_contract_uses(vec![
         ContractUse::new(

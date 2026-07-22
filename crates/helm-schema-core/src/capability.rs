@@ -17,9 +17,15 @@ pub struct HelperBranch {
 pub enum HelperBranchBody {
     /// Flat list of literal alternatives. Empty means the branch resolves to
     /// no statically-known literal.
-    Literals { values: Vec<String> },
+    Literals {
+        /// Literal strings emitted by the branch body.
+        values: Vec<String>,
+    },
     /// Branch body is itself a typed if/else chain.
-    Nested { branches: Vec<HelperBranch> },
+    Nested {
+        /// Nested control-flow branches in source order.
+        branches: Vec<HelperBranch>,
+    },
 }
 
 impl HelperBranchBody {
@@ -38,6 +44,7 @@ impl HelperBranchBody {
         }
     }
 
+    /// Returns every distinct literal reachable from this branch body.
     #[must_use]
     pub fn all_literals(&self) -> Vec<String> {
         let mut out = Vec::new();
@@ -46,6 +53,7 @@ impl HelperBranchBody {
         out
     }
 
+    /// Appends distinct reachable literals while preserving branch order.
     pub fn append_all_literals(&self, out: &mut Vec<String>, seen: &mut HashSet<String>) {
         match self {
             Self::Literals { values } => {
@@ -69,21 +77,41 @@ impl HelperBranchBody {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum CapabilityGuard {
     /// `.Capabilities.APIVersions.Has "X"`.
-    Has { api: String },
+    Has {
+        /// Helm API or resource literal whose presence selects the branch.
+        api: String,
+    },
     /// `not .Capabilities.APIVersions.Has "X"`.
-    NotHas { api: String },
+    NotHas {
+        /// Helm API or resource literal whose absence selects the branch.
+        api: String,
+    },
     /// Any guard the static decoder cannot structurally evaluate.
-    Opaque { text: String },
+    Opaque {
+        /// Original guard text retained for diagnostics.
+        text: String,
+    },
 }
 
 /// A typed `.Capabilities.APIVersions.Has ...` query.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ApiPresenceQuery {
-    Resource { api_version: String, kind: String },
-    GroupVersion { api_version: String },
+    /// Presence of one concrete resource kind at an API version.
+    Resource {
+        /// Kubernetes API version.
+        api_version: String,
+        /// Kubernetes resource kind.
+        kind: String,
+    },
+    /// Presence of any resource in an API group/version.
+    GroupVersion {
+        /// Kubernetes API group/version literal.
+        api_version: String,
+    },
 }
 
 impl ApiPresenceQuery {
+    /// Parses either Helm's `group/version[/Kind]` or core `version/Kind` spelling.
     #[must_use]
     pub fn parse_helm_literal(api: &str) -> Option<Self> {
         let parts: Vec<&str> = api.split('/').collect();
@@ -128,10 +156,7 @@ fn is_k8s_api_version_segment(segment: &str) -> bool {
     let Some(rest) = segment.strip_prefix('v') else {
         return false;
     };
-    let digit_count = rest
-        .chars()
-        .take_while(|character| character.is_ascii_digit())
-        .count();
+    let digit_count = rest.chars().take_while(char::is_ascii_digit).count();
     if digit_count == 0 {
         return false;
     }

@@ -44,7 +44,12 @@ pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
                 .map(|(rank, condition)| (condition, u32::try_from(rank).unwrap_or(u32::MAX)))
                 .collect();
         uses.iter()
-            .map(|contract_use| rank_by_condition[&contract_use.condition])
+            .map(|contract_use| {
+                rank_by_condition
+                    .get(&contract_use.condition)
+                    .copied()
+                    .unwrap_or(u32::MAX)
+            })
             .collect()
     };
     let mut rows: Vec<(u32, ContractUse)> = condition_ranks

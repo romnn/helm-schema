@@ -13,6 +13,7 @@ use crate::lookup::{
 };
 use crate::schema_doc::SchemaDoc;
 
+/// Provider for user-supplied schema files arranged by resource coordinate.
 #[derive(Debug)]
 pub struct LocalSchemaProvider {
     root_dir: PathBuf,
@@ -21,6 +22,7 @@ pub struct LocalSchemaProvider {
 }
 
 impl LocalSchemaProvider {
+    /// Creates a provider rooted at a local override directory.
     #[must_use]
     pub fn new(root_dir: impl Into<PathBuf>) -> Self {
         Self {
@@ -30,6 +32,7 @@ impl LocalSchemaProvider {
         }
     }
 
+    /// Enables or disables API-version inference from local overrides.
     #[must_use]
     pub fn with_api_version_guess(mut self, enabled: bool) -> Self {
         self.allow_api_version_guess = enabled;

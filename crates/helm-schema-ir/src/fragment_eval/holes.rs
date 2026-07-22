@@ -245,6 +245,10 @@ impl Interpreter<'_> {
     /// Evaluate a standalone output action: the lowered fragment plus the
     /// action's explicit rendered indent (`… | nindent N`), which decides
     /// which enclosing container the output attaches to.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(super) fn eval_output_action(
         &mut self,
         span: Span,
@@ -380,7 +384,7 @@ impl Interpreter<'_> {
                 }],
             }));
         }
-        stamp_fragment_sites(&mut out, &self.current_site);
+        stamp_fragment_sites(&mut out, self.current_site.as_ref());
         out.extend(inlined);
         self.restore_site(previous_site);
         (out, width)
@@ -393,6 +397,10 @@ impl Interpreter<'_> {
     /// onto the call site, and its reads/hints absorb here. Other shapes
     /// (encodings, transfer functions, dynamic names, unresolved helpers)
     /// keep evaluating through the value lattice.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn splice_helper_call_hole(
         &mut self,
         exprs: &[TemplateExpr],
@@ -505,7 +513,7 @@ impl Interpreter<'_> {
             .extend(summary.values_root_helper_includes.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
-        Some(splice_summary(summary, &self.current_site))
+        Some(splice_summary(summary, self.current_site.as_ref()))
     }
 
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
@@ -602,7 +610,7 @@ impl Interpreter<'_> {
             arms.push((Predicate::True, plain_parts));
         }
         for (_, parts) in &mut arms {
-            stamp_part_sites(parts, &self.current_site);
+            stamp_part_sites(parts, self.current_site.as_ref());
         }
         self.restore_site(previous_site);
         arms
@@ -675,6 +683,10 @@ impl Interpreter<'_> {
     /// claims only when EVERY scalar arm agrees — the arms partition what
     /// the token renders, so a path present at the position in all of them
     /// provably reaches it.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn record_completed_token_contracts(&mut self, arms: &[(PathCondition, Vec<StringPart>)]) {
         #[derive(Clone, Copy, PartialEq)]
         enum QuoteContext {

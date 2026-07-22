@@ -16,12 +16,12 @@ use helm_schema_ast::{
 
 pub(super) fn record_string_transform_effects(
     function: &str,
-    value: &Option<AbstractValue>,
+    value: Option<&AbstractValue>,
     string_paths: &BTreeSet<String>,
     raw_range_key_paths: &BTreeSet<String>,
     effects: &mut Effects,
 ) {
-    let influence_paths = value.as_ref().map(AbstractValue::paths).unwrap_or_default();
+    let influence_paths = value.map(AbstractValue::paths).unwrap_or_default();
     if is_total_stringification_function(function) {
         // Sprig's `strval` fallback renders ANY input (maps, lists, nil), so
         // a total stringification constrains nothing about its input and the
@@ -75,8 +75,8 @@ pub(super) fn string_call_operand_facts(
             continue;
         };
         let result = eval_expr_with_helper_calls(arg, env, resolver);
-        paths.extend(identity_value_paths(&result.value));
-        let keys = identity_range_key_paths(&result.value);
+        paths.extend(identity_value_paths(result.value.as_ref()));
+        let keys = identity_range_key_paths(result.value.as_ref());
         range_key_paths.extend(
             keys.difference(&result.effects.derived_range_key_paths)
                 .cloned(),
@@ -88,7 +88,7 @@ pub(super) fn string_call_operand_facts(
 pub(super) fn pipeline_string_operand_facts(
     function: &str,
     args: &[TemplateExpr],
-    piped_value: &Option<AbstractValue>,
+    piped_value: Option<&AbstractValue>,
     piped_effects: &Effects,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
@@ -105,8 +105,8 @@ pub(super) fn pipeline_string_operand_facts(
             );
         } else if let Some(arg) = args.get(index) {
             let result = eval_expr_with_helper_calls(arg, env, resolver);
-            paths.extend(identity_value_paths(&result.value));
-            let keys = identity_range_key_paths(&result.value);
+            paths.extend(identity_value_paths(result.value.as_ref()));
+            let keys = identity_range_key_paths(result.value.as_ref());
             range_key_paths.extend(
                 keys.difference(&result.effects.derived_range_key_paths)
                     .cloned(),
@@ -202,7 +202,7 @@ fn parser_operand_has_partitioned_identity(
                         .local_output_meta
                         .get(path)
                         .is_some_and(|meta| !meta.predicates.is_empty())
-                    || parser_output_metas(&operand.value, path)
+                    || parser_output_metas(operand.value.as_ref(), path)
                         .iter()
                         .any(|meta| !meta.predicates.is_empty() || meta.defaulted)
             }))
@@ -292,7 +292,7 @@ fn record_strict_parser_result(
         // Escape tokens recorded on the operand's metas exempt raw strings
         // a replace/split-prefix chain transformed before parsing.
         let escapes: BTreeSet<crate::helper_meta::LexicalEscape> =
-            parser_output_metas(&operand.value, &path)
+            parser_output_metas(operand.value.as_ref(), &path)
                 .iter()
                 .flat_map(|meta| meta.lexical_escapes.iter().cloned())
                 .collect();
@@ -305,7 +305,7 @@ fn record_strict_parser_result(
 
 fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Vec<Vec<Predicate>> {
     let base = operand_selection_conjunctions(&operand.effects, path);
-    let metas = parser_output_metas(&operand.value, path);
+    let metas = parser_output_metas(operand.value.as_ref(), path);
     if metas.is_empty() {
         return base;
     }
@@ -340,7 +340,7 @@ fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Ve
 }
 
 fn parser_output_metas(
-    value: &Option<AbstractValue>,
+    value: Option<&AbstractValue>,
     path: &str,
 ) -> Vec<crate::helper_meta::HelperOutputMeta> {
     fn collect(
@@ -431,7 +431,7 @@ pub(super) fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: 
 }
 
 pub(super) fn record_range_key_string_consumer_effects(
-    value: &Option<AbstractValue>,
+    value: Option<&AbstractValue>,
     effects: &mut Effects,
 ) {
     let paths = identity_range_key_paths(value);
@@ -521,15 +521,16 @@ pub(super) fn record_comparable_kind_result(
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(super) fn record_collection_item_kind_result(
     operand: &EvalResult,
     schema_type: &str,
     pattern: Option<&str>,
     effects: &mut Effects,
 ) {
-    let mut collection_paths = BTreeSet::new();
-    let mut individual_paths = BTreeSet::new();
-
     fn collect(
         value: &AbstractValue,
         collection_paths: &mut BTreeSet<String>,
@@ -603,6 +604,8 @@ pub(super) fn record_collection_item_kind_result(
         }
     }
 
+    let mut collection_paths = BTreeSet::new();
+    let mut individual_paths = BTreeSet::new();
     if let Some(value) = &operand.value {
         collect(value, &mut collection_paths, &mut individual_paths, true);
     }

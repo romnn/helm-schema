@@ -22,6 +22,7 @@ use super::eval::Interpreter;
 use super::holes::HoleEval;
 
 /// How a no-render site demotes a called helper's rendered rows.
+#[derive(Clone, Copy)]
 pub(super) enum RenderedDemotion {
     /// Rendered rows stay tree evidence (ordinary output holes).
     None,
@@ -43,6 +44,77 @@ pub(super) fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> 
     subjects
 }
 
+fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
+    let foreign = |guard_path: &str| {
+        guard_path != path
+            && !helm_schema_core::values_path_is_descendant(guard_path, path)
+            && !helm_schema_core::values_path_is_descendant(path, guard_path)
+    };
+    match guard {
+        Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => false,
+        Guard::RangeKeyPrefix { .. }
+        | Guard::RangeKeyEquals { .. }
+        | Guard::RangeKeyMatches { .. } => true,
+        Guard::Truthy { path: guard_path }
+        | Guard::Not { path: guard_path }
+        | Guard::Absent { path: guard_path }
+        | Guard::Eq {
+            path: guard_path, ..
+        }
+        | Guard::NotEq {
+            path: guard_path, ..
+        }
+        | Guard::MatchesPattern {
+            path: guard_path, ..
+        }
+        | Guard::IntGt {
+            path: guard_path, ..
+        }
+        | Guard::IntLt {
+            path: guard_path, ..
+        }
+        | Guard::AtMostOneMember { path: guard_path }
+        | Guard::MinMembers {
+            path: guard_path, ..
+        }
+        | Guard::HasKey {
+            path: guard_path, ..
+        }
+        | Guard::ContainsEquals {
+            path: guard_path, ..
+        } => !guard_path.trim().is_empty() && foreign(guard_path),
+        // A type test PARTITIONS its subject: hints observed under
+        // it hold only for the tested types, even on the hinted
+        // path itself (a self-truthy guard, by contrast, only
+        // states nullability).
+        Guard::TypeIs {
+            path: guard_path, ..
+        }
+        | Guard::NotTypeIs {
+            path: guard_path, ..
+        } => !guard_path.trim().is_empty(),
+        Guard::Or { paths } => paths
+            .iter()
+            .any(|guard_path| !guard_path.trim().is_empty() && foreign(guard_path)),
+        Guard::AnyOf { alternatives } => alternatives
+            .iter()
+            .flatten()
+            .any(|guard| guard_gates_hint(guard, path)),
+    }
+}
+
+fn predicate_gates_hint(predicate: &Predicate, path: &str) -> bool {
+    match predicate {
+        Predicate::True | Predicate::False => false,
+        Predicate::Approximate { .. } => true,
+        Predicate::Guard(guard) => guard_gates_hint(guard, path),
+        Predicate::Not(inner) => predicate_gates_hint(inner, path),
+        Predicate::And(predicates) | Predicate::Or(predicates) => predicates
+            .iter()
+            .any(|inner| predicate_gates_hint(inner, path)),
+    }
+}
+
 /// Whether a `required` subject is Helm-empty by construction: `nil`, an
 /// empty string literal, an empty `dict`/`list`, or an `index`/`get` into
 /// one of those (which yields nil for every key).
@@ -60,7 +132,7 @@ pub(super) fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {
         TemplateExpr::Call { function, args }
             if matches!(function.as_str(), "index" | "get") && !args.is_empty() =>
         {
-            subject_is_statically_helm_empty(&args[0])
+            args.first().is_some_and(subject_is_statically_helm_empty)
         }
         _ => false,
     }
@@ -72,8 +144,10 @@ pub(super) fn collect_required_subjects<'e>(
 ) {
     match expr {
         TemplateExpr::Call { function, args } => {
-            if function == "required" && args.len() == 2 {
-                out.push(&args[1]);
+            if function == "required"
+                && let [_, subject] = args.as_slice()
+            {
+                out.push(subject);
             }
             for arg in args {
                 collect_required_subjects(arg, out);
@@ -84,16 +158,16 @@ pub(super) fn collect_required_subjects<'e>(
                 if let TemplateExpr::Call { function, args } = stage
                     && function == "required"
                     && args.len() == 1
-                    && index > 0
+                    && let Some(previous) = index.checked_sub(1).and_then(|index| stages.get(index))
                 {
-                    out.push(&stages[index - 1]);
+                    out.push(previous);
                 }
                 collect_required_subjects(stage, out);
             }
         }
         TemplateExpr::Parenthesized(inner) => collect_required_subjects(inner, out),
         TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            collect_required_subjects(value, out)
+            collect_required_subjects(value, out);
         }
         _ => {}
     }
@@ -307,80 +381,15 @@ impl Interpreter<'_> {
         if self.helper_scope {
             return true;
         }
-        fn guard_gates(guard: &Guard, path: &str) -> bool {
-            let foreign = |guard_path: &str| {
-                guard_path != path
-                    && !helm_schema_core::values_path_is_descendant(guard_path, path)
-                    && !helm_schema_core::values_path_is_descendant(path, guard_path)
-            };
-            match guard {
-                Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => false,
-                Guard::RangeKeyPrefix { .. }
-                | Guard::RangeKeyEquals { .. }
-                | Guard::RangeKeyMatches { .. } => true,
-                Guard::Truthy { path: guard_path }
-                | Guard::Not { path: guard_path }
-                | Guard::Absent { path: guard_path }
-                | Guard::Eq {
-                    path: guard_path, ..
-                }
-                | Guard::NotEq {
-                    path: guard_path, ..
-                }
-                | Guard::MatchesPattern {
-                    path: guard_path, ..
-                }
-                | Guard::IntGt {
-                    path: guard_path, ..
-                }
-                | Guard::IntLt {
-                    path: guard_path, ..
-                }
-                | Guard::AtMostOneMember { path: guard_path }
-                | Guard::MinMembers {
-                    path: guard_path, ..
-                }
-                | Guard::HasKey {
-                    path: guard_path, ..
-                }
-                | Guard::ContainsEquals {
-                    path: guard_path, ..
-                } => !guard_path.trim().is_empty() && foreign(guard_path),
-                // A type test PARTITIONS its subject: hints observed under
-                // it hold only for the tested types, even on the hinted
-                // path itself (a self-truthy guard, by contrast, only
-                // states nullability).
-                Guard::TypeIs {
-                    path: guard_path, ..
-                }
-                | Guard::NotTypeIs {
-                    path: guard_path, ..
-                } => !guard_path.trim().is_empty(),
-                Guard::Or { paths } => paths
-                    .iter()
-                    .any(|guard_path| !guard_path.trim().is_empty() && foreign(guard_path)),
-                Guard::AnyOf { alternatives } => alternatives
-                    .iter()
-                    .flatten()
-                    .any(|guard| guard_gates(guard, path)),
-            }
-        }
-        fn predicate_gates(predicate: &Predicate, path: &str) -> bool {
-            match predicate {
-                Predicate::True | Predicate::False => false,
-                Predicate::Approximate { .. } => true,
-                Predicate::Guard(guard) => guard_gates(guard, path),
-                Predicate::Not(inner) => predicate_gates(inner, path),
-                Predicate::And(predicates) | Predicate::Or(predicates) => {
-                    predicates.iter().any(|inner| predicate_gates(inner, path))
-                }
-            }
-        }
         self.active_predicates
             .iter()
-            .all(|predicate| !predicate_gates(predicate, path))
+            .all(|predicate| !predicate_gates_hint(predicate, path))
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(super) fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
         self.absorb_member_host_conversions(&effects.member_host_conversions);
         self.apply_root_set_mutations(
@@ -618,14 +627,14 @@ fn runtime_requirement_paths(
         CaptureKind::RangeKeyStrings { paths } | CaptureKind::CollectionItems { paths, .. } => {
             paths.clone()
         }
-        CaptureKind::IndexAccess { path, .. } => [path.clone()].into_iter().collect(),
-        CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
-        CaptureKind::ValueType { path, .. }
+        CaptureKind::IndexAccess { path, .. }
+        | CaptureKind::ValueType { path, .. }
         | CaptureKind::DigSubject { path }
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. }
         | CaptureKind::RangeSelection { path, .. } => [path.clone()].into_iter().collect(),
+        CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
             .conjunction
             .last()

@@ -1390,7 +1390,7 @@ impl<'a> Interpreter<'a> {
                     // opened before it) belong to branch bodies too; their
                     // in-place evaluation was bounded at the region start.
                     let mut escaped = Vec::new();
-                    for prior in &nodes[..region_index] {
+                    for prior in nodes.get(..region_index).unwrap_or_default() {
                         if matches!(prior.node, Node::Control(_)) {
                             continue;
                         }
@@ -1414,8 +1414,11 @@ impl<'a> Interpreter<'a> {
                     // descendants escaping into that region evaluate inside
                     // its branches instead of unguarded in place.
                     let mut bounded = *view;
-                    if let Some(region_start) =
-                        nodes[index + 1..].iter().find_map(|next| match next.node {
+                    if let Some(region_start) = nodes
+                        .get(index + 1..)
+                        .into_iter()
+                        .flatten()
+                        .find_map(|next| match next.node {
                             Node::Control(region) => Some(region.span.start),
                             _ => None,
                         })
@@ -1655,6 +1658,10 @@ impl<'a> Interpreter<'a> {
             .map_or(0, |line| line.len() - line.trim_start_matches(' ').len())
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn eval_node(&mut self, view: NodeView<'_>) -> Contributions {
         let mut out = Contributions::default();
         match view.node {

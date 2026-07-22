@@ -1,5 +1,6 @@
 use clap::Args;
 
+/// API-version inference and strictness options.
 #[derive(Args, Debug, Clone)]
 pub struct InferenceArgs {
     /// Enable Feature D apiVersion guessing for kinds whose
@@ -14,6 +15,7 @@ pub struct InferenceArgs {
 }
 
 impl InferenceArgs {
+    /// Reports whether API-version inference is enabled after strict-mode policy.
     #[must_use]
     pub fn enabled(&self) -> bool {
         self.api_version_guess && !self.strict_api_versions

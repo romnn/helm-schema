@@ -1,7 +1,6 @@
-use std::io::Read;
 use std::path::PathBuf;
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
@@ -19,28 +18,8 @@ fn chart_dir(chart_relative_path: &str) -> VfsPath {
     VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str))
 }
 
-#[allow(
-    dead_code,
-    reason = "shared integration-test helper; not every test binary reads values.yaml"
-)]
-pub(crate) fn read_values_yaml_for_path(
-    chart_relative_path: &str,
-) -> std::result::Result<String, Report> {
-    let mut out = String::new();
-    chart_dir(chart_relative_path)
-        .join("values.yaml")
-        .wrap_err("join values.yaml")?
-        .open_file()
-        .wrap_err("open values.yaml")?
-        .read_to_string(&mut out)
-        .wrap_err("read values.yaml")?;
-    Ok(out)
-}
-
-pub fn generate_chart_schema_for_path(
-    chart_relative_path: &str,
-) -> std::result::Result<Value, Report> {
-    let _guard = test_util::builder().with_tracing(false).build();
+pub fn generate_chart_schema_for_path(chart_relative_path: &str) -> eyre::Result<Value> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let opts = GenerateOptions {
         chart_dir: chart_dir(chart_relative_path),
@@ -77,6 +56,6 @@ pub fn generate_chart_schema_for_path(
         // Mirror the CLI's default output policy: repeated schema subtrees
         // are interned into root-level `$defs` before anything ships.
         .map(|generated| json_schema_minify::minimize_schema(generated.schema))
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")
 }

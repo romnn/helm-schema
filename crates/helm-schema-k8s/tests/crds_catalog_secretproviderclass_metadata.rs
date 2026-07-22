@@ -1,3 +1,5 @@
+//! CRD-catalog metadata lookup regression for `SecretProviderClass`.
+
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider};
 use test_util::prelude::sim_assert_eq;

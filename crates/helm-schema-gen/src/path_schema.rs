@@ -7,6 +7,10 @@ use crate::schema_model::{
 };
 use crate::schema_node::SchemaNode;
 
+#[expect(
+    clippy::fn_params_excessive_bools,
+    reason = "each boolean is an independent structural fact at this private lowering boundary"
+)]
 pub(crate) fn merge_explicit_empty_placeholder(
     schema: Value,
     is_empty_map: bool,

@@ -174,6 +174,10 @@ fn flattened_merge_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
 
 /// Lower a hole value that stands as an entire fragment position (an entry
 /// value, a sequence item, or a standalone output line).
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn lower_value(
     value: &AbstractValue,
     kind: ValueKind,
@@ -360,7 +364,9 @@ pub(crate) fn lower_value(
                 if let Some(layer_paths) = &identities {
                     for (_, fragment) in &mut lowered.arms {
                         if let AbstractFragment::Splice(splice) = fragment
-                            && splice.values_path == layer_paths[position]
+                            && layer_paths
+                                .get(position)
+                                .is_some_and(|path| splice.values_path == *path)
                         {
                             splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
                                 layers: layer_paths.clone(),
@@ -521,6 +527,10 @@ fn structure_child_kind(value: &AbstractValue) -> ValueKind {
 /// branches split into arms so their conditions stay in the tree. `kind` is
 /// the hole's own render kind: fragment-rendering holes (`toYaml …` inside a
 /// block scalar) keep fragment evidence even though they sit in scalar text.
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn lower_value_scalar_arms(
     value: &AbstractValue,
     kind: ValueKind,

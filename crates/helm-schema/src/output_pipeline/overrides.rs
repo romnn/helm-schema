@@ -32,6 +32,12 @@ impl PolicyInputs {
     }
 }
 
+/// Loads and prepares override schemas according to reference and fetch policy.
+///
+/// # Errors
+///
+/// Returns an error when an override exceeds its load budget, cannot be read
+/// or decoded, or contains references that policy cannot prepare.
 #[tracing::instrument(skip_all, fields(override_count = paths.len()))]
 pub fn load_policy_inputs(
     paths: &[PathBuf],
@@ -75,7 +81,7 @@ fn prepare_override_schema(
             options.load_budget,
         ),
         ReferenceMode::FullyInlinedExport => flatten::flatten_refs(
-            schema,
+            &schema,
             override_base,
             options.fetch_policy,
             options.load_budget,

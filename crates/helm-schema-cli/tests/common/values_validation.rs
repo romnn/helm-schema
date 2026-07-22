@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
@@ -40,10 +40,8 @@ pub fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<Str
         .collect()
 }
 
-pub fn values_yaml_as_json_for_path(
-    chart_relative_path: &str,
-) -> std::result::Result<Value, Report> {
-    let values_yaml = crate::schema_roundtrip::read_values_yaml_for_path(chart_relative_path)
+pub fn values_yaml_as_json_for_path(chart_relative_path: &str) -> eyre::Result<Value> {
+    let values_yaml = crate::values_yaml::read_values_yaml_for_path(chart_relative_path)
         .wrap_err("read values.yaml")?;
     let values_json: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;
     Ok(drop_nulls(&values_json))

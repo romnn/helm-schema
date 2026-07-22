@@ -1,3 +1,5 @@
+use color_eyre::eyre;
+
 use super::*;
 use test_util::prelude::sim_assert_eq;
 
@@ -18,7 +20,7 @@ fn role_paths(files: &[ChartFile], role: FileRole) -> Vec<String> {
 }
 
 #[test]
-fn file_roles_preserve_existing_chart_file_classification() -> color_eyre::eyre::Result<()> {
+fn file_roles_preserve_existing_chart_file_classification() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,

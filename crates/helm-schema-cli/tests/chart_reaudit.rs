@@ -10,6 +10,7 @@
 
 use std::collections::BTreeSet;
 
+use color_eyre::eyre::{self, OptionExt as _};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
@@ -17,6 +18,8 @@ use test_util::prelude::sim_assert_eq;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 struct SemanticCase {
     label: &'static str,
@@ -51,10 +54,10 @@ struct ValidationFailure {
     message: String,
 }
 
-fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> color_eyre::eyre::Result<()> {
+fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
     let validator = jsonschema::validator_for(&schema)
-        .map_err(|error| color_eyre::eyre::eyre!("compile {chart} schema: {error}"))?;
+        .map_err(|error| eyre::eyre!("compile {chart} schema: {error}"))?;
     let validation_errors = |instance: &Value| {
         validator
             .iter_errors(instance)
@@ -80,7 +83,7 @@ fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> color_eyre::eyre
                 ));
             }
         } else {
-            let rejected_path = case.rejected_path.expect("rejected case path");
+            let rejected_path = case.rejected_path.ok_or_eyre("rejected case path")?;
             let path_prefix = format!("{rejected_path}/");
             if !additional_errors.iter().any(|error| {
                 if rejected_path.is_empty() {
@@ -105,12 +108,12 @@ fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> color_eyre::eyre
     if failures.is_empty() {
         Ok(())
     } else {
-        Err(color_eyre::eyre::eyre!("{chart}:\n{}", failures.join("\n")))
+        Err(eyre::eyre!("{chart}:\n{}", failures.join("\n")))
     }
 }
 
 #[test]
-fn fluent_bit_extra_containers_rejects_scalar_complement() -> color_eyre::eyre::Result<()> {
+fn fluent_bit_extra_containers_rejects_scalar_complement() -> eyre::Result<()> {
     assert_chart_cases(
         "fluent-bit",
         vec![
@@ -132,7 +135,7 @@ fn fluent_bit_extra_containers_rejects_scalar_complement() -> color_eyre::eyre::
 }
 
 #[test]
-fn minio_extra_containers_rejects_scalar_complement() -> color_eyre::eyre::Result<()> {
+fn minio_extra_containers_rejects_scalar_complement() -> eyre::Result<()> {
     assert_chart_cases(
         "minio",
         vec![
@@ -154,7 +157,7 @@ fn minio_extra_containers_rejects_scalar_complement() -> color_eyre::eyre::Resul
 }
 
 #[test]
-fn oauth2_proxy_consumers_follow_the_selected_helper_branch() -> color_eyre::eyre::Result<()> {
+fn oauth2_proxy_consumers_follow_the_selected_helper_branch() -> eyre::Result<()> {
     assert_chart_cases(
         "oauth2-proxy",
         vec![
@@ -200,7 +203,7 @@ fn oauth2_proxy_consumers_follow_the_selected_helper_branch() -> color_eyre::eyr
 }
 
 #[test]
-fn istiod_string_and_object_consumers_reject_wrong_kinds() -> color_eyre::eyre::Result<()> {
+fn istiod_string_and_object_consumers_reject_wrong_kinds() -> eyre::Result<()> {
     assert_chart_cases(
         "istiod",
         vec![
@@ -230,7 +233,7 @@ fn istiod_string_and_object_consumers_reject_wrong_kinds() -> color_eyre::eyre::
 }
 
 #[test]
-fn istiod_constructed_tpl_selector_reaches_removed_value_fail() -> color_eyre::eyre::Result<()> {
+fn istiod_constructed_tpl_selector_reaches_removed_value_fail() -> eyre::Result<()> {
     assert_chart_cases(
         "istiod",
         vec![
@@ -256,7 +259,7 @@ fn istiod_constructed_tpl_selector_reaches_removed_value_fail() -> color_eyre::e
 }
 
 #[test]
-fn vault_fullname_override_requires_a_string_when_truthy() -> color_eyre::eyre::Result<()> {
+fn vault_fullname_override_requires_a_string_when_truthy() -> eyre::Result<()> {
     assert_chart_cases(
         "vault",
         vec![
@@ -297,7 +300,7 @@ fn vault_fullname_override_requires_a_string_when_truthy() -> color_eyre::eyre::
 }
 
 #[test]
-fn promtail_string_consumers_and_range_keys_keep_their_domains() -> color_eyre::eyre::Result<()> {
+fn promtail_string_consumers_and_range_keys_keep_their_domains() -> eyre::Result<()> {
     assert_chart_cases(
         "promtail",
         vec![
@@ -338,7 +341,7 @@ fn promtail_string_consumers_and_range_keys_keep_their_domains() -> color_eyre::
 }
 
 #[test]
-fn nfs_archive_on_delete_keeps_quoted_scalar_forms() -> color_eyre::eyre::Result<()> {
+fn nfs_archive_on_delete_keeps_quoted_scalar_forms() -> eyre::Result<()> {
     assert_chart_cases(
         "nfs-subdir-external-provisioner",
         vec![
@@ -355,7 +358,7 @@ fn nfs_archive_on_delete_keeps_quoted_scalar_forms() -> color_eyre::eyre::Result
 }
 
 #[test]
-fn postgres_operator_extra_envs_requires_a_sequence() -> color_eyre::eyre::Result<()> {
+fn postgres_operator_extra_envs_requires_a_sequence() -> eyre::Result<()> {
     assert_chart_cases(
         "zalando-postgres-operator",
         vec![
@@ -373,7 +376,7 @@ fn postgres_operator_extra_envs_requires_a_sequence() -> color_eyre::eyre::Resul
 }
 
 #[test]
-fn postgres_operator_ui_extra_envs_requires_a_sequence() -> color_eyre::eyre::Result<()> {
+fn postgres_operator_ui_extra_envs_requires_a_sequence() -> eyre::Result<()> {
     assert_chart_cases(
         "zalando-postgres-operator-ui",
         vec![
@@ -391,7 +394,7 @@ fn postgres_operator_ui_extra_envs_requires_a_sequence() -> color_eyre::eyre::Re
 }
 
 #[test]
-fn external_dns_affinity_preserves_the_with_skip_domain() -> color_eyre::eyre::Result<()> {
+fn external_dns_affinity_preserves_the_with_skip_domain() -> eyre::Result<()> {
     assert_chart_cases(
         "external-dns",
         vec![
@@ -415,8 +418,7 @@ fn external_dns_affinity_preserves_the_with_skip_domain() -> color_eyre::eyre::R
 }
 
 #[test]
-fn external_dns_helper_return_partitions_the_webhook_provider_contract()
--> color_eyre::eyre::Result<()> {
+fn external_dns_helper_return_partitions_the_webhook_provider_contract() -> eyre::Result<()> {
     let provider = |name: &str, pull_policy: Value| {
         json!({
             "provider": {
@@ -449,7 +451,7 @@ fn external_dns_helper_return_partitions_the_webhook_provider_contract()
 }
 
 #[test]
-fn grafana_nested_ranges_and_has_key_require_object_members() -> color_eyre::eyre::Result<()> {
+fn grafana_nested_ranges_and_has_key_require_object_members() -> eyre::Result<()> {
     let dashboards = json!({ "default": { "audit": { "json": "{}" } } });
     assert_chart_cases(
         "grafana",
@@ -520,7 +522,7 @@ fn grafana_nested_ranges_and_has_key_require_object_members() -> color_eyre::eyr
 }
 
 #[test]
-fn sealed_secrets_liveness_probe_keeps_its_object_type() -> color_eyre::eyre::Result<()> {
+fn sealed_secrets_liveness_probe_keeps_its_object_type() -> eyre::Result<()> {
     assert_chart_cases(
         "sealed-secrets",
         vec![
@@ -544,7 +546,7 @@ fn sealed_secrets_liveness_probe_keeps_its_object_type() -> color_eyre::eyre::Re
 }
 
 #[test]
-fn jaeger_range_body_requires_string_arguments() -> color_eyre::eyre::Result<()> {
+fn jaeger_range_body_requires_string_arguments() -> eyre::Result<()> {
     assert_chart_cases(
         "jaeger",
         vec![
@@ -562,7 +564,7 @@ fn jaeger_range_body_requires_string_arguments() -> color_eyre::eyre::Result<()>
 }
 
 #[test]
-fn jenkins_range_body_requires_string_plugins() -> color_eyre::eyre::Result<()> {
+fn jenkins_range_body_requires_string_plugins() -> eyre::Result<()> {
     assert_chart_cases(
         "jenkins",
         vec![
@@ -580,7 +582,7 @@ fn jenkins_range_body_requires_string_plugins() -> color_eyre::eyre::Result<()> 
 }
 
 #[test]
-fn velero_range_values_and_merge_operands_keep_their_domains() -> color_eyre::eyre::Result<()> {
+fn velero_range_values_and_merge_operands_keep_their_domains() -> eyre::Result<()> {
     assert_chart_cases(
         "velero",
         vec![
@@ -610,7 +612,7 @@ fn velero_range_values_and_merge_operands_keep_their_domains() -> color_eyre::ey
 /// preferred object's keys precedence, so a legacy member types exactly
 /// where the preferred object lacks it.
 #[test]
-fn velero_merge_shadowing_scopes_legacy_security_context() -> color_eyre::eyre::Result<()> {
+fn velero_merge_shadowing_scopes_legacy_security_context() -> eyre::Result<()> {
     assert_chart_cases(
         "velero",
         vec![
@@ -635,8 +637,7 @@ fn velero_merge_shadowing_scopes_legacy_security_context() -> color_eyre::eyre::
 }
 
 #[test]
-fn surveyor_range_members_and_intermediate_secrets_are_structural() -> color_eyre::eyre::Result<()>
-{
+fn surveyor_range_members_and_intermediate_secrets_are_structural() -> eyre::Result<()> {
     assert_chart_cases(
         "surveyor",
         vec![
@@ -700,7 +701,7 @@ fn surveyor_range_members_and_intermediate_secrets_are_structural() -> color_eyr
 }
 
 #[test]
-fn harbor_string_comparisons_reject_composite_operands() -> color_eyre::eyre::Result<()> {
+fn harbor_string_comparisons_reject_composite_operands() -> eyre::Result<()> {
     assert_chart_cases(
         "harbor",
         vec![
@@ -724,7 +725,7 @@ fn harbor_string_comparisons_reject_composite_operands() -> color_eyre::eyre::Re
 }
 
 #[test]
-fn signoz_comparisons_and_guarded_ranges_keep_exact_scope() -> color_eyre::eyre::Result<()> {
+fn signoz_comparisons_and_guarded_ranges_keep_exact_scope() -> eyre::Result<()> {
     let config = json!({
         "route": { "receiver": "audit" },
         "receivers": [{ "name": "audit" }]
@@ -787,8 +788,7 @@ fn signoz_comparisons_and_guarded_ranges_keep_exact_scope() -> color_eyre::eyre:
 }
 
 #[test]
-fn kube_state_metrics_collection_consumers_keep_documented_unions() -> color_eyre::eyre::Result<()>
-{
+fn kube_state_metrics_collection_consumers_keep_documented_unions() -> eyre::Result<()> {
     assert_chart_cases(
         "kube-state-metrics",
         vec![
@@ -811,7 +811,7 @@ fn kube_state_metrics_collection_consumers_keep_documented_unions() -> color_eyr
 }
 
 #[test]
-fn kube_prometheus_stack_must_uniq_requires_a_list() -> color_eyre::eyre::Result<()> {
+fn kube_prometheus_stack_must_uniq_requires_a_list() -> eyre::Result<()> {
     assert_chart_cases(
         "kube-prometheus-stack",
         vec![
@@ -829,7 +829,7 @@ fn kube_prometheus_stack_must_uniq_requires_a_list() -> color_eyre::eyre::Result
 }
 
 #[test]
-fn argo_cd_concat_rejects_all_non_list_operands() -> color_eyre::eyre::Result<()> {
+fn argo_cd_concat_rejects_all_non_list_operands() -> eyre::Result<()> {
     assert_chart_cases(
         "argo-cd",
         vec![
@@ -865,7 +865,7 @@ fn argo_cd_concat_rejects_all_non_list_operands() -> color_eyre::eyre::Result<()
 }
 
 #[test]
-fn cloudnative_pg_merge_rejects_falsy_wrong_kinds_when_live() -> color_eyre::eyre::Result<()> {
+fn cloudnative_pg_merge_rejects_falsy_wrong_kinds_when_live() -> eyre::Result<()> {
     assert_chart_cases(
         "cloudnative-pg",
         vec![
@@ -907,7 +907,7 @@ fn cloudnative_pg_merge_rejects_falsy_wrong_kinds_when_live() -> color_eyre::eyr
 }
 
 #[test]
-fn airflow_webserver_contract_binds_under_version_guard() -> color_eyre::eyre::Result<()> {
+fn airflow_webserver_contract_binds_under_version_guard() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -938,7 +938,7 @@ fn airflow_webserver_contract_binds_under_version_guard() -> color_eyre::eyre::R
 }
 
 #[test]
-fn airflow_version_requires_semver_lexical_form() -> color_eyre::eyre::Result<()> {
+fn airflow_version_requires_semver_lexical_form() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -953,8 +953,7 @@ fn airflow_version_requires_semver_lexical_form() -> color_eyre::eyre::Result<()
 }
 
 #[test]
-fn airflow_security_context_priority_keeps_dormant_fallbacks_open() -> color_eyre::eyre::Result<()>
-{
+fn airflow_security_context_priority_keeps_dormant_fallbacks_open() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -981,7 +980,7 @@ fn airflow_security_context_priority_keeps_dormant_fallbacks_open() -> color_eyr
 }
 
 #[test]
-fn postgres_operator_ui_team_elements_are_formatted_as_text() -> color_eyre::eyre::Result<()> {
+fn postgres_operator_ui_team_elements_are_formatted_as_text() -> eyre::Result<()> {
     assert_chart_cases(
         "zalando-postgres-operator-ui",
         vec![
@@ -999,7 +998,7 @@ fn postgres_operator_ui_team_elements_are_formatted_as_text() -> color_eyre::eyr
 }
 
 #[test]
-fn kyverno_image_pull_secret_keys_require_a_map() -> color_eyre::eyre::Result<()> {
+fn kyverno_image_pull_secret_keys_require_a_map() -> eyre::Result<()> {
     assert_chart_cases(
         "kyverno",
         vec![
@@ -1025,7 +1024,7 @@ fn kyverno_image_pull_secret_keys_require_a_map() -> color_eyre::eyre::Result<()
 }
 
 #[test]
-fn bitnami_redis_ternary_selector_requires_boolean() -> color_eyre::eyre::Result<()> {
+fn bitnami_redis_ternary_selector_requires_boolean() -> eyre::Result<()> {
     assert_chart_cases(
         "bitnami-redis",
         vec![
@@ -1046,7 +1045,7 @@ fn bitnami_redis_ternary_selector_requires_boolean() -> color_eyre::eyre::Result
 /// character (RFC 1123 resource names); the key domain lowers to
 /// `propertyNames`.
 #[test]
-fn traefik_ingress_route_keys_must_be_lowercase() -> color_eyre::eyre::Result<()> {
+fn traefik_ingress_route_keys_must_be_lowercase() -> eyre::Result<()> {
     assert_chart_cases(
         "traefik",
         vec![
@@ -1067,8 +1066,7 @@ fn traefik_ingress_route_keys_must_be_lowercase() -> color_eyre::eyre::Result<()
 /// is not a TRUTHY string — the empty string is falsy and takes the `fail`
 /// arm just like a non-string.
 #[test]
-fn sealed_secrets_private_key_metadata_members_must_be_truthy_strings()
--> color_eyre::eyre::Result<()> {
+fn sealed_secrets_private_key_metadata_members_must_be_truthy_strings() -> eyre::Result<()> {
     assert_chart_cases(
         "sealed-secrets",
         vec![
@@ -1097,7 +1095,7 @@ fn sealed_secrets_private_key_metadata_members_must_be_truthy_strings()
 /// `k8sClientExponentialBackoff` (default-enabled) is live; disabling the
 /// feature reopens the names.
 #[test]
-fn cilium_backoff_env_name_collisions_are_rejected_while_live() -> color_eyre::eyre::Result<()> {
+fn cilium_backoff_env_name_collisions_are_rejected_while_live() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -1125,8 +1123,7 @@ fn cilium_backoff_env_name_collisions_are_rejected_while_live() -> color_eyre::e
 /// users body and aborts rendering; a string hashes, and every Helm-falsy
 /// spelling escapes to the `nopass` arm through the `default ""` local.
 #[test]
-fn bitnami_redis_acl_passwords_reaching_sha256sum_must_be_strings() -> color_eyre::eyre::Result<()>
-{
+fn bitnami_redis_acl_passwords_reaching_sha256sum_must_be_strings() -> eyre::Result<()> {
     assert_chart_cases(
         "bitnami-redis",
         vec![
@@ -1173,7 +1170,7 @@ fn bitnami_redis_acl_passwords_reaching_sha256sum_must_be_strings() -> color_eyr
 /// composition and validate against the nil-tolerant comparison operand
 /// (cilium's `ne $cluster.enabled false` clustermesh arm).
 #[test]
-fn cilium_replacement_list_members_keep_literal_nulls() -> color_eyre::eyre::Result<()> {
+fn cilium_replacement_list_members_keep_literal_nulls() -> eyre::Result<()> {
     let composed = chart_instances::with_override(
         "cilium",
         json!({
@@ -1208,8 +1205,7 @@ fn cilium_replacement_list_members_keep_literal_nulls() -> color_eyre::eyre::Res
 /// accepted instance validates the key's ABSENCE (the release-namespace
 /// fallback), not a literal null at the property.
 #[test]
-fn kube_state_metrics_null_namespace_override_composes_to_absent_key()
--> color_eyre::eyre::Result<()> {
+fn kube_state_metrics_null_namespace_override_composes_to_absent_key() -> eyre::Result<()> {
     assert_chart_cases(
         "kube-state-metrics",
         vec![
@@ -1226,7 +1222,7 @@ fn kube_state_metrics_null_namespace_override_composes_to_absent_key()
 }
 
 #[test]
-fn nats_operator_executes_file_backed_client_auth_template() -> color_eyre::eyre::Result<()> {
+fn nats_operator_executes_file_backed_client_auth_template() -> eyre::Result<()> {
     assert_chart_cases(
         "nats-operator",
         vec![
@@ -1250,7 +1246,7 @@ fn nats_operator_executes_file_backed_client_auth_template() -> color_eyre::eyre
 }
 
 #[test]
-fn minio_executes_base_path_template_partials() -> color_eyre::eyre::Result<()> {
+fn minio_executes_base_path_template_partials() -> eyre::Result<()> {
     assert_chart_cases(
         "minio",
         vec![
@@ -1261,7 +1257,7 @@ fn minio_executes_base_path_template_partials() -> color_eyre::eyre::Result<()> 
 }
 
 #[test]
-fn sealed_secrets_helper_propagates_semver_domain() -> color_eyre::eyre::Result<()> {
+fn sealed_secrets_helper_propagates_semver_domain() -> eyre::Result<()> {
     assert_chart_cases(
         "sealed-secrets",
         vec![
@@ -1279,7 +1275,7 @@ fn sealed_secrets_helper_propagates_semver_domain() -> color_eyre::eyre::Result<
 }
 
 #[test]
-fn cilium_duration_parser_keeps_its_lexical_domain() -> color_eyre::eyre::Result<()> {
+fn cilium_duration_parser_keeps_its_lexical_domain() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -1297,7 +1293,7 @@ fn cilium_duration_parser_keeps_its_lexical_domain() -> color_eyre::eyre::Result
 }
 
 #[test]
-fn traefik_helper_propagates_semver_domain() -> color_eyre::eyre::Result<()> {
+fn traefik_helper_propagates_semver_domain() -> eyre::Result<()> {
     assert_chart_cases(
         "traefik",
         vec![
@@ -1315,7 +1311,7 @@ fn traefik_helper_propagates_semver_domain() -> color_eyre::eyre::Result<()> {
 }
 
 #[test]
-fn urlquery_total_conversion_accepts_structured_passwords() -> color_eyre::eyre::Result<()> {
+fn urlquery_total_conversion_accepts_structured_passwords() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -1336,7 +1332,7 @@ fn urlquery_total_conversion_accepts_structured_passwords() -> color_eyre::eyre:
 }
 
 #[test]
-fn vault_object_selector_keeps_or_selected_shape_alternatives() -> color_eyre::eyre::Result<()> {
+fn vault_object_selector_keeps_or_selected_shape_alternatives() -> eyre::Result<()> {
     assert_chart_cases(
         "vault",
         vec![
@@ -1374,7 +1370,7 @@ fn vault_object_selector_keeps_or_selected_shape_alternatives() -> color_eyre::e
 }
 
 #[test]
-fn vault_quoted_external_address_accepts_total_textual_forms() -> color_eyre::eyre::Result<()> {
+fn vault_quoted_external_address_accepts_total_textual_forms() -> eyre::Result<()> {
     assert_chart_cases(
         "vault",
         vec![
@@ -1395,7 +1391,7 @@ fn vault_quoted_external_address_accepts_total_textual_forms() -> color_eyre::ey
 }
 
 #[test]
-fn prometheus_namespace_text_pipeline_accepts_structured_inputs() -> color_eyre::eyre::Result<()> {
+fn prometheus_namespace_text_pipeline_accepts_structured_inputs() -> eyre::Result<()> {
     assert_chart_cases(
         "prometheus",
         vec![
@@ -1424,7 +1420,7 @@ fn prometheus_namespace_text_pipeline_accepts_structured_inputs() -> color_eyre:
 }
 
 #[test]
-fn trivy_ignore_policy_prefix_requires_string_values() -> color_eyre::eyre::Result<()> {
+fn trivy_ignore_policy_prefix_requires_string_values() -> eyre::Result<()> {
     assert_chart_cases(
         "trivy-operator",
         vec![
@@ -1446,7 +1442,7 @@ fn trivy_ignore_policy_prefix_requires_string_values() -> color_eyre::eyre::Resu
 }
 
 #[test]
-fn traefik_invalid_kind_guard_preserves_falsy_present_values() -> color_eyre::eyre::Result<()> {
+fn traefik_invalid_kind_guard_preserves_falsy_present_values() -> eyre::Result<()> {
     assert_chart_cases(
         "traefik",
         vec![
@@ -1471,7 +1467,7 @@ fn traefik_invalid_kind_guard_preserves_falsy_present_values() -> color_eyre::ey
 /// through `coalesce … "false"`, so the empty, null, and literal-`"<nil>"`
 /// spellings render as well (all helm-verified).
 #[test]
-fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> color_eyre::eyre::Result<()> {
+fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -1520,7 +1516,7 @@ fn cilium_kube_proxy_replacement_accepts_raw_booleans() -> color_eyre::eyre::Res
 /// deletes null keys the way helm's value coalescing does, so a null
 /// case cannot be expressed here.
 #[test]
-fn cilium_removed_options_abort_even_when_disabled() -> color_eyre::eyre::Result<()> {
+fn cilium_removed_options_abort_even_when_disabled() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -1558,7 +1554,7 @@ fn cilium_removed_options_abort_even_when_disabled() -> color_eyre::eyre::Result
 /// port stays null (all polarities helm-rendered and checked against the
 /// committed provider bundle).
 #[test]
-fn promtail_extra_port_members_require_the_container_port() -> color_eyre::eyre::Result<()> {
+fn promtail_extra_port_members_require_the_container_port() -> eyre::Result<()> {
     assert_chart_cases(
         "promtail",
         vec![
@@ -1590,7 +1586,7 @@ fn promtail_extra_port_members_require_the_container_port() -> color_eyre::eyre:
 /// enabled; `[{}]` renders null header fields the strict provider
 /// rejects, while the disabled probe renders nothing (helm-verified).
 #[test]
-fn kube_state_metrics_probe_headers_require_name_and_value() -> color_eyre::eyre::Result<()> {
+fn kube_state_metrics_probe_headers_require_name_and_value() -> eyre::Result<()> {
     assert_chart_cases(
         "kube-state-metrics",
         vec![
@@ -1620,7 +1616,7 @@ fn kube_state_metrics_probe_headers_require_name_and_value() -> color_eyre::eyre
 /// string `"0"` escapes through the helper's own `kindIs "string"`
 /// dispatch (all polarities helm-verified).
 #[test]
-fn kyverno_zero_replicas_abort_through_the_template_helper() -> color_eyre::eyre::Result<()> {
+fn kyverno_zero_replicas_abort_through_the_template_helper() -> eyre::Result<()> {
     assert_chart_cases(
         "kyverno",
         vec![
@@ -1646,7 +1642,7 @@ fn kyverno_zero_replicas_abort_through_the_template_helper() -> color_eyre::eyre
     )
 }
 
-/// redis-ha's ConfigMap renders `redis.conf: |` followed by a column-zero
+/// redis-ha's `ConfigMap` renders `redis.conf: |` followed by a column-zero
 /// `{{- include "config-redis.conf" . }}`: the include's output continues
 /// the block scalar, so ranged `redis.config` members are pure text and
 /// any scalar spelling renders (helm-verified). Anchoring the include as
@@ -1655,7 +1651,7 @@ fn kyverno_zero_replicas_abort_through_the_template_helper() -> color_eyre::eyre
 /// enabled. The strict `tpl` string-program contract on `customConfig`
 /// must survive the text adoption.
 #[test]
-fn oauth2_proxy_redis_ha_config_members_render_as_block_text() -> color_eyre::eyre::Result<()> {
+fn oauth2_proxy_redis_ha_config_members_render_as_block_text() -> eyre::Result<()> {
     assert_chart_cases(
         "oauth2-proxy",
         vec![
@@ -1684,7 +1680,7 @@ fn oauth2_proxy_redis_ha_config_members_render_as_block_text() -> color_eyre::ey
     )
 }
 
-/// The redis StandaloneUrl helper fails ("please set
+/// The redis `StandaloneUrl` helper fails ("please set
 /// sessionStorage.redis.standalone.connectionUrl or enable the redis
 /// subchart via redis-ha.enabled") when the standalone client has no
 /// explicit url and `redis-ha.enabled` is false. The caller gate is
@@ -1694,7 +1690,7 @@ fn oauth2_proxy_redis_ha_config_members_render_as_block_text() -> color_eyre::ey
 /// decode for the terminal to reach the schema (helm-verified all three
 /// ways).
 #[test]
-fn oauth2_proxy_standalone_redis_requires_a_connection_url() -> color_eyre::eyre::Result<()> {
+fn oauth2_proxy_standalone_redis_requires_a_connection_url() -> eyre::Result<()> {
     assert_chart_cases(
         "oauth2-proxy",
         vec![
@@ -1724,7 +1720,7 @@ fn oauth2_proxy_standalone_redis_requires_a_connection_url() -> color_eyre::eyre
 /// `redis-ha.redis.config.save: '""'` — enabling the dependency must not
 /// reject the chart's own defaults (helm renders them).
 #[test]
-fn argo_cd_redis_ha_own_defaults_render_when_enabled() -> color_eyre::eyre::Result<()> {
+fn argo_cd_redis_ha_own_defaults_render_when_enabled() -> eyre::Result<()> {
     assert_chart_cases(
         "argo-cd",
         vec![SemanticCase::accepted(
@@ -1742,7 +1738,7 @@ fn argo_cd_redis_ha_own_defaults_render_when_enabled() -> color_eyre::eyre::Resu
 /// `with .addX | toString` family, whose truthiness is a RENDERING test
 /// (all polarities helm-verified).
 #[test]
-fn traefik_otlp_resource_attributes_render_as_flag_loops() -> color_eyre::eyre::Result<()> {
+fn traefik_otlp_resource_attributes_render_as_flag_loops() -> eyre::Result<()> {
     assert_chart_cases(
         "traefik",
         vec![
@@ -1772,7 +1768,7 @@ fn traefik_otlp_resource_attributes_render_as_flag_loops() -> color_eyre::eyre::
 }
 
 #[test]
-fn cilium_certificate_sans_require_string_members() -> color_eyre::eyre::Result<()> {
+fn cilium_certificate_sans_require_string_members() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -1838,7 +1834,7 @@ fn cilium_certificate_sans_require_string_members() -> color_eyre::eyre::Result<
 }
 
 #[test]
-fn loki_minio_user_index_requires_a_first_user_when_live() -> color_eyre::eyre::Result<()> {
+fn loki_minio_user_index_requires_a_first_user_when_live() -> eyre::Result<()> {
     let live_enterprise = json!({
         "enterprise": { "enabled": true },
         "loki": {
@@ -1883,8 +1879,7 @@ fn loki_minio_user_index_requires_a_first_user_when_live() -> color_eyre::eyre::
 }
 
 #[test]
-fn loki_chart_authored_htpasswd_program_requires_selected_credentials()
--> color_eyre::eyre::Result<()> {
+fn loki_chart_authored_htpasswd_program_requires_selected_credentials() -> eyre::Result<()> {
     let live = |basic_auth: Value| {
         json!({
             "gateway": { "basicAuth": basic_auth },
@@ -1930,7 +1925,7 @@ fn loki_chart_authored_htpasswd_program_requires_selected_credentials()
 }
 
 #[test]
-fn coredns_prometheus_address_requires_a_host_port_split() -> color_eyre::eyre::Result<()> {
+fn coredns_prometheus_address_requires_a_host_port_split() -> eyre::Result<()> {
     let server = |parameters| {
         json!([{
             "zones": [{ "zone": "." }],
@@ -1955,7 +1950,7 @@ fn coredns_prometheus_address_requires_a_host_port_split() -> color_eyre::eyre::
 }
 
 #[test]
-fn falco_removed_config_accumulator_forbids_present_legacy_keys() -> color_eyre::eyre::Result<()> {
+fn falco_removed_config_accumulator_forbids_present_legacy_keys() -> eyre::Result<()> {
     assert_chart_cases(
         "falco",
         vec![
@@ -1975,7 +1970,7 @@ fn falco_removed_config_accumulator_forbids_present_legacy_keys() -> color_eyre:
 }
 
 #[test]
-fn jaeger_http_route_validator_requires_a_parent_reference() -> color_eyre::eyre::Result<()> {
+fn jaeger_http_route_validator_requires_a_parent_reference() -> eyre::Result<()> {
     assert_chart_cases(
         "jaeger",
         vec![
@@ -2003,7 +1998,7 @@ fn jaeger_http_route_validator_requires_a_parent_reference() -> color_eyre::eyre
 /// with `substr 0 7` before comparing against `sha256:`, so a non-string tag
 /// terminates rendering while ordinary and digest tags render.
 #[test]
-fn flux2_controller_tags_require_substr_string_subjects() -> color_eyre::eyre::Result<()> {
+fn flux2_controller_tags_require_substr_string_subjects() -> eyre::Result<()> {
     assert_chart_cases(
         "flux2",
         vec![
@@ -2027,7 +2022,7 @@ fn flux2_controller_tags_require_substr_string_subjects() -> color_eyre::eyre::R
 /// selects the literal fallback and renders, while a truthy non-semver
 /// input still terminates inside the parser.
 #[test]
-fn cilium_upgrade_compatibility_keeps_helm_empty_inputs_open() -> color_eyre::eyre::Result<()> {
+fn cilium_upgrade_compatibility_keeps_helm_empty_inputs_open() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -2061,7 +2056,7 @@ fn cilium_upgrade_compatibility_keeps_helm_empty_inputs_open() -> color_eyre::ey
 /// before `trunc`/`contains`, and reads `namespaceOverride` only inside its
 /// own truthy `if`; Helm-empty overrides substitute or skip and render.
 #[test]
-fn cloudnative_pg_override_fallbacks_keep_helm_empty_inputs_open() -> color_eyre::eyre::Result<()> {
+fn cloudnative_pg_override_fallbacks_keep_helm_empty_inputs_open() -> eyre::Result<()> {
     assert_chart_cases(
         "cloudnative-pg",
         vec![
@@ -2091,8 +2086,7 @@ fn cloudnative_pg_override_fallbacks_keep_helm_empty_inputs_open() -> color_eyre
 /// architecture arms, while scaling the master to zero keeps the whole
 /// partition dead.
 #[test]
-fn bitnami_redis_auth_ternary_holds_across_architecture_partitions() -> color_eyre::eyre::Result<()>
-{
+fn bitnami_redis_auth_ternary_holds_across_architecture_partitions() -> eyre::Result<()> {
     assert_chart_cases(
         "bitnami-redis",
         vec![
@@ -2130,7 +2124,7 @@ fn bitnami_redis_auth_ternary_holds_across_architecture_partitions() -> color_ey
 /// `velero.io/v1 Schedule`, so the chart-local CRD's member schema applies
 /// through `additionalProperties` to every (arbitrarily named) entry.
 #[test]
-fn velero_schedule_members_carry_the_crd_member_schema() -> color_eyre::eyre::Result<()> {
+fn velero_schedule_members_carry_the_crd_member_schema() -> eyre::Result<()> {
     assert_chart_cases(
         "velero",
         vec![
@@ -2177,8 +2171,7 @@ fn velero_schedule_members_carry_the_crd_member_schema() -> color_eyre::eyre::Re
 /// contract still enforces the `required "Must specify key!"` read and the
 /// structural `.name` access.
 #[test]
-fn cluster_autoscaler_env_config_map_members_stay_open_with_contracts()
--> color_eyre::eyre::Result<()> {
+fn cluster_autoscaler_env_config_map_members_stay_open_with_contracts() -> eyre::Result<()> {
     let live = json!({ "autoDiscovery": { "clusterName": "audit-cluster" } });
     let merge = |extra: serde_json::Value| {
         let mut base = live.clone();
@@ -2212,7 +2205,7 @@ fn cluster_autoscaler_env_config_map_members_stay_open_with_contracts()
 /// string consumer) inside the serverFiles dispatch, so a non-string URL
 /// terminates rendering while string URLs pass.
 #[test]
-fn prometheus_remote_write_urls_require_strings() -> color_eyre::eyre::Result<()> {
+fn prometheus_remote_write_urls_require_strings() -> eyre::Result<()> {
     assert_chart_cases(
         "prometheus",
         vec![
@@ -2239,7 +2232,7 @@ fn prometheus_remote_write_urls_require_strings() -> color_eyre::eyre::Result<()
 /// accepts the sentinel while other lexically invalid tags still terminate
 /// rendering. `doNotCheckTag` disables the whole check.
 #[test]
-fn datadog_cluster_agent_latest_tag_survives_the_version_check() -> color_eyre::eyre::Result<()> {
+fn datadog_cluster_agent_latest_tag_survives_the_version_check() -> eyre::Result<()> {
     assert_chart_cases(
         "datadog",
         vec![
@@ -2269,8 +2262,7 @@ fn datadog_cluster_agent_latest_tag_survives_the_version_check() -> color_eyre::
 /// `otelAgentGateway.image.tag` renders (helm-verified) and only a truthy
 /// non-version string reaches the parser and aborts.
 #[test]
-fn datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback()
--> color_eyre::eyre::Result<()> {
+fn datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback() -> eyre::Result<()> {
     assert_chart_cases(
         "datadog",
         vec![
@@ -2302,7 +2294,7 @@ fn datadog_otel_gateway_empty_tag_selects_the_agent_version_fallback()
 /// grpc-enabled gates (helm-verified each way). The port-suffixed unix
 /// spelling isolates the prefix terminal — the port test alone admits it.
 #[test]
-fn datadog_otlp_grpc_endpoints_reject_the_unix_protocol() -> color_eyre::eyre::Result<()> {
+fn datadog_otlp_grpc_endpoints_reject_the_unix_protocol() -> eyre::Result<()> {
     assert_chart_cases(
         "datadog",
         vec![
@@ -2343,7 +2335,7 @@ fn datadog_otlp_grpc_endpoints_reject_the_unix_protocol() -> color_eyre::eyre::R
 /// those arms (helm-verified each way): conjoining them rejected both
 /// documented shapes, and the missing enum accepted an unknown `type`.
 #[test]
-fn traefik_local_plugins_keep_their_alternative_shapes() -> color_eyre::eyre::Result<()> {
+fn traefik_local_plugins_keep_their_alternative_shapes() -> eyre::Result<()> {
     assert_chart_cases(
         "traefik",
         vec![
@@ -2396,7 +2388,7 @@ fn traefik_local_plugins_keep_their_alternative_shapes() -> color_eyre::eyre::Re
 /// those raw forms render while an untouched non-version string still
 /// terminates.
 #[test]
-fn traefik_transformed_tag_sentinels_survive_the_version_checks() -> color_eyre::eyre::Result<()> {
+fn traefik_transformed_tag_sentinels_survive_the_version_checks() -> eyre::Result<()> {
     assert_chart_cases(
         "traefik",
         vec![
@@ -2436,7 +2428,7 @@ fn traefik_transformed_tag_sentinels_survive_the_version_checks() -> color_eyre:
 /// raw `"` inside any component corrupts the completed quoted token while
 /// ordinary strings and numbers format safely.
 #[test]
-fn zalando_operator_quoted_image_scalar_excludes_raw_quotes() -> color_eyre::eyre::Result<()> {
+fn zalando_operator_quoted_image_scalar_excludes_raw_quotes() -> eyre::Result<()> {
     assert_chart_cases(
         "zalando-postgres-operator",
         vec![
@@ -2463,7 +2455,7 @@ fn zalando_operator_quoted_image_scalar_excludes_raw_quotes() -> color_eyre::eyr
 /// unquoted, so a list registry opens a flow sequence at the token start and
 /// breaks the final YAML; maps and strings format as plain text.
 #[test]
-fn tempo_assembled_image_scalar_excludes_token_initial_lists() -> color_eyre::eyre::Result<()> {
+fn tempo_assembled_image_scalar_excludes_token_initial_lists() -> eyre::Result<()> {
     assert_chart_cases(
         "tempo",
         vec![
@@ -2494,7 +2486,7 @@ fn tempo_assembled_image_scalar_excludes_token_initial_lists() -> color_eyre::ey
 /// argument string; the `default "info"` fallback documents intent without
 /// constraining the input kind.
 #[test]
-fn flux2_prefixed_log_level_accepts_every_input_kind() -> color_eyre::eyre::Result<()> {
+fn flux2_prefixed_log_level_accepts_every_input_kind() -> eyre::Result<()> {
     assert_chart_cases(
         "flux2",
         vec![
@@ -2512,7 +2504,7 @@ fn flux2_prefixed_log_level_accepts_every_input_kind() -> color_eyre::eyre::Resu
 /// schemas reject a null label value (`labels.additionalProperties` is
 /// `string`), so the plain-token exclusion correctly keeps rejecting it.
 #[test]
-fn aws_lbc_null_spelling_name_override_stays_rejected() -> color_eyre::eyre::Result<()> {
+fn aws_lbc_null_spelling_name_override_stays_rejected() -> eyre::Result<()> {
     assert_chart_cases(
         "aws-load-balancer-controller",
         vec![
@@ -2535,7 +2527,7 @@ fn aws_lbc_null_spelling_name_override_stays_rejected() -> color_eyre::eyre::Res
 /// and airflow's scheduler fragments reject scalar inputs that break the
 /// completed document while structured inputs render.
 #[test]
-fn tpl_serialized_fragments_keep_their_structural_slots() -> color_eyre::eyre::Result<()> {
+fn tpl_serialized_fragments_keep_their_structural_slots() -> eyre::Result<()> {
     assert_chart_cases(
         "cloudnative-pg",
         vec![
@@ -2577,7 +2569,7 @@ fn tpl_serialized_fragments_keep_their_structural_slots() -> color_eyre::eyre::R
 /// `.Values.webhook.podDisruptionBudget.enabled`, so a truthy non-object
 /// host terminates rendering while the object form (and the default) render.
 #[test]
-fn external_secrets_pdb_header_member_requires_an_object_host() -> color_eyre::eyre::Result<()> {
+fn external_secrets_pdb_header_member_requires_an_object_host() -> eyre::Result<()> {
     assert_chart_cases(
         "external-secrets",
         vec![
@@ -2606,16 +2598,15 @@ fn external_secrets_pdb_header_member_requires_an_object_host() -> color_eyre::e
 
 /// external-secrets' `renderSecurityContext` removes `fsGroup`,
 /// `runAsUser`, and `runAsGroup` with a guard-scoped `omit` when the
-/// OpenShift adaptation runs (`adaptSecurityContext` "force", or "auto" on
-/// a detected OpenShift cluster). The removed keys' provider typing binds
+/// `OpenShift` adaptation runs (`adaptSecurityContext` "force", or "auto" on
+/// a detected `OpenShift` cluster). The removed keys' provider typing binds
 /// exactly where the omit certainly does not run — `adaptSecurityContext:
 /// disabled` with a live render gate — while "force" and the
 /// cluster-dependent "auto" accept any value there. Keys the omit never
 /// touches keep their typing in every mode. Each polarity reproduces
 /// under `helm template --skip-schema-validation` + kubeconform.
 #[test]
-fn external_secrets_omitted_security_context_keys_scope_their_typing()
--> color_eyre::eyre::Result<()> {
+fn external_secrets_omitted_security_context_keys_scope_their_typing() -> eyre::Result<()> {
     assert_chart_cases(
         "external-secrets",
         vec![
@@ -2671,7 +2662,7 @@ fn external_secrets_omitted_security_context_keys_scope_their_typing()
 /// digest-suffixed tags render (helm-verified with
 /// `hubble.relay.enabled=true hubble.ui.enabled=true`).
 #[test]
-fn cilium_hubble_ui_tag_binds_the_transformed_semver_bound() -> color_eyre::eyre::Result<()> {
+fn cilium_hubble_ui_tag_binds_the_transformed_semver_bound() -> eyre::Result<()> {
     let with_tag = |tag: &str| {
         json!({
             "hubble": {
@@ -2712,8 +2703,7 @@ fn cilium_hubble_ui_tag_binds_the_transformed_semver_bound() -> color_eyre::eyre
 /// at template headers). Each polarity helm-verified with
 /// `--skip-schema-validation`.
 #[test]
-fn external_secrets_deleted_render_mode_selects_the_default_literal_arm()
--> color_eyre::eyre::Result<()> {
+fn external_secrets_deleted_render_mode_selects_the_default_literal_arm() -> eyre::Result<()> {
     assert_chart_cases(
         "external-secrets",
         vec![
@@ -2742,8 +2732,7 @@ fn external_secrets_deleted_render_mode_selects_the_default_literal_arm()
 /// selection is cluster-dependent, so the schema abstains. Each polarity
 /// reproduces under `helm template`.
 #[test]
-fn oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api() -> color_eyre::eyre::Result<()>
-{
+fn oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api() -> eyre::Result<()> {
     assert_chart_cases(
         "oauth2-proxy",
         vec![
@@ -2806,10 +2795,10 @@ fn oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api() -> color_eyr
 /// with case-colliding siblings can therefore be SHADOWED by an earlier
 /// key and never render, so the multi-member map stays open — but a
 /// SINGLETON member cannot be shadowed (the accumulator is provably empty
-/// on the first iteration), so the provider's EnvVar shape binds it under
+/// on the first iteration), so the provider's `EnvVar` shape binds it under
 /// a `maxProperties: 1` bound.
 #[test]
-fn signoz_additional_env_members_stay_open_under_dedup_shadowing() -> color_eyre::eyre::Result<()> {
+fn signoz_additional_env_members_stay_open_under_dedup_shadowing() -> eyre::Result<()> {
     assert_chart_cases(
         "signoz-signoz",
         vec![
@@ -2836,13 +2825,13 @@ fn signoz_additional_env_members_stay_open_under_dedup_shadowing() -> color_eyre
     )
 }
 
-/// minio renders each `environment` range KEY at the EnvVar `name:` slot
+/// minio renders each `environment` range KEY at the `EnvVar` `name:` slot
 /// (`statefulset.yaml`). A list supplies integer indices there — `name: 0`
 /// renders but the provider rejects the non-string name — so non-empty
 /// lists are excluded while the map lane, the empty list (zero
 /// iterations), and absence stay open.
 #[test]
-fn minio_environment_list_lane_is_excluded_at_the_name_slot() -> color_eyre::eyre::Result<()> {
+fn minio_environment_list_lane_is_excluded_at_the_name_slot() -> eyre::Result<()> {
     assert_chart_cases(
         "minio",
         vec![
@@ -2870,13 +2859,13 @@ fn minio_environment_list_lane_is_excluded_at_the_name_slot() -> color_eyre::eyr
 /// existential over `env` and lowers to a `contains`-backed terminal
 /// clause under the celery/redis guards.
 #[test]
-fn airflow_celery_broker_sentinel_requires_a_matching_env_item() -> color_eyre::eyre::Result<()> {
+fn airflow_celery_broker_sentinel_requires_a_matching_env_item() -> eyre::Result<()> {
     let celery = |extra: serde_json::Value| {
         let mut base = json!({
             "executor": "CeleryExecutor",
             "redis": { "enabled": true, "passwordSecretName": "redis-secret" }
         });
-        for (key, value) in extra.as_object().expect("object").iter() {
+        for (key, value) in extra.as_object().expect("object") {
             base.as_object_mut()
                 .expect("object")
                 .insert(key.clone(), value.clone());
@@ -2912,7 +2901,7 @@ fn airflow_celery_broker_sentinel_requires_a_matching_env_item() -> color_eyre::
 /// coerced inequality pair. The sound-subset lowerings reject the
 /// strengthened domains while coerced spellings outside them stay open.
 #[test]
-fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> color_eyre::eyre::Result<()> {
+fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -2958,7 +2947,7 @@ fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> color_eyre::
 /// literal `extraConfig` opt-out and the no-ENI configuration stay open
 /// (all polarities verified under `helm template`).
 #[test]
-fn cilium_inclusive_comparator_chains_bound_integer_domains() -> color_eyre::eyre::Result<()> {
+fn cilium_inclusive_comparator_chains_bound_integer_domains() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -3013,7 +3002,7 @@ fn cilium_inclusive_comparator_chains_bound_integer_domains() -> color_eyre::eyr
 /// Cluster-or-Local equality disjunction exactly instead of weakening
 /// to truthiness (every polarity helm-verified).
 #[test]
-fn cilium_provider_modes_pin_routing_and_traffic_policy_domains() -> color_eyre::eyre::Result<()> {
+fn cilium_provider_modes_pin_routing_and_traffic_policy_domains() -> eyre::Result<()> {
     assert_chart_cases(
         "cilium",
         vec![
@@ -3069,7 +3058,7 @@ fn cilium_provider_modes_pin_routing_and_traffic_policy_domains() -> color_eyre:
 /// version through `semverCompare "<2.11.0"`; the comparator's exact
 /// pattern subset now reaches the terminal clause.
 #[test]
-fn airflow_minimum_version_terminal_rejects_older_semver() -> color_eyre::eyre::Result<()> {
+fn airflow_minimum_version_terminal_rejects_older_semver() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3091,7 +3080,7 @@ fn airflow_minimum_version_terminal_rejects_older_semver() -> color_eyre::eyre::
 /// provenance rides the binding, so both disjuncts reach the terminal
 /// clause through the raw-integer subsets.
 #[test]
-fn jenkins_controller_replicas_domain_is_bounded() -> color_eyre::eyre::Result<()> {
+fn jenkins_controller_replicas_domain_is_bounded() -> eyre::Result<()> {
     assert_chart_cases(
         "jenkins",
         vec![
@@ -3132,7 +3121,7 @@ fn jenkins_controller_replicas_domain_is_bounded() -> color_eyre::eyre::Result<(
 /// to its arm's kind, so the provider projection follows the partition and
 /// stays scoped to the arm's liveness.
 #[test]
-fn airflow_scheduler_kind_partition_scopes_strategy_providers() -> color_eyre::eyre::Result<()> {
+fn airflow_scheduler_kind_partition_scopes_strategy_providers() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3175,7 +3164,7 @@ fn airflow_scheduler_kind_partition_scopes_strategy_providers() -> color_eyre::e
 /// scalar and list items cannot become resources; object items (including
 /// `$tplYaml` wrappers) stay open.
 #[test]
-fn nats_extra_resources_items_must_be_objects() -> color_eyre::eyre::Result<()> {
+fn nats_extra_resources_items_must_be_objects() -> eyre::Result<()> {
     assert_chart_cases(
         "nats",
         vec![
@@ -3207,7 +3196,7 @@ fn nats_extra_resources_items_must_be_objects() -> color_eyre::eyre::Result<()> 
 /// disabling the tag makes Helm abort with `no template
 /// "common.names.fullname"`, so the inactive tag states are terminal.
 #[test]
-fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> color_eyre::eyre::Result<()> {
+fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> eyre::Result<()> {
     assert_chart_cases(
         "bitnami-postgresql",
         vec![
@@ -3230,7 +3219,7 @@ fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> color_eyre::ey
 /// dependency, so disabling the tag is terminal only while the postgresql
 /// child itself is active.
 #[test]
-fn airflow_disabled_common_tag_is_scoped_to_the_postgresql_child() -> color_eyre::eyre::Result<()> {
+fn airflow_disabled_common_tag_is_scoped_to_the_postgresql_child() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3255,7 +3244,7 @@ fn airflow_disabled_common_tag_is_scoped_to_the_postgresql_child() -> color_eyre
 /// direct `with .Values.labels` + `toYaml` renders keep it a labels
 /// map), while a truthy string still aborts at the `mustMerge` sites.
 #[test]
-fn airflow_checksum_annotations_do_not_string_type_root_labels() -> color_eyre::eyre::Result<()> {
+fn airflow_checksum_annotations_do_not_string_type_root_labels() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3282,7 +3271,7 @@ fn airflow_checksum_annotations_do_not_string_type_root_labels() -> color_eyre::
 /// base while the or-gated fail arm keeps the live-gate combination
 /// rejected.
 #[test]
-fn airflow_falsy_root_labels_render_while_live_merge_gates_bind() -> color_eyre::eyre::Result<()> {
+fn airflow_falsy_root_labels_render_while_live_merge_gates_bind() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3320,7 +3309,7 @@ fn airflow_falsy_root_labels_render_while_live_merge_gates_bind() -> color_eyre:
 /// itself) must therefore be a map, while map-shaped per-set overrides
 /// stay open.
 #[test]
-fn airflow_worker_set_overrides_bind_strict_member_kinds() -> color_eyre::eyre::Result<()> {
+fn airflow_worker_set_overrides_bind_strict_member_kinds() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3366,7 +3355,7 @@ fn airflow_worker_set_overrides_bind_strict_member_kinds() -> color_eyre::eyre::
 /// (helm-render verified; the string spelling reaches the rendered pod
 /// context, which the strict apps/v1 Deployment schema rejects).
 #[test]
-fn airflow_rerooted_worker_lanes_bind_layered_provider_payloads() -> color_eyre::eyre::Result<()> {
+fn airflow_rerooted_worker_lanes_bind_layered_provider_payloads() -> eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -3400,7 +3389,7 @@ fn airflow_rerooted_worker_lanes_bind_layered_provider_payloads() -> color_eyre:
 }
 
 /// vault's `.mode` is assigned across the five arms of `vault.mode`
-/// (`$_ := set . "mode" "…"`), and the HTTPRoute / redundancy-zone fails
+/// (`$_ := set . "mode" "…"`), and the `HTTPRoute` / redundancy-zone fails
 /// sit behind `ne .mode "external"` / `eq .mode …` gates over that
 /// dispatch. The joined root-set value dispatch decodes those gates
 /// exactly: the parentRefs and redundancy-zone requirements bind under
@@ -3411,7 +3400,7 @@ fn airflow_rerooted_worker_lanes_bind_layered_provider_payloads() -> color_eyre:
 /// (`helm template --kube-version 1.29.0` fails with "requires
 /// Kubernetes >= 1.35") — the capabilities-semver lane binds it.
 #[test]
-fn vault_mode_dispatch_binds_httproute_and_redundancy_zone_fails() -> color_eyre::eyre::Result<()> {
+fn vault_mode_dispatch_binds_httproute_and_redundancy_zone_fails() -> eyre::Result<()> {
     assert_chart_cases(
         "vault",
         vec![
@@ -3467,8 +3456,7 @@ fn vault_mode_dispatch_binds_httproute_and_redundancy_zone_fails() -> color_eyre
 /// while a pre-1.14 override turns every dashboard document off exactly
 /// (helm-verified each way).
 #[test]
-fn kube_prometheus_stack_dashboard_gates_decode_the_version_policy() -> color_eyre::eyre::Result<()>
-{
+fn kube_prometheus_stack_dashboard_gates_decode_the_version_policy() -> eyre::Result<()> {
     assert_chart_cases(
         "kube-prometheus-stack",
         vec![
@@ -3501,8 +3489,7 @@ fn kube_prometheus_stack_dashboard_gates_decode_the_version_policy() -> color_ey
 /// `defaultRules.create: false` escape keeps every spelling open — all
 /// polarities verified under `helm template`.
 #[test]
-fn kube_prometheus_stack_dig_subjects_bind_the_even_null_contract() -> color_eyre::eyre::Result<()>
-{
+fn kube_prometheus_stack_dig_subjects_bind_the_even_null_contract() -> eyre::Result<()> {
     assert_chart_cases(
         "kube-prometheus-stack",
         vec![

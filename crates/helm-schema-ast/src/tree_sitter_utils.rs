@@ -1,5 +1,6 @@
 use crate::{TemplateExpr, parse_action_expressions};
 
+/// Returns named children occupying a tree-sitter field.
 pub fn children_with_field<'node>(
     node: tree_sitter::Node<'node>,
     field: &str,
@@ -10,6 +11,8 @@ pub fn children_with_field<'node>(
         .collect()
 }
 
+/// Parses expression text with or without surrounding action delimiters.
+#[must_use]
 pub fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
     let trimmed = text.trim();
     if trimmed.is_empty() {
@@ -26,6 +29,7 @@ pub fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
 pub use helm_schema_syntax::parse_go_template;
 
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
+/// Parses a source file with the fused Helm-template grammar.
 pub fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());

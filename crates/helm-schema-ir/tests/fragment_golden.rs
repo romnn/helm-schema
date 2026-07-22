@@ -69,7 +69,7 @@ fn branchy_mapping_merges_guarded_entry_arms() {
 /// dynamic entry also splices the member scalar.
 #[test]
 fn range_over_values_splices_list_and_mapping_sources() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         spec:
           args:
             {{- range .Values.extraArgs }}
@@ -79,7 +79,7 @@ fn range_over_values_splices_list_and_mapping_sources() {
             {{- range $key, $value := .Values.env }}
             {{ $key }}: {{ $value }}
             {{- end }}
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -185,12 +185,12 @@ fn helper_splice_lowers_summary_branches_into_arms() {
 /// influencing the text without sink-typing the entry's document position.
 #[test]
 fn block_scalar_body_is_render_suppressed() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         data:
           config.yaml: |
             port={{ .Values.port }}
             host=localhost
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:

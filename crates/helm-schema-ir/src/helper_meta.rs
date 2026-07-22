@@ -3,6 +3,7 @@
 //! summaries all carry a [`HelperOutputMeta`] per rendered `.Values` path.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write as _;
 
 use crate::{ContractProvenance, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
@@ -117,7 +118,7 @@ pub(crate) struct HelperOutputMeta {
     pub(crate) lexical_escapes: BTreeSet<LexicalEscape>,
     /// Literal member keys an `omit` removed from this map value on some
     /// path to the render, mapped to the sound RETAIN guards under which
-    /// the key certainly survives (external-secrets' OpenShift
+    /// the key certainly survives (external-secrets' `OpenShift`
     /// `adaptSecurityContext` omit). Empty guards mean survival is
     /// undecidable: the key's sink typing abstains.
     pub(crate) omitted_keys: std::collections::BTreeMap<String, Vec<crate::Guard>>,
@@ -360,14 +361,14 @@ fn composed_edge_escape_pattern(
     }
     let mut composed = String::from("^");
     if let Some(token) = prefix {
-        composed.push_str(&format!("(?:{})?", regex_literal(token)));
+        let _ = write!(composed, "(?:{})?", regex_literal(token));
     }
-    composed.push_str(&format!("(?:{anchored})"));
+    let _ = write!(composed, "(?:{anchored})");
     if let Some(token) = suffix {
-        composed.push_str(&format!("(?:{})?", regex_literal(token)));
+        let _ = write!(composed, "(?:{})?", regex_literal(token));
     }
     if let Some(token) = cut {
-        composed.push_str(&format!("(?:{}.*)?", regex_literal(token)));
+        let _ = write!(composed, "(?:{}.*)?", regex_literal(token));
     }
     composed.push('$');
     Some(composed)

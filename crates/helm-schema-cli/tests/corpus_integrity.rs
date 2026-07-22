@@ -18,6 +18,8 @@
 //! root of its own. Packaged `.tgz` dependencies are immutable committed
 //! archives; their internal locks are not extracted.
 
+use color_eyre::eyre;
+
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -63,12 +65,15 @@ fn chart_lock_path(chart_dir: &std::path::Path) -> Option<std::path::PathBuf> {
 /// archive at the locked version, or its unpacked directory (under the real
 /// or aliased name) whose `Chart.yaml` records the locked version.
 fn dependency_is_vendored(chart_dir: &std::path::Path, names: &[&str], version: &str) -> bool {
-    let charts_dir = chart_dir.join("charts");
+    let vendored_charts_dir = chart_dir.join("charts");
     names.iter().any(|name| {
-        if charts_dir.join(format!("{name}-{version}.tgz")).is_file() {
+        if vendored_charts_dir
+            .join(format!("{name}-{version}.tgz"))
+            .is_file()
+        {
             return true;
         }
-        let manifest_path = charts_dir.join(name).join("Chart.yaml");
+        let manifest_path = vendored_charts_dir.join(name).join("Chart.yaml");
         let Ok(manifest_text) = std::fs::read_to_string(&manifest_path) else {
             return false;
         };
@@ -79,9 +84,7 @@ fn dependency_is_vendored(chart_dir: &std::path::Path, names: &[&str], version: 
 
 /// Every chart directory reachable from the corpus roots through unpacked
 /// `charts/` dependencies, each visited exactly once.
-fn locked_chart_roots(
-    corpus_root: &std::path::Path,
-) -> color_eyre::eyre::Result<Vec<std::path::PathBuf>> {
+fn locked_chart_roots(corpus_root: &std::path::Path) -> eyre::Result<Vec<std::path::PathBuf>> {
     let mut roots = Vec::new();
     let mut stack: Vec<std::path::PathBuf> = std::fs::read_dir(corpus_root)?
         .map(|entry| entry.map(|entry| entry.path()))
@@ -105,7 +108,7 @@ fn locked_chart_roots(
 fn missing_locked_dependencies(
     chart_dir: &std::path::Path,
     corpus_root: &std::path::Path,
-) -> color_eyre::eyre::Result<Vec<String>> {
+) -> eyre::Result<Vec<String>> {
     let Some(lock_path) = chart_lock_path(chart_dir) else {
         return Ok(Vec::new());
     };
@@ -136,7 +139,7 @@ fn missing_locked_dependencies(
 }
 
 #[test]
-fn corpus_charts_vendor_every_locked_dependency() -> color_eyre::eyre::Result<()> {
+fn corpus_charts_vendor_every_locked_dependency() -> eyre::Result<()> {
     let corpus_root = test_util::workspace_testdata().join("charts");
     let mut missing = Vec::new();
     for chart_dir in locked_chart_roots(&corpus_root)? {
@@ -154,7 +157,7 @@ fn corpus_charts_vendor_every_locked_dependency() -> color_eyre::eyre::Result<()
 /// zookeeper chain sits two levels deep); the walk must reach them, or
 /// deleting a nested dependency would be invisible to the gate.
 #[test]
-fn nested_dependency_locks_are_discovered() -> color_eyre::eyre::Result<()> {
+fn nested_dependency_locks_are_discovered() -> eyre::Result<()> {
     let corpus_root = test_util::workspace_testdata().join("charts");
     let roots = locked_chart_roots(&corpus_root)?;
     let nested = corpus_root
@@ -176,7 +179,7 @@ fn nested_dependency_locks_are_discovered() -> color_eyre::eyre::Result<()> {
 /// A stale unpacked dependency directory must not satisfy the gate: only the
 /// locked version proves the vendored copy matches the packaged chart.
 #[test]
-fn unpacked_dependency_with_wrong_version_is_not_vendored() -> color_eyre::eyre::Result<()> {
+fn unpacked_dependency_with_wrong_version_is_not_vendored() -> eyre::Result<()> {
     let chart_dir = tempfile::tempdir()?;
     let dependency_dir = chart_dir.path().join("charts").join("common");
     std::fs::create_dir_all(&dependency_dir)?;
@@ -213,7 +216,7 @@ fn legacy_requirements_lock_is_discovered() {
 /// silently degrades to cold-cache output and every provider-backed fact
 /// disappears from the expected schemas while their tests keep passing.
 #[test]
-fn provider_bundle_holds_kubernetes_schemas() -> color_eyre::eyre::Result<()> {
+fn provider_bundle_holds_kubernetes_schemas() -> eyre::Result<()> {
     let bundle = test_util::workspace_testdata().join("provider-bundle");
     let mut schema_files = 0usize;
     let mut stack = vec![bundle.join("kubernetes-json-schema-cache")];

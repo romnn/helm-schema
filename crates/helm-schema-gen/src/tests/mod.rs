@@ -160,9 +160,9 @@ fn expected_values_schema(
     let mut schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
-        "properties": properties,
         "type": "object",
     });
+    schema["properties"] = Value::Object(properties);
     if !all_of.is_empty() {
         schema["allOf"] = Value::Array(all_of);
     }

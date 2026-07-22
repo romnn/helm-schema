@@ -203,7 +203,7 @@ fn lookup_values_yaml_path_info(
         .iter()
         .filter_map(|value| serde_json::to_value(value).ok())
         .collect();
-    let is_explicit_null = values.len() == 1 && matches!(values[0], YamlValue::Null);
+    let is_explicit_null = matches!(values.as_slice(), [YamlValue::Null]);
     let is_empty_string = values
         .iter()
         .any(|value| matches!(value, YamlValue::String(value) if value.is_empty()));
@@ -252,8 +252,8 @@ fn lookup_values_yaml_values<'a>(
         return Some(vec![doc]);
     }
 
-    let head = path_segments[0].as_str();
-    let tail = &path_segments[1..];
+    let (head, tail) = path_segments.split_first()?;
+    let head = head.as_str();
 
     match doc {
         YamlValue::Mapping(map) => {

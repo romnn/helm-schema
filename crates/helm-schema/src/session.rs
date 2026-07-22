@@ -30,20 +30,30 @@ use crate::values_roots;
 /// [`AnalysisSession::contract_schema_signals`].
 #[derive(Debug, Clone)]
 pub struct Analysis {
+    /// Guarded contract graph recovered from chart templates.
     pub contract: ContractIr,
+    /// Resource schemas declared by the chart's CRDs.
     pub local_schemas: LocalSchemaUniverse,
 }
 
 /// Session-level explanation for one values path.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValuePathExplanation {
+    /// Canonical values path described by the explanation.
     pub path: String,
+    /// Contract uses that read exactly this path.
     pub exact_uses: Vec<ContractUse>,
+    /// Contract uses that read descendants of this path.
     pub descendant_uses: Vec<ContractUse>,
+    /// Aggregate behavioral facts for the path, when analysis found evidence.
     pub value_path_facts: Option<ContractValuePathFacts>,
+    /// Values-decidable guards attached to the path.
     pub guard_predicates: Vec<ConditionalGuard>,
+    /// Kubernetes metadata roles reached from the path.
     pub metadata_fields: Vec<MetadataFieldKind>,
+    /// JSON Schema type hints derived from strict consumers.
     pub type_hints: Vec<Value>,
+    /// Whether a defaulting operation supplies an absent value.
     pub has_default_fallback: bool,
 }
 
@@ -132,24 +142,32 @@ impl<T> SessionCache<T> {
 
     fn get_or_try_init(&self, init: impl FnOnce() -> EngineResult<T>) -> EngineResult<Arc<T>> {
         {
-            let guard = self.value.lock().expect("session cache mutex");
+            let guard = self
+                .value
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             if let Some(value) = guard.as_ref() {
                 return Ok(Arc::clone(value));
             }
         }
 
         let value = Arc::new(init()?);
-        let mut guard = self.value.lock().expect("session cache mutex");
+        let mut guard = self
+            .value
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         Ok(Arc::clone(guard.get_or_insert_with(|| Arc::clone(&value))))
     }
 }
 
 impl AnalysisSession {
+    /// Creates a memoized session with an internal diagnostic sink.
     #[must_use]
     pub fn new(opts: GenerateOptions) -> Self {
         Self::with_diagnostics(opts, DiagnosticSink::new())
     }
 
+    /// Creates a memoized session that emits diagnostics into `diagnostics`.
     #[must_use]
     pub fn with_diagnostics(opts: GenerateOptions, diagnostics: DiagnosticSink) -> Self {
         Self {
@@ -163,16 +181,29 @@ impl AnalysisSession {
     }
 
     /// Return the memoized chart analysis artifact.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when chart discovery, source loading, parsing, or
+    /// structural analysis fails.
     pub fn analysis(&self) -> EngineResult<Analysis> {
         Ok(self.prepared()?.analysis.clone())
     }
 
     /// Return typed schema-lowering evidence derived from the guarded contract.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when preparing or finalizing chart analysis fails.
     pub fn contract_schema_signals(&self) -> EngineResult<ContractSchemaSignals> {
         Ok(self.finalized_contract()?.schema_signals().clone())
     }
 
     /// Return the stable versioned contract export document.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when preparing or finalizing chart analysis fails.
     pub fn contract_document(&self) -> EngineResult<ContractDocument> {
         Ok(self.finalized_contract()?.document())
     }
@@ -184,12 +215,21 @@ impl AnalysisSession {
     /// `resolved_contract(policy)`: structural contract facts have already
     /// been resolved against providers, but the later heuristic
     /// `--infer-required` mutation has not yet run.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when chart analysis, values composition, or provider
+    /// schema resolution fails.
     pub fn resolved_contract(&self) -> EngineResult<ResolvedContract> {
         Ok((*self.resolved()?).clone())
     }
 
     /// Return the memoized generated values schema: the resolved contract
     /// schema plus the optional `--infer-required` post-pass.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when resolving the contract or preparing chart values fails.
     pub fn generated_schema(&self) -> EngineResult<GeneratedSchema> {
         Ok((*self.generated_schema.get_or_try_init(|| {
             let resolved = self.resolved()?;
@@ -217,10 +257,15 @@ impl AnalysisSession {
     /// it starts from the memoized generated schema, applies override/policy
     /// inputs, mirrors global schema into subcharts, resolves reference mode,
     /// and returns the final document callers would write to disk.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when generated-schema preparation, override merging,
+    /// or reference processing fails.
     pub fn emit(
         &self,
         policy_inputs: PolicyInputs,
-        output_options: &OutputPipelineOptions,
+        output_options: OutputPipelineOptions,
     ) -> EngineResult<Value> {
         let generated = self.generated_schema()?;
         apply_schema_output_pipeline(
@@ -233,17 +278,26 @@ impl AnalysisSession {
     }
 
     /// Load policy inputs from override paths, then emit the final document.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when an override cannot be loaded or prepared, or
+    /// when final output transforms fail.
     pub fn emit_with_policy_paths(
         &self,
         override_paths: &[PathBuf],
-        policy_input_options: &PolicyInputOptions,
-        output_options: &OutputPipelineOptions,
+        policy_input_options: PolicyInputOptions,
+        output_options: OutputPipelineOptions,
     ) -> EngineResult<Value> {
-        let policy_inputs = load_policy_inputs(override_paths, policy_input_options)?;
+        let policy_inputs = load_policy_inputs(override_paths, &policy_input_options)?;
         self.emit(policy_inputs, output_options)
     }
 
     /// Explain one values path using the current contract and chart evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when chart analysis or contract finalization fails.
     pub fn explain(&self, path: &str) -> EngineResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
         let finalized_contract = self.finalized_contract()?;

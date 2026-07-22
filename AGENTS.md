@@ -178,6 +178,11 @@ useful simplicity metric.
   crate's `src/tests/` module tree when private access is required.
 - `src/tests/**` is test code, not production source. Core LOC metrics should
   be able to exclude it along with crate-level `tests/` directories.
+- Test functions and shared test helpers that can fail during setup, parsing,
+  fixture loading, serialization, or external command execution should return
+  `eyre::Result<T>` and propagate errors with `?` and useful context. Do not
+  add `expect`, `unwrap`, or explicit `panic!` calls with lint suppressions for
+  failures that can be represented as normal errors.
 
 ### `values.schema.json` is output, not inference evidence
 
@@ -235,9 +240,22 @@ Therefore:
 
 ## Result types
 
-- Prefer explicit result types and avoid `Result` aliases (do not import `Result` as a local alias), to avoid confusion with `std::result::Result`.
+- Use `color_eyre` only in tests and shared test-support code. Production
+  library and binary code should use typed error enums derived with
+  `thiserror`; do not use `color_eyre::Report` as an application error type.
+- In test code, import the module as `use color_eyre::eyre;` or import required
+  extension traits anonymously, for example
+  `use color_eyre::eyre::{self, OptionExt as _};`, and write return types as
+  `eyre::Result<T>`. Do not write `color_eyre::eyre::Result<T>` inline.
+- In test code, convert missing `Option` values with `ok_or_eyre(...)` from
+  `OptionExt` instead of spelling `ok_or_else(|| eyre!(...))`. Reserve
+  `ok_or_else` for errors whose construction is genuinely lazy or dynamic.
+- Prefer explicit result types and avoid bare `Result` aliases (do not import
+  `Result` as a local alias), to avoid shadowing or confusion with
+  `std::result::Result`.
 - Inside crates, prefer typed error enums (e.g. `std::result::Result<T, MyError>`) for precise variants.
-- Convert typed errors to `color_eyre::eyre::Report` only at the outer boundary (e.g. `main`).
+- Keep typed errors through production boundaries, including `main`; reserve
+  `color_eyre` reports for tests and shared test-support code.
 
 ## Cache is a speed optimisation, not a correctness oracle
 

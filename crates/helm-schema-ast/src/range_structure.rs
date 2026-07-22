@@ -1,5 +1,7 @@
 use crate::{TemplateExpr, TemplateHeader};
 
+/// Returns the variable defined by a single-variable range expression.
+#[must_use]
 pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
     let TemplateExpr::VariableDefinition { name, .. } = expr.deparen() else {
         return None;
@@ -20,6 +22,7 @@ fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> O
         .map(|text| text.trim().to_string())
 }
 
+/// Parses a range node's source header into a typed template header.
 pub fn range_header_from_source(
     node: tree_sitter::Node<'_>,
     source: &str,
@@ -27,14 +30,15 @@ pub fn range_header_from_source(
     range_header_text_from_source(node, source).map(TemplateHeader::parse_range)
 }
 
+/// Reports whether a range header binds separate key and value variables.
+#[must_use]
 pub fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
     destructured_range_variables(node).len() >= 2
 }
 
-/// The VALUE variable of a destructured range header
-/// (`range $k, $v := …` binds each member's value to `$v`).
 /// The KEY variable of a destructured range header (`$k` in
 /// `range $k, $v := …`).
+#[must_use]
 pub fn range_destructured_key_variable(
     node: tree_sitter::Node<'_>,
     source: &str,
@@ -49,6 +53,10 @@ pub fn range_destructured_key_variable(
         .map(|name| name.trim().trim_start_matches('$').to_string())
 }
 
+/// Returns the value variable of a destructured range header.
+///
+/// `range $k, $v := …` binds each member's value to `$v`.
+#[must_use]
 pub fn range_destructured_value_variable(
     node: tree_sitter::Node<'_>,
     source: &str,

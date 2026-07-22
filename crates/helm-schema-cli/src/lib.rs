@@ -1,3 +1,6 @@
+//! Command-line argument model and invocation policy for `helm-schema`.
+
+/// Typed command-line arguments and option validation.
 pub mod cli;
 mod diag_emit;
 
@@ -69,7 +72,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
         crd_catalog_mirrors: cli.crd.crd_catalog_mirror.clone(),
         crd_catalog_cache_dir: cli.crd.crd_catalog_cache_dir.clone(),
         crd_override_dir: cli.crd.crd_override_dir.clone(),
-        local_schema_universe: Default::default(),
+        local_schema_universe: helm_schema::provider::LocalSchemaUniverse::default(),
         crd_cache_record_source: cli.crd.crd_cache_record_source,
         api_version_guess: cli.inference.enabled(),
     };
@@ -91,8 +94,8 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     let output_options = cli.output.pipeline_options();
     let schema = session.emit_with_policy_paths(
         &cli.override_schema,
-        &policy_input_options,
-        &output_options,
+        policy_input_options,
+        output_options,
     )?;
 
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);

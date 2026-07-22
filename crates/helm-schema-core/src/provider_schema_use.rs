@@ -3,10 +3,15 @@ use crate::{MergeLayersUse, ResourceRef, SplitSegmentUse, ValueKind, YamlPath};
 /// Contract fact that needs a Kubernetes resource schema lookup.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ProviderSchemaUse {
+    /// Canonical values path whose runtime value reaches the provider slot.
     pub value_path: String,
+    /// Structural path of the slot in the rendered Kubernetes resource.
     pub path: YamlPath,
+    /// How the value contributes to rendered YAML at the slot.
     pub kind: ValueKind,
+    /// Resource whose schema owns the slot.
     pub resource: ResourceRef,
+    /// Whether the value is the collection directly ranged by the template.
     pub is_self_range_collection: bool,
     /// Literal member keys the template writes beside the splice in the
     /// same mapping; the slot schema's `required` must not re-demand them.

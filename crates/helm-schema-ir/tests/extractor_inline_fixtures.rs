@@ -585,7 +585,7 @@ fn local_storage_class_alias_emits_guarded_leaf_use() {
 
 #[test]
 fn scalar_item_range_keeps_parent_collection_path() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: v1
         kind: PersistentVolumeClaim
         metadata:
@@ -595,7 +595,7 @@ fn scalar_item_range_keeps_parent_collection_path() {
           {{- range .Values.accessModes }}
             - {{ . | quote }}
           {{- end }}
-    "#};
+    "};
 
     let ir = generate(template, "");
 
@@ -634,7 +634,7 @@ fn scalar_item_range_keeps_parent_collection_path() {
 
 #[test]
 fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: networking.k8s.io/v1
         kind: Ingress
         metadata:
@@ -655,7 +655,7 @@ fn scalar_range_wrapped_into_object_item_stays_on_leaf_path() {
                           number: 80
                 {{- end }}
           {{- end }}
-    "#};
+    "};
 
     let ir = generate(template, "");
 
@@ -1101,7 +1101,7 @@ fn conditional_annotations_fragment_stays_under_annotations_path() {
 
 #[test]
 fn with_rewritten_selector_chain_does_not_emit_parent_suffix_path() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: v1
         kind: Service
         metadata:
@@ -1111,7 +1111,7 @@ fn with_rewritten_selector_chain_does_not_emit_parent_suffix_path() {
             {{- with .Values.service }}
             - port: {{ .ports.http.port }}
             {{- end }}
-    "#};
+    "};
 
     let ir = generate(template, "");
 
@@ -1187,7 +1187,7 @@ fn helper_context_chain_in_condition_surfaces_referenced_value() {
 
 #[test]
 fn template_action_used_in_mapping_key_does_not_project_to_parent_value_path() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1195,7 +1195,7 @@ fn template_action_used_in_mapping_key_does_not_project_to_parent_value_path() {
         data:
           {{ .Values.account.name }}.json: |
             {}
-    "#};
+    "};
 
     let ir = generate(template, "");
 
@@ -1214,7 +1214,7 @@ fn template_action_used_in_mapping_key_does_not_project_to_parent_value_path() {
 
 #[test]
 fn inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -1223,7 +1223,7 @@ fn inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
               image: busybox
               args:
                 - --image={{- if .Values.image.registry -}}{{ .Values.image.registry }}/{{- end -}}{{ .Values.image.repository }}{{- if .Values.image.digest -}}@{{ .Values.image.digest }}{{- end -}}
-    "#};
+    "};
 
     let ir = generate(template, "");
 
@@ -1245,7 +1245,7 @@ fn inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
 
 #[test]
 fn with_bound_inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_path() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -1256,7 +1256,7 @@ fn with_bound_inline_scalar_sequence_item_with_mixed_template_gaps_keeps_output_
                 {{- with .Values.image }}
                 - --image={{- if .registry -}}{{ .registry }}/{{- end -}}{{ .repository }}{{- if .digest -}}@{{ .digest }}{{- end -}}
                 {{- end }}
-    "#};
+    "};
 
     let ir = generate(template, "");
 

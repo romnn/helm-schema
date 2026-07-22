@@ -1,3 +1,5 @@
+use color_eyre::eyre;
+
 use super::build_composed_values_yaml;
 use crate::chart::ChartContext;
 use crate::chart::discover_chart_contexts;
@@ -13,13 +15,12 @@ fn yaml_pointer<'a>(doc: &'a serde_yaml::Value, path: &[&str]) -> Option<&'a ser
     Some(current)
 }
 
-fn discover(chart_dir: &VfsPath) -> color_eyre::eyre::Result<Vec<ChartContext>> {
+fn discover(chart_dir: &VfsPath) -> eyre::Result<Vec<ChartContext>> {
     Ok(discover_chart_contexts(chart_dir)?)
 }
 
 #[test]
-fn composed_subchart_globals_preserve_parent_explicit_null_defaults() -> color_eyre::eyre::Result<()>
-{
+fn composed_subchart_globals_preserve_parent_explicit_null_defaults() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
@@ -56,7 +57,7 @@ fn composed_subchart_globals_preserve_parent_explicit_null_defaults() -> color_e
 }
 
 #[test]
-fn composed_subchart_globals_hoist_when_parent_key_is_absent() -> color_eyre::eyre::Result<()> {
+fn composed_subchart_globals_hoist_when_parent_key_is_absent() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,

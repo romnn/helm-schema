@@ -125,9 +125,9 @@ fn range_appended_error_accumulator_reaches_the_final_fail() {
         {{- fail $breaking }}
         {{- end }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         configMaps: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (instance, want, label) in [
@@ -352,10 +352,10 @@ fn independent_kind_guard_does_not_convert_member_host() {
           {{- end }}
           name: {{ .Values.image.name | quote }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         image:
           name: app
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     assert!(
@@ -390,12 +390,12 @@ fn guarded_set_conversion_does_not_escape_its_outer_guard() {
         {{- end }}
         {{- end -}}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         jetstream:
           enabled: false
           image:
             name: app
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     assert!(
@@ -445,10 +445,10 @@ fn ordered_set_mutation_accepts_converted_and_map_forms() {
         {{- printf "%s:%s" $d.repository (default "latest" $d.tag) -}}
         {{- end -}}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         jetstream:
           image: nats:2.9
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     for instance in [

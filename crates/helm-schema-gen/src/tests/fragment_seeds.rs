@@ -49,7 +49,7 @@ fn quoted_matchlabels_key_value_stays_string() {
 
 #[test]
 fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -57,7 +57,7 @@ fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
         data:
           {{ .Values.account.name }}.json: |
             {}
-    "#};
+    "};
     let values_yaml = indoc! {"
         account:
           name: surveyor
@@ -212,14 +212,14 @@ fn helper_defaulted_root_service_account_name_allows_null() {
               serviceAccountName: {{ include "alertmanager.serviceAccountName" . }}
         {{- end }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         alertmanager:
           enabled: true
           name: alertmanager
           serviceAccount:
             create: true
             name:
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     assert!(
@@ -289,12 +289,12 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }]);
@@ -358,25 +358,25 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }]);
     contract.push_pathless_scalar("clickhouse");
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
-            Some(indoc! {r#"
+            Some(indoc! {r"
                 clickhouse:
                   securityContext:
                     enabled: true
                     fsGroup: 101
                     runAsUser: 1001
-            "#}),
+            "}),
         ),
     );
 
@@ -410,12 +410,12 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -434,12 +434,12 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -511,12 +511,12 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }]);
@@ -558,12 +558,12 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }]);
@@ -615,12 +615,12 @@ fn helper_default_with_nonliteral_string_fallback_stays_nullable_string() {
         metadata:
           name: {{ include "service.accountName" . }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         service:
           name:
         serviceAccount:
           name:
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     let name = schema
@@ -655,12 +655,12 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 resource: None,
                 provenance: Vec::new(),
                 has_string_contract: false,
-                template_supplied_member_keys: Default::default(),
+                template_supplied_member_keys: std::collections::BTreeSet::default(),
                 split_segment: None,
                 merge_layers: None,
                 range_key: false,
                 nil_omitting: false,
-                omitted_members: Default::default(),
+                omitted_members: std::collections::BTreeMap::default(),
                 digest: false,
                 merge_operand: false,
             },
@@ -679,12 +679,12 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 resource: None,
                 provenance: Vec::new(),
                 has_string_contract: false,
-                template_supplied_member_keys: Default::default(),
+                template_supplied_member_keys: std::collections::BTreeSet::default(),
                 split_segment: None,
                 merge_layers: None,
                 range_key: false,
                 nil_omitting: false,
-                omitted_members: Default::default(),
+                omitted_members: std::collections::BTreeMap::default(),
                 digest: false,
                 merge_operand: false,
             },

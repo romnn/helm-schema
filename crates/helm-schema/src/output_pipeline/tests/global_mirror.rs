@@ -4,6 +4,10 @@ use test_util::prelude::sim_assert_eq;
 use super::mirror_global_schema_into_subcharts;
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full nested schema fixture keeps this transformation regression readable"
+)]
 fn shared_global_override_schema_is_mirrored_into_nested_subcharts() {
     let mut schema = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",

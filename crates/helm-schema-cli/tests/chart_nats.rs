@@ -2,15 +2,19 @@
 //! replaces `.Values` with a JSON-decoded tree. Full-schema equality and
 //! default-values validation live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/helm_samples.rs"]
 mod helm_samples;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
-fn nats_json_decoded_extra_resources_exclude_integer_iteration() -> color_eyre::eyre::Result<()> {
+fn nats_json_decoded_extra_resources_exclude_integer_iteration() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -40,8 +44,7 @@ fn nats_json_decoded_extra_resources_exclude_integer_iteration() -> color_eyre::
 }
 
 #[test]
-fn nats_tpl_yaml_sentinels_stay_nested_and_do_not_seed_root_properties()
--> color_eyre::eyre::Result<()> {
+fn nats_tpl_yaml_sentinels_stay_nested_and_do_not_seed_root_properties() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
 
     assert!(
@@ -56,14 +59,14 @@ fn nats_tpl_yaml_sentinels_stay_nested_and_do_not_seed_root_properties()
         &[helm_samples::HelmValidationSample {
             name: "nested tplYaml sentinel",
             values_yaml: Some(
-                r#"
+                r"
 extraResources:
   - apiVersion: v1
     kind: ConfigMap
     metadata:
       name:
         $tplYaml: '{{ .Release.Name | quote }}'
-"#,
+",
             ),
         }],
     )?;
@@ -80,7 +83,7 @@ extraResources:
 /// refuses the spread wrapper outright. Every polarity below reproduces
 /// under `helm template` on the vendored chart.
 #[test]
-fn nats_wrapper_results_must_be_compatible_with_their_sinks() -> color_eyre::eyre::Result<()> {
+fn nats_wrapper_results_must_be_compatible_with_their_sinks() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
@@ -176,7 +179,7 @@ fn nats_wrapper_results_must_be_compatible_with_their_sinks() -> color_eyre::eyr
 /// member — a wider map passes through as a plain object and fails the
 /// node's ordinary domain.
 #[test]
-fn nats_program_wrappers_inhabit_typed_leaves() -> color_eyre::eyre::Result<()> {
+fn nats_program_wrappers_inhabit_typed_leaves() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
@@ -221,7 +224,7 @@ fn nats_program_wrappers_inhabit_typed_leaves() -> color_eyre::eyre::Result<()> 
 /// lane (`$tplYamlSpread` inside `patch`) render — all polarities verified
 /// under `helm template` on the vendored chart.
 #[test]
-fn nats_jsonpatch_ops_bind_through_the_helper_range() -> color_eyre::eyre::Result<()> {
+fn nats_jsonpatch_ops_bind_through_the_helper_range() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
@@ -265,8 +268,7 @@ fn nats_jsonpatch_ops_bind_through_the_helper_range() -> color_eyre::eyre::Resul
 /// `value` abort every render, while complete patches of each op render —
 /// all polarities verified under `helm template` on the vendored chart.
 #[test]
-fn nats_jsonpatch_per_op_requirements_bind_through_the_helper_range() -> color_eyre::eyre::Result<()>
-{
+fn nats_jsonpatch_per_op_requirements_bind_through_the_helper_range() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (patch, want) in [
@@ -322,7 +324,7 @@ fn nats_jsonpatch_per_op_requirements_bind_through_the_helper_range() -> color_e
 /// post-rewrite consumers keep their wrapper alternatives — every
 /// polarity verified under `helm template` on the vendored chart.
 #[test]
-fn nats_pre_rewrite_strict_consumers_reject_wrapper_programs() -> color_eyre::eyre::Result<()> {
+fn nats_pre_rewrite_strict_consumers_reject_wrapper_programs() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [

@@ -23,6 +23,10 @@ impl TemplatedDocument<'_> {
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping the exhaustive node rendering in one match makes dump coverage auditable"
+)]
 fn dump_node(node: &Node, source: &str, depth: usize, out: &mut String) {
     let pad = "  ".repeat(depth);
     match node {

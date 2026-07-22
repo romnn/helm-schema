@@ -6,7 +6,7 @@ use super::*;
 /// rendered output lands in a K8s array field like `env:`.
 #[test]
 fn destructured_range_map_input_does_not_become_output_array() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -18,7 +18,7 @@ fn destructured_range_map_input_does_not_become_output_array() {
                 - name: {{ $key }}
                   value: {{ $value | quote }}
                 {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         environment:
           INBUCKET_LOGLEVEL: debug
@@ -47,8 +47,12 @@ fn destructured_range_map_input_does_not_become_output_array() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn destructured_range_with_len_guard_preserves_shape_erased_members() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -62,7 +66,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
                   value: {{ $value | quote }}
                 {{- end }}
               {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         environment:
           INBUCKET_LOGLEVEL: debug
@@ -169,7 +173,7 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
 /// strict item consumer.
 #[test]
 fn collection_selection_projects_item_conversion_to_source_items() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -191,7 +195,7 @@ fn collection_selection_projects_item_conversion_to_source_items() {
                   value: {{ . | b64enc | quote }}
                 {{- end }}
                 {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         teams:
           - first
@@ -233,7 +237,7 @@ fn collection_selection_projects_item_conversion_to_source_items() {
 /// `items.type` array inferred only from the item uses.
 #[test]
 fn scalar_item_range_keeps_provider_array_metadata() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: PersistentVolumeClaim
         metadata:
@@ -243,7 +247,7 @@ fn scalar_item_range_keeps_provider_array_metadata() {
           {{- range .Values.accessModes }}
             - {{ . | quote }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         accessModes:
           - ReadWriteOnce
@@ -284,7 +288,7 @@ fn scalar_item_range_keeps_provider_array_metadata() {
 /// schema for the rendered resource field.
 #[test]
 fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: networking.k8s.io/v1
         kind: Ingress
         metadata:
@@ -305,7 +309,7 @@ fn scalar_range_wrapped_into_object_items_stays_scalar_array() {
                           number: 80
                 {{- end }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         hosts:
           - host: example.test
@@ -383,7 +387,7 @@ fn scalar_range_with_root_helper_stays_scalar_array() {
 
 #[test]
 fn map_entry_range_over_values_path_keeps_object_map_schema() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -392,7 +396,7 @@ fn map_entry_range_over_values_path_keeps_object_map_schema() {
         {{- range $key, $value := .Values.controller.config }}
           {{- $key | nindent 2 }}: {{ tpl (toString $value) $ | quote }}
         {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         controller:
           config: {}
@@ -454,12 +458,12 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }];

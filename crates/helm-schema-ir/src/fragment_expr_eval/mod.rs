@@ -108,6 +108,10 @@ pub(crate) fn locals_with_roots(
 /// the fully-populated environment (locals, bound values, local default/meta
 /// facts) and this resolves bound helper calls through the memoized
 /// in-domain summaries.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "expression evaluation requires the complete lexical and fragment context"
+)]
 pub(crate) fn document_result_from_expr(
     expr: &TemplateExpr,
     env: &EvalEnv,

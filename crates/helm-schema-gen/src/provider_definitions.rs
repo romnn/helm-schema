@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write as _;
 
 use helm_schema_core::{ProviderOrigin, ProviderSchemaSource};
 use serde_json::{Map, Value};
@@ -637,12 +638,11 @@ fn source_fingerprint(source: &ProviderSchemaSource) -> String {
 
     // 12 hex chars = the digest's first 6 bytes; sha2 0.11's output array no longer implements
     // `LowerHex`, so format the bytes directly.
-    hasher
-        .finalize()
-        .iter()
-        .take(6)
-        .map(|byte| format!("{byte:02x}"))
-        .collect()
+    let mut digest = String::with_capacity(12);
+    for byte in hasher.finalize().iter().take(6) {
+        let _ = write!(digest, "{byte:02x}");
+    }
+    digest
 }
 
 #[cfg(test)]

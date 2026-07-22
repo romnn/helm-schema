@@ -92,6 +92,7 @@ impl ContractIr {
         ));
     }
 
+    /// Records a pathless fragment accepted at a dependency values root.
     pub fn push_pathless_dependency_fragment(&mut self, source_expr: impl Into<String>) {
         self.dependency_values_root_fragments
             .insert(source_expr.into());
@@ -167,6 +168,7 @@ impl ContractIr {
         }
     }
 
+    /// Conjoins activation guards onto every use and terminating failure.
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
             contract_use.condition = contract_use
@@ -545,19 +547,19 @@ impl ContractIr {
         fail_conditions.dedup();
         FinalizedContract::new(
             uses,
-            type_hints,
-            guarded_type_hints,
-            fallback_type_hints,
-            guarded_fallback_type_hints,
-            shape_erased_value_paths,
-            string_contract_value_paths,
-            range_modes,
+            &type_hints,
+            &guarded_type_hints,
+            &fallback_type_hints,
+            &guarded_fallback_type_hints,
+            &shape_erased_value_paths,
+            &string_contract_value_paths,
+            &range_modes,
             values_default_sources,
             values_root_overlay_prefixes,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            fail_conditions,
-            dependency_values_root_fragments,
+            &fail_conditions,
+            &dependency_values_root_fragments,
         )
     }
 }

@@ -1,3 +1,4 @@
+use color_eyre::eyre::{self, WrapErr as _};
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -59,7 +60,7 @@ fn quoted_empty_membership_scopes_raw_provider_preimages() {
 
 #[test]
 fn plain_string_provider_preimage_rejects_yaml_unsafe_spellings() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -71,7 +72,7 @@ fn plain_string_provider_preimage_rejects_yaml_unsafe_spellings() {
               env:
                 - name: AUDIT
                   value: {{ .Values.value }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("value: safe\n"));
 
     for (value, want, label) in [
@@ -121,7 +122,7 @@ fn plain_string_provider_preimage_rejects_yaml_unsafe_spellings() {
 /// valid manifest, so rejecting the alias set falsely narrows the input.
 #[test]
 fn boolean_slot_accepts_every_resolver_boolean_spelling() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -131,7 +132,7 @@ fn boolean_slot_accepts_every_resolver_boolean_spelling() {
           containers:
             - name: test
               image: busybox
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("hostNetwork: false\n"));
 
     for (value, want, label) in [
@@ -156,7 +157,7 @@ fn boolean_slot_accepts_every_resolver_boolean_spelling() {
 /// renders `port: +443` into a valid Service).
 #[test]
 fn integer_slot_accepts_every_resolver_integer_spelling() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Service
         metadata:
@@ -164,7 +165,7 @@ fn integer_slot_accepts_every_resolver_integer_spelling() {
         spec:
           ports:
             - port: {{ .Values.port }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("port: 443\n"));
 
     for (value, want, label) in [
@@ -289,7 +290,7 @@ fn typeof_dispatched_numeric_lane_keeps_the_provider_intersection() {
 
 #[test]
 fn inline_conditional_kind_candidates_reach_the_matching_provider_path() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: {{ if .Values.stateful }}StatefulSet{{ else }}Deployment{{ end }}
         metadata:
@@ -311,7 +312,7 @@ fn inline_conditional_kind_candidates_reach_the_matching_provider_path() {
               containers:
               - name: test
                 image: busybox
-    "#};
+    "};
     let values_yaml = "stateful: false\nstrategy: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -565,7 +566,7 @@ fn helper_literal_or_override_return_applies_integer_preimage_to_the_override() 
 /// (absence renders the fallback instead).
 #[test]
 fn provider_required_field_requires_direct_source_leaf() {
-    let guarded = indoc! {r#"
+    let guarded = indoc! {r"
         {{- if .Values.svc.enabled }}
         apiVersion: v1
         kind: Service
@@ -576,7 +577,7 @@ fn provider_required_field_requires_direct_source_leaf() {
           - port: {{ .Values.svc.port }}
             name: http
         {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         svc:
           enabled: false
@@ -611,7 +612,7 @@ fn provider_required_field_requires_direct_source_leaf() {
         );
     }
 
-    let defaulted = indoc! {r#"
+    let defaulted = indoc! {r"
         {{- if .Values.svc.enabled }}
         apiVersion: v1
         kind: Service
@@ -622,7 +623,7 @@ fn provider_required_field_requires_direct_source_leaf() {
           - port: {{ .Values.svc.port | default 9090 }}
             name: http
         {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(defaulted), Some(values_yaml));
     let instance = serde_json::json!({ "svc": { "enabled": true, "port": null } });
     assert!(
@@ -643,12 +644,12 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }]);
@@ -689,12 +690,12 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }];
@@ -738,18 +739,22 @@ impl ResourceSchemaOracle for DescriptionProvider {
 }
 
 #[test]
-fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
-    let src = test_util::read_testdata("charts/surveyor/templates/serviceMonitor.yaml");
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()> {
+    let src = test_util::read_testdata("charts/surveyor/templates/serviceMonitor.yaml")?;
     let mut idx = DefineIndex::new();
     idx.add_file_source(
         "charts/surveyor/templates/_helpers.tpl",
-        &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl"),
+        &test_util::read_testdata("charts/surveyor/templates/_helpers.tpl")?,
     );
     let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src);
     let schema_signals = contract.finalize().into_schema_signals();
+    let values_yaml_source = test_util::read_testdata("charts/surveyor/values.yaml")?;
     let values_yaml: serde_yaml::Value =
-        serde_yaml::from_str(&test_util::read_testdata("charts/surveyor/values.yaml"))
-            .expect("values yaml");
+        serde_yaml::from_str(&values_yaml_source).wrap_err("parse Surveyor values fixture")?;
     let provider = Chain::new(vec![
         Box::new(
             CrdsCatalogSchemaProvider::new()
@@ -820,9 +825,8 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
     );
 
     let generated = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider).with_values_yaml(Some(
-            &test_util::read_testdata("charts/surveyor/values.yaml"),
-        )),
+        ValuesSchemaInput::new(&schema_signals, &provider)
+            .with_values_yaml(Some(&values_yaml_source)),
     );
     for (instance, want, label) in [
         (
@@ -861,23 +865,24 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
             "{label}: instance={instance}; schema={generated}"
         );
     }
+    Ok(())
 }
 
 #[test]
-fn zalando_extra_envs_keeps_podspec_envvar_shape() {
+fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
     let src =
-        test_util::read_testdata("charts/zalando-postgres-operator/templates/deployment.yaml");
+        test_util::read_testdata("charts/zalando-postgres-operator/templates/deployment.yaml")?;
     let mut idx = DefineIndex::new();
     idx.add_file_source(
         "charts/zalando-postgres-operator/templates/_helpers.tpl",
-        &test_util::read_testdata("charts/zalando-postgres-operator/templates/_helpers.tpl"),
+        &test_util::read_testdata("charts/zalando-postgres-operator/templates/_helpers.tpl")?,
     );
     let contract = SymbolicIrContext::new(&idx).generate_contract_ir(&src);
     let schema_signals = contract.finalize().into_schema_signals();
-    let values_yaml: serde_yaml::Value = serde_yaml::from_str(&test_util::read_testdata(
-        "charts/zalando-postgres-operator/values.yaml",
-    ))
-    .expect("values yaml");
+    let values_yaml_source =
+        test_util::read_testdata("charts/zalando-postgres-operator/values.yaml")?;
+    let values_yaml: serde_yaml::Value = serde_yaml::from_str(&values_yaml_source)
+        .wrap_err("parse Zalando operator values fixture")?;
     let provider = production_chain_provider();
 
     let resolved =
@@ -913,9 +918,8 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
     );
 
     let generated = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &provider).with_values_yaml(Some(
-            &test_util::read_testdata("charts/zalando-postgres-operator/values.yaml"),
-        )),
+        ValuesSchemaInput::new(&schema_signals, &provider)
+            .with_values_yaml(Some(&values_yaml_source)),
     );
     let extra_envs = generated
         .pointer("/properties/extraEnvs")
@@ -932,6 +936,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() {
         want: Some("string"),
         "generated extraEnvs should keep EnvVar item shape: {extra_envs}"
     );
+    Ok(())
 }
 
 #[test]
@@ -979,6 +984,10 @@ fn unrelated_default_inside_set_does_not_mark_target_as_defaulted() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn guarded_fragment_array_provider_schema_stays_precise() {
     #[derive(Debug)]
     struct RelabelingsProvider;
@@ -1025,12 +1034,12 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             )),
             provenance: Vec::new(),
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -1051,12 +1060,12 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             )),
             provenance: Vec::new(),
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -1119,12 +1128,12 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             resource: Some(resource.clone()),
             provenance: Vec::new(),
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -1136,12 +1145,12 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             resource: Some(resource),
             provenance: Vec::new(),
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -1190,12 +1199,12 @@ fn values_yaml_comments_override_provider_descriptions() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         digest: false,
         merge_operand: false,
     }];
@@ -1219,12 +1228,12 @@ fn values_yaml_comments_override_provider_descriptions() {
 #[test]
 fn values_yaml_comments_do_not_create_schema_paths() {
     let uses = parse_ir(
-        r#"
+        r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: {{ .Values.name }}
-        "#,
+        ",
     );
     let descriptions = BTreeMap::from([
         ("name".to_string(), "name description".to_string()),
@@ -1367,7 +1376,7 @@ fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() 
 /// `toYaml` splice (airflow's scheduler command and extraContainers).
 #[test]
 fn tpl_serialized_fragment_projects_the_provider_slot() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -1381,7 +1390,7 @@ fn tpl_serialized_fragment_projects_the_provider_slot() {
                   {{- if .Values.scheduler.command }}
                   command: {{ tpl (toYaml .Values.scheduler.command) . | nindent 12 }}
                   {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("scheduler:\n  command: ~\n"));
 
     for (instance, want) in [
@@ -1406,10 +1415,10 @@ fn tpl_serialized_fragment_projects_the_provider_slot() {
 /// Helm's YAML resolver reads hex, explicit octal, binary, and legacy
 /// leading-zero spellings as integers, so a bare token in any of those
 /// forms reparses away from the string a provider slot requires (velero's
-/// unquoted BackupStorageLocation provider).
+/// unquoted `BackupStorageLocation` provider).
 #[test]
 fn plain_string_slot_excludes_non_decimal_integer_spellings() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -1420,7 +1429,7 @@ fn plain_string_slot_excludes_non_decimal_integer_spellings() {
               containers:
                 - name: {{ .Values.containerName }}
                   image: img
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("containerName: app\n"));
 
     for (instance, want) in [
@@ -1472,7 +1481,7 @@ fn template_supplied_sibling_keys_relax_provider_requiredness() {
         }
     }
 
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -1483,7 +1492,7 @@ fn template_supplied_sibling_keys_relax_provider_requiredness() {
               volumes:
                 - name: tmp
                   {{- toYaml .Values.tmpVolume | nindent 10 }}
-    "#};
+    "};
     let ir = parse_ir(src);
     let schema_signals = ir.into_schema_signals();
     let schema = generate_values_schema(
@@ -1540,7 +1549,7 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
         }
     }
 
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -1550,7 +1559,7 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
             - name: config
               secret:
                 secretName: {{ tpl .Values.objectName . }}
-    "#};
+    "};
     let ir = parse_ir(src);
     let schema_signals = ir.into_schema_signals();
     let schema = generate_values_schema(
@@ -1582,7 +1591,7 @@ fn tpl_rendered_slots_keep_the_raw_program_open() {
     }
 }
 
-/// redis-ha's ConfigMap fills each `data` value with `redis.conf: |`
+/// redis-ha's `ConfigMap` fills each `data` value with `redis.conf: |`
 /// followed by a COLUMN-ZERO `{{- include "config-redis.conf" . }}`: the
 /// include's rendered lines are deeper than the entry, so they continue
 /// the still-open block scalar — pure text. Evaluating the include as
@@ -1616,11 +1625,11 @@ fn block_scalar_adopted_includes_render_as_text_not_structure() {
           redis.conf: |
         {{- include "repro.conf" . }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         redis:
           port: 6379
           config: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
@@ -1702,11 +1711,11 @@ fn roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth() {
               app: test
           template: {{ include "repro.podTemplate" . | fromYaml | toYaml | nindent 4 }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         tracing:
           otlp:
             enabled: false
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
@@ -1740,7 +1749,7 @@ fn roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth() {
 /// alternative of a per-member disjunction.
 #[test]
 fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -1768,11 +1777,11 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
                         value: {{ $header.value }}
                       {{- end }}
                       {{- end }}
-    "#};
-    let values_yaml = indoc! {r#"
+    "};
+    let values_yaml = indoc! {r"
         probe:
           httpHeaders: []
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
@@ -1815,7 +1824,7 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
 /// in a pod-template helper consumed through `include … | fromYaml |
 /// toYaml`, and the leaf renders through Sprig `quote` — which SKIPS nil
 /// operands, so a missing or null source still forces an explicit null
-/// into the provider-required VolumeMount `mountPath` (traefik's local
+/// into the provider-required `VolumeMount` `mountPath` (traefik's local
 /// plugins).
 #[test]
 fn quoted_ranged_leaves_bind_presence_through_the_pod_template_projection() {
@@ -1846,9 +1855,9 @@ fn quoted_ranged_leaves_bind_presence_through_the_pod_template_projection() {
               app: test
           template: {{ include "test.podTemplate" . | fromYaml | toYaml | nindent 4 }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         plugins: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
@@ -1880,7 +1889,7 @@ fn quoted_ranged_leaves_bind_presence_through_the_pod_template_projection() {
 /// `service`, so the presence requirement carries the service escape.
 #[test]
 fn ranged_member_required_leaves_keep_the_else_arm_escape() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- range $key, $values := .Values.extraPorts }}
         ---
         apiVersion: v1
@@ -1899,10 +1908,10 @@ fn ranged_member_required_leaves_keep_the_else_arm_escape() {
           selector:
             app: test
         {{- end }}
-    "#};
-    let values_yaml = indoc! {r#"
+    "};
+    let values_yaml = indoc! {r"
         extraPorts: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (member, want, label) in [
         (

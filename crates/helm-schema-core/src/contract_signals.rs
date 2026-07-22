@@ -6,50 +6,74 @@ use crate::{GuardValue, ProviderSchemaUse};
 /// conditionals.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConditionalGuard {
+    /// The value at `path` is Helm-truthy.
     Truthy {
+        /// Values path tested for truthiness.
         path: String,
     },
+    /// A `with` action selected the non-empty value at `path`.
     With {
+        /// Values path selected by the action.
         path: String,
     },
+    /// The value at `path` equals a literal.
     Eq {
+        /// Values path compared with the literal.
         path: String,
+        /// Literal required at the path.
         value: GuardValue,
     },
+    /// The value at `path` differs from a literal.
     NotEq {
+        /// Values path compared with the literal.
         path: String,
+        /// Literal excluded at the path.
         value: GuardValue,
     },
+    /// The value at `path` is absent.
     Absent {
+        /// Values path whose absence selects the branch.
         path: String,
     },
+    /// The value at `path` has a specific JSON Schema type.
     TypeIs {
+        /// Values path subjected to the type test.
         path: String,
+        /// JSON Schema type name accepted by the branch.
         schema_type: String,
     },
+    /// The string at `path` matches a regular expression.
     MatchesPattern {
+        /// Values path subjected to the pattern test.
         path: String,
+        /// ECMA-compatible regular expression required by the branch.
         pattern: String,
     },
     /// The path's RAW value is a JSON integer strictly greater than `bound`
     /// — a sound SUBSET of the Sprig coercion (`gt (int64 x) bound`) it
     /// stands in for, valid only where firing less often is safe.
     IntGt {
+        /// Values path subjected to the integer comparison.
         path: String,
+        /// Exclusive lower bound.
         bound: i64,
     },
     /// The mirror of [`ConditionalGuard::IntGt`]: the path's RAW value is a
     /// JSON integer strictly less than `bound`, under the same sound-subset
     /// contract.
     IntLt {
+        /// Values path subjected to the integer comparison.
         path: String,
+        /// Exclusive upper bound.
         bound: i64,
     },
     /// The mapping at `path` contains the literal member `key`. The key is
     /// an OPAQUE property name (it may contain dots), so it rides beside
     /// the segmented path instead of being appended to it.
     HasKey {
+        /// Values path expected to hold a mapping.
         path: String,
+        /// Literal mapping key whose presence selects the branch.
         key: String,
     },
     /// SOME iterated item of the collection at `path` has `member` equal to
@@ -58,8 +82,11 @@ pub enum ConditionalGuard {
     /// over the array lane and the double-negated member quantifier over
     /// the object lane.
     ContainsMemberEquals {
+        /// Values path expected to hold the iterated collection.
         path: String,
+        /// Member name compared within each collection item.
         member: String,
+        /// Literal that at least one member must equal.
         value: GuardValue,
     },
     /// SOME item of the list at `path` deep-equals the scalar literal —
@@ -68,7 +95,9 @@ pub enum ConditionalGuard {
     /// arrays carrying the literal; lowers to `contains` with a `const`
     /// item.
     ContainsEquals {
+        /// Values path expected to hold the list.
         path: String,
+        /// Literal that at least one list item must equal.
         value: GuardValue,
     },
     /// The collection at `path` has at most one entry — the document-level
@@ -76,20 +105,27 @@ pub enum ConditionalGuard {
     /// empty-initialized dedup accumulator cannot have shadowed anything).
     /// A sound subset: it may only scope positive-polarity evidence.
     AtMostOneMember {
+        /// Values path expected to hold the bounded collection.
         path: String,
     },
     /// The value at `path` is a mapping with at least `bound` members
     /// (`gt (keys X | len) N`). Exact: both polarities encode.
     MinMembers {
+        /// Values path expected to hold the mapping.
         path: String,
+        /// Inclusive minimum number of members.
         bound: i64,
     },
+    /// Logical negation of a guard.
     Not(Box<ConditionalGuard>),
+    /// Conjunction of every enclosed guard.
     AllOf(Vec<ConditionalGuard>),
+    /// Disjunction of the enclosed guards.
     AnyOf(Vec<ConditionalGuard>),
 }
 
 impl ConditionalGuard {
+    /// Returns every values path referenced by this guard tree.
     #[must_use]
     pub fn value_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
@@ -205,7 +241,9 @@ impl ConditionalGuard {
 /// hold for the overlay to apply.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ConditionalPathOverlay {
+    /// Conjoined conditions that select this overlay.
     pub guards: Vec<ConditionalGuard>,
+    /// Schema evidence that applies while the guards hold.
     pub evidence: ConditionalOverlayEvidence,
     /// Keep the unconditional/base schema for this path alongside the guarded
     /// overlay because the contract also observed an unguarded use.
@@ -218,13 +256,18 @@ pub struct ConditionalPathOverlay {
 /// entry that owns the overlay.
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ConditionalOverlayEvidence {
+    /// Behavioral facts observed in the selected branch.
     pub facts: ContractValuePathFacts,
+    /// Kubernetes metadata field roles reached in the branch.
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    /// JSON Schema type names implied by branch-local consumers.
     pub type_hints: BTreeSet<String>,
+    /// Resource-schema sinks reached in the selected branch.
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
 }
 
 impl ConditionalOverlayEvidence {
+    /// Materializes this branch-local evidence as evidence for `value_path`.
     #[must_use]
     pub fn as_path_evidence(&self, value_path: &str) -> ContractPathSchemaEvidence {
         ContractPathSchemaEvidence {
@@ -265,11 +308,17 @@ pub enum MetadataFieldKind {
 /// several parallel maps.
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractPathSchemaEvidence {
+    /// Canonical dot-separated values path described by this evidence.
     pub value_path: String,
+    /// Whether template analysis directly referenced this path.
     pub is_referenced_value_path: bool,
+    /// Aggregate behavioral facts observed for the path.
     pub facts: ContractValuePathFacts,
+    /// Unconditional guard facts attached to the path.
     pub guard_predicates: Vec<ConditionalGuard>,
+    /// Kubernetes metadata field roles reached from the path.
     pub metadata_field_kinds: BTreeSet<MetadataFieldKind>,
+    /// Unconditional JSON Schema type hints.
     pub type_hints: BTreeSet<String>,
     /// Hints observed only under branch predicates. At the path level these
     /// may only WIDEN (add accepted alternatives to an otherwise-typed
@@ -281,8 +330,11 @@ pub struct ContractPathSchemaEvidence {
     /// fallback — so these type only the truthy arm and base lowering must
     /// keep the whole Helm-falsy set open beside them.
     pub fallback_type_hints: BTreeSet<String>,
+    /// Resource-schema sinks that consume the path.
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
+    /// Facts used by optional required-property inference.
     pub requiredness: ContractRequirednessEvidence,
+    /// Branch-local evidence keyed by values-decidable guards.
     pub conditional_overlays: Vec<ConditionalPathOverlay>,
     /// Requirements implied by explicit `fail` branches: the failing test's
     /// negation must hold wherever the outer guards do. Runtime-hard
@@ -343,15 +395,24 @@ pub enum ContractRequirementTarget {
     /// `allow_integer` describes the range header's own integer lane. It is
     /// false for a two-variable range, even when the member requirement would
     /// otherwise accept integer values.
-    Members { allow_integer: bool },
+    Members {
+        /// Whether Helm's integer-count range form remains accepted.
+        allow_integer: bool,
+    },
     /// Values of object entries whose keys start with the literal prefix.
     /// Empty arrays and null remain valid because they execute no range body.
-    MembersMatchingPrefix { prefix: String },
+    MembersMatchingPrefix {
+        /// Literal key prefix selecting affected object entries.
+        prefix: String,
+    },
     /// Each ranged member whose literal sibling equals `value` must satisfy
     /// the requirements at `target_path`, both relative to that member.
     MembersWhereEquals {
+        /// Relative member path used as the selector.
         guard_path: Vec<String>,
+        /// Literal required at the selector path.
         value: GuardValue,
+        /// Relative member path constrained by the requirement.
         target_path: Vec<String>,
     },
     /// Every ranged member must CONTAIN `target_path` and its value there
@@ -359,7 +420,9 @@ pub enum ContractRequirementTarget {
     /// read by a strict consumer (`tpl $member.url` fails on a missing or
     /// non-string field). `allow_integer` mirrors [`Self::Members`].
     MembersAt {
+        /// Relative member path that must exist.
         target_path: Vec<String>,
+        /// Whether Helm's integer-count range form remains accepted.
         allow_integer: bool,
     },
     /// Every key produced by ranging the path.
@@ -416,26 +479,37 @@ pub enum FailValueRequirement {
     /// failing test fired on the field's truthiness (oauth2-proxy aborts
     /// when a legacy `extraPaths[].backend.serviceName` is set under the
     /// `networking.k8s.io/v1` Ingress api).
-    FieldHelmFalsy { path: Vec<String> },
+    FieldHelmFalsy {
+        /// Relative field path constrained to Helm-falsy values.
+        path: Vec<String>,
+    },
     /// The value must be an object whose field at `path` is present and
     /// equals the literal: the failing test's negation held an equality on
     /// the field (traefik's `eq $plugin.type "hostPath"` dispatch arm; Go's
     /// `eq` aborts on a nil operand, so presence rides along).
     FieldEquals {
+        /// Relative field path compared with the literal.
         path: Vec<String>,
+        /// Literal required at the field path.
         value: GuardValue,
     },
     /// The value must be an object whose field at `path` is present and
     /// non-null: a ranged member's leaf renders into a provider-REQUIRED
     /// resource field, where a missing or null source emits an explicit
     /// null the provider rejects (promtail's extra Service `port`).
-    FieldPresentNotNull { path: Vec<String> },
+    FieldPresentNotNull {
+        /// Relative field path that must contain a non-null value.
+        path: Vec<String>,
+    },
     /// The value must be an object whose field at `path` is present and
     /// Helm-truthy — the positive mirror of [`Self::FieldHelmFalsy`], used
     /// as the ESCAPE alternative when a member-scoped branch guard selects
     /// another render for truthy fields (promtail's `service` arm renders
     /// its own port instead of `containerPort`).
-    FieldHelmTruthy { path: Vec<String> },
+    FieldHelmTruthy {
+        /// Relative field path constrained to Helm-truthy values.
+        path: Vec<String>,
+    },
     /// At least one alternative (each a conjunction of requirements) must
     /// hold. A `fail` whose test conjoins several member conditions negates
     /// to the DISJUNCTION of their negations — traefik's local plugins
@@ -452,7 +526,9 @@ pub enum FailValueRequirement {
     /// (traefik's HTTPS-protocol listeners must carry `certificateRefs`;
     /// non-HTTPS listeners escape through this arm).
     FieldNotEquals {
+        /// Relative field path compared with the literal.
         path: Vec<String>,
+        /// Literal excluded at the field path.
         value: GuardValue,
     },
     /// The value must be of this JSON Schema type IF present and non-null:
@@ -467,22 +543,41 @@ pub enum FailValueRequirement {
     /// The value must be a string matching this regular expression
     /// (`regexMatch` type-asserts a string subject, so string-ness rides
     /// along).
-    MatchesPattern { pattern: String, templated: bool },
+    MatchesPattern {
+        /// Regular expression the string must match.
+        pattern: String,
+        /// Whether the pattern originated from a templated expression.
+        templated: bool,
+    },
     /// The value must be a string NOT matching this regular expression —
     /// the failing test fired on matches, and its `regexMatch` still
     /// type-asserts a string subject (traefik's uppercase key gate).
-    NotMatchesPattern { pattern: String },
+    NotMatchesPattern {
+        /// Regular expression the string must not match.
+        pattern: String,
+    },
     /// The value must be a string whose length lies inside the window — a
     /// provider key slot's `minLength`/`maxLength` projected onto a ranged
     /// collection's keys (traefik's Gateway listener names).
-    StringLengthBounds { min: Option<u64>, max: Option<u64> },
+    StringLengthBounds {
+        /// Inclusive minimum length, when one is known.
+        min: Option<u64>,
+        /// Inclusive maximum length, when one is known.
+        max: Option<u64>,
+    },
     /// The value HOSTS literal member reads: it must be an object — or one
     /// of the kinds the chart's own type dispatch provably handles before
     /// the reads run (nack converts the string image form with `set`).
-    MemberHost { handled_kinds: Vec<String> },
+    MemberHost {
+        /// Non-object JSON kinds explicitly handled by chart dispatch.
+        handled_kinds: Vec<String>,
+    },
     /// The value is iterated by `range`: collections and nil render, and
     /// integer counts iterate when the loop body has no member structure.
-    Iterable { allow_integer: bool },
+    Iterable {
+        /// Whether Helm's integer-count range form remains accepted.
+        allow_integer: bool,
+    },
     /// A zero-based position must exist before `index` can project it.
     /// Arrays lower exactly; strings remain conservative because Go indexes
     /// bytes while JSON Schema `minLength` counts Unicode code points.
@@ -491,8 +586,11 @@ pub enum FailValueRequirement {
     /// When the input was first passed through a total text conversion,
     /// non-string inputs remain conservatively accepted.
     SplitSegmentsAtLeast {
+        /// Literal delimiter used by the split operation.
         separator: String,
+        /// Minimum number of produced segments.
         segments: usize,
+        /// Whether a preceding total conversion admits non-string inputs.
         allow_non_string: bool,
     },
     /// The value renders inside a manually quoted YAML scalar: every string
@@ -501,10 +599,14 @@ pub enum FailValueRequirement {
     /// (`map[k:v]` / `[a b]`) with its strings embedded raw — must be valid
     /// content for the quoting style. Non-string scalars format as plain
     /// digits/words and are always safe.
-    QuotedSerializationSafe { style: QuotedScalarStyle },
+    QuotedSerializationSafe {
+        /// YAML quoting grammar that serialized content must satisfy.
+        style: QuotedScalarStyle,
+    },
 }
 
 impl ContractPathSchemaEvidence {
+    /// Reports whether positive, unconditional evidence can make the path required.
     #[must_use]
     pub fn is_required_inference_candidate(&self) -> bool {
         self.requiredness.is_positive_header
@@ -540,6 +642,7 @@ pub struct ContractSchemaSignals {
 }
 
 impl ContractSchemaSignals {
+    /// Builds a stable signal set from path evidence and terminal clauses.
     #[must_use]
     pub fn new(
         schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
@@ -711,6 +814,7 @@ impl ContractSchemaSignals {
         &self.terminal_clauses
     }
 
+    /// Returns schema-lowering evidence indexed by canonical values path.
     #[must_use]
     pub fn schema_evidence_by_value_path(&self) -> &BTreeMap<String, ContractPathSchemaEvidence> {
         &self.schema_evidence_by_value_path
@@ -729,6 +833,7 @@ impl ContractSchemaSignals {
         &self.pruned_parent_value_paths
     }
 
+    /// Returns schema evidence for one canonical values path.
     #[must_use]
     pub fn evidence_for(&self, value_path: &str) -> Option<&ContractPathSchemaEvidence> {
         self.schema_evidence_by_value_path.get(value_path)
@@ -742,6 +847,7 @@ impl ContractSchemaSignals {
 /// lower-level projections.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractValuePathFacts {
+    /// Whether analysis observed referenced paths below this path.
     pub has_referenced_descendants: bool,
     /// Descendant rows that continue through a `*` item segment. Item rows
     /// describe a ranged collection's element shape; a literal member read
@@ -752,6 +858,7 @@ pub struct ContractValuePathFacts {
     /// too, so declared-empty maps with only bare member-value rows stay
     /// user-populated.
     pub has_structured_item_descendants: bool,
+    /// Whether the path renders as a structural YAML fragment.
     pub used_as_fragment: bool,
     /// The path renders through a serializing or total-stringification sink
     /// (`tpl (toYaml …)`, `quote`, `toString`, `join`): any input type
@@ -769,9 +876,13 @@ pub struct ContractValuePathFacts {
     /// over each ranged member): integer iteration yields int members the
     /// contract rejects, so the integer lane closes.
     pub has_string_contract_items: bool,
+    /// Whether fragment rendering lost a precise output location.
     pub used_as_pathless_fragment: bool,
+    /// Whether the path may supply the chart's complete values-root fragment.
     pub accepted_values_root_fragment: bool,
+    /// Whether the path may supply a dependency values-root fragment.
     pub accepted_dependency_values_root_fragment: bool,
+    /// Whether this path or one of its projections supplies a range action.
     pub is_ranged_source: bool,
     /// The chart ranges this path DIRECTLY (`range .Values.x`), so the
     /// runtime iterable domain applies to the path's own value.
@@ -783,10 +894,15 @@ pub struct ContractValuePathFacts {
     /// Some direct range sees the path after JSON decoding, where numbers are
     /// `float64` values rather than Helm's integer iteration counts.
     pub has_json_decoded_range_use: bool,
+    /// Whether the path contributes only part of a rendered scalar token.
     pub is_partial_scalar_value_path: bool,
+    /// Whether any rendering sink consumes the path.
     pub has_render_use: bool,
+    /// Whether a rendering sink consumes the path without a branch guard.
     pub has_unconditional_render_use: bool,
+    /// Whether any rendering sink is guarded by this path's own truthiness.
     pub has_self_guarded_render_use: bool,
+    /// Whether every rendering sink is guarded by this path's own truthiness.
     pub all_render_uses_self_guarded: bool,
     /// A render consumed this path as one layer of an ordered merge: the
     /// generator synthesizes the layer's typing as root arms, and the
@@ -802,11 +918,14 @@ pub struct ContractValuePathFacts {
     /// bit feeds ONLY the base falsy escape — never overlay-branch routing or
     /// declared-default placement.
     pub all_render_uses_falsy_tolerant: bool,
+    /// Whether a direct range guard protects a rendering sink for this path.
     pub has_self_range_guard_render_use: bool,
+    /// Whether observed semantics explicitly admit null.
     pub is_nullable: bool,
 }
 
 impl ContractValuePathFacts {
+    /// Incorporates one rendering use into the aggregate path facts.
     pub fn record_render_use(
         &mut self,
         range_guarded: bool,
@@ -828,6 +947,7 @@ impl ContractValuePathFacts {
         }
     }
 
+    /// Merges rendering facts collected by another analysis branch.
     pub fn merge_render_use_facts(&mut self, other: Self) {
         if !other.has_render_use {
             return;
@@ -860,7 +980,10 @@ impl ContractValuePathFacts {
 /// defaults before mutating the JSON Schema.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractRequirednessEvidence {
+    /// Whether the path appears in a positive control-flow header.
     pub is_positive_header: bool,
+    /// Whether some branch permits the path to remain absent.
     pub is_conditionally_optional: bool,
+    /// Whether a defaulting operation supplies an absent value.
     pub has_default_fallback: bool,
 }

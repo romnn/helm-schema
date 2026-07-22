@@ -63,6 +63,10 @@ pub(crate) fn build_condition_clauses_cached(
 /// when the key is missing. A missing parent-owned key was null-deleted
 /// and reads as nil; a missing dependency-owned key reads as the
 /// subchart's declared default.
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 fn build_single_condition_fragment(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
@@ -151,7 +155,7 @@ fn build_single_condition_fragment(
             int_bound_leaf_schema(
                 "exclusiveMinimum",
                 *bound,
-                int_region_string_preimage(true, *bound),
+                Some(int_region_string_preimage(true, *bound)),
             ),
             absent_coerced_int(subchart_defaults_doc, path) > *bound,
         ),
@@ -161,7 +165,7 @@ fn build_single_condition_fragment(
             int_bound_leaf_schema(
                 "exclusiveMaximum",
                 *bound,
-                int_region_string_preimage(false, *bound),
+                Some(int_region_string_preimage(false, *bound)),
             ),
             absent_coerced_int(subchart_defaults_doc, path) < *bound,
         ),
@@ -304,7 +308,9 @@ fn build_single_condition_fragment(
                 })),
                 matches!(
                     yaml_value_at_path(subchart_defaults_doc, path),
-                    Some(YamlValue::Mapping(mapping)) if mapping.len() as i64 >= *bound
+                    Some(YamlValue::Mapping(mapping))
+                        if *bound <= 0
+                            || usize::try_from(*bound).is_ok_and(|bound| mapping.len() >= bound)
                 ),
             )
         }
@@ -436,27 +442,23 @@ fn int_bound_leaf_schema(
 /// bound, a negative `IntGt` bound) contain 0, so every spelling except
 /// a successful parse beyond the bound lands inside: they claim the
 /// COMPLEMENT of an overapproximated escape language instead.
-pub(crate) fn int_region_string_preimage(greater: bool, bound: i64) -> Option<IntStringPreimage> {
+pub(crate) fn int_region_string_preimage(greater: bool, bound: i64) -> IntStringPreimage {
     if greater {
         if let Some(pattern) = decimal_strings_above(bound) {
-            return Some(IntStringPreimage::Within(pattern));
+            return IntStringPreimage::Within(pattern);
         }
         // bound < 0: only a successful parse of a magnitude STRICTLY
         // beyond |bound| escapes the region.
         let escape = parse_magnitude_reaching(bound.unsigned_abs());
-        Some(IntStringPreimage::Excluding(format!(
-            "^-({escape})(\\.0*)?$"
-        )))
+        IntStringPreimage::Excluding(format!("^-({escape})(\\.0*)?$"))
     } else {
         if let Some(pattern) = decimal_strings_below(bound) {
-            return Some(IntStringPreimage::Within(pattern));
+            return IntStringPreimage::Within(pattern);
         }
         // bound > 0: only a successful unsigned parse reaching the bound
         // escapes the region.
         let escape = parse_magnitude_reaching(bound.unsigned_abs());
-        Some(IntStringPreimage::Excluding(format!(
-            "^\\+?({escape})(\\.0*)?$"
-        )))
+        IntStringPreimage::Excluding(format!("^\\+?({escape})(\\.0*)?$"))
     }
 }
 
@@ -541,10 +543,16 @@ fn radix_windows_above(
     // digit strictly above the bound's, then any digits.
     if digits.len() <= max_digits {
         for index in 0..digits.len() {
-            let Some(class) = radix_digit_range(digits[index] + 1, radix) else {
+            let Some(digit) = digits.get(index) else {
                 continue;
             };
-            let lead: String = digits[..index]
+            let Some(class) = radix_digit_range(*digit + 1, radix) else {
+                continue;
+            };
+            let Some(prefix_digits) = digits.get(..index) else {
+                continue;
+            };
+            let lead: String = prefix_digits
                 .iter()
                 .map(|&digit| radix_digit(digit))
                 .collect();
@@ -577,12 +585,11 @@ fn radix_digits(value: u64, radix: u64) -> Vec<u64> {
 
 /// One literal radix digit as pattern text; hex letters match both cases.
 fn radix_digit(value: u64) -> String {
-    match value {
-        0..=9 => value.to_string(),
-        _ => {
-            let letter = char::from(b'a' + u8::try_from(value - 10).unwrap_or(0));
-            format!("[{letter}{}]", letter.to_ascii_uppercase())
-        }
+    if let 0..=9 = value {
+        value.to_string()
+    } else {
+        let letter = char::from(b'a' + u8::try_from(value - 10).unwrap_or(0));
+        format!("[{letter}{}]", letter.to_ascii_uppercase())
     }
 }
 
@@ -756,7 +763,7 @@ fn negated_member_guard_fragment(guard: &ConditionalGuard) -> Option<SchemaNode>
     };
     let segments = split_value_path(path);
     let star = segments.iter().position(|segment| segment == "*")?;
-    let suffix = &segments[star + 1..];
+    let suffix = segments.get(star + 1..)?;
     let member_positive = if suffix.is_empty() {
         leaf
     } else {
@@ -767,7 +774,7 @@ fn negated_member_guard_fragment(guard: &ConditionalGuard) -> Option<SchemaNode>
         "additionalProperties": member,
         "items": member,
     }));
-    for segment in segments[..star].iter().rev() {
+    for segment in segments.get(..star)?.iter().rev() {
         fragment = SchemaNode::object().property(segment.clone(), fragment);
     }
     Some(fragment)
@@ -876,7 +883,9 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         }
         ConditionalGuard::MinMembers { path, bound } => Some(matches!(
             yaml_value_at_path(values_yaml_doc, path),
-            Some(YamlValue::Mapping(mapping)) if mapping.len() as i64 >= *bound
+            Some(YamlValue::Mapping(mapping))
+                if *bound <= 0
+                    || usize::try_from(*bound).is_ok_and(|bound| mapping.len() >= bound)
         )),
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
@@ -929,7 +938,9 @@ fn guard_value_matches_optional_yaml(value: &GuardValue, yaml: Option<&YamlValue
         GuardValue::Bool(expected) => yaml.as_bool() == Some(*expected),
         GuardValue::Int(expected) => {
             yaml.as_i64() == Some(*expected)
-                || (*expected >= 0 && yaml.as_u64() == Some(*expected as u64))
+                || u64::try_from(*expected)
+                    .ok()
+                    .is_some_and(|expected| yaml.as_u64() == Some(expected))
         }
         GuardValue::Float(expected) => {
             let Some(expected) = expected.parse::<f64>().ok() else {
@@ -943,7 +954,7 @@ fn guard_value_matches_optional_yaml(value: &GuardValue, yaml: Option<&YamlValue
 
 fn yaml_value_is_truthy(value: &YamlValue) -> bool {
     match value {
-        YamlValue::Null => false,
+        YamlValue::Null | YamlValue::Tagged(_) => false,
         YamlValue::Bool(value) => *value,
         YamlValue::Number(value) => {
             value.as_i64().is_some_and(|value| value != 0)
@@ -953,7 +964,6 @@ fn yaml_value_is_truthy(value: &YamlValue) -> bool {
         YamlValue::String(value) => !value.is_empty(),
         YamlValue::Sequence(value) => !value.is_empty(),
         YamlValue::Mapping(value) => !value.is_empty(),
-        YamlValue::Tagged(_) => false,
     }
 }
 
@@ -974,6 +984,6 @@ fn strip_ancestor_prefix(
     ancestor_segments: &[String],
 ) -> Option<Vec<String>> {
     path_segments
-        .starts_with(ancestor_segments)
-        .then(|| path_segments[ancestor_segments.len()..].to_vec())
+        .strip_prefix(ancestor_segments)
+        .map(<[String]>::to_vec)
 }

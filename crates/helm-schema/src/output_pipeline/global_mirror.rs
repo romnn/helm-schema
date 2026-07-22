@@ -39,12 +39,11 @@ fn schema_property_mut<'a>(schema: &'a mut Value, property: &str) -> &'a mut Val
 }
 
 fn ensure_json_object(value: &mut Value) -> &mut Map<String, Value> {
-    match value {
-        Value::Object(object) => object,
-        _ => {
-            *value = Value::Object(Map::new());
-            ensure_json_object(value)
-        }
+    if let Value::Object(object) = value {
+        object
+    } else {
+        *value = Value::Object(Map::new());
+        ensure_json_object(value)
     }
 }
 

@@ -162,14 +162,14 @@ fn constructed_collection_operands_do_not_retype_leaf_values() {
 /// Only structural control flow or fallback selection may make its domain conditional.
 #[test]
 fn unconditional_strict_call_rejects_falsy_wrong_kinds() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
           merged: {{ merge .Values.config (dict) | toYaml | quote }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("config: {}\n"));
 
     assert!(
@@ -404,7 +404,7 @@ fn ternary_selector_binds_boolean_operand_contract() {
 /// downstream runtime contracts apply only to the value that was selected.
 #[test]
 fn short_circuit_value_selection_scopes_downstream_contracts() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $selected := or .Values.primary .Values.fallback }}
         apiVersion: v1
         kind: Secret
@@ -413,7 +413,7 @@ fn short_circuit_value_selection_scopes_downstream_contracts() {
         data:
           selected: {{ $selected | b64enc | quote }}
           nested: {{ or .Values.ready (b64enc .Values.payload) | quote }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         primary: ''
         fallback: fallback
@@ -1128,12 +1128,12 @@ fn ternary_selected_semver_local_keeps_candidate_partitions() {
 
 #[test]
 fn duration_and_url_parsers_bind_lexical_domains() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         {{- $_ := mustDateModify .Values.duration (now) }}
         {{- $_ := urlParse .Values.url }}
         {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
         Some("enabled: true\nduration: 30s\nurl: https://example.com\n"),
@@ -1220,7 +1220,7 @@ fn semver_parser_projects_through_identity_helper_output() {
 /// while a truthy wrong-kind value reaches `merge` and aborts rendering.
 #[test]
 fn guarded_collection_call_keeps_skipped_falsy_operands() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1229,7 +1229,7 @@ fn guarded_collection_call_keeps_skipped_falsy_operands() {
           {{- with .Values.optional }}
           merged: {{ merge $.Values.optional (dict) | toYaml | quote }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("optional: {}\n"));
 
     for optional in [
@@ -1257,7 +1257,7 @@ fn guarded_collection_call_keeps_skipped_falsy_operands() {
 /// unconditional `merge` consumes the selected result.
 #[test]
 fn fallback_selected_collection_operands_are_truthy_scoped() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1265,7 +1265,7 @@ fn fallback_selected_collection_operands_are_truthy_scoped() {
         data:
           defaulted: {{ merge (default (dict) .Values.defaulted) (dict) | toYaml | quote }}
           coalesced: {{ merge (coalesce .Values.first .Values.second (dict)) (dict) | toYaml | quote }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         defaulted: {}
         first: {}
@@ -1816,7 +1816,7 @@ fn regex_strip_and_trim_prefix_carry_the_parser_preimage() {
 /// only a present value of a different basic kind aborts.
 #[test]
 fn comparison_operands_accept_missing_and_null_members() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1827,7 +1827,7 @@ fn comparison_operands_accept_missing_and_null_members() {
           {{ $name }}: live
           {{- end }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("clusters: {}\n"));
 
     for (instance, want) in [
@@ -1933,7 +1933,7 @@ fn helper_returned_default_keeps_falsy_parser_operands_open() {
 
 /// `regexMatch "64$" (typeOf x)` matches Go's `int64`/`float64` spellings
 /// and nothing else, so the guard emits the field only for numeric values
-/// and OMITS every other kind (sealed-secrets' PodDisruptionBudget
+/// and OMITS every other kind (sealed-secrets' `PodDisruptionBudget`
 /// `pdb.minAvailable`/`pdb.maxUnavailable` arms). The derived predicate
 /// must stay a type dispatch: the omitted complement renders and stays
 /// open.

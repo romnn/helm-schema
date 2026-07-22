@@ -54,7 +54,7 @@ pub(crate) struct Effects {
     pub(crate) merge_operand_paths: BTreeSet<String>,
     /// Literal keys an `omit` in this expression removed from the map at
     /// each path: whole-map sink typing must not bind those members
-    /// (external-secrets' OpenShift `adaptSecurityContext` omit).
+    /// (external-secrets' `OpenShift` `adaptSecurityContext` omit).
     pub(crate) omitted_map_keys: BTreeMap<String, BTreeSet<String>>,
     /// Range keys converted to text by an earlier pipeline stage.
     pub(crate) derived_range_key_paths: BTreeSet<String>,
@@ -283,6 +283,10 @@ impl Effects {
         }
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(crate) fn merge(&mut self, other: Self) {
         // Exhaustive destructuring: a new channel refuses to compile until
         // this merge decides how to combine it, instead of being silently
@@ -598,7 +602,7 @@ impl Effects {
         &mut self,
         name: String,
         keys: BTreeSet<String>,
-        value: AbstractValue,
+        value: &AbstractValue,
     ) {
         if name.trim().is_empty() || keys.is_empty() {
             return;

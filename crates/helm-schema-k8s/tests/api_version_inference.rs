@@ -2,19 +2,21 @@
 
 use std::sync::Arc;
 
+use color_eyre::eyre;
 use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use helm_schema_k8s::inference::aggregate;
 use helm_schema_k8s::{
     ApiVersionCandidate, ApiVersionInferenceOutcome, Chain, CrdsCatalogSchemaProvider, Diagnostic,
-    DiagnosticSink, InferenceSource, K8sSchemaProvider, KubernetesJsonSchemaProvider,
-    ProviderLookupResult, ProviderOrigin, source_id_for_url,
+    DiagnosticSink, InferenceSource, K8sSchemaProvider, K8sVersionChain,
+    KubernetesJsonSchemaProvider, ProviderLookupResult, ProviderOrigin, source_id_for_url,
 };
 use test_util::prelude::sim_assert_eq;
 
-mod common;
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
 use common::{MockFetcher, MockResponse};
 
-fn tmp_dir(label: &str) -> std::path::PathBuf {
+fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
     let p = std::env::temp_dir().join(format!(
         "helm-schema.{label}.{}.{}",
         std::process::id(),
@@ -23,8 +25,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
             .map(|d| d.as_nanos())
             .unwrap_or(0)
     ));
-    std::fs::create_dir_all(&p).expect("create temp dir");
-    p
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
 }
 
 fn use_with_kind(kind: &str) -> ProviderSchemaUse {
@@ -34,18 +36,18 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         kind: ValueKind::Scalar,
         resource: ResourceRef::concrete(String::new(), kind.to_string()),
         is_self_range_collection: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     }
 }
 
 #[test]
-fn inference_skipped_when_api_version_candidates_nonempty() {
+fn inference_skipped_when_api_version_candidates_nonempty() -> eyre::Result<()> {
     let mut use_ = use_with_kind("ServiceMonitor");
     use_.resource
         .api_version_candidates
@@ -53,7 +55,7 @@ fn inference_skipped_when_api_version_candidates_nonempty() {
 
     let crd = CrdsCatalogSchemaProvider::new()
         .with_allow_download(false)
-        .with_cache_dir(tmp_dir("inf-skip"))
+        .with_cache_dir(tmp_dir("inf-skip")?)
         .with_api_version_guess(true);
     let chain = Chain::new(vec![Box::new(crd)]).with_inference_enabled(true);
     // No diagnostic sink because inference wouldn't actually emit
@@ -61,6 +63,7 @@ fn inference_skipped_when_api_version_candidates_nonempty() {
     let _ = chain.schema_fragment_for_use(&use_);
     // The contract is: this should NOT trigger inference. If it did,
     // we'd see InferredApiVersion in a sink; absence here is the test.
+    Ok(())
 }
 
 #[test]
@@ -74,9 +77,9 @@ fn inference_returns_no_match_without_opt_in() {
 }
 
 #[test]
-fn api_version_guess_shortlist_resolves_known_kind() {
-    let crd = tmp_dir("inf-shortlist");
-    let k8s = tmp_dir("inf-shortlist-k8s");
+fn api_version_guess_shortlist_resolves_known_kind() -> eyre::Result<()> {
+    let crd = tmp_dir("inf-shortlist")?;
+    let k8s = tmp_dir("inf-shortlist-k8s")?;
     let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let crd_provider = CrdsCatalogSchemaProvider::new()
         .with_cache_dir(crd)
@@ -102,6 +105,7 @@ fn api_version_guess_shortlist_resolves_known_kind() {
                 && c.source == InferenceSource::Shortlist),
         "expected ServiceMonitor → monitoring.coreos.com/v1 from shortlist; got {candidates:?}"
     );
+    Ok(())
 }
 
 #[test]
@@ -287,9 +291,9 @@ fn infer_api_version_candidates_default_impl_empty() {
 }
 
 #[test]
-fn api_version_guess_cache_scan_spans_all_version_dirs() {
+fn api_version_guess_cache_scan_spans_all_version_dirs() -> eyre::Result<()> {
     // Pre-populate two version dirs in the cache; tier 2 must scan both.
-    let cache = tmp_dir("inf-version-spans");
+    let cache = tmp_dir("inf-version-spans")?;
     std::fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -302,7 +306,6 @@ fn api_version_guess_cache_scan_spans_all_version_dirs() {
     )
     .expect("seed file");
 
-    use helm_schema_k8s::K8sVersionChain;
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec!["v1.35.0".to_string(), "v1.24.0".to_string()],
         None,
@@ -319,13 +322,14 @@ fn api_version_guess_cache_scan_spans_all_version_dirs() {
                 && c.source == InferenceSource::LocalCacheScan),
         "tier 2 must find PDB v1beta1 in v1.24.0 cache dir; got {candidates:?}"
     );
+    Ok(())
 }
 
 // Tier-2 CRD cache scan walks EVERY CONFIGURED source namespace.
 // Configured = default + every mirror passed to `with_mirrors`.
 #[test]
-fn api_version_guess_cache_scan_spans_all_configured_crd_sources() {
-    let cache = tmp_dir("inf-crd-sources-configured");
+fn api_version_guess_cache_scan_spans_all_configured_crd_sources() -> eyre::Result<()> {
+    let cache = tmp_dir("inf-crd-sources-configured")?;
     let mirror_url = "https://example.com/mirror-a";
     let mirror_source_id = source_id_for_url(mirror_url);
     std::fs::write(
@@ -368,6 +372,7 @@ fn api_version_guess_cache_scan_spans_all_configured_crd_sources() {
         api_versions.contains("example.io/v2"),
         "configured-mirror source result missing; got {api_versions:?}"
     );
+    Ok(())
 }
 
 // A CRD source-id dir on disk that is NOT in the currently-configured
@@ -375,8 +380,8 @@ fn api_version_guess_cache_scan_spans_all_configured_crd_sources() {
 // `--crd-catalog-mirror=https://stale.example.com`, today's run
 // doesn't. Today's inference must ignore the stale-mirror dir.
 #[test]
-fn api_version_guess_cache_scan_ignores_stale_unconfigured_crd_source() {
-    let cache = tmp_dir("inf-crd-sources-stale");
+fn api_version_guess_cache_scan_ignores_stale_unconfigured_crd_source() -> eyre::Result<()> {
+    let cache = tmp_dir("inf-crd-sources-stale")?;
     std::fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -418,6 +423,7 @@ fn api_version_guess_cache_scan_ignores_stale_unconfigured_crd_source() {
         !api_versions.contains("example.io/v2"),
         "stale removed-mirror cache MUST NOT contribute inference candidates; got {api_versions:?}"
     );
+    Ok(())
 }
 
 // `PodDisruptionBudget` is version-dependent
@@ -444,8 +450,8 @@ fn shortlist_does_not_resolve_pod_disruption_budget() {
 // only the EXPLICIT version (not auto-fallback) keeps the loose-mode
 // invocation clean.
 #[test]
-fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() {
-    let cache = tmp_dir("inf-pdb-no-ambiguous");
+fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() -> eyre::Result<()> {
+    let cache = tmp_dir("inf-pdb-no-ambiguous")?;
     std::fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -466,7 +472,6 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() {
     )
     .expect("seed v1.24 file");
 
-    use helm_schema_k8s::K8sVersionChain;
     // EXPLICIT = [v1.35.0]; auto_fallback_window = 11 → ordered chain
     // includes v1.24.0 too. inference_scan_versions = explicit only.
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
@@ -496,6 +501,7 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() {
             "must resolve via primary cache scan; got NoMatch from candidates {candidates:?}"
         ),
     }
+    Ok(())
 }
 
 // InferredApiVersion is informational and must NOT fire for built-in
@@ -525,12 +531,12 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         kind: ValueKind::Scalar,
         resource: ResourceRef::concrete(String::new(), "ConfigMap".to_string()),
         is_self_range_collection: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };
     let _ = chain.schema_fragment_for_use(&use_);
@@ -549,9 +555,9 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
 // InferredApiVersion. Pins that the suppression is scoped to
 // built-ins only and doesn't accidentally hide useful CRD diagnostics.
 #[test]
-fn inference_for_crd_kind_still_emits_diagnostic() {
+fn inference_for_crd_kind_still_emits_diagnostic() -> eyre::Result<()> {
     let provider = CrdsCatalogSchemaProvider::new()
-        .with_cache_dir(tmp_dir("inf-crd-emits"))
+        .with_cache_dir(tmp_dir("inf-crd-emits")?)
         .with_allow_download(false)
         .with_api_version_guess(true);
     let diagnostics = DiagnosticSink::new();
@@ -567,12 +573,12 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         kind: ValueKind::Scalar,
         resource: ResourceRef::concrete(String::new(), "ServiceMonitor".to_string()),
         is_self_range_collection: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };
     let _ = chain.schema_fragment_for_use(&use_);
@@ -594,6 +600,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         )),
         "CRD inference MUST still emit InferredApiVersion; sink: {snapshot:?}"
     );
+    Ok(())
 }
 
 // The inference K8s cache scan must skip auto-fallback version dirs
@@ -602,8 +609,8 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
 // Only EXPLICIT versions participate in inference; auto-fallback
 // dirs exist as schema-lookup escape valves, not as user intent.
 #[test]
-fn k8s_cache_scan_skips_auto_fallback_version_dir() {
-    let cache = tmp_dir("inf-skip-auto-fallback");
+fn k8s_cache_scan_skips_auto_fallback_version_dir() -> eyre::Result<()> {
+    let cache = tmp_dir("inf-skip-auto-fallback")?;
     std::fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -624,7 +631,6 @@ fn k8s_cache_scan_skips_auto_fallback_version_dir() {
     )
     .expect("seed fallback file");
 
-    use helm_schema_k8s::K8sVersionChain;
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec!["v1.35.0".to_string()],
         Some(11),
@@ -647,14 +653,15 @@ fn k8s_cache_scan_skips_auto_fallback_version_dir() {
         !cache_versions.contains("extensions/v1beta1"),
         "auto-fallback v1.24 dir MUST NOT contribute extensions/v1beta1 to inference; got {cache_versions:?}"
     );
+    Ok(())
 }
 
 // Like the CRD-side stale-mirror test above, the K8s cache scan must
 // ignore stale `<source_id>` dirs left behind by a previously
 // configured `--k8s-schema-mirror`.
 #[test]
-fn api_version_guess_k8s_cache_scan_ignores_stale_unconfigured_source() {
-    let cache = tmp_dir("inf-k8s-sources-stale");
+fn api_version_guess_k8s_cache_scan_ignores_stale_unconfigured_source() -> eyre::Result<()> {
+    let cache = tmp_dir("inf-k8s-sources-stale")?;
     std::fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -674,7 +681,6 @@ fn api_version_guess_k8s_cache_scan_ignores_stale_unconfigured_source() {
     )
     .expect("seed stale file");
 
-    use helm_schema_k8s::K8sVersionChain;
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec!["v1.35.0".to_string(), "v1.24.0".to_string()],
         None,
@@ -697,13 +703,14 @@ fn api_version_guess_k8s_cache_scan_ignores_stale_unconfigured_source() {
         !api_versions.contains("unconfigured.example/v9"),
         "stale removed-mirror cache MUST NOT contribute K8s inference candidates; got {api_versions:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn api_version_guess_online_probe_kind_scoped() {
+fn api_version_guess_online_probe_kind_scoped() -> eyre::Result<()> {
     // Shortlist-known kind: online probe answers; an unknown kind: no
     // probe attempted at all.
-    let cache = tmp_dir("inf-online-probe");
+    let cache = tmp_dir("inf-online-probe")?;
     let known_kind_url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1.json";
     let mock = Arc::new(MockFetcher::new().with_body(known_kind_url, crd_doc().into_bytes()));
     let provider = CrdsCatalogSchemaProvider::new()
@@ -732,11 +739,12 @@ fn api_version_guess_online_probe_kind_scoped() {
             .any(|c| c.source == InferenceSource::OnlineProbe),
         "no online candidate for unknown kind"
     );
+    Ok(())
 }
 
 #[test]
-fn chain_caches_api_version_inference_by_kind() {
-    let cache = tmp_dir("inf-chain-cache");
+fn chain_caches_api_version_inference_by_kind() -> eyre::Result<()> {
+    let cache = tmp_dir("inf-chain-cache")?;
     let service_monitor_url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1.json";
     let mock = Arc::new(MockFetcher::new().with_body(service_monitor_url, crd_doc().into_bytes()));
     let provider = CrdsCatalogSchemaProvider::new()
@@ -762,6 +770,7 @@ fn chain_caches_api_version_inference_by_kind() {
         want: calls_after_first_lookup,
         "repeated uses of the same kind must reuse the chain inference cache"
     );
+    Ok(())
 }
 
 fn crd_doc() -> String {
@@ -769,9 +778,9 @@ fn crd_doc() -> String {
 }
 
 #[test]
-fn inference_emits_diagnostic_through_chain() {
-    let crd = tmp_dir("inf-diag");
-    let k8s = tmp_dir("inf-diag-k8s");
+fn inference_emits_diagnostic_through_chain() -> eyre::Result<()> {
+    let crd = tmp_dir("inf-diag")?;
+    let k8s = tmp_dir("inf-diag-k8s")?;
     let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let crd_provider = CrdsCatalogSchemaProvider::new()
         .with_cache_dir(crd)
@@ -797,4 +806,5 @@ fn inference_emits_diagnostic_through_chain() {
         inferred.is_some(),
         "expected InferredApiVersion diagnostic for ServiceMonitor; got {snapshot:?}"
     );
+    Ok(())
 }

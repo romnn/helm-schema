@@ -202,7 +202,7 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
           labels:
             {{- include "temporal.resourceLabels" (list $ "admintools" "pod") | nindent 4 }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         admintools:
           podAnnotations:
             team: platform
@@ -212,7 +212,7 @@ fn helper_list_bound_metadata_maps_stay_open_string_maps() {
           owner: infra
         additionalLabels:
           cluster: prod
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
@@ -240,13 +240,13 @@ fn assigned_fragment_variable_keeps_open_string_map_when_reused_in_helper_call()
         metadata:
           labels: {{- include "common.labels.standard" (dict "customLabels" $podLabels "context" .) | nindent 4 }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         commonLabels:
           team: platform
         podLabels:
           app: minio
           extra: enabled
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
@@ -302,13 +302,13 @@ fn assigned_annotations_fragment_variable_keeps_open_string_map() {
           name: test
           annotations: {{- include "common.tplvalues.render" (dict "value" $annotations "context" .) | nindent 4 }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         commonAnnotations:
           owner: infra
         serviceAccount:
           annotations:
             team: platform
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
@@ -343,10 +343,10 @@ fn direct_rendered_annotations_helper_keeps_open_string_map() {
                 - name: demo
                   image: nginx
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         podAnnotations:
           owner: infra
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
@@ -381,9 +381,9 @@ fn direct_rendered_annotations_helper_with_empty_default_keeps_open_string_map()
                 - name: demo
                   image: nginx
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         podAnnotations: {}
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
@@ -474,10 +474,10 @@ fn assigned_fragment_variable_with_empty_defaults_keeps_open_string_map() {
           labels: {{- include "common.labels.standard" (dict "customLabels" $podLabels "context" .) | nindent 4 }}
             app.kubernetes.io/component: minio
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         commonLabels: {}
         podLabels: {}
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
@@ -631,18 +631,18 @@ fn bitnami_standard_labels_merge_keeps_name_override_scalar() {
 
 #[test]
 fn scalar_slot_rendered_array_keeps_provider_item_schema() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Service
         spec:
           {{- if .Values.service.loadBalancerSourceRanges }}
           loadBalancerSourceRanges: {{ .Values.service.loadBalancerSourceRanges }}
           {{- end }}
-    "#};
-    let values_yaml = indoc! {r#"
+    "};
+    let values_yaml = indoc! {r"
         service:
           loadBalancerSourceRanges: []
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let source_ranges = schema
@@ -678,13 +678,13 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
               annotations: {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" .) | nindent 8 }}
               {{- end }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         mode: standalone
         commonLabels: {}
         podLabels:
           app: minio
         podAnnotations: {}
-    "#};
+    "};
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, &helpers), Some(values_yaml));
 
@@ -709,7 +709,7 @@ fn unresolved_workload_metadata_maps_still_infer_open_string_maps() {
 
 #[test]
 fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -722,7 +722,7 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
               - --leader-election-lease-duration={{ .leaseDuration }}
               {{- end }}
               {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         leaderElection: {}
     "};
@@ -771,7 +771,7 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
 
 #[test]
 fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_textual_paths_open() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -780,7 +780,7 @@ fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_textual_paths_open() 
               image: busybox
               args:
                 - --image={{- if .Values.image.registry -}}{{ .Values.image.registry }}/{{- end -}}{{ .Values.image.repository }}{{- if .Values.image.digest -}}@{{ .Values.image.digest }}{{- end -}}
-    "#};
+    "};
     let values_yaml = indoc! {"
         image:
           repository: jetstack/cert-manager-acmesolver
@@ -802,7 +802,7 @@ fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_textual_paths_open() 
 
 #[test]
 fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -813,7 +813,7 @@ fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_pat
                 {{- with .Values.image }}
                 - --image={{- if .registry -}}{{ .registry }}/{{- end -}}{{ .repository }}{{- if .digest -}}@{{ .digest }}{{- end -}}
                 {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         image:
           repository: jetstack/cert-manager-acmesolver
@@ -854,6 +854,10 @@ fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_pat
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn exact_realistic_common_ingress_helper_propagates_paths() {
     let helpers = indoc! {r#"
         {{- define "common.fullname" -}}app{{- end -}}
@@ -1001,7 +1005,7 @@ fn exact_realistic_common_ingress_helper_propagates_paths() {
 
 #[test]
 fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         spec:
@@ -1010,7 +1014,7 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
               image: busybox
               resources:
         {{ toYaml .Values.resources | indent 16 }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         resources:
           limits:
@@ -1058,12 +1062,12 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         kind: helm_schema_ir::ValueKind::Fragment,
         resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };
 
@@ -1121,7 +1125,7 @@ fn mapping_key_splice_accepts_every_scalar_kind() {
 /// manifests (nats renders each `extraResources` item as a document).
 #[test]
 fn document_root_member_splices_require_object_items() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1131,7 +1135,7 @@ fn document_root_member_splices_require_object_items() {
         ---
         {{ . | toYaml }}
         {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("extraResources: []\n"));
     for (instance, want) in [
         (serde_json::json!({ "extraResources": [true] }), false),

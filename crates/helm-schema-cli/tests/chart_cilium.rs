@@ -6,13 +6,17 @@
 //! and install guards were all enabled. Values validation and the
 //! full-schema pin live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
-fn cilium_spire_images_accept_strings_under_active_guards() -> color_eyre::eyre::Result<()> {
+fn cilium_spire_images_accept_strings_under_active_guards() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("cilium")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
@@ -63,7 +67,7 @@ fn cilium_spire_images_accept_strings_under_active_guards() -> color_eyre::eyre:
 /// any radix. Each polarity is helm-verified against the template-level
 /// validators.
 #[test]
-fn cilium_int_cast_validators_bind_base0_string_preimages() -> color_eyre::eyre::Result<()> {
+fn cilium_int_cast_validators_bind_base0_string_preimages() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("cilium")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overlay, want, label) in [

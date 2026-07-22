@@ -3,6 +3,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::helper_meta::HelperOutputMeta;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "boxing common abstract values would add allocation and pointer chasing in the evaluator hot path"
+)]
 pub(crate) enum AbstractValue {
     Top,
     Unknown,
@@ -68,6 +72,17 @@ pub(crate) enum AbstractValue {
     /// projection can still attribute the rendered text to its sources.
     /// Declared last so projected rows sort after structured alternatives.
     Widened(BTreeSet<String>),
+}
+
+fn flattened_merge_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
+    let mut flat = Vec::new();
+    for layer in layers {
+        match layer {
+            AbstractValue::MergedLayers(inner) => flat.extend(flattened_merge_layers(inner)),
+            other => flat.push(other),
+        }
+    }
+    flat
 }
 
 impl AbstractValue {
@@ -332,19 +347,7 @@ impl AbstractValue {
                 // associative, so an inner merge's layers slot into the
                 // outer order where the inner merge stood (airflow's
                 // per-set merge over the celery-merged workers base).
-                fn flat_layers(layers: &[AbstractValue]) -> Vec<&AbstractValue> {
-                    let mut flat = Vec::new();
-                    for layer in layers {
-                        match layer {
-                            AbstractValue::MergedLayers(inner) => {
-                                flat.extend(flat_layers(inner));
-                            }
-                            other => flat.push(other),
-                        }
-                    }
-                    flat
-                }
-                let layers = flat_layers(layers);
+                let layers = flattened_merge_layers(layers);
                 let identities: Option<Vec<String>> = layers
                     .iter()
                     .map(|layer| layer.merge_layer_identity())
@@ -359,8 +362,8 @@ impl AbstractValue {
                             |layer| matches!(layer, Self::OutputPath(_, meta) if meta.nil_scrubbed),
                         )
                         .collect();
-                    for position in 0..layers.len() {
-                        let entry = out.entry(layer_paths[position].clone()).or_default();
+                    for (position, layer_path) in layer_paths.iter().enumerate() {
+                        let entry = out.entry(layer_path.clone()).or_default();
                         entry.merge_layers = Some(helm_schema_core::MergeLayersUse {
                             layers: layer_paths.clone(),
                             position,
@@ -484,9 +487,8 @@ impl AbstractValue {
 
     pub(crate) fn definitely_nonempty_iterable(&self) -> bool {
         match self {
-            Self::Dict(entries) => !entries.is_empty(),
+            Self::Dict(entries) | Self::Overlay { entries, .. } => !entries.is_empty(),
             Self::List(items) => !items.is_empty(),
-            Self::Overlay { entries, .. } => !entries.is_empty(),
             Self::SplitList { .. } => true,
             Self::Choice(choices) => {
                 !choices.is_empty() && choices.iter().all(Self::definitely_nonempty_iterable)
@@ -605,7 +607,6 @@ impl AbstractValue {
     pub(crate) fn mark_json_decoded(self) -> Self {
         match self {
             Self::ValuesPath(path) => Self::JsonDecodedPath(path),
-            Self::JsonDecodedPath(_) => self,
             Self::OutputPath(path, mut meta) => {
                 meta.json_decoded = true;
                 Self::OutputPath(path, meta)
@@ -642,7 +643,8 @@ impl AbstractValue {
                 Self::choice(paths.into_iter().map(Self::JsonDecodedPath).collect())
                     .unwrap_or(Self::Unknown)
             }
-            Self::Top
+            Self::JsonDecodedPath(_)
+            | Self::Top
             | Self::Unknown
             | Self::RangeKey(_)
             | Self::KeysList(_)
@@ -940,6 +942,10 @@ impl AbstractValue {
         (!paths.is_empty()).then_some(paths)
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(crate) fn apply_to_path(&self, rest: &[String]) -> Option<Self> {
         if rest.is_empty() {
             return Some(self.clone());
@@ -970,8 +976,10 @@ impl AbstractValue {
             }
             Self::OutputPath(prefix, meta) => Some(Self::OutputPath(prefix.clone(), meta.clone())),
             Self::RootContext => {
-                if rest.first().is_some_and(|segment| segment == "Values") {
-                    let tail = resolve_root_values_methods(&rest[1..])?;
+                if let Some((segment, remaining)) = rest.split_first()
+                    && segment == "Values"
+                {
+                    let tail = resolve_root_values_methods(remaining)?;
                     if tail.is_empty() {
                         Some(Self::values_root())
                     } else {
@@ -991,8 +999,8 @@ impl AbstractValue {
             | Self::SplitList { .. }
             | Self::SplitSegment { .. }
             | Self::RangeKey(_)
-            | Self::KeysList(_) => None,
-            Self::StringSet(_) => None,
+            | Self::KeysList(_)
+            | Self::StringSet(_) => None,
             Self::Choice(choices) => {
                 let mut out = Vec::new();
                 for value in choices {
@@ -1241,6 +1249,10 @@ impl AbstractValue {
         }
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(crate) fn remove_fragment_paths(self, remove: &BTreeSet<String>) -> Option<Self> {
         if remove.is_empty() {
             return Some(self);
@@ -1426,9 +1438,13 @@ fn item_path(path: &str) -> String {
 /// nested values are plain maps, so deeper same-named segments stay
 /// ordinary keys.
 pub(crate) fn resolve_root_values_methods(tail: &[String]) -> Option<&[String]> {
-    match tail.first().map(String::as_str) {
-        Some("AsMap") => Some(&tail[1..]),
-        Some("YAML" | "Table" | "Encode" | "PathValue") => None,
+    match tail.split_first() {
+        Some((method, rest)) if method == "AsMap" => Some(rest),
+        Some((method, _))
+            if matches!(method.as_str(), "YAML" | "Table" | "Encode" | "PathValue") =>
+        {
+            None
+        }
         _ => Some(tail),
     }
 }

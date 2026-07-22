@@ -1,3 +1,6 @@
+//! S-expression regressions for the fused Helm and YAML grammar.
+
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use indoc::indoc;
 use std::str::FromStr;
 use test_util::prelude::sim_assert_eq;
@@ -66,22 +69,24 @@ fn normalize_helm_template_text(raw: &str) -> String {
     s.trim().to_string()
 }
 
-fn parse_yaml_items(src: &str) -> Vec<SExpr> {
+fn parse_yaml_items(src: &str) -> eyre::Result<Vec<SExpr>> {
     let src = deindent_yaml_fragment(src);
     if src.trim().is_empty() {
-        return vec![];
+        return Ok(vec![]);
     }
 
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
     let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).expect("set language");
+    parser
+        .set_language(&language)
+        .wrap_err("load generated Helm template grammar")?;
 
     let Some(tree) = parser.parse(&src, None) else {
-        return vec![SExpr::Leaf {
+        return Ok(vec![SExpr::Leaf {
             kind: "yaml_parse_error".to_string(),
             text: Some(src),
-        }];
+        }]);
     };
 
     let root = tree.root_node();
@@ -108,13 +113,16 @@ fn parse_yaml_items(src: &str) -> Vec<SExpr> {
         }
     }
 
-    out
+    Ok(out)
 }
 
-#[allow(clippy::too_many_lines, clippy::match_same_arms)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the exhaustive syntax-to-S-expression mapping is clearest as one match"
+)]
 fn yaml_node_to_sexpr(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
     match node.kind() {
-        "block_node" | "flow_node" => {
+        "block_node" | "flow_node" | "block_sequence_item" => {
             if let Some(ch) = node.named_child(0) {
                 yaml_node_to_sexpr(ch, src)
             } else {
@@ -215,13 +223,6 @@ fn yaml_node_to_sexpr(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                     kind: "seq".to_string(),
                     children: kids,
                 }
-            }
-        }
-        "block_sequence_item" => {
-            if let Some(ch) = node.named_child(0) {
-                yaml_node_to_sexpr(ch, src)
-            } else {
-                SExpr::Empty
             }
         }
         "plain_scalar" => {
@@ -335,23 +336,29 @@ fn is_control_flow(kind: &str) -> bool {
     )
 }
 
-fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
-    #![allow(clippy::needless_pass_by_value)]
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "fusion consumes the owned node sequence into its output pass"
+)]
+fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> eyre::Result<Vec<SExpr>> {
     let mut out: Vec<SExpr> = Vec::new();
     let mut pending = String::new();
 
-    let flush_pending = |pending: &mut String, out: &mut Vec<SExpr>| {
+    let flush_pending = |pending: &mut String, out: &mut Vec<SExpr>| -> eyre::Result<()> {
         if pending.trim().is_empty() {
             pending.clear();
-            return;
+            return Ok(());
         }
         let fragment = std::mem::take(pending);
-        out.extend(parse_yaml_items(&fragment));
+        out.extend(parse_yaml_items(&fragment)?);
+        Ok(())
     };
 
     let mut i = 0usize;
     while i < blocks.len() {
-        let b = blocks[i];
+        let Some(b) = blocks.get(i).copied() else {
+            break;
+        };
 
         // A go-template comment action is represented as:
         //   `{{`/`{{-` (anonymous token), `comment` (named), `}}`/`-}}` (anonymous token)
@@ -362,9 +369,11 @@ fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
                 .get(i + 1)
                 .is_some_and(|n| n.is_named() && n.kind() == "comment")
         {
-            flush_pending(&mut pending, &mut out);
+            flush_pending(&mut pending, &mut out)?;
 
-            let comment_node = blocks[i + 1];
+            let Some(comment_node) = blocks.get(i + 1).copied() else {
+                break;
+            };
             let comment_text = comment_node.utf8_text(src.as_bytes()).unwrap_or("");
             out.push(SExpr::Leaf {
                 kind: "helm_comment".to_string(),
@@ -375,23 +384,25 @@ fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
             i += 2;
 
             // Skip any immediate whitespace token(s) before a trim-right delimiter `-}}`.
-            while i < blocks.len()
-                && !blocks[i].is_named()
-                && blocks[i].kind().chars().all(char::is_whitespace)
-            {
+            while blocks.get(i).is_some_and(|node| {
+                !node.is_named() && node.kind().chars().all(char::is_whitespace)
+            }) {
                 i += 1;
             }
 
             // Skip the right delimiter if present.
-            if i < blocks.len() && (blocks[i].kind() == "}}" || blocks[i].kind() == "-}}") {
+            if blocks
+                .get(i)
+                .is_some_and(|node| matches!(node.kind(), "}}" | "-}}"))
+            {
                 i += 1;
             }
             continue;
         }
 
         if is_control_flow(b.kind()) {
-            flush_pending(&mut pending, &mut out);
-            out.push(fuse_control_flow(b, src));
+            flush_pending(&mut pending, &mut out)?;
+            out.push(fuse_control_flow(b, src)?);
         } else {
             let r = b.byte_range();
             pending.push_str(&src[r]);
@@ -400,13 +411,16 @@ fn fuse_blocks(blocks: Vec<tree_sitter::Node<'_>>, src: &str) -> Vec<SExpr> {
         i += 1;
     }
 
-    flush_pending(&mut pending, &mut out);
-    out
+    flush_pending(&mut pending, &mut out)?;
+    Ok(out)
 }
 
-#[allow(clippy::too_many_lines)]
-fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
-    match node.kind() {
+#[expect(
+    clippy::too_many_lines,
+    reason = "the control-flow fixture lowering is easier to audit as one exhaustive match"
+)]
+fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> eyre::Result<SExpr> {
+    Ok(match node.kind() {
         "if_action" => {
             let cond_node = node.child_by_field_name("condition");
             let cond_text = cond_node
@@ -418,8 +432,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
             let then_blocks = children_with_field(node, "consequence");
             let else_blocks = children_with_field(node, "alternative");
 
-            let then_items = fuse_blocks(then_blocks, src);
-            let base_else_items = fuse_blocks(else_blocks, src);
+            let then_items = fuse_blocks(then_blocks, src)?;
+            let base_else_items = fuse_blocks(else_blocks, src)?;
 
             // Tree-sitter's helm dialect inlines `else if` clauses into the `if_action` node
             // using repeated `condition:` and `option:` fields.
@@ -463,7 +477,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
             } else {
                 let mut tail_else_items = base_else_items;
                 for (cnd, blocks) in else_if_pairs.into_iter().rev() {
-                    let opt_items = fuse_blocks(blocks, src);
+                    let opt_items = fuse_blocks(blocks, src)?;
                     let nested = SExpr::Node {
                         kind: "if".to_string(),
                         children: vec![
@@ -541,8 +555,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 .trim()
                 .to_string();
 
-            let body_items = fuse_blocks(children_with_field(node, "body"), src);
-            let else_items = fuse_blocks(children_with_field(node, "alternative"), src);
+            let body_items = fuse_blocks(children_with_field(node, "body"), src)?;
+            let else_items = fuse_blocks(children_with_field(node, "alternative"), src)?;
 
             SExpr::Node {
                 kind: "range".to_string(),
@@ -584,8 +598,8 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 .trim()
                 .to_string();
 
-            let body_items = fuse_blocks(children_with_field(node, "consequence"), src);
-            let else_items = fuse_blocks(children_with_field(node, "alternative"), src);
+            let body_items = fuse_blocks(children_with_field(node, "consequence"), src)?;
+            let else_items = fuse_blocks(children_with_field(node, "alternative"), src)?;
 
             SExpr::Node {
                 kind: "with".to_string(),
@@ -626,7 +640,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 .unwrap_or("")
                 .trim()
                 .to_string();
-            let body_items = fuse_blocks(children_with_field(node, "body"), src);
+            let body_items = fuse_blocks(children_with_field(node, "body"), src)?;
 
             SExpr::Node {
                 kind: "define".to_string(),
@@ -667,7 +681,7 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 format!("{name} {arg}")
             };
 
-            let body_items = fuse_blocks(children_with_field(node, "body"), src);
+            let body_items = fuse_blocks(children_with_field(node, "body"), src)?;
 
             SExpr::Node {
                 kind: "block".to_string(),
@@ -701,16 +715,19 @@ fn fuse_control_flow(node: tree_sitter::Node<'_>, src: &str) -> SExpr {
                 text: Some(text),
             }
         }
-    }
+    })
 }
 
-fn parse_fused_template(src: &str) -> SExpr {
+fn parse_fused_template(src: &str) -> eyre::Result<SExpr> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
     let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).expect("set language");
-
-    let tree = parser.parse(src, None).expect("parse");
+    parser
+        .set_language(&language)
+        .wrap_err("load generated Go template grammar")?;
+    let tree = parser
+        .parse(src, None)
+        .ok_or_eyre("parse fused Go template fixture")?;
     let root = tree.root_node();
 
     let mut blocks = Vec::new();
@@ -719,15 +736,14 @@ fn parse_fused_template(src: &str) -> SExpr {
         blocks.push(ch);
     }
 
-    SExpr::Node {
+    Ok(SExpr::Node {
         kind: "doc".to_string(),
-        children: fuse_blocks(blocks, src),
-    }
+        children: fuse_blocks(blocks, src)?,
+    })
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
-fn if_else_end_with_yaml_branches() {
+fn if_else_end_with_yaml_branches() -> eyre::Result<()> {
     let src = indoc! {r"
         {{- if .Values.enabled }}
         foo: bar
@@ -755,14 +771,18 @@ fn if_else_end_with_yaml_branches() {
         )
     "#};
 
-    let have = parse_fused_template(src);
-    let want = SExpr::from_str(want).expect("parse expected");
+    let have = parse_fused_template(src)?;
+    let want = SExpr::from_str(want).map_err(|error| eyre::eyre!(error.to_string()))?;
     sim_assert_eq!(have: have, want: want);
+    Ok(())
 }
 
 #[test]
-#[allow(clippy::too_many_lines)]
-fn redis_prometheus_rule_yaml() {
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete expected syntax tree is most readable beside its source fixture"
+)]
+fn redis_prometheus_rule_yaml() -> eyre::Result<()> {
     let src = indoc! {r#"
         {{- /*
         Copyright Broadcom, Inc. All Rights Reserved.
@@ -869,14 +889,15 @@ fn redis_prometheus_rule_yaml() {
         )
     "#};
 
-    let have = parse_fused_template(src);
-    let want = SExpr::from_str(want).expect("parse expected");
+    let have = parse_fused_template(src)?;
+    let want = SExpr::from_str(want).map_err(|error| eyre::eyre!(error.to_string()))?;
     println!("{}", have.to_string_pretty());
     sim_assert_eq!(have: have, want: want);
+    Ok(())
 }
 
 #[test]
-fn else_if_chain_is_nested_if_in_else_branch() {
+fn else_if_chain_is_nested_if_in_else_branch() -> eyre::Result<()> {
     let src = indoc! {r"
         {{- if .A }}
         foo: 1
@@ -924,13 +945,14 @@ fn else_if_chain_is_nested_if_in_else_branch() {
         )
     "#};
 
-    let have = parse_fused_template(src);
-    let want = SExpr::from_str(want).expect("parse expected");
+    let have = parse_fused_template(src)?;
+    let want = SExpr::from_str(want).map_err(|error| eyre::eyre!(error.to_string()))?;
     sim_assert_eq!(have: have, want: want);
+    Ok(())
 }
 
 #[test]
-fn range_action_body_contains_yaml_and_inline_exprs() {
+fn range_action_body_contains_yaml_and_inline_exprs() -> eyre::Result<()> {
     let src = indoc! {r"
         {{- range .Values.items }}
         - name: {{ .name }}
@@ -956,13 +978,14 @@ fn range_action_body_contains_yaml_and_inline_exprs() {
         )
     "#};
 
-    let have = parse_fused_template(src);
-    let want = SExpr::from_str(want).expect("parse expected");
+    let have = parse_fused_template(src)?;
+    let want = SExpr::from_str(want).map_err(|error| eyre::eyre!(error.to_string()))?;
     sim_assert_eq!(have: have, want: want);
+    Ok(())
 }
 
 #[test]
-fn inline_helm_expr_is_part_of_yaml_structure() {
+fn inline_helm_expr_is_part_of_yaml_structure() -> eyre::Result<()> {
     let src = indoc! {r"
         name: {{ .Release.Name }}
     "};
@@ -978,7 +1001,8 @@ fn inline_helm_expr_is_part_of_yaml_structure() {
         )
     "#};
 
-    let have = parse_fused_template(src);
-    let want = SExpr::from_str(want).expect("parse expected");
+    let have = parse_fused_template(src)?;
+    let want = SExpr::from_str(want).map_err(|error| eyre::eyre!(error.to_string()))?;
     sim_assert_eq!(have: have, want: want);
+    Ok(())
 }

@@ -96,7 +96,9 @@ fn record_member_access_captures(
         return;
     }
     for len in accessed_from.max(1)..segments.len() {
-        let prefix = &segments[..len];
+        let Some(prefix) = segments.get(..len) else {
+            continue;
+        };
         if prefix.iter().any(String::is_empty) {
             continue;
         }
@@ -122,7 +124,10 @@ fn record_grouped_member_access_captures(
     });
 
     for len in receiver_len..segments.len() {
-        let target = helm_schema_core::join_value_path(segments[..len].iter().cloned());
+        let Some(prefix) = segments.get(..len) else {
+            continue;
+        };
+        let target = helm_schema_core::join_value_path(prefix.iter().cloned());
         if target.is_empty() {
             continue;
         }
@@ -167,6 +172,10 @@ fn record_member_host_capture(
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn eval_expr_with_helper_calls(
     expr: &TemplateExpr,
     env: &EvalEnv,
@@ -187,7 +196,10 @@ pub(crate) fn eval_expr_with_helper_calls(
             {
                 EvalResult::from_value(value)
             } else {
-                root_values_selector_result(&path[1..], env)
+                let Some((_, tail)) = path.split_first() else {
+                    return EvalResult::none();
+                };
+                root_values_selector_result(tail, env)
             }
         }
         TemplateExpr::Field(path) if path.is_empty() => {
@@ -220,7 +232,10 @@ pub(crate) fn eval_expr_with_helper_calls(
             if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
                 && path.first().is_some_and(|segment| segment == "Values") =>
         {
-            root_values_selector_result(&path[1..], env)
+            let Some((_, tail)) = path.split_first() else {
+                return EvalResult::none();
+            };
+            root_values_selector_result(tail, env)
         }
         TemplateExpr::Variable(var) if var.is_empty() => {
             EvalResult::from_value(AbstractValue::RootContext)
@@ -259,7 +274,10 @@ pub(crate) fn eval_expr_with_helper_calls(
                 && !var.is_empty()
                 && path.first().is_some_and(|segment| segment == "Values")
             {
-                let result = root_values_selector_result(&path[1..], env);
+                let Some((_, tail)) = path.split_first() else {
+                    return EvalResult::none();
+                };
+                let result = root_values_selector_result(tail, env);
                 return with_bound_selector_paths(result, expr, env);
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()

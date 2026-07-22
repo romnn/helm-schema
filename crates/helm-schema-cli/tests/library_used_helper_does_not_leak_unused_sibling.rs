@@ -14,7 +14,7 @@
 //! include set. An unused helper inside a used library contributes
 //! nothing.
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
@@ -82,8 +82,8 @@ replicas: ~
 ";
 
 #[test]
-fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn unused_helper_in_used_library_does_not_leak_type_hint() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;
@@ -125,7 +125,7 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     let app_replicas = schema
@@ -145,13 +145,13 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
 }
 
 #[test]
-fn unused_helper_in_used_library_does_not_perturb_infer_required() -> color_eyre::eyre::Result<()> {
+fn unused_helper_in_used_library_does_not_perturb_infer_required() -> eyre::Result<()> {
     // Same wrapper as above; this time exercise the --infer-required
     // axis. The unused helper has `default 5 .Values.replicas`, which
     // is also a fallback-path signal. With helper-granular scoping,
     // that fallback should NOT change the app chart's own result.
 
-    let _guard = test_util::builder().with_tracing(false).build();
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;
@@ -210,7 +210,7 @@ data:
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     let app_required: Vec<String> = schema

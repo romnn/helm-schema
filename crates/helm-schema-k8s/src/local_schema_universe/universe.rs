@@ -28,10 +28,15 @@ impl ResourceDocKey {
 /// second chart-local provider path.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LocalResourceSchema {
+    /// Concrete API version declared by the CRD.
     pub api_version: String,
+    /// Kubernetes kind declared by the CRD.
     pub kind: String,
+    /// `OpenAPI` schema for instances of the resource.
     pub schema: Value,
+    /// Stable identity of the chart-local source.
     pub source_id: String,
+    /// Logical filename used in provider provenance.
     pub filename: String,
 }
 
@@ -53,6 +58,7 @@ pub(crate) struct LocalSchemaDocument {
 }
 
 impl LocalSchemaUniverse {
+    /// Inserts a resource schema unless that coordinate already has a document.
     pub fn insert_resource_schema(&mut self, resource_schema: LocalResourceSchema) {
         let key = ResourceDocKey {
             api_version: resource_schema.api_version,
@@ -65,6 +71,7 @@ impl LocalSchemaUniverse {
         });
     }
 
+    /// Reports whether the universe contains no resource schemas.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.docs.is_empty()
@@ -87,9 +94,10 @@ impl LocalSchemaUniverse {
     }
 }
 
+/// Extracts served resource schemas from a CRD document with source provenance.
 #[must_use]
 pub fn resource_schemas_from_crd_document_with_source(
-    document: Value,
+    document: &Value,
     source_id: impl Into<String>,
     filename: impl Into<String>,
 ) -> Vec<LocalResourceSchema> {

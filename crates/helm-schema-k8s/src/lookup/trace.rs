@@ -57,42 +57,65 @@ impl LookupTrace {
         self.entries
     }
 
+    /// Returns executed provider and source probes in evaluation order.
     #[must_use]
     pub fn entries(&self) -> &[LookupTraceEntry] {
         &self.entries
     }
 }
 
+/// One executed step in a schema or API-presence lookup.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum LookupTraceEntry {
+    /// A provider attempted to resolve a concrete resource schema.
     ResourceProvider {
+        /// Resource requested from the provider.
         resource: ResourceRef,
+        /// Provider that handled the step.
         provider: ProviderOrigin,
+        /// Provider's normalized lookup outcome.
         outcome: LookupTraceOutcome,
     },
+    /// A provider answered whether an API version is present.
     ApiPresenceProvider {
+        /// Provider that handled the query.
         provider: ProviderOrigin,
+        /// Authoritative answer, or `None` when the provider cannot decide.
         answer: Option<bool>,
     },
+    /// A concrete upstream or cache source was probed for API presence.
     ApiPresenceSourceProbe {
+        /// Provider responsible for the source.
         provider: ProviderOrigin,
+        /// Stable namespace of the probed source.
         source_id: String,
+        /// Kubernetes release queried at the source.
         k8s_version: String,
+        /// Resource filename used as the capability witness.
         filename: String,
+        /// Authority level and result of the source probe.
         outcome: SourceProbeTraceOutcome,
     },
 }
 
+/// Normalized outcome of one concrete resource-provider lookup.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum LookupTraceOutcome {
+    /// The provider returned a schema fragment.
     Found {
+        /// Kubernetes version that supplied the schema, when versioned.
         resolved_k8s_version: Option<String>,
     },
+    /// The resource exists, but the requested YAML path has no schema node.
     PathUnresolved,
+    /// The provider owned the resource but could not load its document.
     ResourceDocMissing {
+        /// Source path or URL that failed.
         source_path: String,
+        /// Human-readable I/O or transport failure.
         io_error: String,
     },
+    /// The provider does not own the requested resource.
     NotOwned,
 }
 
@@ -118,21 +141,31 @@ impl From<&ProviderLookupResult> for LookupTraceOutcome {
     }
 }
 
+/// Authority-aware outcome of probing one schema source.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SourceProbeTraceOutcome {
+    /// The source contains the capability witness.
     Found,
+    /// An authoritative response proves the witness is absent.
     AuthoritativelyAbsent,
+    /// Available local state cannot establish presence or absence.
     Uncertain,
 }
 
+/// Schema-chain result paired with its executed lookup trace.
 #[derive(Debug)]
 pub struct TracedLookupOutcome {
+    /// Result returned by the provider chain.
     pub outcome: ChainLookupOutcome,
+    /// Provider and source steps executed to obtain the result.
     pub trace: LookupTrace,
 }
 
+/// API-presence answer paired with its executed lookup trace.
 #[derive(Debug)]
 pub struct TracedApiPresenceOutcome {
+    /// Authoritative answer, or `None` when the chain remains uncertain.
     pub answer: Option<bool>,
+    /// Provider and source steps executed to obtain the answer.
     pub trace: LookupTrace,
 }

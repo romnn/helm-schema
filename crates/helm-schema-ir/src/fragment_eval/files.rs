@@ -23,7 +23,7 @@ use super::domain::{AbstractFragment, Guarded};
 use super::eval::{Interpreter, NodeView};
 use crate::abstract_value::AbstractValue;
 
-impl<'a> Interpreter<'a> {
+impl Interpreter<'_> {
     /// Resolve every static file template requested by the hole or its
     /// literal helper calls and evaluate the referenced files as nested
     /// fragments.
@@ -97,6 +97,10 @@ impl<'a> Interpreter<'a> {
     /// guards, mirroring the current pipeline's seeded nested walk) and the
     /// chart-level default mutations observed so far; file-internal local
     /// state stays nested-only.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn eval_static_template_program(
         &mut self,
         request: &StaticTemplateProgram,

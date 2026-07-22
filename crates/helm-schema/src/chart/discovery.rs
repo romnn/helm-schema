@@ -46,14 +46,14 @@ pub(crate) fn discover_chart_contexts_with_budget(
     load_budget: LoadBudget,
 ) -> EngineResult<Vec<ChartContext>> {
     let mut out = Vec::new();
-    discover_chart_contexts_inner(root_chart_dir, &[], Vec::new(), load_budget, &mut out)?;
+    discover_chart_contexts_inner(root_chart_dir, &[], &[], load_budget, &mut out)?;
     Ok(out)
 }
 
 fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
     parent_prefix: &[String],
-    dependency_activation_chain: Vec<ChartDependencyActivation>,
+    dependency_activation_chain: &[ChartDependencyActivation],
     load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
 ) -> EngineResult<()> {
@@ -68,7 +68,7 @@ fn discover_chart_contexts_inner(
         chart_dir: chart_dir.clone(),
         values_prefix: parent_prefix.to_vec(),
         is_library,
-        dependency_activation_chain: dependency_activation_chain.clone(),
+        dependency_activation_chain: dependency_activation_chain.to_vec(),
     });
 
     let dependency_metadata_by_name = dependency_metadata_map(&chart_yaml, parent_prefix);
@@ -128,13 +128,13 @@ fn discover_chart_contexts_inner(
         // Only condition/tag-carrying edges add an activation level; an
         // unconditional dependency keeps its parent's chain, so a child's
         // chain always extends its parent's as a prefix.
-        let mut chain = dependency_activation_chain.clone();
+        let mut chain = dependency_activation_chain.to_vec();
         let activation = dependency_metadata.activation;
         if !activation.condition_paths.is_empty() || !activation.tag_paths.is_empty() {
             chain.push(activation);
         }
 
-        discover_chart_contexts_inner(&sub_dir, &prefix, chain, load_budget, out)?;
+        discover_chart_contexts_inner(&sub_dir, &prefix, &chain, load_budget, out)?;
     }
 
     Ok(())
@@ -192,7 +192,8 @@ fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> EngineResul
         out.parent().create_dir_all()?;
         let mut file = out.create_file()?;
         let copied = std::io::copy(&mut entry, &mut file)?;
-        extracted_bytes = extracted_bytes.saturating_add(copied as usize);
+        extracted_bytes =
+            extracted_bytes.saturating_add(usize::try_from(copied).unwrap_or(usize::MAX));
         if extracted_bytes > load_budget.max_chart_archive_unpacked_bytes {
             return Err(CliError::LoadBudgetExceeded {
                 subject: format!("expanded {}", path.as_str()),

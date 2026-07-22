@@ -6,7 +6,7 @@ use super::*;
 /// fail the access (surveyor `config.jetstream.accounts` shape).
 #[test]
 fn range_member_structure_constrains_all_iterable_lanes() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -15,7 +15,7 @@ fn range_member_structure_constrains_all_iterable_lanes() {
           {{- range .Values.accounts }}
           {{ .tls }}: enabled
           {{- end }}
-    "#};
+    "};
     let values_yaml = "accounts: ~
 ";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
@@ -48,7 +48,7 @@ fn range_member_structure_constrains_all_iterable_lanes() {
 /// (jaeger `args` / jenkins `installPlugins` shape).
 #[test]
 fn range_string_consumer_constrains_all_iterable_lanes() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -57,7 +57,7 @@ fn range_string_consumer_constrains_all_iterable_lanes() {
           {{- range $index, $arg := .Values.args }}
           arg{{ $index }}: {{ tpl $arg $ | quote }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = "args: ~
 ";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
@@ -83,7 +83,7 @@ fn range_string_consumer_constrains_all_iterable_lanes() {
 /// shape — the range sits under an enable guard).
 #[test]
 fn guarded_destructured_range_excludes_integer_iteration() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -97,7 +97,7 @@ fn guarded_destructured_range_excludes_integer_iteration() {
             - --{{ $key }}={{ $value }}
             {{- end }}
             {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         server:
           enabled: false
@@ -156,7 +156,7 @@ fn unlowerable_outer_guard_abstains_from_child_string_contract() {
 /// cannot represent.
 #[test]
 fn decodable_guard_keeps_child_string_contract() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         apiVersion: v1
         kind: ConfigMap
@@ -166,7 +166,7 @@ fn decodable_guard_keeps_child_string_contract() {
           airflow.cfg: |
             base_url = {{ trunc 63 .Values.baseUrl }}
         {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         enabled: false
         baseUrl: ~
@@ -492,7 +492,7 @@ fn selection_chain_dots_bind_per_candidate_iterable_domains() {
 /// per-candidate iterable domains without a helper boundary.
 #[test]
 fn inline_selection_chain_ranges_bind_per_candidate_iterable_domains() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -509,7 +509,7 @@ fn inline_selection_chain_ranges_bind_per_candidate_iterable_domains() {
               containers:
                 - name: repro
                   image: nginx
-    "#};
+    "};
     let values_yaml = "global:\n  imagePullSecrets: []\ncontroller:\n  imagePullSecrets: []\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 

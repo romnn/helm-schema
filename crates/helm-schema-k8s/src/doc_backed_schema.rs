@@ -116,7 +116,7 @@ pub(crate) fn descend_schema_path_expanding_leaf_with_root_metadata_source(
     }
 
     let metadata = enriched_metadata_schema(root);
-    descend_schema_path_with_resolver(root, &metadata, &path[1..], false)
+    descend_schema_path_with_resolver(root, &metadata, path.get(1..).unwrap_or_default(), false)
 }
 
 fn descend_schema_path_with_resolver(

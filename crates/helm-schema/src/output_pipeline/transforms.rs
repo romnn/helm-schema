@@ -12,6 +12,12 @@ use crate::schema_override;
 
 const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 
+/// Applies overrides, subchart mirroring, reference policy, and final minimization.
+///
+/// # Errors
+///
+/// Returns an error when prepared references cannot be validated, bundled, or
+/// fully inlined under the requested output policy.
 #[tracing::instrument(
     skip_all,
     fields(
@@ -27,7 +33,7 @@ pub fn apply_schema_output_pipeline(
     policy_inputs: PolicyInputs,
     subchart_value_prefixes: &[Vec<String>],
     base_dir: &Path,
-    options: &OutputPipelineOptions,
+    options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
     for override_schema in policy_inputs.into_prepared_override_schemas() {
         schema = schema_override::apply_schema_override(schema, override_schema);
@@ -53,12 +59,12 @@ pub fn apply_schema_output_pipeline(
 fn apply_output_transforms(
     mut schema: Value,
     base_dir: &Path,
-    options: &OutputPipelineOptions,
+    options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
     match options.reference_mode {
         ReferenceMode::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
         ReferenceMode::FullyInlinedExport => {
-            schema = flatten::flatten_prepared_refs(schema, base_dir)?;
+            schema = flatten::flatten_prepared_refs(&schema, base_dir)?;
         }
         ReferenceMode::PreserveRefs => {}
     }

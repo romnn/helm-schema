@@ -2,6 +2,8 @@ use std::collections::BTreeSet;
 
 use crate::{Literal, TemplateExpr};
 
+/// Returns the first argument when it is a literal `printf` format string.
+#[must_use]
 pub fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
     match args.first()?.deparen() {
         TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) => {
@@ -11,6 +13,8 @@ pub fn literal_printf_format(args: &[TemplateExpr]) -> Option<&str> {
     }
 }
 
+/// Evaluates a supported literal `printf` format over finite argument string sets.
+#[must_use]
 pub fn render_printf_string_sets(
     format: &str,
     arg_strings: &[BTreeSet<String>],
@@ -64,6 +68,10 @@ enum PrintfPart<'a> {
     Substitution,
 }
 
+#[expect(
+    clippy::indexing_slicing,
+    reason = "this hot format scanner checks the byte cursor before every direct access"
+)]
 fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
     let mut parts = Vec::new();
     let mut literal_start = 0usize;

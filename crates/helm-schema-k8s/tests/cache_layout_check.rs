@@ -4,15 +4,17 @@ use std::fs;
 use std::sync::Arc;
 use test_util::prelude::sim_assert_eq;
 
+use color_eyre::eyre;
 use helm_schema_k8s::{
     CACHE_LAYOUT_VERSION, Diagnostic, DiagnosticSink, K8sSchemaProvider,
     KubernetesJsonSchemaProvider, LAYOUT_MARKER_FILENAME,
 };
 
-mod common;
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
 use common::{MockFetcher, MockResponse};
 
-fn tmp_dir(label: &str) -> std::path::PathBuf {
+fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
     let p = std::env::temp_dir().join(format!(
         "helm-schema.{label}.{}.{}",
         std::process::id(),
@@ -21,13 +23,13 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
             .map(|d| d.as_nanos())
             .unwrap_or(0)
     ));
-    std::fs::create_dir_all(&p).expect("create temp dir");
-    p
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
 }
 
 #[test]
-fn legacy_cache_layout_is_invalidated_in_alpha() {
-    let root = tmp_dir("legacy-k8s");
+fn legacy_cache_layout_is_invalidated_in_alpha() -> eyre::Result<()> {
+    let root = tmp_dir("legacy-k8s")?;
     // Pre-populate the legacy layout: <root>/v1.35.0/foo.json directly,
     // no per-source <default>/ directory and no marker.
     fs::create_dir_all(root.join("v1.35.0")).expect("legacy version dir");
@@ -71,11 +73,12 @@ fn legacy_cache_layout_is_invalidated_in_alpha() {
         )),
         "expected CacheLayoutInvalidated diagnostic; got {diagnostics:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn cache_layout_version_marker_written_after_repopulate() {
-    let root = tmp_dir("empty-k8s");
+fn cache_layout_version_marker_written_after_repopulate() -> eyre::Result<()> {
+    let root = tmp_dir("empty-k8s")?;
     let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let diagnostics = DiagnosticSink::new();
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
@@ -100,14 +103,15 @@ fn cache_layout_version_marker_written_after_repopulate() {
             .any(|d| matches!(d, Diagnostic::CacheLayoutInvalidated { .. })),
         "first-populate must NOT emit an invalidation diagnostic"
     );
+    Ok(())
 }
 
 #[test]
-fn cache_invalidation_emits_diagnostic() {
+fn cache_invalidation_emits_diagnostic() -> eyre::Result<()> {
     // Same setup as `legacy_cache_layout_is_invalidated_in_alpha`, but
     // asserting the exact diagnostic shape (previous_marker=None on
     // first sweep, current_marker = compiled-in constant).
-    let root = tmp_dir("cache-inv-diag");
+    let root = tmp_dir("cache-inv-diag")?;
     fs::create_dir_all(root.join("v1.35.0")).expect("legacy version dir");
     fs::write(root.join("v1.35.0/foo.json"), "{}").expect("seed legacy file");
 
@@ -137,13 +141,14 @@ fn cache_invalidation_emits_diagnostic() {
     sim_assert_eq!(have: inv.0, want: root.display().to_string());
     sim_assert_eq!(have: inv.1, want: None, "legacy layout has no prior marker");
     sim_assert_eq!(have: inv.2, want: CACHE_LAYOUT_VERSION);
+    Ok(())
 }
 
 #[test]
-fn forward_incompat_cache_emits_diagnostic() {
+fn forward_incompat_cache_emits_diagnostic() -> eyre::Result<()> {
     // Companion to `cache_layout_version_newer_marker_refuses_mutation`
     // that asserts the diagnostic shape (on_disk_marker > compiled).
-    let root = tmp_dir("forward-incompat-diag");
+    let root = tmp_dir("forward-incompat-diag")?;
     fs::write(
         root.join(LAYOUT_MARKER_FILENAME),
         format!("{}\n", CACHE_LAYOUT_VERSION + 999),
@@ -176,21 +181,22 @@ fn forward_incompat_cache_emits_diagnostic() {
     sim_assert_eq!(have: payload.0, want: root.display().to_string());
     sim_assert_eq!(have: payload.1, want: CACHE_LAYOUT_VERSION + 999);
     sim_assert_eq!(have: payload.2, want: CACHE_LAYOUT_VERSION);
+    Ok(())
 }
 
 #[test]
-fn cache_invalidation_is_per_root() {
+fn cache_invalidation_is_per_root() -> eyre::Result<()> {
     use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider};
 
     // K8s root: legacy layout; CRD root: current marker + valid entry.
-    let k8s_root = tmp_dir("per-root-k8s");
-    let crd_root = tmp_dir("per-root-crd");
+    let k8s_root = tmp_dir("per-root-k8s")?;
+    let crd_root = tmp_dir("per-root-crd")?;
     fs::create_dir_all(k8s_root.join("v1.35.0")).expect("legacy K8s");
     fs::write(k8s_root.join("v1.35.0/foo.json"), "{}").expect("seed legacy K8s");
 
     fs::write(
         crd_root.join(LAYOUT_MARKER_FILENAME),
-        format!("{}\n", CACHE_LAYOUT_VERSION),
+        format!("{CACHE_LAYOUT_VERSION}\n"),
     )
     .expect("seed CRD marker");
     fs::create_dir_all(crd_root.join("default/monitoring.coreos.com")).expect("seed CRD group dir");
@@ -251,15 +257,16 @@ fn cache_invalidation_is_per_root() {
         "CRD root must NOT be invalidated (current marker)"
     );
     assert!(crd_file.exists(), "CRD content must survive untouched");
+    Ok(())
 }
 
 #[test]
-fn cache_forward_incompat_one_root_does_not_block_other() {
+fn cache_forward_incompat_one_root_does_not_block_other() -> eyre::Result<()> {
     use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider};
 
     // K8s root: forward-incompat. CRD root: empty.
-    let k8s_root = tmp_dir("forward-block-k8s");
-    let crd_root = tmp_dir("forward-block-crd");
+    let k8s_root = tmp_dir("forward-block-k8s")?;
+    let crd_root = tmp_dir("forward-block-crd")?;
     fs::write(
         k8s_root.join(LAYOUT_MARKER_FILENAME),
         format!("{}\n", CACHE_LAYOUT_VERSION + 1),
@@ -333,14 +340,15 @@ fn cache_forward_incompat_one_root_does_not_block_other() {
         "K8s root must emit exactly one forward-incompat"
     );
     sim_assert_eq!(have: crd_incompat, want: 0, "no forward-incompat for CRD root");
+    Ok(())
 }
 
 #[test]
-fn override_dir_never_invalidated() {
+fn override_dir_never_invalidated() -> eyre::Result<()> {
     use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, LocalSchemaProvider};
 
-    let override_dir = tmp_dir("override-untouched");
-    let cache_dir = tmp_dir("cache-wiped");
+    let override_dir = tmp_dir("override-untouched")?;
+    let cache_dir = tmp_dir("cache-wiped")?;
 
     // Hand-maintained override schema.
     fs::create_dir_all(override_dir.join("g.io")).expect("override group dir");
@@ -396,11 +404,12 @@ fn override_dir_never_invalidated() {
         !override_dir.join(LAYOUT_MARKER_FILENAME).exists(),
         "override dir must not gain a CACHE_LAYOUT_VERSION marker"
     );
+    Ok(())
 }
 
 #[test]
-fn cache_layout_version_newer_marker_refuses_mutation() {
-    let root = tmp_dir("forward-incompat");
+fn cache_layout_version_newer_marker_refuses_mutation() -> eyre::Result<()> {
+    let root = tmp_dir("forward-incompat")?;
     fs::write(
         root.join(LAYOUT_MARKER_FILENAME),
         format!("{}\n", CACHE_LAYOUT_VERSION + 999),
@@ -436,4 +445,5 @@ fn cache_layout_version_newer_marker_refuses_mutation() {
         )),
         "expected forward-incompatible diagnostic; got {diagnostics:?}"
     );
+    Ok(())
 }

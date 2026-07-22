@@ -10,7 +10,10 @@ fn string(value: &str) -> AbstractValue {
 }
 
 fn paths(values: &[&str]) -> BTreeSet<String> {
-    values.iter().map(|value| value.to_string()).collect()
+    values
+        .iter()
+        .map(std::string::ToString::to_string)
+        .collect()
 }
 
 fn join(values: Vec<AbstractValue>) -> AbstractValue {

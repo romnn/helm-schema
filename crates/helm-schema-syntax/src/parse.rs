@@ -48,7 +48,7 @@ pub(crate) fn parse_document(source: &str, tokens: Vec<ActionToken>) -> Template
         region_modes: HashMap::new(),
         next_token: 0,
     };
-    parser.run(lines)
+    parser.run(&lines)
 }
 
 enum RegionMode {
@@ -133,7 +133,7 @@ struct Parser<'src> {
 }
 
 impl<'src> Parser<'src> {
-    fn run(mut self, lines: LineIndex) -> TemplatedDocument<'src> {
+    fn run(mut self, lines: &LineIndex) -> TemplatedDocument<'src> {
         for line in 0..lines.count() {
             let (ls, le) = lines.span(line);
             let followed_by_newline = line + 1 < lines.count();
@@ -153,7 +153,7 @@ impl<'src> Parser<'src> {
     }
 
     fn process_line(&mut self, ls: usize, le: usize, followed_by_newline: bool) {
-        let raw = &self.source[ls..le];
+        let raw = self.source.get(ls..le).unwrap_or_default();
         // Mirror `str::lines()`: the replay side never sees a trailing `\r`
         // that precedes a newline (a final newline-less line keeps it).
         let replay = if followed_by_newline {
@@ -168,9 +168,10 @@ impl<'src> Parser<'src> {
         }
         // Body of an open block scalar: any line deeper than the block
         // header is suppressed content, regardless of its own shape.
-        if let Some(head) = self.head
-            && self.frames[head].block
-            && indent > self.frames[head].indent
+        if self
+            .head
+            .and_then(|head| self.frames.get(head))
+            .is_some_and(|frame| frame.block && indent > frame.indent)
         {
             self.extend_block_body(ls, le);
             self.consume_line_tokens(le, false);
@@ -302,8 +303,12 @@ impl<'src> Parser<'src> {
     /// layout; its tokens carry the structure (control regions, outputs).
     fn process_action_line(&mut self, ls: usize, le: usize) {
         let mut pos = ls;
-        while self.next_token < self.tokens.len() && self.tokens[self.next_token].span.start < le {
-            let token = self.tokens[self.next_token];
+        while let Some(token) = self
+            .tokens
+            .get(self.next_token)
+            .copied()
+            .filter(|token| token.span.start < le)
+        {
             self.next_token += 1;
             self.attach_gap_text(pos, token.span.start.min(le));
             pos = pos.max(token.span.end);
@@ -429,8 +434,12 @@ impl<'src> Parser<'src> {
     /// preserved). A structured region's `else`/`end` landing here still
     /// rotates/closes the region, flagged as an unclean boundary.
     fn consume_line_tokens(&mut self, le: usize, opaque_inline_regions: bool) {
-        while self.next_token < self.tokens.len() && self.tokens[self.next_token].span.start < le {
-            let token = self.tokens[self.next_token];
+        while let Some(token) = self
+            .tokens
+            .get(self.next_token)
+            .copied()
+            .filter(|token| token.span.start < le)
+        {
             self.next_token += 1;
             match token.kind {
                 TokenKind::RegionOpen {
@@ -482,7 +491,11 @@ impl<'src> Parser<'src> {
     /// Content-line pops: close containers at `indent` or deeper.
     fn pop(&mut self, indent: usize) {
         while let Some(head) = self.head {
-            if self.frames[head].indent >= indent {
+            if self
+                .frames
+                .get(head)
+                .is_some_and(|frame| frame.indent >= indent)
+            {
                 self.close_container();
             } else {
                 break;
@@ -494,7 +507,10 @@ impl<'src> Parser<'src> {
     /// while it still accepts same-indent items (empty value, unmarked).
     fn seq_pop(&mut self, indent: usize) {
         while let Some(head) = self.head {
-            let frame = &self.frames[head];
+            let Some(frame) = self.frames.get(head) else {
+                self.head = None;
+                break;
+            };
             let allow = frame.opened_empty && frame.marked_at.is_none();
             if frame.indent > indent || (frame.indent == indent && !allow) {
                 self.close_container();
@@ -508,13 +524,17 @@ impl<'src> Parser<'src> {
     fn mark(&mut self, indent: usize, ls: usize) {
         let mut current = self.head;
         while let Some(id) = current {
-            if self.frames[id].indent < indent {
-                if self.frames[id].marked_at.is_none() {
-                    self.frames[id].marked_at = Some(ls);
+            let Some(frame) = self.frames.get_mut(id) else {
+                self.head = None;
+                return;
+            };
+            if frame.indent < indent {
+                if frame.marked_at.is_none() {
+                    frame.marked_at = Some(ls);
                 }
                 return;
             }
-            current = self.frames[id].parent;
+            current = frame.parent;
         }
     }
 
@@ -539,7 +559,7 @@ impl<'src> Parser<'src> {
                     indent: seed.indent,
                     key: seed.key,
                     value: seed.value,
-                    block: seed.block.map(|block| self.finish_block(block)),
+                    block: seed.block.map(|block| self.finish_block(&block)),
                     opens_scope: true,
                     children,
                 }),
@@ -550,7 +570,7 @@ impl<'src> Parser<'src> {
                     span: seed.span,
                     indent: seed.indent,
                     value: seed.value,
-                    block: seed.block.map(|block| self.finish_block(block)),
+                    block: seed.block.map(|block| self.finish_block(&block)),
                     children,
                 }),
                 seed.frame,
@@ -561,11 +581,11 @@ impl<'src> Parser<'src> {
                 return;
             }
         };
-        self.head = self.frames[frame].parent;
+        self.head = self.frames.get(frame).and_then(|frame| frame.parent);
         self.attach_at(index.saturating_sub(1), node);
     }
 
-    fn finish_block(&self, seed: BlockSeed) -> BlockScalar {
+    fn finish_block(&self, seed: &BlockSeed) -> BlockScalar {
         let body = seed
             .body
             .unwrap_or(Span::new(seed.header.end, seed.header.end));
@@ -585,7 +605,10 @@ impl<'src> Parser<'src> {
     fn close_all(&mut self) {
         while self.owners.len() > 1 {
             let top = self.owners.len() - 1;
-            match &self.owners[top].data {
+            let Some(owner) = self.owners.get(top) else {
+                break;
+            };
+            match &owner.data {
                 OwnerData::Entry(_) | OwnerData::Item(_) => self.close_container(),
                 OwnerData::Branch(seed) => {
                     let region = seed.region;
@@ -618,7 +641,7 @@ impl<'src> Parser<'src> {
         let mut parts = Vec::new();
         let mut pos = start;
         let first = self.tokens.partition_point(|token| token.span.end <= start);
-        for token in &self.tokens[first..] {
+        for token in self.tokens.get(first..).unwrap_or_default() {
             if token.span.start >= end {
                 break;
             }

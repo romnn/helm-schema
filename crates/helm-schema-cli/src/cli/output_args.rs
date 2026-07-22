@@ -7,8 +7,10 @@ use helm_schema::output::{
     ReferenceMode,
 };
 
+/// Destination, serialization, reference, and minimization options.
 #[derive(Args, Debug, Clone)]
 pub struct OutputArgs {
+    /// Optional output file; standard output is used when absent.
     #[arg(short, long)]
     pub output: Option<PathBuf>,
 

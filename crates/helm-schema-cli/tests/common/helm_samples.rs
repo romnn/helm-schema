@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::Value;
 use tempfile::TempDir;
 
@@ -16,7 +16,7 @@ pub fn assert_generated_schema_accepts_helm_samples_for_path(
     chart_relative_path: &str,
     schema: &Value,
     samples: &[HelmValidationSample<'_>],
-) -> std::result::Result<(), Report> {
+) -> eyre::Result<()> {
     let temp_chart = GeneratedSchemaHelmChart::new(chart_relative_path, schema)?;
 
     // Each helm invocation re-parses the chart and its generated schema;
@@ -42,7 +42,7 @@ pub fn assert_generated_schema_accepts_helm_samples_for_path(
     for (name, kind, handle) in runs {
         handle
             .join()
-            .expect("helm sample thread panicked")
+            .map_err(|_| eyre::eyre!("helm sample thread panicked"))?
             .wrap_err_with(|| {
                 format!("helm {kind} must accept sample '{name}' for {chart_relative_path}")
             })?;
@@ -57,7 +57,7 @@ struct GeneratedSchemaHelmChart {
 }
 
 impl GeneratedSchemaHelmChart {
-    fn new(chart_relative_path: &str, schema: &Value) -> std::result::Result<Self, Report> {
+    fn new(chart_relative_path: &str, schema: &Value) -> eyre::Result<Self> {
         let temp_dir = tempfile::tempdir().wrap_err("create temp dir for helm validation")?;
         let chart_dir = temp_dir.path().join("chart");
         copy_chart_tree(
@@ -90,7 +90,7 @@ impl GeneratedSchemaHelmChart {
     fn write_sample_values(
         &self,
         sample: &HelmValidationSample<'_>,
-    ) -> std::result::Result<Option<PathBuf>, Report> {
+    ) -> eyre::Result<Option<PathBuf>> {
         let Some(values_yaml) = sample.values_yaml else {
             return Ok(None);
         };
@@ -102,7 +102,7 @@ impl GeneratedSchemaHelmChart {
     }
 }
 
-fn copy_chart_tree(from: &Path, to: &Path) -> std::result::Result<(), Report> {
+fn copy_chart_tree(from: &Path, to: &Path) -> eyre::Result<()> {
     fs::create_dir_all(to).wrap_err("create chart destination dir")?;
     for entry in fs::read_dir(from).wrap_err("read chart source dir")? {
         let entry = entry.wrap_err("read chart source entry")?;
@@ -133,7 +133,7 @@ fn sanitize_sample_name(name: &str) -> String {
     out.trim_matches('-').to_string()
 }
 
-fn run_helm_lint(chart_dir: &Path, values_file: Option<&Path>) -> std::result::Result<(), Report> {
+fn run_helm_lint(chart_dir: &Path, values_file: Option<&Path>) -> eyre::Result<()> {
     let mut command = Command::new("helm");
     command.arg("lint").arg(chart_dir);
     if let Some(values_file) = values_file {
@@ -142,10 +142,7 @@ fn run_helm_lint(chart_dir: &Path, values_file: Option<&Path>) -> std::result::R
     run_helm_command(command, "helm lint")
 }
 
-fn run_helm_template(
-    chart_dir: &Path,
-    values_file: Option<&Path>,
-) -> std::result::Result<(), Report> {
+fn run_helm_template(chart_dir: &Path, values_file: Option<&Path>) -> eyre::Result<()> {
     let mut command = Command::new("helm");
     command.arg("template").arg("test-release").arg(chart_dir);
     if let Some(values_file) = values_file {
@@ -154,14 +151,14 @@ fn run_helm_template(
     run_helm_command(command, "helm template")
 }
 
-fn run_helm_command(mut command: Command, label: &str) -> std::result::Result<(), Report> {
+fn run_helm_command(mut command: Command, label: &str) -> eyre::Result<()> {
     let output = command
         .output()
         .wrap_err_with(|| format!("spawn {label}"))?;
     if output.status.success() {
         return Ok(());
     }
-    Err(Report::msg(format!(
+    Err(eyre::Report::msg(format!(
         "{label} failed with status {}:\nstdout:\n{}\nstderr:\n{}",
         output.status,
         String::from_utf8_lossy(&output.stdout),

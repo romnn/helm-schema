@@ -105,7 +105,7 @@ fn next_definition_name(existing_names: &BTreeSet<String>, next_id: usize) -> (S
     }
 }
 
-fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> isize {
+fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> i128 {
     let ref_bytes = json_schema_walk::canonical_json_string(&reference_schema(name)).len();
     let original = schema_bytes.saturating_mul(occurrences);
     let rewritten = schema_bytes
@@ -113,7 +113,7 @@ fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> isi
         .saturating_add(name.len())
         .saturating_add(DEFINITIONS_KEY.len())
         .saturating_add(16);
-    original as isize - rewritten as isize
+    original as i128 - rewritten as i128
 }
 
 fn rewrite_schema(

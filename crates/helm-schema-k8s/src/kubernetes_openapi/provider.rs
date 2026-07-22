@@ -45,18 +45,24 @@ fn mem_key(source_id: &str, version: &str, filename: &str) -> MemKey {
 }
 
 /// Composer of fetch + cache + lookup primitives for upstream K8s
-/// OpenAPI schemas. Carries a [`K8sVersionChain`] and a
-/// [`MirrorChain`] and walks the cross product version-first /
+/// `OpenAPI` schemas. Carries a [`K8sVersionChain`] and a
+/// mirror chain and walks the cross product version-first /
 /// mirror-first: all configured sources are tried at one version
 /// before falling back to the next version.
 #[derive(Debug)]
 pub struct KubernetesJsonSchemaProvider {
+    /// Ordered Kubernetes releases consulted for each lookup.
     pub versions: K8sVersionChain,
     pub(crate) mirrors: MirrorChain,
+    /// Root directory for versioned schema documents.
     pub cache_dir: PathBuf,
+    /// Whether cache misses may fetch upstream documents.
     pub allow_download: bool,
+    /// Whether successful upstream responses are read from and written to disk.
     pub use_cache: bool,
+    /// Whether bounded API-version inference is enabled.
     pub allow_api_version_guess: bool,
+    /// Whether returned fragments retain provider source ownership.
     pub record_source: bool,
 
     fetcher: Arc<dyn HttpFetcher>,
@@ -81,6 +87,7 @@ impl KubernetesJsonSchemaProvider {
         Self::with_versions(K8sVersionChain::new(vec![version_dir.into()], None))
     }
 
+    /// Creates a provider with an explicit ordered Kubernetes version policy.
     #[must_use]
     pub fn with_versions(versions: K8sVersionChain) -> Self {
         Self {
@@ -99,60 +106,70 @@ impl KubernetesJsonSchemaProvider {
         }
     }
 
+    /// Overrides the on-disk schema cache root.
     #[must_use]
     pub fn with_cache_dir(mut self, dir: impl Into<PathBuf>) -> Self {
         self.cache_dir = dir.into();
         self
     }
 
+    /// Enables or disables upstream downloads on cache miss.
     #[must_use]
     pub fn with_allow_download(mut self, allow: bool) -> Self {
         self.allow_download = allow;
         self
     }
 
+    /// Enables or disables use of the persistent schema cache.
     #[must_use]
     pub fn with_use_cache(mut self, use_cache: bool) -> Self {
         self.use_cache = use_cache;
         self
     }
 
+    /// Configures additional upstream mirrors after the default source.
     #[must_use]
     pub fn with_mirrors(mut self, mirrors: Vec<String>) -> Self {
         self.mirrors = MirrorChain::with_mirrors(K8S_DEFAULT_BASE_URL, mirrors);
         self
     }
 
+    /// Replaces the HTTP transport, primarily for deterministic tests.
     #[must_use]
     pub fn with_fetcher(mut self, fetcher: Arc<dyn HttpFetcher>) -> Self {
         self.fetcher = fetcher;
         self
     }
 
+    /// Shares an authoritative-not-found cache with other providers.
     #[must_use]
     pub fn with_negative_cache(mut self, negative_cache: Arc<NegativeCache>) -> Self {
         self.negative_cache = negative_cache;
         self
     }
 
+    /// Shares cache-layout validation state with other providers.
     #[must_use]
     pub fn with_layout_checker(mut self, checker: Arc<LayoutChecker>) -> Self {
         self.layout_checker = checker;
         self
     }
 
+    /// Emits committed lookup diagnostics into `sink`.
     #[must_use]
     pub fn with_diagnostic_sink(mut self, sink: DiagnosticSink) -> Self {
         self.diagnostic_sink = Some(sink);
         self
     }
 
+    /// Enables or disables API-version inference for resources that omit it.
     #[must_use]
     pub fn with_api_version_guess(mut self, enabled: bool) -> Self {
         self.allow_api_version_guess = enabled;
         self
     }
 
+    /// Controls whether returned fragments retain source-document metadata.
     #[must_use]
     pub fn with_record_source(mut self, record: bool) -> Self {
         self.record_source = record;
@@ -221,7 +238,7 @@ impl KubernetesJsonSchemaProvider {
         filename: &str,
     ) -> Option<SchemaDoc> {
         load_source_schema_doc(
-            self.doc_request(source, version, filename),
+            &self.doc_request(source, version, filename),
             &self.mem,
             mem_key(&source.source_id, version, filename),
         )
@@ -285,7 +302,7 @@ impl KubernetesJsonSchemaProvider {
         filename: &str,
     ) -> SourceProbeTraceOutcome {
         match probe_source_schema_doc(
-            self.doc_request(source, version, filename),
+            &self.doc_request(source, version, filename),
             &self.mem,
             mem_key(&source.source_id, version, filename),
         ) {
@@ -517,7 +534,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             }
         }
         let answer = match worst {
-            SourceProbeTraceOutcome::Found => unreachable!("Found short-circuits above"),
+            SourceProbeTraceOutcome::Found => Some(true),
             SourceProbeTraceOutcome::AuthoritativelyAbsent => Some(false),
             SourceProbeTraceOutcome::Uncertain => None,
         };

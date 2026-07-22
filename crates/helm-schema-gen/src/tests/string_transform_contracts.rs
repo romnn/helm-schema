@@ -197,12 +197,12 @@ fn join_use_does_not_erase_range_branch() {
 /// fails template evaluation (`wrong type for value; expected string`).
 #[test]
 fn dynamic_printf_format_requires_string() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: {{ printf .Values.storageClass.provisionerName }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         storageClass:
           provisionerName: cluster.local/provisioner
@@ -308,7 +308,7 @@ fn self_guarded_join_of_declared_list_accepts_any_input() {
 /// stringification.
 #[test]
 fn with_guarded_quote_into_string_sink_accepts_any_input() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         spec:
@@ -321,7 +321,7 @@ fn with_guarded_quote_into_string_sink_accepts_any_input() {
                     - name: SKIP_TLS_VERIFY
                       value: {{ quote . }}
                     {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("sidecar: {}\n"));
 
     for probe in [

@@ -13,7 +13,7 @@ fn branch_join_restores_control_state_to_entry() {
     let branch = state.snapshot();
 
     state.restore(entry.clone());
-    state.join_branch_outcomes(&entry, vec![branch]);
+    state.join_branch_outcomes(&entry, &[branch]);
 
     sim_assert_eq!(
         have: state.contract_guards(),
@@ -45,7 +45,7 @@ fn branch_join_still_joins_local_state() {
     let other_branch = state.snapshot();
 
     state.restore(entry.clone());
-    state.join_branch_outcomes(&entry, vec![branch, other_branch]);
+    state.join_branch_outcomes(&entry, &[branch, other_branch]);
 
     sim_assert_eq!(
         have: state.locals().range_domains.get("scope"),

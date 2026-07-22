@@ -15,7 +15,7 @@
 //! search for `"<library_name>."` in caller charts' template sources.
 //! An unused library contributes no extracts.
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use serde_json::Value;
@@ -74,8 +74,8 @@ metadata:
 const APP_VALUES_YAML: &str = "{}\n";
 
 #[test]
-fn library_fallback_does_not_leak_to_sibling_chart() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn library_fallback_does_not_leak_to_sibling_chart() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;
@@ -117,7 +117,7 @@ fn library_fallback_does_not_leak_to_sibling_chart() -> color_eyre::eyre::Result
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     let app_required: Vec<String> = schema

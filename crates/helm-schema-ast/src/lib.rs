@@ -1,4 +1,7 @@
+//! Typed structural analysis for Helm templates and templated YAML.
+
 mod capability_branch;
+/// Typed Go-template expression nodes and expression parsing.
 pub mod expr;
 mod expr_function_catalog;
 mod literal_schema_type;
@@ -39,8 +42,10 @@ pub use values_comments::extract_values_yaml_descriptions;
 
 use std::collections::HashMap;
 
+/// Errors produced while parsing Helm template structure.
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {
+    /// Tree-sitter could not produce a syntax tree.
     #[error("tree-sitter parse failed")]
     TreeSitterParseFailed,
 }
@@ -64,6 +69,7 @@ impl TemplateHeader {
         }
     }
 
+    /// Parses an `if` or `with` control header into a typed expression.
     #[must_use]
     pub fn parse_control(raw: impl Into<String>) -> Self {
         let raw = raw.into();
@@ -71,6 +77,7 @@ impl TemplateHeader {
         Self::new(raw, expr)
     }
 
+    /// Parses a `range` header into a typed expression.
     #[must_use]
     pub(crate) fn parse_range(raw: impl Into<String>) -> Self {
         let raw = raw.into();
@@ -82,11 +89,13 @@ impl TemplateHeader {
         Self::new(raw, expr)
     }
 
+    /// Returns the source-preserving control header text.
     #[must_use]
     pub fn raw(&self) -> &str {
         &self.raw
     }
 
+    /// Returns the parsed expression carried by the header.
     #[must_use]
     pub fn expr(&self) -> &TemplateExpr {
         &self.expr
@@ -134,11 +143,13 @@ pub struct DefineIndex {
 }
 
 impl DefineIndex {
+    /// Creates an empty index of chart and helper sources.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Adds or replaces one logical chart file source.
     pub fn add_file_source(&mut self, path: &str, src: &str) {
         self.files.retain(|existing_path, existing_src| {
             !is_inline_source(existing_path, existing_src, src)
@@ -146,11 +157,13 @@ impl DefineIndex {
         self.files.insert(path.to_string(), src.to_string());
     }
 
+    /// Returns the source registered at a logical chart path.
     #[must_use]
     pub fn get_file(&self, path: &str) -> Option<&str> {
         self.files.get(path).map(std::string::String::as_str)
     }
 
+    /// Iterates logical chart paths and sources in stable path order.
     pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str)> {
         let mut entries: Vec<_> = self.files.iter().collect();
         entries.sort_by_key(|(path, _)| *path);

@@ -7,7 +7,7 @@ use super::*;
 /// iterable lane after broad fragment/default alternatives are assembled.
 #[test]
 fn guarded_range_member_string_contract_stays_branch_scoped() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         {{- with .Values.config }}
         apiVersion: v1
@@ -21,7 +21,7 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
           {{- end }}
         {{- end }}
         {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         enabled: false
         config: {}
@@ -106,7 +106,7 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
 /// consumer.
 #[test]
 fn range_key_string_contract_preserves_only_the_empty_array_lane() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -116,7 +116,7 @@ fn range_key_string_contract_preserves_only_the_empty_array_lane() {
             {{- range $key, $value := .Values.extraPorts }}
             {{ $key | lower }}
             {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("extraPorts: {}\n"));
     sim_assert_eq!(
         have: &schema,
@@ -307,7 +307,7 @@ fn raw_range_key_occurrence_survives_a_derived_sibling() {
 /// YAML holes do.
 #[test]
 fn block_scalar_range_variable_projects_its_string_contract() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -321,7 +321,7 @@ fn block_scalar_range_variable_projects_its_string_contract() {
             {{- end }}
             {{- end }}
             {{- end }}
-    "#};
+    "};
     let values_yaml = "enabled: false\nplugins: ~\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -351,7 +351,7 @@ fn block_scalar_range_variable_projects_its_string_contract() {
 /// branch is disabled.
 #[test]
 fn guarded_ranged_member_access_constrains_collection_lanes() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- if .Values.enabled }}
         apiVersion: v1
         kind: ConfigMap
@@ -362,7 +362,7 @@ fn guarded_ranged_member_access_constrains_collection_lanes() {
           {{ .tls }}: enabled
           {{- end }}
         {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("enabled: false\naccounts: ~\n"));
     let mut properties = serde_json::Map::new();
     properties.insert("accounts".to_string(), serde_json::json!({}));
@@ -432,7 +432,7 @@ fn guarded_ranged_member_access_constrains_collection_lanes() {
 /// `range keys . | sortAlpha` and reads the CURRENT member with
 /// `pluck . $dict | first`, then dispatches on the member's Go type
 /// (`printf "%T"`). Plucking the ranged key from the same map is a member
-/// projection, so the map arm's `toYaml` splice at the EnvVar slot must
+/// projection, so the map arm's `toYaml` splice at the `EnvVar` slot must
 /// type arbitrary members while the scalar arm's quoted lane stays open.
 #[test]
 fn same_map_pluck_of_ranged_key_projects_member_identity() {
@@ -498,13 +498,13 @@ fn same_map_pluck_of_ranged_key_projects_member_identity() {
     }
 }
 
-/// minio renders each `environment` range KEY at the EnvVar `name:` slot.
+/// minio renders each `environment` range KEY at the `EnvVar` `name:` slot.
 /// A list supplies integer keys, so a non-empty list renders `name: 0`
 /// against the provider's string-only field; the map lane and the empty
 /// list (zero iterations) stay open.
 #[test]
 fn range_key_at_string_slot_excludes_integer_key_lanes() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -519,7 +519,7 @@ fn range_key_at_string_slot_excludes_integer_key_lanes() {
                     - name: {{ $key }}
                       value: {{ $val | quote }}
                     {{- end }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("environment: {}\n"));
     for (instance, want) in [
         (serde_json::json!({ "environment": ["audit"] }), false),
@@ -619,7 +619,7 @@ fn dedup_accumulator_binds_member_typing_to_singleton_maps() {
 }
 
 /// A guard-scoped `omit` removes literal keys from a values-backed map
-/// before the sink reads it (external-secrets' OpenShift
+/// before the sink reads it (external-secrets' `OpenShift`
 /// `adaptSecurityContext`): the removed keys' provider typing must not
 /// bind where the omit may run, and comes back exactly where the omitting
 /// arm certainly did not run (`adaptSecurityContext` not force/auto).

@@ -1,8 +1,4 @@
-#![allow(
-    dead_code,
-    reason = "shared by multiple integration-test binaries; each binary uses a subset"
-)]
-
+use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::SymbolicIrContext;
 use serde_json::Value;
@@ -18,8 +14,8 @@ pub struct IrCorpusCase<'a> {
     pub dump_env: &'a str,
 }
 
-pub fn build_define_index(spec: test_util::DefineSourceSpec<'_>) -> DefineIndex {
-    let loaded = spec.load();
+pub fn build_define_index(spec: test_util::DefineSourceSpec<'_>) -> eyre::Result<DefineIndex> {
+    let loaded = spec.load()?;
     let mut idx = DefineIndex::new();
     for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
         idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
@@ -27,44 +23,40 @@ pub fn build_define_index(spec: test_util::DefineSourceSpec<'_>) -> DefineIndex 
     for (name, source) in loaded.file_sources {
         idx.add_file_source(&name, &source);
     }
-    idx
+    Ok(idx)
 }
 
-pub fn render_ir_case(case: IrCorpusCase<'_>) -> Value {
-    let src = test_util::read_testdata(case.template_path);
-    let idx = build_define_index(case.define_sources);
+pub fn render_ir_case(case: &IrCorpusCase<'_>) -> eyre::Result<Value> {
+    let src = test_util::read_testdata(case.template_path)?;
+    let idx = build_define_index(case.define_sources)?;
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(&src)
         .finalize()
         .document();
 
-    let actual = serde_json::to_value(ir).expect("serialize");
+    let actual = serde_json::to_value(ir).wrap_err("serialize contract IR")?;
     if std::env::var(case.dump_env).is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&actual).expect("pretty json")
-        );
+        eprintln!("{}", serde_json::to_string_pretty(&actual)?);
         let dump_stem = case
             .template_path
             .chars()
             .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
             .collect::<String>();
         let path = std::env::temp_dir().join(format!("helm-schema-ir.{dump_stem}.ir.json"));
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&actual).expect("json bytes"),
-        )
-        .expect("write ir dump");
+        std::fs::write(&path, serde_json::to_vec_pretty(&actual)?)
+            .wrap_err_with(|| format!("write IR dump to {}", path.display()))?;
     }
-    actual
+    Ok(actual)
 }
 
-pub fn assert_ir_fixture(case: IrCorpusCase<'_>) {
-    let actual = render_ir_case(case);
+pub fn assert_ir_fixture(case: &IrCorpusCase<'_>) -> eyre::Result<()> {
+    let actual = render_ir_case(case)?;
     if std::env::var(case.dump_env).is_ok() {
-        return;
+        return Ok(());
     }
-    let expected: Value = serde_json::from_str(case.expected_fixture).expect("expected ir json");
+    let expected: Value = serde_json::from_str(case.expected_fixture)
+        .wrap_err("parse expected contract IR fixture")?;
 
     sim_assert_eq!(have: actual, want: expected);
+    Ok(())
 }

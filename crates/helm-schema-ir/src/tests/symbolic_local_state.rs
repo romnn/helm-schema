@@ -357,7 +357,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     );
 
     let mut joined = entry;
-    joined.join_branch_outcomes(&entry_snapshot, vec![first, second]);
+    joined.join_branch_outcomes(&entry_snapshot, &[first, second]);
 
     sim_assert_eq!(
         have: joined.fragment_values.get("name"),
@@ -386,7 +386,7 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
         .insert("message".to_string(), Predicate::truthy_path("legacy"));
 
     let mut joined = entry;
-    joined.join_branch_outcomes(&entry_snapshot, vec![populated, entry_snapshot.clone()]);
+    joined.join_branch_outcomes(&entry_snapshot, &[populated, entry_snapshot.clone()]);
 
     sim_assert_eq!(
         have: joined.truthy_reductions.get("message"),
@@ -407,7 +407,7 @@ fn branch_join_intersects_chart_value_defaults() {
     let second = entry.clone();
 
     let mut joined = entry;
-    joined.join_branch_outcomes(&entry_snapshot, vec![first, second]);
+    joined.join_branch_outcomes(&entry_snapshot, &[first, second]);
 
     sim_assert_eq!(
         have: joined.chart_value_defaults,

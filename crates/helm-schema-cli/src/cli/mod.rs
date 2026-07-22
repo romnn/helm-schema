@@ -18,33 +18,42 @@ pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::OutputArgs;
 pub use perf_args::PerfArgs;
 
+/// Complete command-line interface for one schema-generation invocation.
 #[derive(Parser, Debug, Clone)]
 #[command(
     name = "helm-schema",
     about = "Generate JSON schema for Helm values.yaml"
 )]
 pub struct Cli {
+    /// Chart directory or packaged chart archive to analyze.
     #[arg(value_name = "CHART_DIR")]
     pub chart_dir: PathBuf,
 
+    /// Final output and reference-processing options.
     #[command(flatten)]
     pub output: OutputArgs,
 
+    /// Kubernetes schema source and version options.
     #[command(flatten)]
     pub k8s: K8sArgs,
 
+    /// CRD schema source and lookup options.
     #[command(flatten)]
     pub crd: CrdArgs,
 
+    /// API-version inference options.
     #[command(flatten)]
     pub inference: InferenceArgs,
 
+    /// Runtime diagnostic formatting options.
     #[command(flatten)]
     pub diag: DiagArgs,
 
+    /// Chart discovery and values-composition options.
     #[command(flatten)]
     pub chart: ChartArgs,
 
+    /// Performance tracing options.
     #[command(flatten)]
     pub perf: PerfArgs,
 

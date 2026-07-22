@@ -1,7 +1,7 @@
 //! Filename / api-version ordering helpers shared across providers.
 //!
 //! Lives in the crate root (not under `kubernetes_openapi/`) because
-//! the CRD provider's diagnostics + the chain's MissingSchema payload
+//! the CRD provider's diagnostics + the chain's `MissingSchema` payload
 //! also derive candidate filenames from a `ResourceRef`.
 
 use helm_schema_core::ResourceRef;

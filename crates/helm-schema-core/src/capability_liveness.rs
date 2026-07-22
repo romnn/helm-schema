@@ -3,6 +3,7 @@ use crate::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBranchBody};
 /// Authoritative answer to a parsed `.Capabilities.APIVersions.Has` query for
 /// a specific Kubernetes version.
 pub trait CapabilityOracle: Send + Sync {
+    /// Returns an authoritative presence answer, or `None` when uncertain.
     fn capability_has_query(&self, query: &ApiPresenceQuery) -> Option<bool>;
 }
 

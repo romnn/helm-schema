@@ -8,7 +8,7 @@
 //! validator inside a DISABLED subchart still became an ungated
 //! `if … then false` clause that rejected the parent chart's own defaults.
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use vfs::VfsPath;
@@ -50,7 +50,7 @@ metadata:
   name: redis
 ";
 
-fn generated_schema() -> color_eyre::eyre::Result<serde_json::Value> {
+fn generated_schema() -> eyre::Result<serde_json::Value> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, ROOT_CHART_YAML)?;
     test_util::write(&chart_dir.join("values.yaml")?, ROOT_VALUES_YAML)?;
@@ -89,14 +89,13 @@ fn generated_schema() -> color_eyre::eyre::Result<serde_json::Value> {
     AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")
 }
 
 #[test]
-fn fail_validator_from_disabled_dependency_does_not_reject_defaults() -> color_eyre::eyre::Result<()>
-{
-    let _guard = test_util::builder().with_tracing(false).build();
+fn fail_validator_from_disabled_dependency_does_not_reject_defaults() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
     let schema = generated_schema()?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

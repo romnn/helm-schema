@@ -26,6 +26,7 @@ pub struct LayoutChecker {
 }
 
 impl LayoutChecker {
+    /// Creates an empty per-process layout-check gate.
     #[must_use]
     pub fn new() -> Self {
         Self::default()

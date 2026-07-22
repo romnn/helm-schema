@@ -3,15 +3,17 @@
 use std::fs;
 use std::sync::Arc;
 
+use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, source_id_for_url,
 };
 
-mod common;
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
 use common::MockFetcher;
 
-fn tmp_dir(label: &str) -> std::path::PathBuf {
+fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
     let p = std::env::temp_dir().join(format!(
         "helm-schema.{label}.{}.{}",
         std::process::id(),
@@ -20,8 +22,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
             .map(|d| d.as_nanos())
             .unwrap_or(0)
     ));
-    fs::create_dir_all(&p).expect("create temp dir");
-    p
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
 }
 
 fn doc(body: &str) -> Vec<u8> {
@@ -29,12 +31,12 @@ fn doc(body: &str) -> Vec<u8> {
 }
 
 #[test]
-fn k8s_mirror_cache_per_source_namespaced() {
+fn k8s_mirror_cache_per_source_namespaced() -> eyre::Result<()> {
     // Default + one mirror, both serving the same (kind, api_version)
     // for v1.35.0 with DIFFERENT content. Default populates first; the
     // mirror's distinct content must be preserved in its own namespace
     // (correctness: no silent masking).
-    let cache_dir = tmp_dir("k8s-mirror-namespace");
+    let cache_dir = tmp_dir("k8s-mirror-namespace")?;
     let default_url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/service-v1.json";
     let mirror_url = "https://mirror.example.com/k8s-schemas";
     let mirror_resource_url = format!("{mirror_url}/v1.35.0/service-v1.json");
@@ -108,4 +110,5 @@ fn k8s_mirror_cache_per_source_namespaced() {
         default_path, mirror_path,
         "default and mirror occupy distinct cache paths"
     );
+    Ok(())
 }

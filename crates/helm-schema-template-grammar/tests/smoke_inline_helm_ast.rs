@@ -1,3 +1,5 @@
+//! Smoke tests for inline Helm actions embedded in YAML structure.
+
 use indoc::indoc;
 
 fn sanitize_yaml_from_gotmpl_text_nodes(gotmpl_tree: &tree_sitter::Tree, src: &str) -> String {

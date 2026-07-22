@@ -23,7 +23,7 @@ fn reference_mode_preserves_refs_when_requested() {
         PolicyInputs::default(),
         &[],
         std::path::Path::new("/does/not/matter"),
-        &OutputPipelineOptions {
+        OutputPipelineOptions {
             reference_mode: ReferenceMode::PreserveRefs,
             strip_descriptions: false,
             minimize: false,
@@ -62,7 +62,7 @@ fn self_contained_reference_mode_preserves_prepared_internal_refs() {
         PolicyInputs::default(),
         &[],
         std::path::Path::new("/does/not/matter"),
-        &OutputPipelineOptions {
+        OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
             strip_descriptions: false,
             minimize: false,
@@ -103,7 +103,7 @@ fn self_contained_reference_mode_rejects_unprepared_external_refs() {
         PolicyInputs::default(),
         &[],
         std::path::Path::new("/does/not/matter"),
-        &OutputPipelineOptions {
+        OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
             strip_descriptions: false,
             minimize: false,
@@ -140,7 +140,7 @@ fn fully_inlined_export_reference_mode_inlines_prepared_internal_refs() {
         PolicyInputs::default(),
         &[],
         std::path::Path::new("/does/not/matter"),
-        &OutputPipelineOptions {
+        OutputPipelineOptions {
             reference_mode: ReferenceMode::FullyInlinedExport,
             strip_descriptions: false,
             minimize: false,
@@ -170,7 +170,7 @@ fn output_pipeline_marks_final_schema_as_generated() {
         PolicyInputs::default(),
         &[],
         std::path::Path::new("/does/not/matter"),
-        &OutputPipelineOptions {
+        OutputPipelineOptions {
             reference_mode: ReferenceMode::PreserveRefs,
             strip_descriptions: false,
             minimize: false,

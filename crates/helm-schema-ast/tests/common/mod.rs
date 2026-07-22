@@ -1,5 +1,6 @@
 use std::fmt::Write;
 
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::{parse_go_template, parse_helm_template};
 use test_util::prelude::sim_assert_eq;
 
@@ -11,34 +12,34 @@ pub struct AstCorpusCase<'a> {
     pub expected_fixture: &'a str,
 }
 
-pub fn assert_ast_fixture(case: AstCorpusCase<'_>) {
-    let src = test_util::read_testdata(case.template_path);
-    let tree = template_tree_for_fixture(&src, case.template_path);
+pub fn assert_ast_fixture(case: AstCorpusCase<'_>) -> eyre::Result<()> {
+    let src = test_util::read_testdata(case.template_path)?;
+    let tree = template_tree_for_fixture(&src, case.template_path)?;
     let have = tree_sitter_sexpr(tree.root_node(), &src);
     sim_assert_eq!(have: have, want: case.expected_fixture.trim_end());
+    Ok(())
 }
 
-pub fn template_tree_for_fixture(src: &str, label: &str) -> tree_sitter::Tree {
-    let tree = parse_helm_template(src).expect("parse template");
-    assert!(
+pub fn template_tree_for_fixture(src: &str, label: &str) -> eyre::Result<tree_sitter::Tree> {
+    let tree = parse_helm_template(src).ok_or_eyre("parse Helm template fixture")?;
+    eyre::ensure!(
         tree.root_node().child_count() > 0,
-        "expected non-empty parse tree for {}",
-        label
+        "expected non-empty parse tree for {label}"
     );
 
     if tree.root_node().has_error() {
-        let go_template_tree = parse_go_template(src).expect("parse go template");
-        assert!(
+        let go_template_tree = parse_go_template(src).ok_or_eyre("parse Go template fixture")?;
+        eyre::ensure!(
             !go_template_tree.root_node().has_error(),
             "fused Helm/YAML parse recovered with errors, and go-template parse also has errors for {}\nhelm_sexpr={}\ngo_template_sexpr={}",
             label,
             tree.root_node().to_sexp(),
             go_template_tree.root_node().to_sexp(),
         );
-        return go_template_tree;
+        return Ok(go_template_tree);
     }
 
-    tree
+    Ok(tree)
 }
 
 pub fn tree_sitter_sexpr(root: tree_sitter::Node<'_>, src: &str) -> String {
@@ -67,7 +68,7 @@ fn write_tree_sitter_node(
         if let Ok(text) = node.utf8_text(src.as_bytes()) {
             let text = text.trim();
             if !text.is_empty() {
-                let quoted = serde_json::to_string(text).expect("string quoting cannot fail");
+                let quoted = serde_json::to_string(text).unwrap_or_else(|_| format!("{text:?}"));
                 let _ = write!(out, " :text {quoted}");
             }
         }

@@ -1,3 +1,5 @@
+//! Builds the vendored tree-sitter grammars used by the template parser.
+
 use std::path::PathBuf;
 
 struct Grammar {
@@ -6,8 +8,8 @@ struct Grammar {
     c_files: &'static [&'static str],
 }
 
-fn main() {
-    let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+fn main() -> Result<(), std::env::VarError> {
+    let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?);
 
     let grammars = [
         Grammar {
@@ -49,4 +51,5 @@ fn main() {
         println!("cargo:rerun-if-changed={}", gdir.join("src").display());
     }
     println!("cargo:rerun-if-changed=build.rs");
+    Ok(())
 }

@@ -202,7 +202,7 @@ impl FragmentSummary {
 /// facts take the site slot.
 pub(crate) fn splice_summary(
     summary: &FragmentSummary,
-    call_site: &Option<Rc<SiteFacts>>,
+    call_site: Option<&Rc<SiteFacts>>,
 ) -> Guarded<AbstractFragment> {
     let mut root = summary.root.clone();
     for (_, node) in &mut root.arms {
@@ -214,7 +214,7 @@ pub(crate) fn splice_summary(
 fn rebase_site(
     site: &mut Option<Rc<SiteFacts>>,
     provenance: &mut Vec<ContractProvenance>,
-    call_site: &Option<Rc<SiteFacts>>,
+    call_site: Option<&Rc<SiteFacts>>,
 ) {
     match site.as_deref() {
         Some(body_site) if body_site.resource.is_none() => {
@@ -222,14 +222,14 @@ fn rebase_site(
                 body_site.provenance.iter().cloned().collect();
             merge_provenance_sites(&mut merged, provenance);
             *provenance = merged;
-            *site = call_site.clone();
+            *site = call_site.cloned();
         }
         Some(_) => {}
-        None => *site = call_site.clone(),
+        None => *site = call_site.cloned(),
     }
 }
 
-fn rebase_node_sites(node: &mut AbstractFragment, call_site: &Option<Rc<SiteFacts>>) {
+fn rebase_node_sites(node: &mut AbstractFragment, call_site: Option<&Rc<SiteFacts>>) {
     match node {
         AbstractFragment::Mapping(mapping) => {
             for entry in &mut mapping.entries {

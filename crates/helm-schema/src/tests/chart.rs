@@ -1,13 +1,15 @@
+use color_eyre::eyre::{self, OptionExt as _};
+
 use crate::chart::discovery;
 use crate::chart::*;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
-fn dependency_activation_paths_are_scoped_from_chart_yaml() -> color_eyre::eyre::Result<()> {
+fn dependency_activation_paths_are_scoped_from_chart_yaml() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        r#"
+        r"
 apiVersion: v2
 name: root
 version: 0.1.0
@@ -18,11 +20,11 @@ dependencies:
     condition: kid.enabled, global.kidEnabled
     tags:
       - observability
-"#,
+",
     )?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        r#"
+        r"
 apiVersion: v2
 name: child
 version: 0.1.0
@@ -32,7 +34,7 @@ dependencies:
     condition: leaf.enabled
     tags:
       - nested
-"#,
+",
     )?;
     test_util::write(
         &chart_dir.join("charts/child/charts/leaf/Chart.yaml")?,
@@ -43,7 +45,7 @@ dependencies:
     let child = charts
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string()])
-        .ok_or_else(|| color_eyre::eyre::eyre!("discover child chart"))?;
+        .ok_or_eyre("discover child chart")?;
     sim_assert_eq!(have: child.dependency_activation_chain.len(), want: 1);
     sim_assert_eq!(
         have: child.dependency_activation_chain[0].condition_paths,
@@ -59,7 +61,7 @@ dependencies:
     let leaf = charts
         .iter()
         .find(|chart| chart.values_prefix == ["kid".to_string(), "leaf".to_string()])
-        .ok_or_else(|| color_eyre::eyre::eyre!("discover nested leaf chart"))?;
+        .ok_or_eyre("discover nested leaf chart")?;
     sim_assert_eq!(have: leaf.dependency_activation_chain.len(), want: 2);
     sim_assert_eq!(
         have: leaf.dependency_activation_chain[0].condition_paths,
@@ -78,7 +80,7 @@ dependencies:
 }
 
 #[test]
-fn vendored_chart_archive_respects_load_budget() -> color_eyre::eyre::Result<()> {
+fn vendored_chart_archive_respects_load_budget() -> eyre::Result<()> {
     use std::io::Write;
 
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
@@ -148,7 +150,7 @@ fn vendored_chart_archive_respects_load_budget() -> color_eyre::eyre::Result<()>
 }
 
 #[test]
-fn vendored_chart_archive_respects_expanded_budget() -> color_eyre::eyre::Result<()> {
+fn vendored_chart_archive_respects_expanded_budget() -> eyre::Result<()> {
     use std::io::Write;
 
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
@@ -215,7 +217,7 @@ fn vendored_chart_archive_respects_expanded_budget() -> color_eyre::eyre::Result
 }
 
 #[test]
-fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()> {
+fn vendored_chart_archive_respects_entry_budget() -> eyre::Result<()> {
     use std::io::Write;
 
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
@@ -278,7 +280,7 @@ fn vendored_chart_archive_respects_entry_budget() -> color_eyre::eyre::Result<()
 }
 
 #[test]
-fn vendored_chart_archive_rejects_unsafe_entry_paths() -> color_eyre::eyre::Result<()> {
+fn vendored_chart_archive_rejects_unsafe_entry_paths() {
     let err = discovery::validate_archive_entry_path(
         "charts/child.tgz",
         std::path::Path::new("../child/Chart.yaml"),
@@ -295,6 +297,4 @@ fn vendored_chart_archive_rejects_unsafe_entry_paths() -> color_eyre::eyre::Resu
         }
         other => panic!("expected unsafe archive entry error, got {other:?}"),
     }
-
-    Ok(())
 }

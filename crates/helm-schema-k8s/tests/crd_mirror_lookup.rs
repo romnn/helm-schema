@@ -3,6 +3,7 @@
 use std::fs;
 use std::sync::Arc;
 
+use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     Chain, CrdsCatalogSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider,
@@ -10,10 +11,11 @@ use helm_schema_k8s::{
 };
 use test_util::prelude::sim_assert_eq;
 
-mod common;
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
 use common::{MockFetcher, MockResponse};
 
-fn tmp_dir(label: &str) -> std::path::PathBuf {
+fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
     let p = std::env::temp_dir().join(format!(
         "helm-schema.{label}.{}.{}",
         std::process::id(),
@@ -22,8 +24,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
             .map(|d| d.as_nanos())
             .unwrap_or(0)
     ));
-    std::fs::create_dir_all(&p).expect("create temp dir");
-    p
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
 }
 
 fn crd_doc() -> String {
@@ -31,8 +33,8 @@ fn crd_doc() -> String {
 }
 
 #[test]
-fn crd_has_resource_does_not_speculatively_download() {
-    let cache = tmp_dir("crd-has-resource");
+fn crd_has_resource_does_not_speculatively_download() -> eyre::Result<()> {
+    let cache = tmp_dir("crd-has-resource")?;
     let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let provider = CrdsCatalogSchemaProvider::new()
         .with_cache_dir(cache)
@@ -46,11 +48,12 @@ fn crd_has_resource_does_not_speculatively_download() {
     let owns = provider.has_resource(&resource);
     assert!(!owns);
     sim_assert_eq!(have: mock.total_calls(), want: 0, "has_resource must not fetch");
+    Ok(())
 }
 
 #[test]
-fn crd_loose_probes_mirrors_for_exact_version() {
-    let cache = tmp_dir("crd-loose-mirror");
+fn crd_loose_probes_mirrors_for_exact_version() -> eyre::Result<()> {
+    let cache = tmp_dir("crd-loose-mirror")?;
     let mirror_url = "https://example.com/crds";
     let mock = Arc::new(
         MockFetcher::new()
@@ -83,11 +86,12 @@ fn crd_loose_probes_mirrors_for_exact_version() {
         schema.is_some(),
         "mirror should answer for exact requested version"
     );
+    Ok(())
 }
 
 #[test]
-fn crd_loose_never_substitutes_version() {
-    let cache = tmp_dir("crd-no-subst");
+fn crd_loose_never_substitutes_version() -> eyre::Result<()> {
+    let cache = tmp_dir("crd-no-subst")?;
     // Pre-populate v1 in default cache so the cross-scan tier sees it,
     // but the requested v1alpha1 is genuinely missing.
     let source_id = "default";
@@ -141,11 +145,12 @@ fn crd_loose_never_substitutes_version() {
         )),
         "expected CrdVersionAvailableAtOtherVersions; got {snapshot:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn crd_loose_available_at_other_versions_local_cache_only() {
-    let cache = tmp_dir("crd-cache-only-hint");
+fn crd_loose_available_at_other_versions_local_cache_only() -> eyre::Result<()> {
+    let cache = tmp_dir("crd-cache-only-hint")?;
     fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -180,13 +185,14 @@ fn crd_loose_available_at_other_versions_local_cache_only() {
             .any(|d| matches!(d, Diagnostic::CrdVersionAvailableAtOtherVersions { .. })),
         "CrdVersionAvailableAtOtherVersions must NOT fire without local-cache evidence"
     );
+    Ok(())
 }
 
 #[test]
-fn crd_strict_suppresses_cross_scan_keeps_mirrors() {
+fn crd_strict_suppresses_cross_scan_keeps_mirrors() -> eyre::Result<()> {
     // Strict mode: cross-scan + CrdVersionAvailableAtOtherVersions
     // are suppressed, but mirrors are still consulted.
-    let cache = tmp_dir("crd-strict-keeps-mirrors");
+    let cache = tmp_dir("crd-strict-keeps-mirrors")?;
     fs::write(
         cache.join("CACHE_LAYOUT_VERSION"),
         format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
@@ -235,14 +241,15 @@ fn crd_strict_suppresses_cross_scan_keeps_mirrors() {
             .any(|d| matches!(d, Diagnostic::CrdVersionAvailableAtOtherVersions { .. })),
         "strict mode must NOT emit CrdVersionAvailableAtOtherVersions"
     );
+    Ok(())
 }
 
 #[test]
-fn crd_mirror_does_not_mask_default_catalog() {
+fn crd_mirror_does_not_mask_default_catalog() -> eyre::Result<()> {
     // Default returns 200 (its own content), mirror also returns 200
     // with different content. Default wins per precedence; mirror
     // entry is namespaced separately, never returned.
-    let cache = tmp_dir("crd-default-wins");
+    let cache = tmp_dir("crd-default-wins")?;
     let mirror_url = "https://example.com/mirror-different-content";
     let default_url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1alpha1.json";
     let mirror_resource_url =
@@ -291,12 +298,13 @@ fn crd_mirror_does_not_mask_default_catalog() {
         !props.contains_key("mirror_only_field"),
         "mirror content must NOT be returned in front-of default"
     );
+    Ok(())
 }
 
 #[test]
-fn crd_negative_cache_per_source() {
+fn crd_negative_cache_per_source() -> eyre::Result<()> {
     // Default 404, mirror 404 — second call must not re-fetch.
-    let cache = tmp_dir("crd-negcache-per-source");
+    let cache = tmp_dir("crd-negcache-per-source")?;
     let mirror_url = "https://example.com/mirror-404";
     let default_url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1alpha1.json";
     let mirror_resource_url =
@@ -329,11 +337,12 @@ fn crd_negative_cache_per_source() {
         want: 1,
         "mirror 404 must be cached negatively independently"
     );
+    Ok(())
 }
 
 #[test]
-fn crd_cache_record_source_writes_meta_sidecar() {
-    let cache = tmp_dir("crd-record-source");
+fn crd_cache_record_source_writes_meta_sidecar() -> eyre::Result<()> {
+    let cache = tmp_dir("crd-record-source")?;
     let default_url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1alpha1.json";
     let mock = Arc::new(MockFetcher::new().with_body(default_url, crd_doc().into_bytes()));
     let provider = CrdsCatalogSchemaProvider::new()
@@ -360,6 +369,7 @@ fn crd_cache_record_source_writes_meta_sidecar() {
         content.contains(default_url),
         "sidecar carries the actual URL"
     );
+    Ok(())
 }
 
 #[test]
@@ -380,8 +390,8 @@ fn crd_diagnostic_json_format() {
 }
 
 #[test]
-fn crd_mirror_cache_per_source_namespaced() {
-    let cache = tmp_dir("crd-mirror-namespace");
+fn crd_mirror_cache_per_source_namespaced() -> eyre::Result<()> {
+    let cache = tmp_dir("crd-mirror-namespace")?;
     let mirror_url = "https://example.com/crds";
     let mirror_id = source_id_for_url(mirror_url);
     let mock = Arc::new(
@@ -432,4 +442,5 @@ fn crd_mirror_cache_per_source_namespaced() {
         default_path, mirror_path,
         "default and mirror must namespace to distinct paths"
     );
+    Ok(())
 }

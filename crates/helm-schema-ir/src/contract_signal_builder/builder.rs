@@ -461,6 +461,10 @@ fn flattened_conjuncts(predicate: &Predicate) -> Vec<&Predicate> {
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 fn record_contract_use_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
@@ -812,7 +816,7 @@ fn record_contract_use_conjunction(
             (facts, facts)
         };
         acc.record_source_use(
-            SourceUseFactSplit {
+            &SourceUseFactSplit {
                 path: path_facts,
                 branch: branch_facts,
             },
@@ -1077,6 +1081,10 @@ fn remove_redundant_approximate_conditions(conjunction: &[Predicate]) -> Vec<Pre
 /// TEST wherever the OUTER guards hold. Conjunctions whose test cannot be
 /// negated structurally are skipped (truthy-fallback predicates approximate
 /// undecodable conditions and must never be negated).
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 fn record_fail_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
@@ -1372,9 +1380,10 @@ fn record_fail_conjunction(
         // the DISJUNCTION of their negations: one satisfied negation keeps
         // the member. A single test lowers flat; several become one AnyOf
         // (traefik's legacy-hostPath-or-typed local plugins).
-        let combine = |mut alternatives: Vec<Vec<FailValueRequirement>>| match alternatives.len() {
-            1 => alternatives.remove(0),
-            _ => {
+        let combine = |mut alternatives: Vec<Vec<FailValueRequirement>>| {
+            if alternatives.len() == 1 {
+                alternatives.remove(0)
+            } else {
                 alternatives.sort();
                 alternatives.dedup();
                 vec![FailValueRequirement::AnyOf(alternatives)]
@@ -1450,14 +1459,13 @@ fn record_fail_conjunction(
         }
         return;
     }
-    let target = match ranged {
-        Some(path) => path.to_string(),
-        None => {
-            let Some(path) = test_paths.into_iter().next() else {
-                return;
-            };
-            path
-        }
+    let target = if let Some(path) = ranged {
+        path.to_string()
+    } else {
+        let Some(path) = test_paths.into_iter().next() else {
+            return;
+        };
+        path
     };
     requirements.sort();
     requirements.dedup();
@@ -1727,7 +1735,7 @@ fn capture_outer_guards(
     Some(guards)
 }
 
-/// ConditionalGuard for one OUTER conjunct of a FAIL implication.
+/// `ConditionalGuard` for one OUTER conjunct of a FAIL implication.
 ///
 /// Fail polarity is positive-only: the emitted guard may hold LESS often
 /// than the real condition — the arm then rejects fewer inputs — but never
@@ -1813,6 +1821,10 @@ fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
     }
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 fn record_value_requirement_capture(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
@@ -2087,9 +2099,18 @@ fn record_member_relative_split_requirement(
     if member_index == 0 || member_index + 1 >= segments.len() {
         return;
     }
-    let collection_path = helm_schema_core::join_value_path(segments[..member_index].to_vec());
-    let member_scope = helm_schema_core::join_value_path(segments[..=member_index].to_vec());
-    let target_path = segments[(member_index + 1)..].to_vec();
+    let Some(collection_segments) = segments.get(..member_index) else {
+        return;
+    };
+    let Some(member_segments) = segments.get(..=member_index) else {
+        return;
+    };
+    let Some(target_path) = segments.get(member_index + 1..) else {
+        return;
+    };
+    let collection_path = helm_schema_core::join_value_path(collection_segments.to_vec());
+    let member_scope = helm_schema_core::join_value_path(member_segments.to_vec());
+    let target_path = target_path.to_vec();
     let mut member_guards = Vec::new();
     let mut outer_guards = Vec::new();
 
@@ -2102,7 +2123,7 @@ fn record_member_relative_split_requirement(
         }
         if let Predicate::Guard(Guard::Eq { path, value }) = predicate
             && let Some(relative) =
-                helm_schema_core::split_value_path(path).strip_prefix(&segments[..=member_index])
+                helm_schema_core::split_value_path(path).strip_prefix(member_segments)
             && !relative.is_empty()
             && !relative.iter().any(|segment| segment == "*")
         {
@@ -2191,11 +2212,10 @@ fn predicate_is_negatable_test(predicate: &Predicate) -> bool {
         // conjunction of inequalities negates to the op enum). Absolute
         // paths stay out: a scalar-target `ne` rides the terminal-clause
         // lane, like `Eq` below.
-        Predicate::Guard(Guard::NotEq { path, .. }) => path.contains(".*"),
+        Predicate::Guard(Guard::NotEq { path, .. } | Guard::Truthy { path }) => path.contains(".*"),
         // A truthiness test over a ranged MEMBER's field is an exact
         // member decode: the fallback truthy stand-ins for undecodable
         // conditions ride absolute paths, never wildcard member scopes.
-        Predicate::Guard(Guard::Truthy { path }) => path.contains(".*"),
         Predicate::Or(items) => items.iter().all(predicate_is_negatable_test),
         _ => false,
     }
@@ -2405,6 +2425,10 @@ fn requirements_from_holding(
 /// Any conjunct the guard encoding cannot represent abstains this read
 /// (the arm may only under-narrow), and approximate conditions abstain
 /// like every fail negation.
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 fn record_member_access_capture(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
@@ -2546,7 +2570,13 @@ fn factor_guard_sets(sets: BTreeSet<Vec<ConditionalGuard>>) -> BTreeSet<Vec<Cond
         let mut merged = None;
         'search: for left in 0..sets.len() {
             for right in left + 1..sets.len() {
-                if let Some(folded) = fold_activation_pair(&sets[left], &sets[right]) {
+                let Some(left_set) = sets.get(left) else {
+                    continue;
+                };
+                let Some(right_set) = sets.get(right) else {
+                    continue;
+                };
+                if let Some(folded) = fold_activation_pair(left_set, right_set) {
                     merged = Some((left, right, folded));
                     break 'search;
                 }
@@ -2556,7 +2586,9 @@ fn factor_guard_sets(sets: BTreeSet<Vec<ConditionalGuard>>) -> BTreeSet<Vec<Cond
             break;
         };
         sets.remove(right);
-        sets[left] = folded;
+        if let Some(left_set) = sets.get_mut(left) {
+            *left_set = folded;
+        }
     }
     sets.into_iter().collect()
 }
@@ -2776,7 +2808,7 @@ struct SourceUseFactSplit {
 impl ContractPathAccumulator {
     fn record_source_use(
         &mut self,
-        facts: SourceUseFactSplit,
+        facts: &SourceUseFactSplit,
         source_null_tolerant: bool,
         lowerable_guards: Option<Vec<ConditionalGuard>>,
         provider_schema_use: Option<ProviderSchemaUse>,
@@ -2833,6 +2865,10 @@ impl ContractPathAccumulator {
         self.facts.record_nullable_observation(source_null_tolerant);
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn into_schema_evidence(
         self,
         value_path: String,
@@ -3217,7 +3253,10 @@ fn extend_lowerable_predicate(
     out: &mut Vec<ConditionalGuard>,
 ) -> Option<()> {
     match predicate {
-        Predicate::True | Predicate::False | Predicate::Approximate { .. } => return None,
+        Predicate::True
+        | Predicate::False
+        | Predicate::Approximate { .. }
+        | Predicate::Guard(Guard::Range { .. }) => return None,
         Predicate::Guard(Guard::With { path }) if path == target_value_path => {}
         Predicate::Guard(Guard::With { .. }) => {
             out.push(predicate_to_guard(predicate, None)?);
@@ -3227,7 +3266,6 @@ fn extend_lowerable_predicate(
                 extend_lowerable_predicate(predicate, target_value_path, out)?;
             }
         }
-        Predicate::Guard(Guard::Range { .. }) => return None,
         Predicate::Guard(Guard::Default { path }) if path == target_value_path => {}
         // The row's own truthiness is nullability evidence (captured as
         // source null-tolerance), not a conditional shape over *other*
@@ -3289,16 +3327,22 @@ fn existential_member_guard(predicates: &[Predicate]) -> Option<ConditionalGuard
     let [a, b] = conjuncts.as_slice() else {
         return None;
     };
-    let (range_path, eq_path, value) = match (a, b) {
-        (
-            Predicate::Guard(Guard::Range { path: range_path }),
-            Predicate::Guard(Guard::Eq { path, value }),
-        )
-        | (
-            Predicate::Guard(Guard::Eq { path, value }),
-            Predicate::Guard(Guard::Range { path: range_path }),
-        ) => (range_path, path, value),
-        _ => return None,
+    let ((
+        Predicate::Guard(Guard::Range { path: range_path }),
+        Predicate::Guard(Guard::Eq {
+            path: eq_path,
+            value,
+        }),
+    )
+    | (
+        Predicate::Guard(Guard::Eq {
+            path: eq_path,
+            value,
+        }),
+        Predicate::Guard(Guard::Range { path: range_path }),
+    )) = (a, b)
+    else {
+        return None;
     };
     let member = eq_path
         .strip_prefix(range_path.as_str())?
@@ -3374,6 +3418,10 @@ fn terminal_clause_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
     predicate_to_guard(predicate, None)
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 fn guard_to_conditional_guard(
     guard: &Guard,
     target_value_path: Option<&str>,
@@ -3433,7 +3481,10 @@ fn guard_to_conditional_guard(
         }),
         Guard::MatchesPattern { .. }
         | Guard::RangeKeyPrefix { .. }
-        | Guard::RangeKeyMatches { .. } => None,
+        | Guard::RangeKeyMatches { .. }
+        | Guard::Range { .. }
+        | Guard::With { .. }
+        | Guard::Default { .. } => None,
         Guard::AtMostOneMember { path: value_path } => Some(ConditionalGuard::AtMostOneMember {
             path: path(value_path)?,
         }),
@@ -3556,7 +3607,6 @@ fn guard_to_conditional_guard(
                 })
                 .collect::<Option<Vec<_>>>()?,
         )),
-        Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => None,
     }
 }
 
@@ -3725,8 +3775,14 @@ fn collect_paths_with_descendants(
     for path in paths {
         let segments = helm_schema_core::split_value_path(path);
         for prefix_len in 1..segments.len() {
-            let ancestor = helm_schema_core::join_value_path(&segments[..prefix_len]);
-            if segments[prefix_len] == "*" {
+            let Some(prefix) = segments.get(..prefix_len) else {
+                continue;
+            };
+            let Some(segment) = segments.get(prefix_len) else {
+                continue;
+            };
+            let ancestor = helm_schema_core::join_value_path(prefix);
+            if segment == "*" {
                 item_ancestors.insert(ancestor.clone());
                 if prefix_len + 1 < segments.len() {
                     structured_item_ancestors.insert(ancestor.clone());

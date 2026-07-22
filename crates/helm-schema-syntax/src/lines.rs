@@ -29,7 +29,7 @@ impl LineIndex {
 
     /// Line span `[start, end)` excluding the trailing newline.
     pub(crate) fn span(&self, line: usize) -> (usize, usize) {
-        let start = self.starts[line];
+        let start = self.starts.get(line).copied().unwrap_or(self.source_len);
         let end = self
             .starts
             .get(line + 1)

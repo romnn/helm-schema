@@ -1,3 +1,5 @@
+use color_eyre::eyre;
+
 use helm_schema_ir::{Guard, ResourceRef, YamlPath};
 use helm_schema_k8s::{ChartLocalCrdSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider};
 use serde_json::json;
@@ -23,9 +25,9 @@ fn one_variable_integer_range_emits_input_channel_diagnostic() {
     let defines = helm_schema_ast::DefineIndex::new();
     let signals = helm_schema_ir::SymbolicIrContext::new(&defines)
         .generate_contract_ir(
-            r#"{{- range .Values.servers }}
+            r"{{- range .Values.servers }}
 {{ . | quote }}
-{{- end }}"#,
+{{- end }}",
         )
         .finalize()
         .into_schema_signals();
@@ -46,9 +48,9 @@ fn two_variable_range_has_no_numeric_input_channel_ambiguity() {
     let defines = helm_schema_ast::DefineIndex::new();
     let signals = helm_schema_ir::SymbolicIrContext::new(&defines)
         .generate_contract_ir(
-            r#"{{- range $key, $value := .Values.servers }}
+            r"{{- range $key, $value := .Values.servers }}
 {{ $key }}={{ $value }}
-{{- end }}"#,
+{{- end }}",
         )
         .finalize()
         .into_schema_signals();
@@ -60,8 +62,7 @@ fn two_variable_range_has_no_numeric_input_channel_ambiguity() {
 }
 
 #[test]
-fn airflow_break_scopes_the_deprecated_security_context_candidate() -> color_eyre::eyre::Result<()>
-{
+fn airflow_break_scopes_the_deprecated_security_context_candidate() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("airflow");
@@ -111,8 +112,7 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> color_eyr
 }
 
 #[test]
-fn loki_selected_htpasswd_default_program_reaches_required_credentials()
--> color_eyre::eyre::Result<()> {
+fn loki_selected_htpasswd_default_program_reaches_required_credentials() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata().join("charts").join("loki");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
@@ -143,8 +143,7 @@ fn loki_selected_htpasswd_default_program_reaches_required_credentials()
 }
 
 #[test]
-fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact()
--> color_eyre::eyre::Result<()> {
+fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -202,8 +201,7 @@ spec:
 }
 
 #[test]
-fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped()
--> color_eyre::eyre::Result<()> {
+fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -266,8 +264,7 @@ fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped()
 }
 
 #[test]
-fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract()
--> color_eyre::eyre::Result<()> {
+fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -299,8 +296,7 @@ fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract()
 }
 
 #[test]
-fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> color_eyre::eyre::Result<()>
-{
+fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("promtail");
@@ -335,8 +331,11 @@ fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> color_eyr
 }
 
 #[test]
-fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_eyre::eyre::Result<()>
-{
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete chart analysis scenario is clearer as one end-to-end regression"
+)]
+fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -447,7 +446,7 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
 
 #[test]
 fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_guards()
--> color_eyre::eyre::Result<()> {
+-> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -540,8 +539,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
 }
 
 #[test]
-fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> color_eyre::eyre::Result<()>
-{
+fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("traefik");
@@ -575,7 +573,7 @@ fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> color_ey
 }
 
 #[test]
-fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> color_eyre::eyre::Result<()> {
+fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("prometheus");
@@ -605,8 +603,8 @@ fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> color_eyre::e
 }
 
 #[test]
-fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
--> color_eyre::eyre::Result<()> {
+fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics() -> eyre::Result<()>
+{
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -678,8 +676,7 @@ fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
 }
 
 #[test]
-fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
--> color_eyre::eyre::Result<()> {
+fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -734,7 +731,7 @@ fn signoz_otel_gateway_service_account_name_keeps_helper_default_nullability()
 }
 
 #[test]
-fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyre::Result<()> {
+fn signoz_clickhouse_security_context_records_fragment_fact() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -773,8 +770,8 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> color_eyre::eyr
 }
 
 #[test]
-fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
--> color_eyre::eyre::Result<()> {
+fn transitive_library_helper_default_flows_into_contract_requiredness_evidence() -> eyre::Result<()>
+{
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -872,8 +869,7 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 }
 
 #[test]
-fn cert_manager_fullname_override_records_self_guarded_render_evidence()
--> color_eyre::eyre::Result<()> {
+fn cert_manager_fullname_override_records_self_guarded_render_evidence() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("cert-manager");
@@ -911,8 +907,7 @@ fn cert_manager_fullname_override_records_self_guarded_render_evidence()
 }
 
 #[test]
-fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment()
--> color_eyre::eyre::Result<()> {
+fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("cert-manager");
@@ -986,7 +981,11 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment()
 }
 
 #[test]
-fn dependency_activation_guards_subchart_contract_uses() -> color_eyre::eyre::Result<()> {
+#[expect(
+    clippy::too_many_lines,
+    reason = "the dependency guard fixture and all of its semantic assertions form one regression"
+)]
+fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1123,7 +1122,7 @@ data:
 /// zookeeper templates must not constrain values while `clickhouse.enabled`
 /// is false).
 #[test]
-fn nested_dependency_activation_carries_the_ancestor_conditions() -> color_eyre::eyre::Result<()> {
+fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1224,7 +1223,7 @@ data:
 }
 
 #[test]
-fn literal_crd_template_populates_chart_local_schema_universe() -> color_eyre::eyre::Result<()> {
+fn literal_crd_template_populates_chart_local_schema_universe() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1234,7 +1233,7 @@ fn literal_crd_template_populates_chart_local_schema_universe() -> color_eyre::e
     test_util::write(&chart_dir.join("values.yaml")?, "spec:\n  size: 1\n")?;
     test_util::write(
         &chart_dir.join("templates/crd.yaml")?,
-        r#"apiVersion: apiextensions.k8s.io/v1
+        r"apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: widgets.example.com
@@ -1257,17 +1256,17 @@ spec:
               properties:
                 size:
                   type: integer
-"#,
+",
     )?;
     test_util::write(
         &chart_dir.join("templates/widget.yaml")?,
-        r#"apiVersion: example.com/v1
+        r"apiVersion: example.com/v1
 kind: Widget
 metadata:
   name: demo
 spec:
   size: {{ .Values.spec.size }}
-"#,
+",
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1290,7 +1289,7 @@ spec:
         .into_schema_fragment();
 
     sim_assert_eq!(
-        have: schema.map(|fragment| fragment.into_schema()),
+        have: schema.map(helm_schema_core::ProviderSchemaFragment::into_schema),
         want: Some(json!({"type": "integer"}))
     );
 
@@ -1298,7 +1297,7 @@ spec:
 }
 
 #[test]
-fn templated_crd_template_populates_chart_local_schema_universe() -> color_eyre::eyre::Result<()> {
+fn templated_crd_template_populates_chart_local_schema_universe() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1335,13 +1334,13 @@ spec:
     )?;
     test_util::write(
         &chart_dir.join("templates/widget.yaml")?,
-        r#"apiVersion: example.com/v1
+        r"apiVersion: example.com/v1
 kind: Widget
 metadata:
   name: demo
 spec:
   size: {{ .Values.spec.size }}
-"#,
+",
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1364,7 +1363,7 @@ spec:
         .into_schema_fragment();
 
     sim_assert_eq!(
-        have: schema.map(|fragment| fragment.into_schema()),
+        have: schema.map(helm_schema_core::ProviderSchemaFragment::into_schema),
         want: Some(json!({"type": "integer"}))
     );
 
@@ -1377,7 +1376,7 @@ spec:
 /// vanish — with a dependency activation condition appended, a vanished
 /// guard becomes a chart-killing `activation => fail` terminal clause.
 #[test]
-fn joined_validator_messages_do_not_become_activation_terminals() -> color_eyre::eyre::Result<()> {
+fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1441,7 +1440,7 @@ child: auth.enabled
 }
 
 #[test]
-fn tpl_executes_only_the_selected_chart_authored_default_program() -> color_eyre::eyre::Result<()> {
+fn tpl_executes_only_the_selected_chart_authored_default_program() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     let program = r#"{{ required "username required" .Values.auth.username }}:{{ required "password required" .Values.auth.password }}"#;
 
@@ -1452,13 +1451,12 @@ fn tpl_executes_only_the_selected_chart_authored_default_program() -> color_eyre
     test_util::write(
         &chart_dir.join("values.yaml")?,
         format!(
-            "auth:\n  enabled: true\n  username: \"\"\n  password: \"\"\n  program: |-\n    {}\n",
-            program
+            "auth:\n  enabled: true\n  username: \"\"\n  password: \"\"\n  program: |-\n    {program}\n"
         ),
     )?;
     test_util::write(
         &chart_dir.join("templates/secret.yaml")?,
-        r#"apiVersion: v1
+        r"apiVersion: v1
 kind: Secret
 metadata:
   name: test
@@ -1469,7 +1467,7 @@ stringData:
     {{- tpl .program $ | nindent 4 }}
 {{- end }}
 {{- end }}
-"#,
+",
     )?;
 
     let schema = crate::AnalysisSession::new(crate::GenerateOptions {

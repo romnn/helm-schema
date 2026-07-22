@@ -5,6 +5,11 @@ use crate::{ParseError, parse_go_template};
 /// This is a syntax-level check over the template grammar. Callers that only
 /// accept literal YAML can use it to abstain before handing source text to a
 /// YAML parser.
+///
+/// # Errors
+///
+/// Returns [`ParseError::TreeSitterParseFailed`] when the template parser
+/// cannot produce a syntax tree.
 #[tracing::instrument(skip_all, fields(bytes = src.len()))]
 pub fn contains_template_action(src: &str) -> Result<bool, ParseError> {
     let tree = parse_go_template(src).ok_or(ParseError::TreeSitterParseFailed)?;

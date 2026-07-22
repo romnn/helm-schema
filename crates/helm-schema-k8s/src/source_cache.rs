@@ -49,7 +49,7 @@ pub(crate) enum SourceDocOutcome {
 /// lookup ([`load_source_schema_doc`]) and the capability oracle's
 /// source probes.
 pub(crate) fn probe_source_schema_doc<K>(
-    request: CachedSchemaDocRequest<'_>,
+    request: &CachedSchemaDocRequest<'_>,
     mem: &SourceDocCache<K>,
     mem_key: K,
 ) -> SourceDocOutcome
@@ -133,7 +133,7 @@ where
 }
 
 pub(crate) fn load_source_schema_doc<K>(
-    request: CachedSchemaDocRequest<'_>,
+    request: &CachedSchemaDocRequest<'_>,
     mem: &SourceDocCache<K>,
     mem_key: K,
 ) -> Option<SchemaDoc>

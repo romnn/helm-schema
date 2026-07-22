@@ -1,6 +1,8 @@
+//! Packaged library-chart inheritance regression for common ingress helpers.
+
 use std::io;
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use helm_schema::AnalysisSession;
@@ -94,7 +96,7 @@ spec:
 {{- end }}
 ";
 
-fn into_eyre(err: helm_schema_cli::CliError) -> Report {
+fn into_eyre(err: helm_schema_cli::CliError) -> eyre::Report {
     err.into()
 }
 
@@ -119,10 +121,7 @@ fn schema_contains_property(schema: &serde_json::Value, property: &str) -> bool 
         })
 }
 
-fn append_dir_entry<W: io::Write>(
-    builder: &mut tar::Builder<W>,
-    path: &str,
-) -> color_eyre::eyre::Result<()> {
+fn append_dir_entry<W: io::Write>(builder: &mut tar::Builder<W>, path: &str) -> eyre::Result<()> {
     let mut header = tar::Header::new_gnu();
     header.set_path(path).wrap_err("set dir path")?;
     header.set_mode(0o755);
@@ -139,7 +138,7 @@ fn append_file_entry<W: io::Write>(
     builder: &mut tar::Builder<W>,
     path: &str,
     contents: &[u8],
-) -> color_eyre::eyre::Result<()> {
+) -> eyre::Result<()> {
     let mut header = tar::Header::new_gnu();
     header.set_path(path).wrap_err("set file path")?;
     header.set_mode(0o644);
@@ -152,7 +151,7 @@ fn append_file_entry<W: io::Write>(
     Ok(())
 }
 
-fn build_common_tarball() -> color_eyre::eyre::Result<Vec<u8>> {
+fn build_common_tarball() -> eyre::Result<Vec<u8>> {
     let mut buf = Vec::new();
     {
         let gz = GzEncoder::new(&mut buf, Compression::default());
@@ -177,8 +176,8 @@ fn build_common_tarball() -> color_eyre::eyre::Result<Vec<u8>> {
 }
 
 #[test]
-fn packaged_library_common_ingress_helper_propagates_schema() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn packaged_library_common_ingress_helper_propagates_schema() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, ROOT_CHART_YAML)?;

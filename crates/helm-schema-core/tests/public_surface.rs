@@ -1,3 +1,5 @@
+//! Public semantic-contract parsing and path utility regressions.
+
 use helm_schema_core::{ApiPresenceQuery, join_value_path, split_value_path};
 use test_util::prelude::sim_assert_eq;
 

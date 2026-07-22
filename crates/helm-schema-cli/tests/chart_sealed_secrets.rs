@@ -4,11 +4,13 @@
 //! templates range over) but fails on strings and non-integral numbers.
 //! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 
 #[test]
-fn sealed_secrets_ranged_namespaces_domain_holds() -> color_eyre::eyre::Result<()> {
+fn sealed_secrets_ranged_namespaces_domain_holds() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("sealed-secrets")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

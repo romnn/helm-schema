@@ -8,7 +8,7 @@ use super::{canonicalize_contract_uses, expand_condition_disjuncts, normalize_co
 
 #[test]
 fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
-    let use_ = ContractUse::new(
+    let row = ContractUse::new(
         "feature.enabled".to_string(),
         YamlPath(vec!["spec".to_string(), "enabled".to_string()]),
         ValueKind::Scalar,
@@ -17,7 +17,7 @@ fn disjunct_expansion_deduplicates_identical_rows_before_subsumption() {
         }],
         None,
     );
-    let mut uses = vec![use_.clone(), use_];
+    let mut uses = vec![row.clone(), row];
 
     expand_condition_disjuncts(&mut uses);
 
@@ -39,12 +39,12 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 Vec::new(),
             )],
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },
@@ -60,12 +60,12 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
                 vec!["helper.render".to_string()],
             )],
             has_string_contract: false,
-            template_supplied_member_keys: Default::default(),
+            template_supplied_member_keys: std::collections::BTreeSet::default(),
             split_segment: None,
             merge_layers: None,
             range_key: false,
             nil_omitting: false,
-            omitted_members: Default::default(),
+            omitted_members: std::collections::BTreeMap::default(),
             digest: false,
             merge_operand: false,
         },

@@ -25,8 +25,12 @@ pub(super) fn eval_dig(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let (subject_expr, rest) = args.split_last().expect("dig arity checked at dispatch");
-    let (default_expr, key_exprs) = rest.split_last().expect("dig arity checked at dispatch");
+    let Some((subject_expr, rest)) = args.split_last() else {
+        return eval_all_args(args, env, resolver);
+    };
+    let Some((default_expr, key_exprs)) = rest.split_last() else {
+        return eval_all_args(args, env, resolver);
+    };
     let mut keys = Vec::new();
     for key in key_exprs {
         match key.deparen() {
@@ -40,11 +44,14 @@ pub(super) fn eval_dig(
     let default_result = eval_expr_with_helper_calls(default_expr, env, resolver);
     let mut effects = subject.effects;
     effects.merge(default_result.effects);
-    for path in identity_value_paths(&subject.value) {
+    for path in identity_value_paths(subject.value.as_ref()) {
         let mut step = path;
         for prefix_len in 0..keys.len() {
             if prefix_len > 0 {
-                step = helm_schema_core::append_value_path(&step, &keys[prefix_len - 1]);
+                let Some(key) = prefix_len.checked_sub(1).and_then(|index| keys.get(index)) else {
+                    continue;
+                };
+                step = helm_schema_core::append_value_path(&step, key);
             }
             // Digging from the whole-values root: the root map itself has
             // no path-level contract to state.
@@ -101,20 +108,24 @@ pub(super) fn eval_dig(
     // The dug leaf is a READ of that path whose absence falls back to the
     // literal default: an output path (so required-subject walking and
     // read rows see it) marked defaulted, exactly like `default`.
-    for path in identity_value_paths(&value) {
+    for path in identity_value_paths(value.as_ref()) {
         effects.output_paths.insert(path.clone());
         effects.defaults.insert(path);
     }
     EvalResult::with_effects(value, effects)
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 pub(super) fn eval_index(
     args: &[TemplateExpr],
     object_host: bool,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let Some(base_expr) = args.first() else {
+    let Some((base_expr, path_args)) = args.split_first() else {
         return EvalResult::none();
     };
     let base = eval_expr_with_helper_calls(base_expr, env, resolver);
@@ -128,7 +139,7 @@ pub(super) fn eval_index(
     };
 
     let mut values = vec![value];
-    for arg in &args[1..] {
+    for arg in path_args {
         let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(arg_result.effects);
         let Some(options) = path_segment_options(arg, arg_result.value.as_ref()) else {
@@ -190,7 +201,7 @@ pub(super) fn eval_index(
                             effects.helper_fails.push(capture);
                         }
                     }
-                    for path in identity_value_paths(&Some(value.clone())) {
+                    for path in identity_value_paths(Some(value)) {
                         for conjunction in
                             super::strict_operands::operand_selection_conjunctions(&effects, &path)
                         {

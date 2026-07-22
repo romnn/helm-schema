@@ -48,17 +48,27 @@ pub(crate) struct BoundHelperCallSummary {
     pub(crate) argument_effects: Effects,
 }
 
+fn allowed_custom_merge_set_value(
+    expr: &TemplateExpr,
+    nested_vars: &BTreeSet<String>,
+    is_map_member: &impl Fn(&TemplateExpr) -> bool,
+) -> bool {
+    if is_map_member(expr) {
+        return true;
+    }
+    match expr.deparen() {
+        TemplateExpr::Variable(variable) => nested_vars.contains(variable.trim_start_matches('$')),
+        TemplateExpr::Call { function, args } if function == "or" => args
+            .iter()
+            .all(|arg| allowed_custom_merge_set_value(arg, nested_vars, is_map_member)),
+        _ => false,
+    }
+}
+
 impl IrAnalysisDb {
     #[tracing::instrument(skip_all)]
     pub(crate) fn new(defines: &DefineIndex) -> Self {
         Self::with_policy(defines, BTreeMap::new(), None)
-    }
-
-    pub(crate) fn with_chart_default_strings(
-        defines: &DefineIndex,
-        chart_default_strings: BTreeMap<String, String>,
-    ) -> Self {
-        Self::with_policy(defines, chart_default_strings, None)
     }
 
     pub(crate) fn with_policy(
@@ -309,6 +319,10 @@ impl IrAnalysisDb {
     /// extra action (another condition, another write, another render)
     /// rejects, so a helper that drops more than nil members or rewrites
     /// values can never claim the scrubbed identity.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn classify_nil_scrub_helper(&self, name: &str) -> Option<()> {
         use helm_schema_ast::Literal;
 
@@ -395,7 +409,7 @@ impl IrAnalysisDb {
                         Some(TemplateExpr::Literal(Literal::String(callee))) if callee == name
                     )
                     && args.len() == 2
-                    && var_is(&args[1], val_var)
+                    && args.get(1).is_some_and(|arg| var_is(arg, val_var))
         ) || !matches!(
             tail.deparen(),
             TemplateExpr::Call { function, args } if function == "fromYaml" && args.is_empty()
@@ -410,8 +424,7 @@ impl IrAnalysisDb {
                         args.first().map(TemplateExpr::deparen),
                         Some(TemplateExpr::Call { function: len_fn, args: len_args })
                             if len_fn == "len"
-                                && len_args.len() == 1
-                                && var_is(&len_args[0], nested)
+                                && matches!(len_args.as_slice(), [arg] if var_is(arg, nested))
                     )
                     && matches!(
                         args.get(1).map(TemplateExpr::deparen),
@@ -428,10 +441,10 @@ impl IrAnalysisDb {
                         value.deparen(),
                         TemplateExpr::Call { function, args }
                             if function == "set"
-                                && args.len() == 3
-                                && var_is(&args[0], accumulator)
-                                && var_is(&args[1], key_var)
-                                && var_is(&args[2], member)
+                                && matches!(args.as_slice(), [target, key, value]
+                                    if var_is(target, accumulator)
+                                        && var_is(key, key_var)
+                                        && var_is(value, member))
                     )
             )
         };
@@ -442,10 +455,9 @@ impl IrAnalysisDb {
             not_nil_test.deparen(),
             TemplateExpr::Call { function, args }
                 if function == "not"
-                    && args.len() == 1
                     && matches!(
-                        args[0].deparen(),
-                        TemplateExpr::Call { function: kind_fn, args: kind_args }
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Call { function: kind_fn, args: kind_args })
                             if kind_fn == "kindIs"
                                 && matches!(
                                     kind_args.first().map(TemplateExpr::deparen),
@@ -463,11 +475,16 @@ impl IrAnalysisDb {
         matches!(
             render.deparen(),
             TemplateExpr::Call { function, args }
-                if function == "toYaml" && args.len() == 1 && var_is(&args[0], accumulator)
+                if function == "toYaml"
+                    && matches!(args.as_slice(), [arg] if var_is(arg, accumulator))
         )
         .then_some(())
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn classify_custom_merge_helper(&self, name: &str) -> Option<()> {
         let body = self.parsed_helper_body(name)?;
 
@@ -568,25 +585,6 @@ impl IrAnalysisDb {
                 _ => false,
             }
         };
-        fn allowed_set_value(
-            expr: &TemplateExpr,
-            nested_vars: &BTreeSet<String>,
-            is_map_member: &impl Fn(&TemplateExpr) -> bool,
-        ) -> bool {
-            if is_map_member(expr) {
-                return true;
-            }
-            match expr.deparen() {
-                TemplateExpr::Variable(variable) => {
-                    nested_vars.contains(variable.trim_start_matches('$'))
-                }
-                TemplateExpr::Call { function, args } if function == "or" => args
-                    .iter()
-                    .all(|arg| allowed_set_value(arg, nested_vars, is_map_member)),
-                _ => false,
-            }
-        }
-
         let mut full_overwrite_sources: BTreeSet<String> = BTreeSet::new();
         let mut disciplined = true;
         for expr in &exprs {
@@ -617,10 +615,11 @@ impl IrAnalysisDb {
                                 if key_vars.contains(key.trim_start_matches('$'))
                         );
                         if function == "unset"
-                            || args.len() != 3
                             || !targets_out
                             || !keyed_by_range
-                            || !allowed_set_value(&args[2], &nested_vars, &is_map_member)
+                            || args.get(2).is_none_or(|value| {
+                                !allowed_custom_merge_set_value(value, &nested_vars, &is_map_member)
+                            })
                         {
                             disciplined = false;
                         }
@@ -638,9 +637,11 @@ impl IrAnalysisDb {
                                 function: list_fn,
                                 args: list_args,
                             }) if list_fn == "list"
-                                && list_args.len() >= 2
-                                && is_map_member(&list_args[0])
-                                && is_map_member(&list_args[1])
+                                && matches!(
+                                    list_args.as_slice(),
+                                    [first, second, ..]
+                                        if is_map_member(first) && is_map_member(second)
+                                )
                         );
                         if !recursion_operands_are_members {
                             disciplined = false;
@@ -695,7 +696,10 @@ impl IrAnalysisDb {
     /// Evaluate one bound helper call in the fragment domain, memoized per
     /// (helper, bindings, dot, call chain).
     #[tracing::instrument(skip_all, fields(helper = name))]
-    #[allow(clippy::too_many_arguments)]
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "helper evaluation needs the complete lexical and fragment context"
+    )]
     pub(crate) fn summarize_bound_helper_call(
         &self,
         name: &str,
@@ -714,7 +718,7 @@ impl IrAnalysisDb {
             };
         }
 
-        let resolved = resolve_bound_helper_call(ResolveBoundHelperCallParams {
+        let resolved = resolve_bound_helper_call(&ResolveBoundHelperCallParams {
             helper_name: name,
             arg,
             outer_bindings,
@@ -786,6 +790,7 @@ struct ResolvedBoundHelperCall {
     argument_effects: Effects,
 }
 
+#[derive(Clone, Copy)]
 struct ResolveBoundHelperCallParams<'a, 'context> {
     helper_name: &'a str,
     arg: Option<&'a TemplateExpr>,
@@ -806,7 +811,7 @@ pub(crate) struct OuterRootFacts<'a> {
 }
 
 fn resolve_bound_helper_call(
-    params: ResolveBoundHelperCallParams<'_, '_>,
+    params: &ResolveBoundHelperCallParams<'_, '_>,
 ) -> ResolvedBoundHelperCall {
     let mut argument_effects = Effects::default();
     let mut eval_arg_value = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
@@ -851,7 +856,7 @@ fn resolve_bound_helper_call(
 
     if helper_uses_large_config_arg(params.helper_name) {
         if let Some(binding) = bindings.remove("config") {
-            bindings.insert("config".to_string(), abstract_config_binding(binding));
+            bindings.insert("config".to_string(), abstract_config_binding(&binding));
         }
         helper_body_dot = helper_body_dot.map(abstract_config_entry_in_binding);
         helper_fragment_dot = helper_fragment_dot.map(abstract_config_entry_in_binding);
@@ -895,7 +900,7 @@ fn helper_uses_large_config_arg(name: &str) -> bool {
     name.starts_with("opentelemetry-collector.apply")
 }
 
-fn abstract_config_binding(binding: AbstractValue) -> AbstractValue {
+fn abstract_config_binding(binding: &AbstractValue) -> AbstractValue {
     // `path_choices` yields `None` only for an empty path set, so a pathless
     // config binding widens straight to `Top`.
     AbstractValue::path_choices(binding.paths()).unwrap_or(AbstractValue::Top)
@@ -905,7 +910,7 @@ fn abstract_config_entry_in_binding(binding: AbstractValue) -> AbstractValue {
     match binding {
         AbstractValue::Dict(mut entries) => {
             if let Some(config) = entries.remove("config") {
-                entries.insert("config".to_string(), abstract_config_binding(config));
+                entries.insert("config".to_string(), abstract_config_binding(&config));
             }
             AbstractValue::Dict(entries)
         }
@@ -1128,6 +1133,10 @@ fn header_has_key_literals(header: &helm_schema_ast::TemplateHeader) -> Option<B
     }
 }
 
+#[expect(
+    clippy::struct_field_names,
+    reason = "the suffix distinguishes the three template variables from their resolved values"
+)]
 struct DestructuredRange {
     source_var: String,
     key_var: String,

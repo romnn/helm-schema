@@ -1,5 +1,6 @@
 use crate::ConditionalGuard;
 
+/// Reports whether two conditional guards are exact logical complements.
 #[must_use]
 pub fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuard) -> bool {
     fn negated_truthy_path(guard: &ConditionalGuard) -> Option<&str> {
@@ -20,6 +21,7 @@ pub fn guards_are_complementary(left: &ConditionalGuard, right: &ConditionalGuar
     }
 }
 
+/// Reports whether every member of `subset` occurs in the larger `superset`.
 #[must_use]
 pub fn key_is_strict_subset(subset: &[ConditionalGuard], superset: &[ConditionalGuard]) -> bool {
     key_is_strict_subset_by(subset, superset)

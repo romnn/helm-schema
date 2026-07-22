@@ -5,7 +5,10 @@ use super::provider_schema_fragment::ProviderSchemaFragment;
 /// lookup trace after the chain decides that the miss is final.
 // Transient by-value outcome; the size gap between `Resolved` and
 // `MissingSchema` does not justify boxing.
-#[allow(clippy::large_enum_variant)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "this transient outcome avoids a heap allocation on every successful lookup"
+)]
 #[derive(Debug)]
 pub enum ChainLookupOutcome {
     /// `None` when the resolving provider returned `PathUnresolved`

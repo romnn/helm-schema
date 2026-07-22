@@ -4,11 +4,13 @@
 //! any input type renders. Values validation and the full-schema pin live
 //! in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 
 #[test]
-fn datadog_image_tag_accepts_non_strings() -> color_eyre::eyre::Result<()> {
+fn datadog_image_tag_accepts_non_strings() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("datadog")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

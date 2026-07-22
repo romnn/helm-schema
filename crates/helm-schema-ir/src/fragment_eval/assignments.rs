@@ -100,8 +100,11 @@ pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variabl
         });
         return keeps_self && adds_nonempty_literal_list;
     }
+    let Some((first, rest)) = args.split_first() else {
+        return false;
+    };
     let same_variable = matches!(
-        args[0].deparen(),
+        first.deparen(),
         TemplateExpr::Variable(name) if name.trim_start_matches('$') == variable
     );
     same_variable
@@ -109,7 +112,7 @@ pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variabl
             function.as_str(),
             "append" | "mustAppend" | "prepend" | "mustPrepend"
         ) || function == "print"
-            && args[1..].iter().any(|arg| {
+            && rest.iter().any(|arg| {
                 matches!(
                     arg.deparen(),
                     TemplateExpr::Literal(
@@ -168,7 +171,7 @@ impl RangeKeyConcretization {
             Predicate::Guard(crate::Guard::Range { path }) if self.keyed.contains_key(path) => {
                 Predicate::from(crate::Guard::HasKey {
                     path: path.clone(),
-                    key: self.keyed[path].clone(),
+                    key: self.keyed.get(path).cloned().unwrap_or_default(),
                 })
             }
             Predicate::Guard(crate::Guard::RangeKeyEquals { path, key })
@@ -269,16 +272,19 @@ impl Interpreter<'_> {
                 let TemplateExpr::Call { function, args } = node else {
                     return;
                 };
-                if function != "set" || args.len() != 3 {
+                let [target, key, value] = args.as_slice() else {
+                    return;
+                };
+                if function != "set" {
                     return;
                 }
-                let target_is_dot = match args[0].deparen() {
+                let target_is_dot = match target.deparen() {
                     TemplateExpr::Field(path) => path.is_empty(),
                     TemplateExpr::Variable(variable) => variable.is_empty(),
                     _ => false,
                 };
                 if target_is_dot {
-                    assignments.push((args[1].clone(), args[2].clone()));
+                    assignments.push((key.clone(), value.clone()));
                 }
             });
         }
@@ -431,6 +437,10 @@ impl Interpreter<'_> {
         }
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     pub(super) fn eval_assignment_exprs(&mut self, exprs: &[TemplateExpr]) {
         if self.apply_helper_scope_set_mutations(exprs) {
             return;

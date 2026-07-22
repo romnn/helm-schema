@@ -1,10 +1,12 @@
+use color_eyre::eyre;
+
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
 use super::local_resource_schemas_from_template_source;
 
 #[test]
-fn templated_metadata_crd_still_projects_local_schema() -> color_eyre::eyre::Result<()> {
+fn templated_metadata_crd_still_projects_local_schema() -> eyre::Result<()> {
     let source = r#"apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
@@ -47,8 +49,8 @@ spec:
 }
 
 #[test]
-fn dynamic_schema_subtree_is_not_projected() -> color_eyre::eyre::Result<()> {
-    let source = r#"apiVersion: apiextensions.k8s.io/v1
+fn dynamic_schema_subtree_is_not_projected() -> eyre::Result<()> {
+    let source = r"apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 spec:
   group: example.com
@@ -63,7 +65,7 @@ spec:
       schema:
         openAPIV3Schema:
           type: {{ .Values.schemaType }}
-"#;
+";
 
     let schemas =
         local_resource_schemas_from_template_source(source, "/chart/templates/crd.yaml", true)?;

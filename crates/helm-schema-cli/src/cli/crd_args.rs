@@ -2,13 +2,17 @@ use std::path::PathBuf;
 
 use clap::{Args, ValueEnum};
 
+/// Policy for resolving CRD versions missing from the configured catalog.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
 pub enum CrdVersionLookup {
+    /// Consult only the exact group, kind, and version.
     #[default]
     Strict,
+    /// Scan other versions and emit informational alternatives.
     Loose,
 }
 
+/// CRD catalog, override, cache, and version-resolution options.
 #[derive(Args, Debug, Clone)]
 pub struct CrdArgs {
     /// CRD version lookup mode. Default `strict`: only the exact
@@ -63,6 +67,11 @@ impl CrdArgs {
 
     /// Validate CRD-related flags. Returns a user-facing error string
     /// on invalid combinations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for removed flags or overlapping managed and
+    /// hand-maintained cache directories.
     pub fn validate(&self) -> Result<(), String> {
         if self.crd_catalog_dir_removed.is_some() {
             return Err(

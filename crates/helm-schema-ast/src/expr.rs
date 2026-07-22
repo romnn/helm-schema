@@ -20,7 +20,9 @@ pub enum Literal {
     Int(i64),
     /// Floating-point literal.
     Float(f64),
+    /// Boolean literal.
     Bool(bool),
+    /// Nil literal.
     Nil,
 }
 
@@ -43,6 +45,7 @@ impl Literal {
 /// is preserved so callers can still inspect it.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TemplateExpr {
+    /// Typed scalar literal.
     Literal(Literal),
     /// Dotted field-access chain rooted at the current context.
     /// `.Values.foo.bar` → `Field(["Values","foo","bar"])`; bare `.`
@@ -51,7 +54,9 @@ pub enum TemplateExpr {
     /// Selector on a non-context operand: `$root.Values.X` becomes
     /// `Selector { operand: Variable("root"), path: ["Values","X"] }`.
     Selector {
+        /// Expression on which selector fields are resolved.
         operand: Box<TemplateExpr>,
+        /// Field segments resolved from the operand.
         path: Vec<String>,
     },
     /// `$varname`; bare `$` is `Variable(String::new())`.
@@ -60,23 +65,31 @@ pub enum TemplateExpr {
     /// `Call { args: vec![] }` because the grammar models them as
     /// zero-arg calls.
     Call {
+        /// Function identifier as written in the action.
         function: String,
+        /// Positional arguments in source order.
         args: Vec<TemplateExpr>,
     },
     /// `a | b | c`. The piped value is passed as the LAST positional
     /// argument to the next stage at render time.
     Pipeline(Vec<TemplateExpr>),
+    /// Expression wrapped in grouping parentheses.
     Parenthesized(Box<TemplateExpr>),
     /// `$x := expr`.
     VariableDefinition {
+        /// Variable name without the leading dollar sign.
         name: String,
+        /// Expression assigned by the definition.
         value: Box<TemplateExpr>,
     },
     /// `$x = expr`.
     Assignment {
+        /// Variable name without the leading dollar sign.
         name: String,
+        /// Expression assigned to the existing variable.
         value: Box<TemplateExpr>,
     },
+    /// Source text for an expression shape not represented by this AST.
     Unknown(String),
 }
 
@@ -120,6 +133,7 @@ impl TemplateExpr {
         current
     }
 
+    /// Reports whether rendering this expression can produce structural YAML.
     #[must_use]
     pub fn renders_yaml_fragment(&self) -> bool {
         match self.deparen() {
@@ -138,9 +152,9 @@ impl TemplateExpr {
         }
     }
 
-    #[must_use]
     /// The rendered indent width of a fragment expression
     /// (`… | nindent N` / `… | indent N`), when statically known.
+    #[must_use]
     pub fn fragment_indent_width(&self) -> Option<usize> {
         match self.deparen() {
             TemplateExpr::Call { function, args }

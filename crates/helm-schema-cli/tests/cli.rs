@@ -1,12 +1,14 @@
+//! End-to-end command-line behavior regressions.
+
 use clap::Parser;
-use color_eyre::eyre::{WrapErr, eyre};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr, eyre};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
+fn into_eyre(e: helm_schema_cli::CliError) -> eyre::Report {
     e.into()
 }
 
@@ -56,14 +58,15 @@ fn schema_contains_open_string_map(schema: &serde_json::Value) -> bool {
         })
 }
 
-fn schema_validates_instance(schema: &serde_json::Value, instance: &serde_json::Value) -> bool {
-    jsonschema::validator_for(schema)
-        .expect("schema validator")
-        .is_valid(instance)
+fn schema_validates_instance(
+    schema: &serde_json::Value,
+    instance: &serde_json::Value,
+) -> eyre::Result<bool> {
+    Ok(jsonschema::validator_for(schema)?.is_valid(instance))
 }
 
 #[test]
-fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
+fn cli_parses_defaults() -> eyre::Result<()> {
     let cli =
         Cli::try_parse_from(["helm-schema", "/tmp/chart"]).map_err(|e| eyre!(e.to_string()))?;
 
@@ -81,7 +84,7 @@ fn cli_parses_defaults() -> color_eyre::eyre::Result<()> {
 }
 
 #[test]
-fn override_schema_flag_is_repeatable() -> color_eyre::eyre::Result<()> {
+fn override_schema_flag_is_repeatable() -> eyre::Result<()> {
     let cli = Cli::try_parse_from([
         "helm-schema",
         "/tmp/chart",
@@ -103,7 +106,7 @@ fn override_schema_flag_is_repeatable() -> color_eyre::eyre::Result<()> {
 }
 
 #[test]
-fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre::Result<()> {
+fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata().join("fixture-charts/full-fixture");
     let chart_dir_str = chart_dir.to_string_lossy().to_string();
     let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
@@ -153,8 +156,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> color_eyre::eyre
 }
 
 #[test]
-fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_eyre::eyre::Result<()>
-{
+fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -247,7 +249,7 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> color_ey
 }
 
 #[test]
-fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> color_eyre::eyre::Result<()> {
+fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -296,7 +298,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> color_eyre:
         schema_accepts_type(
             actual
                 .pointer("/properties/kid/properties/enabled")
-                .ok_or_else(|| eyre!("missing kid.enabled schema"))?,
+                .ok_or_eyre("missing kid.enabled schema")?,
             "boolean"
         ),
         "expected kid.enabled to be boolean: {actual}"
@@ -305,7 +307,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> color_eyre:
         schema_accepts_type(
             actual
                 .pointer("/properties/global/properties/kidEnabled")
-                .ok_or_else(|| eyre!("missing global.kidEnabled schema"))?,
+                .ok_or_eyre("missing global.kidEnabled schema")?,
             "boolean"
         ),
         "expected global.kidEnabled to be boolean: {actual}"
@@ -314,7 +316,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> color_eyre:
         schema_accepts_type(
             actual
                 .pointer("/properties/tags/properties/observability")
-                .ok_or_else(|| eyre!("missing tags.observability schema"))?,
+                .ok_or_eyre("missing tags.observability schema")?,
             "boolean"
         ),
         "expected tags.observability to be boolean: {actual}"
@@ -324,7 +326,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> color_eyre:
 }
 
 #[test]
-fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<()> {
+fn static_chart_crds_type_custom_resource_values() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -368,14 +370,14 @@ fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<(
     )?;
     test_util::write(
         &chart_dir.join("templates/widget.yaml")?,
-        indoc! {r#"
+        indoc! {r"
             apiVersion: example.com/v1
             kind: Widget
             metadata:
               name: widget
             spec:
               size: {{ .Values.widget.spec.size }}
-        "#},
+        "},
     )?;
 
     let opts = GenerateOptions {
@@ -395,7 +397,7 @@ fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<(
         .wrap_err("generate schema")?;
     let size = schema
         .pointer("/properties/widget/properties/spec/properties/size")
-        .ok_or_else(|| eyre!("missing widget.spec.size schema: {schema}"))?;
+        .ok_or_eyre(format!("missing widget.spec.size schema: {schema}"))?;
 
     assert!(
         schema_accepts_type(size, "integer"),
@@ -410,8 +412,7 @@ fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<(
 }
 
 #[test]
-fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_eyre::eyre::Result<()>
-{
+fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -484,7 +485,7 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_ey
                     }
                 }
             })
-        ),
+        )?,
         "defaulted helper serviceAccount.name should validate null without provider schemas: {schema}"
     );
     assert!(
@@ -500,7 +501,7 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_ey
                     }
                 }
             })
-        ),
+        )?,
         "helper else-branch default should also validate null without provider schemas: {schema}"
     );
 
@@ -508,8 +509,7 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> color_ey
 }
 
 #[test]
-fn layered_values_file_comments_override_and_add_descriptions_only() -> color_eyre::eyre::Result<()>
-{
+fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -615,7 +615,7 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> color_ey
 }
 
 #[test]
-fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result<()> {
+fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -711,8 +711,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> color_eyre::eyre::Result
 }
 
 #[test]
-fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context()
--> color_eyre::eyre::Result<()> {
+fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -780,7 +779,7 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context()
 
     let digest = actual
         .pointer("/properties/kid/properties/image/properties/digest")
-        .ok_or_else(|| eyre!("missing kid.image.digest schema: {actual}"))?;
+        .ok_or_eyre(format!("missing kid.image.digest schema: {actual}"))?;
     // printf renders any argument, so the digest slot must accept the
     // explicit null default, digest strings, and other renderable scalars.
     for probe in [
@@ -789,7 +788,7 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context()
         serde_json::json!(7),
     ] {
         assert!(
-            schema_validates_instance(digest, &probe),
+            schema_validates_instance(digest, &probe)?,
             "kid.image.digest renders through printf, so {probe} must validate, got {digest}"
         );
     }
@@ -798,8 +797,7 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context()
 }
 
 #[test]
-fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> color_eyre::eyre::Result<()>
-{
+fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -865,7 +863,7 @@ spec:
 
     let global = actual
         .pointer("/properties/global")
-        .ok_or_else(|| eyre!("missing global schema"))?;
+        .ok_or_eyre("missing global schema")?;
     assert!(
         global.get("required").is_none(),
         "global should not inherit required fields from helper output, got {global}"
@@ -881,7 +879,7 @@ spec:
 
     let persistence = actual
         .pointer("/properties/kid/properties/persistence")
-        .ok_or_else(|| eyre!("missing kid.persistence schema"))?;
+        .ok_or_eyre("missing kid.persistence schema")?;
     assert!(
         persistence.get("required").is_none(),
         "kid.persistence should not inherit required fields from helper output, got {persistence}"
@@ -899,8 +897,7 @@ spec:
 }
 
 #[test]
-fn library_subchart_helper_descendant_access_does_not_widen_parent_objects()
--> color_eyre::eyre::Result<()> {
+fn library_subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -965,7 +962,7 @@ storageClassName: {{ $storageClass }}
 
     let global = actual
         .pointer("/properties/global")
-        .ok_or_else(|| eyre!("missing global schema"))?;
+        .ok_or_eyre("missing global schema")?;
     assert!(
         global.get("required").is_none(),
         "global should not inherit required fields from library helper output, got {global}"
@@ -981,7 +978,7 @@ storageClassName: {{ $storageClass }}
 
     let persistence = actual
         .pointer("/properties/kid/properties/persistence")
-        .ok_or_else(|| eyre!("missing kid.persistence schema"))?;
+        .ok_or_eyre("missing kid.persistence schema")?;
     assert!(
         persistence.get("required").is_none(),
         "kid.persistence should not inherit required fields from library helper output, got {persistence}"
@@ -999,7 +996,7 @@ storageClassName: {{ $storageClass }}
 }
 
 #[test]
-fn deployment_annotations_fragment_stays_annotations_map() -> color_eyre::eyre::Result<()> {
+fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1051,7 +1048,7 @@ spec:
 
     let pod_annotations = actual
         .pointer("/properties/podAnnotations")
-        .ok_or_else(|| eyre!("missing podAnnotations schema"))?;
+        .ok_or_eyre("missing podAnnotations schema")?;
     assert!(
         pod_annotations.get("required").is_none(),
         "podAnnotations should not inherit deployment required fields, got {pod_annotations}"
@@ -1065,8 +1062,7 @@ spec:
 }
 
 #[test]
-fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> color_eyre::eyre::Result<()>
-{
+fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1079,7 +1075,7 @@ fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> color_eyr
     )?;
     test_util::write(
         &chart_dir.join("templates/pod.yaml")?,
-        r#"apiVersion: v1
+        r"apiVersion: v1
 kind: Pod
 spec:
   {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
@@ -1089,7 +1085,7 @@ spec:
   containers:
     - name: demo
       image: nginx
-"#,
+",
     )?;
 
     let opts = GenerateOptions {
@@ -1114,7 +1110,7 @@ spec:
 
     let global = actual
         .pointer("/properties/global")
-        .ok_or_else(|| eyre!("missing global schema"))?;
+        .ok_or_eyre("missing global schema")?;
     assert!(
         global.get("required").is_none(),
         "global should not inherit local-object-reference requirements, got {global}"
@@ -1128,7 +1124,7 @@ spec:
 }
 
 #[test]
-fn parens_around_values_prefix_propagate_full_path_into_schema() -> color_eyre::eyre::Result<()> {
+fn parens_around_values_prefix_propagate_full_path_into_schema() -> eyre::Result<()> {
     // Regression: charts use `(.Values.image).tag` so a nil
     // `.Values.image` returns nil instead of erroring on the `.tag`
     // access (Helm idiom, see chart_template_guide). Pre-fix, the IR
@@ -1189,7 +1185,7 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> color_eyre::
 
     let image = actual
         .pointer("/properties/image")
-        .ok_or_else(|| eyre!("missing image schema"))?;
+        .ok_or_eyre("missing image schema")?;
     assert!(
         image.pointer("/properties/tag").is_some(),
         "image.tag should be inferred even when the template uses `(.Values.image).tag` parens form; got {image}",
@@ -1203,8 +1199,7 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> color_eyre::
 }
 
 #[test]
-fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
--> color_eyre::eyre::Result<()> {
+fn parens_form_does_not_lose_default_driven_nullability_on_inner_field() -> eyre::Result<()> {
     // Charts pair the parens idiom with `| default` so a nil
     // `.Values.image.tag` falls back to `$appVersion`. The default
     // pattern makes the inner path nullable in the contract projection.
@@ -1268,7 +1263,7 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
                     "tag": null
                 }
             })
-        ),
+        )?,
         "image.tag should accept null when guarded by `| default` even through the parens-form prefix; got {actual}",
     );
 
@@ -1288,7 +1283,7 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
 /// runs before any read, while every other path on `serviceAccount`
 /// stays narrowly typed.
 #[test]
-fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::eyre::Result<()> {
+fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1380,7 +1375,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> color_eyre::e
 /// target. The target's declared null remains accepted independently, while
 /// the stringification sink contributes the scalar input alternatives.
 #[test]
-fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre::eyre::Result<()> {
+fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1463,8 +1458,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
 }
 
 #[test]
-fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads()
--> color_eyre::eyre::Result<()> {
+fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1524,7 +1518,7 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads()
 
     let name = actual
         .pointer("/properties/serviceAccount/properties/name")
-        .ok_or_else(|| eyre!("missing serviceAccount.name schema: {actual}"))?;
+        .ok_or_eyre(format!("missing serviceAccount.name schema: {actual}"))?;
 
     assert!(
         !schema_accepts_type(name, "null"),
@@ -1540,8 +1534,11 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads()
 /// carries the default-driven nullability for both `fullnameOverride` and
 /// `nameOverride`; the surrounding `printf` must not erase that signal.
 #[test]
-fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
--> color_eyre::eyre::Result<()> {
+#[expect(
+    clippy::too_many_lines,
+    reason = "the nested helper fixture and nullability assertions form one focused regression"
+)]
+fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(

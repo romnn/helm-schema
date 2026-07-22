@@ -88,17 +88,20 @@ fn local_set_mutation_target_and_keys_from_exprs(
             let TemplateExpr::Call { function, args } = node else {
                 return;
             };
-            if function != "set" || args.len() != 3 {
+            let [target, key, _value] = args.as_slice() else {
+                return;
+            };
+            if function != "set" {
                 return;
             }
-            let TemplateExpr::Variable(var) = &args[0] else {
+            let TemplateExpr::Variable(var) = target else {
                 return;
             };
             if var.is_empty() || !local_bindings.contains_key(var) {
                 return;
             }
             let Some(key_binding) =
-                context.fragment_value_from_expr(&args[1], local_bindings, current_dot, seen)
+                context.fragment_value_from_expr(key, local_bindings, current_dot, seen)
             else {
                 return;
             };

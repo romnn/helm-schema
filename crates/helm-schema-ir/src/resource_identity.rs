@@ -397,10 +397,13 @@ fn collect_kind_partition_literals(
                             let TemplateExpr::Call { function, args } = expr.deparen() else {
                                 return;
                             };
-                            if !matches!(function.as_str(), "eq" | "ne") || args.len() != 2 {
+                            let [left, right] = args.as_slice() else {
+                                return;
+                            };
+                            if !matches!(function.as_str(), "eq" | "ne") {
                                 return;
                             }
-                            let candidate = match (args[0].deparen(), args[1].deparen()) {
+                            let candidate = match (left.deparen(), right.deparen()) {
                                 (
                                     path,
                                     TemplateExpr::Literal(
@@ -577,8 +580,9 @@ fn record_api_version_output(
         0 => {}
         // A single branch carries no alternative; unwrap it into the summary.
         1 => {
-            let branch = nested.into_iter().next().expect("single branch");
-            record_api_version_output(branch.body, versions, branches);
+            if let Some(branch) = nested.into_iter().next() {
+                record_api_version_output(branch.body, versions, branches);
+            }
         }
         _ => {
             for branch in &nested {
@@ -809,11 +813,11 @@ fn body_from_helper_parts(literals: Vec<String>, branches: Vec<HelperBranch>) ->
 }
 
 fn nonempty_body(literals: Vec<String>, branches: Vec<HelperBranch>) -> Option<HelperBranchBody> {
-    if !branches.is_empty() {
-        Some(HelperBranchBody::Nested { branches })
-    } else {
+    if branches.is_empty() {
         let literals = dedup_preserve_order(literals);
         (!literals.is_empty()).then_some(HelperBranchBody::literals(literals))
+    } else {
+        Some(HelperBranchBody::Nested { branches })
     }
 }
 
@@ -869,20 +873,28 @@ fn capability_ternary_body(exprs: &[TemplateExpr]) -> Option<HelperBranchBody> {
             let TemplateExpr::Call { function, args } = last.deparen() else {
                 return None;
             };
-            if function != "ternary" || args.len() != 2 || condition_stages.is_empty() {
+            let [on_true, on_false] = args.as_slice() else {
+                return None;
+            };
+            if function != "ternary" || condition_stages.is_empty() {
                 return None;
             }
             (
                 TemplateExpr::Pipeline(condition_stages.to_vec()),
-                literal_string(&args[0])?,
-                literal_string(&args[1])?,
+                literal_string(on_true)?,
+                literal_string(on_false)?,
             )
         }
-        TemplateExpr::Call { function, args } if function == "ternary" && args.len() == 3 => (
-            args[2].clone(),
-            literal_string(&args[0])?,
-            literal_string(&args[1])?,
-        ),
+        TemplateExpr::Call { function, args } if function == "ternary" => {
+            let [on_true, on_false, condition] = args.as_slice() else {
+                return None;
+            };
+            (
+                condition.clone(),
+                literal_string(on_true)?,
+                literal_string(on_false)?,
+            )
+        }
         _ => return None,
     };
     let guard = decode_guard_expr(&condition, "")?;

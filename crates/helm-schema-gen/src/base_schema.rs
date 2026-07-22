@@ -58,8 +58,12 @@ pub(crate) fn classify_base(
     conditional_targets: &ConditionalTargetIndex,
     owning_ancestors: &BTreeSet<Vec<String>>,
 ) -> BaseOwner {
-    let has_owning_ancestor = (1..resolved_path.path_segments.len())
-        .any(|length| owning_ancestors.contains(&resolved_path.path_segments[..length]));
+    let has_owning_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
+        resolved_path
+            .path_segments
+            .get(..length)
+            .is_some_and(|path| owning_ancestors.contains(path))
+    });
     if has_owning_ancestor {
         return BaseOwner::OwnedByAncestor;
     }

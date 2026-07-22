@@ -15,7 +15,7 @@
 //! - cycle detection (left in place as `$ref` strings rather than
 //!   recursing forever)
 //!
-//! All we own is the [`Retrieve`] implementation that maps URIs back to
+//! All we own is the [`jsonschema::Retrieve`] implementation that maps URIs back to
 //! their content — files from the chart-local filesystem and URLs over
 //! HTTP via `ureq`, both gated by an explicit fetch policy.
 //!
@@ -53,7 +53,7 @@ use crate::load_budget::{LoadBudget, read_to_end_capped};
 /// is wrapped with enough detail for an operator to find the bad ref.
 #[instrument(skip_all)]
 pub fn flatten_refs(
-    schema: Value,
+    schema: &Value,
     base_dir: &Path,
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
@@ -68,8 +68,13 @@ pub fn flatten_refs(
 /// This is the final-output counterpart to [`flatten_refs`]. Input assembly is
 /// responsible for fetching and preparing external refs. If an external ref
 /// reaches this pass, the schema is not self-contained and the run fails.
+///
+/// # Errors
+///
+/// Returns [`CliError::Referencing`] when a reference is malformed,
+/// unresolved, or still points to an external document.
 #[instrument(skip_all)]
-pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Value> {
+pub fn flatten_prepared_refs(schema: &Value, base_dir: &Path) -> EngineResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
     flatten_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
@@ -81,6 +86,11 @@ pub fn flatten_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Val
 /// the same [`Retrieve`] implementation used by [`flatten_refs`], but the
 /// referenced schema is re-homed under `#/$defs/...` instead of being inlined
 /// at each use site.
+///
+/// # Errors
+///
+/// Returns an error when a reference URI is malformed, a referenced document
+/// cannot be retrieved or parsed, or a load budget is exceeded.
 #[instrument(skip_all)]
 pub fn bundle_refs(
     schema: Value,
@@ -98,6 +108,11 @@ pub fn bundle_refs(
 ///
 /// Internal refs are preserved. External refs fail, because input assembly
 /// should have already re-homed them under root-level `$defs`.
+///
+/// # Errors
+///
+/// Returns an error when a reference is malformed, unresolved, or still
+/// points to an external document.
 #[instrument(skip_all)]
 pub fn bundle_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Value> {
     let base_uri = path_to_file_uri(base_dir);
@@ -116,14 +131,14 @@ pub fn bundle_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Valu
 /// Returns [`CliError::Referencing`] on any ref-resolution failure.
 #[instrument(skip_all)]
 pub fn flatten_with_retriever(
-    schema: Value,
+    schema: &Value,
     base_uri: &str,
     retriever: impl Retrieve + 'static,
 ) -> EngineResult<Value> {
     let dereferenced = jsonschema::options()
         .with_base_uri(base_uri.to_string())
         .with_retriever(retriever)
-        .dereference(&schema)?;
+        .dereference(schema)?;
     Ok(dereferenced)
 }
 
@@ -133,6 +148,11 @@ pub fn flatten_with_retriever(
 /// fetched through `retriever`, rewritten to root-level `$defs`, and any refs
 /// inside fetched schemas are interpreted relative to the document they came
 /// from before being re-homed.
+///
+/// # Errors
+///
+/// Returns an error when the base URI or a reference is malformed, retrieval
+/// fails, or the resulting definitions cannot be inserted safely.
 #[instrument(skip_all)]
 pub fn bundle_with_retriever(
     mut schema: Value,

@@ -26,7 +26,7 @@ impl K8sVersionChain {
         }
     }
 
-    /// Materialise the ordered list of version_dirs to probe.
+    /// Materialise the ordered list of `version_dirs` to probe.
     #[must_use]
     pub fn ordered(&self) -> Vec<String> {
         let mut out: Vec<String> = self.explicit.clone();
@@ -35,9 +35,8 @@ impl K8sVersionChain {
             && let Some(primary) = self.explicit.first().and_then(|v| parse_minor(v))
         {
             for offset in 1..=window {
-                let next_minor = match primary.1.checked_sub(offset) {
-                    Some(m) => m,
-                    None => break,
+                let Some(next_minor) = primary.1.checked_sub(offset) else {
+                    break;
                 };
                 out.push(format!("v{}.{next_minor}.0", primary.0));
             }

@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{
     Chain, Diagnostic, DiagnosticSink, K8sSchemaProvider, K8sVersionChain,
@@ -13,10 +14,11 @@ use helm_schema_k8s::{
 };
 use test_util::prelude::sim_assert_eq;
 
-mod common;
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
 use common::{MockFetcher, MockResponse};
 
-fn tmp_dir(label: &str) -> std::path::PathBuf {
+fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
     let p = std::env::temp_dir().join(format!(
         "helm-schema.{label}.{}.{}",
         std::process::id(),
@@ -25,8 +27,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
             .map(|d| d.as_nanos())
             .unwrap_or(0)
     ));
-    std::fs::create_dir_all(&p).expect("create temp dir");
-    p
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
 }
 
 fn pdb_v1beta1_doc() -> String {
@@ -34,8 +36,8 @@ fn pdb_v1beta1_doc() -> String {
 }
 
 #[test]
-fn k8s_version_fallback_falls_back_to_older() {
-    let cache_dir = tmp_dir("k8s-fallback-falls-back");
+fn k8s_version_fallback_falls_back_to_older() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-fallback-falls-back")?;
     let mock = Arc::new(
         MockFetcher::new()
             .with(
@@ -82,11 +84,12 @@ fn k8s_version_fallback_falls_back_to_older() {
         )),
         "expected ResolvedFromFallbackVersion diagnostic; got {diagnostics:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn k8s_version_fallback_offline_returns_none() {
-    let cache_dir = tmp_dir("k8s-fallback-offline");
+fn k8s_version_fallback_offline_returns_none() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-fallback-offline")?;
     let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NetworkDisabled));
     let diagnostics = DiagnosticSink::new();
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
@@ -117,11 +120,12 @@ fn k8s_version_fallback_offline_returns_none() {
         )),
         "expected MissingSchema with both versions; got {diagnostics:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn has_resource_does_not_speculatively_download() {
-    let cache_dir = tmp_dir("k8s-has-resource-no-download");
+fn has_resource_does_not_speculatively_download() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-has-resource-no-download")?;
     let mock = Arc::new(MockFetcher::new());
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec![
@@ -148,6 +152,7 @@ fn has_resource_does_not_speculatively_download() {
         want: 0,
         "has_resource must not trigger any fetches"
     );
+    Ok(())
 }
 
 #[test]
@@ -172,8 +177,8 @@ fn k8s_version_fallback_chain_derivation() {
 }
 
 #[test]
-fn resolved_from_fallback_version_payload_fields() {
-    let cache_dir = tmp_dir("k8s-fallback-payload-fields");
+fn resolved_from_fallback_version_payload_fields() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-fallback-payload-fields")?;
     let mock = Arc::new(
         MockFetcher::new()
             .with(
@@ -227,11 +232,12 @@ fn resolved_from_fallback_version_payload_fields() {
     sim_assert_eq!(have: payload.1, want: "policy/v1beta1");
     sim_assert_eq!(have: payload.2, want: "v1.35.0");
     sim_assert_eq!(have: payload.3, want: "v1.24.0");
+    Ok(())
 }
 
 #[test]
-fn k8s_negative_cache_per_source_and_version() {
-    let cache_dir = tmp_dir("k8s-negcache-per-source");
+fn k8s_negative_cache_per_source_and_version() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-negcache-per-source")?;
     let mirror_url = "https://example.com/mirror";
     let default_url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
     let mirror_resource_url =
@@ -271,11 +277,12 @@ fn k8s_negative_cache_per_source_and_version() {
         mock.calls_for(&mirror_resource_url) <= 2,
         "mirror should be fetched at most once per file (first to populate)"
     );
+    Ok(())
 }
 
 #[test]
-fn negative_cache_avoids_retry() {
-    let cache_dir = tmp_dir("k8s-negative-cache");
+fn negative_cache_avoids_retry() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-negative-cache")?;
     let mock = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec!["v1.35.0".to_string()],
@@ -305,11 +312,12 @@ fn negative_cache_avoids_retry() {
         want: 1,
         "negative cache must prevent repeat fetches for the same URL"
     );
+    Ok(())
 }
 
 #[test]
-fn persisted_not_found_marker_avoids_cross_process_retry() {
-    let cache_dir = tmp_dir("k8s-persistent-negative-cache");
+fn persisted_not_found_marker_avoids_cross_process_retry() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-persistent-negative-cache")?;
     let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
     let first_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let first_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
@@ -347,11 +355,12 @@ fn persisted_not_found_marker_avoids_cross_process_retry() {
         want: 0,
         "persisted not-found marker should avoid a cross-process retry"
     );
+    Ok(())
 }
 
 #[test]
-fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
-    let cache_dir = tmp_dir("k8s-no-cache-refreshes-negative");
+fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-no-cache-refreshes-negative")?;
     let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
     let stale_fetcher = Arc::new(MockFetcher::new().with_default(MockResponse::NotFound));
     let stale_provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
@@ -427,11 +436,12 @@ fn no_cache_bypasses_not_found_marker_and_refreshes_positive_schema() {
             .is_some(),
         "fresh positive schema should be cached for later normal runs"
     );
+    Ok(())
 }
 
 #[test]
-fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
-    let cache_dir = tmp_dir("k8s-no-cache-clears-positive");
+fn no_cache_authoritative_not_found_clears_stale_positive_schema() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("k8s-no-cache-clears-positive")?;
     let url = "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.35.0/poddisruptionbudget-policy-v1beta1.json";
     let resource = ResourceRef::concrete(
         "policy/v1beta1".to_string(),
@@ -492,4 +502,5 @@ fn no_cache_authoritative_not_found_clears_stale_positive_schema() {
             .is_none(),
         "stale positive cache entry should not survive the authoritative 404"
     );
+    Ok(())
 }

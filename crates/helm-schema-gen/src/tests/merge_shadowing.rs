@@ -13,7 +13,7 @@ use super::{parse_ir, parse_ir_with_helpers, schema_accepts_instance, schema_for
 /// truthiness, and custom legacy keys stay open.
 #[test]
 fn shadowed_merge_layer_binds_members_only_where_unshadowed() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $ctx := merge (.Values.podSecurityContext | default dict) (.Values.securityContext | default dict) }}
         apiVersion: apps/v1
         kind: Deployment
@@ -28,7 +28,7 @@ fn shadowed_merge_layer_binds_members_only_where_unshadowed() {
               {{- end }}
               containers:
                 - name: main
-    "#};
+    "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
         Some("podSecurityContext: {}\nsecurityContext: {}\n"),
@@ -138,7 +138,7 @@ fn merged_member_projection_reaches_both_layers() {
 /// the first is typed only where the second lacks the key.
 #[test]
 fn merge_overwrite_reverses_layer_precedence() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $ctx := mergeOverwrite (.Values.legacy | default dict) (.Values.preferred | default dict) }}
         apiVersion: apps/v1
         kind: Deployment
@@ -153,7 +153,7 @@ fn merge_overwrite_reverses_layer_precedence() {
               {{- end }}
               containers:
                 - name: main
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("legacy: {}\npreferred: {}\n"));
     for (instance, want) in [
         (
@@ -325,6 +325,10 @@ fn candidate_selection_helper_binds_provider_payload_through_scope_list() {
 /// and the scrubbed layer's members admit null (the scrub drops them
 /// before the sink renders).
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads() {
     let helpers = indoc! {r#"
         {{- define "test.podSecurityContext" }}
@@ -462,6 +466,10 @@ fn nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads() {
 /// — while the per-set member kinds keep their round-8/17 capture arms
 /// (scalar `labels` in a set terminates the merge recursion).
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
     let helpers = indoc! {r#"
         {{- define "test.podSecurityContext" }}
@@ -643,6 +651,10 @@ fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
 /// base's layered identity — the scrub marker survives on the set-free
 /// operand — so the candidate-selection payload types exactly.
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn per_set_merge_layers_bind_without_the_reroot() {
     let helpers = indoc! {r#"
         {{- define "test.podSecurityContext" }}

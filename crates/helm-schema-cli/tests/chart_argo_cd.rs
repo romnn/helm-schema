@@ -3,13 +3,17 @@
 //! The full-schema fixture and default-values validation live in
 //! `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
-fn argo_cd_cluster_credentials_require_config_per_entry() -> color_eyre::eyre::Result<()> {
+fn argo_cd_cluster_credentials_require_config_per_entry() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("argo-cd")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

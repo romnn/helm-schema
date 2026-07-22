@@ -2,6 +2,8 @@
 //! quote-aware) and scalar quoting. These are the shared lexical layer under
 //! both the layout parser and its query API.
 
+/// Parses a YAML mapping key from text ending immediately before its colon.
+#[must_use]
 pub fn parse_yaml_key(after: &str) -> Option<String> {
     fn finalize_yaml_key(key: String) -> Option<String> {
         if key.is_empty() {
@@ -63,6 +65,7 @@ pub fn parse_yaml_key(after: &str) -> Option<String> {
 /// Strip one matching pair of surrounding single or double quotes from a
 /// YAML scalar, returning the inner text. Unquoted (or mismatched-quote)
 /// input is returned unchanged.
+#[must_use]
 pub fn unquote_yaml_scalar(value: &str) -> &str {
     value
         .strip_prefix('"')
@@ -87,10 +90,16 @@ pub fn mapping_colon_is_structural(text: &str, colon: usize) -> bool {
 
 /// The offset of the first colon that YAML treats as a mapping key/value
 /// separator, or `None` when the line has no such colon.
+#[must_use]
 pub fn structural_mapping_colon(text: &str) -> Option<usize> {
     first_mapping_colon_offset(text).filter(|&colon| mapping_colon_is_structural(text, colon))
 }
 
+/// Finds the first mapping colon while skipping template actions and quoted scalars.
+#[expect(
+    clippy::indexing_slicing,
+    reason = "this hot byte scanner maintains explicit bounds before every direct access"
+)]
 pub fn first_mapping_colon_offset(line: &str) -> Option<usize> {
     let bytes = line.as_bytes();
     let mut idx = 0usize;

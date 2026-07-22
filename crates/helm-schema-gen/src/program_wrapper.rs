@@ -416,7 +416,7 @@ fn replace_program_schema(node: &Value) -> Value {
     if plain_word_excluded {
         excluded.push(PLAIN_WORD.to_string());
     }
-    program_schema_excluding(excluded, plain_word_excluded && kinds.null)
+    program_schema_excluding(&excluded, plain_word_excluded && kinds.null)
 }
 
 /// A spread sentinel splices the decoded result into the parent: scalar
@@ -439,13 +439,13 @@ fn spread_program_schema(edge: WrapperEdge) -> Value {
         WrapperEdge::Item => excluded.push(FLOW_MAP_START.to_string()),
         WrapperEdge::Unknown => {}
     }
-    program_schema_excluding(excluded, true)
+    program_schema_excluding(&excluded, true)
 }
 
 /// A program string rejecting the certainly-incompatible static lexeme
 /// classes. `rescue_null` re-admits null spellings swallowed by the bare
 /// word class when a null result is acceptable.
-fn program_schema_excluding(excluded: Vec<String>, rescue_null: bool) -> Value {
+fn program_schema_excluding(excluded: &[String], rescue_null: bool) -> Value {
     if excluded.is_empty() {
         return json!({ "type": "string" });
     }

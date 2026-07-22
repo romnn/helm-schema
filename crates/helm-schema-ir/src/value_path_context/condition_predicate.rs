@@ -147,8 +147,9 @@ impl ValuePathContext<'_> {
                     .all(|arg| self.condition_lowering_is_faithful(arg)),
                 "list" | "tuple" | "dict" => true,
                 "not" => {
-                    args.len() == 1
-                        && self.condition_lowering_is_faithful(&args[0])
+                    args.first()
+                        .is_some_and(|arg| self.condition_lowering_is_faithful(arg))
+                        && args.len() == 1
                         && self.not_predicate(args).is_some()
                 }
                 "eq" => self.value_comparison_predicate(args, false).is_some(),
@@ -171,7 +172,8 @@ impl ValuePathContext<'_> {
                     self.merge_truthy_predicate(args).is_some()
                 }
                 "dig" => self.dig_truthy_predicate(args).is_some(),
-                "toString" => args.len() == 1 && self.tostring_truthy_predicate(&args[0]).is_some(),
+                "toString" => matches!(args.as_slice(), [arg]
+                    if self.tostring_truthy_predicate(arg).is_some()),
                 "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
                 "include" => self.include_truthy_predicate(expr).is_some(),
                 function if is_files_get_function(function) => {
@@ -273,10 +275,10 @@ impl ValuePathContext<'_> {
                         }
                     })
                     .collect();
-                if (function == "and") != negated {
-                    Predicate::all(parts)
-                } else {
+                if (function == "and") == negated {
                     predicate_any(parts)
+                } else {
+                    Predicate::all(parts)
                 }
             }
             "not" if args.len() == 1 => {
@@ -293,7 +295,10 @@ impl ValuePathContext<'_> {
                         );
                     }
                 }
-                self.approximate_condition_parts(&args[0], &format!("{marker}:!"), !negated)
+                let Some(arg) = args.first() else {
+                    return Predicate::approximate(marker, BTreeSet::new());
+                };
+                self.approximate_condition_parts(arg, &format!("{marker}:!"), !negated)
             }
             _ => {
                 if let Some(predicate) = self.int_cast_region_disjunction(expr, marker, negated) {
@@ -337,8 +342,8 @@ impl ValuePathContext<'_> {
             return None;
         };
         let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
-            (cast, TemplateExpr::Literal(Literal::Int(literal))) => (cast, *literal),
-            (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
+            (cast, TemplateExpr::Literal(Literal::Int(literal)))
+            | (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
             _ => return None,
         };
         let source = self.int_cast_operand(cast_expr)?;
@@ -430,7 +435,7 @@ impl ValuePathContext<'_> {
                 .dig_truthy_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
             "toString" if args.len() == 1 => self
-                .tostring_truthy_predicate(&args[0])
+                .tostring_truthy_predicate(args.first()?)
                 .or_else(|| self.truthy_predicate(expr)),
             "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args),
             "include" => self
@@ -477,9 +482,8 @@ impl ValuePathContext<'_> {
             if !literal_string(default)?.is_empty() {
                 return None;
             }
-            let base = match self.with_body_fragment_value_expr(map)? {
-                AbstractValue::ValuesPath(base) => base,
-                _ => return None,
+            let AbstractValue::ValuesPath(base) = self.with_body_fragment_value_expr(map)? else {
+                return None;
             };
             let (leaf_key, parent_keys) = keys.split_last()?;
             let parent = parent_keys.iter().fold(base, |path, key| {
@@ -550,9 +554,8 @@ impl ValuePathContext<'_> {
         // The subject must be ONE values-backed map identity — the
         // whole-values root (`.Values` or `.Values.AsMap`) or a single
         // path. A choice of subjects would misstate the leaf condition.
-        let base = match self.with_body_fragment_value_expr(subject)? {
-            AbstractValue::ValuesPath(base) => base,
-            _ => return None,
+        let AbstractValue::ValuesPath(base) = self.with_body_fragment_value_expr(subject)? else {
+            return None;
         };
         let path = keys.iter().fold(base, |path, key| {
             helm_schema_core::append_value_path(&path, key)
@@ -621,8 +624,8 @@ impl ValuePathContext<'_> {
             return None;
         };
         let (subject, bound) = match (function, left.deparen(), right.deparen()) {
-            ("gt", subject, TemplateExpr::Literal(Literal::Int(bound))) => (subject, *bound),
-            ("lt", TemplateExpr::Literal(Literal::Int(bound)), subject) => (subject, *bound),
+            ("gt", subject, TemplateExpr::Literal(Literal::Int(bound)))
+            | ("lt", TemplateExpr::Literal(Literal::Int(bound)), subject) => (subject, *bound),
             // The inclusive forms normalize to the strict bound below them.
             ("ge", subject, TemplateExpr::Literal(Literal::Int(bound)))
             | ("le", TemplateExpr::Literal(Literal::Int(bound)), subject) => {
@@ -745,15 +748,19 @@ impl ValuePathContext<'_> {
         else {
             return None;
         };
-        if function != "printf" || printf_args.len() != 2 {
+        let [format, subject] = printf_args.as_slice() else {
+            return None;
+        };
+        if function != "printf" {
             return None;
         }
-        let format = match printf_args[0].deparen() {
-            TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
-            _ => return None,
+        let TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format)) =
+            format.deparen()
+        else {
+            return None;
         };
         let (prefix, suffix) = single_string_verb_split(format)?;
-        let subject_paths = self.paths_for_expr(&printf_args[1]);
+        let subject_paths = self.paths_for_expr(subject);
         if subject_paths.is_empty() {
             return None;
         }
@@ -883,7 +890,7 @@ impl ValuePathContext<'_> {
             // on raw false, which stringifies truthy. An undecodable
             // stringification abstains for the same reason.
             TemplateExpr::Call { function, args } if function == "toString" && args.len() == 1 => {
-                self.tostring_truthy_predicate(&args[0])
+                self.tostring_truthy_predicate(args.first()?)
                     .map(|predicate| predicate.negated())
             }
             TemplateExpr::Pipeline(stages)
@@ -1118,9 +1125,10 @@ impl ValuePathContext<'_> {
     }
 
     fn type_is_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
-        let type_name = match args.first()?.deparen() {
-            TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name)) => name,
-            _ => return None,
+        let TemplateExpr::Literal(Literal::String(type_name) | Literal::RawString(type_name)) =
+            args.first()?.deparen()
+        else {
+            return None;
         };
         let schema_type = type_is_schema_type(args.first());
         if type_name != "invalid" && schema_type.is_none() {
@@ -1237,9 +1245,16 @@ impl ValuePathContext<'_> {
         if function != "has" || args.len() != 1 {
             return None;
         }
-        self.helper_literal_membership_predicate(&[args[0].clone(), haystack.clone()])
+        let [needle] = args.as_slice() else {
+            return None;
+        };
+        self.helper_literal_membership_predicate(&[needle.clone(), haystack.clone()])
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn helper_literal_membership_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
         let [needle, haystack] = args else {
             return None;
@@ -1744,10 +1759,13 @@ impl ValuePathContext<'_> {
             let TemplateExpr::Call { function, args } = header.expr().deparen() else {
                 return Vec::new();
             };
-            if function != "semverCompare" || args.len() != 2 {
+            let [constraint, subject] = args.as_slice() else {
+                return Vec::new();
+            };
+            if function != "semverCompare" {
                 return Vec::new();
             }
-            let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+            let TemplateExpr::Literal(Literal::String(constraint)) = constraint.deparen() else {
                 return Vec::new();
             };
             // `<X-0` opts prereleases into Masterminds' matching; the
@@ -1761,7 +1779,7 @@ impl ValuePathContext<'_> {
             else {
                 return Vec::new();
             };
-            let Some(path) = self.single_resolved_values_path_expr(&args[1]) else {
+            let Some(path) = self.single_resolved_values_path_expr(subject) else {
                 return Vec::new();
             };
             if subject_path.get_or_insert_with(|| path.clone()) != &path {
@@ -1823,7 +1841,8 @@ impl ValuePathContext<'_> {
             return Vec::new();
         }
         let (Some(path), Ok(bound)) = (
-            self.single_resolved_values_path_expr(&args[0]),
+            args.first()
+                .and_then(|arg| self.single_resolved_values_path_expr(arg)),
             usize::try_from(bound),
         ) else {
             return Vec::new();
@@ -1858,8 +1877,8 @@ impl ValuePathContext<'_> {
             return Vec::new();
         };
         let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
-            (cast, TemplateExpr::Literal(Literal::Int(literal))) => (cast, *literal),
-            (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
+            (cast, TemplateExpr::Literal(Literal::Int(literal)))
+            | (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
             _ => return Vec::new(),
         };
         let Some(source) = self.int_cast_operand(cast_expr) else {
@@ -1908,8 +1927,8 @@ impl ValuePathContext<'_> {
             return Vec::new();
         };
         let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
-            (cast, TemplateExpr::Literal(Literal::Int(literal))) => (cast, *literal),
-            (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
+            (cast, TemplateExpr::Literal(Literal::Int(literal)))
+            | (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
             _ => return Vec::new(),
         };
         let (Some(below), Some(above)) = (literal.checked_sub(1), literal.checked_add(1)) else {
@@ -1942,18 +1961,24 @@ impl ValuePathContext<'_> {
 
     /// `not (list "a" "b" | has .Values.x)` is EXACTLY "x differs from
     /// every listed literal" (Sprig `has` is deep equality against each
-    /// item), so the negated membership lowers to the NotEq conjunction
+    /// item), so the negated membership lowers to the `NotEq` conjunction
     /// (cilium's internal-or-external `kvstoreMode` check).
     fn negated_membership_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
         };
-        if function != "not" || args.len() != 1 {
+        let [inner] = args.as_slice() else {
+            return Vec::new();
+        };
+        if function != "not" {
             return Vec::new();
         }
-        let (subject, list_args) = match args[0].deparen() {
-            TemplateExpr::Call { function, args } if function == "has" && args.len() == 2 => {
-                (&args[0], &args[1])
+        let (subject, list_args) = match inner.deparen() {
+            TemplateExpr::Call { function, args } if function == "has" => {
+                let [subject, list] = args.as_slice() else {
+                    return Vec::new();
+                };
+                (subject, list)
             }
             TemplateExpr::Pipeline(stages) => match stages.as_slice() {
                 [list, has] => match (list.deparen(), has.deparen()) {
@@ -1967,7 +1992,10 @@ impl ValuePathContext<'_> {
                         && has_name == "has"
                         && has_args.len() == 1 =>
                     {
-                        (&has_args[0], list)
+                        let Some(subject) = has_args.first() else {
+                            return Vec::new();
+                        };
+                        (subject, list)
                     }
                     _ => return Vec::new(),
                 },
@@ -2021,19 +2049,21 @@ impl ValuePathContext<'_> {
     /// abstains, as does a fallback chain selecting other sources.
     fn semver_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let (constraint, path, escapes) = match expr.deparen() {
-            TemplateExpr::Call { function, args }
-                if function == "semverCompare" && args.len() == 2 =>
-            {
-                let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+            TemplateExpr::Call { function, args } if function == "semverCompare" => {
+                let [constraint, subject] = args.as_slice() else {
+                    return Vec::new();
+                };
+                let TemplateExpr::Literal(Literal::String(constraint)) = constraint.deparen()
+                else {
                     return Vec::new();
                 };
                 if !matches!(
-                    args[1].deparen(),
+                    subject.deparen(),
                     TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
                 ) {
                     return Vec::new();
                 }
-                let Some(path) = self.single_resolved_values_path_expr(&args[1]) else {
+                let Some(path) = self.single_resolved_values_path_expr(subject) else {
                     return Vec::new();
                 };
                 (constraint, path, BTreeSet::new())
@@ -2045,10 +2075,14 @@ impl ValuePathContext<'_> {
                 let TemplateExpr::Call { function, args } = last.deparen() else {
                     return Vec::new();
                 };
-                if function != "semverCompare" || args.len() != 1 {
+                let [constraint] = args.as_slice() else {
+                    return Vec::new();
+                };
+                if function != "semverCompare" {
                     return Vec::new();
                 }
-                let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+                let TemplateExpr::Literal(Literal::String(constraint)) = constraint.deparen()
+                else {
                     return Vec::new();
                 };
                 let Some((path, escapes)) = self.semver_transformed_operand(transforms) else {
@@ -2089,10 +2123,13 @@ impl ValuePathContext<'_> {
             let TemplateExpr::Call { function, args } = stage.deparen() else {
                 return None;
             };
-            if function != "trimPrefix" || args.len() != 1 {
+            let [token] = args.as_slice() else {
+                return None;
+            };
+            if function != "trimPrefix" {
                 return None;
             }
-            let token = literal_string(&args[0])?;
+            let token = literal_string(token)?;
             if token != "v" || !escapes.insert(LexicalEscape::TrimPrefix(token.to_string())) {
                 return None;
             }
@@ -2107,8 +2144,11 @@ impl ValuePathContext<'_> {
                         | "mustRegexReplaceAllLiteral"
                 ) && args.len() == 3 =>
             {
-                let pattern = literal_string(&args[0])?;
-                let replacement = literal_string(&args[2])?;
+                let [pattern, subject, replacement] = args.as_slice() else {
+                    return None;
+                };
+                let pattern = literal_string(pattern)?;
+                let replacement = literal_string(replacement)?;
                 let token = pattern.strip_suffix(".*$")?;
                 let token_is_regex_literal = !token.is_empty()
                     && token.chars().all(|character| {
@@ -2136,7 +2176,7 @@ impl ValuePathContext<'_> {
                     return None;
                 }
                 escapes.insert(LexicalEscape::CutAtToken(token.to_string()));
-                &args[1]
+                subject
             }
             _ => first,
         };
@@ -2175,10 +2215,14 @@ impl ValuePathContext<'_> {
             return Vec::new();
         };
         let form = match (function.as_str(), left.deparen(), right.deparen()) {
-            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound))) => Some((cast, *bound, true)),
-            ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => Some((cast, *bound, true)),
-            ("lt", cast, TemplateExpr::Literal(Literal::Int(bound))) => Some((cast, *bound, false)),
-            ("gt", TemplateExpr::Literal(Literal::Int(bound)), cast) => Some((cast, *bound, false)),
+            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound)))
+            | ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => {
+                Some((cast, *bound, true))
+            }
+            ("lt", cast, TemplateExpr::Literal(Literal::Int(bound)))
+            | ("gt", TemplateExpr::Literal(Literal::Int(bound)), cast) => {
+                Some((cast, *bound, false))
+            }
             ("ge", cast, TemplateExpr::Literal(Literal::Int(bound)))
             | ("le", TemplateExpr::Literal(Literal::Int(bound)), cast) => {
                 bound.checked_sub(1).map(|bound| (cast, bound, true))
@@ -2357,17 +2401,23 @@ impl ValuePathContext<'_> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return None;
         };
-        if !matches!(function.as_str(), "int" | "int64") || args.len() != 1 {
+        let [operand] = args.as_slice() else {
+            return None;
+        };
+        if !matches!(function.as_str(), "int" | "int64") {
             return None;
         }
-        let (subject, default_int) = match args[0].deparen() {
-            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-                let TemplateExpr::Literal(Literal::Int(fallback)) = args[0].deparen() else {
+        let (subject, default_int) = match operand.deparen() {
+            TemplateExpr::Call { function, args } if function == "default" => {
+                let [fallback, subject] = args.as_slice() else {
                     return None;
                 };
-                (&args[1], Some(*fallback))
+                let TemplateExpr::Literal(Literal::Int(fallback)) = fallback.deparen() else {
+                    return None;
+                };
+                (subject, Some(*fallback))
             }
-            _ => (&args[0], None),
+            _ => (operand, None),
         };
         if !matches!(
             subject.deparen(),
@@ -2408,6 +2458,10 @@ impl ValuePathContext<'_> {
         }
     }
 
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+    )]
     fn value_comparison_predicate(
         &self,
         args: &[TemplateExpr],
@@ -2446,50 +2500,42 @@ impl ValuePathContext<'_> {
         // over a selector, whose output is the `%v` rendering the preimage
         // projection below decodes exactly (cilium validate.yaml's
         // `eq (toString .Values.kubeProxyReplacement) "disabled"`).
-        fn tostring_selector(expr: &TemplateExpr) -> bool {
-            tostring_wrapped_subject(expr).is_some_and(|subject| {
-                matches!(
-                    subject.deparen(),
-                    TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-                )
-            })
-        }
         let direct_selector = |expr: &TemplateExpr| match expr.deparen() {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => true,
             TemplateExpr::Variable(name) => !self
                 .typeof_bindings
                 .contains_key(name.trim_start_matches('$')),
             TemplateExpr::Call { function, args } if function == "index" => {
-                args.len() >= 2
-                    && matches!(
-                        args[0].deparen(),
-                        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-                    )
-                    && args[1..].iter().all(|key| {
-                        matches!(
-                            key.deparen(),
-                            TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_))
+                args.split_first().is_some_and(|(base, keys)| {
+                    !keys.is_empty()
+                        && matches!(
+                            base.deparen(),
+                            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
                         )
-                    })
+                        && keys.iter().all(|key| {
+                            matches!(
+                                key.deparen(),
+                                TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_))
+                            )
+                        })
+                })
             }
-            expr => tostring_selector(expr),
+            expr => is_tostring_selector(expr),
         };
         // A `toString`-wrapped selector compares the rendering of the inner
         // path's value; resolve the paths from the operand itself.
-        fn tostring_operand(expr: &TemplateExpr) -> &TemplateExpr {
-            tostring_wrapped_subject(expr).unwrap_or(expr)
-        }
         // Literal-key `index` navigation compares the MEMBER value only; the
         // evaluator's influence set also carries the parent map, which is
         // not the compared value.
         let subject_paths = |expr: &TemplateExpr| {
-            let expr = tostring_operand(expr);
+            let expr = tostring_wrapped_subject(expr).unwrap_or(expr);
             if let TemplateExpr::Call { function, args } = expr.deparen()
                 && function == "index"
-                && let Some(base) = self.single_resolved_values_path_expr(&args[0])
+                && let Some((base_expr, keys)) = args.split_first()
+                && let Some(base) = self.single_resolved_values_path_expr(base_expr)
             {
                 let mut path = base;
-                for key in &args[1..] {
+                for key in keys {
                     match key.deparen() {
                         TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) => {
                             path = helm_schema_core::append_value_path(&path, key);
@@ -2596,7 +2642,7 @@ impl ValuePathContext<'_> {
             // Boolean `true` beside the string spelling). Serialized or
             // include-derived text has a different (or unknowable) image
             // and keeps the literal alone.
-            let stringified = tostring_selector(subject)
+            let stringified = is_tostring_selector(subject)
                 || subject_meta_for(&path).is_some_and(|meta| meta.stringified);
             let candidates = match &value {
                 GuardValue::String(text) if stringified => {
@@ -3059,6 +3105,10 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
     Some(predicate_any(arms))
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
 fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
     match value {
         AbstractValue::Dict(entries) => Some(bool_predicate(entries.contains_key(key))),
@@ -3201,7 +3251,10 @@ fn ancestor_chain_leaf(paths: &std::collections::BTreeSet<String>) -> Option<&st
     let mut ordered: Vec<&String> = paths.iter().collect();
     ordered.sort_by_key(|path| helm_schema_core::split_value_path(path).len());
     for pair in ordered.windows(2) {
-        if !helm_schema_core::values_path_is_descendant(pair[1], pair[0]) {
+        let [ancestor, descendant] = pair else {
+            continue;
+        };
+        if !helm_schema_core::values_path_is_descendant(descendant, ancestor) {
             return None;
         }
     }
@@ -3252,8 +3305,11 @@ fn keys_len_subject(expr: &TemplateExpr) -> Option<&TemplateExpr> {
 /// redundancy-zone gates spell it this way).
 fn tostring_wrapped_subject(expr: &TemplateExpr) -> Option<&TemplateExpr> {
     match expr.deparen() {
-        TemplateExpr::Call { function, args } if function == "toString" && args.len() == 1 => {
-            Some(&args[0])
+        TemplateExpr::Call { function, args } if function == "toString" => {
+            let [subject] = args.as_slice() else {
+                return None;
+            };
+            Some(subject)
         }
         TemplateExpr::Pipeline(stages) => {
             let [subject, tail] = stages.as_slice() else {
@@ -3268,12 +3324,24 @@ fn tostring_wrapped_subject(expr: &TemplateExpr) -> Option<&TemplateExpr> {
     }
 }
 
+fn is_tostring_selector(expr: &TemplateExpr) -> bool {
+    tostring_wrapped_subject(expr).is_some_and(|subject| {
+        matches!(
+            subject.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        )
+    })
+}
+
 /// The `(fallback, subject)` of a literal-fallback `default` call —
 /// `default D X` or the two-stage pipeline `X | default D`.
 fn default_call_operand(expr: &TemplateExpr) -> Option<(GuardValue, &TemplateExpr)> {
     match expr.deparen() {
-        TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
-            Some((guard_value_literal(&args[0])?, &args[1]))
+        TemplateExpr::Call { function, args } if function == "default" => {
+            let [fallback, subject] = args.as_slice() else {
+                return None;
+            };
+            Some((guard_value_literal(fallback)?, subject))
         }
         TemplateExpr::Pipeline(stages) => {
             let [subject, tail] = stages.as_slice() else {
@@ -3282,10 +3350,13 @@ fn default_call_operand(expr: &TemplateExpr) -> Option<(GuardValue, &TemplateExp
             let TemplateExpr::Call { function, args } = tail.deparen() else {
                 return None;
             };
-            if function != "default" || args.len() != 1 {
+            let [fallback] = args.as_slice() else {
+                return None;
+            };
+            if function != "default" {
                 return None;
             }
-            Some((guard_value_literal(&args[0])?, subject))
+            Some((guard_value_literal(fallback)?, subject))
         }
         _ => None,
     }

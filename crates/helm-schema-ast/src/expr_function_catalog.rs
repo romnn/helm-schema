@@ -15,6 +15,7 @@ pub fn type_is_schema_type(expr: Option<&TemplateExpr>) -> Option<String> {
 /// Covers both the reflect-kind spellings (`slice`, `map`) and the exact
 /// `typeOf` spellings of untyped YAML containers (`[]interface {}`,
 /// `map[string]interface {}`).
+#[must_use]
 pub fn go_type_schema_type(type_name: &str) -> Option<&'static str> {
     Some(match type_name {
         "bool" | "boolean" => "boolean",
@@ -31,6 +32,7 @@ pub fn go_type_schema_type(type_name: &str) -> Option<&'static str> {
 /// one JSON Schema kind. Integer values list both numeric spellings because
 /// provenance decides the dynamic type: file-loaded values decode through
 /// JSON as `float64`, while `--set` values parse as `int64`.
+#[must_use]
 pub fn go_type_descriptor_spellings(schema_type: &str) -> &'static [&'static str] {
     match schema_type {
         "boolean" => &["bool"],
@@ -46,17 +48,18 @@ pub fn go_type_descriptor_spellings(schema_type: &str) -> &'static [&'static str
 /// The subject of a Go type-descriptor call: `typeOf x`, `kindOf x`, or the
 /// equivalent `printf "%T" x` (`typeOf` is exactly `fmt.Sprintf("%T", …)`;
 /// signoz binds `printf "%T" $val` and dispatches on the result).
+#[must_use]
 pub fn type_descriptor_call_subject<'a>(
     function: &str,
     args: &'a [TemplateExpr],
 ) -> Option<&'a TemplateExpr> {
-    match function {
-        "typeOf" | "kindOf" if args.len() == 1 => Some(&args[0]),
-        "printf" if args.len() == 2 => match args[0].deparen() {
+    match (function, args) {
+        ("typeOf" | "kindOf", [subject]) => Some(subject),
+        ("printf", [format_expr, subject]) => match format_expr.deparen() {
             TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format))
                 if format == "%T" =>
             {
-                Some(&args[1])
+                Some(subject)
             }
             _ => None,
         },
@@ -64,6 +67,8 @@ pub fn type_descriptor_call_subject<'a>(
     }
 }
 
+/// Reports whether a function returns string output while retaining input provenance.
+#[must_use]
 pub fn is_string_transform_function(function: &str) -> bool {
     matches!(
         function,
@@ -97,6 +102,7 @@ pub fn is_string_transform_function(function: &str) -> bool {
 /// text with no reverse identity. They are NOT string transforms — an
 /// `include … | sha256sum` checksum annotation must keep the include's
 /// serialized placement semantics rather than a text derivation of it.
+#[must_use]
 pub fn is_checksum_function(function: &str) -> bool {
     matches!(
         function,
@@ -108,6 +114,7 @@ pub fn is_checksum_function(function: &str) -> bool {
 ///
 /// `argument_count` includes a pipeline input, which Go templates append as the final
 /// argument. An empty result means the function has no catalogued string operands.
+#[must_use]
 pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usize> {
     if argument_count == 0 {
         return Vec::new();
@@ -163,6 +170,7 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
 /// The pattern is a conservative superset of every string accepted by the
 /// runtime parser, so lowering it may miss some invalid inputs but never
 /// rejects an input solely because the parser accepts a wider spelling.
+#[must_use]
 pub fn strict_parser_operand_pattern(
     function: &str,
     argument_count: usize,
@@ -351,6 +359,7 @@ const URL_PARSE_PATTERN: &str = concat!(
 /// Like [`strict_parser_operand_pattern`], the pattern is a conservative
 /// superset of every string the runtime parser accepts, so lowering it may
 /// miss some invalid inputs but never rejects one the parser accepts.
+#[must_use]
 pub fn strict_collection_item_pattern(function: &str, index: usize) -> Option<&'static str> {
     match (function, index) {
         // genSignedCert/genSelfSignedCert pass every ip-list entry through
@@ -371,6 +380,7 @@ pub fn strict_collection_item_pattern(function: &str, index: usize) -> Option<&'
 /// input-type constraint, and the sink observes the rendered string, never
 /// the input shape. (`join` shares this contract via `strslice` but has its
 /// own eval arms.)
+#[must_use]
 pub fn is_total_stringification_function(function: &str) -> bool {
     matches!(function, "quote" | "squote" | "toString" | "urlquery")
 }
@@ -379,6 +389,7 @@ pub fn is_total_stringification_function(function: &str) -> bool {
 /// `int64`, and `float64` convert through `cast.ToXxx`, which coerces ANY
 /// input (junk becomes zero) instead of failing. Like `toString`, they
 /// erase input shape; their output is derived (numeric) content.
+#[must_use]
 pub fn is_total_numeric_cast_function(function: &str) -> bool {
     matches!(function, "int" | "int64" | "float64")
 }
@@ -391,6 +402,7 @@ pub fn is_total_numeric_cast_function(function: &str) -> bool {
 /// only its evaluated value participates. Division and modulo are
 /// intentionally EXCLUDED: a zero denominator is a genuine precondition,
 /// so they must not be widened by this analogy.
+#[must_use]
 pub fn is_coercing_arithmetic_function(function: &str) -> bool {
     matches!(
         function,
@@ -415,6 +427,7 @@ pub fn is_coercing_arithmetic_function(function: &str) -> bool {
 /// Returns whether a function consumes a Go `string` subject as its LAST
 /// parameter (Sprig's subject-last convention) and fails template evaluation
 /// for non-string values, without transforming template output flow itself.
+#[must_use]
 pub fn is_string_predicate_function(function: &str) -> bool {
     matches!(
         function,
@@ -432,10 +445,13 @@ pub fn is_string_predicate_function(function: &str) -> bool {
 /// Returns whether a function consumes a Go `string` subject as its LAST
 /// parameter but produces NON-STRING output (a list, a boolean): the input
 /// contract is real, while the output carries no string provenance.
+#[must_use]
 pub fn is_string_splitting_function(function: &str) -> bool {
     matches!(function, "splitList" | "split" | "splitn" | "regexSplit")
 }
 
+/// Reports whether a function preserves enough input provenance for static analysis.
+#[must_use]
 pub fn is_provenance_preserving_function(function: &str) -> bool {
     matches!(
         function,
@@ -451,6 +467,8 @@ pub fn is_provenance_preserving_function(function: &str) -> bool {
     )
 }
 
+/// Reports whether a function performs one of Sprig's ordered map merges.
+#[must_use]
 pub fn is_merge_function(function: &str) -> bool {
     matches!(
         function,

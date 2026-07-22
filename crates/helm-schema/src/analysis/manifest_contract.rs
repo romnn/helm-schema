@@ -154,7 +154,7 @@ fn level_activation_guard_sets(activation: &chart::ChartDependencyActivation) ->
 
     let mut guard_sets = Vec::new();
     for (index, condition_path) in condition_paths.iter().enumerate() {
-        let mut guards = absent_guards(&condition_paths[..index]);
+        let mut guards = absent_guards(condition_paths.get(..index).unwrap_or_default());
         guards.push(Guard::Truthy {
             path: condition_path.clone(),
         });

@@ -39,7 +39,7 @@ impl Interpreter<'_> {
         let previous_site = std::mem::replace(&mut self.current_site, region_site);
         let mut arms = self.eval_inline_region_arms(span);
         for (_, parts) in &mut arms {
-            stamp_part_sites(parts, &self.current_site);
+            stamp_part_sites(parts, self.current_site.as_ref());
         }
         self.restore_site(previous_site);
         arms

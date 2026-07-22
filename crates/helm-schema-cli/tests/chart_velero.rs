@@ -4,13 +4,17 @@
 //! consumed with field access and must be objects. Values validation and the
 //! full-schema pin live in `chart_corpus.rs`.
 
+use color_eyre::eyre;
+
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
-fn velero_storage_locations_type_dispatch_holds() -> color_eyre::eyre::Result<()> {
+fn velero_storage_locations_type_dispatch_holds() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("velero")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 

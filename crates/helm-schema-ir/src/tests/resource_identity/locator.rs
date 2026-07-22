@@ -96,7 +96,7 @@ fn resource_locator_keeps_multi_document_resources_separate() {
 
 #[test]
 fn resource_locator_descends_into_list_items_and_rebases_paths() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         apiVersion: v1
         kind: List
         items:
@@ -110,7 +110,7 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
             spec:
               ports:
                 - port: {{ .Values.port }}
-    "#};
+    "};
     let locator = attribution_index(source);
 
     let host_byte = source.find("host").expect("host marker");
@@ -158,14 +158,14 @@ fn resource_locator_descends_into_list_items_and_rebases_paths() {
 
 #[test]
 fn resource_locator_reports_only_single_resource_control_spans() {
-    let single = indoc! {r#"
+    let single = indoc! {r"
         {{- if .Values.enabled }}
         apiVersion: v1
         kind: ConfigMap
         data:
           name: {{ .Values.name }}
         {{- end }}
-    "#};
+    "};
     let locator = attribution_index(single);
     let resource = locator
         .single_resource_in_span(0, single.len())
@@ -173,7 +173,7 @@ fn resource_locator_reports_only_single_resource_control_spans() {
     sim_assert_eq!(have: resource.kind.as_str(), want: "ConfigMap");
     sim_assert_eq!(have: resource.api_version.as_str(), want: "v1");
 
-    let multiple = indoc! {r#"
+    let multiple = indoc! {r"
         {{- if .Values.enabled }}
         apiVersion: v1
         kind: ConfigMap
@@ -181,14 +181,14 @@ fn resource_locator_reports_only_single_resource_control_spans() {
         apiVersion: v1
         kind: Secret
         {{- end }}
-    "#};
+    "};
     let locator = attribution_index(multiple);
     assert!(locator.single_resource_in_span(0, multiple.len()).is_none());
 }
 
 #[test]
 fn resource_locator_descends_into_ranged_list_items() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         apiVersion: v1
         kind: List
         items:
@@ -199,7 +199,7 @@ fn resource_locator_descends_into_ranged_list_items() {
               rules:
                 - host: {{ $.Values.host | quote }}
         {{- end }}
-    "#};
+    "};
     let locator = attribution_index(source);
 
     let host_byte = source.find("host").expect("host marker");
@@ -226,7 +226,7 @@ fn resource_locator_descends_into_ranged_list_items() {
 // List envelope and silently dropped every resource in the document.
 #[test]
 fn resource_locator_descends_into_nested_list_envelopes() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         apiVersion: v1
         kind: List
         items:
@@ -237,7 +237,7 @@ fn resource_locator_descends_into_nested_list_envelopes() {
                 kind: ConfigMap
                 data:
                   key: {{ .Values.key }}
-    "#};
+    "};
     let locator = attribution_index(source);
 
     let key_byte = source.find("key").expect("key marker");
@@ -257,7 +257,7 @@ fn resource_locator_descends_into_nested_list_envelopes() {
 
 #[test]
 fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         apiVersion: example.com/v1
         kind: List
         items:
@@ -266,7 +266,7 @@ fn resource_locator_keeps_non_kubernetes_list_kind_as_resource() {
             spec:
               ports:
                 - port: {{ .Values.port }}
-    "#};
+    "};
     let locator = attribution_index(source);
 
     let port_byte = source.find("port").expect("port marker");

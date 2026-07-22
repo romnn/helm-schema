@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use sha2::{Digest, Sha256};
 
 /// Stable per-source identifier used to namespace cache entries.
@@ -17,11 +19,11 @@ pub const fn default_source_id() -> &'static str {
 pub fn source_id_for_url(url: &str) -> String {
     // 12 hex chars = the digest's first 6 bytes; sha2 0.11's output array no longer implements
     // `LowerHex`, so format the bytes directly.
-    Sha256::digest(url.as_bytes())
-        .iter()
-        .take(6)
-        .map(|byte| format!("{byte:02x}"))
-        .collect()
+    let mut source_id = String::with_capacity(12);
+    for byte in Sha256::digest(url.as_bytes()).iter().take(6) {
+        let _ = write!(source_id, "{byte:02x}");
+    }
+    source_id
 }
 
 #[cfg(test)]

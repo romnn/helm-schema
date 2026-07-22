@@ -7,12 +7,12 @@
 //! `<app>.replicas` got typed `{type: integer}` solely because a sibling
 //! library happened to mention `.Values.replicas` in a helper.
 //!
-//! Fix: library-helper extracts (both type_hints and fallback_paths) are
+//! Fix: library-helper extracts (both `type_hints` and `fallback_paths`) are
 //! scoped to the prefixes of charts that actually `include` any of the
 //! library's helpers. An unused library — no `include` references found
 //! anywhere — contributes nothing.
 
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use test_util::prelude::sim_assert_eq;
@@ -74,8 +74,8 @@ replicas: ~
 ";
 
 #[test]
-fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn library_literal_default_does_not_leak_type_to_sibling_chart() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;
@@ -117,7 +117,7 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::
     let schema = AnalysisSession::new(opts)
         .generated_schema()
         .map(|generated| generated.schema)
-        .map_err(Report::from)
+        .map_err(eyre::Report::from)
         .wrap_err("generate schema")?;
 
     let app_replicas = schema

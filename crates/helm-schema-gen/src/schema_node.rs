@@ -241,7 +241,7 @@ impl SchemaNode {
     pub(crate) fn all_of(values: Vec<SchemaNode>) -> Self {
         match values.len() {
             0 => Self::empty(),
-            1 => values.into_iter().next().expect("single allOf value"),
+            1 => values.into_iter().next().unwrap_or_else(Self::empty),
             _ => Self::keyword_schema(
                 "allOf",
                 Value::Array(values.into_iter().map(Self::into_value).collect()),
@@ -252,7 +252,7 @@ impl SchemaNode {
     pub(crate) fn any_of(values: Vec<SchemaNode>) -> Self {
         match values.len() {
             0 => Self::empty(),
-            1 => values.into_iter().next().expect("single anyOf value"),
+            1 => values.into_iter().next().unwrap_or_else(Self::empty),
             _ => Self::keyword_schema(
                 "anyOf",
                 Value::Array(values.into_iter().map(Self::into_value).collect()),
@@ -303,9 +303,8 @@ impl SchemaNode {
     pub(crate) fn is_array_like(&self) -> bool {
         match self {
             Self::Array { .. } => true,
-            Self::Object { .. } => false,
+            Self::Object { .. } | Self::Empty => false,
             Self::Foreign(value) => foreign_is_array_like(value),
-            _ => false,
         }
     }
 
@@ -429,8 +428,7 @@ impl SchemaNode {
 
     pub(crate) fn is_empty_slot(&self) -> bool {
         match self {
-            Self::Empty => true,
-            Self::Foreign(Value::Null) => true,
+            Self::Empty | Self::Foreign(Value::Null) => true,
             Self::Foreign(value) => crate::schema_model::is_empty_schema(value),
             _ => false,
         }

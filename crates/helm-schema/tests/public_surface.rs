@@ -1,3 +1,5 @@
+//! Public session API and staged schema-generation regressions.
+
 use color_eyre::eyre;
 use helm_schema::generation::GenerateOptions;
 use helm_schema::output::{JsonOutputFormat, OutputPipelineOptions, PolicyInputs, ReferenceMode};
@@ -134,14 +136,14 @@ fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> 
     test_util::write(&chart_dir.join("values.yaml")?, "replicas: 1\n")?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
-        r#"
+        r"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: root
 spec:
   replicas: {{ .Values.replicas }}
-"#,
+",
     )?;
 
     let opts = GenerateOptions {
@@ -223,7 +225,7 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
     )?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
-        indoc::indoc! {r#"
+        indoc::indoc! {r"
             {{- if .Values.web.enabled -}}
             apiVersion: apps/v1
             kind: Deployment
@@ -244,7 +246,7 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
                     {{- toYaml . | nindent 8 }}
                   {{- end }}
             {{- end }}
-        "#},
+        "},
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
@@ -390,14 +392,14 @@ fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
     test_util::write(&chart_dir.join("values.yaml")?, "replicas: 1\n")?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
-        r#"
+        r"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: root
 spec:
   replicas: {{ .Values.replicas }}
-"#,
+",
     )?;
 
     let opts = GenerateOptions {
@@ -428,6 +430,10 @@ spec:
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full session stage comparison is clearest as one public API regression"
+)]
 fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -586,7 +592,7 @@ data:
 
     let emitted = session.emit(
         PolicyInputs::default(),
-        &OutputPipelineOptions {
+        OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
             strip_descriptions: false,
             minimize: false,
@@ -610,6 +616,10 @@ data:
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete explanation fixture and assertions form one public API regression"
+)]
 fn analysis_session_explains_values_path() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -880,12 +890,12 @@ fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()>
     test_util::write(&chart_dir.join("charts/child/values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/templates/configmap.yaml")?,
-        r#"
+        r"
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Values.name | trunc 63 | quote }}
-"#,
+",
     )?;
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {

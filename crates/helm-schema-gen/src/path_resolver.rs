@@ -42,7 +42,6 @@ struct ProviderSchemaLookupKey {
 pub(crate) struct PathSchemaResolver<'a> {
     schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
     values_yaml_info: BTreeMap<String, ValuesYamlPathInfo>,
-    resolve_policy: ResolvePolicy,
     provider: &'a dyn ResourceSchemaOracle,
     provider_schema_cache: HashMap<ProviderSchemaLookupKey, Option<Arc<ProviderSchemaCandidate>>>,
 }
@@ -62,7 +61,6 @@ impl<'a> PathSchemaResolver<'a> {
         Self {
             schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
             values_yaml_info,
-            resolve_policy: ResolvePolicy,
             provider,
             provider_schema_cache: HashMap::new(),
         }
@@ -75,14 +73,7 @@ impl<'a> PathSchemaResolver<'a> {
         provider: &dyn ResourceSchemaOracle,
     ) -> ResolvedPathSchema {
         let path_segments = crate::split_value_path(&evidence.value_path);
-        resolve_path_evidence(
-            evidence.clone(),
-            path_segments,
-            None,
-            provider,
-            &ResolvePolicy,
-            &mut HashMap::new(),
-        )
+        resolve_path_evidence(evidence, path_segments, None, provider, &mut HashMap::new())
     }
 
     #[tracing::instrument(skip_all)]
@@ -107,22 +98,20 @@ impl<'a> PathSchemaResolver<'a> {
             .get(value_path)
             .cloned()?;
         Some(resolve_path_evidence(
-            evidence,
+            &evidence,
             crate::split_value_path(value_path),
             self.values_yaml_info.get(value_path),
             self.provider,
-            &self.resolve_policy,
             &mut self.provider_schema_cache,
         ))
     }
 }
 
 fn resolve_path_evidence(
-    evidence: ContractPathSchemaEvidence,
+    evidence: &ContractPathSchemaEvidence,
     path_segments: Vec<String>,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
     provider: &dyn ResourceSchemaOracle,
-    resolve_policy: &ResolvePolicy,
     provider_schema_cache: &mut HashMap<
         ProviderSchemaLookupKey,
         Option<Arc<ProviderSchemaCandidate>>,
@@ -133,14 +122,9 @@ fn resolve_path_evidence(
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =
         evidence.facts.accepted_dependency_values_root_fragment;
-    let (policy_inputs, provider_schema_candidate) = build_path_schema_inputs(
-        evidence,
-        values_yaml_info,
-        provider,
-        resolve_policy,
-        provider_schema_cache,
-    );
-    let mut schema = resolve_policy.resolve_schema_for_value_path(policy_inputs);
+    let (policy_inputs, provider_schema_candidate) =
+        build_path_schema_inputs(evidence, values_yaml_info, provider, provider_schema_cache);
+    let mut schema = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
     if let Some(values_yaml_info) = values_yaml_info {
         for declared_default in &values_yaml_info.declared_defaults {
             schema = crate::resolve_policy::open_objects_rejecting_declared_members(
@@ -169,7 +153,6 @@ fn resolve_path_evidence(
 fn provider_schemas_for_path_evidence(
     evidence: &ContractPathSchemaEvidence,
     provider: &dyn ResourceSchemaOracle,
-    resolve_policy: &ResolvePolicy,
     provider_schema_cache: &mut HashMap<
         ProviderSchemaLookupKey,
         Option<Arc<ProviderSchemaCandidate>>,
@@ -200,7 +183,7 @@ fn provider_schemas_for_path_evidence(
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
             std::collections::hash_map::Entry::Vacant(entry) => {
-                let schema = lookup_provider_schema(provider, provider_use, resolve_policy);
+                let schema = lookup_provider_schema(provider, provider_use);
                 entry.insert(schema.clone());
                 schema
             }
@@ -218,27 +201,24 @@ fn provider_schemas_for_path_evidence(
 }
 
 fn build_path_schema_inputs(
-    evidence: ContractPathSchemaEvidence,
+    evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
     provider: &dyn ResourceSchemaOracle,
-    resolve_policy: &ResolvePolicy,
     provider_schema_cache: &mut HashMap<
         ProviderSchemaLookupKey,
         Option<Arc<ProviderSchemaCandidate>>,
     >,
 ) -> (ValuePathSchemaInputs, Option<ProviderSchemaCandidate>) {
-    let provider_schemas = provider_schemas_for_path_evidence(
-        &evidence,
-        provider,
-        resolve_policy,
-        provider_schema_cache,
-    );
+    let provider_schemas =
+        provider_schemas_for_path_evidence(evidence, provider, provider_schema_cache);
     let (provider_schema, provider_schema_candidate) = provider_schema_for_path(
         provider_schemas,
         metadata_schema(&evidence.metadata_field_kinds),
     );
-    let values_yaml_facts =
-        values_yaml_info.map_or_else(ValuesYamlPathFacts::absent, |path_info| path_info.facts());
+    let values_yaml_facts = values_yaml_info.map_or_else(
+        ValuesYamlPathFacts::absent,
+        super::values_yaml::ValuesYamlPathInfo::facts,
+    );
     let facts = ValuePathSchemaFacts::new(evidence.facts, values_yaml_facts);
     let values_yaml_schema = values_yaml_info
         .map(|path_info| path_info.schema.clone())
@@ -252,7 +232,6 @@ fn build_path_schema_inputs(
             guard_predicate_schema: guard_predicate_schema(
                 &evidence.value_path,
                 &evidence.guard_predicates,
-                resolve_policy,
             ),
             type_hint_schema: type_hint_schema(&evidence.type_hints),
             guarded_type_hint_schema: type_hint_schema(&evidence.guarded_type_hints),
@@ -265,13 +244,12 @@ fn build_path_schema_inputs(
 fn lookup_provider_schema(
     provider: &dyn ResourceSchemaOracle,
     provider_use: &ProviderSchemaUse,
-    resolve_policy: &ResolvePolicy,
 ) -> Option<Arc<ProviderSchemaCandidate>> {
     provider
         .schema_fragment_for_use(provider_use)
         .and_then(|fragment| {
             fragment.try_map_schema(|schema| {
-                resolve_policy.provider_schema_for_value_use(schema, provider_use)
+                ResolvePolicy::provider_schema_for_value_use(schema, provider_use)
             })
         })
         .map(ProviderSchemaCandidate::from_provider_fragment)
@@ -334,6 +312,10 @@ fn metadata_schema(field_kinds: &BTreeSet<MetadataFieldKind>) -> Value {
 /// `default`-chained locals, where a null input takes the fallback and
 /// renders. Member requirements stay exact (a null member value really
 /// aborts).
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn fail_requirement_schema<'a>(
     implications: impl IntoIterator<Item = &'a helm_schema_core::ContractFailImplication>,
 ) -> Value {
@@ -495,14 +477,21 @@ pub(crate) fn fail_requirement_schema<'a>(
                         _ => {}
                     }
                 }
-                match key_schemas.len() {
-                    0 => {}
-                    1 => {
-                        object["propertyNames"] =
-                            key_schemas.pop().unwrap_or_else(|| serde_json::json!({}));
-                    }
-                    _ => {
-                        object["propertyNames"] = serde_json::json!({ "allOf": key_schemas });
+                if let Some(object) = object.as_object_mut() {
+                    match key_schemas.len() {
+                        0 => {}
+                        1 => {
+                            object.insert(
+                                "propertyNames".to_string(),
+                                key_schemas.pop().unwrap_or_else(|| serde_json::json!({})),
+                            );
+                        }
+                        _ => {
+                            object.insert(
+                                "propertyNames".to_string(),
+                                serde_json::json!({ "allOf": key_schemas }),
+                            );
+                        }
                     }
                 }
                 let array = if requirements_allow_runtime_kind(&implication.requirements, "integer")
@@ -578,7 +567,9 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
     };
     let mut index = 0;
     while index < characters.len() {
-        let character = characters[index];
+        let Some(character) = characters.get(index).copied() else {
+            break;
+        };
         if character != '\\' && character != '-' {
             previous_was_class_escape = false;
         }
@@ -586,8 +577,8 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
             '\\' => {
                 previous_was_class_escape = in_class && is_class_escape(index);
                 out.push(character);
-                if index + 1 < characters.len() {
-                    out.push(characters[index + 1]);
+                if let Some(next) = characters.get(index + 1).copied() {
+                    out.push(next);
                     index += 1;
                 }
             }
@@ -608,15 +599,19 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
                 // A valid quantifier ({n}, {n,}, {n,m}) passes through.
                 let mut end = index + 1;
                 while end < characters.len()
-                    && (characters[end].is_ascii_digit() || characters[end] == ',')
+                    && characters
+                        .get(end)
+                        .is_some_and(|character| character.is_ascii_digit() || *character == ',')
                 {
                     end += 1;
                 }
                 let quantifier = end > index + 1
                     && characters.get(end) == Some(&'}')
-                    && characters[index + 1].is_ascii_digit();
+                    && characters.get(index + 1).is_some_and(char::is_ascii_digit);
                 if quantifier {
-                    out.extend(&characters[index..=end]);
+                    if let Some(quantifier) = characters.get(index..=end) {
+                        out.extend(quantifier);
+                    }
                     index = end;
                 } else {
                     out.push_str("\\{");
@@ -637,20 +632,25 @@ fn requirements_allow_runtime_kind(
     use helm_schema_core::FailValueRequirement;
 
     requirements.iter().all(|requirement| match requirement {
-        FailValueRequirement::SchemaType(required) => required == schema_type,
+        FailValueRequirement::SchemaType(required)
         // Null is asserted away before Sprig's missing-key handling runs.
-        FailValueRequirement::SchemaTypeEvenNull(required) => required == schema_type,
+        | FailValueRequirement::SchemaTypeEvenNull(required) => required == schema_type,
         // Every runtime kind has a Helm-falsy spelling that escapes the
         // consumer, so the truthy-scoped requirement excludes no kind.
-        FailValueRequirement::TruthyImpliesSchemaType(_) => true,
-        // Every runtime kind except null has truthy inhabitants.
-        FailValueRequirement::HelmTruthy => schema_type != "null",
+        FailValueRequirement::TruthyImpliesSchemaType(_)
         // Every runtime kind has a Helm-falsy spelling.
-        FailValueRequirement::HelmFalsy => true,
-        FailValueRequirement::NotEquals(_) => true,
+        | FailValueRequirement::HelmFalsy
+        | FailValueRequirement::NotEquals(_)
         // Applies only to present fields on objects; every other kind
         // passes vacuously (a missing field differs from every literal).
-        FailValueRequirement::FieldNotEquals { .. } => true,
+        | FailValueRequirement::FieldNotEquals { .. }
+        // The requirement constrains rendered CONTENT, not the value's kind.
+        | FailValueRequirement::QuotedSerializationSafe { .. }
+        // The field constraint applies only to objects carrying the field;
+        // every other kind passes vacuously.
+        | FailValueRequirement::FieldHelmFalsy { .. } => true,
+        // Every runtime kind except null has truthy inhabitants.
+        FailValueRequirement::HelmTruthy => schema_type != "null",
         FailValueRequirement::ComparableKind(required) => {
             required == schema_type || schema_type == "null"
         }
@@ -662,7 +662,11 @@ fn requirements_allow_runtime_kind(
             matches!(schema_type, "array" | "object" | "null")
                 || schema_type == "integer" && *allow_integer
         }
-        FailValueRequirement::HasMember(_) => schema_type == "object",
+        FailValueRequirement::HasMember(_)
+        | FailValueRequirement::FieldEquals { .. }
+        // Presence of a (truthy or non-null) field needs an object host.
+        | FailValueRequirement::FieldPresentNotNull { .. }
+        | FailValueRequirement::FieldHelmTruthy { .. } => schema_type == "object",
         FailValueRequirement::MemberHost { handled_kinds } => {
             schema_type == "object" || handled_kinds.iter().any(|kind| kind == schema_type)
         }
@@ -670,21 +674,16 @@ fn requirements_allow_runtime_kind(
         FailValueRequirement::SplitSegmentsAtLeast {
             allow_non_string, ..
         } => schema_type == "string" || *allow_non_string,
-        // The requirement constrains rendered CONTENT, not the value's kind.
-        FailValueRequirement::QuotedSerializationSafe { .. } => true,
-        // The field constraint applies only to objects carrying the field;
-        // every other kind passes vacuously.
-        FailValueRequirement::FieldHelmFalsy { .. } => true,
-        FailValueRequirement::FieldEquals { .. } => schema_type == "object",
-        // Presence of a (truthy or non-null) field needs an object host.
-        FailValueRequirement::FieldPresentNotNull { .. }
-        | FailValueRequirement::FieldHelmTruthy { .. } => schema_type == "object",
         FailValueRequirement::AnyOf(alternatives) => alternatives
             .iter()
             .any(|alternative| requirements_allow_runtime_kind(alternative, schema_type)),
     })
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 fn fail_value_requirement_schema(
     requirements: &[helm_schema_core::FailValueRequirement],
     per_member: bool,
@@ -982,12 +981,11 @@ fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {
 fn guard_predicate_schema(
     value_path: &str,
     guard_predicates: &[helm_schema_ir::ConditionalGuard],
-    resolve_policy: &ResolvePolicy,
 ) -> Value {
     merge_schema_list(
         guard_predicates
             .iter()
-            .filter_map(|predicate| resolve_policy.guard_predicate_schema(value_path, predicate))
+            .filter_map(|predicate| ResolvePolicy::guard_predicate_schema(value_path, predicate))
             .collect(),
     )
 }

@@ -10,6 +10,8 @@
 //! accepts — which lets condition lowering treat the derived pattern as a
 //! structural guard rather than a heuristic.
 
+use std::fmt::Write as _;
+
 /// The comparison operator of a single bounded comparator constraint.
 #[derive(Clone, Copy)]
 enum ComparisonOp {
@@ -65,7 +67,7 @@ pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
         if part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()) {
             return None;
         }
-        bound[position] = part.parse().ok()?;
+        *bound.get_mut(position)? = part.parse().ok()?;
     }
     let body = match prerelease {
         None => {
@@ -145,8 +147,9 @@ fn prerelease_floor_body(op: ComparisonOp, bound: [u64; 3], prerelease: &str) ->
 fn equal_cores(bound: [u64; 3]) -> Vec<String> {
     let mut cores = Vec::new();
     for written in 1..=3usize {
-        if bound[written..].iter().all(|component| *component == 0) {
-            let components: Vec<String> = bound[..written]
+        let (written_components, omitted_components) = bound.split_at(written);
+        if omitted_components.iter().all(|component| *component == 0) {
+            let components: Vec<String> = written_components
                 .iter()
                 .copied()
                 .map(decimal_eq_pattern)
@@ -174,8 +177,9 @@ fn core_alternatives(op: ComparisonOp, bound: [u64; 3]) -> Vec<String> {
                 alternatives.push(core);
             }
         }
-        if inclusive && bound[written..].iter().all(|component| *component == 0) {
-            let components: Vec<String> = bound[..written]
+        let (written_components, omitted_components) = bound.split_at(written);
+        if inclusive && omitted_components.iter().all(|component| *component == 0) {
+            let components: Vec<String> = written_components
                 .iter()
                 .copied()
                 .map(decimal_eq_pattern)
@@ -244,7 +248,7 @@ fn decimal_lt_pattern(bound: u64) -> Option<String> {
     let count = digits.len();
     let mut alternatives = Vec::new();
     if count == 1 {
-        alternatives.push(digit_span(0, digits[0] - 1));
+        alternatives.push(digit_span(0, digits.first()?.saturating_sub(1)));
     } else {
         // Fewer significant digits than the bound is always below it; equal
         // length splits on the first digit that drops below the bound's.
@@ -252,16 +256,16 @@ fn decimal_lt_pattern(bound: u64) -> Option<String> {
         for length in 2..count {
             alternatives.push(format!("[1-9][0-9]{{{}}}", length - 1));
         }
-        for split in 0..count {
+        for (split, digit) in digits.iter().copied().enumerate() {
             let low = u32::from(split == 0);
-            if digits[split] <= low {
+            if digit <= low {
                 continue;
             }
-            let mut pattern: String = digits[..split].iter().map(ToString::to_string).collect();
-            pattern.push_str(&digit_span(low, digits[split] - 1));
+            let mut pattern: String = digits.iter().take(split).map(ToString::to_string).collect();
+            pattern.push_str(&digit_span(low, digit - 1));
             let remaining = count - split - 1;
             if remaining > 0 {
-                pattern.push_str(&format!("[0-9]{{{remaining}}}"));
+                let _ = write!(pattern, "[0-9]{{{remaining}}}");
             }
             alternatives.push(pattern);
         }
@@ -277,16 +281,16 @@ fn decimal_gt_pattern(bound: u64) -> String {
     // More significant digits than the bound is always above it; equal
     // length splits on the first digit that rises above the bound's.
     let mut alternatives = vec![format!("[1-9][0-9]{{{count},}}")];
-    for split in 0..count {
-        let low = digits[split].saturating_add(1).max(u32::from(split == 0));
+    for (split, digit) in digits.iter().copied().enumerate() {
+        let low = digit.saturating_add(1).max(u32::from(split == 0));
         if low > 9 {
             continue;
         }
-        let mut pattern: String = digits[..split].iter().map(ToString::to_string).collect();
+        let mut pattern: String = digits.iter().take(split).map(ToString::to_string).collect();
         pattern.push_str(&digit_span(low, 9));
         let remaining = count - split - 1;
         if remaining > 0 {
-            pattern.push_str(&format!("[0-9]{{{remaining}}}"));
+            let _ = write!(pattern, "[0-9]{{{remaining}}}");
         }
         alternatives.push(pattern);
     }

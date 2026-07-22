@@ -9,6 +9,7 @@ use crate::lookup::{
 use super::LocalSchemaUniverse;
 use super::universe::LocalSchemaDocument;
 
+/// Provider backed by CRD schemas declared directly in the analyzed chart.
 #[derive(Debug)]
 pub struct ChartLocalCrdSchemaProvider {
     universe: LocalSchemaUniverse,
@@ -16,6 +17,7 @@ pub struct ChartLocalCrdSchemaProvider {
 }
 
 impl ChartLocalCrdSchemaProvider {
+    /// Creates a provider over a precomputed chart-local schema universe.
     #[must_use]
     pub fn new(universe: LocalSchemaUniverse) -> Self {
         Self {
@@ -24,19 +26,20 @@ impl ChartLocalCrdSchemaProvider {
         }
     }
 
+    /// Enables or disables API-version inference from chart-local CRDs.
     #[must_use]
     pub fn with_api_version_guess(mut self, enabled: bool) -> Self {
         self.allow_api_version_guess = enabled;
         self
     }
 
+    /// Reports whether the provider has no chart-local schemas.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.universe.is_empty()
     }
 
     fn source_for_leaf(
-        &self,
         document: &LocalSchemaDocument,
         leaf: &LocalSchemaLeaf,
     ) -> Option<ProviderSchemaSource> {
@@ -63,7 +66,7 @@ impl K8sSchemaProvider for ChartLocalCrdSchemaProvider {
         };
 
         lookup_root_metadata_path(&document.doc, path, |leaf| {
-            self.source_for_leaf(document, leaf)
+            Self::source_for_leaf(document, leaf)
         })
     }
 

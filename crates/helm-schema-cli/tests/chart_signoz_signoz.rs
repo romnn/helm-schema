@@ -4,6 +4,8 @@
 //! these assertions state WHY the schema must look the way the fixture says,
 //! so a fixture regeneration cannot silently pin a regression.
 
+use color_eyre::eyre;
+
 use std::collections::BTreeSet;
 
 #[path = "common/chart_instances.rs"]
@@ -14,12 +16,18 @@ mod descriptions;
 mod helm_samples;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 use indoc::indoc;
 use serde_json::{Map, Value};
 
 #[test]
-fn signoz_signoz_schema_semantics_hold() -> color_eyre::eyre::Result<()> {
+#[expect(
+    clippy::too_many_lines,
+    reason = "the chart-wide semantic assertions are clearest in one generated-schema regression"
+)]
+fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("signoz-signoz")?;
     assert_schema_description(
         &schema,
@@ -735,7 +743,9 @@ fn schema_values_at_pointer<'schema>(
             schema_values_at_pointer(root, branch, segments, matches);
         }
     }
-    if let Some(child) = object.get(segments[0]) {
-        schema_values_at_pointer(root, child, &segments[1..], matches);
+    if let Some((head, tail)) = segments.split_first()
+        && let Some(child) = object.get(*head)
+    {
+        schema_values_at_pointer(root, child, tail, matches);
     }
 }

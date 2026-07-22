@@ -1,5 +1,6 @@
 pub mod cases;
 
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ResourceSchemaOracle, YamlPath};
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
@@ -16,8 +17,8 @@ use test_util::prelude::sim_assert_eq;
 pub fn build_define_index(
     spec: test_util::DefineSourceSpec<'_>,
     _helper_parse_mode: HelperParseMode,
-) -> DefineIndex {
-    let loaded = spec.load();
+) -> eyre::Result<DefineIndex> {
+    let loaded = spec.load()?;
     let mut idx = DefineIndex::new();
     for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
         idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
@@ -25,7 +26,7 @@ pub fn build_define_index(
     for (name, source) in loaded.file_sources {
         idx.add_file_source(&name, &source);
     }
-    idx
+    Ok(idx)
 }
 
 #[derive(Clone, Copy)]
@@ -148,10 +149,9 @@ pub fn relax_schema(schema: &Value) -> Value {
 
 /// Parse a `values.yaml` string into a [`serde_json::Value`].
 ///
-/// Returns the top-level mapping as a JSON object, or panics on parse failure.
-pub fn values_yaml_to_json(values_yaml: &str) -> Value {
-    let yaml: Value = serde_yaml::from_str(values_yaml).expect("parse values.yaml as JSON");
-    yaml
+/// Returns the top-level mapping as a JSON object.
+pub fn values_yaml_to_json(values_yaml: &str) -> eyre::Result<Value> {
+    serde_yaml::from_str(values_yaml).wrap_err("parse values.yaml as JSON")
 }
 
 pub fn generate_schema_with_values_yaml(
@@ -165,19 +165,21 @@ pub fn generate_schema_with_values_yaml(
     )
 }
 
-pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> Value {
-    match case.fixture_values_yaml {
-        Some(values_yaml) => render_schema_case_with_values(case, values_yaml),
-        None => {
-            let values_yaml = test_util::read_testdata(case.values_path);
-            render_schema_case_with_values(case, &values_yaml)
-        }
+pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> eyre::Result<Value> {
+    if let Some(values_yaml) = case.fixture_values_yaml {
+        render_schema_case_with_values(case, values_yaml)
+    } else {
+        let values_yaml = test_util::read_testdata(case.values_path)?;
+        render_schema_case_with_values(case, &values_yaml)
     }
 }
 
-pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: &str) -> Value {
-    let src = test_util::read_testdata(case.template_path);
-    let idx = build_define_index(case.define_sources, case.helper_parse_mode);
+pub fn render_schema_case_with_values(
+    case: &SchemaCorpusCase<'_>,
+    values_yaml: &str,
+) -> eyre::Result<Value> {
+    let src = test_util::read_testdata(case.template_path)?;
+    let idx = build_define_index(case.define_sources, case.helper_parse_mode)?;
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
     let provider = match case.provider {
         ProviderKind::K8s(version) => production_k8s_chain(version),
@@ -186,46 +188,42 @@ pub fn render_schema_case_with_values(case: &SchemaCorpusCase<'_>, values_yaml: 
     let schema = generate_schema_with_values_yaml(ir, &provider, Some(values_yaml));
 
     if std::env::var("SCHEMA_DUMP").is_ok() {
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&schema).expect("pretty json")
-        );
+        eprintln!("{}", serde_json::to_string_pretty(&schema)?);
         let path = std::env::temp_dir().join(format!("helm-schema.{}.schema.json", case.dump_stem));
-        std::fs::write(
-            &path,
-            serde_json::to_vec_pretty(&schema).expect("json bytes"),
-        )
-        .expect("write schema dump");
+        std::fs::write(&path, serde_json::to_vec_pretty(&schema)?)
+            .wrap_err_with(|| format!("write schema dump to {}", path.display()))?;
     }
 
-    schema
+    Ok(schema)
 }
 
-pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) {
-    let actual = render_schema_case(case);
+pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) -> eyre::Result<()> {
+    let actual = render_schema_case(case)?;
     if std::env::var("SCHEMA_DUMP").is_ok() {
-        return;
+        return Ok(());
     }
-    let expected: Value =
-        serde_json::from_str(case.expected_fixture).expect("expected schema json");
+    let expected: Value = serde_json::from_str(case.expected_fixture)
+        .wrap_err_with(|| format!("parse expected schema fixture for {}", case.dump_stem))?;
     sim_assert_eq!(
         have: actual,
         want: expected,
         "schema fixture mismatch for {}",
         case.dump_stem,
     );
+    Ok(())
 }
 
-pub fn assert_values_yaml_validates(case: &SchemaCorpusCase<'_>) {
-    let values_yaml = test_util::read_testdata(case.values_path);
-    let schema = render_schema_case_with_values(case, &values_yaml);
-    let errors = validate_values_yaml(&values_yaml, &schema);
-    assert!(
+pub fn assert_values_yaml_validates(case: &SchemaCorpusCase<'_>) -> eyre::Result<()> {
+    let values_yaml = test_util::read_testdata(case.values_path)?;
+    let schema = render_schema_case_with_values(case, &values_yaml)?;
+    let errors = validate_values_yaml(&values_yaml, &schema)?;
+    color_eyre::eyre::ensure!(
         errors.is_empty(),
         "values.yaml failed schema validation with {} error(s):\n{}",
         errors.len(),
         errors.join("\n")
     );
+    Ok(())
 }
 
 fn drop_nulls(v: &Value) -> Value {
@@ -274,17 +272,17 @@ pub fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
 /// The schema is first relaxed (removing `additionalProperties: false`) so that
 /// values for other templates don't cause false positives. Returns a list of
 /// validation errors (empty = pass).
-pub fn validate_values_yaml(values_yaml: &str, schema: &Value) -> Vec<String> {
-    let json_values = drop_nulls(&values_yaml_to_json(values_yaml));
+pub fn validate_values_yaml(values_yaml: &str, schema: &Value) -> eyre::Result<Vec<String>> {
+    let json_values = drop_nulls(&values_yaml_to_json(values_yaml)?);
     let relaxed = relax_schema(schema);
-    validate_json_against_schema(&json_values, &relaxed)
+    Ok(validate_json_against_schema(&json_values, &relaxed))
 }
 
 pub fn helm_template_render_with_args(
     chart_dir: &Path,
     show_only: Option<&str>,
     extra_args: &[&str],
-) -> Result<String, String> {
+) -> eyre::Result<String> {
     let mut cmd = Command::new("helm");
     cmd.arg("template").arg("test-release").arg(chart_dir);
 
@@ -295,44 +293,41 @@ pub fn helm_template_render_with_args(
         cmd.arg(arg);
     }
 
-    let output = cmd
-        .output()
-        .map_err(|e| format!("failed to run helm: {e}"))?;
+    let output = cmd.output().wrap_err("run helm template")?;
 
     if output.status.success() {
-        String::from_utf8(output.stdout).map_err(|e| format!("helm output is not valid UTF-8: {e}"))
+        String::from_utf8(output.stdout).wrap_err("decode helm output as UTF-8")
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
         // helm template prints errors to stdout sometimes
         let stdout = String::from_utf8_lossy(&output.stdout);
-        Err(format!(
+        Err(eyre::eyre!(
             "helm template failed:\nstderr: {stderr}\nstdout: {stdout}"
         ))
     }
 }
 
-pub fn render_helm_case(case: &HelmRenderCase<'_>) -> Result<String, String> {
+pub fn render_helm_case(case: &HelmRenderCase<'_>) -> eyre::Result<String> {
     let chart_dir = test_util::workspace_testdata().join(case.chart_path);
     helm_template_render_with_args(&chart_dir, case.show_only, case.extra_args)
 }
 
-pub fn assert_helm_render_case(case: &HelmRenderCase<'_>) {
-    let rendered = render_helm_case(case);
-    match &rendered {
-        Ok(yaml) => assert!(
-            !yaml.is_empty(),
-            "helm render produced empty YAML for {}",
-            case.name
-        ),
-        Err(e) => panic!("helm render failed for {}: {e}", case.name),
-    }
+pub fn assert_helm_render_case(case: &HelmRenderCase<'_>) -> eyre::Result<()> {
+    let rendered = render_helm_case(case)
+        .wrap_err_with(|| format!("render Helm corpus case {}", case.name))?;
+    color_eyre::eyre::ensure!(
+        !rendered.is_empty(),
+        "helm render produced empty YAML for {}",
+        case.name
+    );
+    Ok(())
 }
 
-pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) {
-    let schema = render_schema_case(&case.schema_case);
+pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) -> eyre::Result<()> {
+    let schema = render_schema_case(&case.schema_case)?;
     for expectation in case.expectations {
-        let instance: Value =
-            serde_json::from_str(expectation.instance).expect("behavior instance JSON");
+        let instance: Value = serde_json::from_str(expectation.instance)
+            .wrap_err_with(|| format!("parse behavior JSON: {}", expectation.message))?;
         let accepted = schema_accepts_instance(&schema, &instance);
         sim_assert_eq!(
             have: accepted,
@@ -341,25 +336,28 @@ pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) {
             case.schema_case.dump_stem, expectation.message
         );
     }
+    Ok(())
 }
 
-pub fn parse_yaml_documents(yaml: &str) -> Vec<Value> {
+pub fn parse_yaml_documents(yaml: &str) -> eyre::Result<Vec<Value>> {
     let mut out = Vec::new();
     for doc in serde_yaml::Deserializer::from_str(yaml) {
-        let value = Value::deserialize(doc).expect("parse YAML document as JSON");
+        let value = Value::deserialize(doc).wrap_err("parse rendered YAML document as JSON")?;
         if value.is_null() {
             continue;
         }
         out.push(value);
     }
-    out
+    Ok(out)
 }
 
-pub fn assert_rendered_manifest_validation_case(case: &RenderedManifestValidationCase<'_>) {
+pub fn assert_rendered_manifest_validation_case(
+    case: &RenderedManifestValidationCase<'_>,
+) -> eyre::Result<()> {
     let rendered_yaml = render_helm_case(&case.render)
-        .unwrap_or_else(|err| panic!("helm render failed for {}: {err}", case.render.name));
-    let docs = parse_yaml_documents(&rendered_yaml);
-    assert!(
+        .wrap_err_with(|| format!("render Helm corpus case {}", case.render.name))?;
+    let docs = parse_yaml_documents(&rendered_yaml)?;
+    color_eyre::eyre::ensure!(
         !docs.is_empty(),
         "rendered YAML contained no documents for {}",
         case.render.name
@@ -369,16 +367,16 @@ pub fn assert_rendered_manifest_validation_case(case: &RenderedManifestValidatio
         let api_version = doc
             .get("apiVersion")
             .and_then(|value| value.as_str())
-            .expect("manifest missing apiVersion");
+            .ok_or_eyre("rendered manifest missing apiVersion")?;
         let kind = doc
             .get("kind")
             .and_then(|value| value.as_str())
-            .expect("manifest missing kind");
+            .ok_or_eyre("rendered manifest missing kind")?;
         let resource = ResourceRef::concrete(api_version.to_string(), kind.to_string());
         let schema = materialized_schema_for_rendered_resource(case.provider, &resource)
-            .unwrap_or_else(|| panic!("load schema for rendered {api_version}/{kind}"));
+            .ok_or_eyre(format!("load schema for rendered {api_version}/{kind}"))?;
         let errors = validate_json_against_schema(&doc, &schema);
-        assert!(
+        color_eyre::eyre::ensure!(
             errors.is_empty(),
             "rendered {api_version}/{kind} for {} failed schema validation with {} error(s):\n{}",
             case.render.name,
@@ -386,6 +384,7 @@ pub fn assert_rendered_manifest_validation_case(case: &RenderedManifestValidatio
             errors.join("\n")
         );
     }
+    Ok(())
 }
 
 fn materialized_schema_for_rendered_resource(

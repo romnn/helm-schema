@@ -22,7 +22,7 @@ impl<'a> FragmentEvalContext<'a> {
     }
 
     pub(crate) fn fragment_value_from_expr(
-        &self,
+        self,
         expr: &TemplateExpr,
         locals: &HashMap<String, AbstractValue>,
         current_dot: Option<&AbstractValue>,
@@ -32,7 +32,7 @@ impl<'a> FragmentEvalContext<'a> {
     }
 
     pub(crate) fn fragment_value_from_expr_with_meta(
-        &self,
+        self,
         expr: &TemplateExpr,
         locals: &HashMap<String, AbstractValue>,
         local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
@@ -51,7 +51,7 @@ impl<'a> FragmentEvalContext<'a> {
                 outer: None,
                 outer_root_facts: crate::analysis_db::OuterRootFacts::default(),
                 current_dot: current_dot_helper.as_ref(),
-                context: *self,
+                context: self,
                 seen,
             },
         );

@@ -50,7 +50,7 @@ pub(crate) const PLAIN_SCALAR_BOOL_TOKEN_PATTERN: &str =
 // mantissas, three-digit exponents) is deliberately left unexcluded.
 
 /// Sign/digit-led tokens the resolver provably reads as decimal numbers,
-/// after global underscore stripping. Covers integers ("1_000"), leading-zero
+/// after global underscore stripping. Covers integers ("`1_000`"), leading-zero
 /// float fallbacks ("09"), trailing-dot floats ("1."), exponent forms
 /// ("1e99", bounded to two exponent digits so overflow never reaches the
 /// claim), and sign-led leading-dot floats ("-.5"). An unsigned leading
@@ -179,7 +179,6 @@ pub(crate) struct ValuePathSchemaInputs {
 
 impl ResolvePolicy {
     pub(crate) fn provider_schema_for_value_use(
-        &self,
         schema: &Value,
         use_: &ProviderSchemaUse,
     ) -> Option<Value> {
@@ -225,7 +224,6 @@ impl ResolvePolicy {
     }
 
     pub(crate) fn guard_predicate_schema(
-        &self,
         value_path: &str,
         predicate: &ConditionalGuard,
     ) -> Option<Value> {
@@ -272,7 +270,11 @@ impl ResolvePolicy {
         }
     }
 
-    pub(crate) fn resolve_schema_for_value_path(&self, input: ValuePathSchemaInputs) -> Value {
+    #[expect(
+        clippy::too_many_lines,
+        reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+    )]
+    pub(crate) fn resolve_schema_for_value_path(input: ValuePathSchemaInputs) -> Value {
         let ValuePathSchemaInputs {
             facts,
             provider_schema,
@@ -344,19 +346,19 @@ impl ResolvePolicy {
             &type_hint_schema,
             &guard_predicate_schema,
         );
-        let values_yaml_schema = self.adjust_values_yaml_schema_for_value_path(
+        let values_yaml_schema = Self::adjust_values_yaml_schema_for_value_path(
             values_yaml_schema,
             facts,
             &provider_schema,
         );
-        let provider_schema = self.adjust_provider_schema_for_value_path(
+        let provider_schema = Self::adjust_provider_schema_for_value_path(
             facts,
             provider_schema,
             &values_yaml_schema,
             &type_hint_schema,
             &guard_predicate_schema,
         );
-        let partial_scalar_schema = self.partial_scalar_schema_for_value_path(
+        let partial_scalar_schema = Self::partial_scalar_schema_for_value_path(
             facts,
             &provider_schema,
             &type_hint_schema,
@@ -364,7 +366,7 @@ impl ResolvePolicy {
         );
         let guard_predicate_schema =
             merge_schema_list(vec![guard_predicate_schema, partial_scalar_schema]);
-        let merged = self.resolve_merged_schema_for_value_path(
+        let merged = Self::resolve_merged_schema_for_value_path(
             ValuePathSchemaInputs {
                 facts,
                 provider_schema,
@@ -502,7 +504,6 @@ impl ResolvePolicy {
     }
 
     fn adjust_values_yaml_schema_for_value_path(
-        &self,
         values_yaml_schema: Value,
         facts: ValuePathSchemaFacts,
         provider_schema: &Value,
@@ -533,7 +534,6 @@ impl ResolvePolicy {
     }
 
     fn adjust_provider_schema_for_value_path(
-        &self,
         facts: ValuePathSchemaFacts,
         provider_schema: Value,
         values_yaml_schema: &Value,
@@ -554,7 +554,6 @@ impl ResolvePolicy {
     }
 
     fn partial_scalar_schema_for_value_path(
-        &self,
         facts: ValuePathSchemaFacts,
         provider_schema: &Value,
         type_hint_schema: &Value,
@@ -574,7 +573,6 @@ impl ResolvePolicy {
     }
 
     fn resolve_merged_schema_for_value_path(
-        &self,
         input: ValuePathSchemaInputs,
         preserve_empty_string_fallback: bool,
     ) -> Value {
@@ -754,7 +752,7 @@ fn plain_scalar_provider_preimage(schema: Value) -> Value {
         number: schema_allows_type(&schema, "number"),
         integer: schema_allows_type(&schema, "integer"),
     };
-    plain_scalar_provider_preimage_with(schema, &allowed)
+    plain_scalar_provider_preimage_with(schema, allowed)
 }
 
 /// Which implicit-token kinds the WHOLE provider slot accepts; computed once
@@ -767,7 +765,7 @@ struct ImplicitTokenAllowance {
     integer: bool,
 }
 
-fn plain_scalar_provider_preimage_with(schema: Value, allowed: &ImplicitTokenAllowance) -> Value {
+fn plain_scalar_provider_preimage_with(schema: Value, allowed: ImplicitTokenAllowance) -> Value {
     let Some(object) = schema.as_object() else {
         return schema;
     };
@@ -809,7 +807,7 @@ fn plain_scalar_provider_preimage_with(schema: Value, allowed: &ImplicitTokenAll
     }
 }
 
-fn scalar_plain_string_preimage(schema: Value, allowed: &ImplicitTokenAllowance) -> Value {
+fn scalar_plain_string_preimage(schema: Value, allowed: ImplicitTokenAllowance) -> Value {
     let mut exclusions = vec![
         serde_json::json!({ "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } }),
         serde_json::json!({ "not": { "pattern": "^[-?:]([ \\t]|$)" } }),
@@ -850,7 +848,9 @@ fn scalar_plain_string_preimage(schema: Value, allowed: &ImplicitTokenAllowance)
 }
 
 fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
-    let object = schema.as_object().expect("typed schema is an object");
+    let Some(object) = schema.as_object() else {
+        return schema;
+    };
     if [
         "minimum",
         "maximum",
@@ -875,7 +875,9 @@ fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
 }
 
 fn scalar_boolean_preimage(schema: Value) -> Value {
-    let object = schema.as_object().expect("typed schema is an object");
+    let Some(object) = schema.as_object() else {
+        return schema;
+    };
     let string_schema = scalar_string_preimage(object, PLAIN_SCALAR_BOOL_TOKEN_PATTERN);
     union_schema_list(vec![schema, string_schema])
 }
@@ -918,7 +920,7 @@ pub(crate) fn conditional_target_schema(
     overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
     branch_schema: Value,
-    values_yaml_schema: Value,
+    values_yaml_schema: &Value,
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
@@ -956,7 +958,7 @@ fn conditional_target_schema_inner(
     overlay: &ConditionalPathOverlay,
     values_yaml_doc: &YamlValue,
     branch_schema: Value,
-    values_yaml_schema: Value,
+    values_yaml_schema: &Value,
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
@@ -1018,8 +1020,8 @@ fn conditional_target_schema_inner(
         // branch: `toYaml` is total there, so the placeholder's
         // object typing must not narrow the branch.
         && !(overlay.evidence.facts.used_as_fragment
-            && is_placeholder_fragment_object_schema(&values_yaml_schema))
-        && should_merge_values_yaml_into_conditional_branch(&branch_schema, &values_yaml_schema)
+            && is_placeholder_fragment_object_schema(values_yaml_schema))
+        && should_merge_values_yaml_into_conditional_branch(&branch_schema, values_yaml_schema)
     {
         merge_schema_list(vec![branch_schema, values_yaml_schema.clone()])
     } else {

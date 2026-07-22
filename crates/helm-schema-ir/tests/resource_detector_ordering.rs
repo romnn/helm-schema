@@ -24,12 +24,10 @@ fn generate(template: &str) -> FinalizedContract {
         .finalize()
 }
 
-fn resource_of(use_: &ContractUse) -> (String, String) {
-    let r = use_
-        .resource
+fn resource_of(use_: &ContractUse) -> Option<(String, String)> {
+    use_.resource
         .as_ref()
-        .expect("contract claim must carry a resource");
-    (r.api_version.clone(), r.kind.clone())
+        .map(|resource| (resource.api_version.clone(), resource.kind.clone()))
 }
 
 // Baseline: the conventional `apiVersion` THEN `kind` ordering must
@@ -52,7 +50,7 @@ fn detector_records_both_when_api_version_precedes_kind() {
         .expect("expected a use for `example`");
     sim_assert_eq!(
         have: resource_of(u),
-        want: ("v1".to_string(), "ConfigMap".to_string()),
+        want: Some(("v1".to_string(), "ConfigMap".to_string())),
         "apiVersion-then-kind must yield (v1, ConfigMap)"
     );
 }
@@ -79,10 +77,10 @@ fn detector_records_both_when_kind_precedes_api_version() {
         .expect("expected a use for `app`");
     sim_assert_eq!(
         have: resource_of(u),
-        want: (
+        want: Some((
             "networking.k8s.io/v1".to_string(),
             "NetworkPolicy".to_string()
-        ),
+        )),
         "kind-then-apiVersion must yield (networking.k8s.io/v1, NetworkPolicy); \
          the old detector dropped apiVersion here"
     );
@@ -113,7 +111,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
         .expect("first use missing");
     sim_assert_eq!(
         have: resource_of(first),
-        want: ("v1".to_string(), "ConfigMap".to_string()),
+        want: Some(("v1".to_string(), "ConfigMap".to_string())),
         "doc 1 must resolve to ConfigMap"
     );
 
@@ -124,7 +122,7 @@ fn detector_resets_at_doc_separator_and_reorders() {
         .expect("second use missing");
     sim_assert_eq!(
         have: resource_of(second),
-        want: ("v1".to_string(), "Secret".to_string()),
+        want: Some(("v1".to_string(), "Secret".to_string())),
         "doc 2 must independently resolve to Secret regardless of header order"
     );
 }
@@ -494,14 +492,14 @@ fn detector_resolves_include_returned_api_version() {
 // `MissingSchema(kind=PodSecurityPolicy, api_version=policy/v1)`.
 #[test]
 fn detector_primary_is_source_order_not_stability_rank() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         apiVersion: policy/v1beta1
         kind: PodSecurityPolicy
         metadata:
           name: psp
         spec:
           allowPrivilegeEscalation: {{ .Values.allowPrivilegeEscalation }}
-    "#};
+    "};
     let ir = generate(template);
     let u = ir
         .uses()
@@ -523,7 +521,7 @@ fn detector_primary_is_source_order_not_stability_rank() {
 // generic "stable beats beta" ranking.
 #[test]
 fn detector_multi_branch_primary_is_first_seen_in_source() {
-    let template = indoc! {r#"
+    let template = indoc! {r"
         kind: PodDisruptionBudget
         {{- if not .Values.modern }}
         apiVersion: policy/v1beta1
@@ -532,7 +530,7 @@ fn detector_multi_branch_primary_is_first_seen_in_source() {
         {{- end }}
         spec:
           minAvailable: {{ .Values.minAvailable }}
-    "#};
+    "};
     let ir = generate(template);
     let u = ir
         .uses()

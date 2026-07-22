@@ -4,7 +4,7 @@ use super::*;
 
 #[test]
 fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Secret
         metadata:
@@ -13,7 +13,7 @@ fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
         stringData:
           password: ignored
         {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         existingSecret: \"\"
     "};
@@ -297,12 +297,12 @@ fn local_default_alias_render_applies_provider_schema_to_fallback_path() {
 
 #[test]
 fn unconstrained_object_fragment_keeps_nested_maps_open() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: example.com/v1
         kind: Widget
         spec:
           resources: {{ toYaml .Values.resources | nindent 4 }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         resources:
           requests:
@@ -349,7 +349,7 @@ fn unconstrained_object_fragment_keeps_nested_maps_open() {
 /// type it as an open string map.
 #[test]
 fn with_bound_range_dot_annotations_stay_string_map() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -360,7 +360,7 @@ fn with_bound_range_dot_annotations_stay_string_map() {
             {{ $key }}: {{ $value | quote }}
             {{- end }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         annotations:
           foo: bar

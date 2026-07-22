@@ -130,7 +130,7 @@ fn with_rebound_dot_type_dispatch_binds_source_path() {
 /// `key` are read from different templates).
 #[test]
 fn partially_observed_selector_object_stays_open() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -140,7 +140,7 @@ fn partially_observed_selector_object_stays_open() {
           - name: creds
             secret:
               secretName: {{ .Values.credentials.secret.name }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), None);
 
     assert!(
@@ -159,7 +159,7 @@ fn partially_observed_selector_object_stays_open() {
 /// bound them (grafana.ini / airflow config shape).
 #[test]
 fn serialized_declared_mapping_sections_stay_open() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -167,7 +167,7 @@ fn serialized_declared_mapping_sections_stay_open() {
         data:
           config.yaml: |
             {{- toYaml .Values.config | nindent 4 }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         config:
           server:
@@ -195,7 +195,7 @@ fn serialized_declared_mapping_sections_stay_open() {
 /// verification shape from the plan, applied to a declared mapping.
 #[test]
 fn guard_read_beside_serialized_render_keeps_mapping_open() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -206,7 +206,7 @@ fn guard_read_beside_serialized_render_keeps_mapping_open() {
           {{- end }}
           config.yaml: |
             {{- toYaml .Values.config | nindent 4 }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         config:
           server:
@@ -231,7 +231,7 @@ fn guard_read_beside_serialized_render_keeps_mapping_open() {
 /// `service.clusterIPs` / nats-operator `tolerations` shape).
 #[test]
 fn serialized_truthy_guarded_leaf_admits_arrays() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: example.com/v1
         kind: Widget
         metadata:
@@ -241,7 +241,7 @@ fn serialized_truthy_guarded_leaf_admits_arrays() {
           clusterIPs:
           {{ toYaml .Values.service.clusterIPs | nindent 4 }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         service: {}
     "};
@@ -261,7 +261,7 @@ fn serialized_truthy_guarded_leaf_admits_arrays() {
 /// empty-string declared default is intent, not an input-kind constraint.
 #[test]
 fn flag_splice_accepts_any_scalar_beyond_declared_string() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -271,7 +271,7 @@ fn flag_splice_accepts_any_scalar_beyond_declared_string() {
           - name: main
             args:
             - -v={{ .Values.klogLevel }}
-    "#};
+    "};
     let values_yaml = "klogLevel: \"\"\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -292,7 +292,7 @@ fn flag_splice_accepts_any_scalar_beyond_declared_string() {
 /// form too (nack `readOnly` shape, `--read-only=true` renders either way).
 #[test]
 fn declared_boolean_flag_splice_accepts_string_form() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -302,7 +302,7 @@ fn declared_boolean_flag_splice_accepts_string_form() {
           - name: main
             args:
             - --read-only={{ .Values.readOnly }}
-    "#};
+    "};
     let values_yaml = "readOnly: false\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -353,7 +353,7 @@ fn quoted_string_slot_widen_declared_boolean_to_scalars() {
 /// `additionalVolumes` shape).
 #[test]
 fn declared_empty_map_guarded_fragment_admits_arrays() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: example.com/v1
         kind: Widget
         metadata:
@@ -363,7 +363,7 @@ fn declared_empty_map_guarded_fragment_admits_arrays() {
           volumes:
           {{- toYaml .Values.additionalVolumes | nindent 4 }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = "additionalVolumes: {}\n";
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -425,7 +425,7 @@ fn with_dot_tpl_keeps_string_form_valid() {
 /// shape, declared `{runAsUser: 0}`).
 #[test]
 fn self_guarded_declared_object_accepts_explicit_null() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: Pod
         metadata:
@@ -435,7 +435,7 @@ fn self_guarded_declared_object_accepts_explicit_null() {
           securityContext:
             {{- toYaml .Values.securityContext | nindent 4 }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         securityContext:
           runAsUser: 0

@@ -9,7 +9,7 @@ fn universe_from_crd_documents<I: IntoIterator<Item = serde_json::Value>>(
     let mut universe = LocalSchemaUniverse::default();
     for document in documents {
         for resource_schema in crate::resource_schemas_from_crd_document_with_source(
-            document,
+            &document,
             "chart-local",
             String::new(),
         ) {

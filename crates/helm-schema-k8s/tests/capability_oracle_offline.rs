@@ -13,6 +13,7 @@
 use std::fs;
 use std::sync::Arc;
 
+use color_eyre::eyre;
 use helm_schema_core::ApiPresenceQuery;
 use helm_schema_k8s::{
     K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, LookupTraceEntry,
@@ -20,10 +21,11 @@ use helm_schema_k8s::{
 };
 use test_util::prelude::sim_assert_eq;
 
-mod common;
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
 use common::MockFetcher;
 
-fn tmp_dir(label: &str) -> std::path::PathBuf {
+fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
     let p = std::env::temp_dir().join(format!(
         "helm-schema.{label}.{}.{}",
         std::process::id(),
@@ -32,8 +34,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
             .map(|d| d.as_nanos())
             .unwrap_or(0)
     ));
-    fs::create_dir_all(&p).expect("create temp dir");
-    p
+    std::fs::create_dir_all(&p)?;
+    Ok(p)
 }
 
 /// Offline mode plus a cache partially populated by an earlier run plus an
@@ -41,8 +43,8 @@ fn tmp_dir(label: &str) -> std::path::PathBuf {
 /// A cache with one unrelated file does not prove the rest of the bundle is
 /// empty.
 #[test]
-fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
-    let cache_dir = tmp_dir("capability_oracle_offline_partial");
+fn offline_partial_cache_capability_probe_returns_none_when_target_absent() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("capability_oracle_offline_partial")?;
     let primary = "v1.35.0";
     let source_id = default_source_id();
 
@@ -83,11 +85,12 @@ fn offline_partial_cache_capability_probe_returns_none_when_target_absent() {
         want: Some(true),
         "the planted ConfigMap at v1 must be discoverable as Has(\"v1\"); got {positive:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn traced_offline_partial_cache_records_uncertain_source_probe() {
-    let cache_dir = tmp_dir("capability_oracle_trace_partial");
+fn traced_offline_partial_cache_records_uncertain_source_probe() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("capability_oracle_trace_partial")?;
     let primary = "v1.35.0";
     let source_id = default_source_id();
     let version_dir = cache_dir.join(source_id).join(primary);
@@ -127,6 +130,7 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() {
         "offline partial cache must expose the uncertain HPA source probe in the trace: {:?}",
         traced.trace.entries()
     );
+    Ok(())
 }
 
 /// Offline + completely empty cache: the oracle has no information
@@ -134,8 +138,8 @@ fn traced_offline_partial_cache_records_uncertain_source_probe() {
 /// would let a just-initialised cache silently misroute branch
 /// selection.
 #[test]
-fn offline_empty_cache_returns_none() {
-    let cache_dir = tmp_dir("capability_oracle_offline_empty");
+fn offline_empty_cache_returns_none() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("capability_oracle_offline_empty")?;
     let primary = "v1.35.0";
 
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
@@ -154,6 +158,7 @@ fn offline_empty_cache_returns_none() {
         want: None,
         "offline + empty cache must return None; got {answer:?}"
     );
+    Ok(())
 }
 
 /// Online + the fetcher reports "not found": that's an authoritative
@@ -161,8 +166,8 @@ fn offline_empty_cache_returns_none() {
 /// gets populated so subsequent probes to the same target in the
 /// same process short-circuit without re-fetching.
 #[test]
-fn online_404_returns_authoritative_false_and_caches_negative() {
-    let cache_dir = tmp_dir("capability_oracle_online_404");
+fn online_404_returns_authoritative_false_and_caches_negative() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("capability_oracle_online_404")?;
     let primary = "v1.35.0";
 
     let mock = Arc::new(MockFetcher::new()); // empty → every fetch is Ok(None) (404)
@@ -195,11 +200,12 @@ fn online_404_returns_authoritative_false_and_caches_negative() {
         want: Some(false),
         "second probe in same process must still be authoritatively absent; got {second:?}"
     );
+    Ok(())
 }
 
 #[test]
-fn traced_online_404_records_authoritative_absent_source_probe() {
-    let cache_dir = tmp_dir("capability_oracle_trace_404");
+fn traced_online_404_records_authoritative_absent_source_probe() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("capability_oracle_trace_404")?;
     let primary = "v1.35.0";
     let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
         vec![primary.to_string()],
@@ -226,22 +232,22 @@ fn traced_online_404_records_authoritative_absent_source_probe() {
         "online 404 must expose the authoritative absent source probe in the trace: {:?}",
         traced.trace.entries()
     );
+    Ok(())
 }
 
 /// Online + the fetcher returns a real schema document: the oracle
 /// returns `Some(true)` and the cache is populated for subsequent
 /// offline lookups.
 #[test]
-fn online_200_returns_true_and_caches() {
-    let cache_dir = tmp_dir("capability_oracle_online_200");
+fn online_200_returns_true_and_caches() -> eyre::Result<()> {
+    let cache_dir = tmp_dir("capability_oracle_online_200")?;
     let primary = "v1.35.0";
     let source_id = default_source_id();
     // The default K8s mirror URL helm-schema uses (per K8sMirrorChain
     // default) — must match what the provider would compose for the
     // HPA-at-autoscaling/v2 probe.
     let default_url = format!(
-        "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{}/horizontalpodautoscaler-autoscaling-v2.json",
-        primary
+        "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{primary}/horizontalpodautoscaler-autoscaling-v2.json"
     );
     let mock = Arc::new(MockFetcher::new().with_body(
         default_url,
@@ -275,4 +281,5 @@ fn online_200_returns_true_and_caches() {
         probe_file.exists(),
         "successful online fetch must persist to disk for future offline reads"
     );
+    Ok(())
 }

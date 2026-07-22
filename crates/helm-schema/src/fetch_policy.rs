@@ -13,6 +13,7 @@ pub struct FetchPolicy {
 }
 
 impl FetchPolicy {
+    /// Creates an explicit local-file and network retrieval policy.
     #[must_use]
     pub const fn new(allow_file: bool, allow_network: bool) -> Self {
         Self {

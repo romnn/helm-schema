@@ -1,3 +1,5 @@
+//! Corpus checks that templated YAML parses without grammar error nodes.
+
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
@@ -211,6 +213,10 @@ fn strip_whitespace_only_lines(text: &str) -> String {
     out
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "the sanitizer is one stateful pass whose shared cursors are clearer kept together"
+)]
 fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src: &str) -> String {
     let root = gotmpl_tree.root_node();
     let mut keep_ranges: Vec<std::ops::Range<usize>> = Vec::new();
@@ -227,8 +233,10 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
             define_ends.push(node.end_byte());
         }
 
-        let child_count = u32::try_from(node.child_count()).expect("child count fits u32");
-        for i in (0..child_count).rev() {
+        for i in (0..node.child_count())
+            .rev()
+            .filter_map(|index| u32::try_from(index).ok())
+        {
             let Some(ch) = node.child(i) else {
                 continue;
             };
@@ -267,15 +275,16 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
     let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
     let mut ri = 0usize;
     let mut keep_mask = vec![false; bytes.len()];
-    for i in 0..bytes.len() {
-        while ri < merged.len() && i >= merged[ri].end {
+    for (i, (keep, byte)) in keep_mask.iter_mut().zip(bytes).enumerate() {
+        while merged.get(ri).is_some_and(|range| i >= range.end) {
             ri += 1;
         }
-        let in_keep = ri < merged.len() && i >= merged[ri].start && i < merged[ri].end;
-        keep_mask[i] = in_keep;
-        let b = bytes[i];
-        if in_keep || b == b'\n' {
-            out.push(b);
+        let in_keep = merged
+            .get(ri)
+            .is_some_and(|range| i >= range.start && i < range.end);
+        *keep = in_keep;
+        if in_keep || *byte == b'\n' {
+            out.push(*byte);
         } else {
             out.push(b' ');
         }
@@ -302,8 +311,11 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
         let in_hole = keep_mask
             .get(start..start + 3)
             .is_some_and(|m| m.iter().all(|keep| !keep));
-        if at_line_start && in_hole {
-            out[start..start + 3].copy_from_slice(b"---");
+        if at_line_start
+            && in_hole
+            && let Some(boundary) = out.get_mut(start..start + 3)
+        {
+            boundary.copy_from_slice(b"---");
         }
     }
 
@@ -312,30 +324,30 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
     let mut i = 0usize;
     let mut line_start = 0usize;
     while i < out.len() {
-        if out[i] == b'\n' {
+        if out.get(i) == Some(&b'\n') {
             i += 1;
             line_start = i;
             continue;
         }
 
-        let is_hole = i < keep_mask.len() && !keep_mask[i] && out[i] != b'\n';
+        let is_hole = keep_mask.get(i) == Some(&false) && out.get(i) != Some(&b'\n');
         if !is_hole {
             i += 1;
             continue;
         }
 
         let start = i;
-        while i < out.len() && out[i] != b'\n' && i < keep_mask.len() && !keep_mask[i] {
+        while out.get(i).is_some_and(|byte| *byte != b'\n') && keep_mask.get(i) == Some(&false) {
             i += 1;
         }
         let end = i;
 
         let mut line_end = end;
-        while line_end < out.len() && out[line_end] != b'\n' {
+        while out.get(line_end).is_some_and(|byte| *byte != b'\n') {
             line_end += 1;
         }
 
-        let prefix = &out[line_start..start];
+        let prefix = out.get(line_start..start).unwrap_or_default();
         let prefix_has_non_ws = prefix.iter().any(|b| !b.is_ascii_whitespace());
 
         // If the hole starts immediately after a mapping `:` (e.g. `key: {{ ... }}`), do not
@@ -344,7 +356,10 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
         let prefix_ends_with_mapping_colon = prefix
             .iter()
             .rposition(|b| !b.is_ascii_whitespace())
-            .is_some_and(|idx| prefix[idx] == b':' && !prefix[..idx].contains(&b':'));
+            .is_some_and(|idx| {
+                prefix.get(idx) == Some(&b':')
+                    && prefix.get(..idx).is_some_and(|head| !head.contains(&b':'))
+            });
 
         // `- {{ toYaml ... }}` renders a mapping inline after the item
         // dash, and templates continue that mapping with literal keys on
@@ -358,23 +373,25 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
             .eq(b"-".iter());
 
         let mut j = end;
-        while j < line_end && out[j].is_ascii_whitespace() {
+        while j < line_end && out.get(j).is_some_and(u8::is_ascii_whitespace) {
             j += 1;
         }
-        let suffix_starts_with_colon = j < line_end && out[j] == b':';
+        let suffix_starts_with_colon = j < line_end && out.get(j) == Some(&b':');
         // `value: {{a}},{{b}}` keeps the literal `,` after the hole; leaving
         // the hole as spaces would start the plain scalar with `,`, which
         // YAML forbids. A hole with trailing line content is part of an
         // inline scalar, so it needs the placeholder. A trailing `#` comment
         // (`{{- end }} # closes foo`) is not content: blank holes leave a
         // plain comment line behind, which is exactly right.
-        let suffix_has_content = j < line_end && out[j] != b'#';
+        let suffix_has_content = j < line_end && out.get(j) != Some(&b'#');
 
         if suffix_starts_with_colon
             || suffix_has_content
             || (prefix_has_non_ws && !prefix_ends_with_mapping_colon)
         {
-            out[start..end].fill(b'0');
+            if let Some(hole) = out.get_mut(start..end) {
+                hole.fill(b'0');
+            }
 
             if prefix_is_item_dash && end > start {
                 let hole_col = start - line_start;
@@ -382,15 +399,15 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
                     let mut k = line_end;
                     let mut next_line: &[u8] = &[];
                     while k < out.len() {
-                        if out[k] == b'\n' {
+                        if out.get(k) == Some(&b'\n') {
                             k += 1;
                             continue;
                         }
                         let mut candidate_end = k;
-                        while candidate_end < out.len() && out[candidate_end] != b'\n' {
+                        while out.get(candidate_end).is_some_and(|byte| *byte != b'\n') {
                             candidate_end += 1;
                         }
-                        let candidate = &out[k..candidate_end];
+                        let candidate = out.get(k..candidate_end).unwrap_or_default();
                         if candidate.iter().all(u8::is_ascii_whitespace) {
                             k = candidate_end;
                             continue;
@@ -403,14 +420,17 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
                         && next_line.iter().any(|b| !b.is_ascii_whitespace());
                     next_is_key && next_indent == hole_col
                 };
-                if continues_as_mapping_key {
-                    out[end - 1] = b':';
+                if continues_as_mapping_key
+                    && let Some(last) = end.checked_sub(1).and_then(|index| out.get_mut(index))
+                {
+                    *last = b':';
                 }
             }
         }
     }
 
-    String::from_utf8(out).expect("sanitized YAML must be valid utf-8")
+    String::from_utf8(out)
+        .unwrap_or_else(|error| String::from_utf8_lossy(error.as_bytes()).into_owned())
 }
 
 fn collect_yaml_files(dir: &Path, out: &mut Vec<PathBuf>) {
@@ -503,14 +523,17 @@ fn contains_kind(root: tree_sitter::Node<'_>, kind: &str) -> bool {
 /// through the layout parser's conservative fallback, so this smoke test
 /// skips them explicitly instead of growing line heuristics around them.
 ///
-/// - falco-talon `rbac.yaml`: the ClusterRole emits `rules` sequence items at
-///   indent 2, but its legacy PodSecurityPolicy branch emits further items at
+/// - falco-talon `rbac.yaml`: the `ClusterRole` emits `rules` sequence items at
+///   indent 2, but its legacy `PodSecurityPolicy` branch emits further items at
 ///   indent 0 of the same sequence; the branches are never both live on a
 ///   modern cluster, and their concatenation is unparsable by construction.
 const SKIP_STRUCTURALLY_ILL_NESTED: &[&str] = &["falco-talon/templates/rbac.yaml"];
 
 #[test]
-#[allow(clippy::too_many_lines)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the corpus smoke test keeps each file's parse diagnostics in one execution flow"
+)]
 fn parses_all_testdata_yaml_templates_best_effort() {
     let yaml_language = tree_sitter::Language::new(helm_schema_template_grammar::yaml::language());
     let gotmpl_language =

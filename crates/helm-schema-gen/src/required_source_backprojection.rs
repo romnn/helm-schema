@@ -113,6 +113,10 @@ pub(crate) fn synthesized_required_source_implications(
 /// port, so only service-less members need `containerPort`). Any other
 /// member-scoped guard shape abstains — firing wider than the real branch
 /// would reject members the chart renders.
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
+)]
 pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
@@ -125,8 +129,12 @@ pub(crate) fn synthesized_ranged_member_required_implications(
         let Some(star) = segments.iter().position(|segment| segment == "*") else {
             continue;
         };
-        let collection_segments = &segments[..star];
-        let field_segments = &segments[star + 1..];
+        let Some(collection_segments) = segments.get(..star) else {
+            continue;
+        };
+        let Some(field_segments) = segments.get(star + 1..) else {
+            continue;
+        };
         if collection_segments.is_empty()
             || field_segments.is_empty()
             || field_segments.iter().any(|segment| segment == "*")

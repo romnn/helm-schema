@@ -2,16 +2,21 @@ use std::collections::BTreeSet;
 
 use crate::Guard;
 
+/// Typed Boolean formula recovered from template control flow.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Predicate {
+    /// Formula that holds for every input.
     True,
+    /// Formula that holds for no input.
     False,
     /// A control condition whose exact relation could not be lowered.
     ///
     /// The paths remain available for diagnostics and conservative attribution, but consumers
     /// must not turn this marker into a narrowing schema condition.
     Approximate {
+        /// Stable description of the expression shape that could not be lowered.
         marker: String,
+        /// Values paths mentioned by the unlowerable expression.
         paths: BTreeSet<String>,
         /// Guards whose conjunction IMPLIES the real condition (a sound
         /// subset). Usable only in POSITIVE polarity where firing less
@@ -20,9 +25,13 @@ pub enum Predicate {
         /// bounded strengthening was recognized.
         sound_subset: Vec<Guard>,
     },
+    /// Exactly lowerable atomic guard.
     Guard(Guard),
+    /// Logical negation of a predicate.
     Not(Box<Predicate>),
+    /// Conjunction of every enclosed predicate.
     And(Vec<Predicate>),
+    /// Disjunction of the enclosed predicates.
     Or(Vec<Predicate>),
 }
 
@@ -46,6 +55,7 @@ impl From<Guard> for Predicate {
 }
 
 impl Predicate {
+    /// Creates an atomic truthiness predicate for a values path.
     pub fn truthy_path(path: impl Into<String>) -> Self {
         Self::Guard(Guard::Truthy { path: path.into() })
     }
@@ -74,6 +84,8 @@ impl Predicate {
         }
     }
 
+    /// Normalizes a conjunction, collapsing empty and singleton formulas.
+    #[must_use]
     pub fn all(predicates: Vec<Self>) -> Self {
         match predicates.as_slice() {
             [] => Self::True,
@@ -82,6 +94,8 @@ impl Predicate {
         }
     }
 
+    /// Returns the logical complement without retaining redundant double negation.
+    #[must_use]
     pub fn negated(&self) -> Self {
         match self {
             Self::True => Self::False,
@@ -91,11 +105,14 @@ impl Predicate {
         }
     }
 
+    /// Reports whether the predicate is the constant `true` or `false` formula.
+    #[must_use]
     pub fn is_trivial(&self) -> bool {
         matches!(self, Self::True | Self::False)
     }
 
     /// Whether this predicate contains a condition that could not be lowered exactly.
+    /// Returns every values path referenced by the formula.
     #[must_use]
     pub fn contains_approximation(&self) -> bool {
         match self {
@@ -108,17 +125,40 @@ impl Predicate {
         }
     }
 
+    /// Returns every values path referenced by the formula.
+    #[must_use]
     pub fn value_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_value_paths(&mut paths);
         paths
     }
 
+    /// Expands header predicates into the context-selection facts active in their bodies.
     pub fn with_context_predicates(self) -> Vec<Self> {
         match self {
             Self::True => Vec::new(),
             Self::False => vec![Self::False],
-            Self::Approximate { .. } => vec![self],
+            Self::Approximate { .. }
+            | Self::Guard(
+                Guard::Range { .. }
+                | Guard::RangeKeyPrefix { .. }
+                | Guard::RangeKeyEquals { .. }
+                | Guard::RangeKeyMatches { .. }
+                | Guard::Absent { .. }
+                | Guard::With { .. }
+                | Guard::Default { .. }
+                | Guard::TypeIs { .. }
+                | Guard::NotTypeIs { .. }
+                | Guard::Not { .. }
+                | Guard::Or { .. }
+                | Guard::AnyOf { .. }
+                | Guard::IntGt { .. }
+                | Guard::IntLt { .. }
+                | Guard::AtMostOneMember { .. }
+                | Guard::MinMembers { .. }
+                | Guard::HasKey { .. }
+                | Guard::ContainsEquals { .. },
+            ) => vec![self],
             Self::And(predicates) => predicates
                 .into_iter()
                 .flat_map(Self::with_context_predicates)
@@ -169,35 +209,18 @@ impl Predicate {
                 Self::from(Guard::With { path: path.clone() }),
                 Self::from(Guard::NotEq { path, value }),
             ],
-            Self::Guard(
-                Guard::Range { .. }
-                | Guard::RangeKeyPrefix { .. }
-                | Guard::RangeKeyEquals { .. }
-                | Guard::RangeKeyMatches { .. }
-                | Guard::Absent { .. }
-                | Guard::With { .. }
-                | Guard::Default { .. }
-                | Guard::TypeIs { .. }
-                | Guard::NotTypeIs { .. }
-                | Guard::Not { .. }
-                | Guard::Or { .. }
-                | Guard::AnyOf { .. }
-                | Guard::IntGt { .. }
-                | Guard::IntLt { .. }
-                | Guard::AtMostOneMember { .. }
-                | Guard::MinMembers { .. }
-                | Guard::HasKey { .. }
-                | Guard::ContainsEquals { .. },
-            ) => vec![self],
         }
     }
 
+    /// Returns values paths whose branch structure permits them to be absent.
+    #[must_use]
     pub fn conditionally_optional_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_conditionally_optional_paths(&mut paths);
         paths
     }
 
+    /// Projects this formula into the contract guard vocabulary.
     pub fn contract_guards(&self) -> Vec<Guard> {
         match self {
             Self::True | Self::False | Self::Approximate { .. } => Vec::new(),
@@ -295,6 +318,8 @@ impl Predicate {
         }
     }
 
+    /// Projects a predicate stack into a deduplicated guard conjunction.
+    #[must_use]
     pub fn contract_guard_stack(predicates: &[Self]) -> Vec<Guard> {
         let mut guards = Vec::new();
         for predicate in predicates {
@@ -307,6 +332,7 @@ impl Predicate {
         guards
     }
 
+    /// Rewrites every values path carried by this formula.
     #[must_use]
     pub fn map_value_paths<F>(self, map: &mut F) -> Self
     where

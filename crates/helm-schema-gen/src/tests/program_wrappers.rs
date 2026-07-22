@@ -185,14 +185,14 @@ fn wrapper_program_results_must_be_compatible_with_node_and_parent() {
 /// route their values through a wrapper engine.
 #[test]
 fn without_an_engine_wrapper_maps_stay_ordinary_objects() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
           port: {{ .Values.port }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some("port: 4222\n"));
     assert!(
         !schema_accepts_instance(

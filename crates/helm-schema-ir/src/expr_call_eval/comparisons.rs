@@ -29,13 +29,13 @@ pub(super) fn eval_ternary(
         // contract only for direct selectors and aliases of direct selectors.
         record_strict_kind_result(&condition, "boolean", &mut effects);
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
-        condition_identity = identity_value_paths(&condition.value);
+        condition_identity = identity_value_paths(condition.value.as_ref());
         effects.merge(condition.effects);
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
         record_strict_kind_result(&condition, "boolean", &mut effects);
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
-        condition_identity = identity_value_paths(&condition.value);
+        condition_identity = identity_value_paths(condition.value.as_ref());
         effects.merge(condition.effects);
     }
     // The condition only SELECTS an arm — its value never renders into the
@@ -108,7 +108,7 @@ fn raw_condition_path(value: &AbstractValue) -> Option<String> {
 
 fn conjoin_result_selection(result: &mut EvalResult, predicate: Predicate) {
     let selection = BTreeSet::from([predicate]);
-    for path in identity_value_paths(&result.value) {
+    for path in identity_value_paths(result.value.as_ref()) {
         result
             .effects
             .local_output_meta
@@ -131,7 +131,10 @@ pub(super) fn eval_type_is(
         values.push(result.value);
     }
     if let Some(schema_type) = type_is_schema_type(args.first()) {
-        let paths = values.get(1).map(identity_value_paths).unwrap_or_default();
+        let paths = values
+            .get(1)
+            .map(|value| identity_value_paths(value.as_ref()))
+            .unwrap_or_default();
         effects.add_tested_type_hints(paths, &schema_type);
     }
     EvalResult::with_effects(None, effects)

@@ -1,3 +1,6 @@
+//! Chart-local CRD lookup regression for the fixture `Widget` resource.
+
+use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{K8sSchemaProvider, LocalSchemaProvider};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -5,15 +8,15 @@ use test_util::prelude::sim_assert_eq;
 
 static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
-fn make_temp_dir(group_dir: &str) -> std::path::PathBuf {
+fn make_temp_dir(group_dir: &str) -> eyre::Result<std::path::PathBuf> {
     let n = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     let dir = std::env::temp_dir().join(format!(
         "helm-schema.local-test.{}.{}",
         std::process::id(),
         n
     ));
-    std::fs::create_dir_all(dir.join(group_dir)).expect("create temp dir");
-    dir
+    std::fs::create_dir_all(dir.join(group_dir))?;
+    Ok(dir)
 }
 
 fn materialize_schema_for_resource(
@@ -27,13 +30,13 @@ fn materialize_schema_for_resource(
 }
 
 #[test]
-fn materialize_expands_refs() {
+fn materialize_expands_refs() -> eyre::Result<()> {
     let group = "acme.example.com";
     let api_version = "acme.example.com/v1";
     let kind = "Widget";
     let filename = "acme.example.com/widget_v1.json";
 
-    let root_dir = make_temp_dir(group);
+    let root_dir = make_temp_dir(group)?;
 
     let schema_doc = serde_json::json!({
         "$schema": "http://json-schema.org/schema#",
@@ -134,16 +137,17 @@ fn materialize_expands_refs() {
     });
 
     sim_assert_eq!(have: actual, want: expected);
+    Ok(())
 }
 
 #[test]
-fn leaf_schema() {
+fn leaf_schema() -> eyre::Result<()> {
     let group = "acme.example.com";
     let api_version = "acme.example.com/v1";
     let kind = "Widget";
     let filename = "acme.example.com/widget_v1.json";
 
-    let root_dir = make_temp_dir(group);
+    let root_dir = make_temp_dir(group)?;
 
     let schema_doc = serde_json::json!({
         "$schema": "http://json-schema.org/schema#",
@@ -191,17 +195,19 @@ fn leaf_schema() {
 
     let expected = serde_json::json!({"type": "string"});
     sim_assert_eq!(have: schema, want: expected);
+    Ok(())
 }
 
 #[test]
-fn returns_none_for_missing_schema() {
-    let root_dir = make_temp_dir("acme.example.com");
+fn returns_none_for_missing_schema() -> eyre::Result<()> {
+    let root_dir = make_temp_dir("acme.example.com")?;
 
     let provider = LocalSchemaProvider::new(&root_dir);
 
     let r = ResourceRef::concrete("acme.example.com/v1".to_string(), "NonExistent".to_string());
 
     assert!(materialize_schema_for_resource(&provider, &r).is_none());
+    Ok(())
 }
 
 // `LocalSchemaProvider` (a.k.a. the `--crd-override-dir` layer) is
@@ -211,7 +217,7 @@ fn returns_none_for_missing_schema() {
 // `is_k8s_builtin_group` guard), this test will fail and force them
 // to read the README's explicit power-user contract first.
 #[test]
-fn local_provider_accepts_builtin_k8s_resource_override() {
+fn local_provider_accepts_builtin_k8s_resource_override() -> eyre::Result<()> {
     // Pin a custom (locally-modified) schema for the BUILT-IN
     // `rbac.authorization.k8s.io/v1` `ClusterRole` resource.
     let group = "rbac.authorization.k8s.io";
@@ -219,7 +225,7 @@ fn local_provider_accepts_builtin_k8s_resource_override() {
     let kind = "ClusterRole";
     let filename = "rbac.authorization.k8s.io/clusterrole_v1.json";
 
-    let root_dir = make_temp_dir(group);
+    let root_dir = make_temp_dir(group)?;
     let schema_doc = serde_json::json!({
         "$schema": "http://json-schema.org/schema#",
         "type": "object",
@@ -245,4 +251,5 @@ fn local_provider_accepts_builtin_k8s_resource_override() {
         "the local override layer must serve the user's custom schema for built-in K8s kinds; \
          restricting it to CRD-only would silently fall through to the upstream schema"
     );
+    Ok(())
 }

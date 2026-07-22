@@ -7,6 +7,7 @@ use crate::{ContractProvenance, Guard, GuardDnf, ResourceRef, ValueKind, YamlPat
 /// sink schema constrains that segment, never the whole raw value.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct SplitSegmentUse {
+    /// Literal delimiter used to split the source string.
     pub separator: String,
     /// The LAST segment when true, the first otherwise.
     pub last: bool,
@@ -42,18 +43,26 @@ impl MergeLayersUse {
     /// The higher-precedence layer paths whose keys shadow this layer's.
     #[must_use]
     pub fn shadowed_by(&self) -> &[String] {
-        &self.layers[..self.position.min(self.layers.len())]
+        self.layers
+            .get(..self.position.min(self.layers.len()))
+            .unwrap_or_default()
     }
 }
 
 /// A contract claim for one observed values path.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct ContractUse {
+    /// Canonical values path or expression that supplied the rendered value.
     pub source_expr: String,
+    /// Structural path of the value in the rendered YAML document.
     pub path: YamlPath,
+    /// How the value contributes to the rendered YAML node.
     pub kind: ValueKind,
+    /// Normalized condition under which the use renders.
     pub condition: GuardDnf,
+    /// Kubernetes resource owning the rendered path, when known.
     pub resource: Option<ResourceRef>,
+    /// Template locations and helper chains that produced the use.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub provenance: Vec<ContractProvenance>,
     /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
@@ -80,7 +89,8 @@ pub struct ContractUse {
     pub range_key: bool,
     /// The rendered text is a Sprig `quote`/`squote` of the value, which
     /// skips nil operands: a missing or null source renders an explicit
-    /// YAML null into the sink (see [`ProviderSchemaUse::nil_omitting`]).
+    /// YAML null into the sink (see
+    /// [`ProviderSchemaUse::nil_omitting`](crate::ProviderSchemaUse::nil_omitting)).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub nil_omitting: bool,
     /// Literal member keys a guard-scoped `omit` may remove from the
@@ -161,6 +171,8 @@ impl<'de> Deserialize<'de> for ContractUse {
 }
 
 impl ContractUse {
+    /// Creates a contract use from one conjunction of guards.
+    #[must_use]
     pub fn new(
         source_expr: String,
         path: YamlPath,
@@ -171,6 +183,7 @@ impl ContractUse {
         Self::with_provenances(source_expr, path, kind, guards, resource, None)
     }
 
+    /// Creates a guarded contract use with explicit source provenance.
     pub fn with_provenances(
         source_expr: String,
         path: YamlPath,
@@ -179,7 +192,7 @@ impl ContractUse {
         resource: Option<ResourceRef>,
         provenance: impl IntoIterator<Item = ContractProvenance>,
     ) -> Self {
-        let condition = GuardDnf::from_guards(guards.iter().cloned());
+        let condition = GuardDnf::from_guards(guards);
         Self::with_condition_and_provenances(
             source_expr,
             path,
@@ -190,6 +203,7 @@ impl ContractUse {
         )
     }
 
+    /// Creates a contract use from an already-normalized condition.
     pub fn with_condition_and_provenances(
         source_expr: String,
         path: YamlPath,
@@ -217,11 +231,13 @@ impl ContractUse {
         }
     }
 
+    /// Sorts and deduplicates provenance without changing semantic evidence.
     pub fn canonicalize(&mut self) {
         self.provenance.sort();
         self.provenance.dedup();
     }
 
+    /// Returns the sole guard conjunction, or an empty conjunction when not singular.
     #[must_use]
     pub fn single_guard_conjunction(&self) -> Vec<Guard> {
         self.condition
@@ -229,6 +245,7 @@ impl ContractUse {
             .unwrap_or_default()
     }
 
+    /// Rewrites the source expression and every values path in the condition.
     pub fn map_value_paths<F>(&mut self, map: &mut F)
     where
         F: FnMut(&str) -> String,

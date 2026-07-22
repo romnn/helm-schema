@@ -141,7 +141,7 @@ fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
 fn constrain_existing_path_to_object(node: &mut SchemaNode, path_segments: &[String]) -> bool {
     let Some((head, tail)) = path_segments.split_first() else {
         return match node {
-            SchemaNode::Empty => {
+            SchemaNode::Empty | SchemaNode::Foreign(Value::Bool(true)) => {
                 *node = SchemaNode::unknown_object();
                 true
             }
@@ -166,10 +166,6 @@ fn constrain_existing_path_to_object(node: &mut SchemaNode, path_segments: &[Str
                 _ => false,
             },
             SchemaNode::Foreign(Value::Bool(false)) => true,
-            SchemaNode::Foreign(Value::Bool(true)) => {
-                *node = SchemaNode::unknown_object();
-                true
-            }
             SchemaNode::Array { .. } | SchemaNode::Foreign(_) => false,
         };
     };
@@ -263,17 +259,17 @@ fn append_conditional_at_parts(
     condition: SchemaNode,
     then_schema: SchemaNode,
 ) {
-    if path_segments.is_empty() {
+    let Some((head, tail)) = path_segments.split_first() else {
         push_conditional_entry(node, condition, then_schema, false);
         return;
-    }
+    };
 
     // A `*` segment addresses EACH member value of a ranged map: the
     // conditional lands inside the node's `additionalProperties` member
     // slot, mirroring `insert_map_member_row` — a literal `"*"` property
     // would constrain nothing a chart can render, silently dropping the
     // guarded member contract (velero `schedules.*` rows).
-    if path_segments[0] == "*" {
+    if head == "*" {
         if node.is_empty_slot() {
             *node = SchemaNode::untyped_member_host();
         }
@@ -284,15 +280,10 @@ fn append_conditional_at_parts(
         {
             let member = additional_properties.get_or_insert_with(|| Box::new(SchemaNode::empty()));
             if !member.is_false_schema() {
-                if path_segments.len() == 1 {
+                if tail.is_empty() {
                     push_conditional_entry(member, condition, then_schema, true);
                 } else {
-                    append_conditional_at_parts(
-                        member,
-                        &path_segments[1..],
-                        condition,
-                        then_schema,
-                    );
+                    append_conditional_at_parts(member, tail, condition, then_schema);
                 }
                 return;
             }
@@ -313,19 +304,17 @@ fn append_conditional_at_parts(
         *node = SchemaNode::untyped_member_host();
     }
     let properties = ensure_object_properties(node);
-    let child = properties
-        .entry(path_segments[0].clone())
-        .or_insert_with(|| {
-            if path_segments.len() == 1 {
-                SchemaNode::foreign(serde_json::json!({}))
-            } else {
-                SchemaNode::untyped_member_host()
-            }
-        });
-    if path_segments.len() == 1 {
+    let child = properties.entry(head.clone()).or_insert_with(|| {
+        if tail.is_empty() {
+            SchemaNode::foreign(serde_json::json!({}))
+        } else {
+            SchemaNode::untyped_member_host()
+        }
+    });
+    if tail.is_empty() {
         push_conditional_entry(child, condition, then_schema, true);
     } else {
-        append_conditional_at_parts(child, &path_segments[1..], condition, then_schema);
+        append_conditional_at_parts(child, tail, condition, then_schema);
     }
 }
 
@@ -559,12 +548,12 @@ fn ensure_array_items_schema(node: &mut SchemaNode) -> &mut SchemaNode {
     if !matches!(node, SchemaNode::Array { .. }) {
         *node = new_array_slot();
     }
-    let SchemaNode::Array { items, .. } = node else {
-        unreachable!("array schema must be normalized before accessing items");
-    };
-    items
-        .get_or_insert_with(|| Box::new(SchemaNode::foreign(Value::Null)))
-        .as_mut()
+    match node {
+        SchemaNode::Array { items, .. } => items
+            .get_or_insert_with(|| Box::new(SchemaNode::foreign(Value::Null)))
+            .as_mut(),
+        _ => ensure_array_items_schema(node),
+    }
 }
 
 fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, SchemaNode> {
@@ -583,10 +572,10 @@ fn ensure_object_properties(node: &mut SchemaNode) -> &mut BTreeMap<String, Sche
             *node = SchemaNode::unknown_object();
         }
     }
-    let SchemaNode::Object { properties, .. } = node else {
-        unreachable!("object schema must be normalized before accessing properties");
-    };
-    properties
+    match node {
+        SchemaNode::Object { properties, .. } => properties,
+        _ => ensure_object_properties(node),
+    }
 }
 
 fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
@@ -641,16 +630,16 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
 }
 
 fn replace_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
-    if path_segments.is_empty() {
+    let Some((head, tail)) = path_segments.split_first() else {
         *node = leaf;
         return;
-    }
+    };
 
-    let head = path_segments[0].as_str();
+    let head = head.as_str();
     let replaced = match node {
         SchemaNode::Object { properties, .. } => {
             if let Some(child) = properties.get_mut(head) {
-                replace_schema_at_parts(child, &path_segments[1..], leaf.clone());
+                replace_schema_at_parts(child, tail, leaf.clone());
                 true
             } else {
                 false
@@ -658,7 +647,7 @@ fn replace_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf
         }
         SchemaNode::Array { items, .. } if head == "*" => {
             if let Some(child) = items.as_deref_mut() {
-                replace_schema_at_parts(child, &path_segments[1..], leaf.clone());
+                replace_schema_at_parts(child, tail, leaf.clone());
                 true
             } else {
                 false
@@ -694,11 +683,14 @@ fn insert_map_member_row(
     path_segments: &[String],
     leaf: &SchemaNode,
 ) -> bool {
+    let Some((_, tail)) = path_segments.split_first() else {
+        return false;
+    };
     let insert = |member: &mut SchemaNode| {
-        if path_segments.len() == 1 {
+        if tail.is_empty() {
             merge_into_schema_slot(member, leaf.clone());
         } else {
-            insert_schema_at_parts(member, &path_segments[1..], leaf.clone());
+            insert_schema_at_parts(member, tail, leaf.clone());
         }
     };
     match node {
@@ -765,15 +757,15 @@ fn insert_map_member_row(
 }
 
 fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf: SchemaNode) {
-    if path_segments.is_empty() {
+    let Some((head, tail)) = path_segments.split_first() else {
         return;
-    }
+    };
 
     // `range` iterates maps as well as lists, so a member row's `*` segment
     // means "each member value" of whatever container the node already is:
     // an object-shaped node hosts it under `additionalProperties` instead
     // of growing an array alternative.
-    if path_segments[0] == "*" && insert_map_member_row(node, path_segments, &leaf) {
+    if head == "*" && insert_map_member_row(node, path_segments, &leaf) {
         return;
     }
 
@@ -783,15 +775,15 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         // own openness decides the outcome (a top-level merge of a nested
         // carrier would let the carrier's materialized closure shut an open
         // map one level down).
-        if path_segments.len() > 1
-            && path_segments[0] != "*"
+        if !tail.is_empty()
+            && head != "*"
             && let SchemaNode::Foreign(value) = node
             && let Some(child_value) = value
                 .get_mut("properties")
-                .and_then(|properties| properties.get_mut(&path_segments[0]))
+                .and_then(|properties| properties.get_mut(head))
         {
             let mut child_node = SchemaNode::foreign(std::mem::take(child_value));
-            insert_schema_at_parts(&mut child_node, &path_segments[1..], leaf);
+            insert_schema_at_parts(&mut child_node, tail, leaf);
             *child_value = child_node.into_value();
             return;
         }
@@ -799,7 +791,7 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         // declared-empty serialized map) hosts descendants in its open arm:
         // merging a carrier at the union level would replace the open arm
         // with the carrier's materialized closure.
-        if path_segments[0] != "*"
+        if head != "*"
             && let SchemaNode::Foreign(value) = node
             && let Some(arms) = value.get_mut("anyOf").and_then(Value::as_array_mut)
         {
@@ -821,7 +813,7 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
         return;
     }
 
-    if path_segments[0] == "*" {
+    if head == "*" {
         if node.is_empty_slot() {
             // A bare `*` member row proves members exist, not which
             // collection lane hosts them: `range` iterates arrays and maps
@@ -845,29 +837,30 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
             return;
         }
         let items = ensure_array_items_schema(node);
-        if path_segments.len() == 1 {
+        if tail.is_empty() {
             merge_into_schema_slot(items, leaf);
         } else {
-            insert_schema_at_parts(items, &path_segments[1..], leaf);
+            insert_schema_at_parts(items, tail, leaf);
         }
         return;
     }
 
-    if path_segments.len() > 1 {
+    if !tail.is_empty() {
         node.clear_exact_empty_constraint_for_descendant();
     }
-    if path_segments.len() == 1 {
+    if tail.is_empty() {
         let properties = ensure_object_properties(node);
-        let key = path_segments[0].clone();
         merge_into_schema_slot(
-            properties.entry(key).or_insert_with(SchemaNode::empty),
+            properties
+                .entry(head.clone())
+                .or_insert_with(SchemaNode::empty),
             leaf,
         );
         return;
     }
 
-    let key = path_segments[0].clone();
-    let next_is_array = path_segments.get(1).is_some_and(|segment| segment == "*");
+    let key = head.clone();
+    let next_is_array = tail.first().is_some_and(|segment| segment == "*");
     let properties = ensure_object_properties(node);
     let child = properties.entry(key).or_insert_with(|| {
         if next_is_array {
@@ -885,5 +878,5 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
     if !next_is_array {
         child.clear_exact_empty_constraint_for_descendant();
     }
-    insert_schema_at_parts(child, &path_segments[1..], leaf);
+    insert_schema_at_parts(child, tail, leaf);
 }

@@ -3,8 +3,10 @@
 use serde_json::Value;
 use std::convert::Infallible;
 
+/// Serializes a JSON value after recursively sorting every object's keys.
+#[must_use]
 pub fn canonical_json_string(value: &Value) -> String {
-    serde_json::to_string(&canonical_json_value(value)).expect("serialize canonical JSON value")
+    canonical_json_value(value).to_string()
 }
 
 fn canonical_json_value(value: &Value) -> Value {
@@ -31,16 +33,23 @@ pub fn escape_json_pointer_segment(segment: &str) -> String {
     segment.replace('~', "~0").replace('/', "~1")
 }
 
+/// Describes how a JSON value is interpreted while traversing a schema.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SchemaTraversalContext {
+    /// The value is a schema.
     Schema,
+    /// The value is an array whose elements are schemas.
     SchemaArray,
+    /// The value is an object whose property values are schemas.
     SchemaMapValues,
     /// Value of a `$ref` keyword: a reference target, not a subschema.
     Ref,
+    /// The value is ordinary JSON data rather than a schema.
     Data,
 }
 
+/// Returns the traversal context for a JSON Schema keyword's value.
+#[must_use]
 pub fn schema_child_context_for_keyword(key: &str) -> SchemaTraversalContext {
     match key {
         "properties" | "patternProperties" | "$defs" | "definitions" | "dependencies"
@@ -63,6 +72,8 @@ pub fn schema_child_context_for_keyword(key: &str) -> SchemaTraversalContext {
     }
 }
 
+/// Reports whether a reference is local and resolves within `root`.
+#[must_use]
 pub fn ref_points_inside(root: &Value, reference: &str) -> bool {
     let Some(pointer) = reference.strip_prefix('#') else {
         return false;
@@ -72,6 +83,7 @@ pub fn ref_points_inside(root: &Value, reference: &str) -> bool {
 
 /// Whether every internal (`#`-prefixed) `$ref` in `schema` resolves within
 /// `schema` itself.
+#[must_use]
 pub fn schema_refs_point_inside(schema: &Value) -> bool {
     refs_point_inside_value(schema, schema, SchemaTraversalContext::Schema)
 }
@@ -105,6 +117,14 @@ fn refs_point_inside_value(root: &Value, value: &Value, context: SchemaTraversal
     }
 }
 
+/// Rewrites a value while preserving JSON Schema traversal semantics.
+///
+/// The callback receives each visited value, its semantic context, and its depth below the input.
+/// Returning `Some` replaces that value without descending into it.
+///
+/// # Errors
+///
+/// Returns the callback's error without visiting the remaining values.
 pub fn try_map_schema_context<E>(
     value: &Value,
     context: SchemaTraversalContext,
@@ -242,6 +262,10 @@ pub fn visit_subschemas_mut(schema: &mut Value, visitor: &mut impl FnMut(&mut Va
 ///
 /// This has the same traversal semantics as [`visit_subschemas_mut`], but lets
 /// the visitor fail so callers can propagate their own error type.
+///
+/// # Errors
+///
+/// Returns the visitor's error without visiting the remaining subschemas.
 pub fn try_visit_subschemas_mut<E>(
     schema: &mut Value,
     visitor: &mut impl FnMut(&mut Value) -> Result<(), E>,

@@ -1,15 +1,25 @@
+//! Parses and formats the tree-sitter S-expressions used in parser tests.
+
 use lexpr::Value;
 use std::fmt;
 use std::str::FromStr;
 
+/// Describes why a tree-sitter S-expression fixture could not be parsed.
 #[derive(Debug)]
 pub enum ParseError {
+    /// The input is not syntactically valid as an S-expression.
     Parse(lexpr::parse::Error),
+    /// The root value is neither a list nor the empty expression.
     InvalidExpression(Value),
+    /// A node's kind is not represented by a symbol.
     InvalidNodeKind(Value),
+    /// A node declares a text attribute without a following value.
     MissingTextAttribute(String),
+    /// A node's text keyword is not followed by any value.
     TextAttributeWithoutString(String),
+    /// A node's text attribute contains a non-string value.
     NonStringTextAttribute(String),
+    /// The expression contains no node kind.
     Empty,
 }
 
@@ -55,11 +65,25 @@ impl std::error::Error for ParseError {
     }
 }
 
+/// Represents the relevant structure of a tree-sitter S-expression.
 #[derive(Clone, PartialEq, Eq)]
 pub enum SExpr {
+    /// An empty expression.
     Empty,
-    Leaf { kind: String, text: Option<String> },
-    Node { kind: String, children: Vec<SExpr> },
+    /// A node without structural children.
+    Leaf {
+        /// The tree-sitter node kind.
+        kind: String,
+        /// Optional source text attached to the node.
+        text: Option<String>,
+    },
+    /// A node containing nested expressions.
+    Node {
+        /// The tree-sitter node kind.
+        kind: String,
+        /// Nested expressions in source order.
+        children: Vec<SExpr>,
+    },
 }
 
 impl FromStr for SExpr {
@@ -79,6 +103,7 @@ impl FromStr for SExpr {
 }
 
 impl SExpr {
+    /// Formats the expression with nested nodes on indented lines.
     #[must_use]
     pub fn to_string_pretty(&self) -> String {
         let mut out = String::new();

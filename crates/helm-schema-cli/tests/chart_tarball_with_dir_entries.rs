@@ -18,7 +18,7 @@
 
 use std::io;
 
-use color_eyre::eyre::WrapErr;
+use color_eyre::eyre::{self, WrapErr};
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use helm_schema::AnalysisSession;
@@ -56,7 +56,7 @@ data:
   enabled: \"{{ .Values.enabled }}\"
 ";
 
-fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
+fn into_eyre(e: helm_schema_cli::CliError) -> eyre::Report {
     e.into()
 }
 
@@ -64,7 +64,7 @@ fn into_eyre(e: helm_schema_cli::CliError) -> color_eyre::eyre::Report {
 /// memory. The archive deliberately contains explicit *directory* entries
 /// (paths ending in `/`) — the shape `tar`/`helm package` emit by default —
 /// because that's what the regression hinges on.
-fn build_subchart_tarball() -> color_eyre::eyre::Result<Vec<u8>> {
+fn build_subchart_tarball() -> eyre::Result<Vec<u8>> {
     let mut buf = Vec::new();
     {
         let gz = GzEncoder::new(&mut buf, Compression::default());
@@ -97,10 +97,7 @@ fn build_subchart_tarball() -> color_eyre::eyre::Result<Vec<u8>> {
 /// higher-level helpers don't reliably emit directory entries across crate
 /// versions, so the entry is assembled by hand to make the failure shape
 /// deterministic.
-fn append_dir_entry<W: io::Write>(
-    builder: &mut tar::Builder<W>,
-    path: &str,
-) -> color_eyre::eyre::Result<()> {
+fn append_dir_entry<W: io::Write>(builder: &mut tar::Builder<W>, path: &str) -> eyre::Result<()> {
     let mut header = tar::Header::new_gnu();
     header.set_path(path).wrap_err("set dir path")?;
     header.set_mode(0o755);
@@ -117,7 +114,7 @@ fn append_file_entry<W: io::Write>(
     builder: &mut tar::Builder<W>,
     path: &str,
     contents: &[u8],
-) -> color_eyre::eyre::Result<()> {
+) -> eyre::Result<()> {
     let mut header = tar::Header::new_gnu();
     header.set_path(path).wrap_err("set file path")?;
     header.set_mode(0o644);
@@ -131,8 +128,8 @@ fn append_file_entry<W: io::Write>(
 }
 
 #[test]
-fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&chart_dir.join("Chart.yaml")?, WRAPPER_CHART_YAML)?;

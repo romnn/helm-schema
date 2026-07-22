@@ -27,6 +27,7 @@ pub struct Chain {
 }
 
 impl Chain {
+    /// Creates a chain in explicit provider-precedence order.
     #[must_use]
     pub fn new(providers: Vec<Box<dyn K8sSchemaProvider>>) -> Self {
         Self {
@@ -38,6 +39,7 @@ impl Chain {
         }
     }
 
+    /// Emits committed final-outcome diagnostics into `sink`.
     #[must_use]
     pub fn with_diagnostic_sink(mut self, sink: DiagnosticSink) -> Self {
         self.sink = Some(sink);
@@ -51,10 +53,12 @@ impl Chain {
         self
     }
 
+    /// Returns configured providers in lookup order.
     pub fn providers(&self) -> &[Box<dyn K8sSchemaProvider>] {
         &self.providers
     }
 
+    /// Returns the primary Kubernetes release exposed by the provider policy.
     pub fn kube_version(&self) -> Option<&str> {
         self.providers
             .iter()
@@ -71,6 +75,7 @@ impl Chain {
         self.resolve_against_chain_traced(resource, path).outcome
     }
 
+    /// Resolves and returns only the materialized schema fragment.
     pub fn schema_fragment_for_resource_path(
         &self,
         resource: &ResourceRef,
@@ -279,8 +284,7 @@ impl Chain {
         let primary_version = self
             .providers
             .iter()
-            .filter_map(|provider| provider.as_ref().primary_k8s_version())
-            .next();
+            .find_map(|provider| provider.as_ref().primary_k8s_version());
         let Some(primary) = primary_version else {
             return;
         };

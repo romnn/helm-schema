@@ -62,7 +62,7 @@ fn resource_schemas_from_literal_documents(
             continue;
         }
         resource_schemas.extend(resource_schemas_from_crd_document_with_source(
-            document,
+            &document,
             source_id,
             filename.to_string(),
         ));
@@ -78,7 +78,7 @@ fn collect_template_crd_schemas(
 ) {
     if let Some(document) = crd_document_from_node(node, source) {
         let schemas = resource_schemas_from_crd_document_with_source(
-            document,
+            &document,
             TEMPLATE_CRD_SOURCE_ID,
             filename.to_string(),
         );
@@ -116,14 +116,23 @@ fn crd_document_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<V
                 }))
             })
             .collect::<Option<Vec<_>>>()?;
-        spec_json["versions"] = Value::Array(versions);
+        spec_json
+            .as_object_mut()?
+            .insert("versions".to_string(), Value::Array(versions));
     } else {
         let validation = mapping_value(spec, source, "validation")?;
-        spec_json["version"] = Value::String(literal_string_for_key(spec, source, "version")?);
-        spec_json["validation"] = json!({
-            "openAPIV3Schema": mapping_value(validation, source, "openAPIV3Schema")
-                .and_then(|schema| literal_json_from_node(schema, source))?,
-        });
+        let spec_object = spec_json.as_object_mut()?;
+        spec_object.insert(
+            "version".to_string(),
+            Value::String(literal_string_for_key(spec, source, "version")?),
+        );
+        spec_object.insert(
+            "validation".to_string(),
+            json!({
+                "openAPIV3Schema": mapping_value(validation, source, "openAPIV3Schema")
+                    .and_then(|schema| literal_json_from_node(schema, source))?,
+            }),
+        );
     }
 
     Some(json!({
@@ -212,11 +221,10 @@ fn literal_json_from_node(node: tree_sitter::Node<'_>, source: &str) -> Option<V
                     )
                 })
                 .collect::<Vec<_>>();
-            if children.len() == 1 {
-                literal_json_from_node(children[0], source)
-            } else {
-                None
-            }
+            let [child] = children.as_slice() else {
+                return None;
+            };
+            literal_json_from_node(*child, source)
         }
         "block_mapping" | "flow_mapping" => {
             let mut object = serde_json::Map::new();

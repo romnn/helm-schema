@@ -9,7 +9,7 @@
 
 use std::collections::HashMap;
 
-use color_eyre::eyre::WrapErr;
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema_cli::flatten;
 use helm_schema_cli::schema_override;
 use jsonschema::{Retrieve, Uri};
@@ -56,10 +56,8 @@ fn base_schema() -> Value {
     })
 }
 
-const SHARED_CLOUD_SCHEMA: &str = r#"{"enum": [null, "azure", "minikube"]}"#;
-
 fn cloud_schema() -> Value {
-    serde_json::from_str(SHARED_CLOUD_SCHEMA).expect("parse cloud schema")
+    serde_json::json!({ "enum": [null, "azure", "minikube"] })
 }
 
 fn cloud_override() -> Value {
@@ -69,8 +67,8 @@ fn cloud_override() -> Value {
 }
 
 #[test]
-fn external_refs_can_be_bundled_into_defs() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn external_refs_can_be_bundled_into_defs() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = schema_override::apply_schema_override(base_schema(), cloud_override());
 
@@ -96,8 +94,8 @@ fn external_refs_can_be_bundled_into_defs() -> color_eyre::eyre::Result<()> {
 }
 
 #[test]
-fn repeated_external_refs_share_one_definition() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn repeated_external_refs_share_one_definition() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -125,8 +123,8 @@ fn repeated_external_refs_share_one_definition() -> color_eyre::eyre::Result<()>
 }
 
 #[test]
-fn bundled_definition_names_do_not_overwrite_existing_defs() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn bundled_definition_names_do_not_overwrite_existing_defs() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -156,8 +154,8 @@ fn bundled_definition_names_do_not_overwrite_existing_defs() -> color_eyre::eyre
 }
 
 #[test]
-fn bundled_external_document_id_updates_relative_ref_base() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn bundled_external_document_id_updates_relative_ref_base() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -202,9 +200,8 @@ fn bundled_external_document_id_updates_relative_ref_base() -> color_eyre::eyre:
 }
 
 #[test]
-fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> color_eyre::eyre::Result<()>
-{
-    let _guard = test_util::builder().with_tracing(false).build();
+fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -236,8 +233,8 @@ fn root_document_id_does_not_turn_local_refs_into_external_fetches() -> color_ey
 }
 
 #[test]
-fn bundling_does_not_rewrite_ref_keys_inside_enum_data() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn bundling_does_not_rewrite_ref_keys_inside_enum_data() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -270,8 +267,8 @@ fn bundling_does_not_rewrite_ref_keys_inside_enum_data() -> color_eyre::eyre::Re
 }
 
 #[test]
-fn bundling_rejects_non_object_root_defs_before_writing_dangling_refs() {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn bundling_rejects_non_object_root_defs_before_writing_dangling_refs() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -290,16 +287,17 @@ fn bundling_rejects_non_object_root_defs_before_writing_dangling_refs() {
         err.to_string().contains("root $defs is not an object"),
         "unexpected error: {err}"
     );
+    Ok(())
 }
 
 #[test]
-fn external_refs_can_be_fully_inlined_for_export() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn external_refs_can_be_fully_inlined_for_export() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = schema_override::apply_schema_override(base_schema(), cloud_override());
     let retriever = InlineRetriever::new([("file:///schemas/cloud.json", cloud_schema())]);
     let actual =
-        flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
+        flatten::flatten_with_retriever(&merged, BASE_URI, retriever).wrap_err("flatten")?;
 
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -317,8 +315,8 @@ fn external_refs_can_be_fully_inlined_for_export() -> color_eyre::eyre::Result<(
 /// `--keep-refs` preserves references through the output pipeline. Verify the
 /// override-merged document keeps its literal `$ref` string.
 #[test]
-fn keep_refs_path_preserves_literal_ref_strings() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn keep_refs_path_preserves_literal_ref_strings() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = schema_override::apply_schema_override(base_schema(), cloud_override());
 
@@ -340,8 +338,8 @@ fn keep_refs_path_preserves_literal_ref_strings() -> color_eyre::eyre::Result<()
 /// behaviour the `referencing`-backed dereferencer gives us for free —
 /// our old hand-rolled flatten would have inlined the whole document.
 #[test]
-fn url_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn url_with_fragment_descends_pointer() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let podspec_like = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -373,7 +371,7 @@ fn url_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
     let retriever = InlineRetriever::new([("https://example.test/podspec.json", podspec_like)]);
 
     let actual =
-        flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
+        flatten::flatten_with_retriever(&merged, BASE_URI, retriever).wrap_err("flatten")?;
 
     let security_context = actual
         .pointer("/properties/securityContext")
@@ -400,8 +398,8 @@ fn url_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
 /// File ref with a JSON Pointer fragment: same as the URL case but
 /// with a file URI. `referencing` handles both uniformly.
 #[test]
-fn file_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn file_with_fragment_descends_pointer() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let bundle = serde_json::json!({
         "$defs": {
@@ -421,7 +419,7 @@ fn file_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
     let retriever = InlineRetriever::new([("file:///schemas/net.json", bundle)]);
 
     let actual =
-        flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
+        flatten::flatten_with_retriever(&merged, BASE_URI, retriever).wrap_err("flatten")?;
 
     let port = actual.pointer("/properties/port").expect("port present");
     sim_assert_eq!(
@@ -437,8 +435,8 @@ fn file_with_fragment_descends_pointer() -> color_eyre::eyre::Result<()> {
 /// could, and the `referencing`-backed pass handles them out of the
 /// box.
 #[test]
-fn bare_fragment_refs_resolve_within_document() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn bare_fragment_refs_resolve_within_document() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -460,7 +458,7 @@ fn bare_fragment_refs_resolve_within_document() -> color_eyre::eyre::Result<()> 
 
     let retriever = InlineRetriever::new([]);
     let actual =
-        flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
+        flatten::flatten_with_retriever(&merged, BASE_URI, retriever).wrap_err("flatten")?;
 
     let expected_address = serde_json::json!({
         "type": "object",
@@ -485,8 +483,8 @@ fn bare_fragment_refs_resolve_within_document() -> color_eyre::eyre::Result<()> 
 /// resolve correctly. The `referencing` crate handles the escape rules
 /// per the spec; we just verify the round-trip end-to-end.
 #[test]
-fn rfc6901_pointer_escapes_resolve() -> color_eyre::eyre::Result<()> {
-    let _guard = test_util::builder().with_tracing(false).build();
+fn rfc6901_pointer_escapes_resolve() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
 
     let merged = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -501,7 +499,7 @@ fn rfc6901_pointer_escapes_resolve() -> color_eyre::eyre::Result<()> {
 
     let retriever = InlineRetriever::new([]);
     let actual =
-        flatten::flatten_with_retriever(merged, BASE_URI, retriever).wrap_err("flatten")?;
+        flatten::flatten_with_retriever(&merged, BASE_URI, retriever).wrap_err("flatten")?;
 
     sim_assert_eq!(
         have: actual.pointer("/properties/media").unwrap().clone(),

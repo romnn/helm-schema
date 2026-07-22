@@ -8,7 +8,10 @@ use super::provider_schema_fragment::ProviderSchemaFragment;
 /// [`crate::lookup::ChainLookupOutcome`].
 // Transient by-value result; the `Found` variant's size does not justify
 // boxing the other (unit) variants.
-#[allow(clippy::large_enum_variant)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "this transient result avoids a heap allocation on every successful lookup"
+)]
 #[derive(Clone, Debug)]
 pub enum ProviderLookupResult {
     /// Provider owns the resource AND resolved the requested path.
@@ -16,7 +19,9 @@ pub enum ProviderLookupResult {
     /// answered via a non-primary (fallback) version; the chain uses
     /// it to emit `ResolvedFromFallbackVersion`.
     Found {
+        /// Materialized schema at the requested resource path.
         schema: ProviderSchemaFragment,
+        /// Fallback Kubernetes release that supplied the schema, if any.
         resolved_k8s_version: Option<String>,
     },
 
@@ -42,7 +47,9 @@ pub enum ProviderLookupResult {
     /// Threaded to `Diagnostic::LocalOverrideUnreadable.override_path`
     /// when the local override layer is the one reporting.
     ResourceDocMissing {
+        /// Human-readable I/O or transport failure.
         io_error: String,
+        /// Filesystem path or URL that could not be loaded.
         source_path: String,
     },
 
@@ -52,6 +59,8 @@ pub enum ProviderLookupResult {
 }
 
 impl ProviderLookupResult {
+    /// Returns the found schema fragment and discards non-success outcomes.
+    #[must_use]
     pub fn into_schema_fragment(self) -> Option<ProviderSchemaFragment> {
         match self {
             Self::Found { schema, .. } => Some(schema),

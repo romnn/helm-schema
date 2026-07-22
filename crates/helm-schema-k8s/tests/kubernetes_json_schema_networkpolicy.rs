@@ -1,3 +1,5 @@
+//! Kubernetes schema lookup regression for `NetworkPolicy`.
+
 use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
 use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider};
 use test_util::prelude::sim_assert_eq;
@@ -118,12 +120,12 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         kind: ValueKind::Fragment,
         resource: ResourceRef::concrete(String::new(), "NetworkPolicy".to_string()),
         is_self_range_collection: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };
 

@@ -27,7 +27,7 @@ pub(super) fn eval_default(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = primary.effects;
-    let primary_paths = identity_value_paths(&primary.value);
+    let primary_paths = identity_value_paths(primary.value.as_ref());
     let primary_identity = direct_raw_identity_path(primary.value.as_ref());
     effects.add_default_paths(primary_paths.clone());
     // Only a LITERAL fallback types the path: `default "x" .Values.name`
@@ -50,7 +50,7 @@ pub(super) fn eval_default(
     let mut fallback_paths = BTreeSet::new();
     for fallback in fallback_args {
         let result = eval_expr_with_helper_calls(fallback, env, resolver);
-        fallback_paths.extend(identity_value_paths(&result.value));
+        fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
         if let Some(value) = result.value {
             values.push(value);
@@ -117,7 +117,7 @@ pub(super) fn eval_coalesce(
     let mut candidate_paths = Vec::with_capacity(args.len());
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
-        default_paths.extend(identity_value_paths(&result.value));
+        default_paths.extend(identity_value_paths(result.value.as_ref()));
         let candidate_path = matches!(
             arg.deparen(),
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
@@ -240,17 +240,16 @@ pub(super) fn eval_dict(
 ) -> EvalResult {
     let mut map = BTreeMap::new();
     let mut effects = Effects::default();
-    let mut index = 0usize;
-    while index + 1 < args.len() {
-        let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = &args[index]
-        else {
-            index += 1;
+    for pair in args.chunks_exact(2) {
+        let [key, value] = pair else {
             continue;
         };
-        let value = eval_expr_with_helper_calls(&args[index + 1], env, resolver);
+        let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = key else {
+            continue;
+        };
+        let value = eval_expr_with_helper_calls(value, env, resolver);
         effects.merge(value.effects);
         map.insert(key.clone(), value.value.unwrap_or(AbstractValue::Unknown));
-        index += 2;
     }
     EvalResult::with_effects(Some(AbstractValue::Dict(map)), effects)
 }
@@ -260,11 +259,14 @@ pub(super) fn eval_pick(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let mut subject = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let Some((subject, key_args)) = args.split_first() else {
+        return eval_all_args(args, env, resolver);
+    };
+    let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
     let mut keys = BTreeSet::new();
-    for arg in &args[1..] {
+    for arg in key_args {
         let key = eval_expr_with_helper_calls(arg, env, resolver);
-        keys.extend(value_strings(&key.value));
+        keys.extend(value_strings(key.value.as_ref()));
         subject.effects.merge(key.effects);
     }
     let value = subject.value.map(|value| {
@@ -324,8 +326,11 @@ pub(super) fn eval_prepend(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let mut list = eval_expr_with_helper_calls(&args[0], env, resolver);
-    let item = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let [list, item] = args else {
+        return eval_all_args(args, env, resolver);
+    };
+    let mut list = eval_expr_with_helper_calls(list, env, resolver);
+    let item = eval_expr_with_helper_calls(item, env, resolver);
     list.effects.merge(item.effects);
     let mut items = item.value.into_iter().collect::<Vec<_>>();
     match list.value {
@@ -349,10 +354,10 @@ pub(super) fn eval_pluck(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    if args.len() == 2 {
-        let key = eval_expr_with_helper_calls(&args[0], env, resolver);
+    if let [key_expr, map_expr] = args {
+        let key = eval_expr_with_helper_calls(key_expr, env, resolver);
         if let Some(AbstractValue::RangeKey(key_source)) = &key.value {
-            let map = eval_expr_with_helper_calls(&args[1], env, resolver);
+            let map = eval_expr_with_helper_calls(map_expr, env, resolver);
             let member = match &map.value {
                 Some(
                     value
@@ -375,7 +380,10 @@ pub(super) fn eval_first(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    eval_first_result(eval_expr_with_helper_calls(&args[0], env, resolver))
+    let Some(arg) = args.first() else {
+        return eval_all_args(args, env, resolver);
+    };
+    eval_first_result(eval_expr_with_helper_calls(arg, env, resolver))
 }
 
 pub(super) fn eval_first_result(result: EvalResult) -> EvalResult {
@@ -402,7 +410,10 @@ pub(super) fn eval_last(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    eval_last_result(eval_expr_with_helper_calls(&args[0], env, resolver))
+    let Some(arg) = args.first() else {
+        return eval_all_args(args, env, resolver);
+    };
+    eval_last_result(eval_expr_with_helper_calls(arg, env, resolver))
 }
 
 pub(super) fn eval_last_result(result: EvalResult) -> EvalResult {
@@ -429,7 +440,10 @@ pub(super) fn eval_reverse(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    eval_reverse_result(eval_expr_with_helper_calls(&args[0], env, resolver))
+    let Some(arg) = args.first() else {
+        return eval_all_args(args, env, resolver);
+    };
+    eval_reverse_result(eval_expr_with_helper_calls(arg, env, resolver))
 }
 
 pub(super) fn eval_reverse_result(result: EvalResult) -> EvalResult {
@@ -448,11 +462,15 @@ pub(super) fn eval_split_list(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let separator = match args[0].deparen() {
-        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
-        _ => return eval_all_args(args, env, resolver),
+    let [separator, subject] = args else {
+        return eval_all_args(args, env, resolver);
     };
-    let mut result = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let TemplateExpr::Literal(Literal::String(separator) | Literal::RawString(separator)) =
+        separator.deparen()
+    else {
+        return eval_all_args(args, env, resolver);
+    };
+    let mut result = eval_expr_with_helper_calls(subject, env, resolver);
     let source_paths = result
         .value
         .as_ref()
@@ -469,9 +487,12 @@ pub(super) fn eval_split_list(
     // The subject must be a Go string at runtime whatever the split
     // produces: the literal-split fast path below is value refinement on
     // top of that contract, not a replacement for it.
-    record_string_consumer_effects(&identity_value_paths(&result.value), &mut result.effects);
+    record_string_consumer_effects(
+        &identity_value_paths(result.value.as_ref()),
+        &mut result.effects,
+    );
     let value = result.value.clone();
-    record_range_key_string_consumer_effects(&value, &mut result.effects);
+    record_range_key_string_consumer_effects(value.as_ref(), &mut result.effects);
     let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
         let value = (!source_paths.is_empty()).then_some(AbstractValue::SplitList {
             source_paths,
@@ -498,7 +519,10 @@ pub(super) fn eval_regex_split(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let [pattern, subject, limit] = args else {
+        return eval_all_args(args, env, resolver);
+    };
+    let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
     let source_paths = subject
         .value
         .as_ref()
@@ -512,14 +536,14 @@ pub(super) fn eval_regex_split(
                 .get(path)
                 .is_some_and(|meta| meta.shape_erased || meta.derived_text)
     });
-    for arg in [&args[0], &args[2]] {
+    for arg in [pattern, limit] {
         subject
             .effects
             .merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
     }
     record_string_call_consumers("regexSplit", args, env, resolver, &mut subject.effects);
 
-    let separator = match args[0].deparen() {
+    let separator = match pattern.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value))
             if is_literal_regex(value) =>
         {
@@ -552,12 +576,15 @@ pub(super) fn eval_nonempty_split(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let separator = eval_expr_with_helper_calls(&args[0], env, resolver);
-    let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let [separator, subject] = args else {
+        return eval_all_args(args, env, resolver);
+    };
+    let separator = eval_expr_with_helper_calls(separator, env, resolver);
+    let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
     subject.effects.merge(separator.effects);
     let mut effects = subject.effects;
     record_string_call_consumers("split", args, env, resolver, &mut effects);
-    let separator = value_strings(&separator.value);
+    let separator = value_strings(separator.value.as_ref());
     let value = single_string(separator).and_then(|separator| {
         // A raw-identity subject keeps its path through `._0` qualified by
         // the separator as a lexical escape before the legacy map
@@ -580,7 +607,7 @@ pub(super) fn eval_nonempty_split_pipeline(
     let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
         "split",
         args,
-        &current.value,
+        current.value.as_ref(),
         &current.effects,
         env,
         resolver,
@@ -588,7 +615,7 @@ pub(super) fn eval_nonempty_split_pipeline(
     let separator = args
         .first()
         .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
-        .and_then(|result| single_string(value_strings(&result.value)));
+        .and_then(|result| single_string(value_strings(result.value.as_ref())));
     let value = separator.as_deref().and_then(|separator| {
         current
             .value
@@ -691,7 +718,9 @@ pub(super) fn eval_append(
         }
         None => Vec::new(),
     };
-    merge_arg_values(&args[1..], env, resolver, &mut items, &mut effects);
+    if let Some((_, rest)) = args.split_first() {
+        merge_arg_values(rest, env, resolver, &mut items, &mut effects);
+    }
     EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
 }
 
@@ -700,11 +729,14 @@ pub(super) fn eval_omit(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let mut base = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let Some((base, key_args)) = args.split_first() else {
+        return eval_all_args(args, env, resolver);
+    };
+    let mut base = eval_expr_with_helper_calls(base, env, resolver);
     let mut keys = BTreeSet::new();
-    for arg in &args[1..] {
+    for arg in key_args {
         let key = eval_expr_with_helper_calls(arg, env, resolver);
-        keys.extend(value_strings(&key.value));
+        keys.extend(value_strings(key.value.as_ref()));
         base.effects.merge(key.effects);
     }
     let value = base.value.map(|value| value.omit_keys(&keys));

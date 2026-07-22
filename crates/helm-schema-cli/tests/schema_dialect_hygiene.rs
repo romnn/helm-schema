@@ -12,7 +12,7 @@
 
 use std::path::{Path, PathBuf};
 
-use color_eyre::eyre::WrapErr as _;
+use color_eyre::eyre::{self, WrapErr as _};
 use json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
 use serde_json::Value;
 
@@ -22,7 +22,7 @@ const OWNED_FIXTURE_DIRS: &[&str] = &[
     "crates/helm-schema-cli/tests/fixtures",
 ];
 
-fn owned_schema_fixtures() -> color_eyre::eyre::Result<Vec<PathBuf>> {
+fn owned_schema_fixtures() -> eyre::Result<Vec<PathBuf>> {
     let root = test_util::workspace_root();
     let mut fixtures = Vec::new();
     for dir in OWNED_FIXTURE_DIRS {
@@ -112,7 +112,7 @@ fn collect_schema_patterns(value: &Value, pointer: &str, out: &mut Vec<(String, 
 }
 
 #[test]
-fn owned_schema_artifacts_validate_against_their_metaschema() -> color_eyre::eyre::Result<()> {
+fn owned_schema_artifacts_validate_against_their_metaschema() -> eyre::Result<()> {
     for path in owned_schema_fixtures()? {
         let schema: Value = serde_json::from_str(
             &std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?,
@@ -126,7 +126,7 @@ fn owned_schema_artifacts_validate_against_their_metaschema() -> color_eyre::eyr
 }
 
 #[test]
-fn owned_schema_patterns_compile_under_ecma_262() -> color_eyre::eyre::Result<()> {
+fn owned_schema_patterns_compile_under_ecma_262() -> eyre::Result<()> {
     for path in owned_schema_fixtures()? {
         let schema: Value = serde_json::from_str(
             &std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?,

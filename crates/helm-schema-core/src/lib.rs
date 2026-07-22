@@ -1,8 +1,11 @@
+//! Shared semantic contracts used by Helm analysis and schema providers.
+
 mod capability;
 mod capability_liveness;
 mod contract_signals;
 mod contract_use;
 mod guard;
+/// Normalization helpers for conjunction and disjunction guard sets.
 pub mod guard_algebra;
 mod guard_dnf;
 mod output_path;

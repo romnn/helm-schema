@@ -4,8 +4,8 @@
 //! This is the production frontend: the abstract rendered document is
 //! evaluated once, guards stay tree-structured, and the
 //! contract graph is a projection over that one artifact
-//! ([`contract_ir_from_document`]). Helper bodies evaluate through the
-//! same interpreter into memoized fragment summaries ([`summary`]); helper
+//! (`contract_ir_from_document`). Helper bodies evaluate through the
+//! same interpreter into memoized fragment summaries; helper
 //! calls splice those summaries at their call sites or consume their value
 //! projection inside expressions.
 

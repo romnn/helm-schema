@@ -9,7 +9,7 @@ fn universe_from_crd_documents<I: IntoIterator<Item = serde_json::Value>>(
     let mut universe = LocalSchemaUniverse::default();
     for document in documents {
         for resource_schema in crate::resource_schemas_from_crd_document_with_source(
-            document,
+            &document,
             "chart-local",
             String::new(),
         ) {
@@ -75,7 +75,7 @@ fn resolves_served_crd_version_schema_from_universe() {
 fn lookup_attaches_chart_local_provider_source() {
     let mut universe = LocalSchemaUniverse::default();
     for resource_schema in crate::resource_schemas_from_crd_document_with_source(
-        json!({
+        &json!({
             "apiVersion": "apiextensions.k8s.io/v1",
             "kind": "CustomResourceDefinition",
             "spec": {

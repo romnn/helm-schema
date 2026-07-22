@@ -64,8 +64,8 @@ pub(crate) fn merge_two_schemas(a: Value, b: Value) -> Value {
 fn deduped_sorted_any_of(variants: Vec<Value>) -> Value {
     let mut variants = dedup_schemas(variants);
     variants.sort_by_key(json_schema_walk::canonical_json_string);
-    if variants.len() == 1 {
-        return variants.into_iter().next().expect("len == 1");
+    if let [variant] = variants.as_slice() {
+        return variant.clone();
     }
     SchemaNode::any_of(variants.into_iter().map(SchemaNode::foreign).collect()).into_value()
 }
@@ -323,15 +323,11 @@ fn enum_value_satisfies_scalar_schema(value: &Value, schema: &Map<String, Value>
     }
 }
 
-#[allow(
+#[expect(
     clippy::too_many_lines,
-    clippy::items_after_statements,
-    clippy::match_same_arms
+    reason = "merging object keywords is clearer as one exhaustive, stateful operation"
 )]
 fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
-    let mut out = a.as_object()?.clone();
-    let bobj = b.as_object()?;
-
     fn has_meaningful_additional_properties(obj: &Map<String, Value>) -> bool {
         obj.get("additionalProperties")
             .and_then(|value| value.as_object())
@@ -371,6 +367,9 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 .is_some_and(|a| !a.is_empty())
     }
 
+    let mut out = a.as_object()?.clone();
+    let bobj = b.as_object()?;
+
     let a_structured = is_structured_object(&out);
     let b_structured = is_structured_object(bobj);
     if !a_structured && b_structured {
@@ -407,7 +406,7 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
         (Some(Value::Bool(false)), _) | (_, Some(Value::Bool(false))) => {
             out.insert("additionalProperties".to_string(), Value::Bool(false));
         }
-        (Some(Value::Bool(true)), Some(ap_b)) => {
+        (Some(Value::Bool(true)) | None, Some(ap_b)) => {
             out.insert("additionalProperties".to_string(), ap_b);
         }
         (Some(ap_a), Some(Value::Bool(true))) => {
@@ -418,9 +417,6 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 "additionalProperties".to_string(),
                 merge_two_schemas(ap_a, ap_b),
             );
-        }
-        (None, Some(ap_b)) => {
-            out.insert("additionalProperties".to_string(), ap_b);
         }
         _ => {}
     }

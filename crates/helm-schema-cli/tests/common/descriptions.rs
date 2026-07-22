@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Report, WrapErr};
+use color_eyre::eyre::{self, WrapErr};
 use helm_schema_ast::extract_values_yaml_descriptions;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
@@ -7,8 +7,8 @@ pub fn assert_chart_values_comments_apply_to_existing_schema_paths(
     chart_relative_path: &str,
     schema: &Value,
     min_applied: usize,
-) -> std::result::Result<(), Report> {
-    let values_yaml = crate::schema_roundtrip::read_values_yaml_for_path(chart_relative_path)
+) -> eyre::Result<()> {
+    let values_yaml = crate::values_yaml::read_values_yaml_for_path(chart_relative_path)
         .wrap_err("read values.yaml")?;
     let descriptions = extract_values_yaml_descriptions(&values_yaml);
 

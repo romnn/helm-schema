@@ -360,7 +360,7 @@ fn values_asmap_method_digs_bind_root_fail_validators() {
 /// path. Selecting a derived-text method (`.Values.YAML`) claims no path.
 #[test]
 fn values_typed_method_resolution_keeps_genuine_keys() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -369,7 +369,7 @@ fn values_typed_method_resolution_keeps_genuine_keys() {
           upper: {{ .Values.Upper | quote }}
           nested: {{ .Values.foo.AsMap | quote }}
           derived: {{ .Values.YAML | quote }}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), None);
 
     assert!(
@@ -616,7 +616,7 @@ fn cross_path_fail_formulas_lower_as_terminal_clauses() {
 /// and literal member reads elsewhere make a truthy value an object.
 #[test]
 fn range_domains_compose_with_body_and_sibling_contracts() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: example.com/v1
         kind: Probe
         metadata:
@@ -643,7 +643,7 @@ fn range_domains_compose_with_body_and_sibling_contracts() {
           {{- range $k, $v := .Values.lookup }}
           - {{ $k }}
           {{- end }}
-    "#};
+    "};
     let values_yaml = indoc! {"
         plain: []
         structured: []
@@ -1034,11 +1034,11 @@ fn ranged_member_name_equality_fail_forbids_the_literal_names() {
           name: test
         data: {}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         k8sClientExponentialBackoff:
           enabled: true
         extraEnv: []
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (instance, want, label) in [
@@ -1140,11 +1140,11 @@ fn scalar_domain_fail_guards_lower_through_sound_subsets() {
           name: test
         data: {}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         clusterName: default
         maxClusters: 255
         mode: internal
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (instance, want) in [
         (
@@ -1222,10 +1222,10 @@ fn variable_bound_coercion_fail_guards_lower_through_sound_subsets() {
         data:
           replicas: {{ include "controller.replicas" . | quote }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         controller:
           replicas: 1
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want) in [
         (
@@ -1489,9 +1489,9 @@ fn multi_test_fail_negations_lower_as_member_alternatives() {
           {{- end }}
         {{- end }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         plugins: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (member, want) in [
         (serde_json::json!({ "hostPath": "/plugins/x" }), true),
@@ -1521,7 +1521,7 @@ fn multi_test_fail_negations_lower_as_member_alternatives() {
 /// argument is neither nil nor a string: a raw integer (or integral
 /// float) zero certainly satisfies the coercing equality, so the fail arm
 /// rejects it while strings and null keep the helper's own escapes. The
-/// equality lowers as the [IntGt bound-1, IntLt bound+1] region pair —
+/// equality lowers as the [`IntGt` bound-1, `IntLt` bound+1] region pair —
 /// coercible non-integers (booleans, fractional floats) stay a documented
 /// sound abstention.
 #[test]
@@ -1753,14 +1753,14 @@ fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
         {{- end }}
         {{- end }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         service:
           enabled: true
           additionalServices: {}
         ports:
           web:
             port: 8000
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (instance, want, label) in [
         (
@@ -1815,11 +1815,11 @@ fn compound_ranged_terminals_negate_to_member_alternatives() {
         config:
           ok: true
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         gateway:
           listeners: {}
         ports: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (listener, want, label) in [
         (
@@ -2049,7 +2049,7 @@ fn pipeline_tostring_gates_decode_in_helper_terminals() {
         {{- include "repro.validate" . -}}
         replicas: {{ .Values.replicas }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         replicas: 1
         zones:
           enabled: false
@@ -2057,7 +2057,7 @@ fn pipeline_tostring_gates_decode_in_helper_terminals() {
           enabled: false
         raft:
           enabled: false
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults skip the gates"),
@@ -2379,12 +2379,12 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
           cpu: {{ dig "resources" "requests" "cpu" "100m" .Values.trivy }}
         {{- end }}
     "#};
-    let values_yaml = indoc! {r#"
+    let values_yaml = indoc! {r"
         rules:
           create: true
         customRules: {}
         trivy: {}
-    "#};
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (instance, want, label) in [
         (serde_json::json!({}), true, "defaults render"),

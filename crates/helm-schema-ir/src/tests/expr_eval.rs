@@ -182,7 +182,7 @@ fn string_transform_pipeline_preserves_all_printf_argument_paths() {
 
 #[test]
 fn quote_pipeline_erases_input_shape_without_typing() {
-    let result = eval_expr(&single_expr(r#".Values.flag | quote"#), &EvalEnv::default());
+    let result = eval_expr(&single_expr(r".Values.flag | quote"), &EvalEnv::default());
 
     sim_assert_eq!(
         have: result.effects.type_hints.get("flag"),
@@ -239,7 +239,7 @@ fn printf_exact_rendering_only_accepts_supported_string_formats() {
 
 #[test]
 fn integer_index_on_values_path_descends_array_item_wildcard() {
-    let expr = single_expr(r#"index .Values.sentinel.externalAccess.service.loadBalancerIP 0"#);
+    let expr = single_expr(r"index .Values.sentinel.externalAccess.service.loadBalancerIP 0");
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
@@ -296,7 +296,7 @@ fn get_requires_its_values_backed_host_to_be_an_object() {
 #[test]
 fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
     let result = eval_expr(
-        &single_expr(r#"(.Values.resources.limits).memory"#),
+        &single_expr(r"(.Values.resources.limits).memory"),
         &EvalEnv::default(),
     );
 
@@ -344,7 +344,7 @@ fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
 #[test]
 fn ungrouped_selector_still_requires_the_intermediate_member() {
     let result = eval_expr(
-        &single_expr(r#".Values.resources.limits.memory"#),
+        &single_expr(r".Values.resources.limits.memory"),
         &EvalEnv::default(),
     );
 
@@ -444,7 +444,7 @@ fn set_call_preserves_assigned_value_path() {
 
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
-    let result = eval_expr(&single_expr(r#"$config.name"#), &env);
+    let result = eval_expr(&single_expr(r"$config.name"), &env);
     sim_assert_eq!(
         have: result.effects.output_paths,
         want: BTreeSet::from(["generatedName".to_string()])
@@ -453,7 +453,7 @@ fn set_call_preserves_assigned_value_path() {
 
 #[test]
 fn selector_on_local_dict_records_only_selected_child_reads() {
-    let expr = single_expr(r#"$config.annotations"#);
+    let expr = single_expr(r"$config.annotations");
     let mut env = EvalEnv::default();
     env.locals.insert(
         "config".to_string(),
@@ -517,7 +517,7 @@ fn pipeline_ternary_returns_value_branches_not_condition() {
 
 #[test]
 fn base64_pipeline_preserves_source_path() {
-    let expr = single_expr(r#".Values.auth.password | toString | b64enc"#);
+    let expr = single_expr(r".Values.auth.password | toString | b64enc");
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
@@ -528,7 +528,7 @@ fn base64_pipeline_preserves_source_path() {
 
 #[test]
 fn uniq_pipeline_preserves_local_list_items() {
-    let expr = single_expr(r#"$pullSecrets | uniq"#);
+    let expr = single_expr(r"$pullSecrets | uniq");
     let mut env = EvalEnv::default();
     env.locals.insert(
         "pullSecrets".to_string(),
@@ -1168,7 +1168,7 @@ fn coercing_arithmetic_erases_raw_operand_shape() {
     // so the raw operand's kind is unconstrained (Traefik's goMemLimit
     // arithmetic accepts numeric strings and junk that coerces to zero).
     let result = eval_expr(
-        &single_expr(r#"mulf .Values.pct 1048576.0 | divf 1048576.0 | floor"#),
+        &single_expr(r"mulf .Values.pct 1048576.0 | divf 1048576.0 | floor"),
         &EvalEnv::default(),
     );
     assert!(
@@ -1187,7 +1187,7 @@ fn coercing_arithmetic_erases_raw_operand_shape() {
 fn division_operand_is_not_arithmetic_erased() {
     // Division/modulo keep a real zero-denominator precondition, so they are
     // deliberately excluded from the coercing-arithmetic widening.
-    let result = eval_expr(&single_expr(r#"div .Values.count 2"#), &EvalEnv::default());
+    let result = eval_expr(&single_expr(r"div .Values.count 2"), &EvalEnv::default());
     assert!(
         !result.effects.shape_erased_paths.contains("count"),
         "div is not part of the coercing-arithmetic catalog"

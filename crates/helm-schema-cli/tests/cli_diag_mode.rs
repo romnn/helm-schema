@@ -5,8 +5,10 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-fn binary_path() -> PathBuf {
-    let mut p = std::env::current_exe().expect("current_exe");
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
+
+fn binary_path() -> eyre::Result<PathBuf> {
+    let mut p = std::env::current_exe().wrap_err("resolve current test executable")?;
     while p.file_name().is_some()
         && p.file_name().and_then(|s| s.to_str()) != Some("debug")
         && p.file_name().and_then(|s| s.to_str()) != Some("release")
@@ -15,65 +17,71 @@ fn binary_path() -> PathBuf {
     }
     // Now `p` is `<target>/debug` or `<target>/release`. helm-schema
     // binary sits one level up under `<target>/.../helm-schema`.
-    p.parent()
-        .expect("target dir")
+    Ok(p.parent()
+        .ok_or_eyre("test executable has no target directory")?
         .join(p.file_name().and_then(|s| s.to_str()).unwrap_or("debug"))
-        .join("helm-schema")
+        .join("helm-schema"))
 }
 
-fn helm_schema_binary() -> PathBuf {
+fn helm_schema_binary() -> eyre::Result<PathBuf> {
     // Prefer the locally-built debug binary for tests; fall back to release.
     let workspace = std::env::var("CARGO_WORKSPACE_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| {
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .to_path_buf()
-        });
+        .map_or_else(
+            |_| {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .parent()
+                    .and_then(std::path::Path::parent)
+                    .map(std::path::Path::to_path_buf)
+                    .ok_or_eyre("CLI crate is not nested below the workspace root")
+            },
+            Ok,
+        )?;
     let debug = workspace.join("target/debug/helm-schema");
     if debug.exists() {
-        return debug;
+        return Ok(debug);
     }
     let release = workspace.join("target/release/helm-schema");
     if release.exists() {
-        return release;
+        return Ok(release);
     }
-    let _ = binary_path();
-    debug
+    let _ = binary_path()?;
+    Ok(debug)
 }
 
-fn ensure_built() {
-    let bin = helm_schema_binary();
+fn ensure_built() -> eyre::Result<()> {
+    let bin = helm_schema_binary()?;
     if !bin.exists() {
         let workspace = std::env::var("CARGO_WORKSPACE_DIR")
             .map(PathBuf::from)
-            .unwrap_or_else(|_| {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .parent()
-                    .unwrap()
-                    .parent()
-                    .unwrap()
-                    .to_path_buf()
-            });
+            .map_or_else(
+                |_| {
+                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                        .parent()
+                        .and_then(std::path::Path::parent)
+                        .map(std::path::Path::to_path_buf)
+                        .ok_or_eyre("CLI crate is not nested below the workspace root")
+                },
+                Ok,
+            )?;
         let _ = Command::new("cargo")
             .arg("build")
             .arg("-p")
             .arg("helm-schema-cli")
             .current_dir(&workspace)
-            .status();
+            .status()
+            .wrap_err("build helm-schema CLI for diagnostic tests")?;
     }
+    Ok(())
 }
 
 #[test]
-fn cli_diag_format_text_is_default() {
-    ensure_built();
-    let bin = helm_schema_binary();
+fn cli_diag_format_text_is_default() -> eyre::Result<()> {
+    ensure_built()?;
+    let bin = helm_schema_binary()?;
     if !bin.exists() {
         eprintln!("skip: helm-schema binary not built; skipping");
-        return;
+        return Ok(());
     }
     // Invoke with an invalid path → run() produces an error before any
     // schema work happens. We only need stderr to be plain text by
@@ -83,7 +91,7 @@ fn cli_diag_format_text_is_default() {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .expect("run binary");
+        .wrap_err("run helm-schema CLI")?;
     let stderr = String::from_utf8_lossy(&output.stderr);
     // Text mode should not produce JSON-object-shaped lines for runtime
     // emissions. Lines that DO appear must NOT all be JSON objects.
@@ -97,15 +105,16 @@ fn cli_diag_format_text_is_default() {
             "text mode (default) must not emit JSON objects per line; got:\n{stderr}"
         );
     }
+    Ok(())
 }
 
 #[test]
-fn json_mode_parse_errors_stay_on_clap_stderr() {
-    ensure_built();
-    let bin = helm_schema_binary();
+fn json_mode_parse_errors_stay_on_clap_stderr() -> eyre::Result<()> {
+    ensure_built()?;
+    let bin = helm_schema_binary()?;
     if !bin.exists() {
         eprintln!("skip: helm-schema binary not built; skipping");
-        return;
+        return Ok(());
     }
     // Invalid argv → clap emits its own plain-text usage error and
     // exits non-zero before our JSON-mode runtime ever starts.
@@ -116,7 +125,7 @@ fn json_mode_parse_errors_stay_on_clap_stderr() {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .expect("run binary");
+        .wrap_err("run helm-schema CLI with invalid arguments")?;
     assert!(!output.status.success(), "invalid argv must exit non-zero");
     let stderr = String::from_utf8_lossy(&output.stderr);
     // Clap's error includes 'unexpected argument' or 'error:' — neither
@@ -133,4 +142,5 @@ fn json_mode_parse_errors_stay_on_clap_stderr() {
             "clap parse errors must not produce parseable Diagnostic JSON; got line: {line}"
         );
     }
+    Ok(())
 }

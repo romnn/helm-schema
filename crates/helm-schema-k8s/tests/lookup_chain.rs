@@ -1,5 +1,5 @@
-//! Chain-layer behaviour: precedence, ResourceDocMissing handling,
-//! PathUnresolved silence, and the "MissingSchema only from chain"
+//! Chain-layer behaviour: precedence, `ResourceDocMissing` handling,
+//! `PathUnresolved` silence, and the "`MissingSchema` only from chain"
 //! invariant.
 
 use helm_schema_core::{
@@ -35,12 +35,12 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         kind: ValueKind::Scalar,
         resource,
         is_self_range_collection: false,
-        template_supplied_member_keys: Default::default(),
+        template_supplied_member_keys: std::collections::BTreeSet::default(),
         split_segment: None,
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
-        omitted_members: Default::default(),
+        omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     }
 }
@@ -133,7 +133,7 @@ fn chain_precedence_local_over_crd_over_k8s() {
     let chain = Chain::new(vec![Box::new(local), Box::new(crd), Box::new(k8s)]);
     let schema = chain
         .schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()))
-        .map(|fragment| fragment.into_schema());
+        .map(helm_schema_core::ProviderSchemaFragment::into_schema);
     sim_assert_eq!(
         have: schema,
         want: Some(Value::String("local".to_string())),
@@ -278,7 +278,7 @@ fn chain_non_override_resource_doc_missing_falls_through() {
     let chain = Chain::new(vec![Box::new(crd), Box::new(k8s)]);
     let schema = chain
         .schema_fragment_for_resource_path(&resource(), &YamlPath(Vec::new()))
-        .map(|fragment| fragment.into_schema());
+        .map(helm_schema_core::ProviderSchemaFragment::into_schema);
     sim_assert_eq!(
         have: schema,
         want: Some(Value::String("k8s-wins".to_string())),
@@ -450,11 +450,6 @@ fn local_provider_emits_local_override_origin() {
 // sink.
 #[test]
 fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
-    let crd = FakeProvider::new(
-        ProviderOrigin::DefaultCatalog,
-        true,
-        FakeBehaviour::Found(Value::String("policy/v1beta1-schema".to_string())),
-    );
     // Wrap the fake in a "knows-policy/v1beta1-only" stub: it returns
     // NotOwned for any other apiVersion. We use the surrogate API the
     // FakeProvider already exposes. It is content-blind, so any
@@ -482,6 +477,11 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
             r.api_version == self.wants
         }
     }
+    let crd = FakeProvider::new(
+        ProviderOrigin::DefaultCatalog,
+        true,
+        FakeBehaviour::Found(Value::String("policy/v1beta1-schema".to_string())),
+    );
     drop(crd);
 
     let diagnostics = DiagnosticSink::new();
@@ -507,7 +507,7 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
     );
     let schema = chain
         .schema_fragment_for_use(&use_)
-        .map(|fragment| fragment.into_schema());
+        .map(helm_schema_core::ProviderSchemaFragment::into_schema);
     sim_assert_eq!(
         have: schema,
         want: Some(Value::String("hit".to_string())),

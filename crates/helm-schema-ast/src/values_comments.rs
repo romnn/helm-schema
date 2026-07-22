@@ -7,6 +7,7 @@ use crate::{parse_yaml_key, structural_mapping_colon};
 /// The returned map is keyed by dotted `.Values` path without the leading
 /// `.Values`. This is documentation metadata only: commented-out examples stay
 /// comments and never become paths in this map.
+#[must_use]
 pub fn extract_values_yaml_descriptions(src: &str) -> BTreeMap<String, String> {
     let mut scanner = CommentScanner::default();
     for line in src.lines() {

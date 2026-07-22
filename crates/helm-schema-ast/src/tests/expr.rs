@@ -67,7 +67,7 @@ fn quoted_string_payload_is_a_literal_not_a_call() {
 
 #[test]
 fn parses_default_literal_dotvalues_prefix_form() {
-    let exprs = parse_action_expressions(r#"{{ default 5 .Values.replicas }}"#);
+    let exprs = parse_action_expressions(r"{{ default 5 .Values.replicas }}");
     match first(&exprs) {
         TemplateExpr::Call { function, args } => {
             sim_assert_eq!(have: function, want: "default");
@@ -83,7 +83,7 @@ fn parses_default_literal_dotvalues_prefix_form() {
 
 #[test]
 fn parses_pipeline_form_dotvalues_default() {
-    let exprs = parse_action_expressions(r#"{{ .Values.replicas | default 5 }}"#);
+    let exprs = parse_action_expressions(r"{{ .Values.replicas | default 5 }}");
     match first(&exprs) {
         TemplateExpr::Pipeline(stages) => {
             sim_assert_eq!(have: stages.len(), want: 2);
@@ -154,7 +154,7 @@ fn raw_string_literal_decoded_verbatim() {
 #[test]
 fn variable_selector_chain() {
     // `$root.Values.foo` — Selector with a Variable operand.
-    let exprs = parse_action_expressions(r#"{{ $root.Values.foo }}"#);
+    let exprs = parse_action_expressions(r"{{ $root.Values.foo }}");
     match first(&exprs) {
         TemplateExpr::Selector { operand, path } => {
             sim_assert_eq!(have: **operand, want: TemplateExpr::Variable("root".into()));
@@ -169,7 +169,7 @@ fn deep_field_chain_collapses_to_single_field() {
     // `.A.B.C.D.E` — nested `selector_expression`s. Should collapse
     // into a single `Field` with the full path, NOT a five-deep
     // Selector chain.
-    let exprs = parse_action_expressions(r#"{{ .A.B.C.D.E }}"#);
+    let exprs = parse_action_expressions(r"{{ .A.B.C.D.E }}");
     sim_assert_eq!(
         have: first(&exprs),
         want: &TemplateExpr::Field(vec![
@@ -188,7 +188,7 @@ fn parens_around_field_prefix_preserve_nil_safe_receiver() {
     // `.Values.image` is tolerated, while a present non-map still fails the
     // `.tag` lookup. The selector retains that boundary and downstream
     // analysis can still derive the complete values path from both nodes.
-    let exprs = parse_action_expressions(r#"{{ (.Values.image).tag }}"#);
+    let exprs = parse_action_expressions(r"{{ (.Values.image).tag }}");
     sim_assert_eq!(
         have: first(&exprs),
         want: &TemplateExpr::Selector {
@@ -203,7 +203,7 @@ fn parens_around_field_prefix_preserve_nil_safe_receiver() {
 
 #[test]
 fn nested_parens_around_field_prefix_preserve_every_boundary() {
-    let exprs = parse_action_expressions(r#"{{ ((.Values.image)).tag }}"#);
+    let exprs = parse_action_expressions(r"{{ ((.Values.image)).tag }}");
     sim_assert_eq!(
         have: first(&exprs),
         want: &TemplateExpr::Selector {
@@ -220,7 +220,7 @@ fn nested_parens_around_field_prefix_preserve_every_boundary() {
 
 #[test]
 fn arbitrary_depth_parens_around_field_remain_structural() {
-    let exprs = parse_action_expressions(r#"{{ (((.Values.image))).tag }}"#);
+    let exprs = parse_action_expressions(r"{{ (((.Values.image))).tag }}");
     let TemplateExpr::Selector { operand, path } = first(&exprs) else {
         panic!("expected selector");
     };
@@ -242,7 +242,7 @@ fn arbitrary_depth_parens_around_field_remain_structural() {
 fn selectors_after_grouped_receiver_still_merge() {
     // The grouping boundary stays on the receiver, while adjacent suffix
     // selectors remain one path.
-    let exprs = parse_action_expressions(r#"{{ (.Values).image.tag }}"#);
+    let exprs = parse_action_expressions(r"{{ (.Values).image.tag }}");
     sim_assert_eq!(
         have: first(&exprs),
         want: &TemplateExpr::Selector {
@@ -261,7 +261,7 @@ fn parens_around_pipeline_do_not_collapse_into_field() {
     // leave the Pipeline wrapped so downstream code sees that the
     // tag access is on the upper-cased operand, not on the raw
     // `.Values.image.tag`.
-    let exprs = parse_action_expressions(r#"{{ (.Values.image | upper).tag }}"#);
+    let exprs = parse_action_expressions(r"{{ (.Values.image | upper).tag }}");
     match first(&exprs) {
         TemplateExpr::Selector { operand, path } => {
             sim_assert_eq!(have: path, want: &vec!["tag".to_string()]);
@@ -280,7 +280,7 @@ fn parens_around_pipeline_do_not_collapse_into_field() {
 
 #[test]
 fn bare_dot_parses_as_empty_field_path() {
-    let exprs = parse_action_expressions(r#"{{ . }}"#);
+    let exprs = parse_action_expressions(r"{{ . }}");
     sim_assert_eq!(have: exprs, want: vec![TemplateExpr::Field(Vec::new())]);
 }
 
@@ -290,11 +290,11 @@ fn deparen_strips_arbitrary_nesting_for_path_and_non_path_alike() {
     // non-parens node, regardless of what it is. Path or pipeline,
     // depth and ordering of the parens don't change the answer.
     let cases = [
-        (r#"{{ .X.Y }}"#, "Field"),
-        (r#"{{ (.X.Y) }}"#, "Field"),
-        (r#"{{ ((.X.Y)) }}"#, "Field"),
-        (r#"{{ (((.X.Y))) }}"#, "Field"),
-        (r#"{{ ((((.X.Y)))) }}"#, "Field"),
+        (r"{{ .X.Y }}", "Field"),
+        (r"{{ (.X.Y) }}", "Field"),
+        (r"{{ ((.X.Y)) }}", "Field"),
+        (r"{{ (((.X.Y))) }}", "Field"),
+        (r"{{ ((((.X.Y)))) }}", "Field"),
     ];
     for (src, expected_kind) in cases {
         let exprs = parse_action_expressions(src);
@@ -387,7 +387,7 @@ fn raw_range_variable_definition_exposes_children() {
         children.push((
             child.kind().to_string(),
             range_var
-                .field_name_for_child(index as u32)
+                .field_name_for_child(u32::try_from(index).unwrap_or(u32::MAX))
                 .map(str::to_string),
             child.utf8_text(src.as_bytes()).unwrap_or("").to_string(),
         ));
@@ -426,7 +426,7 @@ fn pipeline_with_intervening_call_no_default_match() {
     // intervenes (so `default` fires on `upper(.Values.X)`, not on
     // `.Values.X`). Only direct `.Values.X | default` pairings are
     // legal type-hint sites.
-    let exprs = parse_action_expressions(r#"{{ .Values.X | upper | default 5 }}"#);
+    let exprs = parse_action_expressions(r"{{ .Values.X | upper | default 5 }}");
     let TemplateExpr::Pipeline(stages) = first(&exprs) else {
         panic!("expected pipeline");
     };
@@ -567,7 +567,7 @@ fn body_with_no_actions_returns_empty() {
 
 #[test]
 fn negative_int_literal() {
-    let exprs = parse_action_expressions(r#"{{ default -42 .Values.X }}"#);
+    let exprs = parse_action_expressions(r"{{ default -42 .Values.X }}");
     let TemplateExpr::Call { args, .. } = first(&exprs) else {
         panic!("expected Call");
     };
@@ -576,7 +576,7 @@ fn negative_int_literal() {
 
 #[test]
 fn hex_int_literal() {
-    let exprs = parse_action_expressions(r#"{{ default 0xFF .Values.X }}"#);
+    let exprs = parse_action_expressions(r"{{ default 0xFF .Values.X }}");
     let TemplateExpr::Call { args, .. } = first(&exprs) else {
         panic!("expected Call");
     };

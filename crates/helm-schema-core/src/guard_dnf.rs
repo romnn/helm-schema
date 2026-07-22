@@ -19,26 +19,31 @@ impl Default for GuardDnf {
 }
 
 impl GuardDnf {
+    /// Returns the formula that accepts every input.
     #[must_use]
     pub fn unconditional() -> Self {
         Self(BTreeSet::from([BTreeSet::new()]))
     }
 
+    /// Returns the formula that accepts no input.
     #[must_use]
     pub fn never() -> Self {
         Self(BTreeSet::new())
     }
 
+    /// Builds a normalized DNF from one predicate conjunction.
     #[must_use]
     pub fn from_conjunction(predicates: impl IntoIterator<Item = Predicate>) -> Self {
         Self::from_disjunction([predicates])
     }
 
+    /// Builds a normalized DNF from one guard conjunction.
     #[must_use]
     pub fn from_guards(guards: impl IntoIterator<Item = Guard>) -> Self {
         Self::from_conjunction(guards.into_iter().map(Predicate::from))
     }
 
+    /// Builds a normalized DNF from guard conjunction alternatives.
     #[must_use]
     pub fn from_guard_disjunction(
         conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = Guard>>,
@@ -76,6 +81,7 @@ impl GuardDnf {
         condition
     }
 
+    /// Projects one predicate conjunction into contract guards.
     #[must_use]
     pub fn from_contract_predicate_conjunction(
         predicates: impl IntoIterator<Item = Predicate>,
@@ -83,6 +89,7 @@ impl GuardDnf {
         Self::from_contract_predicate_disjunction([predicates])
     }
 
+    /// Canonicalizes a disjunction of conditional-guard conjunctions.
     #[must_use]
     pub fn normalize_conditional_guard_disjunction(
         conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = ConditionalGuard>>,
@@ -99,6 +106,7 @@ impl GuardDnf {
         minimize_disjunction_by(keys, crate::guard_algebra::guards_are_complementary)
     }
 
+    /// Builds and minimizes a DNF from predicate conjunction alternatives.
     #[must_use]
     pub fn from_disjunction(
         conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = Predicate>>,
@@ -115,21 +123,25 @@ impl GuardDnf {
         )
     }
 
+    /// Reports whether the formula accepts every input.
     #[must_use]
     pub fn is_unconditional(&self) -> bool {
         self.0.contains(&BTreeSet::new())
     }
 
+    /// Reports whether the formula accepts no input.
     #[must_use]
     pub fn is_never(&self) -> bool {
         self.0.is_empty()
     }
 
+    /// Returns normalized predicate conjunctions in stable order.
     #[must_use]
     pub fn disjuncts(&self) -> &BTreeSet<BTreeSet<Predicate>> {
         &self.0
     }
 
+    /// Projects each predicate conjunction into serializable contract guards.
     #[must_use]
     pub fn guard_conjunctions(&self) -> Vec<Vec<Guard>> {
         let mut seen = BTreeSet::new();
@@ -149,12 +161,14 @@ impl GuardDnf {
         projected
     }
 
+    /// Returns the sole projected guard conjunction, if exactly one exists.
     #[must_use]
     pub fn single_guard_conjunction(&self) -> Option<Vec<Guard>> {
         let [guards] = self.guard_conjunctions().try_into().ok()?;
         Some(guards)
     }
 
+    /// Returns the conjunction of this formula and `other`.
     #[must_use]
     pub fn conjoined(&self, other: &Self) -> Self {
         Self::from_disjunction(self.0.iter().flat_map(|left| {
@@ -167,11 +181,13 @@ impl GuardDnf {
         }))
     }
 
+    /// Conjoins this formula with one guard conjunction.
     #[must_use]
     pub fn conjoined_with_guards(&self, guards: impl IntoIterator<Item = Guard>) -> Self {
         self.conjoined(&Self::from_guards(guards))
     }
 
+    /// Adds alternatives without absorbing subsets that may carry distinct evidence.
     pub fn union_preserving_disjuncts(&mut self, other: Self) {
         // Rows are combined before downstream evidence payloads are known to
         // be equal, so absorption here could discard a more precise payload.
@@ -185,6 +201,7 @@ impl GuardDnf {
         *self = Self::from_disjunction(std::mem::take(&mut self.0).into_iter().chain(other.0));
     }
 
+    /// Rewrites every values path and re-normalizes the formula.
     pub fn map_value_paths<F>(&mut self, map: &mut F)
     where
         F: FnMut(&str) -> String,
