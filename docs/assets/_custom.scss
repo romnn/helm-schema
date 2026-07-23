@@ -1,0 +1,375 @@
+@import "syntax";
+
+/* Geist + Geist Mono (variable), the same pairing as the sibling projects. */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/geist-sans.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/geist-mono.woff2') format('woff2');
+}
+
+:root {
+  --hs-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --hs-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/*
+  Theme application. An inline <head> script resolves the effective theme from
+  localStorage or prefers-color-scheme and sets data-theme before first paint,
+  so these two rules cover both the OS default and the manual toggle. The
+  attribute selector also outranks the theme's own `:root { … }` block.
+*/
+@mixin hs-light {
+  @include theme-light;
+  /* Azure accent — distinct from the sibling docs' violet, still restrained. */
+  --hs-brand: #2563eb;
+  --hs-brand-strong: #1d4ed8;
+  --hs-brand-contrast: #ffffff;
+  --color-link: #1d4ed8;
+  --color-visited-link: #1d4ed8;
+
+  /* Inline code and code blocks (theme uses --gray-100 bg + --gray-200 border);
+     kept clearly distinct from the white body. */
+  --gray-100: #eef0f4;
+  --gray-200: #dbdfe6;
+
+  --hs-surface: #ffffff;
+  --hs-surface-2: #f6f7f9;
+  --hs-border: #e6e8eb;
+  --hs-muted: #59626d;
+  --hs-scroll-thumb: #c7ccd1;
+}
+
+@mixin hs-dark {
+  @include theme-dark;
+  --hs-brand: #7ea8ff;
+  --hs-brand-strong: #9cbcff;
+  --hs-brand-contrast: #0b1220;
+  --color-link: #8ab0ff;
+  --color-visited-link: #8ab0ff;
+
+  /* A neutral dark gray — darker and less blue than the theme's Nord default
+     (#2e3440), but not a harsh near-black. Text is softened off-white so the
+     contrast stays comfortable. */
+  --body-background: #1a1c21;
+  --body-font-color: #dce1e7;
+  /* Inline code and code blocks sit one clear step above the body, with a
+     visible border, so they read as distinct surfaces. */
+  --gray-100: #282d37;
+  --gray-200: #3a414e;
+  --gray-500: #bec6cf;
+
+  --hs-surface: #23262d;
+  --hs-surface-2: #1f2228;
+  --hs-border: #313641;
+  --hs-muted: #949dab;
+  --hs-scroll-thumb: #3a414c;
+}
+
+/* Base defaults so every --hs-* variable is defined even when data-theme is not
+   set yet — before the head script runs, on a livereload repaint, or with JS
+   disabled. Without them var(--hs-brand-contrast)/var(--hs-brand) are undefined
+   and the primary hero button renders transparent with black text. */
+:root { @include hs-light; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { @include hs-dark; }
+}
+:root[data-theme="light"] { @include hs-light; }
+:root[data-theme="dark"] { @include hs-dark; }
+
+/* Keep code blocks on the same neutral "code surface" as inline code (one step
+   above the body), rather than the syntax theme's tinted background. Token
+   colors are unchanged. */
+:root[data-theme="dark"] pre.chroma {
+  background: var(--gray-100);
+}
+
+body {
+  font-family: var(--hs-sans);
+}
+
+/* Thin, theme-aware scrollbars (page, menu, TOC, code blocks, tables). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hs-scroll-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hs-scroll-thumb);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hs-brand);
+}
+
+code, kbd, samp, pre, .chroma {
+  font-family: var(--hs-mono);
+}
+
+.markdown h1, .markdown h2, .markdown h3, .markdown h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* The book theme forces TOC entries onto a single line (`white-space: nowrap`),
+   so a long entry (e.g. a heading naming a flag) overflows the column instead of
+   wrapping. Allow entries to wrap, but keep each hyphenated flag name whole. */
+.book-toc a {
+  display: block;
+  white-space: normal;
+}
+.book-toc code {
+  white-space: nowrap;
+}
+.book-toc li {
+  margin: 0.2rem 0;
+  line-height: 1.35;
+}
+
+.markdown pre.chroma {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--gray-200);
+  border-radius: 0.4rem;
+  overflow-x: auto;
+}
+
+.hs-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-size: var(--font-size-smaller);
+  color: var(--body-font-color);
+  background: var(--hs-surface-2);
+  border: 1px solid var(--hs-border);
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+
+.hs-theme-btn:hover {
+  border-color: var(--hs-brand);
+}
+
+.hs-theme-btn__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.markdown a.hs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.4rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--hs-border);
+  color: var(--body-font-color);
+}
+
+.markdown a.hs-btn:hover {
+  border-color: var(--hs-brand);
+  text-decoration: none;
+}
+
+.markdown a.hs-btn--primary {
+  background: var(--hs-brand);
+  border-color: var(--hs-brand);
+  color: var(--hs-brand-contrast);
+}
+
+.markdown a.hs-btn--primary:hover {
+  background: var(--hs-brand-strong);
+  border-color: var(--hs-brand-strong);
+}
+
+.hs-hero {
+  margin: 0.25rem 0 2.25rem;
+}
+
+.hs-hero__text {
+  max-width: 46rem;
+}
+
+.hs-hero__text h1 {
+  font-size: 2rem;
+  line-height: 1.15;
+  margin: 0 0 0.6rem;
+  border: 0;
+  padding: 0;
+}
+
+.hs-hero__lead {
+  font-size: 1.05rem;
+  color: var(--hs-muted);
+  margin: 0 0 1.3rem;
+  line-height: 1.55;
+}
+
+.hs-hero__cmd {
+  display: inline-block;
+  font-family: var(--hs-mono);
+  background: #0e1116;
+  color: #e6edf3;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.4rem;
+  margin-bottom: 1.3rem;
+  font-size: 0.9rem;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.hs-hero__cmd::before {
+  content: "$ ";
+  color: #4ade80;
+}
+
+.hs-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 2rem;
+}
+
+/*
+  Code cards. A file/schema panel with a caption strip on top (filename + a small
+  role tag) and a scrollable highlighted body. Shared by the chartfile, schema,
+  and io shortcodes; the body reuses the markdown chroma styling.
+*/
+.hs-file {
+  margin: 1.1rem 0;
+  border: 1px solid var(--hs-border);
+  border-radius: 0.45rem;
+  overflow: hidden;
+  background: var(--hs-surface);
+}
+
+.hs-file__cap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--hs-surface-2);
+  border-bottom: 1px solid var(--hs-border);
+  font-size: 0.8rem;
+}
+
+.hs-file__name {
+  font-family: var(--hs-mono);
+  color: var(--body-font-color);
+}
+
+.hs-file__tag {
+  margin-left: auto;
+  font-family: var(--hs-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+  border: 1px solid var(--hs-border);
+  border-radius: 0.25rem;
+  padding: 0.05rem 0.4rem;
+}
+
+.hs-file--out .hs-file__tag {
+  color: var(--hs-brand);
+  border-color: var(--hs-brand);
+}
+
+/* The body wraps a chroma <pre>; strip the markdown border/radius the base rule
+   would add (the card already provides them) and let it scroll on its own. */
+.hs-file__body pre.chroma {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  max-height: 30rem;
+  overflow: auto;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+/*
+  Two-panel input → output. Side by side on wide viewports with an arrow between;
+  stacks (arrow rotates to point down) when the column gets narrow.
+*/
+.hs-io {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 0.6rem;
+  margin: 1.25rem 0;
+}
+
+.hs-io .hs-file {
+  margin: 0;
+  min-width: 0;
+}
+
+/* The two panels usually differ in height (a short template vs a longer schema);
+   top-align them and float the arrow down to roughly the shared upper third so it
+   reads as "this becomes that" rather than centering against the taller panel. */
+.hs-io__arrow {
+  font-size: 1.4rem;
+  color: var(--hs-brand);
+  text-align: center;
+  align-self: center;
+}
+
+@media (max-width: 46rem) {
+  .hs-io {
+    grid-template-columns: 1fr;
+  }
+  .hs-io__arrow {
+    transform: rotate(90deg);
+  }
+}
+
+.hs-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 2rem;
+}
+
+.hs-card {
+  border: 1px solid var(--hs-border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--hs-surface);
+}
+
+.hs-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+}
+
+.hs-card p {
+  margin: 0;
+  color: var(--hs-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}

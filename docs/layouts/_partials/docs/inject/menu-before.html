@@ -1,0 +1,28 @@
+{{- /* Manual light/dark toggle. Persists to localStorage; falls back to OS preference. */ -}}
+<button type="button" id="hs-theme-btn" class="hs-theme-btn" aria-label="Toggle light and dark theme" aria-pressed="false">
+  <span class="hs-theme-btn__icon" aria-hidden="true">☾</span>
+  <span class="hs-theme-btn__label">Dark</span>
+</button>
+<script>
+(function () {
+  var btn = document.getElementById('hs-theme-btn');
+  if (!btn) return;
+  var root = document.documentElement;
+  var icon = btn.querySelector('.hs-theme-btn__icon');
+  var label = btn.querySelector('.hs-theme-btn__label');
+  function mode() { return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+  function render() {
+    var m = mode();
+    icon.textContent = m === 'dark' ? '☀' : '☾';
+    label.textContent = m === 'dark' ? 'Light' : 'Dark';
+    btn.setAttribute('aria-pressed', String(m === 'dark'));
+  }
+  btn.addEventListener('click', function () {
+    var next = mode() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('hs-theme', next); } catch (e) {}
+    render();
+  });
+  render();
+})();
+</script>

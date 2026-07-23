@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "autoscaling": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "minReplicas": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "const": true
+                  },
+                  {
+                    "not": {
+                      "const": 0
+                    },
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "minReplicas": {}
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "x-helm-schema-generated": true
+}

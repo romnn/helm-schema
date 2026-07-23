@@ -1,0 +1,26 @@
+{{- /* Two-panel "templates in → schema out" view: an example chart file on the
+       left, the real generated schema on the right, with an arrow between.
+       Usage: {{< io in="hero/templates/deployment.yaml" schema="hero" >}}
+       Optional: intitle=, outtitle=, inlang=. */ -}}
+{{- $inPath := .Get "in" -}}
+{{- $schemaName := .Get "schema" -}}
+{{- $inRes := resources.Get (printf "examples/%s" $inPath) -}}
+{{- if not $inRes -}}{{- errorf "io: examples/%s not found" $inPath -}}{{- end -}}
+{{- $outRes := resources.Get (printf "schemas/%s.json" $schemaName) -}}
+{{- if not $outRes -}}{{- errorf "io: assets/schemas/%s.json not found (run scripts/schemas.sh)" $schemaName -}}{{- end -}}
+{{- $ext := strings.TrimPrefix "." (path.Ext $inPath) -}}
+{{- $isTemplate := or (strings.HasSuffix $inPath ".tpl") (and (in $inPath "/templates/") (or (eq $ext "yaml") (eq $ext "yml"))) -}}
+{{- $inLang := .Get "inlang" | default (cond $isTemplate "gotmpl" $ext) -}}
+{{- $inTitle := .Get "intitle" | default (path.Base $inPath) -}}
+{{- $outTitle := .Get "outtitle" | default "values.schema.json" -}}
+<div class="hs-io">
+  <div class="hs-file hs-file--in">
+    <div class="hs-file__cap"><span class="hs-file__name">{{ $inTitle }}</span><span class="hs-file__tag">chart</span></div>
+    <div class="hs-file__body">{{ transform.Highlight (strings.TrimSpace $inRes.Content) $inLang }}</div>
+  </div>
+  <div class="hs-io__arrow" aria-hidden="true">→</div>
+  <div class="hs-file hs-file--out">
+    <div class="hs-file__cap"><span class="hs-file__name">{{ $outTitle }}</span><span class="hs-file__tag">generated</span></div>
+    <div class="hs-file__body">{{ transform.Highlight (strings.TrimSpace $outRes.Content) "json" }}</div>
+  </div>
+</div>

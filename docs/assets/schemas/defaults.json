@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "nameOverride": {
+      "anyOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "const": true
+              },
+              {
+                "not": {
+                  "const": 0
+                },
+                "type": "number"
+              },
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "minProperties": 1,
+                "type": "object"
+              }
+            ]
+          }
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "replicaCount": {
+      "anyOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "const": true
+              },
+              {
+                "not": {
+                  "const": 0
+                },
+                "type": "number"
+              },
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "minProperties": 1,
+                "type": "object"
+              }
+            ]
+          }
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "x-helm-schema-generated": true
+}

@@ -1,0 +1,8 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: guards
+spec:
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+{{- end }}

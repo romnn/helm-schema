@@ -88,12 +88,39 @@ tasks:
         \( -name '.intentionally-empty-file.o' -o -name '*detect_compiler_family.o' \)
         -delete
 
-  docs:
-    desc: "open documentation preview"
+  docs:cargo:
+    desc: "open the rustdoc API documentation preview"
     env:
       RUSTDOCFLAGS: "--cfg docsrs"
     cmds:
       - cargo +nightly watchdoc --all-features {{.CLI_ARGS}}
+
+  docs:schemas:
+    desc: "regenerate the documentation schema snippets (runs helm-schema on docs/examples)"
+    sources:
+      - scripts/schemas.sh
+      - crates/*/src/**/*.rs
+      - docs/examples/**
+    generates:
+      - docs/assets/schemas/*.json
+    cmds:
+      - bash scripts/schemas.sh
+
+  docs:build:
+    desc: "regenerate schema snippets and build the static site into docs/public"
+    deps: [docs:schemas]
+    dir: docs
+    cmds:
+      - hugo --minify --gc {{.CLI_ARGS}}
+
+  docs:serve:
+    desc: "serve the documentation website with hot reload (needs hugo extended + go)"
+    aliases: [docs]
+    deps: [docs:schemas]
+    dir: docs
+    interactive: true
+    cmds:
+      - hugo server --disableFastRender {{.CLI_ARGS}}
 
   outdated:
     desc: "list outdated deps (incl. new majors): adoptable now vs still in cooldown"
