@@ -317,7 +317,7 @@ fn falsy_reassignment_to_another_source_scopes_the_parser_to_truthy_values() {
 /// cilium's hubble-ui tag gate strips a digest suffix and a leading `v`
 /// before comparing (`regexReplaceAll "@.*$" TAG "" | trimPrefix "v" |
 /// semverCompare "<0.9.0"` → fail). Both reject lanes compose through the
-/// ordered chain exactly: an unparseable core aborts `semverCompare`
+/// ordered chain exactly: an unparsable core aborts `semverCompare`
 /// itself, a parseable version below the bound hits the `fail`, and valid
 /// versions — optionally v-prefixed, optionally digest-suffixed — render,
 /// as does the `ne "latest"`-excluded sentinel.
@@ -360,7 +360,7 @@ fn digest_strip_and_v_trim_compose_the_semver_bound_exactly() {
         (
             serde_json::json!("garbage"),
             false,
-            "an unparseable core aborts semverCompare",
+            "an unparsable core aborts semverCompare",
         ),
         (
             serde_json::json!("v0.1.0"),

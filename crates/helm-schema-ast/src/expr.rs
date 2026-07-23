@@ -442,7 +442,7 @@ fn convert_value_field(node: Node<'_>, src: &str) -> TemplateExpr {
 /// parenthesized — a pipe always splits the ENCLOSING command. The
 /// tree-sitter grammar instead attaches `(include "x" .)| sha256sum`'s
 /// pipe to the last argument, so a BARE pipeline argument is always that
-/// mis-parse: its first stage is the real argument and the remaining
+/// parsing error: its first stage is the real argument and the remaining
 /// stages pipe the whole call (redis-ha's checksum annotation spells its
 /// digest exactly this way).
 fn call_with_unfolded_pipe(function: String, mut args: Vec<TemplateExpr>) -> TemplateExpr {

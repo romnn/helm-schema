@@ -15,7 +15,7 @@ enum Op {
 /// comparator against a numeric bound. Versions parse as
 /// `v?MAJOR(.MINOR(.PATCH)?)?` with numeric components (leading zeros
 /// tolerated), build metadata is validated but ignored, and a bare
-/// comparator never matches a prerelease version. Unparseable versions
+/// comparator never matches a prerelease version. Unparsable versions
 /// error at render time, so they must not match either.
 fn reference_matches(op: Op, bound: (u64, u64, u64), version: &str) -> bool {
     let version = version.strip_prefix('v').unwrap_or(version);

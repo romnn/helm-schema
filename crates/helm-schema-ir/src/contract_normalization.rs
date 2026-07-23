@@ -310,8 +310,9 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         // semantics (per-layer shadowing, branch-only serialized tolerance,
         // base falsy tolerance), so it must not fold into a plain row at the
         // same site: the fold keeps one row's marker for ALL unioned
-        // disjuncts and mis-attributes the other's (airflow's otel
-        // `mustMerge` labels beside the pod-template `with` renders).
+        // disjuncts and incorrectly attributes the other's semantics
+        // (airflow's otel `mustMerge` labels beside the pod-template `with`
+        // renders).
         .then_with(|| left.merge_layers.cmp(&right.merge_layers))
         .then_with(|| left.digest.cmp(&right.digest))
         .then_with(|| left.merge_operand.cmp(&right.merge_operand))

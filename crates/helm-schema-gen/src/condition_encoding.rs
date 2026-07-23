@@ -145,7 +145,7 @@ fn build_single_condition_fragment(
         // the explicit test admits raw integers, plus the string spellings
         // the coercion provably parses into the claimed region (jenkins'
         // `"5"` replicas abort like `5`; a mixed-sign region also collects
-        // every unparseable spelling through the complement lane). A
+        // every unparsable spelling through the complement lane). A
         // missing parent-owned key reads as nil and coerces to 0, so it
         // satisfies the region exactly when 0 does; a dependency-owned
         // key coerces its subchart default.
@@ -409,7 +409,7 @@ pub(crate) enum IntStringPreimage {
     Within(String),
     /// Spellings certainly coercing into the region are everything OUTSIDE
     /// this overapproximated escape language (mixed-sign regions contain
-    /// 0, where every unparseable or overflowing spelling lands).
+    /// 0, where every unparsable or overflowing spelling lands).
     Excluding(String),
 }
 
@@ -674,7 +674,7 @@ fn decimal_default_int_value(value: Option<&YamlValue>) -> Option<i64> {
 /// The Sprig `int` coercion of the value the render reads when `path` is
 /// missing from the validated document: the subchart default for
 /// dependency-owned paths, nil (0) otherwise. Non-decimal defaults
-/// coerce to 0 like every unparseable spelling.
+/// coerce to 0 like every unparsable spelling.
 fn absent_coerced_int(subchart_defaults_doc: &YamlValue, path: &str) -> i64 {
     decimal_default_int_value(yaml_value_at_path(subchart_defaults_doc, path)).unwrap_or(0)
 }

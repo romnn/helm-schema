@@ -1584,7 +1584,7 @@ fn int_cast_zero_equality_fails_reject_raw_zero() {
 /// zero-padded VALID octal while an 8/9 digit is a parse error coercing
 /// to 0 (`"-018"` renders — the old pattern falsely rejected it), and a
 /// MIXED-sign region (positive `lt` bound) claims the complement of the
-/// parse-escape language: every unparseable, empty, or negative spelling
+/// parse-escape language: every unparsable, empty, or negative spelling
 /// coerces to 0 inside the region while a successful parse past the
 /// bound escapes.
 #[test]
@@ -1622,7 +1622,7 @@ fn int_cast_string_preimages_cover_radix_and_complement_lanes() {
         (
             serde_json::json!({ "floor": "abc" }),
             false,
-            "unparseable coerces to 0 below the floor",
+            "unparsable coerces to 0 below the floor",
         ),
         (
             serde_json::json!({ "floor": "" }),

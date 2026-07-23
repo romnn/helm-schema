@@ -62,7 +62,7 @@ fn cilium_spire_images_accept_strings_under_active_guards() -> eyre::Result<()> 
 /// The `validate.yaml` int-cast domain checks bind their base-0 string
 /// preimages exactly: under the default `cluster.name`, any `cluster.id`
 /// spelling certainly coercing to nonzero aborts; a live standalone DNS
-/// proxy aborts on every spelling coercing to 0 (unparseable included);
+/// proxy aborts on every spelling coercing to 0 (unparsable included);
 /// and `maxConnectedClusters` must certainly coerce into {255, 511} in
 /// any radix. Each polarity is helm-verified against the template-level
 /// validators.
@@ -105,7 +105,7 @@ fn cilium_int_cast_validators_bind_base0_string_preimages() -> eyre::Result<()> 
                 "dnsProxy": { "proxyPort": "oops" },
             }),
             false,
-            "an unparseable proxy port coerces to 0 and aborts",
+            "an unparsable proxy port coerces to 0 and aborts",
         ),
         (
             serde_json::json!({

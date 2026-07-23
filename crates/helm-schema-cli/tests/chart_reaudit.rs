@@ -2681,7 +2681,7 @@ fn cilium_hubble_ui_tag_binds_the_transformed_semver_bound() -> eyre::Result<()>
             ),
             SemanticCase::accepted("the ne-excluded latest sentinel", with_tag("latest")),
             SemanticCase::rejected(
-                "unparseable core aborts semverCompare",
+                "unparsable core aborts semverCompare",
                 "/hubble/ui/backend/image/tag",
                 with_tag("garbage"),
             ),
