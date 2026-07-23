@@ -258,7 +258,7 @@ fn collect_selected_schema_cores(
     let (core_hash, core_len) = core_hash_len(object);
     if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES && counts.contains_key(&core_hash) {
         let core = schema_core(object);
-        let key = json_schema_walk::canonical_json_string(&core);
+        let key = helm_schema_json_schema_walk::canonical_json_string(&core);
         let payload = payloads.entry(key).or_insert_with(|| RepeatedPayload {
             schema: core,
             uses: 0,
@@ -283,7 +283,7 @@ fn replace_repeated_schema_cores(
     if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES
         && counts.contains_key(&core_hash)
         && let core = schema_core(object)
-        && let key = json_schema_walk::canonical_json_string(&core)
+        && let key = helm_schema_json_schema_walk::canonical_json_string(&core)
         && let Some((name, _)) = selected.get(&key)
     {
         let mut replacement = schema_decorations(object);
@@ -463,7 +463,7 @@ impl ProviderSchemaDefinitionEntries {
             });
         if let Some(source_schema) = provider_schema_candidate.source_definition_schema() {
             entry.definition_schemas_by_key.insert(
-                json_schema_walk::canonical_json_string(source_schema),
+                helm_schema_json_schema_walk::canonical_json_string(source_schema),
                 source_schema.clone(),
             );
             entry.definition_schema_uses += 1;

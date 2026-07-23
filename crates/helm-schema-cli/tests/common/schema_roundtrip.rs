@@ -55,7 +55,7 @@ pub fn generate_chart_schema_for_path(chart_relative_path: &str) -> eyre::Result
         .generated_schema()
         // Mirror the CLI's default output policy: repeated schema subtrees
         // are interned into root-level `$defs` before anything ships.
-        .map(|generated| json_schema_minify::minimize_schema(generated.schema))
+        .map(|generated| helm_schema_json_schema_minify::minimize_schema(generated.schema))
         .map_err(eyre::Report::from)
         .wrap_err("generate schema")
 }

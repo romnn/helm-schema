@@ -27,7 +27,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use json_schema_walk::try_visit_subschemas_mut;
+use helm_schema_json_schema_walk::try_visit_subschemas_mut;
 use jsonschema::{Retrieve, Uri};
 use referencing::uri;
 use serde_json::{Map, Value};

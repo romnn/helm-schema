@@ -13,7 +13,7 @@
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::{self, WrapErr as _};
-use json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
+use helm_schema_json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
 use serde_json::Value;
 
 const OWNED_FIXTURE_DIRS: &[&str] = &[
@@ -75,7 +75,7 @@ fn collect_schema_patterns(value: &Value, pointer: &str, out: &mut Vec<(String, 
         let child_pointer = || {
             format!(
                 "{pointer}/{}",
-                json_schema_walk::escape_json_pointer_segment(key)
+                helm_schema_json_schema_walk::escape_json_pointer_segment(key)
             )
         };
         match schema_child_context_for_keyword(key) {
@@ -100,7 +100,7 @@ fn collect_schema_patterns(value: &Value, pointer: &str, out: &mut Vec<(String, 
                         let entry_pointer = format!(
                             "{}/{}",
                             child_pointer(),
-                            json_schema_walk::escape_json_pointer_segment(entry_key)
+                            helm_schema_json_schema_walk::escape_json_pointer_segment(entry_key)
                         );
                         collect_schema_patterns(entry, &entry_pointer, out);
                     }

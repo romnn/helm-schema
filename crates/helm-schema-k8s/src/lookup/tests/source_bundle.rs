@@ -60,7 +60,9 @@ fn keeps_leaf_local_definitions_intact() {
         }
     });
 
-    assert!(json_schema_walk::schema_refs_point_inside(&source_schema));
+    assert!(helm_schema_json_schema_walk::schema_refs_point_inside(
+        &source_schema
+    ));
 }
 
 #[test]

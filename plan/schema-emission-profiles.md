@@ -298,7 +298,7 @@ except file paths in step 2 — resolve by function name.
 
 ## Recorded follow-ups (not scheduled)
 
-1. **Lossless node-count compaction in `json-schema-minify`.** The
+1. **Lossless node-count compaction in `helm-schema-json-schema-minify`.** The
    remaining lean-profile mass is 2-branch `anyOf` unions; many are
    expressible as `type: [t, "null"]` arrays or merged sibling keywords
    with identical semantics. A semantics-preserving compaction pass would

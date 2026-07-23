@@ -264,7 +264,7 @@ time is the lockfile's job).
   `http(s)://` and reads arbitrary `file://` targets from override files with
   no policy (SSRF / local-file exfiltration into the emitted schema).
 - **Worth preserving:** the tri-state oracle and its offline-safety contract,
-  typed capability-branch preservation, `json-schema-minify` as a standalone
+  typed capability-branch preservation, `helm-schema-json-schema-minify` as a standalone
   Helm-free crate, full-schema-equality golden tests over real charts, and
   the in-flight `AbstractValue`/`Effects` unification.
 
@@ -337,7 +337,7 @@ backlog.
 
 ### 5.1 Crates
 
-Six crates (plus `json-schema-minify` and `test-util`, unchanged):
+Six crates (plus `helm-schema-json-schema-minify` and `test-util`, unchanged):
 
 ```
 helm-schema-template-grammar   tree-sitter C grammars + build.rs only
@@ -930,7 +930,7 @@ schema model:
   validation time. `EmitMode::FullyInlinedExport` (full inlining — today's
   default shape) remains as an explicit export for consumers that reject
   refs. This deletes the current inline-everything-then-re-deduplicate cycle
-  between flatten and the minifier; `json-schema-minify` remains as optional
+  between flatten and the minifier; `helm-schema-json-schema-minify` remains as optional
   extra compaction. Internal-ref support is solid in both validators that
   matter (helm 3's gojsonschema, helm 4) and in yaml-language-server.
 - The **consumer matrix** is pinned by tests: helm 3 (gojsonschema draft-07
@@ -1261,7 +1261,7 @@ and the `ValueUse` projection never gains a production consumer.
 | CLI `chart.rs` | facade chart loading (`ChartProgram`) |
 | CLI `schema_override.rs`, `flatten.rs`, mirroring pass | facade output passes (+ `FetchPolicy`); flatten becomes `EmitMode::FullyInlinedExport` |
 | CLI `lib.rs` pipeline | facade stage functions |
-| `json-schema-minify` | unchanged (optional pass; bundling removes its hottest input) |
+| `helm-schema-json-schema-minify` | unchanged (optional pass; bundling removes its hottest input) |
 
 ## 13. Parity checklist (current behavior the design must reproduce)
 

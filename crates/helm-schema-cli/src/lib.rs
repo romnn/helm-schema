@@ -34,7 +34,9 @@ pub fn run(cli: Cli) -> EngineResult<()> {
                 .with_debug_annotations(true)
                 .with_filter(tracing_subscriber::filter::filter_fn(|metadata| {
                     metadata.target().starts_with("helm_schema")
-                        || metadata.target().starts_with("json_schema_minify")
+                        || metadata
+                            .target()
+                            .starts_with("helm_schema_json_schema_minify")
                 }));
         let subscriber = tracing_subscriber::registry().with(perfetto_layer);
         let dispatch = tracing::Dispatch::new(subscriber);

@@ -63,7 +63,7 @@ pub(crate) fn merge_two_schemas(a: Value, b: Value) -> Value {
 
 fn deduped_sorted_any_of(variants: Vec<Value>) -> Value {
     let mut variants = dedup_schemas(variants);
-    variants.sort_by_key(json_schema_walk::canonical_json_string);
+    variants.sort_by_key(helm_schema_json_schema_walk::canonical_json_string);
     if let [variant] = variants.as_slice() {
         return variant.clone();
     }

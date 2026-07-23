@@ -6,7 +6,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use json_schema_walk::{visit_subschemas, visit_subschemas_mut};
+use helm_schema_json_schema_walk::{visit_subschemas, visit_subschemas_mut};
 use serde_json::{Map, Value};
 
 const DEFINITIONS_KEY: &str = "$defs";
@@ -106,7 +106,8 @@ fn next_definition_name(existing_names: &BTreeSet<String>, next_id: usize) -> (S
 }
 
 fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> i128 {
-    let ref_bytes = json_schema_walk::canonical_json_string(&reference_schema(name)).len();
+    let ref_bytes =
+        helm_schema_json_schema_walk::canonical_json_string(&reference_schema(name)).len();
     let original = schema_bytes.saturating_mul(occurrences);
     let rewritten = schema_bytes
         .saturating_add(ref_bytes.saturating_mul(occurrences))
@@ -157,7 +158,7 @@ fn candidate_fingerprint(schema: &Value) -> Option<String> {
     if !matches!(schema, Value::Object(_)) || contains_reference_scope_keyword(schema) {
         return None;
     }
-    Some(json_schema_walk::canonical_json_string(schema))
+    Some(helm_schema_json_schema_walk::canonical_json_string(schema))
 }
 
 fn contains_reference_scope_keyword(value: &Value) -> bool {

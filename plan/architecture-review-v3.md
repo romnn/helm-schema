@@ -222,7 +222,7 @@ Est. −250 LOC. Risk: none.
 (only `clippy-wrapper` declares `[lints] workspace = true`) — verified
 empirically: `unreachable!` at `k8s/src/kubernetes_openapi/provider.rs:520`,
 bare `.expect` at `helm-schema/src/session.rs:116,123` and
-`json-schema-walk/src/lib.rs:7`, and slice indexing at
+`helm-schema-json-schema-walk/src/lib.rs:7`, and slice indexing at
 `syntax/src/lines.rs:31` all pass `task lint` today.
 
 1. Add `[lints] workspace = true` to every workspace crate's Cargo.toml.
@@ -343,10 +343,10 @@ Est. +20 LOC. Risk: low; soundness fix.
 - f. **Delete gen's private schema walker.**
   `gen/src/provider_definitions.rs:324-402`
   (`visit_schema_children`/`_mut`, ~78 LOC) duplicates
-  `json_schema_walk::visit_subschemas`/`_mut`
-  (`json-schema-walk/src/lib.rs:192-285`), which the same file already
+  `helm_schema_json_schema_walk::visit_subschemas`/`_mut`
+  (`helm-schema-json-schema-walk/src/lib.rs:192-285`), which the same file already
   imports for `canonical_json_string`. Caveat: the local walker descends
-  into `$ref`-bearing objects; json-schema-walk treats them as leaves.
+  into `$ref`-bearing objects; `helm-schema-json-schema-walk` treats them as leaves.
   **Gate:** all schema fixtures byte-identical. If a diff appears, stop and
   record it — the `$ref`-leaf semantics is likely the *correct* one for the
   replacement pass, but that adjudication is Roman's.

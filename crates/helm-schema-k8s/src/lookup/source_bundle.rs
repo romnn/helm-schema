@@ -1,7 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::convert::Infallible;
 
-use json_schema_walk::{SchemaTraversalContext, ref_points_inside, try_map_schema_context};
+use helm_schema_json_schema_walk::{
+    SchemaTraversalContext, ref_points_inside, try_map_schema_context,
+};
 use serde_json::{Map, Value};
 
 use crate::schema_doc::strip_ref;
@@ -46,7 +48,7 @@ pub(crate) fn bundle_source_definition(
     source_schema: &Value,
     mut resolve_external_ref: impl FnMut(&SourceBundleLocation, &str) -> Option<SourceBundleNode>,
 ) -> Value {
-    if json_schema_walk::schema_refs_point_inside(source_schema) {
+    if helm_schema_json_schema_walk::schema_refs_point_inside(source_schema) {
         return source_schema.clone();
     }
 

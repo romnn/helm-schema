@@ -279,7 +279,7 @@ source = "git+https://github.com/romnn/clippy-shim.git?branch=main#da77262527376
 
 [[package]]
 name = "clippy-wrapper"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "clippy-shim",
 ]
@@ -629,7 +629,7 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "helm-schema"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "flate2",
@@ -637,10 +637,10 @@ dependencies = [
  "helm-schema-core",
  "helm-schema-gen",
  "helm-schema-ir",
+ "helm-schema-json-schema-minify",
+ "helm-schema-json-schema-walk",
  "helm-schema-k8s",
  "indoc",
- "json-schema-minify",
- "json-schema-walk",
  "jsonschema",
  "referencing",
  "serde",
@@ -660,7 +660,7 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-ast"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "helm-schema-core",
@@ -679,17 +679,17 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-cli"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "clap",
  "color-eyre",
  "flate2",
  "helm-schema",
  "helm-schema-ast",
+ "helm-schema-json-schema-minify",
+ "helm-schema-json-schema-walk",
  "helm-schema-k8s",
  "indoc",
- "json-schema-minify",
- "json-schema-walk",
  "jsonschema",
  "mimalloc",
  "regress",
@@ -708,9 +708,9 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-core"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
- "json-schema-walk",
+ "helm-schema-json-schema-walk",
  "regex",
  "serde",
  "serde_json",
@@ -719,15 +719,15 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-gen"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "helm-schema-ast",
  "helm-schema-core",
  "helm-schema-ir",
+ "helm-schema-json-schema-walk",
  "helm-schema-k8s",
  "indoc",
- "json-schema-walk",
  "jsonschema",
  "regex",
  "serde",
@@ -742,7 +742,7 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-ir"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "helm-schema-ast",
@@ -762,12 +762,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "helm-schema-json-schema-minify"
+version = "0.0.2"
+dependencies = [
+ "helm-schema-json-schema-walk",
+ "serde_json",
+ "similar-asserts",
+ "test-util",
+ "tracing",
+]
+
+[[package]]
+name = "helm-schema-json-schema-walk"
+version = "0.0.2"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "helm-schema-k8s"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "helm-schema-core",
- "json-schema-walk",
+ "helm-schema-json-schema-walk",
  "serde",
  "serde_json",
  "sha2",
@@ -779,7 +797,7 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-syntax"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "helm-schema-template-grammar",
@@ -792,7 +810,7 @@ dependencies = [
 
 [[package]]
 name = "helm-schema-template-grammar"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "cc",
  "color-eyre",
@@ -1011,24 +1029,6 @@ dependencies = [
  "futures-util",
  "once_cell",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "json-schema-minify"
-version = "0.0.1"
-dependencies = [
- "json-schema-walk",
- "serde_json",
- "similar-asserts",
- "test-util",
- "tracing",
-]
-
-[[package]]
-name = "json-schema-walk"
-version = "0.0.1"
-dependencies = [
- "serde_json",
 ]
 
 [[package]]
@@ -1782,7 +1782,7 @@ dependencies = [
 
 [[package]]
 name = "test-util"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "googletest",

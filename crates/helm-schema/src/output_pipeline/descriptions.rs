@@ -1,4 +1,4 @@
-use json_schema_walk::visit_subschemas_mut;
+use helm_schema_json_schema_walk::visit_subschemas_mut;
 use serde_json::Value;
 
 pub(super) fn strip_schema_descriptions(schema: &mut Value) {

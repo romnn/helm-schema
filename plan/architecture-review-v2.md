@@ -14,8 +14,8 @@ case.** The frontend half (syntax → ast → ir `fragment_eval`) is the right
 architecture; nothing to change. The backend half (signal builder + gen) has
 the right phases, but the guard-audit fix added machinery where code already
 was, not where the concepts belong. Per-crate: `core`, `syntax`, `ast`,
-`k8s` (probe-table debt stays documented), `json-schema-walk`,
-`json-schema-minify`, `cli`, `test-util`, `helm-schema` (engine) — sound.
+`k8s` (probe-table debt stays documented), `helm-schema-json-schema-walk`,
+`helm-schema-json-schema-minify`, `cli`, `test-util`, `helm-schema` (engine) — sound.
 `gen` carries steps 2–3; `core`+`ir`+`gen` share step 1; step 5 is the
 next structural campaign.
 

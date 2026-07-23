@@ -1,4 +1,4 @@
-use json_schema_walk::visit_subschemas_mut;
+use helm_schema_json_schema_walk::visit_subschemas_mut;
 use serde_json::Value;
 
 /// Normalize regex dialects in every schema-position `pattern` keyword and

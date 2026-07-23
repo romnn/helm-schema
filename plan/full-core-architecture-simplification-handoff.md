@@ -121,8 +121,8 @@ helm-schema       ~2,730
 helm-schema-ast   ~2,310
 helm-schema-core  ~1,180
 helm-schema-cli     ~390
-json-schema-walk    ~330
-json-schema-minify  ~180
+helm-schema-json-schema-walk    ~330
+helm-schema-json-schema-minify  ~180
 template-grammar    ~100
 ```
 

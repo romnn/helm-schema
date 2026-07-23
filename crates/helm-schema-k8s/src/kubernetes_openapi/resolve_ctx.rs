@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
+use helm_schema_json_schema_walk::{SchemaTraversalContext, schema_child_context_for_keyword};
 use serde_json::{Map, Value};
 
 use crate::schema_doc::{SchemaDoc, strip_ref};
@@ -214,7 +214,7 @@ fn normalize_ref_filename(current_filename: &str, file: &str) -> String {
 }
 
 fn append_json_pointer_segment(pointer: &str, segment: &str) -> String {
-    let escaped = json_schema_walk::escape_json_pointer_segment(segment);
+    let escaped = helm_schema_json_schema_walk::escape_json_pointer_segment(segment);
     if pointer.is_empty() {
         format!("/{escaped}")
     } else {

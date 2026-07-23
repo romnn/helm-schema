@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use json_schema_minify::minimize_schema;
+use helm_schema_json_schema_minify::minimize_schema;
 use serde_json::Value;
 
 use crate::error::EngineResult;

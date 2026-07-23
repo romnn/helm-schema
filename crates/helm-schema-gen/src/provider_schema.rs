@@ -1,5 +1,5 @@
 use helm_schema_core::{ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment};
-use json_schema_walk::{
+use helm_schema_json_schema_walk::{
     SchemaTraversalContext, escape_json_pointer_segment, try_map_schema_context,
 };
 use serde_json::Value;
@@ -22,7 +22,7 @@ pub(crate) struct ProviderSchemaCandidate {
 impl ProviderSchemaCandidate {
     pub(crate) fn from_provider_fragment(fragment: ProviderSchemaFragment) -> Self {
         let (schema, source_fragment) = fragment.into_source_parts();
-        let key = json_schema_walk::canonical_json_string(&schema);
+        let key = helm_schema_json_schema_walk::canonical_json_string(&schema);
         Self {
             key,
             schema,
@@ -48,7 +48,7 @@ impl ProviderSchemaCandidate {
         self.source_fragment
             .as_ref()
             .map(ProviderSourceFragment::definition_schema)
-            .filter(|schema| json_schema_walk::schema_refs_point_inside(schema))
+            .filter(|schema| helm_schema_json_schema_walk::schema_refs_point_inside(schema))
     }
 
     pub(crate) fn survives_as(&self, schema: &Value) -> bool {
@@ -120,7 +120,7 @@ fn rewrite_local_ref_for_root_definition(
     definition_name: &str,
 ) -> Option<String> {
     let pointer = reference.strip_prefix('#')?;
-    if !json_schema_walk::ref_points_inside(root, reference) {
+    if !helm_schema_json_schema_walk::ref_points_inside(root, reference) {
         return None;
     }
     Some(format!(
