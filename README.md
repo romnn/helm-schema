@@ -9,11 +9,13 @@
 
 Generate a **JSON Schema** for a Helm chart's `values.yaml` by **analyzing the chart's templates**:
 
+📖 **[Documentation](https://romnn.github.io/helm-schema/)** — introduction, quick start, guide, and full CLI reference.
+
 - Discovers a chart (and its vendored dependencies under `charts/`, including `.tgz`/`.tar.gz` archives).
-- Parses Helm templates and statically extracts `.Values.*` usages.
-- Tracks template control flow (guards like `if`, `with`, `range`, plus patterns such as `eq`, `not`, and `or`).
-- Tracks Kubernetes resource context (best-effort `apiVersion`/`kind`) so a value use can be mapped to a Kubernetes schema path.
-- Infers value types using upstream Kubernetes JSON schemas and CRD schemas.
+- Reads the Helm templates and finds every `.Values.*` the chart actually uses.
+- Follows the control flow around each value (`if`, `with`, `range`, plus patterns such as `default`, `eq`, `not`, and `or`), so the schema mirrors the template's real logic.
+- Tracks which Kubernetes resource and field a value flows into, so it can type that value from the upstream API.
+- Types values using upstream Kubernetes JSON schemas and CRD schemas.
 - Merges these signals into a single Draft-07 JSON schema (commonly saved as `values.schema.json`).
 
 ## Why this is different
@@ -326,15 +328,15 @@ helm-schema ./path/to/chart \
 
 Overrides are applied as a recursive merge (with special handling to union `required` lists), which is useful for tightening types and filling inference gaps. One exception: an override subtree that contains `$ref` replaces the corresponding base subtree entirely rather than merging — JSON Schema draft-07 ignores siblings of `$ref`, and merging would otherwise leave inferred constraints from the base alongside the refed schema's constraints, producing shapes no input can satisfy.
 
-## How it works (high level)
+## What it looks at
 
-- Chart discovery reads `Chart.yaml` (and supports `Chart.template.yaml`) and walks vendored dependencies under `charts/`.
-- It composes an effective values document by merging the root `values.yaml` with subchart defaults under their dependency keys (and merging subchart `global` into top-level `global`).
-- Templates are parsed and an index of named `define` blocks is built so helper templates can be analyzed.
-- A symbolic extractor collects value-uses (`.Values.*`) and guards from template actions, and tries to track the YAML path where a value is emitted.
-- The chart's `files/` directory is also scanned for YAML/TPL fragments; when templates load YAML fragments from `.Files.Get` using literal paths, those fragments can be analyzed too.
-- A Kubernetes/CRD schema provider chain is consulted to infer types for values used in specific resource paths.
-- Inference signals are merged into a single JSON schema rooted at the Helm values object.
+For every value, `helm-schema` combines three signals, and the schema is recovered from what the chart *does* — not from what its defaults happen to be:
+
+- **How your templates use it** — which resource field the value renders into, and the control flow around it. A value used only behind `{{ if .Values.x.enabled }}` is only constrained when that guard is on; a value with no default still appears if the chart reads it.
+- **Your composed defaults** — the root `values.yaml` merged with each subchart's defaults and `global`, the same way Helm composes them.
+- **What Kubernetes expects** — once a value is traced to a resource field, its type (and description) comes from the upstream Kubernetes or CRD schema for that field. A port that happens to be `80` is an integer because the Service field *is* one, not because `80` looks numeric.
+
+When a value is genuinely ambiguous it stays a union rather than a wrong guess, and anything that can't be resolved is reported as a diagnostic instead of being invented. See the [documentation](https://romnn.github.io/helm-schema/docs/how-it-works/) for the details.
 
 ## Status / disclaimer
 
