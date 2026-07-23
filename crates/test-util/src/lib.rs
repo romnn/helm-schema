@@ -30,13 +30,13 @@ pub struct DefineSourceSpec<'a> {
     pub file_sources: &'a [(&'a str, &'a str)],
 }
 
-/// Owns the fixture contents loaded by [`DefineSourceSpec`].
+/// A named fixture source loaded from the workspace test-data directory.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LoadedDefineSources {
-    /// Loaded helper-template contents.
-    pub helper_templates: Vec<String>,
-    /// Template names paired with their loaded contents.
-    pub file_sources: Vec<(String, String)>,
+pub struct LoadedDefineSource {
+    /// Stable logical path used for source identity and provenance.
+    pub path: String,
+    /// Normalized UTF-8 source text.
+    pub source: String,
 }
 
 impl DefineSourceSpec<'_> {
@@ -45,25 +45,29 @@ impl DefineSourceSpec<'_> {
     /// # Errors
     ///
     /// Returns an error when a configured fixture cannot be read.
-    pub fn load(self) -> eyre::Result<LoadedDefineSources> {
-        let mut helper_templates = self
+    pub fn load(self) -> eyre::Result<Vec<LoadedDefineSource>> {
+        let mut sources = self
             .helper_templates
             .iter()
-            .map(|path| read_testdata(path))
+            .map(|path| {
+                Ok(LoadedDefineSource {
+                    path: (*path).to_string(),
+                    source: read_testdata(path)?,
+                })
+            })
             .collect::<eyre::Result<Vec<_>>>()?;
         for (dir, extension) in self.helper_template_dirs {
-            helper_templates.extend(read_testdata_dir(dir, extension)?);
+            sources.extend(read_testdata_dir(dir, extension)?);
         }
-        let file_sources = self
-            .file_sources
-            .iter()
-            .map(|(name, path)| Ok(((*name).to_string(), read_testdata(path)?)))
-            .collect::<eyre::Result<Vec<_>>>()?;
+        for (name, path) in self.file_sources {
+            sources.push(LoadedDefineSource {
+                path: (*name).to_string(),
+                source: read_testdata(path)?,
+            });
+        }
+        sources.sort_by(|left, right| left.path.cmp(&right.path));
 
-        Ok(LoadedDefineSources {
-            helper_templates,
-            file_sources,
-        })
+        Ok(sources)
     }
 }
 
@@ -96,32 +100,43 @@ pub fn read_testdata(relative_path: &str) -> eyre::Result<String> {
     Ok(source.replace("\r\n", "\n"))
 }
 
-/// Reads all files with the given extension from a directory relative to
-/// the workspace `testdata/` directory.
+/// Reads named files with the given extension from a test-data directory.
 ///
 /// Returns an empty `Vec` if the directory does not exist.
+/// Source identities use forward-slash paths relative to `testdata/`, and the
+/// returned sources are ordered by those identities.
 ///
 /// # Errors
 ///
 /// Returns an error when the directory or one of its matching files cannot be read.
-pub fn read_testdata_dir(relative_dir: &str, extension: &str) -> eyre::Result<Vec<String>> {
+pub fn read_testdata_dir(
+    relative_dir: &str,
+    extension: &str,
+) -> eyre::Result<Vec<LoadedDefineSource>> {
     let dir = workspace_testdata().join(relative_dir);
     let entries = match std::fs::read_dir(&dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(error) => return Err(error).wrap_err_with(|| format!("read {}", dir.display())),
     };
-    let mut out = Vec::new();
+    let mut sources = Vec::new();
     for entry in entries {
         let entry = entry.wrap_err_with(|| format!("read entry in {}", dir.display()))?;
         if entry.path().extension().is_some_and(|e| e == extension) {
             let path = entry.path();
             let content = std::fs::read_to_string(&path)
                 .wrap_err_with(|| format!("read test fixture {}", path.display()))?;
-            out.push(content.replace("\r\n", "\n"));
+            let filename = entry.file_name();
+            let filename = filename.to_string_lossy();
+            sources.push(LoadedDefineSource {
+                path: format!("{}/{filename}", relative_dir.trim_end_matches('/')),
+                source: content.replace("\r\n", "\n"),
+            });
         }
     }
-    Ok(out)
+
+    sources.sort_by(|left, right| left.path.cmp(&right.path));
+    Ok(sources)
 }
 
 /// Write `data` into the virtual filesystem at `path`, creating parent directories as needed.

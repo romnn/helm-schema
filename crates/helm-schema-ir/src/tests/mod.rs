@@ -499,14 +499,14 @@ spec:
 {{- end }}
 "#;
     let mut idx = DefineIndex::new();
-    let loaded = test_util::DefineSourceSpec {
+    let sources = test_util::DefineSourceSpec {
         helper_templates: &[],
         helper_template_dirs: &[("charts/common/templates", "tpl")],
         file_sources: &[],
     }
     .load()?;
-    for (idx_num, source) in loaded.helper_templates.into_iter().enumerate() {
-        idx.add_file_source(&format!("<inline:{idx_num}>"), &source);
+    for source in sources {
+        idx.add_file_source(&source.path, &source.source);
     }
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src)
