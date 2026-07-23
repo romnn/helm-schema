@@ -170,6 +170,7 @@ tasks:
 
   test:
     desc: "test cargo workspace"
+    aliases: [test:unit]
     cmds:
       - cargo nextest run -P default --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
@@ -177,6 +178,17 @@ tasks:
     desc: "test cargo workspace for all combinations of features"
     cmds:
       - cargo fc nextest run -P default --all-targets --no-tests warn {{.CLI_ARGS}}
+
+  test:integration:
+    desc: "run integration tests in cargo workspace"
+    cmds:
+      - cargo nextest run -P integration --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
+
+  test:all:
+    desc: "run all tests in cargo workspace"
+    aliases: [test:ci]
+    cmds:
+      - cargo nextest run -P ci --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
   test:doc:
     desc: "run doctests in cargo workspace"

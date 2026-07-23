@@ -21,12 +21,16 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [tests]
     timeout-minutes: 30
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@v0.0.10
       - name: Publish crates
         uses: romnn/publish-crates@main
         with:

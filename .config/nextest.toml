@@ -1,2 +1,16 @@
 [profile.default]
+default-filter = "not kind(test)"
 fail-fast = { max-fail = "all" }
+retries = 0
+slow-timeout = { period = "60s", terminate-after = 1, grace-period = "10s" }
+
+[profile.integration]
+default-filter = "kind(test)"
+fail-fast = { max-fail = "all" }
+retries = 3
+slow-timeout = { period = "300s", terminate-after = 1, grace-period = "10s" }
+
+[profile.ci]
+default-filter = "all()"
+fail-fast = false
+slow-timeout = { period = "300s", terminate-after = 1, grace-period = "10s" }

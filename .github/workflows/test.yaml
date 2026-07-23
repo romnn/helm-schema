@@ -5,9 +5,6 @@ on:
   workflow_call: {}
   pull_request:
     types: [opened, synchronize, reopened, edited]
-  schedule:
-    # 8AM first day of the month in JAN and JUNE to keep workflow badges up-to-date
-    - cron: "0 8 1 1,6 *"
 
 env:
   MISE_GITHUB_TOKEN: ${{ github.token }}
@@ -18,6 +15,9 @@ jobs:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
     strategy:
       fail-fast: false
       matrix:
@@ -30,27 +30,59 @@ jobs:
           cache: true
           env: false
       - run: >-
-          mise install task helm aqua:nextest-rs/nextest/cargo-nextest
+          mise install task aqua:nextest-rs/nextest/cargo-nextest
           github:romnn/cargo-feature-combinations
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@v0.0.10
       - name: Feature-combination tests
-        run: task test:fc --output group --output-group-error-only
+        run: task test:fc
       - name: Doc-tests
-        run: task test:doc --output group --output-group-error-only
+        run: task test:doc
+
+  integration:
+    name: integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: false
+          cache: true
+          env: false
+      - run: mise install task helm aqua:nextest-rs/nextest/cargo-nextest
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@v0.0.10
+      - name: Integration tests
+        run: task test:integration
 
   publish:
     name: publish (dry-run)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@v0.0.10
       - name: Publish crates (dry-run)
         uses: romnn/publish-crates@main
         with:
