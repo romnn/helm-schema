@@ -1,28 +1,26 @@
-use std::fs;
+use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 use referencing::uri;
 use serde_json::json;
+use url::Url;
 
 use super::*;
 
-fn temp_path(name: &str) -> std::path::PathBuf {
-    std::env::temp_dir().join(format!(
-        "helm-schema-fetch-policy-{name}-{}",
-        std::process::id()
-    ))
-}
-
 #[test]
-fn file_retrieval_respects_fetch_policy() {
-    let path = temp_path("file");
-    fs::write(&path, r#"{"type":"string"}"#).expect("write test schema");
-    let canonical = path.canonicalize().expect("canonicalize test schema");
-    let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
+fn file_retrieval_respects_fetch_policy() -> eyre::Result<()> {
+    let temp_dir = tempfile::tempdir()?;
+    let directory = temp_dir.path().join("directory with #");
+    std::fs::create_dir(&directory)?;
+    let path = directory.join("schema.json");
+    std::fs::write(&path, r#"{"type":"string"}"#)?;
+    let base_uri = Url::parse(&directory_file_uri(&directory)?)?;
+    let uri = uri::from_str(base_uri.join("schema.json")?.as_str())?;
 
     let denied = FsHttpRetrieve::new(FetchPolicy::new(false, false), LoadBudget::default())
         .retrieve(&uri)
-        .expect_err("file retrieval should be denied");
+        .err()
+        .ok_or_eyre("file retrieval should be denied")?;
     assert!(
         denied
             .to_string()
@@ -32,10 +30,10 @@ fn file_retrieval_respects_fetch_policy() {
 
     let allowed = FsHttpRetrieve::new(FetchPolicy::new(true, false), LoadBudget::default())
         .retrieve(&uri)
-        .expect("file retrieval should succeed");
+        .map_err(|error| eyre::Report::msg(error.to_string()))?;
     sim_assert_eq!(have: allowed, want: json!({ "type": "string" }));
 
-    fs::remove_file(&path).expect("remove test schema");
+    Ok(())
 }
 
 #[test]
@@ -84,19 +82,23 @@ fn network_retrieval_rejects_loopback_and_link_local_hosts() {
 }
 
 #[test]
-fn file_retrieval_respects_load_budget() {
-    let path = temp_path("file-budget");
-    fs::write(&path, r#"{"type":"string"}"#).expect("write test schema");
-    let canonical = path.canonicalize().expect("canonicalize test schema");
-    let uri = Uri::parse(format!("file://{}", canonical.to_string_lossy())).expect("file uri");
+fn file_retrieval_respects_load_budget() -> eyre::Result<()> {
+    let temp_dir = tempfile::tempdir()?;
+    let directory = temp_dir.path().join("file-budget directory with #");
+    std::fs::create_dir(&directory)?;
+    let path = directory.join("schema.json");
+    std::fs::write(&path, r#"{"type":"string"}"#)?;
+    let base_uri = Url::parse(&directory_file_uri(&directory)?)?;
+    let uri = uri::from_str(base_uri.join("schema.json")?.as_str())?;
 
     let err = FsHttpRetrieve::new(FetchPolicy::new(true, false), LoadBudget::new(64, 4))
         .retrieve(&uri)
-        .expect_err("file retrieval should exceed budget");
+        .err()
+        .ok_or_eyre("file retrieval should exceed budget")?;
     assert!(
         err.to_string().contains("load budget exceeded"),
         "unexpected budget error: {err}"
     );
 
-    fs::remove_file(&path).expect("remove test schema");
+    Ok(())
 }

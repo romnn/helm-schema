@@ -25,13 +25,14 @@
 //! in-memory map keyed by URI and avoid disk I/O entirely.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use json_schema_walk::try_visit_subschemas_mut;
 use jsonschema::{Retrieve, Uri};
 use referencing::uri;
 use serde_json::{Map, Value};
 use tracing::instrument;
+use url::Url;
 
 use crate::error::{CliError, EngineResult};
 use crate::fetch_policy::FetchPolicy;
@@ -42,15 +43,16 @@ use crate::load_budget::{LoadBudget, read_to_end_capped};
 ///
 /// Relative refs in the schema (and in any document loaded transitively)
 /// resolve against the directory each ref originates from — the standard
-/// JSON Schema base-URI rule. The base URI is constructed from
-/// `base_dir` as `file://<canonical-path>/`.
+/// JSON Schema base-URI rule. The base URI is constructed from `base_dir` as
+/// an absolute `file:` URL.
 ///
 /// # Errors
 ///
 /// Returns [`CliError::Referencing`] for any ref-resolution failure
 /// (file not found, JSON parse error, cycle the underlying resolver
-/// can't break, network/file refs denied by fetch policy, …). The underlying error
-/// is wrapped with enough detail for an operator to find the bad ref.
+/// can't break, network/file refs denied by fetch policy, …), or an error when
+/// `base_dir` cannot be represented as an absolute file URI. The underlying
+/// error is wrapped with enough detail for an operator to find the bad ref.
 #[instrument(skip_all)]
 pub fn flatten_refs(
     schema: &Value,
@@ -58,7 +60,7 @@ pub fn flatten_refs(
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
 ) -> EngineResult<Value> {
-    let base_uri = path_to_file_uri(base_dir);
+    let base_uri = directory_file_uri(base_dir)?;
     let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
     flatten_with_retriever(schema, &base_uri, retriever)
 }
@@ -72,10 +74,11 @@ pub fn flatten_refs(
 /// # Errors
 ///
 /// Returns [`CliError::Referencing`] when a reference is malformed,
-/// unresolved, or still points to an external document.
+/// unresolved, or still points to an external document, or an error when
+/// `base_dir` cannot be represented as an absolute file URI.
 #[instrument(skip_all)]
 pub fn flatten_prepared_refs(schema: &Value, base_dir: &Path) -> EngineResult<Value> {
-    let base_uri = path_to_file_uri(base_dir);
+    let base_uri = directory_file_uri(base_dir)?;
     flatten_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
 
@@ -89,8 +92,9 @@ pub fn flatten_prepared_refs(schema: &Value, base_dir: &Path) -> EngineResult<Va
 ///
 /// # Errors
 ///
-/// Returns an error when a reference URI is malformed, a referenced document
-/// cannot be retrieved or parsed, or a load budget is exceeded.
+/// Returns an error when `base_dir` cannot be represented as an absolute file
+/// URI, a reference URI is malformed, a referenced document cannot be
+/// retrieved or parsed, or a load budget is exceeded.
 #[instrument(skip_all)]
 pub fn bundle_refs(
     schema: Value,
@@ -98,7 +102,7 @@ pub fn bundle_refs(
     fetch_policy: FetchPolicy,
     load_budget: LoadBudget,
 ) -> EngineResult<Value> {
-    let base_uri = path_to_file_uri(base_dir);
+    let base_uri = directory_file_uri(base_dir)?;
     let retriever = FsHttpRetrieve::new(fetch_policy, load_budget);
     bundle_with_retriever(schema, &base_uri, retriever)
 }
@@ -111,11 +115,12 @@ pub fn bundle_refs(
 ///
 /// # Errors
 ///
-/// Returns an error when a reference is malformed, unresolved, or still
-/// points to an external document.
+/// Returns an error when `base_dir` cannot be represented as an absolute file
+/// URI, or a reference is malformed, unresolved, or still points to an
+/// external document.
 #[instrument(skip_all)]
 pub fn bundle_prepared_refs(schema: Value, base_dir: &Path) -> EngineResult<Value> {
-    let base_uri = path_to_file_uri(base_dir);
+    let base_uri = directory_file_uri(base_dir)?;
     bundle_with_retriever(schema, &base_uri, NoExternalRetrieve)
 }
 
@@ -338,25 +343,17 @@ impl Retrieve for FsHttpRetrieve {
                 self.fetch_policy
                     .validate_file_host(host)
                     .map_err(|err| format!("$ref to {uri} but {err}"))?;
-                // `file://host/path/to/foo.json` — the path component is
-                // what we want. Empty host is the standard
-                // `file:///path` shape.
-                let path = uri.path().as_str();
-                if !std::path::Path::new(path).is_absolute() {
-                    return Err(
-                        format!("$ref to {uri} but file URI path is not absolute: {path}").into(),
-                    );
-                }
-                let mut file =
-                    std::fs::File::open(path).map_err(|e| format!("open {path}: {e}"))?;
+                let path = file_uri_path(uri)?;
+                let mut file = std::fs::File::open(&path)
+                    .map_err(|error| format!("open {}: {error}", path.display()))?;
                 let bytes = read_to_end_capped(
                     &mut file,
                     self.load_budget.max_schema_document_bytes,
-                    path.to_string(),
+                    path.display().to_string(),
                 )
                 .map_err(|e| e.to_string())?;
-                let value: Value =
-                    serde_json::from_slice(&bytes).map_err(|e| format!("parse {path}: {e}"))?;
+                let value: Value = serde_json::from_slice(&bytes)
+                    .map_err(|error| format!("parse {}: {error}", path.display()))?;
                 Ok(value)
             }
             "http" | "https" => {
@@ -465,17 +462,26 @@ fn definition_ref(name: &str) -> Value {
     )]))
 }
 
-/// Convert a filesystem path into a base `file://` URI suitable for
-/// passing to `with_base_uri`. The trailing `/` ensures relative refs
-/// resolve as *children* of the base, not as siblings replacing the last
-/// path segment.
-fn path_to_file_uri(p: &Path) -> String {
-    // Canonicalise so `..` segments in the input don't end up in the
-    // base URI (would otherwise interfere with ref resolution).
-    let canonical = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
-    let s = canonical.to_string_lossy();
-    let trimmed = s.trim_end_matches('/');
-    format!("file://{trimmed}/")
+fn directory_file_uri(path: &Path) -> EngineResult<String> {
+    let path = if path.as_os_str().is_empty() {
+        Path::new(".")
+    } else {
+        path
+    };
+    let absolute = path.canonicalize().or_else(|_| std::path::absolute(path))?;
+    let uri = Url::from_directory_path(&absolute)
+        .map_err(|()| CliError::InvalidFileUriPath { path: absolute })?;
+    Ok(uri.into())
+}
+
+fn file_uri_path(uri: &Uri<String>) -> EngineResult<PathBuf> {
+    let invalid_uri = || CliError::InvalidFileUri {
+        uri: uri.as_str().to_string(),
+    };
+    Url::parse(uri.as_str())
+        .map_err(|_| invalid_uri())?
+        .to_file_path()
+        .map_err(|()| invalid_uri())
 }
 
 #[cfg(test)]

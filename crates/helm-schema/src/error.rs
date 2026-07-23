@@ -74,6 +74,20 @@ pub enum CliError {
     #[error("$ref bundling failed: {0}")]
     RefBundling(String),
 
+    /// A local filesystem path cannot be represented as a file URI.
+    #[error("filesystem path cannot be represented as a file URI: {path}")]
+    InvalidFileUriPath {
+        /// Filesystem path that could not be encoded.
+        path: PathBuf,
+    },
+
+    /// A file URI cannot be represented as a local filesystem path.
+    #[error("file URI cannot be represented as a local filesystem path: {uri}")]
+    InvalidFileUri {
+        /// File URI that could not be decoded.
+        uri: String,
+    },
+
     /// One loaded document exceeded the configured byte budget.
     #[error("load budget exceeded for {subject} (limit {limit_bytes} bytes)")]
     LoadBudgetExceeded {
