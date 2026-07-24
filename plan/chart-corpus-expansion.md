@@ -8649,3 +8649,65 @@ sharpened variable-binding lane.
 fixtures, the two new selection-chain gen reproducers, the sharpened
 datadog reproducer, and the kyverno CLI pin battery). The luup2
 `check:local` downstream gate passes with the installed binary.
+
+## Presence-decode round (2026-07-24, twenty-fifth round)
+
+The selection-chain round left one collateral residual on its own
+books: KPS `defaultRules.runbookUrl: []` re-widened by a single probe
+state (helm aborts rendering the composed `runbook_url` splice on an
+array). This round closed it.
+
+### Root cause
+
+`eval_default` returns `AbstractValue::FirstTruthy` since the
+twenty-fourth round, and the merged-layer `hasKey` decode in
+`value_has_key` only knew how to drop constant-False alternatives for
+CHOICE layers (the airflow per-set literal-entry rule). KPS binds
+`$groupAnnotations := default (dict)
+.Values.defaultRules.additionalRuleGroupAnnotations.<group>`, merges it
+with the dig-selected per-rule annotations
+(`mergeOverwrite (dict) $groupAnnotations $ruleAnnotations`), and gates
+every composed `runbook_url` splice on
+`not (hasKey $additionalAnnotations "runbook_url")`. The selection-chain
+layer fell through to the generic agree-or-abstain rule, its candidates
+resolved to the disagreeing pair `[¬Absent(path.runbook_url), False]`,
+the whole merged decode abstained, and the splice's array-rejection arm
+(present since the F80 merge-layer rounds) silently dropped out of the
+schema.
+
+### Exactness argument
+
+The layer rule now drops a selection-chain candidate's constant-False
+presence under an order-aware condition: the candidate is the LAST in
+the chain, or it is definitely falsy. Soundness both ways — a present
+key makes any map nonempty and therefore Helm-truthy, so when the
+surviving candidates' agreed predicate holds, every surviving prior is
+truthy and selection can never fall through to the dropped tail; a
+definitely-falsy candidate is never selected ahead of the tail at all;
+and when the agreed predicate is false, every candidate (kept or
+dropped) lacks the key, so the merged presence is false either way.
+Unlike the choice layer's per-iteration approximation, this decode is
+exact for the chain.
+
+### Adjudication
+
+One corpus chart re-encodes: kube-prometheus-stack, with exactly one
+acceptance flip across the depth-3 probe battery —
+`defaultRules.runbookUrl: []` tightens from accept to reject.
+Helm-adjudicated on the real chart: `--set-json
+'defaultRules.runbookUrl=[]'` aborts with a YAML parse error on the
+alertmanager rules template (the composed splice), defaults render.
+String, integer, and map spellings render as scalar text inside the
+composed line and stay accepted. Against the PRE-round fixture the new
+schema shows zero flips — the round restores the pre-round acceptance
+behavior probe-for-probe. The other 54 corpus fixtures are
+byte-identical, and the mini-chart reproducer matched helm on all nine
+probed states (annotation-shadow and dormant escapes included).
+
+### Validation
+
+`task test` green (902 unit tests) and `task test:integration` green,
+including the regenerated KPS fixture and the new
+`selection_chain_merge_layers_keep_the_has_key_gated_splice` gen
+reproducer (red without the fix, green with it). The luup2
+`check:local` downstream gate passes with the installed binary.

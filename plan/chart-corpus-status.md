@@ -1,8 +1,30 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-21 after the selection-chain round
-(twenty-fourth round), which closed the remaining open note: the kyverno
-`global.imagePullSecrets` truthy-scalar widening. Notable mechanisms:
+Last reconciled 2026-07-24 after the presence-decode round
+(twenty-fifth round), which closed the selection-chain round's own
+collateral residual: the KPS `defaultRules.runbookUrl: []` one-probe
+re-widening. The `FirstTruthy` re-encoding of `default` chains had
+silently broken the `hasKey` presence decode over merged annotation
+layers — the merged-layer rule special-cases CHOICE layers
+(constant-False alternatives drop as the OR identity) while a
+selection-chain layer fell through to the generic agree-or-abstain
+rule, so KPS' `hasKey (mergeOverwrite (dict) $groupAnnotations
+$ruleAnnotations) "runbook_url"` gates abstained and every composed
+`runbook_url` splice lost its array rejection. The layer rule now drops
+a selection-chain candidate's constant-False presence exactly where
+selection can never land on that candidate while the key is present
+(the LAST candidate is selected only when every prior is falsy, but the
+agreeing priors are truthy whenever the key is present — `hasKey`
+implies a nonempty map — and a definitely-falsy candidate is never
+selected ahead of the tail), an exact decode rather than the choice
+rule's adjudicated per-iteration approximation. KPS re-tightened by
+exactly the one probed state (helm aborts rendering the composed splice
+on an array) and matches its pre-round acceptance probe-for-probe; the
+other 54 corpus fixtures re-encode byte-identically.
+
+The twenty-fourth (selection-chain) round's summary, for context: the
+kyverno `global.imagePullSecrets` truthy-scalar widening closed. Notable
+mechanisms:
 `default` chains now carry candidate-selection provenance in the value
 itself — `AbstractValue::FirstTruthy(Vec<_>)`, the ordered first-truthy
 selection that behaves exactly like the unordered `Choice` at every
@@ -37,10 +59,9 @@ their declared-default typing (the F80/F12 policy lane, newly reachable
 through the exact chain-truthiness decode). Bounded residuals: integer
 spellings of ranged slots stay accepted under the documented
 F38/F72/F95 input-channel policy (now also visible at
-topologySpreadConstraints and pull-secret slots), and KPS
-`defaultRules.runbookUrl: []` re-widened by one probe state (an
-accept-direction re-encoding loss; helm aborts on the composed
-`runbook_url` splice). The coalesced-document doctrine stands unchanged:
+topologySpreadConstraints and pull-secret slots); the KPS
+`defaultRules.runbookUrl: []` re-widening closed in the twenty-fifth
+round above. The coalesced-document doctrine stands unchanged:
 the generated schema validates the COALESCED values document, absence
 semantics follow the parent-declared/dependency-owned ownership rule,
 and every pin composes its override over the chart defaults
@@ -1114,9 +1135,38 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `inline_selection_chain_ranges_bind_per_candidate_iterable_domains`,
   the sharpened `fallback_selected_bindings_leave_the_source_unranged`,
   and nine regenerated corpus fixtures. Bounded residuals: F38/F72/F95
-  integer spellings stay accepted on the newly-claimed slots, and KPS
-  `defaultRules.runbookUrl: []` re-widened by one probe state (helm
-  aborts on the composed splice; accept-direction re-encoding loss).
+  integer spellings stay accepted on the newly-claimed slots. The KPS
+  `defaultRules.runbookUrl: []` re-widening (formerly noted here) closed
+  in the twenty-fifth round — see its own entry below.
+- **F32 KPS presence decode (twenty-fifth round; closes the runbookUrl
+  re-widening).** The selection-chain round's `FirstTruthy` values broke
+  the merged-layer `hasKey` decode: `value_has_key`'s layer rule
+  special-cases CHOICE layers (constant-False alternatives drop as the
+  OR identity) while a `default (dict)` selection-chain layer fell
+  through to the generic agree-or-abstain rule, so KPS'
+  `hasKey (mergeOverwrite (dict) $groupAnnotations $ruleAnnotations)
+  "runbook_url"` gates abstained and every composed `runbook_url`
+  splice lost its fail-implication arm. The layer rule now drops a
+  selection-chain candidate's constant-False presence exactly where
+  selection can never land on that candidate while the key is present:
+  the LAST candidate is selected only when every prior candidate is
+  falsy, but the agreeing priors are truthy whenever the key is present
+  (`hasKey` implies a nonempty map), and a definitely-falsy candidate
+  is never selected ahead of the tail. That decode is EXACT — unlike
+  the choice rule's adjudicated per-iteration approximation — so the
+  gate reads presence from both annotation paths and the splice keeps
+  its array rejection where neither layer supplies the key. KPS
+  re-tightens by exactly the one probed state (`runbookUrl: []`;
+  helm-adjudicated — the composed splice renders invalid YAML and helm
+  aborts, while string/int/map spellings render as scalar text) and
+  matches its pre-round acceptance probe-for-probe (zero flips against
+  the pre-round fixture across the depth-3 battery); the other 54
+  corpus fixtures are byte-identical. Pinned by
+  `selection_chain_merge_layers_keep_the_has_key_gated_splice` (the
+  annotation-shadow states included: a `runbook_url` supplied through
+  either the group or the rule layer keeps `[]` accepted because the
+  splice never renders, and the dormant `create: false` state stays
+  open) and the regenerated KPS fixture.
 - **F74 residual — parser exactness and transformed comparisons (bounded;
   seventeenth round).** (a) The `urlParse` operand pattern is now Go
   `url.Parse`'s accepted language, differential-verified against ~900k
