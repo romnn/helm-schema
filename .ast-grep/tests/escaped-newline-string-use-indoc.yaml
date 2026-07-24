@@ -1,0 +1,37 @@
+id: escaped-newline-string-use-indoc
+valid:
+  - |
+    fn main() {
+        let text = indoc! {"
+            first
+            second
+        "};
+    }
+  - |
+    fn main() {
+        let text = "single line\n";
+    }
+  - |
+    fn main() {
+        let path = "C:\\notes";
+    }
+  - |
+    fn main() {
+        literal_only!("first\nsecond");
+    }
+  - |
+    fn main() {
+        let raw = b"apiVersion: v2\nname: root\n";
+    }
+  - |
+    #[doc = "first\nsecond"]
+    fn documented() {}
+invalid:
+  - |
+    fn main() {
+        let text = "first\nsecond";
+    }
+  - |
+    fn main() {
+        let text = "apiVersion: v2\nname: root\nversion: 0.1.0\n";
+    }

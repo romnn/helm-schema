@@ -1,0 +1,30 @@
+id: escaped-newline-string-use-indoc
+language: Rust
+severity: warning
+message: "strings whose value spans several lines should use indoc!"
+note: "\\n escapes hide the document's shape; indoc! shows the real lines and keeps the value flush-left."
+rule:
+  all:
+    - kind: string_literal
+    # An escaped newline that is not merely the trailing one. The leading
+    # [^\\] keeps `\\n` (escaped backslash followed by n) from matching.
+    - regex: '[^\\]\\n[^"]'
+    # indoc! yields a &str, so a byte-string literal cannot adopt it directly.
+    - not:
+        regex: '^b"'
+    - not:
+        inside:
+          kind: token_tree
+          stopBy: end
+    - not:
+        inside:
+          kind: attribute_item
+          stopBy: end
+    - not:
+        inside:
+          kind: match_pattern
+          stopBy: end
+    - not:
+        inside:
+          kind: let_condition
+          field: pattern
