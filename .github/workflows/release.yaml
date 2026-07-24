@@ -20,7 +20,9 @@ jobs:
   publish-crate:
     runs-on: ubuntu-24.04
     needs: [tests]
-    timeout-minutes: 30
+    # First-time workspace publishes can hit crates.io's new-crate limit; the publisher waits
+    # ten minutes after each 429 before retrying.
+    timeout-minutes: 90
     env:
       SCCACHE_GHA_ENABLED: "true"
       RUSTC_WRAPPER: sccache
