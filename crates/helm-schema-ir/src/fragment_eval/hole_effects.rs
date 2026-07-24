@@ -630,6 +630,7 @@ fn runtime_requirement_paths(
         CaptureKind::IndexAccess { path, .. }
         | CaptureKind::ValueType { path, .. }
         | CaptureKind::DigSubject { path }
+        | CaptureKind::RequiredPresence { path }
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. }

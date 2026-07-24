@@ -42,6 +42,15 @@ pub(super) fn eval_dig(
     }
     let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
     let default_result = eval_expr_with_helper_calls(default_expr, env, resolver);
+    // Subject-level claims hold only for a RAW identity subject: a
+    // selection chain (`x | default dict`) reaches the dig with its
+    // fallback exactly in the states the raw path is falsy or absent, so
+    // claiming the raw path's presence or even-null type there would
+    // reject documents that render through the fallback.
+    let raw_subject = matches!(
+        subject.value.as_ref(),
+        Some(AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_))
+    );
     let mut effects = subject.effects;
     effects.merge(default_result.effects);
     for path in identity_value_paths(subject.value.as_ref()) {
@@ -59,19 +68,32 @@ pub(super) fn eval_dig(
                 continue;
             }
             let capture = if prefix_len == 0 {
+                if !raw_subject {
+                    continue;
+                }
                 // The SUBJECT is type-asserted before any missing-key
                 // handling, so a present-but-null subject aborts too
                 // (KPS's nulled `customRules`). The strict `HasKey`
-                // conjunct self-scopes the claim — absence keeps the
-                // caller's structural tolerance — and the dig-subject
-                // kind keeps null rejected where a truthy-scoped arm
-                // would go vacuous.
+                // conjunct self-scopes the claim — the dig-subject kind
+                // keeps null rejected where a truthy-scoped arm would go
+                // vacuous — while the companion presence capture below
+                // covers the absent state (a missing subject reads as
+                // nil and aborts the same assertion; loki's null-deleted
+                // `storage_config`).
                 let Some((parent, leaf)) = helm_schema_core::split_value_path(&step)
                     .split_last()
                     .map(|(leaf, parents)| (parents.join("."), leaf.clone()))
                 else {
                     continue;
                 };
+                let presence = crate::eval_effect::FailCapture {
+                    conjunction: Vec::new(),
+                    ranged: crate::range_modes::RangeModes::default(),
+                    kind: crate::eval_effect::CaptureKind::RequiredPresence { path: step.clone() },
+                };
+                if !effects.helper_fails.contains(&presence) {
+                    effects.helper_fails.push(presence);
+                }
                 crate::eval_effect::FailCapture {
                     conjunction: vec![Predicate::from(crate::Guard::HasKey {
                         path: parent,

@@ -2547,3 +2547,75 @@ fn per_op_requirement_binds_through_the_helper_roundtrip() {
         );
     }
 }
+
+/// The loki `dig` corridor: a NESTED raw-identity subject under a
+/// decodable helper-boolean gate must be PRESENT — `dig` type-asserts the
+/// subject before its missing-key handling, so a null-DELETED subject
+/// reads as nil and aborts exactly like an explicit null. The presence
+/// claim is abort-grade and exempt from the default-supplied `required`
+/// relaxation, a `| default dict` chain subject keeps every falsy state
+/// open (the fallback renders), and dormant gates keep junk open.
+#[test]
+fn dig_subject_presence_binds_through_selection_gates() {
+    let helpers = indoc! {r#"
+        {{- define "test.isObj" -}}
+        {{- has .Values.loki.storage.type (list "s3" "gcs") }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if eq (include "test.isObj" .) "true" }}
+        {{- if not (or (dig "aws" "s3" "" .Values.loki.storage_config) (dig "aws" "bucketnames" "" .Values.loki.storage_config)) }}
+        bucket: {{ .Values.bucket }}
+        {{- end }}
+        {{- end }}
+        chained: {{ dig "a" "b" (.Values.loki.extra | default dict) }}
+    "#};
+    let values_yaml = indoc! {r"
+        loki:
+          storage:
+            type: s3
+          storage_config: {}
+          extra: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "empty document stays dormant"),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "s3" } } }),
+            false,
+            "a live gate demands the deleted subject",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "s3" },
+                "storage_config": { "aws": { "s3": "s3://x" } } } }),
+            true,
+            "a live map subject renders",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "s3" }, "storage_config": null } }),
+            false,
+            "a live explicit-null subject aborts the assertion",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" } } }),
+            true,
+            "a non-member storage type keeps the digs dormant",
+        ),
+        // A DELETED chain subject stays open: the `| default dict`
+        // fallback renders, and the raw-identity gate keeps the presence
+        // claim off the chain. (Present-but-falsy chain subjects still
+        // false-reject through the pre-existing member-host typing — a
+        // documented residual outside the dig lane.)
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "s3" },
+                "storage_config": {} } }),
+            true,
+            "a deleted chain subject renders through the dict fallback",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "dig subject presence ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

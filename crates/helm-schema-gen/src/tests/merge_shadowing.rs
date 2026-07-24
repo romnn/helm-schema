@@ -545,6 +545,9 @@ fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
         {{- $mergedWorkers := include "workersMergeValues" (list .Values.workers $filteredCelery "" list) | fromYaml -}}
         {{- $_ := unset $mergedWorkers "celery" -}}
         {{- $workerSets := .Values.workers.celery.sets | default list -}}
+        {{- if .Values.workers.celery.enableDefault -}}
+          {{- $workerSets = concat (list (dict "name" "default")) $workerSets -}}
+        {{- end -}}
         {{- range $workerSet := $workerSets -}}
         {{- $workers := include "workersMergeValues" (list $mergedWorkers $workerSet "" list) | fromYaml -}}
         {{- $_ := set $globals.Values "workers" $workers -}}
@@ -598,34 +601,44 @@ fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
     );
     for (instance, want, label) in [
         (
-            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": "oops" } } } }),
+            serde_json::json!({ "executor": "CeleryExecutor", "workers": {
+                "securityContexts": { "pod": { "runAsUser": "oops" } },
+                "celery": { "enableDefault": true } } }),
             false,
             "base-layer string runAsUser reaches the rendered pod context",
         ),
         (
-            serde_json::json!({ "workers": { "securityContexts": { "pod": { "runAsUser": 50000 } } } }),
+            serde_json::json!({ "workers": {
+                "securityContexts": { "pod": { "runAsUser": 50000 } },
+                "celery": { "enableDefault": true } } }),
             true,
             "base-layer integer runAsUser renders",
         ),
         (
-            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": "oops" } } } } }),
+            serde_json::json!({ "executor": "CeleryExecutor", "workers": { "celery": {
+                "enableDefault": true,
+                "securityContexts": { "pod": { "runAsUser": "oops" } } } } }),
             false,
             "celery-layer string runAsUser reaches the rendered pod context",
         ),
         (
-            serde_json::json!({ "workers": { "celery": { "securityContexts": { "pod": { "runAsUser": null } } } } }),
+            serde_json::json!({ "workers": { "celery": {
+                "enableDefault": true,
+                "securityContexts": { "pod": { "runAsUser": null } } } } }),
             true,
             "the scrub drops null members before the sink",
         ),
         (
             serde_json::json!({ "workers": {
                 "securityContexts": { "pod": { "runAsUser": "oops" } },
-                "celery": { "securityContexts": { "pod": { "runAsUser": 50000 } } } } }),
+                "celery": {
+                    "enableDefault": true,
+                    "securityContexts": { "pod": { "runAsUser": 50000 } } } } }),
             true,
             "the celery layer shadows the base member",
         ),
         (
-            serde_json::json!({ "workers": { "celery": { "sets": [
+            serde_json::json!({ "executor": "CeleryExecutor", "workers": { "celery": { "sets": [
                 { "name": "heavy", "labels": "oops" }
             ] } } }),
             false,
@@ -637,6 +650,23 @@ fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
             ] } } }),
             true,
             "map labels override renders",
+        ),
+        // The range-liveness gate: with the default set disabled and no
+        // extra sets, the per-set range iterates zero times, nothing
+        // renders, and the layer arms must stay silent.
+        (
+            serde_json::json!({ "workers": {
+                "securityContexts": { "pod": { "runAsUser": "oops" } },
+                "celery": { "enableDefault": false, "sets": [] } } }),
+            true,
+            "an empty worker family leaves the base layer unconsumed",
+        ),
+        (
+            serde_json::json!({ "executor": "CeleryExecutor", "workers": {
+                "securityContexts": { "pod": { "runAsUser": "oops" } },
+                "celery": { "enableDefault": false, "sets": [ { "name": "heavy" } ] } } }),
+            false,
+            "a nonempty set list alone keeps the family live",
         ),
     ] {
         assert!(
@@ -811,19 +841,22 @@ fn selection_chain_merge_layers_keep_the_has_key_gated_splice() {
     );
     for (instance, want, label) in [
         (
-            serde_json::json!({ "defaultRules": { "create": true, "runbookUrl": [] } }),
+            serde_json::json!({ "defaultRules": {
+                "create": true, "runbookUrl": [], "additionalRuleAnnotations": {} } }),
             false,
             "live array splice",
         ),
         (
-            serde_json::json!({ "defaultRules": { "create": true, "runbookUrl": "https://x" } }),
+            serde_json::json!({ "defaultRules": {
+                "create": true, "runbookUrl": "https://x", "additionalRuleAnnotations": {} } }),
             true,
             "live string splice",
         ),
         // A non-collection scalar renders as scalar text inside the
         // composed line; only arrays break the rendered YAML.
         (
-            serde_json::json!({ "defaultRules": { "create": true, "runbookUrl": 7 } }),
+            serde_json::json!({ "defaultRules": {
+                "create": true, "runbookUrl": 7, "additionalRuleAnnotations": {} } }),
             true,
             "live integer splice",
         ),
@@ -831,6 +864,7 @@ fn selection_chain_merge_layers_keep_the_has_key_gated_splice() {
             serde_json::json!({ "defaultRules": {
                 "create": true,
                 "runbookUrl": [],
+                "additionalRuleAnnotations": {},
                 "additionalRuleGroupAnnotations": { "alertmanager": { "runbook_url": "x" } } } }),
             true,
             "group annotation shadows the splice",

@@ -540,6 +540,14 @@ pub enum FailValueRequirement {
     NotSchemaType(String),
     /// The value must be an object containing this member.
     HasMember(String),
+    /// The value must be an object containing this member EVEN when the
+    /// chart's own defaults supply it: the consumer aborts on an absent
+    /// subject (a nil `dig` dict), and under coalesced-document semantics
+    /// the member is absent exactly when a user null-deletes it — the
+    /// state the requirement must reject. Exempt from the
+    /// default-supplied `required` relaxation that render-grade presence
+    /// claims get.
+    HasMemberEvenDefaulted(String),
     /// The value must be a string matching this regular expression
     /// (`regexMatch` type-asserts a string subject, so string-ness rides
     /// along).

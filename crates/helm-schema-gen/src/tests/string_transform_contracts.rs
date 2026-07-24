@@ -672,3 +672,71 @@ fn split_last_segment_into_numeric_slot_requires_numeric_suffix() {
         );
     }
 }
+
+/// The datadog migration shape: a raw values string is checksummed into an
+/// annotation (`userValues | sha256sum`) and spliced verbatim into a block
+/// scalar. The annotation slot observes the DIGEST — a plain token for any
+/// operand — so the slot's plain-scalar language must not project backward
+/// onto the operand: YAML-looking and multiline file contents stay
+/// accepted while the checksum's own strict-string contract still rejects
+/// non-strings (helm aborts hashing a map or number).
+#[test]
+fn checksum_digest_splices_project_no_slot_language_onto_the_operand() {
+    let src = indoc! {r"
+        {{- if or .Values.migration.enabled .Values.migration.preview }}
+        {{- if .Values.migration.userValues }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+          annotations:
+            checksum/migration-config: {{ .Values.migration.userValues | sha256sum }}
+        data:
+          values.yaml: |-
+        {{ .Values.migration.userValues | indent 4 }}
+        {{- end }}
+        {{- end }}
+    "};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("migration:\n  enabled: false\n  preview: false\n  userValues: null\n"),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "migration": { "enabled": true, "userValues": "datadog: {}" } }),
+            true,
+            "single-line YAML file content renders",
+        ),
+        (
+            serde_json::json!({ "migration": { "enabled": true, "userValues": "datadog:\n  apiKey: x\n" } }),
+            true,
+            "multiline YAML file content renders",
+        ),
+        (
+            serde_json::json!({ "migration": { "enabled": true, "userValues": "plain" } }),
+            true,
+            "plain text renders",
+        ),
+        (
+            serde_json::json!({ "migration": { "enabled": true, "userValues": { "a": 1 } } }),
+            false,
+            "a live map operand aborts the checksum",
+        ),
+        (
+            serde_json::json!({ "migration": { "enabled": true, "userValues": 7 } }),
+            false,
+            "a live number operand aborts the checksum",
+        ),
+        (
+            serde_json::json!({ "migration": { "userValues": { "a": 1 } } }),
+            true,
+            "the dormant gate keeps junk open",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "checksum operand slot-language abstention ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

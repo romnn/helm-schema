@@ -1122,6 +1122,17 @@
         "null"
       ]
     },
+    "schema159": {
+      "additionalProperties": {},
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "required": [
+            "*"
+          ],
+          "type": "object"
+        }
+      }
+    },
     "schema16": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
@@ -1159,6 +1170,17 @@
         "null"
       ]
     },
+    "schema160": {
+      "additionalProperties": {},
+      "properties": {
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+          "required": [
+            "*"
+          ],
+          "type": "object"
+        }
+      }
+    },
     "schema17": {
       "description": "MinDomains indicates a minimum number of eligible domains. When the number of eligible domains with matching topology keys is less than minDomains, Pod Topology Spread treats \"global minimum\" as 0, and then the calculation of Skew is performed. And when the number of eligible domains with matching topology keys equals or greater than minDomains, this value has no effect on scheduling. As a result, when the number of eligible domains is less than minDomains, scheduler won't schedule more than maxSkew Pods to those domains. If value is nil, the constraint behaves as if MinDomains is equal to 1. Valid values are integers greater than 0. When value is not nil, WhenUnsatisfiable must be DoNotSchedule.\n\nFor example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same labelSelector spread as 2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  | The number of domains is less than 5(MinDomains), so \"global minimum\" is treated as 0. In this situation, new pod with the same labelSelector cannot be scheduled, because computed skew will be 3(3 - 0) if new Pod is scheduled to any of the three zones, it will violate MaxSkew.\n\nThis is a beta field and requires the MinDomainsInPodTopologySpread feature gate to be enabled (enabled by default).",
       "format": "int32",
@@ -1167,18 +1189,18 @@
         "null"
       ]
     },
-    "schema170": {
+    "schema172": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "schema172": {
+    "schema174": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema173": {
+    "schema175": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -1221,7 +1243,7 @@
         "null"
       ]
     },
-    "schema185": {
+    "schema187": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
@@ -1276,7 +1298,7 @@
         "null"
       ]
     },
-    "schema191": {
+    "schema193": {
       "description": "Added capabilities",
       "items": {
         "type": [
@@ -1289,7 +1311,7 @@
         "null"
       ]
     },
-    "schema193": {
+    "schema195": {
       "not": {
         "properties": {
           "provider": {
@@ -1302,7 +1324,7 @@
         "type": "object"
       }
     },
-    "schema197": {
+    "schema199": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
@@ -1366,13 +1388,13 @@
         }
       ]
     },
-    "schema201": {
+    "schema203": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema207": {
+    "schema209": {
       "oneOf": [
         {
           "type": [
@@ -1387,27 +1409,6 @@
           ]
         }
       ]
-    },
-    "schema208": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema209": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
     },
     "schema21": {
       "allOf": [
@@ -1466,13 +1467,34 @@
       "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
       "type": "string"
     },
-    "schema213": {
+    "schema210": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema211": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema215": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema216": {
+    "schema218": {
       "anyOf": [
         {
           "type": "null"
@@ -1482,22 +1504,22 @@
         }
       ]
     },
-    "schema217": {
+    "schema219": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema218": {
+    "schema220": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema219": {
+    "schema221": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema222": {
+    "schema224": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3920,6 +3942,110 @@
           {
             "properties": {
               "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "properties": {
+                      "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "preferredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "properties": {
+                      "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "preferredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "$ref": "#/$defs/schema159"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
                 "$ref": "#/$defs/helm-truthy"
               }
             },
@@ -4004,6 +4130,110 @@
             "properties": {
               "podAffinity": {
                 "$ref": "#/$defs/schema83"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "properties": {
+                      "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "requiredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "properties": {
+                      "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "requiredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "$ref": "#/$defs/schema160"
               }
             }
           }
@@ -4224,6 +4454,110 @@
           {
             "properties": {
               "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "properties": {
+                      "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "preferredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "properties": {
+                      "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "preferredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "$ref": "#/$defs/schema159"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
                 "$ref": "#/$defs/helm-truthy"
               }
             },
@@ -4308,6 +4642,110 @@
             "properties": {
               "podAntiAffinity": {
                 "$ref": "#/$defs/schema83"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "properties": {
+                      "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "requiredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "properties": {
+                      "requiredDuringSchedulingIgnoredDuringExecution": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "requiredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "$ref": "#/$defs/schema160"
               }
             }
           }
@@ -4586,7 +5024,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema213"
+                "$ref": "#/$defs/schema215"
               },
               {
                 "not": {
@@ -4667,7 +5105,7 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/schema213"
+                "$ref": "#/$defs/schema215"
               },
               {
                 "type": "null"
@@ -5030,7 +5468,7 @@
                           "$ref": "#/$defs/schema146"
                         },
                         "optional": {
-                          "$ref": "#/$defs/schema172"
+                          "$ref": "#/$defs/schema174"
                         }
                       },
                       "type": [
@@ -5125,7 +5563,7 @@
                           ]
                         },
                         "sizeLimit": {
-                          "$ref": "#/$defs/schema208"
+                          "$ref": "#/$defs/schema210"
                         }
                       },
                       "type": [
@@ -6020,7 +6458,7 @@
                                     "$ref": "#/$defs/schema146"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/schema172"
+                                    "$ref": "#/$defs/schema174"
                                   }
                                 },
                                 "type": [
@@ -6663,13 +7101,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema217"
-                      },
-                      {
                         "$ref": "#/$defs/schema219"
                       },
                       {
-                        "$ref": "#/$defs/schema222"
+                        "$ref": "#/$defs/schema221"
+                      },
+                      {
+                        "$ref": "#/$defs/schema224"
                       },
                       {
                         "not": {
@@ -6682,16 +7120,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema173"
+                        "$ref": "#/$defs/schema175"
                       },
                       {
                         "$ref": "#/$defs/schema116"
                       },
                       {
-                        "$ref": "#/$defs/schema197"
+                        "$ref": "#/$defs/schema199"
                       },
                       {
-                        "$ref": "#/$defs/schema209"
+                        "$ref": "#/$defs/schema211"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -6722,13 +7160,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema217"
-                          },
-                          {
                             "$ref": "#/$defs/schema219"
                           },
                           {
-                            "$ref": "#/$defs/schema222"
+                            "$ref": "#/$defs/schema221"
+                          },
+                          {
+                            "$ref": "#/$defs/schema224"
                           },
                           {
                             "not": {
@@ -6741,19 +7179,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema218"
+                            "$ref": "#/$defs/schema220"
                           },
                           {
-                            "$ref": "#/$defs/schema173"
+                            "$ref": "#/$defs/schema175"
                           },
                           {
                             "$ref": "#/$defs/schema116"
                           },
                           {
-                            "$ref": "#/$defs/schema197"
+                            "$ref": "#/$defs/schema199"
                           },
                           {
-                            "$ref": "#/$defs/schema209"
+                            "$ref": "#/$defs/schema211"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -8434,7 +8872,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema193"
+                "$ref": "#/$defs/schema195"
               }
             ]
           },
@@ -8465,7 +8903,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema193"
+            "$ref": "#/$defs/schema195"
           },
           {
             "$ref": "#/$defs/schema73"
@@ -8593,7 +9031,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema213"
+                    "$ref": "#/$defs/schema215"
                   },
                   {
                     "type": "null"
@@ -8986,7 +9424,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema213"
+                        "$ref": "#/$defs/schema215"
                       },
                       {
                         "type": "null"
@@ -10151,7 +10589,7 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema201"
+          "$ref": "#/$defs/schema203"
         },
         {
           "$ref": "#/$defs/schema76"
@@ -10178,10 +10616,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema207"
+                  "$ref": "#/$defs/schema209"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema207"
+                  "$ref": "#/$defs/schema209"
                 }
               },
               "type": [
@@ -10290,13 +10728,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema217"
-            },
-            {
               "$ref": "#/$defs/schema219"
             },
             {
-              "$ref": "#/$defs/schema222"
+              "$ref": "#/$defs/schema221"
+            },
+            {
+              "$ref": "#/$defs/schema224"
             },
             {
               "not": {
@@ -10309,16 +10747,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema173"
+              "$ref": "#/$defs/schema175"
             },
             {
               "$ref": "#/$defs/schema116"
             },
             {
-              "$ref": "#/$defs/schema197"
+              "$ref": "#/$defs/schema199"
             },
             {
-              "$ref": "#/$defs/schema209"
+              "$ref": "#/$defs/schema211"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -10640,7 +11078,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema201"
+          "$ref": "#/$defs/schema203"
         },
         {
           "additionalProperties": {
@@ -10670,7 +11108,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema201"
+          "$ref": "#/$defs/schema203"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -11131,7 +11569,7 @@
                       "port": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema185"
+                            "$ref": "#/$defs/schema187"
                           },
                           {
                             "$ref": "#/$defs/schema143"
@@ -11186,7 +11624,7 @@
           "$ref": "#/$defs/schema13"
         },
         {
-          "$ref": "#/$defs/schema201"
+          "$ref": "#/$defs/schema203"
         },
         {
           "not": {
@@ -11284,14 +11722,14 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/schema191"
+                      "$ref": "#/$defs/schema193"
                     },
                     "drop": {
                       "anyOf": [
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema216"
+                            "$ref": "#/$defs/schema218"
                           },
                           "type": "array"
                         },
@@ -11397,7 +11835,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema201"
+              "$ref": "#/$defs/schema203"
             },
             {
               "$ref": "#/$defs/schema76"
@@ -11442,13 +11880,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema217"
-                },
-                {
                   "$ref": "#/$defs/schema219"
                 },
                 {
-                  "$ref": "#/$defs/schema222"
+                  "$ref": "#/$defs/schema221"
+                },
+                {
+                  "$ref": "#/$defs/schema224"
                 },
                 {
                   "not": {
@@ -11461,16 +11899,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema173"
+                  "$ref": "#/$defs/schema175"
                 },
                 {
                   "$ref": "#/$defs/schema116"
                 },
                 {
-                  "$ref": "#/$defs/schema197"
+                  "$ref": "#/$defs/schema199"
                 },
                 {
-                  "$ref": "#/$defs/schema209"
+                  "$ref": "#/$defs/schema211"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -11494,7 +11932,7 @@
         "port": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema185"
+              "$ref": "#/$defs/schema187"
             },
             {
               "$ref": "#/$defs/schema143"
@@ -11592,7 +12030,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema170"
+                        "$ref": "#/$defs/schema172"
                       }
                     ],
                     "description": "Set this to `false` to [opt out of API credential automounting](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#opt-out-of-api-credential-automounting) for the `ServiceAccount`."
@@ -11628,13 +12066,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema217"
-                          },
-                          {
                             "$ref": "#/$defs/schema219"
                           },
                           {
-                            "$ref": "#/$defs/schema222"
+                            "$ref": "#/$defs/schema221"
+                          },
+                          {
+                            "$ref": "#/$defs/schema224"
                           },
                           {
                             "not": {
@@ -11647,16 +12085,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema173"
+                            "$ref": "#/$defs/schema175"
                           },
                           {
                             "$ref": "#/$defs/schema116"
                           },
                           {
-                            "$ref": "#/$defs/schema197"
+                            "$ref": "#/$defs/schema199"
                           },
                           {
-                            "$ref": "#/$defs/schema209"
+                            "$ref": "#/$defs/schema211"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -11708,13 +12146,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema217"
-                },
-                {
                   "$ref": "#/$defs/schema219"
                 },
                 {
-                  "$ref": "#/$defs/schema222"
+                  "$ref": "#/$defs/schema221"
+                },
+                {
+                  "$ref": "#/$defs/schema224"
                 },
                 {
                   "not": {
@@ -11727,16 +12165,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema173"
+                  "$ref": "#/$defs/schema175"
                 },
                 {
                   "$ref": "#/$defs/schema116"
                 },
                 {
-                  "$ref": "#/$defs/schema197"
+                  "$ref": "#/$defs/schema199"
                 },
                 {
-                  "$ref": "#/$defs/schema209"
+                  "$ref": "#/$defs/schema211"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -11783,7 +12221,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema213"
+                        "$ref": "#/$defs/schema215"
                       },
                       {
                         "not": {
@@ -11801,7 +12239,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema213"
+                        "$ref": "#/$defs/schema215"
                       },
                       {
                         "not": {
@@ -12056,7 +12494,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema170"
+          "$ref": "#/$defs/schema172"
         }
       ],
       "description": "If `true`, the `Pod` will have [process namespace sharing](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) enabled."

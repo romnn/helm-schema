@@ -663,6 +663,7 @@ fn requirements_allow_runtime_kind(
                 || schema_type == "integer" && *allow_integer
         }
         FailValueRequirement::HasMember(_)
+        | FailValueRequirement::HasMemberEvenDefaulted(_)
         | FailValueRequirement::FieldEquals { .. }
         // Presence of a (truthy or non-null) field needs an object host.
         | FailValueRequirement::FieldPresentNotNull { .. }
@@ -775,7 +776,8 @@ fn fail_value_requirement_schema(
             FailValueRequirement::NotSchemaType(schema_type) => {
                 parts.push(serde_json::json!({ "not": type_schema(schema_type) }));
             }
-            FailValueRequirement::HasMember(member) => {
+            FailValueRequirement::HasMember(member)
+            | FailValueRequirement::HasMemberEvenDefaulted(member) => {
                 required_members.push(member);
             }
             FailValueRequirement::MatchesPattern { pattern, templated } => {

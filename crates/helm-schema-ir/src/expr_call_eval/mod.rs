@@ -207,6 +207,17 @@ pub(crate) fn eval_call_with_helper_calls(
         function if is_checksum_function(function) && args.len() == 1 => {
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_string_call_consumers(function, args, env, resolver, &mut result.effects);
+            // The digest shares no text or shape with its subject, so a
+            // RAW identity operand must not project any slot language
+            // backward through the call (datadog's `userValues |
+            // sha256sum` checksum annotation beside the raw block-scalar
+            // payload).
+            if let Some(subject) = args.first() {
+                let subject = eval_expr_with_helper_calls(subject, env, resolver);
+                result
+                    .effects
+                    .add_shape_erased_paths(identity_value_paths(subject.value.as_ref()));
+            }
             result
         }
         // len/has additionally erase operand shape: only a derived count or
@@ -637,7 +648,11 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                     env,
                     resolver,
                 );
+                // The digest shares no text or shape with its subject —
+                // same erasure as the call form above.
+                let subject_identities = identity_value_paths(current.value.as_ref());
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
+                result.effects.add_shape_erased_paths(subject_identities);
                 record_string_consumer_effects(&string_paths, &mut result.effects);
                 record_raw_range_key_string_consumer_paths(
                     &raw_range_key_paths,

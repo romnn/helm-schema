@@ -553,7 +553,24 @@ fn record_contract_use_conjunction(
                     })
                 })
         });
-    let merge_outer_guards = merge_layered.is_some().then(|| lowerable_guards.clone());
+    // The synthesized layer arms tolerate a PARTIAL gate: every lowered
+    // conjunct is an exact decode of one row condition, so a live render
+    // satisfies the subset and the arms still fire; dropped conjuncts only
+    // leave the arms firing in some dormant states (the documented
+    // member-local-wildcard widening, now shrunk to the genuinely
+    // unlowerable conjuncts). The full-set decode stays preferred so an
+    // exactly-decodable row keeps its complete gate. Either way the
+    // per-layer spellings of one MERGED read (the historic all-paths
+    // conjunction) must not gate conjunctively — the merged value is
+    // truthy when ANY layer supplies it, so the conjunction silences the
+    // arm on live renders (airflow's `workers.waitForMigrations.enabled`
+    // read of the celery-merged map, absent from the celery defaults).
+    let merge_outer_guards = merge_layered.map(|merge| {
+        let guards = lowerable_guards
+            .clone()
+            .unwrap_or_else(|| lowerable_conditional_guard_subset(contract_use, predicates));
+        collapse_layered_truthy_gates(guards, &merge.layers)
+    });
     let lowerable_guards = if merge_layered.is_some() {
         Some(vec![ConditionalGuard::Truthy {
             path: contract_use.source_expr.clone(),
@@ -767,11 +784,12 @@ fn record_contract_use_conjunction(
         if let Some(mut layered) = merge_layer_provider_use {
             // Decoded render gates scope the synthesized layer arms — a
             // dormant gate must silence them (KPS's `defaultRules.create:
-            // false`). Gates that cannot lower (member-local wildcard
-            // conditions on airflow's per-set rows) keep the ungated arms
-            // instead of dropping verified typing; their exact encoding is
+            // false`, airflow's empty worker-set range). Conjuncts that
+            // cannot lower (member-local wildcard conditions on airflow's
+            // per-set rows) drop from the gate individually, keeping the
+            // arms live wherever the render is; their exact encoding is
             // the F80 existential member-guard residual.
-            layered.outer_guards = merge_outer_guards.flatten().unwrap_or_default();
+            layered.outer_guards = merge_outer_guards.unwrap_or_default();
             acc.facts.facts.has_merge_layered_use = true;
             acc.facts.record_provider_schema_use(layered);
         }
@@ -1178,6 +1196,26 @@ fn record_fail_conjunction(
             capture,
             path,
             FailValueRequirement::SchemaTypeEvenNull("object".to_string()),
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::RequiredPresence { path } = &capture.kind {
+        // The presence claim lands on the PARENT as a required member so
+        // the arm fires when the subject itself is absent; a root-level
+        // subject has no parent slot to host it and abstains.
+        let mut segments = helm_schema_core::split_value_path(path);
+        let Some(member) = segments.pop() else {
+            return;
+        };
+        if segments.is_empty() {
+            return;
+        }
+        let parent = segments.join(".");
+        record_value_requirement_capture(
+            paths,
+            capture,
+            &parent,
+            FailValueRequirement::HasMemberEvenDefaulted(member),
         );
         return;
     }
@@ -3103,6 +3141,154 @@ fn lowerable_conditional_guard_set(
     guards.sort();
     guards.dedup();
     Some(guards)
+}
+
+/// Collapse per-layer spellings of one merged read out of an arm gate.
+/// A conjunction of `Truthy(layer.suffix)` guards sharing a suffix across
+/// two or more merge layers is the historic all-paths approximation of
+/// the merged member's truthiness: the merged value is truthy when ANY
+/// layer supplies it, so the conjunctive form under-fires on live
+/// renders. With every layer spelled concretely the group collapses to
+/// the exact-direction disjunction; a merge with wildcard layers
+/// (per-set members) cannot spell them at the document root, so the
+/// group drops instead — the arm then fires in some dormant states, the
+/// tolerated direction.
+fn collapse_layered_truthy_gates(
+    guards: Vec<ConditionalGuard>,
+    layers: &[String],
+) -> Vec<ConditionalGuard> {
+    // Layers arrive member-projected (each ends with the row's shared
+    // member suffix); the merge ROOTS are the layers with the longest
+    // common dot-suffix stripped.
+    let split: Vec<Vec<&str>> = layers
+        .iter()
+        .map(|layer| layer.split('.').collect())
+        .collect();
+    let Some(first) = split.first() else {
+        return guards;
+    };
+    let mut common = 0;
+    'suffix: while common < first.len() {
+        let candidate = first
+            .len()
+            .checked_sub(1 + common)
+            .and_then(|index| first.get(index));
+        let Some(candidate) = candidate else {
+            break;
+        };
+        for segments in &split {
+            let segment = segments
+                .len()
+                .checked_sub(1 + common)
+                .filter(|&index| index > 0)
+                .and_then(|index| segments.get(index));
+            if segment != Some(candidate) {
+                break 'suffix;
+            }
+        }
+        common += 1;
+    }
+    let roots: Vec<String> = split
+        .iter()
+        .map(|segments| {
+            let keep = segments.len().saturating_sub(common);
+            segments.get(..keep).unwrap_or_default().join(".")
+        })
+        .collect();
+    let concrete_layers: Vec<&String> = roots
+        .iter()
+        .filter(|layer| !layer.split('.').any(|segment| segment == "*"))
+        .collect();
+    let has_wildcard_layer = concrete_layers.len() != roots.len();
+    let mut suffix_members: BTreeMap<&str, BTreeSet<usize>> = BTreeMap::new();
+    for (index, guard) in guards.iter().enumerate() {
+        let ConditionalGuard::Truthy { path } = guard else {
+            continue;
+        };
+        for layer in &concrete_layers {
+            let Some(suffix) = path
+                .strip_prefix(layer.as_str())
+                .and_then(|rest| rest.strip_prefix('.'))
+            else {
+                continue;
+            };
+            if !suffix.is_empty() {
+                suffix_members.entry(suffix).or_default().insert(index);
+            }
+        }
+    }
+    let mut dropped = BTreeSet::new();
+    let mut replacements = Vec::new();
+    for members in suffix_members.into_values() {
+        if members.len() < 2 || members.iter().any(|index| dropped.contains(index)) {
+            continue;
+        }
+        dropped.extend(members.iter().copied());
+        if !has_wildcard_layer {
+            let mut arms: Vec<ConditionalGuard> = members
+                .iter()
+                .filter_map(|&index| guards.get(index).cloned())
+                .collect();
+            arms.sort();
+            arms.dedup();
+            replacements.push(ConditionalGuard::AnyOf(arms));
+        }
+    }
+    if dropped.is_empty() {
+        return guards;
+    }
+    let mut out: Vec<ConditionalGuard> = guards
+        .into_iter()
+        .enumerate()
+        .filter(|(index, _)| !dropped.contains(index))
+        .map(|(_, guard)| guard)
+        .collect();
+    out.extend(replacements);
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// The maximal lowerable SUBSET of the row conditions, at whole-conjunct
+/// granularity. Only gate consumers that tolerate dropped conjuncts may
+/// use it: each kept guard is an exact decode of one conjunct, so the
+/// subset holds in every state the full conjunction holds — a gated arm
+/// never goes silent on a live render — while a dropped conjunct leaves
+/// the arm firing in some states the render never reaches (widen-only
+/// for gates, unsound for fail-requirement conditions).
+fn lowerable_conditional_guard_subset(
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+) -> Vec<ConditionalGuard> {
+    let key_equals_ranges: BTreeSet<&str> = predicates
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+            _ => None,
+        })
+        .collect();
+    let mut guards = Vec::new();
+    for predicate in predicates {
+        // The row's own iteration is how the row fires, not a foreign
+        // condition — the same skip as the full-set decode.
+        if matches!(
+            predicate,
+            Predicate::Guard(Guard::Range { path })
+                if path == &contract_use.source_expr
+                    || range_guard_is_iteration_ancestor(&contract_use.source_expr, path)
+                    || key_equals_ranges.contains(path.as_str())
+        ) {
+            continue;
+        }
+        let mut lowered = Vec::new();
+        if extend_lowerable_predicate(predicate, &contract_use.source_expr, &mut lowered).is_some()
+        {
+            guards.extend(lowered);
+        }
+    }
+    guards.sort();
+    guards.dedup();
+    guards
 }
 
 fn provider_schema_use(

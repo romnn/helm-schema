@@ -207,6 +207,12 @@ pub(crate) enum CaptureKind {
     /// while absence stays open (the conjunction carries the strict
     /// presence guard).
     DigSubject { path: String },
+    /// A `dig` SUBJECT must additionally be PRESENT: the type assertion
+    /// runs before any missing-key handling, so an absent subject reads as
+    /// nil and aborts exactly like an explicit null (loki's null-deleted
+    /// `storage_config`). Lowers to a `HasMember` presence requirement on
+    /// the parent path.
+    RequiredPresence { path: String },
     /// A comparison operand must have the named JSON Schema type when
     /// PRESENT and non-null; `eq`/`ne` compare `nil` against anything.
     ComparableKind { path: String, schema_type: String },
@@ -262,6 +268,7 @@ impl CaptureKind {
             Self::IndexAccess { path, .. }
             | Self::ValueType { path, .. }
             | Self::DigSubject { path }
+            | Self::RequiredPresence { path }
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
             | Self::QuotedSerialization { path, .. } => {

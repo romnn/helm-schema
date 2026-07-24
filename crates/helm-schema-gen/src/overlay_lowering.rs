@@ -214,10 +214,22 @@ pub(crate) fn collect_conditional_schemas(
             if crate::schema_model::is_empty_schema(&target_schema) {
                 continue;
             }
-            if matches!(
-                &implication.target,
-                helm_schema_core::ContractRequirementTarget::Value
-            ) && let Some(default) = yaml_value_at_path(values_yaml_doc, target_value_path)
+            // Abort-grade presence is exempt: the consumer aborts on an
+            // absent subject, and under coalesced-document semantics a
+            // default-supplied member is absent exactly when null-deleted
+            // — the state the arm must reject (loki's `dig` subjects).
+            let abort_grade_presence = implication.requirements.iter().all(|requirement| {
+                matches!(
+                    requirement,
+                    helm_schema_core::FailValueRequirement::HasMemberEvenDefaulted(_)
+                )
+            });
+            if !abort_grade_presence
+                && matches!(
+                    &implication.target,
+                    helm_schema_core::ContractRequirementTarget::Value
+                )
+                && let Some(default) = yaml_value_at_path(values_yaml_doc, target_value_path)
             {
                 relax_required_members_supplied_by_default(&mut target_schema, default);
             }
@@ -967,7 +979,8 @@ fn requirement_admits_runtime_type(
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }
         | FailValueRequirement::FieldHelmTruthy { .. }
-        | FailValueRequirement::HasMember(_) => runtime_type == "object",
+        | FailValueRequirement::HasMember(_)
+        | FailValueRequirement::HasMemberEvenDefaulted(_) => runtime_type == "object",
         FailValueRequirement::NotSchemaType(rejected) => {
             runtime_type != rejected && !(rejected == "number" && runtime_type == "integer")
         }
