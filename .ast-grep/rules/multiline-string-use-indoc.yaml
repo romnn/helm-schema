@@ -1,0 +1,30 @@
+id: multiline-string-use-indoc
+language: Rust
+severity: warning
+message: "multiline string literals should use indoc!"
+note: "indoc! keeps source indentation out of the resulting string; escaped source continuations are ignored."
+rule:
+  all:
+    - any:
+        - kind: string_literal
+        - kind: raw_string_literal
+    - has:
+        all:
+          - kind: string_content
+          - regex: '\r?\n'
+    - not:
+        inside:
+          kind: token_tree
+          stopBy: end
+    - not:
+        inside:
+          kind: attribute_item
+          stopBy: end
+    - not:
+        inside:
+          kind: match_pattern
+          stopBy: end
+    - not:
+        inside:
+          kind: let_condition
+          field: pattern

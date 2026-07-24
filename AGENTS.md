@@ -136,6 +136,22 @@ In short: the simpler Rust is usually the better Rust here. Prefer direct,
 boring code over abstraction that does not materially improve correctness or
 clarity.
 
+### Multiline Rust strings
+
+Use `indoc!` for Rust string literals that intentionally contain line breaks,
+so the source can follow the surrounding indentation without adding that
+indentation to the value. Use `formatdoc!` instead when the multiline string
+also interpolates values.
+
+This applies to ordinary and raw string literals. A string split across source
+lines with Rust's trailing-backslash continuation does not contain a line break
+and does not need either macro.
+
+Keep a direct literal where Rust syntax or an outer macro requires a literal
+token, such as an attribute, a pattern, or a macro argument matched as
+`$literal`. `indoc!` and `formatdoc!` expand as expressions and cannot replace
+those forms.
+
 ## Design goal: fast, deterministic, cache-safe output
 
 helm-schema should be fast enough for normal interactive use. Most schemas
@@ -225,18 +241,27 @@ Therefore:
 
 ## Equality assertions in tests
 
-- Tests must assert equality with `similar_asserts::assert_eq`, **not** the std `assert_eq!`. On failure it prints a readable line-by-line diff instead of dumping two large opaque values — essential for the big JSON schemas this project compares.
-- Import the alias from the `test-util` prelude and call it `sim_assert_eq!`:
+- Tests must assert equality with `test_util::sim_assert_eq!`, **not** the std
+  `assert_eq!`. The workspace macro requires `have:` and `want:` labels and
+  delegates to `similar_asserts::assert_eq!`, which prints a readable
+  line-by-line diff instead of dumping two large opaque values.
+- Import the macro from the `test-util` prelude and call it with labeled
+  operands:
 
   ```rust
   use test_util::prelude::sim_assert_eq;
   // ...
-  sim_assert_eq!(actual, expected);
+  sim_assert_eq!(have: actual, want: expected);
   ```
 
-  The alias is defined once in `test-util` (`pub use similar_asserts::assert_eq as sim_assert_eq;`) so every crate refers to the same macro. Add `test-util` as a `dev-dependency` (`test-util.workspace = true`) if the crate does not already have it.
+  The macro is defined once in `test-util` so every crate uses the same labels
+  and diff implementation. Add `test-util` as a `dev-dependency`
+  (`test-util.workspace = true`) if the crate does not already have it.
 - The import is **per-module**: a `use` in a parent module does not reach child `mod tests { … }` blocks, so each test module (and each integration-test file under `tests/`) needs its own `use test_util::prelude::sim_assert_eq;`.
-- This is enforced by clippy: `clippy.toml` disallows the `std::assert_eq` macro via `disallowed-macros`. The lint only bans the std macro — `similar_asserts::assert_eq` / the `sim_assert_eq` alias is unaffected. It currently surfaces as a warning (it still "shouts" so violations are caught), so do not reintroduce bare `assert_eq!` in tests.
+- This is enforced by clippy and the macro definition: `clippy.toml` disallows
+  `std::assert_eq!`, while `sim_assert_eq!` accepts only the exact `have:` and
+  `want:` labels. It currently surfaces as a warning (it still "shouts" so
+  violations are caught), so do not reintroduce bare `assert_eq!` in tests.
 
 ## Result types
 

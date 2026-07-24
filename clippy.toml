@@ -9,15 +9,14 @@ allow-indexing-slicing-in-tests = true
 # `..` appends to clippy's built-in proper-noun list instead of replacing it.
 doc-valid-idents = ["PyPI", "GOPROXY", ".."]
 
-# Tests must assert equality with `similar_asserts::assert_eq`, which renders a
-# readable diff on failure instead of dumping two large opaque values. Import
-# the alias from the test-util prelude (`use test_util::prelude::sim_assert_eq;`)
-# and call `sim_assert_eq!`. This bans only the std macro; `similar_asserts`'
-# own macro (and the `sim_assert_eq` alias) is unaffected.
+# Tests must assert equality with `test_util::sim_assert_eq!`, which requires
+# `have:` and `want:` labels and delegates to `similar_asserts::assert_eq` for a
+# readable diff. Import it from the test-util prelude
+# (`use test_util::prelude::sim_assert_eq;`).
 #
 # Note: similar-asserts ships no `assert_ne`, so `std::assert_ne!` is kept as-is.
 disallowed-macros = [
-  { path = "std::assert_eq", reason = "use similar_asserts::assert_eq via the test-util prelude alias `sim_assert_eq` (import `use test_util::prelude::sim_assert_eq;`)" },
+  { path = "std::assert_eq", reason = "use the labeled test-util macro `sim_assert_eq` (import `use test_util::prelude::sim_assert_eq;`)" },
   { path = "std::dbg", reason = "remove before commit" },
 ]
 

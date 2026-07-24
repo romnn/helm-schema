@@ -1,0 +1,21 @@
+id: multiline-format-use-formatdoc
+language: Rust
+severity: warning
+message: "multiline format strings should use formatdoc!"
+note: "formatdoc! combines formatting with indentation removal for multiline output."
+rule:
+  any:
+    - pattern: format!($FORMAT)
+    - pattern: format!($FORMAT, $$$ARGS)
+    - pattern: std::format!($FORMAT)
+    - pattern: std::format!($FORMAT, $$$ARGS)
+constraints:
+  FORMAT:
+    all:
+      - any:
+          - kind: string_literal
+          - kind: raw_string_literal
+      - has:
+          all:
+            - kind: string_content
+            - regex: '\r?\n'

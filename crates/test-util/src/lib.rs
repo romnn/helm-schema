@@ -9,14 +9,55 @@ use vfs::VfsPath;
 /// S-expression fixtures and parsing utilities.
 pub mod sexpr;
 
+#[doc(hidden)]
+pub use similar_asserts::assert_eq as __similar_assert_eq;
+
+/// Asserts that `have` equals `want` and renders a readable diff on failure.
+///
+/// The `have:` and `want:` labels are required so failure output identifies the
+/// observed and expected values consistently.
+///
+/// # Examples
+///
+/// ```
+/// use test_util::sim_assert_eq;
+///
+/// sim_assert_eq!(have: vec![1, 2], want: vec![1, 2]);
+/// sim_assert_eq!(have: "foo", want: "foo", "values should match");
+/// ```
+///
+/// Unlabeled operands are rejected:
+///
+/// ```compile_fail
+/// use test_util::sim_assert_eq;
+///
+/// sim_assert_eq!(1, 1);
+/// ```
+///
+/// Labels other than `have:` and `want:` are also rejected:
+///
+/// ```compile_fail
+/// use test_util::sim_assert_eq;
+///
+/// sim_assert_eq!(left: 1, right: 1);
+/// ```
+#[macro_export]
+macro_rules! sim_assert_eq {
+    (have: $have:expr, want: $want:expr $(,)?) => {
+        $crate::__similar_assert_eq!(have: $have, want: $want)
+    };
+    (have: $have:expr, want: $want:expr, $($arg:tt)+) => {
+        $crate::__similar_assert_eq!(have: $have, want: $want, $($arg)+)
+    };
+}
+
 /// Common imports for workspace tests.
 pub mod prelude {
     pub use crate::matchers::*;
     pub use crate::sexpr::{ParseError as SExprParseError, SExpr};
     pub use crate::write;
-    pub use crate::{Builder, LogLevel};
+    pub use crate::{Builder, LogLevel, sim_assert_eq};
     pub use googletest::{assert_that, matcher::MatcherBase, matchers::*};
-    pub use similar_asserts::assert_eq as sim_assert_eq;
 }
 
 /// Identifies helper and template fixtures used to construct a define index.

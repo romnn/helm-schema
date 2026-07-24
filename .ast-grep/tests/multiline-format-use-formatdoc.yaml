@@ -1,0 +1,25 @@
+id: multiline-format-use-formatdoc
+valid:
+  - |
+    fn main(name: &str) {
+        let text = formatdoc!("
+            hello {name}
+            welcome
+        ");
+    }
+  - |
+    fn main() {
+        let text = format!("{}", "first
+    second");
+    }
+invalid:
+  - |
+    fn main(name: &str) {
+        let text = format!("hello {name}
+    welcome");
+    }
+  - |
+    fn main(name: &str) {
+        let text = std::format!(r#"hello {name}
+    welcome"#);
+    }

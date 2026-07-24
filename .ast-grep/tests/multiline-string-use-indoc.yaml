@@ -1,0 +1,42 @@
+id: multiline-string-use-indoc
+valid:
+  - |
+    fn main() {
+        let text = indoc! {"
+            first
+            second
+        "};
+    }
+  - |
+    fn main() {
+        let text = "first\
+            second";
+    }
+  - |
+    fn main(value: &str) {
+        match value {
+            "first
+    second" => {}
+            _ => {}
+        }
+    }
+  - |
+    fn main() {
+        literal_only!("first
+    second");
+    }
+  - |
+    #[doc = "first
+    second"]
+    fn documented() {}
+invalid:
+  - |
+    fn main() {
+        let text = "first
+    second";
+    }
+  - |
+    fn main() {
+        let text = r#"first
+    second"#;
+    }
