@@ -1,11 +1,22 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-24 after the twenty-sixth fixture/source audit.
+Last reconciled 2026-07-24 after the twenty-sixth fixture/source audit
+and the reopened-items round that followed it (twenty-seventh round).
 All 55 committed corpus fixtures, 122 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
 fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below.
+reopened the bounded findings listed below. The reopened-items round
+closed three of them — F80's Airflow empty-worker over-constraint
+(merge-arm gates now lower the maximal exact-conjunct subset, with
+per-layer truthy spellings of one merged read collapsed out of the
+conjunctive form), F105's checksum backward attribution (digest
+operands are shape-erased; no slot language projects through a
+checksum), and F107's Loki dig-subject presence (a nested raw-identity
+dig subject records an abort-grade `HasMemberEvenDefaulted` presence
+requirement exempt from the default-supplied `required` relaxation) —
+each helm-adjudicated with regenerated fixtures (airflow, datadog,
+external-dns, jenkins, kube-prometheus-stack, loki, nats, traefik).
 
 This ledger has three status buckets. A finding may have a completed bounded
 part and a separately listed residual. Detailed round history remains in
@@ -1338,6 +1349,19 @@ same recursive map-null deletion as `chart_instances::with_override`.
   open at cert-manager's three `podDisruptionBudget` families and ReLoader
   `serviceAccount`, despite immediate `.enabled`/`.create` member reads.
   Default or explicit map controls render.
+  SCOPING (verified twenty-seventh round): both spot checks reproduce
+  (metrics-server `apiService: null` aborts helm with "nil pointer
+  evaluating interface {}.create" while the schema accepts; a scalar
+  reloader `serviceAccount` aborts the member read). Go template member
+  navigation on a nil OR absent host aborts, so navigation-host
+  presence is ABORT-grade — the member-access lane's `HasMember`
+  implications exist but the default-supplied `required` relaxation
+  strips them for declared hosts, the same dropper F107's dig presence
+  was exempted from via `HasMemberEvenDefaulted`. Fix direction: emit
+  the abort-grade presence form from the member-access presence site
+  (`record_member_access_implications`' HasMember lowering) under its
+  existing factored guards, and let the MemberHost object typing reject
+  present-scalar hosts with immediate member reads.
 - **F76 — dynamic keys and `tpl` results lose their YAML-slot lexical
   preimages.** Crossplane accepts `extraEnvVars*:{"BAD: KEY":"x"}` even
   though the ranged key, after `replace "." "_"`, breaks the unquoted
@@ -1349,29 +1373,94 @@ same recursive map-null deletion as `chart_instances::with_override`.
   External DNS disabled branch stays open. Project the slot language back to
   the source map's `propertyNames` or representable `tpl` operand under the
   exact live gate.
-- **F80 — Airflow's empty worker family is still over-constrained.** With
-  `workers.celery.enableDefault=false` and `sets=[]`, a string
-  `workers.celery.securityContexts.pod.runAsUser` is rejected although Helm
-  emits no worker and strict validation is 36/36 valid. Whole-scalar celery
-  inputs and the previously suspected mixed-set shadowing case now behave
-  correctly; remove those stale residual claims.
+- **F80 — Airflow's empty worker family (twenty-seventh round; CLOSED).**
+  The synthesized merge-layer arms were gated all-or-nothing: one
+  unlowerable conjunct (the member-local wildcard anyOfs) emptied the
+  whole gate, so the arms fired on the empty worker family. Gates now
+  lower the MAXIMAL exact-conjunct subset
+  (`lowerable_conditional_guard_subset`): every kept guard is an exact
+  decode of one row condition, so live renders always still fire, and
+  the range-liveness anyOf (`enableDefault ∨ nonempty(sets)`) plus the
+  executor membership now silence the arms exactly when no worker set
+  renders — `enableDefault=false` beside `sets=[]` accepts a string
+  `runAsUser` (helm renders 44 documents, none consuming it) while the
+  default, sets-only, and executor-live states keep their rejections
+  (helm-verified each way). A companion exactness repair: the per-layer
+  truthy spellings of one MERGED read (the historic all-paths
+  conjunction — `workers.waitForMigrations.enabled` spelled at both the
+  workers and celery layers) collapse out of the gate
+  (`collapse_layered_truthy_gates`): with concrete layers they become
+  the implied disjunction, and with wildcard (per-set) layers the group
+  drops — without this, `waitForMigrations.env: true` was accepted
+  though helm aborts consuming it in the default-live worker. Pinned by
+  the extended `rerooted_worker_set_merges_keep_layered_provider_payloads`
+  (the faithful enableDefault-concat shape, both liveness polarities)
+  and the regenerated airflow fixture (zero probe-battery flips; the
+  target states verified as composed documents). Residual: gates still
+  fire in dormant states whose conjuncts are genuinely unlowerable
+  (keda/kerberos component junk keeps its pre-existing false rejection
+  when those components are disabled — unchanged direction), and a
+  dropped wildcard-layer group leaves `waitForMigrations.env` junk
+  rejected under `enabled: false` (pre-existing class, unchanged).
 - **F99 — finite Grafana traversal does not constrain intermediate hosts.**
   With `assertNoLeakedSecrets=true`, scalar `grafana.ini.database` or the
   atomic dotted-key host `grafana.ini["auth.basic"]` validates, then
   `_helpers.tpl:260` passes an integer to `hasKey` and Helm aborts. Object
   hosts pass, and disabling the assertion keeps the values dormant.
-- **F105 — checksum result constraints leak backward into raw block-scalar
-  payloads.** Live Datadog migration `userValues:"datadog: {}"` and
-  multiline YAML are valid file contents and render/provider-pass, but the
-  schema rejects them because the later `sha256sum` annotation's plain-token
-  domain is attributed to the checksum operand. Plain text and the dormant
-  migration control pass.
-- **F107 — Loki `dig` subjects still lose their live map requirement.**
-  Null-deleted `loki.storage_config` and `loki.rulerConfig` validate under
-  live object-storage/test-schema controls, but Helm aborts in
-  `_helpers.tpl:230/:244` because `dig` receives nil instead of a map. Map
-  controls pass. The completed KPS, Trivy, and Cilium `dig` cases remain
-  correct.
+  ROOT CAUSE (diagnosed twenty-seventh round): the walk unrolls exactly
+  — the leaf regex/string claims bind per sensitive path — and `hasKey`
+  already records strict object-kind subject captures (`ValueType`),
+  but the enclosing `and $shouldContinue (hasKey …)` short-circuit
+  wraps the capture with a truthiness conjunct on the BOOLEAN LOCAL
+  flag, which decodes approximately and poisons the capture
+  (reproduced minimally: `and $b (hasKey .Values.cfg "a")` with
+  `$b := true` records nothing while the `.Values.flag` operand form
+  survives). The fix needs the flag conjunct decodable: constant-fold
+  literal boolean locals in condition position, and decode the
+  joined per-iteration flag state of the unrolled walk (iteration K's
+  `$shouldContinue` is exactly the prior iterations' `hasKey`
+  conjunction, which the subject's own presence conjunct implies).
+- **F105 — checksum backward attribution (twenty-seventh round; CLOSED).**
+  The checksum family now SHAPE-ERASES its operand identities (call and
+  pipeline forms): the digest shares no text or shape with the subject,
+  so no slot language projects backward through the call. Datadog's
+  `userValues | sha256sum` annotation splice lowers as a Serialized
+  taint instead of a raw Scalar splice, and single-line/multiline YAML
+  file contents render and validate while the checksum's own
+  strict-string contract still rejects live maps and numbers (helm
+  aborts hashing a non-string) and the dormant migration control keeps
+  junk open — all helm-verified on the real chart (with the NOTES.txt
+  `keepCrds` fail arm confirmed exact along the way). Collateral:
+  external-dns/jenkins/nats/traefik re-encode their `include|sha256sum`
+  and `tpl|sha256sum` checksum operands with zero probe-battery flips.
+  Pinned by
+  `checksum_digest_splices_project_no_slot_language_onto_the_operand`
+  and the regenerated datadog fixture.
+- **F107 — Loki `dig` subject presence (twenty-seventh round; CLOSED).**
+  `dig` type-asserts its subject BEFORE missing-key handling, so an
+  absent subject reads as nil and aborts exactly like an explicit null.
+  A nested RAW-IDENTITY subject now records a companion
+  `CaptureKind::RequiredPresence` capture lowering to the new
+  abort-grade `FailValueRequirement::HasMemberEvenDefaulted` on the
+  parent — exempt from the default-supplied `required` relaxation
+  (which stays for render-grade F98 presence), because under
+  coalesced-document semantics a default-supplied member is absent
+  exactly when null-deleted, the state helm aborts on. Subject-level
+  claims (presence AND the even-null type) are now scoped to raw
+  identities: a `| default dict` chain subject renders through its
+  fallback, so the old chain claims were a latent false-reject.
+  loki: live null-deleted `storage_config`/`rulerConfig` reject, maps
+  and the baseline render, and the filesystem/SingleBinary dormant
+  state keeps the deletion open — all helm-verified as composed
+  documents. KPS re-tightens by one probe state (deleted
+  `defaultRules.additionalRuleAnnotations`; helm aborts — verified).
+  Pinned by `dig_subject_presence_binds_through_selection_gates` and
+  the regenerated loki/KPS fixtures; the existing KPS/trivy/cilium dig
+  pins stay green. Residuals: a ROOT-LEVEL dig subject has no parent
+  slot to host the presence requirement and abstains, and a
+  present-but-falsy CHAIN subject still false-rejects through the
+  pre-existing member-host base typing (the digchain shape) — a lane
+  outside the dig machinery, newly documented.
 
 ## Rejected (invalid or won't fix by design)
 

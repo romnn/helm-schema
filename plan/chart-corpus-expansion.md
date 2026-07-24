@@ -8711,3 +8711,100 @@ including the regenerated KPS fixture and the new
 `selection_chain_merge_layers_keep_the_has_key_gated_splice` gen
 reproducer (red without the fix, green with it). The luup2
 `check:local` downstream gate passes with the installed binary.
+
+## Reopened-items round (2026-07-24, twenty-seventh round)
+
+The twenty-sixth fixture/source audit reopened nine bounded findings
+with fully-composed-value evidence. This round closed the three whose
+fixes were structurally scoped: F80 (Airflow empty-worker
+over-constraint), F105 (checksum backward attribution), and F107 (Loki
+dig-subject presence). The remaining six stay In progress.
+
+### F80 — subset gates and the layered-truthy collapse
+
+The synthesized merge-layer arms were gated all-or-nothing: one
+unlowerable conjunct (airflow's member-local wildcard anyOfs) emptied
+the entire gate and the arms fired unconditionally, rejecting
+`workers.securityContexts.pod.runAsUser` junk even with
+`workers.celery.enableDefault=false` and `sets=[]` — a state where the
+per-set range iterates zero times and helm renders 44 documents without
+consuming the value. Gates now lower the maximal exact-conjunct subset:
+every kept guard is an exact decode of one row condition, so a live
+render always satisfies the subset (arms never go silent on live
+states) while dropped conjuncts only leave dormant-state firing — the
+pre-existing, now-shrunken widening. Two exactness companions surfaced
+during adjudication: (a) the corpus airflow probes exposed the historic
+all-paths CONJUNCTION of per-layer spellings gating a merged read
+(`Truthy(workers.celery.waitForMigrations.enabled) ∧
+Truthy(workers.waitForMigrations.enabled)`), which under-fires on live
+renders (the celery spelling is absent from the defaults); merged-read
+truthiness implies only the DISJUNCTION of layer spellings, so
+`collapse_layered_truthy_gates` rewrites concrete-layer groups to that
+disjunction and drops groups whose merge carries wildcard (per-set)
+layers. Without the collapse, `waitForMigrations.env: true` was
+accepted while helm aborts consuming it in the default-live worker.
+(b) The mini reproducers were made faithful to the chart (the
+`enableDefault` concat), with both liveness polarities pinned.
+
+### F105 — digest operands are shape-erased
+
+`sha256sum`-family calls (call and pipeline forms) now add their
+operand identity paths to the shape-erased class: the digest shares no
+text or shape with the subject, so no slot language projects backward
+through the call. Datadog's `userValues | sha256sum` annotation splice
+had projected the unquoted-scalar plain-token language onto the raw
+file payload, rejecting `"datadog: {}"` and multiline YAML that helm
+renders into the block scalar. The isolated-lane hunt was instructive:
+neither the annotation nor the block-scalar splice alone reproduces —
+the leak rode the provider/metadata string-map lane over the widened
+splice. Adjudication confirmed the NOTES.txt `keepCrds` fail arm exact
+(the audit's "live" states require `operator.datadogCRDs.keepCrds:
+true`), non-string operands still reject through the strict-string
+contract (helm aborts hashing a map), and the dormant control keeps
+junk open. external-dns, jenkins, nats, and traefik re-encode their
+checksum operands with zero probe-battery flips.
+
+### F107 — abort-grade dig-subject presence
+
+helm 4's `dig` type-asserts the subject before its missing-key
+handling: an ABSENT subject reads as nil and aborts exactly like an
+explicit null, but the seventeenth-round `HasKey` self-scope kept
+deletion states open. A nested raw-identity subject now records a
+companion `RequiredPresence` capture lowering to the new
+`FailValueRequirement::HasMemberEvenDefaulted` on the parent. The
+requirement is exempt from the default-supplied `required` relaxation
+— that relaxation was adjudicated for render-grade F98 presence, while
+under coalesced-document semantics a default-supplied member is absent
+exactly when a user null-deletes it, which is the abort state. The
+lowering chain had three real blockers, each diagnosed on the live
+chart: the loki corridor runs through `tpl .Values.loki.config .` of
+the values-declared program (the captures carry the program-equality
+conjunct and decode), approximate-conditioned duplicates abstain as
+before, and the relaxation was the final silent dropper. Subject-level
+claims are additionally scoped to RAW identities — a `| default dict`
+chain subject renders through its fallback, so the old chain claims
+were a latent false-reject (fixed); present-but-falsy chain subjects
+still false-reject through the member-host base typing, a documented
+residual outside the dig lane.
+
+### Adjudication
+
+Eight corpus fixtures regenerate. airflow: zero battery flips; the
+target compound states verified as composed documents (dormant junk
+accepts, default/sets-only lives reject, `waitForMigrations.env`
+rejects — helm-verified each). KPS: exactly one battery flip, deleted
+`defaultRules.additionalRuleAnnotations` tightens (helm aborts — the
+dig-nil interface conversion). loki: battery-blind (the defaults doc
+fails helm's own bucketNames requirement under both schemas), so the
+five composed live/dormant states were adjudicated directly. datadog:
+YAML-text `userValues` accepts, non-strings reject, dormant junk open.
+external-dns/jenkins/nats/traefik: checksum-operand re-encodings, zero
+battery flips.
+
+### Validation
+
+`task test` green (904 unit tests), `task test:integration` green
+(484, including all chart pins), clippy and ast-grep lints clean, and
+the corpus fixtures byte-identical to one clean dump run of the final
+build. The luup2 `check:local` downstream gate passes with the
+installed binary.
