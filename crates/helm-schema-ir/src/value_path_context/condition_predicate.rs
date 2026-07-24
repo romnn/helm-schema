@@ -3173,6 +3173,40 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
                         _ => None,
                     }
                 }
+                // A selection-chain layer drops a constant-False candidate
+                // only where selection can never land on it while the key
+                // is present: the LAST candidate is selected only when
+                // every prior is falsy, but the agreeing priors are truthy
+                // whenever the key is present (`hasKey` implies a nonempty
+                // map), and a definitely-falsy candidate is never selected
+                // ahead of the tail. KPS' `default (dict) .Values
+                // .defaultRules.additionalRuleGroupAnnotations.*` group
+                // layer reads presence from the raw path exactly.
+                AbstractValue::FirstTruthy(candidates) => {
+                    let resolved = candidates
+                        .iter()
+                        .map(|candidate| value_has_key(candidate, key))
+                        .collect::<Option<Vec<_>>>()?;
+                    let last = candidates.len().saturating_sub(1);
+                    let mut kept = Vec::new();
+                    for (index, (candidate, predicate)) in
+                        candidates.iter().zip(resolved).enumerate()
+                    {
+                        if matches!(predicate, Predicate::False)
+                            && (index == last || candidate.static_truthiness() == Some(false))
+                        {
+                            continue;
+                        }
+                        kept.push(predicate);
+                    }
+                    kept.sort();
+                    kept.dedup();
+                    match kept.as_slice() {
+                        [] => Some(Predicate::False),
+                        [predicate] => Some(predicate.clone()),
+                        _ => None,
+                    }
+                }
                 layer => value_has_key(layer, key),
             };
             let mut resolved = layers

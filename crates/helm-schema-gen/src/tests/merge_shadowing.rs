@@ -763,3 +763,97 @@ fn per_set_merge_layers_bind_without_the_reroot() {
         );
     }
 }
+
+/// The kube-prometheus-stack annotation-override shape: a `hasKey` gate
+/// over `mergeOverwrite (dict) $group $rule` whose group layer is a
+/// `default (dict)` selection chain. The chain's empty-dict tail drops
+/// out of the presence decode — selection only reaches the tail when the
+/// raw path is falsy, and a present key makes it truthy — so the gate
+/// reads presence from both annotation paths exactly and the composed
+/// `runbook_url` splice keeps its array rejection where neither layer
+/// supplies the key (an array breaks the rendered YAML; helm aborts).
+#[test]
+fn selection_chain_merge_layers_keep_the_has_key_gated_splice() {
+    let src = indoc! {r#"
+        {{- if .Values.defaultRules.create }}
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: test
+        spec:
+          groups:
+          - name: alertmanager.rules
+            rules:
+            - alert: AlertmanagerFailedReload
+              annotations:
+        {{- $ruleAnnotations := dig "AlertmanagerFailedReload" (dict) .Values.defaultRules.additionalRuleAnnotations }}
+        {{- $groupAnnotations := default (dict) .Values.defaultRules.additionalRuleGroupAnnotations.alertmanager }}
+        {{- $additionalAnnotations := mergeOverwrite (dict) $groupAnnotations $ruleAnnotations }}
+        {{- if $additionalAnnotations }}
+        {{ toYaml $additionalAnnotations | indent 8 }}
+        {{- end }}
+                {{- if not (hasKey $additionalAnnotations "runbook_url") }}
+                runbook_url: {{ .Values.defaultRules.runbookUrl }}/alertmanager/alertmanagerfailedreload
+                {{- end }}
+              expr: vector(1)
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {r#"
+            defaultRules:
+              create: true
+              additionalRuleAnnotations: {}
+              additionalRuleGroupAnnotations:
+                alertmanager: {}
+              runbookUrl: "https://runbooks.example/runbooks"
+        "#}),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "defaultRules": { "create": true, "runbookUrl": [] } }),
+            false,
+            "live array splice",
+        ),
+        (
+            serde_json::json!({ "defaultRules": { "create": true, "runbookUrl": "https://x" } }),
+            true,
+            "live string splice",
+        ),
+        // A non-collection scalar renders as scalar text inside the
+        // composed line; only arrays break the rendered YAML.
+        (
+            serde_json::json!({ "defaultRules": { "create": true, "runbookUrl": 7 } }),
+            true,
+            "live integer splice",
+        ),
+        (
+            serde_json::json!({ "defaultRules": {
+                "create": true,
+                "runbookUrl": [],
+                "additionalRuleGroupAnnotations": { "alertmanager": { "runbook_url": "x" } } } }),
+            true,
+            "group annotation shadows the splice",
+        ),
+        (
+            serde_json::json!({ "defaultRules": {
+                "create": true,
+                "runbookUrl": [],
+                "additionalRuleAnnotations": { "AlertmanagerFailedReload": { "runbook_url": "x" } } } }),
+            true,
+            "rule annotation shadows the splice",
+        ),
+        (
+            serde_json::json!({ "defaultRules": { "create": false, "runbookUrl": [] } }),
+            true,
+            "dormant rule document",
+        ),
+        (serde_json::json!({}), true, "empty document"),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "selection-chain merge layer presence ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
