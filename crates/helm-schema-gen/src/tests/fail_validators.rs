@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// A `regexMatch` fail whose subject reached the match through `tpl` (a
 /// raw template PROGRAM, not the rendered text) constrains only the
@@ -444,13 +445,13 @@ fn required_subjects_bind_nonempty_requirements() {
             key: {{ required "target required when gated" .Values.gate.target }}
           {{- end }}
     "#};
-    let values_yaml = indoc! {"
-        clusterName: \"\"
+    let values_yaml = indoc! {r#"
+        clusterName: ""
         envSecrets: {}
         gate:
           enabled: false
-          target: \"\"
-    "};
+          target: ""
+    "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (instance, want, label) in [
@@ -573,12 +574,12 @@ fn cross_path_fail_formulas_lower_as_terminal_clauses() {
           {{- end }}
           ok: "true"
     "#};
-    let values_yaml = indoc! {"
-        txtPrefix: \"\"
-        txtSuffix: \"\"
+    let values_yaml = indoc! {r#"
+        txtPrefix: ""
+        txtSuffix: ""
         dnsPolicy: ClusterFirst
         dnsConfig: {}
-    "};
+    "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (instance, want, label) in [
@@ -775,7 +776,10 @@ fn json_decoded_range_excludes_integer_without_changing_raw_range() {
     "#};
     let guarded_schema = schema_for_values_yaml(
         parse_ir_with_helpers(guarded_source, helpers),
-        Some("enabled: false\nextraResources: []\n"),
+        Some(indoc! {"
+            enabled: false
+            extraResources: []
+        "}),
     );
     assert!(
         schema_accepts_instance(
@@ -1602,7 +1606,14 @@ fn int_cast_string_preimages_cover_radix_and_complement_lanes() {
         config:
           ok: true
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("count: 0\nfloor: 5\nneg: 1\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            count: 0
+            floor: 5
+            neg: 1
+        "}),
+    );
     for (instance, want, label) in [
         (
             serde_json::json!({ "count": "0x10", "floor": 5 }),
@@ -1701,7 +1712,13 @@ fn ranged_not_equals_chains_negate_to_the_field_enum() {
         config:
           ok: true
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("service:\n  patch: []\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            service:
+              patch: []
+        "}),
+    );
     for (item, want, label) in [
         (serde_json::json!({ "op": "add" }), true, "add allowed"),
         (
@@ -1911,7 +1928,10 @@ fn helper_scope_ranges_bind_member_identities_in_fail_captures() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("service:\n  patch: []\n"),
+        Some(indoc! {"
+            service:
+              patch: []
+        "}),
     );
     for (patch, want, label) in [
         (serde_json::json!([]), true, "an empty patch list renders"),
@@ -2452,7 +2472,13 @@ fn per_op_requirement_binds_in_a_direct_range() {
         config:
           ok: true
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("service:\n  patch: []\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            service:
+              patch: []
+        "}),
+    );
     for (item, want, label) in [
         (
             serde_json::json!({ "op": "copy", "from": "/x" }),
@@ -2520,7 +2546,10 @@ fn per_op_requirement_binds_through_the_helper_roundtrip() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("service:\n  patch: []\n"),
+        Some(indoc! {"
+            service:
+              patch: []
+        "}),
     );
     for (item, want, label) in [
         (

@@ -1,4 +1,5 @@
 use color_eyre::eyre;
+use indoc::indoc;
 
 use super::build_composed_values_yaml;
 use crate::chart::ChartContext;
@@ -24,19 +25,33 @@ fn composed_subchart_globals_preserve_parent_explicit_null_defaults() -> eyre::R
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "global:\n  imageRegistry:\n",
+        indoc! {"
+            global:
+              imageRegistry:
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "global:\n  imageRegistry: docker.io\n",
+        indoc! {"
+            global:
+              imageRegistry: docker.io
+        "},
     )?;
 
     let composed =
@@ -61,16 +76,27 @@ fn composed_subchart_globals_hoist_when_parent_key_is_absent() -> eyre::Result<(
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "global:\n  imageRegistry: docker.io\n",
+        indoc! {"
+            global:
+              imageRegistry: docker.io
+        "},
     )?;
 
     let composed =

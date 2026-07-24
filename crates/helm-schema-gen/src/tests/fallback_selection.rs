@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// cilium `upgradeCompatibility`: a strict parser applied to
 /// `default LITERAL .Values.path` only ever sees the raw value on the truthy
@@ -79,7 +80,11 @@ fn helper_default_fallback_keeps_helm_empty_inputs_open_for_string_consumers() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("nameOverride: \"\"\nconfig:\n  create: true\n"),
+        Some(indoc! {r#"
+            nameOverride: ""
+            config:
+              create: true
+        "#}),
     );
 
     for instance in [
@@ -133,7 +138,11 @@ fn truthy_guarded_read_keeps_helm_falsy_inputs_open() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("namespaceOverride: \"\"\nrbac:\n  create: true\n"),
+        Some(indoc! {r#"
+            namespaceOverride: ""
+            rbac:
+              create: true
+        "#}),
     );
 
     for instance in [
@@ -173,9 +182,13 @@ fn liveness_gated_helper_keeps_helm_empty_fallback_inputs_open() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some(
-            "nameOverride: \"\"\nfullnameOverride: \"\"\nnamespaceOverride: \"\"\nconfig:\n  create: true\n",
-        ),
+        Some(indoc! {r#"
+            nameOverride: ""
+            fullnameOverride: ""
+            namespaceOverride: ""
+            config:
+              create: true
+        "#}),
     );
     for instance in [
         serde_json::json!({ "nameOverride": false, "config": { "create": true } }),

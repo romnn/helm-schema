@@ -161,7 +161,11 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Re
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -186,15 +190,19 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Re
 
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        indoc! {"
+        indoc! {r#"
             image:
               # -- Child image tag docs
-              tag: \"1.0.0\"
-        "},
+              tag: "1.0.0"
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/cm.yaml")?,
@@ -270,7 +278,11 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Resul
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("charts/child/values.yaml")?, "{}\n")?;
 
@@ -331,7 +343,11 @@ fn static_chart_crds_type_custom_resource_values() -> eyre::Result<()> {
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -417,7 +433,11 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Re
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -514,7 +534,11 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: layered\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: layered
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -615,29 +639,61 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the parent/subchart fixture set and its scoping assertions belong to one contiguous scenario"
+)]
 fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "kid:\n  persistence:\n    enabled: true\n",
+        indoc! {"
+            kid:
+              persistence:
+                enabled: true
+        "},
     )?;
 
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "foo: 1\nglobal:\n  bar: true\n",
+        indoc! {"
+            foo: 1
+            global:
+              bar: true
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/configmap.yaml")?,
-        "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: test\ndata:\n  foo: {{ .Values.foo | quote }}\n  bar: {{ .Values.global.bar | quote }}\n",
+        indoc! {"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              foo: {{ .Values.foo | quote }}
+              bar: {{ .Values.global.bar | quote }}
+        "},
     )?;
 
     let opts = GenerateOptions {
@@ -716,13 +772,25 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
 
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
@@ -797,43 +865,68 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the parent/subchart fixture set and its widening assertions belong to one contiguous scenario"
+)]
 fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
 
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "global:\n  defaultStorageClass: \"\"\npersistence:\n  enabled: true\n  storageClass: \"\"\n  size: 1Gi\n",
+        indoc! {r#"
+            global:
+              defaultStorageClass: ""
+            persistence:
+              enabled: true
+              storageClass: ""
+              size: 1Gi
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/_helpers.tpl")?,
-        r#"{{- define "common.storage.class" -}}
-{{- $storageClass := (.global).storageClass | default .persistence.storageClass | default (.global).defaultStorageClass | default "" -}}
-{{- if $storageClass -}}
-storageClassName: {{ $storageClass }}
-{{- end -}}
-{{- end -}}
-"#,
+        indoc! {r#"
+            {{- define "common.storage.class" -}}
+            {{- $storageClass := (.global).storageClass | default .persistence.storageClass | default (.global).defaultStorageClass | default "" -}}
+            {{- if $storageClass -}}
+            storageClassName: {{ $storageClass }}
+            {{- end -}}
+            {{- end -}}
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/pvc.yaml")?,
-        r#"apiVersion: v1
-kind: PersistentVolumeClaim
-spec:
-  resources:
-    requests:
-      storage: {{ .Values.persistence.size | quote }}
-  {{- include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) | nindent 2 }}
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: PersistentVolumeClaim
+            spec:
+              resources:
+                requests:
+                  storage: {{ .Values.persistence.size | quote }}
+              {{- include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) | nindent 2 }}
+        "#},
     )?;
 
     let opts = GenerateOptions {
@@ -897,47 +990,80 @@ spec:
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the library/subchart fixture set and its widening assertions belong to one contiguous scenario"
+)]
 fn library_subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
 
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\ndependencies:\n  - name: common\n    version: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+            dependencies:
+              - name: common
+                version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "global:\n  defaultStorageClass: \"\"\npersistence:\n  enabled: true\n  storageClass: \"\"\n  size: 1Gi\n",
+        indoc! {r#"
+            global:
+              defaultStorageClass: ""
+            persistence:
+              enabled: true
+              storageClass: ""
+              size: 1Gi
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/pvc.yaml")?,
-        r#"apiVersion: v1
-kind: PersistentVolumeClaim
-spec:
-  resources:
-    requests:
-      storage: {{ .Values.persistence.size | quote }}
-  {{- include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) | nindent 2 }}
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: PersistentVolumeClaim
+            spec:
+              resources:
+                requests:
+                  storage: {{ .Values.persistence.size | quote }}
+              {{- include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) | nindent 2 }}
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/charts/common/Chart.yaml")?,
-        "apiVersion: v2\nname: common\nversion: 0.1.0\ntype: library\n",
+        indoc! {"
+            apiVersion: v2
+            name: common
+            version: 0.1.0
+            type: library
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/charts/common/templates/_storage.tpl")?,
-        r#"{{- define "common.storage.class" -}}
-{{- $storageClass := (.global).storageClass | default .persistence.storageClass | default (.global).defaultStorageClass | default "" -}}
-{{- if $storageClass -}}
-storageClassName: {{ $storageClass }}
-{{- end -}}
-{{- end -}}
-"#,
+        indoc! {r#"
+            {{- define "common.storage.class" -}}
+            {{- $storageClass := (.global).storageClass | default .persistence.storageClass | default (.global).defaultStorageClass | default "" -}}
+            {{- if $storageClass -}}
+            storageClassName: {{ $storageClass }}
+            {{- end -}}
+            {{- end -}}
+        "#},
     )?;
 
     let opts = GenerateOptions {
@@ -1001,29 +1127,34 @@ fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "podAnnotations: {}\n")?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
-        r#"apiVersion: apps/v1
-kind: Deployment
-spec:
-  selector:
-    matchLabels:
-      app: demo
-  template:
-    metadata:
-      annotations:
-        checksum/secret: {{ "abc" | quote }}
-    {{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-    {{- end }}
-    spec:
-      containers:
-        - name: demo
-          image: nginx
-"#,
+        indoc! {r#"
+            apiVersion: apps/v1
+            kind: Deployment
+            spec:
+              selector:
+                matchLabels:
+                  app: demo
+              template:
+                metadata:
+                  annotations:
+                    checksum/secret: {{ "abc" | quote }}
+                {{- if .Values.podAnnotations }}
+            {{ toYaml .Values.podAnnotations | indent 8 }}
+                {{- end }}
+                spec:
+                  containers:
+                    - name: demo
+                      image: nginx
+        "#},
     )?;
 
     let opts = GenerateOptions {
@@ -1067,25 +1198,33 @@ fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> eyre::Res
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "global: {}\nimagePullSecrets: []\n",
+        indoc! {"
+            global: {}
+            imagePullSecrets: []
+        "},
     )?;
     test_util::write(
         &chart_dir.join("templates/pod.yaml")?,
-        r"apiVersion: v1
-kind: Pod
-spec:
-  {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
-  imagePullSecrets:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  containers:
-    - name: demo
-      image: nginx
-",
+        indoc! {r"
+            apiVersion: v1
+            kind: Pod
+            spec:
+              {{- with (.Values.imagePullSecrets | default .Values.global.imagePullSecrets) }}
+              imagePullSecrets:
+                {{- toYaml . | nindent 4 }}
+              {{- end }}
+              containers:
+                - name: demo
+                  image: nginx
+        "},
     )?;
 
     let opts = GenerateOptions {
@@ -1136,11 +1275,19 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> eyre::Result
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "image:\n  repository: example/app\n  tag: latest\n",
+        indoc! {"
+            image:
+              repository: example/app
+              tag: latest
+        "},
     )?;
     // Two parens forms: the common Helm idiom plus a double-paren
     // variant. Both should produce identical Field paths.
@@ -1209,14 +1356,22 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field() -> eyre
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     // values.yaml ships `tag` as an empty string so helm-schema has a type
     // signal to anchor the schema. An explicit null supplied by a user still
     // selects the downstream default and must remain valid.
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "image:\n  repository: example/app\n  tag: \"\"\n",
+        indoc! {r#"
+            image:
+              repository: example/app
+              tag: ""
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
@@ -1288,7 +1443,11 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: synth-nats\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: synth-nats
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -1380,7 +1539,11 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: synth-negative\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: synth-negative
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -1463,7 +1626,11 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre:
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: synth-branch-default\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: synth-branch-default
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -1543,7 +1710,11 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: hs-nested\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: hs-nested
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,

@@ -1,4 +1,5 @@
 use color_eyre::eyre;
+use indoc::indoc;
 
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
@@ -7,30 +8,31 @@ use super::local_resource_schemas_from_template_source;
 
 #[test]
 fn templated_metadata_crd_still_projects_local_schema() -> eyre::Result<()> {
-    let source = r#"apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: {{ printf "%s.example.com" "widgets" }}
-spec:
-  group: example.com
-  names:
-    kind: Widget
-    plural: widgets
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                size:
-                  type: integer
-"#;
+    let source = indoc! {r#"
+        apiVersion: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        metadata:
+          name: {{ printf "%s.example.com" "widgets" }}
+        spec:
+          group: example.com
+          names:
+            kind: Widget
+            plural: widgets
+          scope: Namespaced
+          versions:
+            - name: v1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: object
+                  properties:
+                    spec:
+                      type: object
+                      properties:
+                        size:
+                          type: integer
+    "#};
 
     let schemas =
         local_resource_schemas_from_template_source(source, "/chart/templates/crd.yaml", true)?;
@@ -50,22 +52,23 @@ spec:
 
 #[test]
 fn dynamic_schema_subtree_is_not_projected() -> eyre::Result<()> {
-    let source = r"apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-spec:
-  group: example.com
-  names:
-    kind: Widget
-    plural: widgets
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: {{ .Values.schemaType }}
-";
+    let source = indoc! {r"
+        apiVersion: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        spec:
+          group: example.com
+          names:
+            kind: Widget
+            plural: widgets
+          scope: Namespaced
+          versions:
+            - name: v1
+              served: true
+              storage: true
+              schema:
+                openAPIV3Schema:
+                  type: {{ .Values.schemaType }}
+    "};
 
     let schemas =
         local_resource_schemas_from_template_source(source, "/chart/templates/crd.yaml", true)?;

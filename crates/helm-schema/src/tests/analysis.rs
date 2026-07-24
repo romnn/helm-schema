@@ -1,4 +1,5 @@
 use color_eyre::eyre;
+use indoc::indoc;
 
 use helm_schema_ir::{Guard, ResourceRef, YamlPath};
 use helm_schema_k8s::{ChartLocalCrdSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider};
@@ -24,11 +25,10 @@ macro_rules! contract_schema_signals {
 fn one_variable_integer_range_emits_input_channel_diagnostic() {
     let defines = helm_schema_ast::DefineIndex::new();
     let signals = helm_schema_ir::SymbolicIrContext::new(&defines)
-        .generate_contract_ir(
-            r"{{- range .Values.servers }}
-{{ . | quote }}
-{{- end }}",
-        )
+        .generate_contract_ir(indoc! {r"
+            {{- range .Values.servers }}
+            {{ . | quote }}
+            {{- end }}"})
         .finalize()
         .into_schema_signals();
     let diagnostics = DiagnosticSink::new();
@@ -47,11 +47,10 @@ fn one_variable_integer_range_emits_input_channel_diagnostic() {
 fn two_variable_range_has_no_numeric_input_channel_ambiguity() {
     let defines = helm_schema_ast::DefineIndex::new();
     let signals = helm_schema_ir::SymbolicIrContext::new(&defines)
-        .generate_contract_ir(
-            r"{{- range $key, $value := .Values.servers }}
-{{ $key }}={{ $value }}
-{{- end }}",
-        )
+        .generate_contract_ir(indoc! {r"
+            {{- range $key, $value := .Values.servers }}
+            {{ $key }}={{ $value }}
+            {{- end }}"})
         .finalize()
         .into_schema_signals();
     let diagnostics = DiagnosticSink::new();
@@ -148,33 +147,51 @@ fn subchart_helper_render_with_guard_surfaces_scoped_self_guarded_fact() -> eyre
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    alias: kid\n    version: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "controller:\n  ingressClassResource:\n    parameters: {}\n",
+        indoc! {"
+            controller:
+              ingressClassResource:
+                parameters: {}
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/_helpers.tpl")?,
-        r#"{{- define "common.tplvalues.render" -}}
-{{- .value | toYaml -}}
-{{- end -}}
-"#,
+        indoc! {r#"
+            {{- define "common.tplvalues.render" -}}
+            {{- .value | toYaml -}}
+            {{- end -}}
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/ingressclass.yaml")?,
-        r#"apiVersion: networking.k8s.io/v1
-kind: IngressClass
-spec:
-  {{- with .Values.controller.ingressClassResource.parameters }}
-  parameters: {{ include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
-  {{- end }}
-"#,
+        indoc! {r#"
+            apiVersion: networking.k8s.io/v1
+            kind: IngressClass
+            spec:
+              {{- with .Values.controller.ingressClassResource.parameters }}
+              parameters: {{ include "common.tplvalues.render" (dict "value" . "context" $) | nindent 4 }}
+              {{- end }}
+        "#},
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -770,6 +787,10 @@ fn signoz_clickhouse_security_context_records_fragment_fact() -> eyre::Result<()
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the whole wrapper/library/app chart tree must be laid out in one test to exercise the transitive helper default"
+)]
 fn transitive_library_helper_default_flows_into_contract_requiredness_evidence() -> eyre::Result<()>
 {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
@@ -793,7 +814,12 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 
     test_util::write(
         &chart_dir.join("charts/liba/Chart.yaml")?,
-        "apiVersion: v2\nname: liba\nversion: 0.1.0\ntype: library\n",
+        indoc! {"
+            apiVersion: v2
+            name: liba
+            version: 0.1.0
+            type: library
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/liba/templates/_helpers.tpl")?,
@@ -806,7 +832,12 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 
     test_util::write(
         &chart_dir.join("charts/libb/Chart.yaml")?,
-        "apiVersion: v2\nname: libb\nversion: 0.1.0\ntype: library\n",
+        indoc! {"
+            apiVersion: v2
+            name: libb
+            version: 0.1.0
+            type: library
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/libb/templates/_helpers.tpl")?,
@@ -819,7 +850,11 @@ fn transitive_library_helper_default_flows_into_contract_requiredness_evidence()
 
     test_util::write(
         &chart_dir.join("charts/app/Chart.yaml")?,
-        "apiVersion: v2\nname: app\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: app
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/app/values.yaml")?,
@@ -1006,7 +1041,11 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
@@ -1014,13 +1053,14 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/configmap.yaml")?,
-        r#"apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: demo
-data:
-  enabled: "{{ .Values.enabled }}"
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: demo
+            data:
+              enabled: "{{ .Values.enabled }}"
+        "#},
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1153,7 +1193,11 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
     test_util::write(&chart_dir.join("charts/mid/values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/mid/charts/leaf/Chart.yaml")?,
-        "apiVersion: v2\nname: leaf\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: leaf
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/mid/charts/leaf/values.yaml")?,
@@ -1161,13 +1205,14 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
     )?;
     test_util::write(
         &chart_dir.join("charts/mid/charts/leaf/templates/configmap.yaml")?,
-        r#"apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: demo
-data:
-  enabled: "{{ .Values.enabled }}"
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: demo
+            data:
+              enabled: "{{ .Values.enabled }}"
+        "#},
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1228,45 +1273,57 @@ fn literal_crd_template_populates_chart_local_schema_universe() -> eyre::Result<
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "spec:\n  size: 1\n")?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            spec:
+              size: 1
+        "},
+    )?;
     test_util::write(
         &chart_dir.join("templates/crd.yaml")?,
-        r"apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: widgets.example.com
-spec:
-  group: example.com
-  names:
-    kind: Widget
-    plural: widgets
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
+        indoc! {r"
+            apiVersion: apiextensions.k8s.io/v1
+            kind: CustomResourceDefinition
+            metadata:
+              name: widgets.example.com
             spec:
-              type: object
-              properties:
-                size:
-                  type: integer
-",
+              group: example.com
+              names:
+                kind: Widget
+                plural: widgets
+              scope: Namespaced
+              versions:
+                - name: v1
+                  served: true
+                  storage: true
+                  schema:
+                    openAPIV3Schema:
+                      type: object
+                      properties:
+                        spec:
+                          type: object
+                          properties:
+                            size:
+                              type: integer
+        "},
     )?;
     test_util::write(
         &chart_dir.join("templates/widget.yaml")?,
-        r"apiVersion: example.com/v1
-kind: Widget
-metadata:
-  name: demo
-spec:
-  size: {{ .Values.spec.size }}
-",
+        indoc! {r"
+            apiVersion: example.com/v1
+            kind: Widget
+            metadata:
+              name: demo
+            spec:
+              size: {{ .Values.spec.size }}
+        "},
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1302,45 +1359,57 @@ fn templated_crd_template_populates_chart_local_schema_universe() -> eyre::Resul
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "spec:\n  size: 1\n")?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            spec:
+              size: 1
+        "},
+    )?;
     test_util::write(
         &chart_dir.join("templates/crd.yaml")?,
-        r#"apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: {{ printf "%s.example.com" "widgets" }}
-spec:
-  group: example.com
-  names:
-    kind: Widget
-    plural: widgets
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
+        indoc! {r#"
+            apiVersion: apiextensions.k8s.io/v1
+            kind: CustomResourceDefinition
+            metadata:
+              name: {{ printf "%s.example.com" "widgets" }}
             spec:
-              type: object
-              properties:
-                size:
-                  type: integer
-"#,
+              group: example.com
+              names:
+                kind: Widget
+                plural: widgets
+              scope: Namespaced
+              versions:
+                - name: v1
+                  served: true
+                  storage: true
+                  schema:
+                    openAPIV3Schema:
+                      type: object
+                      properties:
+                        spec:
+                          type: object
+                          properties:
+                            size:
+                              type: integer
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("templates/widget.yaml")?,
-        r"apiVersion: example.com/v1
-kind: Widget
-metadata:
-  name: demo
-spec:
-  size: {{ .Values.spec.size }}
-",
+        indoc! {r"
+            apiVersion: example.com/v1
+            kind: Widget
+            metadata:
+              name: demo
+            spec:
+              size: {{ .Values.spec.size }}
+        "},
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1381,41 +1450,68 @@ fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Resul
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    version: 0.1.0\n    condition: child.enabled\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                version: 0.1.0
+                condition: child.enabled
+        "},
     )?;
-    test_util::write(&chart_dir.join("values.yaml")?, "child:\n  enabled: true\n")?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            child:
+              enabled: true
+        "},
+    )?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
-        "enabled: true\nauth:\n  enabled: false\n  user: \"\"\n",
+        indoc! {r#"
+            enabled: true
+            auth:
+              enabled: false
+              user: ""
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/_helpers.tpl")?,
-        r#"{{- define "child.validateValues.auth" -}}
-{{- if and .Values.auth.enabled (not .Values.auth.user) }}
-child: auth.enabled
-    In order to enable authentication, you need to provide a user.
-{{- end -}}
-{{- end -}}
+        indoc! {r#"
+            {{- define "child.validateValues.auth" -}}
+            {{- if and .Values.auth.enabled (not .Values.auth.user) }}
+            child: auth.enabled
+                In order to enable authentication, you need to provide a user.
+            {{- end -}}
+            {{- end -}}
 
-{{- define "child.validateValues" -}}
-{{- $messages := list -}}
-{{- $messages := append $messages (include "child.validateValues.auth" .) -}}
-{{- $messages := without $messages "" -}}
-{{- $message := join "\n" $messages -}}
+            {{- define "child.validateValues" -}}
+            {{- $messages := list -}}
+            {{- $messages := append $messages (include "child.validateValues.auth" .) -}}
+            {{- $messages := without $messages "" -}}
+            {{- $message := join "\n" $messages -}}
 
-{{- if $message -}}
-{{-   printf "\nVALUES VALIDATION:\n%s" $message | fail -}}
-{{- end -}}
-{{- end -}}
-"#,
+            {{- if $message -}}
+            {{-   printf "\nVALUES VALIDATION:\n%s" $message | fail -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/NOTES.txt")?,
-        "Thank you for installing.\n{{- include \"child.validateValues\" . }}\n",
+        indoc! {r#"
+            Thank you for installing.
+            {{- include "child.validateValues" . }}
+        "#},
     )?;
 
     let charts = chart::discover_chart_contexts(&chart_dir)?;
@@ -1446,7 +1542,11 @@ fn tpl_executes_only_the_selected_chart_authored_default_program() -> eyre::Resu
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -1456,18 +1556,19 @@ fn tpl_executes_only_the_selected_chart_authored_default_program() -> eyre::Resu
     )?;
     test_util::write(
         &chart_dir.join("templates/secret.yaml")?,
-        r"apiVersion: v1
-kind: Secret
-metadata:
-  name: test
-{{- with .Values.auth }}
-{{- if .enabled }}
-stringData:
-  credentials: |
-    {{- tpl .program $ | nindent 4 }}
-{{- end }}
-{{- end }}
-",
+        indoc! {r"
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: test
+            {{- with .Values.auth }}
+            {{- if .enabled }}
+            stringData:
+              credentials: |
+                {{- tpl .program $ | nindent 4 }}
+            {{- end }}
+            {{- end }}
+        "},
     )?;
 
     let schema = crate::AnalysisSession::new(crate::GenerateOptions {

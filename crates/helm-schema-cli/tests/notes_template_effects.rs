@@ -9,41 +9,42 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use vfs::VfsPath;
 
-const CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-";
+const CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
+    version: 0.1.0
+"};
 
-const VALUES_YAML: &str = "\
-targetNamespaces: ~
-backupStorageLocation: ~
-";
+const VALUES_YAML: &str = indoc! {"
+    targetNamespaces: ~
+    backupStorageLocation: ~
+"};
 
-const NOTES: &str = "\
-Thank you for installing {{ .Chart.Name }}.
+const NOTES: &str = indoc! {r#"
+    Thank you for installing {{ .Chart.Name }}.
 
-Scanning namespaces: {{ tpl .Values.targetNamespaces . }}
+    Scanning namespaces: {{ tpl .Values.targetNamespaces . }}
 
-{{- $breaking := \"\" }}
-{{- if kindIs \"map\" .Values.backupStorageLocation }}
-{{- $breaking = print $breaking \"backupStorageLocation moved to the list form\" }}
-{{- end }}
-{{- if $breaking }}
-{{- fail $breaking }}
-{{- end }}
-";
+    {{- $breaking := "" }}
+    {{- if kindIs "map" .Values.backupStorageLocation }}
+    {{- $breaking = print $breaking "backupStorageLocation moved to the list form" }}
+    {{- end }}
+    {{- if $breaking }}
+    {{- fail $breaking }}
+    {{- end }}
+"#};
 
-const TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app
-data:
-  placeholder: \"static\"
-";
+const TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app
+    data:
+      placeholder: "static"
+"#};
 
 fn generated_schema() -> eyre::Result<serde_json::Value> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());

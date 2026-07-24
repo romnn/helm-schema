@@ -10,63 +10,64 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-const ROOT_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-dependencies:
-  - name: sub
+const ROOT_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
     version: 0.1.0
-";
+    dependencies:
+      - name: sub
+        version: 0.1.0
+"};
 
-const ROOT_VALUES_YAML: &str = "\
-port: 4222
-";
+const ROOT_VALUES_YAML: &str = indoc! {"
+    port: 4222
+"};
 
-const ROOT_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app
-data:
-  port: {{ .Values.port }}
-";
+const ROOT_TEMPLATE: &str = indoc! {"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app
+    data:
+      port: {{ .Values.port }}
+"};
 
-const SUB_CHART_YAML: &str = "\
-apiVersion: v2
-name: sub
-version: 0.1.0
-";
+const SUB_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: sub
+    version: 0.1.0
+"};
 
-const SUB_VALUES_YAML: &str = "\
-port: 4222
-";
+const SUB_VALUES_YAML: &str = indoc! {"
+    port: 4222
+"};
 
-const SUB_ENGINE_HELPERS: &str = r#"
-{{- define "sub.tplValues" -}}
-{{- $doc := .doc -}}
-{{- if and (eq (kindOf $doc) "map") (eq (len $doc) 1) (hasKey $doc "$tplYaml") -}}
-{{- $tpl := get $doc "$tplYaml" -}}
-{{- toJson (dict "doc" (fromYaml (tpl $tpl .ctx))) -}}
-{{- else -}}
-{{- toJson (dict "doc" $doc) -}}
-{{- end -}}
-{{- end -}}
-"#;
+const SUB_ENGINE_HELPERS: &str = indoc! {r#"
+    {{- define "sub.tplValues" -}}
+    {{- $doc := .doc -}}
+    {{- if and (eq (kindOf $doc) "map") (eq (len $doc) 1) (hasKey $doc "$tplYaml") -}}
+    {{- $tpl := get $doc "$tplYaml" -}}
+    {{- toJson (dict "doc" (fromYaml (tpl $tpl .ctx))) -}}
+    {{- else -}}
+    {{- toJson (dict "doc" $doc) -}}
+    {{- end -}}
+    {{- end -}}
+"#};
 
-const SUB_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: sub
-data:
-  port: {{ .Values.port }}
-{{- $values := get (include \"sub.tplValues\" (dict \"doc\" .Values \"ctx\" $) | fromJson) \"doc\" }}
-{{- $_ := set . \"Values\" $values }}
-";
+const SUB_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: sub
+    data:
+      port: {{ .Values.port }}
+    {{- $values := get (include "sub.tplValues" (dict "doc" .Values "ctx" $) | fromJson) "doc" }}
+    {{- $_ := set . "Values" $values }}
+"#};
 
 #[test]
 fn subchart_wrapper_engine_scopes_to_its_values_prefix() -> eyre::Result<()> {

@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// Go-template `eq`/`ne` against a STRING literal terminates on
 /// incomparable operand kinds — maps, lists, and mismatched scalars abort
@@ -134,7 +135,13 @@ fn constructed_collection_operands_do_not_retype_leaf_values() {
         data:
           merged: {{ merge $handler .Values.settings | toYaml | quote }}
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("healthPort: null\nsettings: {}\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            healthPort: null
+            settings: {}
+        "}),
+    );
 
     for health_port in [
         serde_json::json!(5556),
@@ -491,7 +498,13 @@ fn short_circuit_type_dispatch_preserves_candidate_partitions() {
             {{- end }}
           {{- end }}
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("primary: default\nfallback: {}\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            primary: default
+            fallback: {}
+        "}),
+    );
 
     for instance in [
         serde_json::json!({ "primary": "text", "fallback": { "ignored": true } }),
@@ -525,7 +538,11 @@ fn literal_index_records_guarded_cardinality_preconditions() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("enabled: true\nitems: [a, b]\neager: [a]\n"),
+        Some(indoc! {"
+            enabled: true
+            items: [a, b]
+            eager: [a]
+        "}),
     );
 
     for instance in [
@@ -565,7 +582,10 @@ fn split_index_projects_separator_cardinality_to_the_text_source() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("enabled: true\naddress: 0.0.0.0:9153\n"),
+        Some(indoc! {"
+            enabled: true
+            address: 0.0.0.0:9153
+        "}),
     );
 
     assert!(
@@ -607,7 +627,11 @@ fn certificate_signatures_constrain_nested_list_members() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("enabled: true\nextraIps: []\nextraDns: []\n"),
+        Some(indoc! {"
+            enabled: true
+            extraIps: []
+            extraDns: []
+        "}),
     );
 
     for instance in [
@@ -666,7 +690,11 @@ fn semver_parser_binds_lexical_operand_contract() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("enabled: true\nkubeVersion: v1.30.0\npipelineVersion: v1.30.0\n"),
+        Some(indoc! {"
+            enabled: true
+            kubeVersion: v1.30.0
+            pipelineVersion: v1.30.0
+        "}),
     );
 
     for version in [
@@ -741,7 +769,13 @@ fn substr_binds_string_subject_contract() {
           {{- end }}
           piped: {{ .Values.ref | substr 0 7 }}
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("tag: v1.2.3\nref: v1.2.3\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            tag: v1.2.3
+            ref: v1.2.3
+        "}),
+    );
 
     for instance in [
         serde_json::json!({ "tag": "sha256:abc", "ref": "v1.2.3" }),
@@ -792,7 +826,11 @@ fn substr_contract_projects_through_helper_arguments() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("cli:\n  image: repo/cli\n  tag: v1.2.3\n"),
+        Some(indoc! {"
+            cli:
+              image: repo/cli
+              tag: v1.2.3
+        "}),
     );
 
     for instance in [
@@ -842,7 +880,13 @@ fn conditional_literal_reassignment_excludes_the_sentinel_from_the_parser_domain
         metadata:
           name: test
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 7.68.2\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            image:
+              tag: 7.68.2
+        "}),
+    );
 
     for tag in ["latest", "1.26.0", "7.68.2-rc.1"] {
         let instance = serde_json::json!({ "image": { "tag": tag } });
@@ -883,7 +927,11 @@ fn conditional_reassignment_without_equality_sentinel_abstains() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("image:\n  tag: 7.68.2\n  floating: false\n"),
+        Some(indoc! {"
+            image:
+              tag: 7.68.2
+              floating: false
+        "}),
     );
 
     let instance = serde_json::json!({ "image": { "tag": "garbage", "floating": true } });
@@ -910,7 +958,13 @@ fn replace_chain_exempts_stripped_sentinels_from_the_parser_domain() {
         metadata:
           name: test
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 1.26.0\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            image:
+              tag: 1.26.0
+        "}),
+    );
 
     for tag in ["latest-1.26.0", "master", "1.26.0"] {
         let instance = serde_json::json!({ "image": { "tag": tag } });
@@ -942,7 +996,13 @@ fn split_prefix_member_exempts_digest_suffixes_from_the_parser_domain() {
         metadata:
           name: test
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 1.26.0\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            image:
+              tag: 1.26.0
+        "}),
+    );
 
     for tag in ["1.26.0@sha256:0123abcd", "1.26.0"] {
         let instance = serde_json::json!({ "image": { "tag": tag } });
@@ -983,7 +1043,10 @@ fn helper_replace_chain_keeps_escape_qualified_identity_at_the_consumer() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("image:\n  tag:\n"),
+        Some(indoc! {"
+            image:
+              tag:
+        "}),
     );
 
     for tag in [
@@ -1024,8 +1087,14 @@ fn dynamic_transform_after_escape_stage_makes_the_parser_abstain() {
         metadata:
           name: test
     "#};
-    let schema =
-        schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 1.26.0\n  strip: xyz\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            image:
+              tag: 1.26.0
+              strip: xyz
+        "}),
+    );
 
     let instance = serde_json::json!({ "image": { "tag": "garbage", "strip": "garbage" } });
     assert!(
@@ -1051,7 +1120,11 @@ fn semver_parser_abstains_across_unpartitioned_local_choices() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("usePrimary: true\nprimaryVersion: v1.30.0\nfallbackVersion: v1.29.0\n"),
+        Some(indoc! {"
+            usePrimary: true
+            primaryVersion: v1.30.0
+            fallbackVersion: v1.29.0
+        "}),
     );
 
     for instance in [
@@ -1087,7 +1160,11 @@ fn ternary_selected_semver_local_keeps_candidate_partitions() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("usePrimary: true\nprimaryVersion: v1.30.0\nfallbackVersion: v1.29.0\n"),
+        Some(indoc! {"
+            usePrimary: true
+            primaryVersion: v1.30.0
+            fallbackVersion: v1.29.0
+        "}),
     );
 
     for instance in [
@@ -1136,7 +1213,11 @@ fn duration_and_url_parsers_bind_lexical_domains() {
     "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("enabled: true\nduration: 30s\nurl: https://example.com\n"),
+        Some(indoc! {"
+            enabled: true
+            duration: 30s
+            url: https://example.com
+        "}),
     );
 
     assert!(
@@ -1541,7 +1622,10 @@ fn helper_range_header_keeps_join_conversion_boundary() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("enabled: true\nnamespaces: []\n"),
+        Some(indoc! {"
+            enabled: true
+            namespaces: []
+        "}),
     );
 
     for namespaces in [
@@ -1692,10 +1776,15 @@ fn type_dispatch_survives_approximate_liveness_guard() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("expanderPriorities: {}\nenabled: true\n"),
+        Some(indoc! {"
+            expanderPriorities: {}
+            enabled: true
+        "}),
     );
     for instance in [
-        serde_json::json!({ "expanderPriorities": "10:\n  - .*" }),
+        serde_json::json!({ "expanderPriorities": indoc! {"
+            10:
+              - .*"} }),
         serde_json::json!({ "expanderPriorities": { "10": [".*"] } }),
     ] {
         assert!(
@@ -1739,7 +1828,12 @@ fn ranged_member_field_contract_survives_foreign_key_selected_range() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("server:\n  remoteWrite: []\nserverFiles:\n  prometheus.yml: {}\n"),
+        Some(indoc! {"
+            server:
+              remoteWrite: []
+            serverFiles:
+              prometheus.yml: {}
+        "}),
     );
     for instance in [
         serde_json::json!({ "server": { "remoteWrite": [{ "url": "http://x" }] } }),
@@ -1782,7 +1876,14 @@ fn regex_strip_and_trim_prefix_carry_the_parser_preimage() {
         metadata:
           name: test
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("ui:\n  backend:\n    tag: v0.13.5\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            ui:
+              backend:
+                tag: v0.13.5
+        "}),
+    );
 
     for (instance, want) in [
         (
@@ -1954,7 +2055,11 @@ fn regex_match_over_type_of_dispatches_numeric_kinds() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("pdb:\n  minAvailable: 1\n  maxUnavailable: \"\"\n"),
+        Some(indoc! {r#"
+            pdb:
+              minAvailable: 1
+              maxUnavailable: ""
+        "#}),
     );
 
     for (instance, want) in [

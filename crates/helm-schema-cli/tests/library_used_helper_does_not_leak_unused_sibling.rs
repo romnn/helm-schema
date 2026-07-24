@@ -17,69 +17,70 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-const WRAPPER_CHART_YAML: &str = "\
-apiVersion: v2
-name: wrapper
-version: 0.1.0
-dependencies:
-  - name: common
+const WRAPPER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: wrapper
     version: 0.1.0
-  - name: app
+    dependencies:
+      - name: common
+        version: 0.1.0
+      - name: app
+        version: 0.1.0
+"};
+
+const WRAPPER_VALUES_YAML: &str = indoc! {"
+    app: {}
+"};
+
+const LIBRARY_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: common
     version: 0.1.0
-";
-
-const WRAPPER_VALUES_YAML: &str = "\
-app: {}
-";
-
-const LIBRARY_CHART_YAML: &str = "\
-apiVersion: v2
-name: common
-version: 0.1.0
-type: library
-";
+    type: library
+"};
 
 // Two defines in one library:
 //   - `common.labels`       gets included by the app
 //   - `common.unusedReplicas` is NEVER included by anyone but carries
 //     a literal default that the previous code would have leaked
-const LIBRARY_HELPERS: &str = "\
-{{- define \"common.labels\" -}}
-app.kubernetes.io/name: {{ .Chart.Name }}
-{{- end -}}
+const LIBRARY_HELPERS: &str = indoc! {r#"
+    {{- define "common.labels" -}}
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    {{- end -}}
 
-{{- define \"common.unusedReplicas\" -}}
-{{- default 5 .Values.replicas -}}
-{{- end -}}
-";
+    {{- define "common.unusedReplicas" -}}
+    {{- default 5 .Values.replicas -}}
+    {{- end -}}
+"#};
 
-const APP_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-";
+const APP_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
+    version: 0.1.0
+"};
 
 // App includes only `common.labels` — never `common.unusedReplicas`.
 // It references `.Values.replicas` directly. The unused helper's
 // literal default must not influence the app's `replicas` schema.
-const APP_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app
-  labels:
-    {{- include \"common.labels\" . | nindent 4 }}
-data:
-  replicas: \"{{ .Values.replicas }}\"
-";
+const APP_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app
+      labels:
+        {{- include "common.labels" . | nindent 4 }}
+    data:
+      replicas: "{{ .Values.replicas }}"
+"#};
 
-const APP_VALUES_YAML: &str = "\
-replicas: ~
-";
+const APP_VALUES_YAML: &str = indoc! {"
+    replicas: ~
+"};
 
 #[test]
 fn unused_helper_in_used_library_does_not_leak_type_hint() -> eyre::Result<()> {
@@ -171,18 +172,18 @@ fn unused_helper_in_used_library_does_not_perturb_infer_required() -> eyre::Resu
     // stricter semantics this remains optional. The app does NOT
     // include `common.unusedReplicas`, so the unused helper must not
     // perturb that result either.
-    let app_template_with_if = "\
-{{- if .Values.replicas }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app
-  labels:
-    {{- include \"common.labels\" . | nindent 4 }}
-data:
-  replicas: \"{{ .Values.replicas }}\"
-{{- end }}
-";
+    let app_template_with_if = indoc! {r#"
+        {{- if .Values.replicas }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: app
+          labels:
+            {{- include "common.labels" . | nindent 4 }}
+        data:
+          replicas: "{{ .Values.replicas }}"
+        {{- end }}
+    "#};
     test_util::write(
         &chart_dir.join("charts/app/templates/cm.yaml")?,
         app_template_with_if,

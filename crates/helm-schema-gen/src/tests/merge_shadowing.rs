@@ -31,7 +31,10 @@ fn shadowed_merge_layer_binds_members_only_where_unshadowed() {
     "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("podSecurityContext: {}\nsecurityContext: {}\n"),
+        Some(indoc! {"
+            podSecurityContext: {}
+            securityContext: {}
+        "}),
     );
     for (instance, want) in [
         // An active legacy member reaches the rendered slot and must type.
@@ -105,7 +108,14 @@ fn merged_member_projection_reaches_both_layers() {
                 - {{ . }}
                 {{- end }}
     "#};
-    let values = "features:\n  logging:\n    format: text\n    verbosity: 2\nctrl:\n  featuresOverride: {}\n";
+    let values = indoc! {"
+        features:
+          logging:
+            format: text
+            verbosity: 2
+        ctrl:
+          featuresOverride: {}
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values));
     for (instance, want, label) in [
         (
@@ -154,7 +164,13 @@ fn merge_overwrite_reverses_layer_precedence() {
               containers:
                 - name: main
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("legacy: {}\npreferred: {}\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            legacy: {}
+            preferred: {}
+        "}),
+    );
     for (instance, want) in [
         (
             serde_json::json!({ "legacy": { "runAsUser": { "bad": true } } }),
@@ -204,7 +220,10 @@ fn fresh_dict_merge_layers_type_dynamic_members_with_shadow_refinement() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("additionalRuleAnnotations: {}\nadditionalRuleGroupAnnotations: {}\n"),
+        Some(indoc! {"
+            additionalRuleAnnotations: {}
+            additionalRuleGroupAnnotations: {}
+        "}),
     );
     for (instance, want) in [
         (
@@ -294,9 +313,14 @@ fn candidate_selection_helper_binds_provider_payload_through_scope_list() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some(
-            "uid: 50000\nworkers:\n  securityContexts: {}\n  securityContext: {}\nsecurityContexts: {}\nsecurityContext: {}\n",
-        ),
+        Some(indoc! {"
+            uid: 50000
+            workers:
+              securityContexts: {}
+              securityContext: {}
+            securityContexts: {}
+            securityContext: {}
+        "}),
     );
     for (instance, want) in [
         (
@@ -414,9 +438,15 @@ fn nil_scrubbed_merge_helper_layers_bind_candidate_provider_payloads() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some(
-            "uid: 50000\nworkers:\n  securityContexts: {}\n  celery:\n    securityContexts: {}\nsecurityContexts: {}\nsecurityContext: {}\n",
-        ),
+        Some(indoc! {"
+            uid: 50000
+            workers:
+              securityContexts: {}
+              celery:
+                securityContexts: {}
+            securityContexts: {}
+            securityContext: {}
+        "}),
     );
     for (instance, want) in [
         (
@@ -767,9 +797,14 @@ fn per_set_merge_layers_bind_without_the_reroot() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some(
-            "uid: 50000\nworkers:\n  securityContexts: {}\n  celery:\n    sets: []\n    securityContexts: {}\n",
-        ),
+        Some(indoc! {"
+            uid: 50000
+            workers:
+              securityContexts: {}
+              celery:
+                sets: []
+                securityContexts: {}
+        "}),
     );
     for (instance, want, label) in [
         (

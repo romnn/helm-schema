@@ -2,22 +2,23 @@ use super::{
     HelmRenderCase, HelperParseMode, ProviderKind, RenderedManifestValidationCase,
     RenderedSchemaProviderKind, SchemaBehaviorCase, SchemaCorpusCase, SchemaExpectation,
 };
+use indoc::indoc;
 
-const SURVEYOR_CONFIGMAP_FIXTURE_VALUES: &str = r#"
-nameOverride: ""
-fullnameOverride: ""
-config:
-  jetstream:
-    enabled: false
-    accounts:
-      - name: test
-        username: username
-        password: password
-        tls:
-          ca: ca.crt
-          cert: tls.crt
-          key: tls.key
-"#;
+const SURVEYOR_CONFIGMAP_FIXTURE_VALUES: &str = indoc! {r#"
+    nameOverride: ""
+    fullnameOverride: ""
+    config:
+      jetstream:
+        enabled: false
+        accounts:
+          - name: test
+            username: username
+            password: password
+            tls:
+              ca: ca.crt
+              cert: tls.crt
+              key: tls.key
+"#};
 
 pub const BITNAMI_REDIS_NETWORKPOLICY: SchemaCorpusCase<'static> = SchemaCorpusCase {
     template_path: "charts/bitnami-redis/templates/networkpolicy.yaml",

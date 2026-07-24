@@ -1,3 +1,4 @@
+use indoc::indoc;
 use std::collections::BTreeSet;
 
 use crate::contract::{ContractIr, ContractUse};
@@ -1248,16 +1249,14 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
 
 #[test]
 fn unsupported_conditional_row_does_not_promote_sink_evidence() {
-    let signals = signals_for_template(
-        r#"
-{{- if semverCompare ">=1.0.0" .Values.version }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.name }}
-{{- end }}
-"#,
-    );
+    let signals = signals_for_template(indoc! {r#"
+        {{- if semverCompare ">=1.0.0" .Values.version }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ .Values.name }}
+        {{- end }}
+    "#});
     assert!(
         signals
             .evidence_for("name")
@@ -1283,19 +1282,17 @@ metadata:
 
 #[test]
 fn foreign_range_does_not_globalize_strict_consumer() {
-    let signals = signals_for_template(
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test
-data:
-  keys: |
-    {{- range .Values.items }}
-    {{ keys $.Values.config | join "," }}
-    {{- end }}
-"#,
-    );
+    let signals = signals_for_template(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          keys: |
+            {{- range .Values.items }}
+            {{ keys $.Values.config | join "," }}
+            {{- end }}
+    "#});
     let evidence = signals
         .evidence_for("config")
         .expect("strict consumer evidence");
@@ -1318,23 +1315,21 @@ data:
 
 #[test]
 fn nested_member_range_abstains_under_unlowerable_outer_guard() {
-    let signals = signals_for_template(
-        r#"
-{{- if semverCompare ">=1.0.0" .Values.version }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test
-data:
-  values: |
-    {{- range $group := .Values.groups }}
-    {{- range $item := $group }}
-    {{ $item }}
-    {{- end }}
-    {{- end }}
-{{- end }}
-"#,
-    );
+    let signals = signals_for_template(indoc! {r#"
+        {{- if semverCompare ">=1.0.0" .Values.version }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          values: |
+            {{- range $group := .Values.groups }}
+            {{- range $item := $group }}
+            {{ $item }}
+            {{- end }}
+            {{- end }}
+        {{- end }}
+    "#});
     assert!(
         signals.evidence_for("groups").is_none_or(|evidence| {
             !evidence.fail_implications.iter().any(|implication| {
@@ -1351,22 +1346,20 @@ data:
 
 #[test]
 fn unlowerable_mixed_guard_retains_its_values_path_reference() {
-    let signals = signals_for_template(
-        r#"
-{{- if .Values.alertmanager.enabled }}
-{{- if .Values.alertmanager.ingress.enabled }}
-{{- if and .Values.alertmanager.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test
-data:
-  class: {{ .Values.alertmanager.ingress.className }}
-{{- end }}
-{{- end }}
-{{- end }}
-"#,
-    );
+    let signals = signals_for_template(indoc! {r#"
+        {{- if .Values.alertmanager.enabled }}
+        {{- if .Values.alertmanager.ingress.enabled }}
+        {{- if and .Values.alertmanager.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          class: {{ .Values.alertmanager.ingress.className }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "#});
 
     let evidence = signals
         .evidence_for("alertmanager.ingress.className")
@@ -1395,19 +1388,17 @@ fn member_row_without_direct_range_identity_does_not_seed_schema_paths() {
 
 #[test]
 fn direct_ranged_nested_sentinel_retains_its_member_contract() {
-    let signals = signals_for_template(
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test
-data:
-  rendered: |
-    {{- range $entry := .Values.entries }}
-    {{ tpl (get $entry "$tplYaml") $ }}
-    {{- end }}
-"#,
-    );
+    let signals = signals_for_template(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          rendered: |
+            {{- range $entry := .Values.entries }}
+            {{ tpl (get $entry "$tplYaml") $ }}
+            {{- end }}
+    "#});
 
     let evidence = signals
         .evidence_for("entries.*.$tplYaml")
@@ -1427,13 +1418,11 @@ data:
 
 #[test]
 fn get_on_destructured_range_value_requires_object_members() {
-    let signals = signals_for_template(
-        r#"
-{{- range $name, $context := .Values.contexts }}
-{{- $_ := get $context "creds" }}
-{{- end }}
-"#,
-    );
+    let signals = signals_for_template(indoc! {r#"
+        {{- range $name, $context := .Values.contexts }}
+        {{- $_ := get $context "creds" }}
+        {{- end }}
+    "#});
     let evidence = signals
         .evidence_for("contexts")
         .expect("direct range evidence");

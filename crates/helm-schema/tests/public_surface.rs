@@ -9,6 +9,7 @@ use helm_schema::{
     contract::{ContractDocument, Guard, ValueKind},
     diagnostics::DiagnosticSink,
 };
+use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
@@ -51,22 +52,29 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "# -- Whether the config map is enabled\nenabled: true\n",
+        indoc! {"
+            # -- Whether the config map is enabled
+            enabled: true
+        "},
     )?;
     test_util::write(
         &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  enabled: "{{ .Values.enabled }}"
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              enabled: "{{ .Values.enabled }}"
+        "#},
     )?;
 
     let versions = K8sVersionChain::new(vec!["v1.35.0".to_string()], Some(1)).ordered();
@@ -131,19 +139,23 @@ fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> 
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "replicas: 1\n")?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
-        r"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: root
-spec:
-  replicas: {{ .Values.replicas }}
-",
+        indoc! {r"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: root
+            spec:
+              replicas: {{ .Values.replicas }}
+        "},
     )?;
 
     let opts = GenerateOptions {
@@ -212,7 +224,11 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -323,7 +339,11 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
@@ -387,19 +407,23 @@ fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "replicas: 1\n")?;
     test_util::write(
         &chart_dir.join("templates/deployment.yaml")?,
-        r"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: root
-spec:
-  replicas: {{ .Values.replicas }}
-",
+        indoc! {r"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: root
+            spec:
+              replicas: {{ .Values.replicas }}
+        "},
     )?;
 
     let opts = GenerateOptions {
@@ -439,36 +463,45 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "mode: unsafe\nserviceAccount:\n  create: false\n",
+        indoc! {"
+            mode: unsafe
+            serviceAccount:
+              create: false
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.schema.json")?,
-        r#"{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "mode": {
-      "enum": ["safe", "fast"]
-    }
-  }
-}"#,
+        indoc! {r#"
+            {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "enum": ["safe", "fast"]
+                }
+              }
+            }"#},
     )?;
     test_util::write(
         &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-{{- if .Values.serviceAccount.create }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  mode: "{{ .Values.mode }}"
-{{- end }}
-"#,
+        indoc! {r#"
+            {{- if .Values.serviceAccount.create }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              mode: "{{ .Values.mode }}"
+            {{- end }}
+        "#},
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
@@ -558,22 +591,29 @@ fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "# -- Whether the config map is enabled\nenabled: true\n",
+        indoc! {"
+            # -- Whether the config map is enabled
+            enabled: true
+        "},
     )?;
     test_util::write(
         &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  enabled: "{{ .Values.enabled }}"
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              enabled: "{{ .Values.enabled }}"
+        "#},
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
@@ -641,7 +681,11 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/values.yaml")?,
@@ -649,14 +693,14 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: demo
-data:
-  enabled: "{{ .Values.enabled }}"
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: demo
+            data:
+              enabled: "{{ .Values.enabled }}"
+        "#},
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
@@ -740,11 +784,18 @@ fn contract_document_json_round_trip_preserves_provenance_and_guards() -> eyre::
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(
         &chart_dir.join("values.yaml")?,
-        "enabled: true\nmessage: hello\n",
+        indoc! {"
+            enabled: true
+            message: hello
+        "},
     )?;
     test_util::write(
         &chart_dir.join("templates/_helpers.tpl")?,
@@ -809,27 +860,31 @@ fn analysis_session_explains_helper_origin_provenance() -> eyre::Result<()> {
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "message: hello\n")?;
     test_util::write(
         &chart_dir.join("templates/_helpers.tpl")?,
-        r#"
-{{- define "root.renderMessage" -}}
-{{ .Values.message }}
-{{- end -}}
-"#,
+        indoc! {r#"
+            {{- define "root.renderMessage" -}}
+            {{ .Values.message }}
+            {{- end -}}
+        "#},
     )?;
     test_util::write(
         &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  message: {{ include "root.renderMessage" . }}
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              message: {{ include "root.renderMessage" . }}
+        "#},
     )?;
 
     let session = AnalysisSession::new(GenerateOptions {
@@ -885,17 +940,21 @@ fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()>
     test_util::write(&chart_dir.join("values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("charts/child/values.yaml")?, "{}\n")?;
     test_util::write(
         &chart_dir.join("charts/child/templates/configmap.yaml")?,
-        r"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.name | trunc 63 | quote }}
-",
+        indoc! {r"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {{ .Values.name | trunc 63 | quote }}
+        "},
     )?;
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {
@@ -963,31 +1022,36 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
 
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
     test_util::write(&chart_dir.join("values.yaml")?, "mode: unsafe\n")?;
     test_util::write(
         &chart_dir.join("values.schema.json")?,
-        r#"{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "mode": {
-      "enum": ["safe", "fast"]
-    }
-  }
-}"#,
+        indoc! {r#"
+            {
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "enum": ["safe", "fast"]
+                }
+              }
+            }"#},
     )?;
     test_util::write(
         &chart_dir.join("templates/configmap.yaml")?,
-        r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root
-data:
-  mode: "{{ .Values.mode }}"
-"#,
+        indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: root
+            data:
+              mode: "{{ .Values.mode }}"
+        "#},
     )?;
 
     let schema = generate_values_schema_for_chart(&GenerateOptions {

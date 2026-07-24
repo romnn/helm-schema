@@ -15,75 +15,76 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use serde_json::Value;
 use vfs::VfsPath;
 
-const WRAPPER_CHART_YAML: &str = "\
-apiVersion: v2
-name: wrapper
-version: 0.1.0
-dependencies:
-  - name: liba
+const WRAPPER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: wrapper
     version: 0.1.0
-  - name: libb
-    version: 0.1.0
-  - name: app
-    version: 0.1.0
-";
+    dependencies:
+      - name: liba
+        version: 0.1.0
+      - name: libb
+        version: 0.1.0
+      - name: app
+        version: 0.1.0
+"};
 
-const WRAPPER_VALUES_YAML: &str = "\
-app: {}
-";
+const WRAPPER_VALUES_YAML: &str = indoc! {"
+    app: {}
+"};
 
-const LIBA_CHART_YAML: &str = "\
-apiVersion: v2
-name: liba
-version: 0.1.0
-type: library
-";
+const LIBA_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: liba
+    version: 0.1.0
+    type: library
+"};
 
 // libA's only helper calls libB's helper.
-const LIBA_HELPERS: &str = "\
-{{- define \"liba.fullname\" -}}
-{{- include \"libb.name\" . -}}
-{{- end -}}
-";
+const LIBA_HELPERS: &str = indoc! {r#"
+    {{- define "liba.fullname" -}}
+    {{- include "libb.name" . -}}
+    {{- end -}}
+"#};
 
-const LIBB_CHART_YAML: &str = "\
-apiVersion: v2
-name: libb
-version: 0.1.0
-type: library
-";
+const LIBB_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: libb
+    version: 0.1.0
+    type: library
+"};
 
 // libB's helper carries the `default` signal — `nameOverride` has a
 // non-literal fallback through `.Chart.Name`.
-const LIBB_HELPERS: &str = "\
-{{- define \"libb.name\" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" -}}
-{{- end -}}
-";
+const LIBB_HELPERS: &str = indoc! {r#"
+    {{- define "libb.name" -}}
+    {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+    {{- end -}}
+"#};
 
-const APP_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-";
+const APP_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
+    version: 0.1.0
+"};
 
 // App directly includes liba.fullname only. The signal it depends on
 // lives in libb.name, two hops away.
-const APP_TEMPLATE: &str = "\
-{{- if .Values.nameOverride }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include \"liba.fullname\" . }}
-{{- end }}
-";
+const APP_TEMPLATE: &str = indoc! {r#"
+    {{- if .Values.nameOverride }}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: {{ include "liba.fullname" . }}
+    {{- end }}
+"#};
 
-const APP_VALUES_YAML: &str = "\
-nameOverride: ~
-";
+const APP_VALUES_YAML: &str = indoc! {"
+    nameOverride: ~
+"};
 
 #[test]
 fn transitive_library_include_chain_propagates_fallback() -> eyre::Result<()> {

@@ -1,4 +1,5 @@
 use super::extract_define_blocks;
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -61,42 +62,42 @@ fn extracts_single_line_define_body_between_actions() {
     sim_assert_eq!(have: blocks[0].body_offset, want: 28);
 }
 
-const WORKERS_MERGE_DEFINE: &str = r#"
-{{- define "workersMergeValues" -}}
-  {{- $inputMap := index . 0 -}}
-  {{- $overwriteMap := index . 1 -}}
-  {{- $sectionName := index . 2 -}}
-  {{- $orBoolean := index . 3 -}}
-  {{- $outputMap := dict -}}
+const WORKERS_MERGE_DEFINE: &str = indoc! {r#"
+    {{- define "workersMergeValues" -}}
+      {{- $inputMap := index . 0 -}}
+      {{- $overwriteMap := index . 1 -}}
+      {{- $sectionName := index . 2 -}}
+      {{- $orBoolean := index . 3 -}}
+      {{- $outputMap := dict -}}
 
-  {{- $fullOverwrite := list "annotations" "labels" "resources" -}}
+      {{- $fullOverwrite := list "annotations" "labels" "resources" -}}
 
-  {{- range $key, $val := $inputMap -}}
-    {{- if and (hasKey $overwriteMap $key) (has $key $fullOverwrite) -}}
-      {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
-    {{- else if and (hasKey $overwriteMap $key) (kindIs "map" $val) -}}
-      {{- $nested := include "workersMergeValues" (list $val (get $overwriteMap $key) $key $orBoolean) | fromYaml -}}
-      {{- if gt (len $nested) 0 -}}
-        {{- $_ := set $outputMap $key $nested -}}
+      {{- range $key, $val := $inputMap -}}
+        {{- if and (hasKey $overwriteMap $key) (has $key $fullOverwrite) -}}
+          {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+        {{- else if and (hasKey $overwriteMap $key) (kindIs "map" $val) -}}
+          {{- $nested := include "workersMergeValues" (list $val (get $overwriteMap $key) $key $orBoolean) | fromYaml -}}
+          {{- if gt (len $nested) 0 -}}
+            {{- $_ := set $outputMap $key $nested -}}
+          {{- end -}}
+        {{- else if and (hasKey $overwriteMap $key) (not (and (kindIs "slice" (get $overwriteMap $key)) (eq (len (get $overwriteMap $key)) 0))) -}}
+          {{- if and (kindIs "bool" $val) (has $sectionName $orBoolean) -}}
+            {{- $_ := set $outputMap $key (or $val (get $overwriteMap $key)) -}}
+          {{- else -}}
+            {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+          {{- end -}}
+        {{- else -}}
+          {{- $_ := set $outputMap $key $val -}}
+        {{- end -}}
       {{- end -}}
-    {{- else if and (hasKey $overwriteMap $key) (not (and (kindIs "slice" (get $overwriteMap $key)) (eq (len (get $overwriteMap $key)) 0))) -}}
-      {{- if and (kindIs "bool" $val) (has $sectionName $orBoolean) -}}
-        {{- $_ := set $outputMap $key (or $val (get $overwriteMap $key)) -}}
-      {{- else -}}
-        {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+      {{- range $key, $val := $overwriteMap -}}
+        {{- if not (hasKey $inputMap $key) -}}
+          {{- $_ := set $outputMap $key $val -}}
+        {{- end -}}
       {{- end -}}
-    {{- else -}}
-      {{- $_ := set $outputMap $key $val -}}
+      {{- toYaml $outputMap -}}
     {{- end -}}
-  {{- end -}}
-  {{- range $key, $val := $overwriteMap -}}
-    {{- if not (hasKey $inputMap $key) -}}
-      {{- $_ := set $outputMap $key $val -}}
-    {{- end -}}
-  {{- end -}}
-  {{- toYaml $outputMap -}}
-{{- end -}}
-"#;
+"#};
 
 #[test]
 fn recognizes_recursive_custom_merge_helper() {

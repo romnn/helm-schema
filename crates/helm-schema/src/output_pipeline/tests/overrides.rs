@@ -1,3 +1,4 @@
+use indoc::indoc;
 use std::fs;
 use std::path::PathBuf;
 use test_util::prelude::sim_assert_eq;
@@ -38,25 +39,27 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
     fs::create_dir_all(&temp_dir).expect("create temp dir");
     fs::write(
         temp_dir.join("shared.json"),
-        r#"{
-            "definitions": {
-                "cloud": {
-                    "enum": [null, "azure", "minikube"]
+        indoc! {r#"
+            {
+                "definitions": {
+                    "cloud": {
+                        "enum": [null, "azure", "minikube"]
+                    }
                 }
-            }
-        }"#,
+            }"#},
     )
     .expect("write shared schema");
     let override_path = temp_dir.join("override.json");
     fs::write(
         &override_path,
-        r#"{
-            "properties": {
-                "cloud": {
-                    "$ref": "./shared.json#/definitions/cloud"
+        indoc! {r#"
+            {
+                "properties": {
+                    "cloud": {
+                        "$ref": "./shared.json#/definitions/cloud"
+                    }
                 }
-            }
-        }"#,
+            }"#},
     )
     .expect("write override schema");
 
@@ -103,25 +106,27 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
     fs::create_dir_all(&temp_dir).expect("create temp dir");
     fs::write(
         temp_dir.join("shared.json"),
-        r#"{
-            "definitions": {
-                "cloud": {
-                    "enum": [null, "azure", "minikube"]
+        indoc! {r#"
+            {
+                "definitions": {
+                    "cloud": {
+                        "enum": [null, "azure", "minikube"]
+                    }
                 }
-            }
-        }"#,
+            }"#},
     )
     .expect("write shared schema");
     let override_path = temp_dir.join("override.json");
     fs::write(
         &override_path,
-        r#"{
-            "properties": {
-                "cloud": {
-                    "$ref": "./shared.json#/definitions/cloud"
+        indoc! {r#"
+            {
+                "properties": {
+                    "cloud": {
+                        "$ref": "./shared.json#/definitions/cloud"
+                    }
                 }
-            }
-        }"#,
+            }"#},
     )
     .expect("write override schema");
 
@@ -162,13 +167,14 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
     let override_path = temp_dir.join("override.json");
     fs::write(
         &override_path,
-        r#"{
-            "properties": {
-                "cloud": {
-                    "$ref": "./shared.json#/definitions/cloud"
+        indoc! {r#"
+            {
+                "properties": {
+                    "cloud": {
+                        "$ref": "./shared.json#/definitions/cloud"
+                    }
                 }
-            }
-        }"#,
+            }"#},
     )
     .expect("write override schema");
 

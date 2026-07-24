@@ -1,16 +1,15 @@
 use super::*;
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
 fn extracts_sorted_top_level_mapping_keys_only() {
-    let roots = ValuesRoots::from_values_yaml(Some(
-        r#"
-z:
-  nested: true
-a: 1
-"quoted": value
-"#,
-    ));
+    let roots = ValuesRoots::from_values_yaml(Some(indoc! {r#"
+        z:
+          nested: true
+        a: 1
+        "quoted": value
+    "#}));
 
     sim_assert_eq!(
         have: roots.top_level_paths,
@@ -39,16 +38,14 @@ fn ignores_non_mapping_documents_and_empty_keys() {
 
 #[test]
 fn mapping_root_paths_distinguish_structured_values_roots() {
-    let roots = ValuesRoots::from_values_yaml(Some(
-        r"
-object:
-  nested: true
-empty: {}
-scalar: value
-list:
-  - item
-",
-    ));
+    let roots = ValuesRoots::from_values_yaml(Some(indoc! {r"
+        object:
+          nested: true
+        empty: {}
+        scalar: value
+        list:
+          - item
+    "}));
 
     sim_assert_eq!(
         have: roots.top_level_mapping_paths,
@@ -58,17 +55,15 @@ list:
 
 #[test]
 fn extracts_nested_explicit_mapping_paths() {
-    let roots = ValuesRoots::from_values_yaml(Some(
-        r"
-controller:
-  kind: Deployment
-  admissionWebhooks:
-    enabled: true
-tcp: {}
-items:
-  - name: first
-",
-    ));
+    let roots = ValuesRoots::from_values_yaml(Some(indoc! {r"
+        controller:
+          kind: Deployment
+          admissionWebhooks:
+            enabled: true
+        tcp: {}
+        items:
+          - name: first
+    "}));
 
     sim_assert_eq!(
         have: roots.explicit_paths,

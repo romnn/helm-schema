@@ -1,3 +1,4 @@
+use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
@@ -16,7 +17,10 @@ use test_util::prelude::sim_assert_eq;
 fn wrapped_with_program_keeps_exact_else_requirements() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);
-    let source = "program: |-\n  {{- with $tenants := .Values.tenants }}{{ $tenants }}{{- else }}{{ required \"username required\" .Values.auth.username }}{{- end }}\n";
+    let source = indoc! {r#"
+        program: |-
+          {{- with $tenants := .Values.tenants }}{{ $tenants }}{{- else }}{{ required "username required" .Values.auth.username }}{{- end }}
+    "#};
     let document = context.eval_document_fragment(source);
     assert!(
         !document.fail_conditions.is_empty()
@@ -32,16 +36,17 @@ fn wrapped_with_program_keeps_exact_else_requirements() {
 fn wrapped_nested_tenant_program_reaches_the_with_alternative() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);
-    let source = r#"program: |-
-  {{- with $tenants := .Values.loki.tenants }}
-    {{- range $tenant := $tenants }}
-      {{- required "tenant name" $tenant.name }}
-    {{- end }}
-  {{- else }}
-    {{- required "username" .Values.gateway.basicAuth.username }}
-    {{- required "password" .Values.gateway.basicAuth.password }}
-  {{- end }}
-"#;
+    let source = indoc! {r#"
+        program: |-
+          {{- with $tenants := .Values.loki.tenants }}
+            {{- range $tenant := $tenants }}
+              {{- required "tenant name" $tenant.name }}
+            {{- end }}
+          {{- else }}
+            {{- required "username" .Values.gateway.basicAuth.username }}
+            {{- required "password" .Values.gateway.basicAuth.password }}
+          {{- end }}
+    "#};
     let signals = context
         .generate_contract_ir(source)
         .finalize()
@@ -61,12 +66,13 @@ fn wrapped_nested_tenant_program_reaches_the_with_alternative() {
 fn constructed_finite_tpl_program_executes_its_required_call() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);
-    let source = r#"{{- $program := print "{{" " required \"name\" .Values.name " "}}" -}}
-apiVersion: v1
-kind: ConfigMap
-data:
-  value: {{ tpl $program . | quote }}
-"#;
+    let source = indoc! {r#"
+        {{- $program := print "{{" " required \"name\" .Values.name " "}}" -}}
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          value: {{ tpl $program . | quote }}
+    "#};
     let signals = context
         .generate_contract_ir(source)
         .finalize()
@@ -84,7 +90,7 @@ data:
 fn finite_range_append_accumulator_reaches_the_terminal_clause() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);
-    let source = r#"
+    let source = indoc! {r#"
         {{- $keys := list "ebpf" "gvisor" -}}
         {{- $found := list -}}
         {{- range $key := $keys -}}
@@ -95,7 +101,7 @@ fn finite_range_append_accumulator_reaches_the_terminal_clause() {
         {{- if gt (len $found) 0 -}}
           {{- fail "removed" -}}
         {{- end -}}
-        "#;
+    "#};
     let document = context.eval_document_fragment(source);
     let signals = context
         .generate_contract_ir(source)
@@ -121,12 +127,13 @@ fn finite_range_append_accumulator_reaches_the_terminal_clause() {
 fn constructed_selector_tpl_program_drives_a_caller_fail() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);
-    let source = r#"{{- $dep := "telemetry.v2.stackdriver.disableOutbound" -}}
-{{- $res := tpl (print "{{" (repeat (split "." $dep | len) "(") ".Values." (replace "." ")." $dep) ")}}") $ -}}
-{{- if not (eq $res "") -}}
-{{- fail "removed" -}}
-{{- end -}}
-"#;
+    let source = indoc! {r#"
+        {{- $dep := "telemetry.v2.stackdriver.disableOutbound" -}}
+        {{- $res := tpl (print "{{" (repeat (split "." $dep | len) "(") ".Values." (replace "." ")." $dep) ")}}") $ -}}
+        {{- if not (eq $res "") -}}
+        {{- fail "removed" -}}
+        {{- end -}}
+    "#};
     let signals = context
         .generate_contract_ir(source)
         .finalize()
@@ -145,21 +152,21 @@ fn constructed_selector_tpl_program_drives_a_caller_fail() {
 
 #[test]
 fn tpl_wrapped_helper_dispatch_drives_a_disjunctive_caller_guard() {
-    let helpers = r#"
-{{- define "provider.name" -}}
-{{- if eq (typeOf .Values.provider) "string" -}}
-{{- .Values.provider -}}
-{{- else -}}
-{{- .Values.provider.name -}}
-{{- end -}}
-{{- end -}}
-"#;
-    let source = r#"
-{{- $provider_name := tpl (include "provider.name" .) $ -}}
-{{- if eq $provider_name "webhook" -}}
-{{- fail "webhook selected" -}}
-{{- end -}}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "provider.name" -}}
+        {{- if eq (typeOf .Values.provider) "string" -}}
+        {{- .Values.provider -}}
+        {{- else -}}
+        {{- .Values.provider.name -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        {{- $provider_name := tpl (include "provider.name" .) $ -}}
+        {{- if eq $provider_name "webhook" -}}
+        {{- fail "webhook selected" -}}
+        {{- end -}}
+    "#};
     let mut defines = DefineIndex::new();
     defines.add_file_source("<inline:0>", helpers);
     let signals = crate::SymbolicIrContext::new(&defines)
@@ -385,20 +392,21 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
-        r#"{{- define "select.context" -}}
-{{- $result := dict -}}
-{{- range . -}}
-  {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod -}}
-    {{- $result = .securityContexts.pod -}}
-    {{- break -}}
-  {{- end -}}
-  {{- if and (hasKey . "securityContext") .securityContext -}}
-    {{- $result = .securityContext -}}
-    {{- break -}}
-  {{- end -}}
-{{- end -}}
-{{- toYaml $result -}}
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "select.context" -}}
+            {{- $result := dict -}}
+            {{- range . -}}
+              {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod -}}
+                {{- $result = .securityContexts.pod -}}
+                {{- break -}}
+              {{- end -}}
+              {{- if and (hasKey . "securityContext") .securityContext -}}
+                {{- $result = .securityContext -}}
+                {{- break -}}
+              {{- end -}}
+            {{- end -}}
+            {{- toYaml $result -}}
+            {{- end -}}"#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
@@ -447,12 +455,13 @@ fn bound_helper_continue_suppresses_the_rest_of_only_that_iteration() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
-        r#"{{- define "loop.values" -}}
-{{- range . -}}
-  {{- if .skip -}}{{- continue -}}{{- end -}}
-  {{- .payload -}}
-{{- end -}}
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "loop.values" -}}
+            {{- range . -}}
+              {{- if .skip -}}{{- continue -}}{{- end -}}
+              {{- .payload -}}
+            {{- end -}}
+            {{- end -}}"#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let expr = single_expr(r#"include "loop.values" (list .Values.first .Values.second)"#);
@@ -491,12 +500,13 @@ fn inner_range_break_does_not_exit_the_outer_range() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
-        r#"{{- define "nested.loop" -}}
-{{- range . -}}
-  {{- range (list "only") -}}{{- break -}}{{- end -}}
-  {{- .payload -}}
-{{- end -}}
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "nested.loop" -}}
+            {{- range . -}}
+              {{- range (list "only") -}}{{- break -}}{{- end -}}
+              {{- .payload -}}
+            {{- end -}}
+            {{- end -}}"#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let expr = single_expr(r#"include "nested.loop" (list .Values.first .Values.second)"#);
@@ -524,17 +534,18 @@ fn bound_helper_keeps_join_shape_erasure_from_range_header() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
-        r#"{{- define "prometheus.namespaces" -}}
-{{- $namespaces := list }}
-{{- if and .Values.rbac.create .Values.server.useExistingClusterRoleName }}
-  {{- if .Values.server.namespaces -}}
-    {{- range $ns := join "," .Values.server.namespaces | split "," }}
-      {{- $namespaces = append $namespaces (tpl $ns $) }}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{ mustToJson $namespaces }}
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "prometheus.namespaces" -}}
+            {{- $namespaces := list }}
+            {{- if and .Values.rbac.create .Values.server.useExistingClusterRoleName }}
+              {{- if .Values.server.namespaces -}}
+                {{- range $ns := join "," .Values.server.namespaces | split "," }}
+                  {{- $namespaces = append $namespaces (tpl $ns $) }}
+                {{- end -}}
+              {{- end -}}
+            {{- end -}}
+            {{ mustToJson $namespaces }}
+            {{- end -}}"#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
@@ -594,11 +605,12 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
-        r#"{{- define "json.roundtrip" -}}
-{{- $params := fromJson (toJson .) -}}
-{{- $doc := pick $params "doc" -}}
-{{- toJson $doc -}}
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "json.roundtrip" -}}
+            {{- $params := fromJson (toJson .) -}}
+            {{- $doc := pick $params "doc" -}}
+            {{- toJson $doc -}}
+            {{- end -}}"#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);
@@ -657,13 +669,14 @@ fn yaml_helper_output_preserves_structured_value_for_decoding() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
-        r#"{{- define "pod.template" -}}
-metadata:
-  labels:
-    app: test
-spec:
-  hostUsers: {{ .Values.hostUsers }}
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "pod.template" -}}
+            metadata:
+              labels:
+                app: test
+            spec:
+              hostUsers: {{ .Values.hostUsers }}
+            {{- end -}}"#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
     let context = helper_context(&analysis_db);

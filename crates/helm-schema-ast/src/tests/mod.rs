@@ -1,6 +1,7 @@
 use crate::{
     DefineIndex, TemplateExpr, TemplateHeader, contains_template_action, parse_action_expressions,
 };
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -59,14 +60,21 @@ fn parse_action_expressions_types_pipeline_actions() {
 
 #[test]
 fn template_action_detection_finds_inline_output_action() {
-    let src = "metadata:\n  name: {{ .Values.name }}\n";
+    let src = indoc! {"
+        metadata:
+          name: {{ .Values.name }}
+    "};
 
     assert!(contains_template_action(src).expect("parse template source"));
 }
 
 #[test]
 fn template_action_detection_accepts_literal_yaml_comments() {
-    let src = "# comment\nmetadata:\n  name: demo\n";
+    let src = indoc! {"
+        # comment
+        metadata:
+          name: demo
+    "};
 
     assert!(!contains_template_action(src).expect("parse template source"));
 }

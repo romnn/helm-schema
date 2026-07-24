@@ -7,6 +7,7 @@
 //! resource and rebased from `items[*].spec...` to the inner
 //! resource's `spec...` path.
 
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 #[path = "common/schema_generation.rs"]
 mod schema_generation;
@@ -19,25 +20,25 @@ use helm_schema_k8s::{
 };
 use serde_json::{Value, json};
 
-const KIND_LIST_TEMPLATE: &str = "\
-apiVersion: v1
-kind: List
-items:
-{{- range $index, $replica := until (.Values.replicas | int) }}
-  - apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: {{ $.Release.Name }}-{{ $index }}
-    spec:
-      rules:
-        - host: {{ $.Values.host }}
-{{- end }}
-";
+const KIND_LIST_TEMPLATE: &str = indoc! {"
+    apiVersion: v1
+    kind: List
+    items:
+    {{- range $index, $replica := until (.Values.replicas | int) }}
+      - apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: {{ $.Release.Name }}-{{ $index }}
+        spec:
+          rules:
+            - host: {{ $.Values.host }}
+    {{- end }}
+"};
 
-const KIND_LIST_VALUES: &str = "\
-replicas: 2
-host: example.com
-";
+const KIND_LIST_VALUES: &str = indoc! {"
+    replicas: 2
+    host: example.com
+"};
 
 #[test]
 fn kind_list_envelope_descends_into_inner_resource() {

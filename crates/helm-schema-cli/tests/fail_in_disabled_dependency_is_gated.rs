@@ -11,44 +11,45 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use vfs::VfsPath;
 
-const ROOT_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-dependencies:
-  - name: redis
+const ROOT_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
     version: 0.1.0
-    condition: redis.enabled
-";
+    dependencies:
+      - name: redis
+        version: 0.1.0
+        condition: redis.enabled
+"};
 
-const ROOT_VALUES_YAML: &str = "\
-redis:
-  enabled: false
-";
+const ROOT_VALUES_YAML: &str = indoc! {"
+    redis:
+      enabled: false
+"};
 
-const REDIS_CHART_YAML: &str = "\
-apiVersion: v2
-name: redis
-version: 0.1.0
-";
+const REDIS_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: redis
+    version: 0.1.0
+"};
 
-const REDIS_VALUES_YAML: &str = "\
-auth:
-  enabled: true
-  usePassword: true
-";
+const REDIS_VALUES_YAML: &str = indoc! {"
+    auth:
+      enabled: true
+      usePassword: true
+"};
 
-const REDIS_TEMPLATE: &str = "\
-{{- if and .Values.auth.enabled .Values.auth.usePassword -}}
-{{- fail \"auth.enabled and auth.usePassword are mutually exclusive\" -}}
-{{- end -}}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: redis
-";
+const REDIS_TEMPLATE: &str = indoc! {r#"
+    {{- if and .Values.auth.enabled .Values.auth.usePassword -}}
+    {{- fail "auth.enabled and auth.usePassword are mutually exclusive" -}}
+    {{- end -}}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: redis
+"#};
 
 fn generated_schema() -> eyre::Result<serde_json::Value> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());

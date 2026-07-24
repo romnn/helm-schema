@@ -42,7 +42,11 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
     assert_schema_description(
         &schema,
         "/properties/alertmanager/properties/ingress/properties/annotations/description",
-        "Annotations to Alertmanager Ingress\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\ncert-manager.io/cluster-issuer: letsencrypt-prod",
+        indoc! {r#"
+            Annotations to Alertmanager Ingress
+            kubernetes.io/ingress.class: nginx
+            kubernetes.io/tls-acme: "true"
+            cert-manager.io/cluster-issuer: letsencrypt-prod"#},
     );
     assert_schema_description(
         &schema,
@@ -71,13 +75,13 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
             },
             helm_samples::HelmValidationSample {
                 name: "otel-gateway-empty-service-account-name",
-                values_yaml: Some(indoc! {"
+                values_yaml: Some(indoc! {r#"
                     signoz-otel-gateway:
                       enabled: true
                       serviceAccount:
                         create: true
-                        name: \"\"
-                "}),
+                        name: ""
+                "#}),
             },
         ],
     )?;

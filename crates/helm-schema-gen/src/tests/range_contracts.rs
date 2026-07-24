@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// an outer range binds each item to a local that an INNER range
 /// iterates — the nested iterable requirement must reach the outer item
@@ -469,7 +470,13 @@ fn ranged_member_access_rejects_falsy_members_only_when_live() {
           {{- end }}
         {{- end }}
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("enabled: false\nproviders: {}\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            enabled: false
+            providers: {}
+        "}),
+    );
 
     assert!(
         schema_accepts_instance(
@@ -712,8 +719,13 @@ fn guarded_destructured_range_rejects_scalar_collections() {
         {{- end }}
         {{- end }}
     "};
-    let schema =
-        schema_for_values_yaml(parse_ir(src), Some("autoReload: true\nconfigScripts: {}\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            autoReload: true
+            configScripts: {}
+        "}),
+    );
     for (instance, want) in [
         (
             serde_json::json!({ "autoReload": true, "configScripts": 7 }),
@@ -763,7 +775,10 @@ fn ranged_member_map_consumers_reject_scalar_members() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("agent: {}\nadditionalAgents: {}\n"),
+        Some(indoc! {"
+            agent: {}
+            additionalAgents: {}
+        "}),
     );
     for (instance, want) in [
         (
@@ -815,8 +830,13 @@ fn complementary_guarded_ranges_keep_the_iterable_requirement() {
           {{- end }}
         {{- end }}
     "};
-    let schema =
-        schema_for_values_yaml(parse_ir(src), Some("autoReload: true\nconfigScripts: {}\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            autoReload: true
+            configScripts: {}
+        "}),
+    );
     for (instance, want) in [
         (
             serde_json::json!({ "autoReload": true, "configScripts": 7 }),

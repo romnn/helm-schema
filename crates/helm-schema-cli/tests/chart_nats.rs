@@ -3,6 +3,7 @@
 //! default-values validation live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use indoc::indoc;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
@@ -58,16 +59,14 @@ fn nats_tpl_yaml_sentinels_stay_nested_and_do_not_seed_root_properties() -> eyre
         &schema,
         &[helm_samples::HelmValidationSample {
             name: "nested tplYaml sentinel",
-            values_yaml: Some(
-                r"
-extraResources:
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name:
-        $tplYaml: '{{ .Release.Name | quote }}'
-",
-            ),
+            values_yaml: Some(indoc! {r"
+                extraResources:
+                  - apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      name:
+                        $tplYaml: '{{ .Release.Name | quote }}'
+            "}),
         }],
     )?;
 

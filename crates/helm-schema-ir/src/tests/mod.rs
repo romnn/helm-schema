@@ -10,6 +10,7 @@ mod symbolic_local_state;
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
 use color_eyre::eyre;
 use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, GuardDnf, Predicate};
+use indoc::indoc;
 
 /// The raw per-branch guard stacks of one helper meta (branch predicates in
 /// canonical guard order plus the defaulted marker), the same lowering the
@@ -42,10 +43,11 @@ use test_util::prelude::sim_assert_eq;
 /// Simple template IR generation test.
 #[test]
 fn simple_template_ir() {
-    let src = r"{{- if .Values.enabled }}
-foo: {{ .Values.name }}
-{{- end }}
-";
+    let src = indoc! {r"
+        {{- if .Values.enabled }}
+        foo: {{ .Values.name }}
+        {{- end }}
+    "};
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src)
@@ -67,17 +69,17 @@ foo: {{ .Values.name }}
 
 #[test]
 fn direct_tpl_files_get_executes_json_template_source() {
-    let src = r#"
-apiVersion: v1
-kind: Secret
-data:
-  clients.json: {{ tpl (.Files.Get "config/client-auth.json") . | b64enc }}
-"#;
-    let file = r"
-{{- range $user := .Values.users }}
-{{ $user.username }}: {{ $user.password }}
-{{- end }}
-";
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Secret
+        data:
+          clients.json: {{ tpl (.Files.Get "config/client-auth.json") . | b64enc }}
+    "#};
+    let file = indoc! {r"
+        {{- range $user := .Values.users }}
+        {{ $user.username }}: {{ $user.password }}
+        {{- end }}
+    "};
     let mut index = DefineIndex::new();
     index.add_file_source("config/client-auth.json", file);
     let ir = SymbolicIrContext::new(&index)
@@ -94,18 +96,18 @@ data:
 
 #[test]
 fn base_path_include_executes_implicit_template_source() {
-    let src = r#"
-apiVersion: v1
-kind: ConfigMap
-data:
-  initialize: |-
-    {{ include (print $.Template.BasePath "/_create.txt") . | nindent 4 }}
-"#;
-    let partial = r"
-{{- range $bucket := .Values.buckets }}
-create {{ $bucket.name }}
-{{- end }}
-";
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          initialize: |-
+            {{ include (print $.Template.BasePath "/_create.txt") . | nindent 4 }}
+    "#};
+    let partial = indoc! {r"
+        {{- range $bucket := .Values.buckets }}
+        create {{ $bucket.name }}
+        {{- end }}
+    "};
     let mut index = DefineIndex::new();
     index.add_file_source("templates/_create.txt", partial);
     let ir = SymbolicIrContext::new(&index)
@@ -122,14 +124,14 @@ create {{ $bucket.name }}
 
 #[test]
 fn dynamic_mapping_value_projects_structural_member_path() {
-    let src = r"
-apiVersion: v1
-kind: ConfigMap
-data:
-  {{- range $key, $value := .Values.entries }}
-  {{ $key }}: {{ $value }}
-  {{- end }}
-";
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          {{- range $key, $value := .Values.entries }}
+          {{ $key }}: {{ $value }}
+          {{- end }}
+    "};
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src)
@@ -148,12 +150,12 @@ data:
 
 #[test]
 fn document_output_projection_preserves_resource_claim() {
-    let src = r"
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Values.serviceName }}
-";
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ .Values.serviceName }}
+    "};
     let idx = DefineIndex::new();
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src)
@@ -176,17 +178,17 @@ metadata:
 
 #[test]
 fn scalar_helper_document_projection_preserves_resource_claim() {
-    let helpers = r#"
-{{- define "common.serviceName" -}}
-{{ .Values.serviceName }}
-{{- end -}}
-"#;
-    let src = r#"
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "common.serviceName" . }}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "common.serviceName" -}}
+        {{ .Values.serviceName }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ include "common.serviceName" . }}
+    "#};
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
@@ -210,21 +212,21 @@ metadata:
 
 #[test]
 fn document_guard_survives_helper_sibling_claim_scoping() {
-    let helpers = r#"
-{{- define "guarded.port" -}}
-{{- if .enabled -}}
-{{- .port -}}
-{{- end -}}
-{{- end -}}
-"#;
-    let src = r#"
-{{- if .Values.enabled }}
-apiVersion: v1
-kind: Service
-spec:
-  value: {{ include "guarded.port" (dict "enabled" .Values.enabled "port" .Values.port) }}
-{{- end }}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "guarded.port" -}}
+        {{- if .enabled -}}
+        {{- .port -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: Service
+        spec:
+          value: {{ include "guarded.port" (dict "enabled" .Values.enabled "port" .Values.port) }}
+        {{- end }}
+    "#};
     let mut index = DefineIndex::new();
     index.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&index)
@@ -246,23 +248,23 @@ spec:
 
 #[test]
 fn document_branch_guard_survives_local_helper_reassignment() {
-    let helpers = r#"
-{{- define "selected.value" -}}
-{{- .Values.payload -}}
-{{- end -}}
-"#;
-    let src = r#"
-{{- $selected := "" -}}
-{{- if eq .Values.mode "active" -}}
-{{- $selected = include "selected.value" . -}}
-{{- end -}}
-{{- if $selected }}
-apiVersion: v1
-kind: ConfigMap
-data:
-  value: {{ $selected }}
-{{- end }}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "selected.value" -}}
+        {{- .Values.payload -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $selected := "" -}}
+        {{- if eq .Values.mode "active" -}}
+        {{- $selected = include "selected.value" . -}}
+        {{- end -}}
+        {{- if $selected }}
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          value: {{ $selected }}
+        {{- end }}
+    "#};
     let mut index = DefineIndex::new();
     index.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&index)
@@ -288,13 +290,13 @@ data:
 
 #[test]
 fn document_local_coalesce_preserves_ordered_candidate_selection() {
-    let src = r"
-{{- $selected := coalesce .Values.primary .Values.fallback -}}
-apiVersion: v1
-kind: Secret
-data:
-  value: {{ $selected | b64enc | quote }}
-";
+    let src = indoc! {r"
+        {{- $selected := coalesce .Values.primary .Values.fallback -}}
+        apiVersion: v1
+        kind: Secret
+        data:
+          value: {{ $selected | b64enc | quote }}
+    "};
     let ir = SymbolicIrContext::new(&DefineIndex::new())
         .generate_contract_ir(src)
         .finalize();
@@ -339,25 +341,25 @@ data:
 
 #[test]
 fn helper_type_dispatch_keeps_or_candidate_selection_on_each_row() {
-    let helpers = r#"
-{{- define "selected.value" -}}
-{{- $selected := or .Values.primary .Values.fallback -}}
-{{- if $selected -}}
-{{- $type := typeOf $selected -}}
-{{- if eq $type "string" -}}
-{{ tpl $selected . }}
-{{- else -}}
-{{ toYaml $selected }}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-"#;
-    let src = r#"
-apiVersion: v1
-kind: ConfigMap
-data:
-  value: {{ include "selected.value" . | quote }}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "selected.value" -}}
+        {{- $selected := or .Values.primary .Values.fallback -}}
+        {{- if $selected -}}
+        {{- $type := typeOf $selected -}}
+        {{- if eq $type "string" -}}
+        {{ tpl $selected . }}
+        {{- else -}}
+        {{ toYaml $selected }}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          value: {{ include "selected.value" . | quote }}
+    "#};
     let mut index = DefineIndex::new();
     index.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&index)
@@ -402,21 +404,21 @@ fn opaque_include_guard_abstains_from_provider_schema_evidence() {
     // The arm renders a VALUES-dependent token, so the helper is not a
     // literal dispatch and the include guard stays undecodable. (A pure
     // literal arm now decodes exactly and no longer exercises abstention.)
-    let helpers = r#"
-{{- define "resource.enabled" -}}
-{{- if .Values.enabled -}}
-{{ .Values.marker }}
-{{- end -}}
-{{- end -}}
-"#;
-    let src = r#"
-{{- if include "resource.enabled" . }}
-apiVersion: v1
-kind: ConfigMap
-data:
-  value: {{ .Values.payload }}
-{{- end }}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "resource.enabled" -}}
+        {{- if .Values.enabled -}}
+        {{ .Values.marker }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if include "resource.enabled" . }}
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          value: {{ .Values.payload }}
+        {{- end }}
+    "#};
     let mut index = DefineIndex::new();
     index.add_file_source("<inline:0>", helpers);
     let finalized = SymbolicIrContext::new(&index)
@@ -451,19 +453,19 @@ data:
 
 #[test]
 fn scalar_helper_document_projection_preserves_scope_guard() {
-    let helpers = r#"
-{{- define "common.serviceName" -}}
-{{ .Values.serviceName }}
-{{- end -}}
-"#;
-    let src = r#"
-apiVersion: v1
-kind: Service
-metadata:
-  {{- if .Values.enabled }}
-  name: {{ include "common.serviceName" . }}
-  {{- end }}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "common.serviceName" -}}
+        {{ .Values.serviceName }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          {{- if .Values.enabled }}
+          name: {{ include "common.serviceName" . }}
+          {{- end }}
+    "#};
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
@@ -486,18 +488,18 @@ metadata:
 
 #[test]
 fn labels_helper_does_not_apply_custom_label_guard_to_name_helper_dependency() -> eyre::Result<()> {
-    let src = r#"
-{{- if .Values.networkPolicy.enabled }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ template "common.names.fullname" . }}
-  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
-spec:
-  podSelector:
-    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
-{{- end }}
-"#;
+    let src = indoc! {r#"
+        {{- if .Values.networkPolicy.enabled }}
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: {{ template "common.names.fullname" . }}
+          labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+        spec:
+          podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
+        {{- end }}
+    "#};
     let mut idx = DefineIndex::new();
     let sources = test_util::DefineSourceSpec {
         helper_templates: &[],
@@ -575,21 +577,21 @@ spec:
 
 #[test]
 fn transitive_scalar_helper_default_projects_default_guard() {
-    let helpers = r#"
-{{- define "liba.fullname" -}}
-{{- include "libb.name" . -}}
-{{- end -}}
+    let helpers = indoc! {r#"
+        {{- define "liba.fullname" -}}
+        {{- include "libb.name" . -}}
+        {{- end -}}
 
-{{- define "libb.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-"#;
-    let src = r#"
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "liba.fullname" . }}
-"#;
+        {{- define "libb.name" -}}
+        {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ include "liba.fullname" . }}
+    "#};
     let mut idx = DefineIndex::new();
     idx.add_file_source("<inline:0>", helpers);
     let ir = SymbolicIrContext::new(&idx)
@@ -611,19 +613,19 @@ metadata:
 
 #[test]
 fn nonempty_choice_list_range_preserves_computed_mutation() {
-    let helpers = r#"
-{{- define "mutate.patch" -}}
-{{- $patch := .Values.patch -}}
-{{- $keys := list "path" -}}
-{{- if .Values.copy -}}
-{{- $keys = append $keys "from" -}}
-{{- end -}}
-{{- range $key := $keys -}}
-{{- $_ := set $patch (printf "%sKey" $key) "derived" -}}
-{{- end -}}
-{{- $patch.pathKey -}}
-{{- end -}}
-"#;
+    let helpers = indoc! {r#"
+        {{- define "mutate.patch" -}}
+        {{- $patch := .Values.patch -}}
+        {{- $keys := list "path" -}}
+        {{- if .Values.copy -}}
+        {{- $keys = append $keys "from" -}}
+        {{- end -}}
+        {{- range $key := $keys -}}
+        {{- $_ := set $patch (printf "%sKey" $key) "derived" -}}
+        {{- end -}}
+        {{- $patch.pathKey -}}
+        {{- end -}}
+    "#};
     let mut index = DefineIndex::new();
     index.add_file_source("<inline:0>", helpers);
 
@@ -649,31 +651,34 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
     let mut idx = DefineIndex::new();
     idx.add_file_source(
         "templates/configmaps/config.yaml",
-        r#"kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: config
-  labels: {{- include "repro.labels" . | nindent 4 }}
-data:
-  NAMES: {{ .Values.scanSecrets | toJson | quote }}
-"#,
+        indoc! {r#"
+            kind: ConfigMap
+            apiVersion: v1
+            metadata:
+              name: config
+              labels: {{- include "repro.labels" . | nindent 4 }}
+            data:
+              NAMES: {{ .Values.scanSecrets | toJson | quote }}
+        "#},
     );
     idx.add_file_source(
         "<inline:0>",
-        r#"{{- define "repro.labels" -}}
-app: repro
-{{- end -}}"#,
+        indoc! {r#"
+            {{- define "repro.labels" -}}
+            app: repro
+            {{- end -}}"#},
     );
-    let src = r#"apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: test
-spec:
-  template:
-    metadata:
-      annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmaps/config.yaml") . | sha256sum }}
-"#;
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            metadata:
+              annotations:
+                checksum/config: {{ include (print $.Template.BasePath "/configmaps/config.yaml") . | sha256sum }}
+    "#};
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src)
         .finalize();

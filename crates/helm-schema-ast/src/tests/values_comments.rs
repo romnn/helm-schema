@@ -23,12 +23,18 @@ fn extracts_leading_inline_and_nested_values_comments() {
     let expected = BTreeMap::from([
         (
             "enabled".to_string(),
-            "Root flag docs\ninline flag docs".to_string(),
+            indoc! {"
+                Root flag docs
+                inline flag docs"}
+            .to_string(),
         ),
         ("parent".to_string(), "Parent docs".to_string()),
         (
             "parent.child".to_string(),
-            "Child docs line 1\nChild docs line 2".to_string(),
+            indoc! {"
+                Child docs line 1
+                Child docs line 2"}
+            .to_string(),
         ),
     ]);
     sim_assert_eq!(have: descriptions, want: expected);
@@ -181,21 +187,21 @@ fn decorative_comment_headings_do_not_become_descriptions() {
 
 #[test]
 fn helm_docs_param_comments_attach_to_explicit_paths() {
-    let yaml = indoc! {"
+    let yaml = indoc! {r#"
         ## @section Global parameters
         ## Global Docker image parameters
         ##
         ## @param global.imageRegistry Global Docker image registry
         ## @param global.imagePullSecrets Global Docker registry secret names as an array
         global:
-          imageRegistry: \"\"
+          imageRegistry: ""
           imagePullSecrets: []
 
         auth:
           ## @param auth.enabled Enable password authentication
           ##
           enabled: true
-    "};
+    "#};
 
     let descriptions = extract_values_yaml_descriptions(yaml);
 

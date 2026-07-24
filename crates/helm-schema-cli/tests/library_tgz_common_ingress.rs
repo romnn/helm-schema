@@ -1,5 +1,6 @@
 //! Packaged library-chart inheritance regression for common ingress helpers.
 
+use indoc::indoc;
 use std::io;
 
 use color_eyre::eyre::{self, WrapErr};
@@ -9,92 +10,92 @@ use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
 use vfs::VfsPath;
 
-const ROOT_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-dependencies:
-  - name: common
+const ROOT_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
     version: 0.1.0
-";
+    dependencies:
+      - name: common
+        version: 0.1.0
+"};
 
-const ROOT_VALUES_YAML: &str = "\
-ingress:
-  enabled: true
-service:
-  port: 9000
-";
+const ROOT_VALUES_YAML: &str = indoc! {"
+    ingress:
+      enabled: true
+    service:
+      port: 9000
+"};
 
-const ROOT_TEMPLATE: &str = "\
-{{- with .Values.ingress -}}
-{{- if .enabled -}}
-{{ include \"common.ingress\" (dict \"ctx\" $ \"config\" .) }}
-{{- end -}}
-{{- end -}}
-";
+const ROOT_TEMPLATE: &str = indoc! {r#"
+    {{- with .Values.ingress -}}
+    {{- if .enabled -}}
+    {{ include "common.ingress" (dict "ctx" $ "config" .) }}
+    {{- end -}}
+    {{- end -}}
+"#};
 
-const COMMON_CHART_YAML: &str = "\
-apiVersion: v2
-name: common
-version: 0.1.0
-type: library
-";
+const COMMON_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: common
+    version: 0.1.0
+    type: library
+"};
 
-const COMMON_HELPERS: &str = "\
-{{- define \"common.fullname\" -}}app{{- end -}}
-{{- define \"common.labels\" -}}
-app.kubernetes.io/name: app
-{{- end -}}
-{{- define \"common.ingress\" }}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ include \"common.fullname\" .ctx }}
-  labels:
-    {{- include \"common.labels\" .ctx | nindent 4 }}
-  {{- with .config.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  {{- with .config.className }}
-  ingressClassName: {{ . }}
-  {{- end }}
-  {{- if .config.tls }}
-  tls:
-    {{- range .config.tls }}
-    - hosts:
-        {{- range .hosts }}
-        - {{ . | quote }}
-        {{- end }}
-      secretName: {{ .secretName }}
-    {{- end }}
-  {{- end }}
-  rules:
-    {{- range .config.hosts }}
-    - host: {{ .host | quote }}
-      http:
-        paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            {{- with .pathType }}
-            pathType: {{ . }}
+const COMMON_HELPERS: &str = indoc! {r#"
+    {{- define "common.fullname" -}}app{{- end -}}
+    {{- define "common.labels" -}}
+    app.kubernetes.io/name: app
+    {{- end -}}
+    {{- define "common.ingress" }}
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: {{ include "common.fullname" .ctx }}
+      labels:
+        {{- include "common.labels" .ctx | nindent 4 }}
+      {{- with .config.annotations }}
+      annotations:
+        {{- toYaml . | nindent 4 }}
+      {{- end }}
+    spec:
+      {{- with .config.className }}
+      ingressClassName: {{ . }}
+      {{- end }}
+      {{- if .config.tls }}
+      tls:
+        {{- range .config.tls }}
+        - hosts:
+            {{- range .hosts }}
+            - {{ . | quote }}
             {{- end }}
-            backend:
-              service:
-                name: {{ .serviceName | default (include \"common.fullname\" $.ctx) }}
-                {{ if .servicePort -}}
-                port:
-                  {{- toYaml .servicePort | nindent 18 }}
-                {{ else -}}
-                port:
-                  number: {{ $.ctx.Values.service.port }}
+          secretName: {{ .secretName }}
+        {{- end }}
+      {{- end }}
+      rules:
+        {{- range .config.hosts }}
+        - host: {{ .host | quote }}
+          http:
+            paths:
+              {{- range .paths }}
+              - path: {{ .path }}
+                {{- with .pathType }}
+                pathType: {{ . }}
                 {{- end }}
-          {{- end }}
+                backend:
+                  service:
+                    name: {{ .serviceName | default (include "common.fullname" $.ctx) }}
+                    {{ if .servicePort -}}
+                    port:
+                      {{- toYaml .servicePort | nindent 18 }}
+                    {{ else -}}
+                    port:
+                      number: {{ $.ctx.Values.service.port }}
+                    {{- end }}
+              {{- end }}
+        {{- end }}
     {{- end }}
-{{- end }}
-";
+"#};
 
 fn into_eyre(err: helm_schema_cli::CliError) -> eyre::Report {
     err.into()

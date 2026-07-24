@@ -1,3 +1,4 @@
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -372,10 +373,9 @@ fn nested_with_chain_range_keeps_falsy_ancestors_valid() {
     "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some(
-            "affinity: {}
-",
-        ),
+        Some(indoc! {"
+            affinity: {}
+        "}),
     );
 
     for instance in [
@@ -472,9 +472,13 @@ fn header_member_read_requires_an_object_host_beside_body_dispatch() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some(
-            "webhook:\n  create: true\n  podDisruptionBudget:\n    enabled: false\n    minAvailable: 1\n",
-        ),
+        Some(indoc! {"
+            webhook:
+              create: true
+              podDisruptionBudget:
+                enabled: false
+                minAvailable: 1
+        "}),
     );
     // The coalesced document carries the declared `create: true`; with it
     // null-deleted the header short-circuits before the member read.

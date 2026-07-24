@@ -113,7 +113,11 @@ const SPREAD_ENGINE_SRC: &str = indoc! {r#"
 fn wrapper_program_results_must_be_compatible_with_node_and_parent() {
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(SPREAD_ENGINE_SRC, SPREAD_ENGINE_HELPERS),
-        Some("port: 4222\nlabels:\n  app: test\n"),
+        Some(indoc! {"
+            port: 4222
+            labels:
+              app: test
+        "}),
     );
     for (instance, want) in [
         // Replace programs at the object-typed node: the decoded result

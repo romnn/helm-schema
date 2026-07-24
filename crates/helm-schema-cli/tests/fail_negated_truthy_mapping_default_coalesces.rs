@@ -15,29 +15,30 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use vfs::VfsPath;
 
-const CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-";
+const CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
+    version: 0.1.0
+"};
 
-const VALUES_YAML: &str = "\
-global:
-  imageRegistry: \"\"
-name: app
-";
+const VALUES_YAML: &str = indoc! {r#"
+    global:
+      imageRegistry: ""
+    name: app
+"#};
 
-const TEMPLATE: &str = "\
-{{- if not .Values.global -}}
-{{- fail \"global context lost\" -}}
-{{- end -}}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.name }}
-";
+const TEMPLATE: &str = indoc! {r#"
+    {{- if not .Values.global -}}
+    {{- fail "global context lost" -}}
+    {{- end -}}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: {{ .Values.name }}
+"#};
 
 fn generated_schema() -> eyre::Result<serde_json::Value> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());

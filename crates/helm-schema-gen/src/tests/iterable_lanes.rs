@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// a range body that reads MEMBER STRUCTURE (`.tls` on each item)
 /// constrains every iterable lane — array items and map values must be
@@ -16,8 +17,9 @@ fn range_member_structure_constrains_all_iterable_lanes() {
           {{ .tls }}: enabled
           {{- end }}
     "};
-    let values_yaml = "accounts: ~
-";
+    let values_yaml = indoc! {"
+        accounts: ~
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for instance in [
@@ -58,8 +60,9 @@ fn range_string_consumer_constrains_all_iterable_lanes() {
           arg{{ $index }}: {{ tpl $arg $ | quote }}
           {{- end }}
     "};
-    let values_yaml = "args: ~
-";
+    let values_yaml = indoc! {"
+        args: ~
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     assert!(
@@ -268,7 +271,12 @@ fn shared_accumulator_helper_ranges_bind_each_source_iterable_domain() {
                 - name: repro
                   image: {{ .Values.image.repository }}
     "#};
-    let values_yaml = "global:\n  imageRegistry: \"\"\nimage:\n  repository: docker.io/repro\n";
+    let values_yaml = indoc! {r#"
+        global:
+          imageRegistry: ""
+        image:
+          repository: docker.io/repro
+    "#};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     for (value, label) in [
@@ -326,7 +334,10 @@ fn fallback_selected_bindings_leave_the_source_unranged() {
           resources: |
         {{ include "repro.customResources" . | indent 4 }}
     "#};
-    let values_yaml = "custom:\n  resources: []\n";
+    let values_yaml = indoc! {"
+        custom:
+          resources: []
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     for (value, label) in [
@@ -434,8 +445,12 @@ fn selection_chain_dots_bind_per_candidate_iterable_domains() {
                 - name: repro
                   image: nginx
     "#};
-    let values_yaml =
-        "global:\n  imagePullSecrets: []\nadmissionController:\n  imagePullSecrets: []\n";
+    let values_yaml = indoc! {"
+        global:
+          imagePullSecrets: []
+        admissionController:
+          imagePullSecrets: []
+    "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
     for (admission, global, label) in [
@@ -510,7 +525,12 @@ fn inline_selection_chain_ranges_bind_per_candidate_iterable_domains() {
                 - name: repro
                   image: nginx
     "};
-    let values_yaml = "global:\n  imagePullSecrets: []\ncontroller:\n  imagePullSecrets: []\n";
+    let values_yaml = indoc! {"
+        global:
+          imagePullSecrets: []
+        controller:
+          imagePullSecrets: []
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     let reject = serde_json::json!({

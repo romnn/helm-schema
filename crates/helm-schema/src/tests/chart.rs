@@ -1,4 +1,5 @@
 use color_eyre::eyre::{self, OptionExt as _};
+use indoc::indoc;
 
 use crate::chart::discovery;
 use crate::chart::*;
@@ -9,36 +10,40 @@ fn dependency_activation_paths_are_scoped_from_chart_yaml() -> eyre::Result<()> 
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        r"
-apiVersion: v2
-name: root
-version: 0.1.0
-dependencies:
-  - name: child
-    alias: kid
-    version: 0.1.0
-    condition: kid.enabled, global.kidEnabled
-    tags:
-      - observability
-",
+        indoc! {r"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: child
+                alias: kid
+                version: 0.1.0
+                condition: kid.enabled, global.kidEnabled
+                tags:
+                  - observability
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/Chart.yaml")?,
-        r"
-apiVersion: v2
-name: child
-version: 0.1.0
-dependencies:
-  - name: leaf
-    version: 0.1.0
-    condition: leaf.enabled
-    tags:
-      - nested
-",
+        indoc! {r"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+            dependencies:
+              - name: leaf
+                version: 0.1.0
+                condition: leaf.enabled
+                tags:
+                  - nested
+        "},
     )?;
     test_util::write(
         &chart_dir.join("charts/child/charts/leaf/Chart.yaml")?,
-        "apiVersion: v2\nname: leaf\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: leaf
+            version: 0.1.0
+        "},
     )?;
 
     let charts = discover_chart_contexts(&chart_dir)?;
@@ -86,7 +91,11 @@ fn vendored_chart_archive_respects_load_budget() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
 
     let mut tar_bytes = Vec::new();
@@ -156,7 +165,11 @@ fn vendored_chart_archive_respects_expanded_budget() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
 
     let mut tar_bytes = Vec::new();
@@ -223,7 +236,11 @@ fn vendored_chart_archive_respects_entry_budget() -> eyre::Result<()> {
     let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
     test_util::write(
         &chart_dir.join("Chart.yaml")?,
-        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
     )?;
 
     let mut tar_bytes = Vec::new();

@@ -1,3 +1,4 @@
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -322,7 +323,10 @@ fn block_scalar_range_variable_projects_its_string_contract() {
             {{- end }}
             {{- end }}
     "};
-    let values_yaml = "enabled: false\nplugins: ~\n";
+    let values_yaml = indoc! {"
+        enabled: false
+        plugins: ~
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for instance in [
@@ -363,7 +367,13 @@ fn guarded_ranged_member_access_constrains_collection_lanes() {
           {{- end }}
         {{- end }}
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("enabled: false\naccounts: ~\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            enabled: false
+            accounts: ~
+        "}),
+    );
     let mut properties = serde_json::Map::new();
     properties.insert("accounts".to_string(), serde_json::json!({}));
     properties.insert(
@@ -664,9 +674,14 @@ fn guard_scoped_omit_scopes_removed_member_typing() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some(
-            "securityContext:\n  enabled: true\nglobal:\n  compatibility:\n    openshift:\n      adaptSecurityContext: auto\n",
-        ),
+        Some(indoc! {"
+            securityContext:
+              enabled: true
+            global:
+              compatibility:
+                openshift:
+                  adaptSecurityContext: auto
+        "}),
     );
     for (mode, member, value, enabled, want) in [
         // The omit certainly runs under "force" and may run under "auto"
@@ -754,7 +769,11 @@ fn capability_dispatch_scoped_member_field_fail_lowers() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("checkDeprecation: true\ningress:\n  extraPaths: []\n"),
+        Some(indoc! {"
+            checkDeprecation: true
+            ingress:
+              extraPaths: []
+        "}),
     );
     for (instance, want) in [
         (

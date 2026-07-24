@@ -23,7 +23,11 @@ fn prefixed_argument_splice_keeps_fallback_typed_inputs_open() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("ctrl:\n  create: true\nlogLevel: info\n"),
+        Some(indoc! {"
+            ctrl:
+              create: true
+            logLevel: info
+        "}),
     );
     for instance in [
         serde_json::json!({ "logLevel": { "a": "b" } }),
@@ -53,7 +57,12 @@ fn token_initial_splice_excludes_lists() {
     "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("tempo:\n  registry: docker.io\n  repository: grafana/tempo\n  tag: latest\n"),
+        Some(indoc! {"
+            tempo:
+              registry: docker.io
+              repository: grafana/tempo
+              tag: latest
+        "}),
     );
     for (instance, want) in [
         (serde_json::json!({ "tempo": { "registry": ["a"] } }), false),
@@ -100,7 +109,12 @@ fn token_initial_splice_survives_sibling_default_arm_split() {
     "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("tempo:\n  registry: docker.io\n  repository: grafana/tempo\n  tag: latest\n"),
+        Some(indoc! {"
+            tempo:
+              registry: docker.io
+              repository: grafana/tempo
+              tag: latest
+        "}),
     );
     let instance = serde_json::json!({ "tempo": { "registry": ["a"] } });
     assert!(
@@ -126,7 +140,12 @@ fn double_quoted_splice_excludes_invalid_quoted_content() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("image:\n  registry: ghcr.io\n  repository: op\n  tag: v1\n"),
+        Some(indoc! {"
+            image:
+              registry: ghcr.io
+              repository: op
+              tag: v1
+        "}),
     );
     for (instance, want) in [
         // Unescaped quote breaks the token
@@ -255,7 +274,12 @@ fn single_quoted_item_survives_undecodable_sibling_arms() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("debug:\n  enabled: false\n  verbose: ~\ndefaultLevel: info\n"),
+        Some(indoc! {"
+            debug:
+              enabled: false
+              verbose: ~
+            defaultLevel: info
+        "}),
     );
     for (instance, want) in [
         (
@@ -322,7 +346,10 @@ fn double_quoted_splice_before_inline_region_keeps_the_contract() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("folder: /tmp/dashboards\ndefaultFolderName: ~\n"),
+        Some(indoc! {"
+            folder: /tmp/dashboards
+            defaultFolderName: ~
+        "}),
     );
     for (instance, want) in [
         (serde_json::json!({ "folder": "a\"b" }), false),
@@ -358,7 +385,10 @@ fn flow_quoted_splice_after_range_variable_keeps_the_contract() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("clusters: []\ndomain: mesh.cilium.io\n"),
+        Some(indoc! {"
+            clusters: []
+            domain: mesh.cilium.io
+        "}),
     );
     for (instance, want) in [
         (
@@ -444,7 +474,13 @@ fn double_quoted_splice_composites_require_safe_nested_strings() {
         data:
           image: "{{ .Values.image.registry }}/ui:v1"
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  registry: ghcr.io\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            image:
+              registry: ghcr.io
+        "}),
+    );
     for (instance, want) in [
         // A nested unescaped quote embeds raw and breaks the token.
         (

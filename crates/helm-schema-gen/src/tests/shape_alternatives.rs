@@ -1,3 +1,4 @@
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -123,7 +124,10 @@ fn serialized_collection_owns_descendant_shape() {
         {{- end }}
         paths: {{ tpl (toYaml .Values.ingress.extraPaths) $ | nindent 2 }}
     "#};
-    let values_yaml = "ingress:\n  extraPaths: []\n";
+    let values_yaml = indoc! {"
+        ingress:
+          extraPaths: []
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let instance = serde_json::json!({
         "ingress": {
@@ -258,7 +262,14 @@ fn helper_destructured_range_keeps_declared_map_open() {
         facts.is_direct_ranged_source && facts.has_destructured_range_use,
         "a bound helper range must export its direct two-variable domain"
     );
-    let schema = schema_for_values_yaml(&ir, Some("redis:\n  config:\n    save: \"\"\n"));
+    let schema = schema_for_values_yaml(
+        &ir,
+        Some(indoc! {r#"
+            redis:
+              config:
+                save: ""
+        "#}),
+    );
 
     for config in [
         serde_json::json!({"appendonly": "no"}),

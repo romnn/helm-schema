@@ -16,6 +16,7 @@
 //! disk I/O — matching the abstraction `helm-schema-cli` already uses
 //! internally for chart extraction.
 
+use indoc::indoc;
 use std::io;
 
 use color_eyre::eyre::{self, WrapErr};
@@ -28,33 +29,33 @@ use vfs::VfsPath;
 
 const SUBCHART_NAME: &str = "subchart";
 
-const WRAPPER_CHART_YAML: &str = "\
-apiVersion: v2
-name: wrapper
-version: 0.1.0
-dependencies:
-  - name: subchart
+const WRAPPER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: wrapper
     version: 0.1.0
-";
+    dependencies:
+      - name: subchart
+        version: 0.1.0
+"};
 
 const WRAPPER_VALUES_YAML: &str = "{}\n";
 
-const SUBCHART_CHART_YAML: &str = "\
-apiVersion: v2
-name: subchart
-version: 0.1.0
-";
+const SUBCHART_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: subchart
+    version: 0.1.0
+"};
 
 const SUBCHART_VALUES_YAML: &str = "enabled: true\n";
 
-const SUBCHART_CONFIGMAP_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test
-data:
-  enabled: \"{{ .Values.enabled }}\"
-";
+const SUBCHART_CONFIGMAP_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: test
+    data:
+      enabled: "{{ .Values.enabled }}"
+"#};
 
 fn into_eyre(e: helm_schema_cli::CliError) -> eyre::Report {
     e.into()

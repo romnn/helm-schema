@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// A total stringification is neutral evidence about its own input; an
 /// INDEPENDENT unconditional string consumer still binds. Cilium's
@@ -363,7 +364,10 @@ fn htpasswd_operands_require_strings() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("adminPassword: hunter2\nbasicAuthUsers: {}\n"),
+        Some(indoc! {"
+            adminPassword: hunter2
+            basicAuthUsers: {}
+        "}),
     );
 
     for (instance, want) in [
@@ -408,7 +412,13 @@ fn checksum_operands_require_strings_through_ranged_default_selection() {
             user {{ .username }} {{ if $password }}#{{ sha256sum $password }}{{ else }}nopass{{ end }}
             {{- end }}
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("seed: audit\nusers: []\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            seed: audit
+            users: []
+        "}),
+    );
 
     for (instance, want, label) in [
         (serde_json::json!({ "seed": 7 }), false, "direct numeric"),
@@ -490,9 +500,15 @@ fn checksum_member_contract_survives_include_result_document_gate() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some(
-            "existingConfigmap: \"\"\nauth:\n  password: \"\"\n  acl:\n    enabled: false\n    users: []\n    userSecret: \"\"\n",
-        ),
+        Some(indoc! {r#"
+            existingConfigmap: ""
+            auth:
+              password: ""
+              acl:
+                enabled: false
+                users: []
+                userSecret: ""
+        "#}),
     );
     for (instance, want, label) in [
         (
@@ -555,7 +571,13 @@ fn checksum_member_contract_survives_outer_branch_guards() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("auth:\n  acl:\n    enabled: false\n    users: []\n    userSecret: \"\"\n"),
+        Some(indoc! {r#"
+            auth:
+              acl:
+                enabled: false
+                users: []
+                userSecret: ""
+        "#}),
     );
 
     for (instance, want, label) in [
@@ -612,7 +634,12 @@ fn tpl_program_contract_survives_default_chain() {
     "#};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("image:\n  registry: \"\"\nglobal:\n  imageRegistry: \"\"\n"),
+        Some(indoc! {r#"
+            image:
+              registry: ""
+            global:
+              imageRegistry: ""
+        "#}),
     );
 
     for (instance, want) in [
@@ -699,7 +726,12 @@ fn checksum_digest_splices_project_no_slot_language_onto_the_operand() {
     "};
     let schema = schema_for_values_yaml(
         parse_ir(src),
-        Some("migration:\n  enabled: false\n  preview: false\n  userValues: null\n"),
+        Some(indoc! {"
+            migration:
+              enabled: false
+              preview: false
+              userValues: null
+        "}),
     );
     for (instance, want, label) in [
         (
@@ -708,7 +740,10 @@ fn checksum_digest_splices_project_no_slot_language_onto_the_operand() {
             "single-line YAML file content renders",
         ),
         (
-            serde_json::json!({ "migration": { "enabled": true, "userValues": "datadog:\n  apiKey: x\n" } }),
+            serde_json::json!({ "migration": { "enabled": true, "userValues": indoc! {"
+                datadog:
+                  apiKey: x
+            "} } }),
             true,
             "multiline YAML file content renders",
         ),

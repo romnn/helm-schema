@@ -18,58 +18,59 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use serde_json::Value;
 use vfs::VfsPath;
 
-const WRAPPER_CHART_YAML: &str = "\
-apiVersion: v2
-name: wrapper
-version: 0.1.0
-dependencies:
-  - name: unused-library
+const WRAPPER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: wrapper
     version: 0.1.0
-  - name: app
-    version: 0.1.0
-";
+    dependencies:
+      - name: unused-library
+        version: 0.1.0
+      - name: app
+        version: 0.1.0
+"};
 
 const WRAPPER_VALUES_YAML: &str = "{}\n";
 
-const LIBRARY_CHART_YAML: &str = "\
-apiVersion: v2
-name: unused-library
-version: 0.1.0
-type: library
-";
+const LIBRARY_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: unused-library
+    version: 0.1.0
+    type: library
+"};
 
 // Non-literal default in a library helper. Under the old broadcast
 // behaviour this added `nameOverride` (and `<app>.nameOverride`,
 // `<library>.nameOverride`, …) to the global fallback set, silently
 // suppressing required-inference even in charts that don't include the
 // helper.
-const LIBRARY_NAME_HELPER: &str = "\
-{{- define \"unused-library.name\" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" -}}
-{{- end -}}
-";
+const LIBRARY_NAME_HELPER: &str = indoc! {r#"
+    {{- define "unused-library.name" -}}
+    {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+    {{- end -}}
+"#};
 
-const APP_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-";
+const APP_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
+    version: 0.1.0
+"};
 
 // App template has a guard-only `if .Values.nameOverride`. Under the
 // current stricter semantics this stays optional. The app does NOT
 // include the library's helper, so the library's default must not
 // affect the sibling app either way.
-const APP_TEMPLATE: &str = "\
-{{- if .Values.nameOverride }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.nameOverride }}
-{{- end }}
-";
+const APP_TEMPLATE: &str = indoc! {"
+    {{- if .Values.nameOverride }}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: {{ .Values.nameOverride }}
+    {{- end }}
+"};
 
 const APP_VALUES_YAML: &str = "{}\n";
 

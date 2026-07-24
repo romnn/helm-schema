@@ -1,3 +1,4 @@
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -692,8 +693,13 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
         &[("serviceAccount.name", "string")],
     );
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider)
-            .with_values_yaml(Some("serviceAccount:\n  create: true\n  name:\n")),
+        ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_yaml(
+            Some(indoc! {"
+                serviceAccount:
+                  create: true
+                  name:
+            "}),
+        ),
     );
 
     assert!(

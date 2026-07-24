@@ -1,4 +1,5 @@
 use color_eyre::eyre::{self, WrapErr as _};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -264,7 +265,13 @@ fn typeof_dispatched_numeric_lane_keeps_the_provider_intersection() {
             matchLabels:
               app: test
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("pdb:\n  minAvailable: 1\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            pdb:
+              minAvailable: 1
+        "}),
+    );
 
     for (value, want, label) in [
         (serde_json::json!(1), true, "integer"),
@@ -313,7 +320,10 @@ fn inline_conditional_kind_candidates_reach_the_matching_provider_path() {
               - name: test
                 image: busybox
     "};
-    let values_yaml = "stateful: false\nstrategy: {}\n";
+    let values_yaml = indoc! {"
+        stateful: false
+        strategy: {}
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     assert!(
@@ -373,7 +383,10 @@ fn values_selected_kind_partitions_provider_contracts() {
               - name: test
                 image: busybox
     "#};
-    let values_yaml = "workloadKind: Deployment\nupdateStrategy: {}\n";
+    let values_yaml = indoc! {"
+        workloadKind: Deployment
+        updateStrategy: {}
+    "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let stateful_only = serde_json::json!({
         "rollingUpdate": { "partition": "not-an-integer" }
@@ -533,7 +546,10 @@ fn helper_literal_or_override_return_applies_integer_preimage_to_the_override() 
     "#};
     let schema = schema_for_values_yaml(
         parse_ir_with_helpers(src, helpers),
-        Some("service:\n  port: null\n"),
+        Some(indoc! {"
+            service:
+              port: null
+        "}),
     );
 
     assert!(
@@ -1073,8 +1089,12 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
 
     let schema_signals = schema_signals_for(uses);
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &RelabelingsProvider)
-            .with_values_yaml(Some("serviceMonitor:\n  metricRelabelings: []\n")),
+        ValuesSchemaInput::new(&schema_signals, &RelabelingsProvider).with_values_yaml(Some(
+            indoc! {"
+                serviceMonitor:
+                  metricRelabelings: []
+            "},
+        )),
     );
 
     for (instance, want, label) in [
@@ -1227,14 +1247,12 @@ fn values_yaml_comments_override_provider_descriptions() {
 
 #[test]
 fn values_yaml_comments_do_not_create_schema_paths() {
-    let uses = parse_ir(
-        r"
+    let uses = parse_ir(indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: {{ .Values.name }}
-        ",
-    );
+    "});
     let descriptions = BTreeMap::from([
         ("name".to_string(), "name description".to_string()),
         (
@@ -1391,7 +1409,13 @@ fn tpl_serialized_fragment_projects_the_provider_slot() {
                   command: {{ tpl (toYaml .Values.scheduler.command) . | nindent 12 }}
                   {{- end }}
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("scheduler:\n  command: ~\n"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {"
+            scheduler:
+              command: ~
+        "}),
+    );
 
     for (instance, want) in [
         (serde_json::json!({ "scheduler": { "command": 7 } }), false),
@@ -1496,8 +1520,10 @@ fn template_supplied_sibling_keys_relax_provider_requiredness() {
     let ir = parse_ir(src);
     let schema_signals = ir.into_schema_signals();
     let schema = generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, &VolumeProvider)
-            .with_values_yaml(Some("tmpVolume:\n  emptyDir: {}\n")),
+        ValuesSchemaInput::new(&schema_signals, &VolumeProvider).with_values_yaml(Some(indoc! {"
+            tmpVolume:
+              emptyDir: {}
+        "})),
     );
 
     for (instance, want, label) in [

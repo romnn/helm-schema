@@ -23,50 +23,51 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use serde_json::Value;
 use vfs::VfsPath;
 
-const WRAPPER_CHART_YAML: &str = "\
-apiVersion: v2
-name: wrapper
-version: 0.1.0
-dependencies:
-  - name: common
+const WRAPPER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: wrapper
     version: 0.1.0
-";
+    dependencies:
+      - name: common
+        version: 0.1.0
+"};
 
-const WRAPPER_VALUES_YAML: &str = "\
-# nameOverride deliberately absent — the chart relies on the library
-# helper's `default .Chart.Name` fallback.
-{}
-";
+const WRAPPER_VALUES_YAML: &str = indoc! {"
+    # nameOverride deliberately absent — the chart relies on the library
+    # helper's `default .Chart.Name` fallback.
+    {}
+"};
 
 // Wrapper template that consumes the library helper. This is what causes
 // `.Values.nameOverride` to appear in the IR (via helper inlining) with
 // empty guards, looking like an unconditional reference.
-const WRAPPER_CONFIGMAP_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include \"common.name\" . }}
-data: {}
-";
+const WRAPPER_CONFIGMAP_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: {{ include "common.name" . }}
+    data: {}
+"#};
 
-const LIBRARY_CHART_YAML: &str = "\
-apiVersion: v2
-name: common
-version: 0.1.0
-type: library
-";
+const LIBRARY_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: common
+    version: 0.1.0
+    type: library
+"};
 
 // The non-literal-default helper. `default .Chart.Name .Values.nameOverride`
 // makes `nameOverride` null-tolerant in the consumer's scope, and that
 // default should now flow through the structural contract directly.
-const LIBRARY_NAME_HELPER: &str = "\
-{{- define \"common.name\" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" -}}
-{{- end -}}
-";
+const LIBRARY_NAME_HELPER: &str = indoc! {r#"
+    {{- define "common.name" -}}
+    {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+    {{- end -}}
+"#};
 
 #[test]
 fn library_helper_non_literal_default_suppresses_required() -> eyre::Result<()> {

@@ -8,6 +8,7 @@
 //! unrelated umbrella-child defect from hiding whether the audited override added the expected
 //! path-specific rejection.
 
+use indoc::indoc;
 use std::collections::BTreeSet;
 
 use color_eyre::eyre::{self, OptionExt as _};
@@ -1351,7 +1352,9 @@ fn vault_object_selector_keeps_or_selected_shape_alternatives() -> eyre::Result<
                 json!({
                     "injector": {
                         "webhook": {
-                            "objectSelector": "matchLabels:\n  audit: {{ .Release.Name | quote }}"
+                            "objectSelector": indoc! {"
+                                matchLabels:
+                                  audit: {{ .Release.Name | quote }}"}
                         }
                     }
                 }),
@@ -1361,7 +1364,9 @@ fn vault_object_selector_keeps_or_selected_shape_alternatives() -> eyre::Result<
                 json!({
                     "injector": {
                         "webhook": { "objectSelector": "" },
-                        "objectSelector": "matchLabels:\n  audit: legacy"
+                        "objectSelector": indoc! {"
+                            matchLabels:
+                              audit: legacy"}
                     }
                 }),
             ),
@@ -3185,7 +3190,11 @@ fn nats_extra_resources_items_must_be_objects() -> eyre::Result<()> {
             ),
             SemanticCase::accepted(
                 "wrapper item is an object",
-                json!({ "extraResources": [{ "$tplYaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: extra" }] }),
+                json!({ "extraResources": [{ "$tplYaml": indoc! {"
+                    apiVersion: v1
+                    kind: ConfigMap
+                    metadata:
+                      name: extra"} }] }),
             ),
         ],
     )

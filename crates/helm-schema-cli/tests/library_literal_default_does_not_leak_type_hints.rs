@@ -15,63 +15,64 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-const WRAPPER_CHART_YAML: &str = "\
-apiVersion: v2
-name: wrapper
-version: 0.1.0
-dependencies:
-  - name: unused-library
+const WRAPPER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: wrapper
     version: 0.1.0
-  - name: app
+    dependencies:
+      - name: unused-library
+        version: 0.1.0
+      - name: app
+        version: 0.1.0
+"};
+
+const WRAPPER_VALUES_YAML: &str = indoc! {"
+    app:
+      replicas: ~
+"};
+
+const LIBRARY_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: unused-library
     version: 0.1.0
-";
-
-const WRAPPER_VALUES_YAML: &str = "\
-app:
-  replicas: ~
-";
-
-const LIBRARY_CHART_YAML: &str = "\
-apiVersion: v2
-name: unused-library
-version: 0.1.0
-type: library
-";
+    type: library
+"};
 
 // Library helper that defines a literal-default for .Values.replicas.
 // The wrapper never `include`s this helper — but the previous code
 // broadcast the type hint anyway.
-const LIBRARY_HELPER: &str = "\
-{{- define \"unused.replicas\" -}}
-{{- default 5 .Values.replicas -}}
-{{- end -}}
-";
+const LIBRARY_HELPER: &str = indoc! {r#"
+    {{- define "unused.replicas" -}}
+    {{- default 5 .Values.replicas -}}
+    {{- end -}}
+"#};
 
-const APP_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-";
+const APP_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
+    version: 0.1.0
+"};
 
 // App chart references its own .Values.replicas (which becomes
 // .Values.app.replicas in the umbrella's composed scope). It does NOT
 // include the library helper above — so the library's literal default
 // must not influence the app's schema.
-const APP_CONFIGMAP_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app-config
-data:
-  replicas: \"{{ .Values.replicas }}\"
-";
+const APP_CONFIGMAP_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app-config
+    data:
+      replicas: "{{ .Values.replicas }}"
+"#};
 
-const APP_VALUES_YAML: &str = "\
-replicas: ~
-";
+const APP_VALUES_YAML: &str = indoc! {"
+    replicas: ~
+"};
 
 #[test]
 fn library_literal_default_does_not_leak_type_to_sibling_chart() -> eyre::Result<()> {

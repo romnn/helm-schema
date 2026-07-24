@@ -33,60 +33,61 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-const ROOT_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-dependencies:
-  - name: loser
+const ROOT_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
     version: 0.1.0
-  - name: winner
+    dependencies:
+      - name: loser
+        version: 0.1.0
+      - name: winner
+        version: 0.1.0
+"};
+
+const ROOT_VALUES_YAML: &str = indoc! {"
+    replicas: ~
+"};
+
+const WINNER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: winner
     version: 0.1.0
-";
+    type: library
+"};
 
-const ROOT_VALUES_YAML: &str = "\
-replicas: ~
-";
+const WINNER_HELPERS: &str = indoc! {r#"
+    {{- define "common.name" -}}
+    {{ .Chart.Name }}
+    {{- end -}}
+"#};
 
-const WINNER_CHART_YAML: &str = "\
-apiVersion: v2
-name: winner
-version: 0.1.0
-type: library
-";
+const LOSER_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: loser
+    version: 0.1.0
+    type: library
+"};
 
-const WINNER_HELPERS: &str = "\
-{{- define \"common.name\" -}}
-{{ .Chart.Name }}
-{{- end -}}
-";
+const LOSER_HELPERS: &str = indoc! {r#"
+    {{- define "common.name" -}}
+    {{- default 5 .Values.replicas -}}
+    {{- end -}}
+"#};
 
-const LOSER_CHART_YAML: &str = "\
-apiVersion: v2
-name: loser
-version: 0.1.0
-type: library
-";
-
-const LOSER_HELPERS: &str = "\
-{{- define \"common.name\" -}}
-{{- default 5 .Values.replicas -}}
-{{- end -}}
-";
-
-const ROOT_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app
-  labels:
-    name: \"{{ include \"common.name\" . }}\"
-data:
-  replicas: \"{{ .Values.replicas }}\"
-";
+const ROOT_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app
+      labels:
+        name: "{{ include "common.name" . }}"
+    data:
+      replicas: "{{ .Values.replicas }}"
+"#};
 
 #[test]
 fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints() -> eyre::Result<()> {

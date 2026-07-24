@@ -19,6 +19,7 @@
 //! archives; their internal locks are not extracted.
 
 use color_eyre::eyre;
+use indoc::indoc;
 
 use serde::Deserialize;
 
@@ -185,7 +186,10 @@ fn unpacked_dependency_with_wrong_version_is_not_vendored() -> eyre::Result<()> 
     std::fs::create_dir_all(&dependency_dir)?;
     std::fs::write(
         dependency_dir.join("Chart.yaml"),
-        "name: common\nversion: 1.0.0\n",
+        indoc! {"
+            name: common
+            version: 1.0.0
+        "},
     )?;
     assert!(dependency_is_vendored(
         chart_dir.path(),

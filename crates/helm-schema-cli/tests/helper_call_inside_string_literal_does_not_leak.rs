@@ -21,57 +21,58 @@
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
 use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-const ROOT_CHART_YAML: &str = "\
-apiVersion: v2
-name: app
-version: 0.1.0
-dependencies:
-  - name: common
+const ROOT_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: app
     version: 0.1.0
-";
+    dependencies:
+      - name: common
+        version: 0.1.0
+"};
 
-const ROOT_VALUES_YAML: &str = "\
-replicas: ~
-";
+const ROOT_VALUES_YAML: &str = indoc! {"
+    replicas: ~
+"};
 
-const LIBRARY_CHART_YAML: &str = "\
-apiVersion: v2
-name: common
-version: 0.1.0
-type: library
-";
+const LIBRARY_CHART_YAML: &str = indoc! {"
+    apiVersion: v2
+    name: common
+    version: 0.1.0
+    type: library
+"};
 
 // `common.used` is the only helper actually included by the app.
 // `common.unusedReplicas` has a literal default that would leak via
 // the helper-call false edge if the regex didn't skip string literals.
-const LIBRARY_HELPERS: &str = "\
-{{- define \"common.used\" -}}
-app.kubernetes.io/name: {{ .Chart.Name }}
-{{- end -}}
+const LIBRARY_HELPERS: &str = indoc! {r#"
+    {{- define "common.used" -}}
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    {{- end -}}
 
-{{- define \"common.unusedReplicas\" -}}
-{{- default 5 .Values.replicas -}}
-{{- end -}}
-";
+    {{- define "common.unusedReplicas" -}}
+    {{- default 5 .Values.replicas -}}
+    {{- end -}}
+"#};
 
 // The manifest contains a quoted PAYLOAD that includes the literal
 // text `include "common.unusedReplicas"`. This is not a real call —
 // at render time Helm pipes that string through `quote` and emits it
 // verbatim. The real helper call is `{{ include "common.used" . }}`.
-const ROOT_TEMPLATE: &str = "\
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app
-  labels:
-    {{- include \"common.used\" . | nindent 4 }}
-data:
-  payload: {{ \"include \\\"common.unusedReplicas\\\"\" | quote }}
-  replicas: \"{{ .Values.replicas }}\"
-";
+const ROOT_TEMPLATE: &str = indoc! {r#"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: app
+      labels:
+        {{- include "common.used" . | nindent 4 }}
+    data:
+      payload: {{ "include \"common.unusedReplicas\"" | quote }}
+      replicas: "{{ .Values.replicas }}"
+"#};
 
 #[test]
 fn quoted_string_payload_does_not_create_phantom_helper_edge() -> eyre::Result<()> {

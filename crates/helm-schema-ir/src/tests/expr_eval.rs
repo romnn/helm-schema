@@ -8,6 +8,7 @@ use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use helm_schema_core::{Guard, GuardValue, Predicate};
+use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
 
@@ -1065,13 +1066,12 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
         ..EvalEnv::default()
     };
     let server = eval_expr(
-        &single_expr(
-            r#"set . "serverEnabled" (or
-                (eq (.Values.server.enabled | toString) "true")
-                (and
-                    (eq (.Values.server.enabled | toString) "-")
-                    (eq (.Values.global.enabled | toString) "true")))"#,
-        ),
+        &single_expr(indoc! {r#"
+            set . "serverEnabled" (or
+                            (eq (.Values.server.enabled | toString) "true")
+                            (and
+                                (eq (.Values.server.enabled | toString) "-")
+                                (eq (.Values.global.enabled | toString) "true")))"#}),
         &env,
     );
     let enabled = Predicate::Or(vec![
@@ -1110,11 +1110,10 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
     env.root_truthy_predicates
         .extend(server.effects.root_set_predicates);
     let service = eval_expr(
-        &single_expr(
-            r#"set . "serverServiceEnabled"
-                (and .serverEnabled
-                    (eq (.Values.server.service.enabled | toString) "true"))"#,
-        ),
+        &single_expr(indoc! {r#"
+            set . "serverServiceEnabled"
+                            (and .serverEnabled
+                                (eq (.Values.server.service.enabled | toString) "true"))"#}),
         &env,
     );
     sim_assert_eq!(

@@ -1,4 +1,5 @@
 use super::*;
+use indoc::indoc;
 
 /// Step 2: negative-integer literal still recognised, type hint is integer.
 #[test]
@@ -164,9 +165,9 @@ fn step2_default_in_helper_template_is_extracted() {
         {{- end -}}
     "#};
     let hints = type_hints_for(parse_ir_with_helpers(
-        r#"
-        name: {{ include "test.serviceAccountName" . }}
-        "#,
+        indoc! {r#"
+            name: {{ include "test.serviceAccountName" . }}
+        "#},
         helper_src,
     ));
     assert!(
