@@ -14,17 +14,17 @@ fn main() -> Result<(), std::env::VarError> {
     let grammars = [
         Grammar {
             name: "tree_sitter_yaml",
-            dir: "../../grammars/tree-sitter-yaml",
+            dir: "grammars/tree-sitter-yaml",
             c_files: &["src/parser.c", "src/scanner.c"],
         },
         Grammar {
             name: "tree_sitter_go_template",
-            dir: "../../grammars/tree-sitter-go-template",
+            dir: "grammars/tree-sitter-go-template",
             c_files: &["src/parser.c"],
         },
         Grammar {
             name: "tree_sitter_helm_template",
-            dir: "../../grammars/tree-sitter-helm-template",
+            dir: "grammars/tree-sitter-helm-template",
             c_files: &["src/parser.c", "src/scanner.c"],
         },
     ];
