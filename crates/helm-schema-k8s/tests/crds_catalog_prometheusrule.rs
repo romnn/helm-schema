@@ -3,6 +3,10 @@
 use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider};
+
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
+use common::bundled_crd_provider;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
@@ -31,7 +35,7 @@ fn materialize_schema_for_resource(
 
 #[test]
 fn materialize_prometheusrule() -> eyre::Result<()> {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let provider = bundled_crd_provider();
 
     let r = ResourceRef::concrete(
         "monitoring.coreos.com/v1".to_string(),
@@ -61,7 +65,7 @@ fn materialize_prometheusrule() -> eyre::Result<()> {
 
 #[test]
 fn prometheusrule_leaf_schema_rules_items() -> eyre::Result<()> {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let provider = bundled_crd_provider();
 
     let r = ResourceRef::concrete(
         "monitoring.coreos.com/v1".to_string(),
@@ -105,7 +109,7 @@ fn prometheusrule_leaf_schema_rules_items() -> eyre::Result<()> {
 /// downstream "missing schema" warnings on path misses.
 #[test]
 fn has_resource_true_for_cached_crd() {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let provider = bundled_crd_provider();
 
     // Force the cache to populate first.
     let r = ResourceRef::concrete(
@@ -117,40 +121,6 @@ fn has_resource_true_for_cached_crd() {
     assert!(
         provider.has_resource(&r),
         "PrometheusRule (cached CRD) should report has_resource=true"
-    );
-}
-
-/// `.k8s.io`-suffix groups previously got blocklisted by
-/// `relative_path_for_resource`, so legitimate addon CRDs like the
-/// vertical pod autoscaler (`autoscaling.k8s.io/VerticalPodAutoscaler`)
-/// were unreachable even when the catalog had them. This pins the fixed
-/// behaviour.
-#[test]
-fn relative_path_handles_dot_k8s_io_suffix_groups() {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
-
-    // Online-tolerant: the resource may or may not be cached; what
-    // matters is that `has_resource` (which goes through
-    // `relative_path_for_resource`) doesn't unconditionally return
-    // false. A successful download path will flip this to true; in
-    // offline test runs with no cache it's false, but the regression
-    // we're guarding against is the unconditional `.k8s.io` skip.
-    let r = ResourceRef::concrete(
-        "autoscaling.k8s.io/v1".to_string(),
-        "VerticalPodAutoscaler".to_string(),
-    );
-
-    let online = provider.has_resource(&r);
-    if !online {
-        // Sanity: if download is gated/offline, the negative-cache
-        // outcome is fine. The regression we're preventing is the
-        // *path-formation* returning None.
-        return;
-    }
-    assert!(
-        online,
-        "VerticalPodAutoscaler (autoscaling.k8s.io/v1) should be \
-         resolvable via the CRDs catalog when downloads are allowed"
     );
 }
 

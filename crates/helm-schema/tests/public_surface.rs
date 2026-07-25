@@ -97,6 +97,8 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -167,6 +169,8 @@ fn analysis_session_exposes_contract_and_generated_schema() -> eyre::Result<()> 
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -274,6 +278,8 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             ..Default::default()
         },
     });
@@ -387,6 +393,8 @@ fn contract_document_is_byte_deterministic_across_100_runs() -> eyre::Result<()>
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -435,6 +443,8 @@ fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -513,6 +523,8 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -625,6 +637,8 @@ fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -712,6 +726,8 @@ fn analysis_session_explains_values_path() -> eyre::Result<()> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -896,6 +912,8 @@ fn analysis_session_explains_helper_origin_provenance() -> eyre::Result<()> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -966,6 +984,8 @@ fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()>
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -1063,6 +1083,8 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },

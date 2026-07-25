@@ -119,13 +119,9 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()>
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
-            k8s_schema_cache_dir: Some(
-                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
-            ),
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
             allow_net: false,
-            crd_catalog_cache_dir: Some(
-                test_util::workspace_root().join(".cache/crds-catalog-cache"),
-            ),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -225,7 +221,8 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Re
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -295,7 +292,8 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Resul
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -403,6 +401,8 @@ fn static_chart_crds_type_custom_resource_values() -> eyre::Result<()> {
         values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -484,6 +484,8 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Re
         values_files: Vec::new(),
         infer_required: false,
         provider: ProviderOptions {
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             ..Default::default()
         },
@@ -601,7 +603,8 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -705,7 +708,8 @@ fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -834,7 +838,8 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -937,13 +942,9 @@ fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Re
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
-            k8s_schema_cache_dir: Some(
-                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
-            ),
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
             allow_net: false,
-            crd_catalog_cache_dir: Some(
-                test_util::workspace_root().join(".cache/crds-catalog-cache"),
-            ),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -1075,7 +1076,8 @@ fn library_subchart_helper_descendant_access_does_not_widen_parent_objects() -> 
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -1165,8 +1167,9 @@ fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
-            k8s_schema_cache_dir: None,
-            allow_net: true,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -1235,8 +1238,9 @@ fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> eyre::Res
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
-            k8s_schema_cache_dir: None,
-            allow_net: true,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -1319,7 +1323,8 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> eyre::Result
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -1398,7 +1403,8 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field() -> eyre
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -1494,7 +1500,8 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
-            allow_net: true,
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()
@@ -1582,8 +1589,9 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
-            k8s_schema_cache_dir: None,
-            allow_net: true,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -1671,8 +1679,9 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre:
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
-            k8s_schema_cache_dir: None,
-            allow_net: true,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            allow_net: false,
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
             crd_override_dir: None,
             ..Default::default()
@@ -1760,9 +1769,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
-            crd_catalog_cache_dir: Some(
-                test_util::workspace_root().join(".cache/crds-catalog-cache"),
-            ),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()

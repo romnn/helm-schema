@@ -2,92 +2,23 @@
 //! on stderr is a Diagnostic JSON object; CLI parse errors stay on
 //! clap's plain-text stderr.
 
-use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
+use color_eyre::eyre::{self, WrapErr as _};
 
-fn binary_path() -> eyre::Result<PathBuf> {
-    let mut p = std::env::current_exe().wrap_err("resolve current test executable")?;
-    while p.file_name().is_some()
-        && p.file_name().and_then(|s| s.to_str()) != Some("debug")
-        && p.file_name().and_then(|s| s.to_str()) != Some("release")
-    {
-        p.pop();
-    }
-    // Now `p` is `<target>/debug` or `<target>/release`. helm-schema
-    // binary sits one level up under `<target>/.../helm-schema`.
-    Ok(p.parent()
-        .ok_or_eyre("test executable has no target directory")?
-        .join(p.file_name().and_then(|s| s.to_str()).unwrap_or("debug"))
-        .join("helm-schema"))
-}
-
-fn helm_schema_binary() -> eyre::Result<PathBuf> {
-    // Prefer the locally-built debug binary for tests; fall back to release.
-    let workspace = std::env::var("CARGO_WORKSPACE_DIR")
-        .map(PathBuf::from)
-        .map_or_else(
-            |_| {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .parent()
-                    .and_then(std::path::Path::parent)
-                    .map(std::path::Path::to_path_buf)
-                    .ok_or_eyre("CLI crate is not nested below the workspace root")
-            },
-            Ok,
-        )?;
-    let debug = workspace.join("target/debug/helm-schema");
-    if debug.exists() {
-        return Ok(debug);
-    }
-    let release = workspace.join("target/release/helm-schema");
-    if release.exists() {
-        return Ok(release);
-    }
-    let _ = binary_path()?;
-    Ok(debug)
-}
-
-fn ensure_built() -> eyre::Result<()> {
-    let bin = helm_schema_binary()?;
-    if !bin.exists() {
-        let workspace = std::env::var("CARGO_WORKSPACE_DIR")
-            .map(PathBuf::from)
-            .map_or_else(
-                |_| {
-                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                        .parent()
-                        .and_then(std::path::Path::parent)
-                        .map(std::path::Path::to_path_buf)
-                        .ok_or_eyre("CLI crate is not nested below the workspace root")
-                },
-                Ok,
-            )?;
-        let _ = Command::new("cargo")
-            .arg("build")
-            .arg("-p")
-            .arg("helm-schema-cli")
-            .current_dir(&workspace)
-            .status()
-            .wrap_err("build helm-schema CLI for diagnostic tests")?;
-    }
-    Ok(())
-}
+/// Cargo builds the binary before running this test and points
+/// `CARGO_BIN_EXE_helm-schema` at it, with the platform's executable
+/// extension already applied. Resolving the path by hand instead would miss
+/// Windows' `.exe` and leave the tests looking at a file that never exists.
+const HELM_SCHEMA_BIN: &str = env!("CARGO_BIN_EXE_helm-schema");
 
 #[test]
 fn cli_diag_format_text_is_default() -> eyre::Result<()> {
-    ensure_built()?;
-    let bin = helm_schema_binary()?;
-    if !bin.exists() {
-        eprintln!("skip: helm-schema binary not built; skipping");
-        return Ok(());
-    }
     // Invoke with an invalid path → run() produces an error before any
     // schema work happens. We only need stderr to be plain text by
     // default, so any path-based smoke is fine.
-    let output = Command::new(&bin)
-        .arg("/nonexistent/chart/path")
+    let output = Command::new(HELM_SCHEMA_BIN)
+        .arg("definitely/not/a/chart")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
@@ -110,18 +41,12 @@ fn cli_diag_format_text_is_default() -> eyre::Result<()> {
 
 #[test]
 fn json_mode_parse_errors_stay_on_clap_stderr() -> eyre::Result<()> {
-    ensure_built()?;
-    let bin = helm_schema_binary()?;
-    if !bin.exists() {
-        eprintln!("skip: helm-schema binary not built; skipping");
-        return Ok(());
-    }
     // Invalid argv → clap emits its own plain-text usage error and
     // exits non-zero before our JSON-mode runtime ever starts.
-    let output = Command::new(&bin)
+    let output = Command::new(HELM_SCHEMA_BIN)
         .arg("--diag-format=json")
         .arg("--banana")
-        .arg("/tmp/chart")
+        .arg("some/chart")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()

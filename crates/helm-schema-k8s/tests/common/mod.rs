@@ -104,3 +104,29 @@ impl HttpFetcher for MockFetcher {
         }
     }
 }
+
+/// K8s provider reading only the vendored bundle under
+/// `testdata/provider-bundle/`.
+///
+/// Provider availability is a deterministic test INPUT. A provider left on
+/// the ambient user cache with downloads enabled answers from whatever a
+/// previous run happened to fetch, so the same assertion can pass on a warm
+/// machine and fail on a cold one. Content regressions must read the bundle;
+/// the live fetch path has its own `network_*` tests.
+#[must_use]
+pub fn bundled_k8s_provider(version: &str) -> helm_schema_k8s::KubernetesJsonSchemaProvider {
+    helm_schema_k8s::KubernetesJsonSchemaProvider::new(version.to_string())
+        .with_cache_dir(
+            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        )
+        .with_allow_download(false)
+}
+
+/// CRD catalog provider reading only the vendored bundle. See
+/// [`bundled_k8s_provider`] for why downloads stay off.
+#[must_use]
+pub fn bundled_crd_provider() -> helm_schema_k8s::CrdsCatalogSchemaProvider {
+    helm_schema_k8s::CrdsCatalogSchemaProvider::new()
+        .with_cache_dir(test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"))
+        .with_allow_download(false)
+}

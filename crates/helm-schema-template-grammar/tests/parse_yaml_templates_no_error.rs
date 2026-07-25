@@ -632,8 +632,7 @@ fn parses_all_testdata_yaml_templates_best_effort() {
                 .file_name()
                 .and_then(|s| s.to_str())
                 .unwrap_or("template.yaml");
-            let dump_path =
-                PathBuf::from("/tmp").join(format!("helm-schema-sanitized-{file_name}"));
+            let dump_path = std::env::temp_dir().join(format!("helm-schema-sanitized-{file_name}"));
             let _ = std::fs::write(&dump_path, &sanitized);
         }
 

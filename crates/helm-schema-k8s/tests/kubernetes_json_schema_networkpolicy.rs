@@ -1,7 +1,11 @@
 //! Kubernetes schema lookup regression for `NetworkPolicy`.
 
 use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
-use helm_schema_k8s::{Chain, K8sSchemaProvider, KubernetesJsonSchemaProvider};
+use helm_schema_k8s::{Chain, K8sSchemaProvider};
+
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
+use common::bundled_k8s_provider;
 use test_util::prelude::sim_assert_eq;
 
 fn materialize_schema_for_resource(
@@ -16,7 +20,7 @@ fn materialize_schema_for_resource(
 
 #[test]
 fn materialize_networkpolicy_v1_35() {
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = bundled_k8s_provider("v1.35.0");
 
     let r = ResourceRef::concrete(
         "networking.k8s.io/v1".to_string(),
@@ -35,7 +39,7 @@ fn materialize_networkpolicy_v1_35() {
 
 #[test]
 fn networkpolicy_leaf_schema_matchlabels() {
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = bundled_k8s_provider("v1.35.0");
 
     let r = ResourceRef::concrete(
         "networking.k8s.io/v1".to_string(),
@@ -66,7 +70,7 @@ fn networkpolicy_leaf_schema_matchlabels() {
 
 #[test]
 fn deployment_container_security_context_leaf_is_not_pod_spec() {
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = bundled_k8s_provider("v1.35.0");
 
     let r = ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string());
 
@@ -103,9 +107,7 @@ fn deployment_container_security_context_leaf_is_not_pod_spec() {
 
 #[test]
 fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
-        .with_allow_download(true)
-        .with_api_version_guess(true);
+    let provider = bundled_k8s_provider("v1.35.0").with_api_version_guess(true);
     let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
 
     let use_ = ProviderSchemaUse {
@@ -149,7 +151,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
 /// enabled — a single provider lookup does not resolve an empty apiVersion.
 #[test]
 fn kind_scan_legacy_path_retired() {
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true);
+    let provider = bundled_k8s_provider("v1.35.0");
 
     let r = ResourceRef::concrete(String::new(), "NetworkPolicy".to_string());
 

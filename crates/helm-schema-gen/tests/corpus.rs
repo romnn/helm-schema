@@ -6,7 +6,7 @@ mod common;
 
 use color_eyre::eyre::{self, OptionExt as _};
 use common::cases;
-use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink, KubernetesJsonSchemaProvider};
+use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink};
 
 #[test]
 fn schema_fixtures_match() -> eyre::Result<()> {
@@ -126,9 +126,11 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() -> eyre::Result<(
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
 
     let diagnostics = DiagnosticSink::new();
-    let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
-        .with_allow_download(true)
-        .with_diagnostic_sink(diagnostics.clone());
+    // The bundle carries the authoritative 404 marker for this removed API,
+    // so the "missing schema" warning is reproduced from disk rather than by
+    // asking upstream on every run.
+    let k8s_provider =
+        common::bundled_k8s_provider("v1.35.0").with_diagnostic_sink(diagnostics.clone());
     let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
 
     let _schema = common::generate_schema_with_values_yaml(ir, &chain, Some(&values_yaml));

@@ -199,9 +199,7 @@ fn packaged_library_common_ingress_helper_propagates_schema() -> eyre::Result<()
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
-            crd_catalog_cache_dir: Some(
-                test_util::workspace_root().join(".cache/crds-catalog-cache"),
-            ),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()

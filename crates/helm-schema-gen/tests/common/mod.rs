@@ -82,22 +82,36 @@ pub struct SchemaBehaviorCase<'a> {
     pub expectations: &'a [SchemaExpectation<'a>],
 }
 
+/// K8s provider reading only the vendored bundle.
+///
+/// Provider availability is a deterministic test INPUT: the bundle pins which
+/// upstream schemas a test can see. Reaching the ambient user cache with
+/// downloads enabled made results depend on cache warmth and on
+/// `raw.githubusercontent.com` being reachable — the exact failure mode the
+/// bundle exists to remove. Every provider a test builds must come from here.
+pub fn bundled_k8s_provider(version: &str) -> KubernetesJsonSchemaProvider {
+    KubernetesJsonSchemaProvider::new(version.to_string())
+        .with_cache_dir(
+            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        )
+        .with_allow_download(false)
+}
+
+/// CRD catalog provider reading only the vendored bundle. See
+/// [`bundled_k8s_provider`] for why downloads stay off.
+pub fn bundled_crd_provider() -> CrdsCatalogSchemaProvider {
+    CrdsCatalogSchemaProvider::new()
+        .with_cache_dir(test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"))
+        .with_allow_download(false)
+}
+
 /// Production-like K8s provider path for chart-level generator tests.
 ///
 /// These tests are meant to approximate what end users run through the CLI,
 /// so they use the chain layer plus apiVersion inference instead of the older
 /// single-provider shortcut.
 pub fn production_k8s_chain(version: &str) -> Chain {
-    // Provider availability is a deterministic test INPUT: the vendored
-    // bundle pins which upstream schemas the corpus can see. The ambient
-    // user cache with downloads enabled made fixture content depend on
-    // cache warmth, the exact failure mode the bundle exists to remove.
-    let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
-        .with_cache_dir(
-            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
-        )
-        .with_allow_download(false)
-        .with_api_version_guess(true);
+    let k8s_provider = bundled_k8s_provider(version).with_api_version_guess(true);
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 
@@ -107,15 +121,8 @@ pub fn production_k8s_chain(version: &str) -> Chain {
 /// as the CLI while leaving lower-layer provider-specific tests free to pin a
 /// single provider when that is the actual subject under test.
 pub fn production_crd_k8s_chain(version: &str) -> Chain {
-    let crds = CrdsCatalogSchemaProvider::new()
-        .with_cache_dir(test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"))
-        .with_allow_download(false);
-    let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
-        .with_cache_dir(
-            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
-        )
-        .with_allow_download(false)
-        .with_api_version_guess(true);
+    let crds = bundled_crd_provider();
+    let k8s_provider = bundled_k8s_provider(version).with_api_version_guess(true);
     Chain::new(vec![Box::new(crds), Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 
@@ -389,12 +396,10 @@ fn materialized_schema_for_rendered_resource(
 ) -> Option<Value> {
     let schema = match provider {
         RenderedSchemaProviderKind::K8s(version) => {
-            let provider = KubernetesJsonSchemaProvider::new(version).with_allow_download(true);
-            materialize_provider_root_schema(&provider, resource)?
+            materialize_provider_root_schema(&bundled_k8s_provider(version), resource)?
         }
         RenderedSchemaProviderKind::CrdCatalog => {
-            let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
-            materialize_provider_root_schema(&provider, resource)?
+            materialize_provider_root_schema(&bundled_crd_provider(), resource)?
         }
     };
 

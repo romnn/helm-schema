@@ -129,6 +129,32 @@ pub fn workspace_testdata() -> PathBuf {
     workspace_root().join("testdata")
 }
 
+/// A provider cache root for `role` that is guaranteed to hold no schemas.
+///
+/// Tests written against cache-miss semantics must point their providers
+/// here. Leaving a provider on its default root aims it at the shared
+/// per-user cache, so a developer whose cache happens to be warm exercises
+/// different provider results than CI ever sees — and every test writes
+/// layout markers into one real shared directory.
+///
+/// `role` names the provider slot (`"k8s"`, `"crd"`, `"crd-override"`).
+/// Each role gets its own directory because the managed cache roots are
+/// versioned and invalidated independently: pointing two providers at one
+/// directory lets one provider's layout check read the other's content as a
+/// legacy layout and wipe it.
+///
+/// The base is process-scoped: under nextest's process-per-test model each
+/// test gets its own directories, and offline providers only ever write the
+/// layout marker into them.
+#[must_use]
+pub fn cold_provider_cache_root(role: &str) -> PathBuf {
+    static BASE: OnceLock<PathBuf> = OnceLock::new();
+    BASE.get_or_init(|| {
+        std::env::temp_dir().join(format!("helm-schema.cold-cache.{}", std::process::id()))
+    })
+    .join(role)
+}
+
 /// Reads a file relative to the workspace `testdata/` directory.
 ///
 /// # Errors

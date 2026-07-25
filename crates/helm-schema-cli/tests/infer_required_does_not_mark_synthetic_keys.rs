@@ -56,15 +56,11 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> eyre::Result<()> {
         infer_required: true,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
-            k8s_schema_cache_dir: Some(
-                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
-            ),
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
             allow_net: false,
-            crd_catalog_cache_dir: Some(
-                test_util::workspace_root().join(".cache/crds-catalog-cache"),
-            ),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
             disable_k8s_schemas: false,
-            crd_override_dir: Some(test_util::workspace_root().join(".cache/crds-catalog-cache")),
+            crd_override_dir: Some(test_util::cold_provider_cache_root("crd-override")),
             ..Default::default()
         },
     };

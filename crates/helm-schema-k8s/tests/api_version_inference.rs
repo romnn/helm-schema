@@ -67,13 +67,19 @@ fn inference_skipped_when_api_version_candidates_nonempty() -> eyre::Result<()> 
 }
 
 #[test]
-fn inference_returns_no_match_without_opt_in() {
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_api_version_guess(false);
+fn inference_returns_no_match_without_opt_in() -> eyre::Result<()> {
+    // Inference reads no cache, but constructing a provider prepares one:
+    // point it at a throwaway root so the test never touches the shared
+    // per-user cache.
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+        .with_cache_dir(tmp_dir("inf-no-opt-in")?)
+        .with_api_version_guess(false);
     let candidates = provider.infer_api_version_candidates("Pod");
     assert!(
         candidates.is_empty(),
         "without opt-in, infer_api_version_candidates must return empty"
     );
+    Ok(())
 }
 
 #[test]
@@ -253,16 +259,19 @@ fn api_version_guess_aggregates_across_providers() {
 }
 
 #[test]
-fn api_version_guess_strict_disables_inference() {
+fn api_version_guess_strict_disables_inference() -> eyre::Result<()> {
     // With guess off, providers return empty candidates regardless of
     // the kind being in the shortlist.
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0").with_api_version_guess(false);
+    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+        .with_cache_dir(tmp_dir("inf-strict")?)
+        .with_api_version_guess(false);
     assert!(
         provider
             .infer_api_version_candidates("ServiceMonitor")
             .is_empty(),
         "with --strict-api-versions (= guess off), no candidates"
     );
+    Ok(())
 }
 
 #[test]
@@ -514,8 +523,11 @@ fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() -> eyre::Result<()>
 // fire — covered by the existing `inference_emits_diagnostic_through_chain`
 // test plus the loose-mode acceptance fixture.
 #[test]
-fn inference_for_builtin_kind_does_not_emit_diagnostic() {
+fn inference_for_builtin_kind_does_not_emit_diagnostic() -> eyre::Result<()> {
+    // A throwaway cache root, so what this asserts cannot change with
+    // whatever a previous run left in the shared per-user cache.
     let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+        .with_cache_dir(tmp_dir("inf-builtin-kind")?)
         .with_allow_download(false)
         .with_api_version_guess(true);
     let diagnostics = DiagnosticSink::new();
@@ -549,6 +561,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         !any_inferred,
         "InferredApiVersion MUST NOT fire for built-in kinds; sink: {snapshot:?}"
     );
+    Ok(())
 }
 
 // Counterexample: a CRD (non-built-in group) inference DOES emit

@@ -1,7 +1,11 @@
 //! CRD-catalog metadata lookup regression for `SecretProviderClass`.
 
 use helm_schema_core::{ResourceRef, YamlPath};
-use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider};
+use helm_schema_k8s::K8sSchemaProvider;
+
+/// Shared provider fixtures for K8s integration tests.
+pub mod common;
+use common::bundled_crd_provider;
 use test_util::prelude::sim_assert_eq;
 
 fn resource() -> ResourceRef {
@@ -13,7 +17,7 @@ fn resource() -> ResourceRef {
 
 #[test]
 fn secretproviderclass_metadata_name_uses_objectmeta_string_schema() {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let provider = bundled_crd_provider();
 
     let schema = provider
         .lookup(
@@ -33,7 +37,7 @@ fn secretproviderclass_metadata_name_uses_objectmeta_string_schema() {
 
 #[test]
 fn secretproviderclass_metadata_labels_use_objectmeta_string_map() {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let provider = bundled_crd_provider();
 
     let schema = provider
         .lookup(
@@ -55,7 +59,7 @@ fn secretproviderclass_metadata_labels_use_objectmeta_string_map() {
 
 #[test]
 fn secretproviderclass_metadata_annotations_use_objectmeta_string_map() {
-    let provider = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let provider = bundled_crd_provider();
 
     let schema = provider
         .lookup(
