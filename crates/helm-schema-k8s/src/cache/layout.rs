@@ -67,20 +67,56 @@ pub(crate) fn layout_marker_path(root: &Path) -> PathBuf {
     root.join(LAYOUT_MARKER_FILENAME)
 }
 
+/// The cache root for one managed schema source when the caller configured
+/// none: the source's own environment override, else the platform per-user
+/// cache directory, else the system temp directory.
+///
+/// The explicit override is taken verbatim — like the equivalent CLI flag, a
+/// relative value is the caller's deliberate choice. The fallback chain,
+/// however, always yields an ABSOLUTE path: a working-directory-relative
+/// default would make the cache location depend on where the process was
+/// launched, so two runs over the same chart from different directories
+/// would consult two different caches — and concurrent runs sharing a
+/// directory would race on the same files.
 pub(crate) fn default_cache_dir(env_var: &str, leaf: &str) -> PathBuf {
-    if let Ok(path) = std::env::var(env_var) {
-        return PathBuf::from(path);
+    if let Some(path) = env_path(env_var) {
+        return path;
     }
-    if let Ok(xdg) = std::env::var("XDG_CACHE_HOME") {
-        return PathBuf::from(xdg).join("helm-schema").join(leaf);
+    cache_home_for(cfg!(windows), env_path)
+        .unwrap_or_else(std::env::temp_dir)
+        .join("helm-schema")
+        .join(leaf)
+}
+
+/// The per-user cache directory, or `None` when the platform's variables are
+/// unset (a bare container, a service account with no profile).
+///
+/// The platform flag and environment reader are parameters so both branches
+/// get unit tests on every host — the Windows branch exists precisely
+/// because untested Windows-only resolution once fell through to a
+/// working-directory-relative path.
+fn cache_home_for(windows: bool, get: impl Fn(&str) -> Option<PathBuf>) -> Option<PathBuf> {
+    // Relative values are ignored, mirroring the XDG rule that relative
+    // basedir paths are invalid: honoring one would silently anchor the
+    // "per-user" cache to the current working directory.
+    let absolute = |var: &str| get(var).filter(|path| path.is_absolute());
+    if windows {
+        // Windows has no XDG convention: per-user, non-roaming application
+        // data lives under LOCALAPPDATA, with USERPROFILE as its fallback.
+        // HOME is deliberately not consulted — cmd and PowerShell leave it
+        // unset while MSYS shells set it elsewhere, so honoring it would
+        // move the cache depending on which shell launched the tool.
+        return absolute("LOCALAPPDATA")
+            .or_else(|| absolute("USERPROFILE").map(|home| home.join("AppData").join("Local")));
     }
-    if let Ok(home) = std::env::var("HOME") {
-        return PathBuf::from(home)
-            .join(".cache")
-            .join("helm-schema")
-            .join(leaf);
-    }
-    PathBuf::from(".cache").join("helm-schema").join(leaf)
+    absolute("XDG_CACHE_HOME").or_else(|| absolute("HOME").map(|home| home.join(".cache")))
+}
+
+/// A path from the environment, treating unset and empty alike: an exported
+/// but empty variable would otherwise resolve to the working directory.
+fn env_path(var: &str) -> Option<PathBuf> {
+    let value = std::env::var_os(var)?;
+    (!value.is_empty()).then(|| PathBuf::from(value))
 }
 
 pub(crate) fn cache_root_has_legacy_layout(
@@ -137,3 +173,7 @@ pub(crate) fn json_files(dir: &Path) -> Vec<PathBuf> {
     }
     out
 }
+
+#[cfg(test)]
+#[path = "tests/layout.rs"]
+mod tests;

@@ -21,6 +21,19 @@ Two managed cache roots, set independently and versioned/invalidated independent
 
 A forward-incompatible Kubernetes cache does not block CRD resolution, and vice versa.
 
+### Default location
+
+With no flag and no environment override, each root resolves to the per-user cache directory, then falls back to the system temp directory:
+
+| Platform | Kubernetes schemas | CRD catalog |
+|---|---|---|
+| Linux, macOS | `$XDG_CACHE_HOME/helm-schema/kubernetes-json-schema`, else `$HOME/.cache/…` | `…/helm-schema/crds-catalog` |
+| Windows | `%LOCALAPPDATA%\helm-schema\kubernetes-json-schema`, else `%USERPROFILE%\AppData\Local\…` | `…\helm-schema\crds-catalog` |
+
+`HELM_SCHEMA_K8S_SCHEMA_CACHE` and `HELM_SCHEMA_CRD_SCHEMA_CACHE` override the respective root; the `--*-cache-dir` flags override both.
+
+The fallback chain only accepts absolute paths (relative values are ignored, per the XDG rule) and ends at the system temp directory — a working-directory-relative cache would make the location depend on where you launched the tool, so the same chart would consult different caches from different directories. The explicit overrides are taken verbatim, like their flags.
+
 `--crd-override-dir` is a **different concept** — hand-maintained content, never wiped, no marker, not subject to the policy below. Mixing the two roles in one directory is prevented at CLI parse time.
 
 ## Per-source layout

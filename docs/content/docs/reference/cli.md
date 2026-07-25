@@ -100,6 +100,8 @@ See [Diagnostics]({{< relref "diagnostics.md" >}}).
 | Variable | Effect |
 |---|---|
 | `HELM_SCHEMA_ALLOW_NET=0` | Disable all network access (same as `--offline`). |
+| `HELM_SCHEMA_K8S_SCHEMA_CACHE` | Kubernetes schema cache root (same as `--k8s-schema-cache-dir`). |
+| `HELM_SCHEMA_CRD_SCHEMA_CACHE` | CRD catalog cache root (same as `--crd-catalog-cache-dir`). |
 
 ## Mutually exclusive flags
 
