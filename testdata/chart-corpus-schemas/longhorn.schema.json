@@ -5662,6 +5662,52 @@
                   "annotations": {
                     "anyOf": [
                       {
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "$ref": "#/$defs/schema104"
+                            },
+                            {
+                              "$ref": "#/$defs/schema106"
+                            },
+                            {
+                              "$ref": "#/$defs/schema109"
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "$ref": "#/$defs/schema110"
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
                         "type": "array"
                       },
                       {

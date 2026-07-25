@@ -3680,3 +3680,144 @@ fn prometheus_dependency_values_roots_must_be_tables() -> eyre::Result<()> {
         ],
     )
 }
+
+/// Each `extraObjects`/`extraDeploy` member renders as its own document
+/// through a `typeIs "string"` dispatch: the string arm splices the member's
+/// raw text, the else arm serializes it at document root. Helm decodes every
+/// manifest as a mapping, so a scalar or sequence member cannot decode
+/// ("error converting YAML to JSON"/"json: cannot unmarshal"), while both
+/// documented shapes and a skipped null member keep rendering. Traefik and
+/// Sealed Secrets route the dispatch through a `<chart>.render` helper, so the
+/// claim has to survive the helper splice; grafana writes it inline.
+#[test]
+fn ranged_document_members_must_decode_as_manifests() -> eyre::Result<()> {
+    for (chart, path, rejected_path) in [
+        ("traefik", "extraObjects", "/extraObjects"),
+        ("sealed-secrets", "extraDeploy", "/extraDeploy"),
+        ("grafana", "extraObjects", "/extraObjects"),
+    ] {
+        assert_chart_cases(
+            chart,
+            vec![
+                SemanticCase::rejected(
+                    "an integer member cannot decode as a document",
+                    rejected_path,
+                    json!({ path: [7] }),
+                ),
+                SemanticCase::rejected(
+                    "a sequence member decodes as a list, not a manifest",
+                    rejected_path,
+                    json!({ path: [["kind: ConfigMap"]] }),
+                ),
+                SemanticCase::accepted(
+                    "a raw manifest string renders through the string arm",
+                    json!({ path: ["apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: extra\n"] }),
+                ),
+                SemanticCase::accepted(
+                    "a mapping member renders through the serialized arm",
+                    json!({ path: [{
+                        "apiVersion": "v1",
+                        "kind": "ConfigMap",
+                        "metadata": { "name": "extra" },
+                    }] }),
+                ),
+                SemanticCase::accepted(
+                    "a null member renders an empty document",
+                    json!({ path: [null] }),
+                ),
+            ],
+        )?;
+    }
+    Ok(())
+}
+
+/// Text spliced raw into an UNQUOTED YAML slot renders the value's own
+/// characters, so a `: `, a ` #`, a line break, or a leading indicator there
+/// ends the plain token. Crossplane splices each ranged `extraEnvVars*` KEY
+/// into the container's `name:` slot (helm aborts: "mapping values are not
+/// allowed in this context"), External DNS splices each
+/// `secretConfiguration.data` key into a raw `{{ $key }}:` mapping key (helm
+/// aborts converting the Secret to JSON) and its `mountPath` through `tpl`
+/// (helm aborts on the deployment). Cluster Autoscaler's Magnum
+/// `--cluster-name={{ tpl … }}` is the render-valid variant: helm emits
+/// `- --cluster-name=x: y`, which decodes as a MAPPING where the container's
+/// `command` requires a string. A value carrying a template action escapes the
+/// `tpl` claims — its render is not the raw text at all.
+#[test]
+fn unquoted_slots_reject_token_breaking_sources() -> eyre::Result<()> {
+    assert_chart_cases(
+        "crossplane",
+        vec![
+            SemanticCase::rejected(
+                "a ranged env key holding `: ` breaks the name slot",
+                "/extraEnvVarsCrossplane",
+                json!({ "extraEnvVarsCrossplane": { "BAD: KEY": "x" } }),
+            ),
+            SemanticCase::accepted(
+                "a dotted key renders (the replace only rewrites `.`)",
+                json!({ "extraEnvVarsCrossplane": { "GOOD.KEY": "x" } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "external-dns",
+        vec![
+            SemanticCase::rejected(
+                "a data key holding `: ` opens a nested mapping",
+                "/secretConfiguration/data",
+                json!({ "secretConfiguration": {
+                    "enabled": true,
+                    "mountPath": "/etc/secrets",
+                    "data": { "BAD: KEY": "x" },
+                } }),
+            ),
+            SemanticCase::rejected(
+                "a mountPath holding `: ` breaks the volumeMount slot",
+                "/secretConfiguration/mountPath",
+                json!({ "secretConfiguration": {
+                    "enabled": true,
+                    "mountPath": "/etc/a: b",
+                    "data": { "K": "v" },
+                } }),
+            ),
+            SemanticCase::accepted(
+                "safe keys and a safe mountPath render",
+                json!({ "secretConfiguration": {
+                    "enabled": true,
+                    "mountPath": "/etc/secrets",
+                    "data": { "GOOD_KEY": "x" },
+                } }),
+            ),
+            SemanticCase::accepted(
+                "a templated mountPath renders whatever the program produces",
+                json!({ "secretConfiguration": {
+                    "enabled": true,
+                    "mountPath": "/etc/{{ .Release.Name }}",
+                    "data": { "GOOD_KEY": "x" },
+                } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "cluster-autoscaler",
+        vec![
+            SemanticCase::rejected(
+                "a magnum cluster name holding `: ` renders a mapping command item",
+                "/magnumClusterName",
+                json!({
+                    "cloudProvider": "magnum",
+                    "magnumClusterName": "x: y",
+                    "autoDiscovery": { "namespace": "default" },
+                }),
+            ),
+            SemanticCase::accepted(
+                "a plain magnum cluster name renders a string command item",
+                json!({
+                    "cloudProvider": "magnum",
+                    "magnumClusterName": "prod",
+                    "autoDiscovery": { "namespace": "default" },
+                }),
+            ),
+        ],
+    )
+}

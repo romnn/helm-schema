@@ -432,12 +432,44 @@
         "null"
       ]
     },
-    "schema105": {
+    "schema103": {
+      "propertyNames": {
+        "allOf": [
+          {
+            "not": {
+              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+            }
+          },
+          {
+            "not": {
+              "pattern": "^[-?:]([ \\t]|$)"
+            }
+          },
+          {
+            "not": {
+              "pattern": ":[ \\t]|:$"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[ \\t]#"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          }
+        ]
+      },
+      "type": "object"
+    },
+    "schema106": {
       "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
       "format": "int32",
       "type": "integer"
     },
-    "schema106": {
+    "schema107": {
       "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
       "format": "int32",
       "type": "null"
@@ -508,31 +540,26 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema111": {
+    "schema113": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "schema112": {
+    "schema114": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "integer"
     },
-    "schema113": {
+    "schema115": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "null"
     },
-    "schema115": {
+    "schema117": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
-    },
-    "schema118": {
-      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-      "format": "int32",
-      "type": "integer"
     },
     "schema12": {
       "description": "If specified, the pod's tolerations.",
@@ -584,32 +611,37 @@
       },
       "type": "array"
     },
-    "schema122": {
+    "schema120": {
+      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "schema124": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema123": {
+    "schema125": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema124": {
+    "schema126": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "null"
     },
-    "schema131": {
+    "schema133": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema132": {
+    "schema134": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -651,18 +683,18 @@
         "null"
       ]
     },
-    "schema145": {
+    "schema147": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema147": {
+    "schema149": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema152": {
+    "schema154": {
       "oneOf": [
         {
           "type": [
@@ -678,14 +710,9 @@
         }
       ]
     },
-    "schema153": {
+    "schema155": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "schema159": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema16": {
@@ -726,16 +753,21 @@
         "null"
       ]
     },
-    "schema160": {
+    "schema161": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema162": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema161": {
+    "schema163": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema163": {
+    "schema165": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -2864,6 +2896,25 @@
         "extraEnvVarsCrossplane": {
           "anyOf": [
             {
+              "$ref": "#/$defs/schema103"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnvVarsCrossplane": {
+          "anyOf": [
+            {
               "type": "array"
             },
             {
@@ -2894,6 +2945,25 @@
             }
           ],
           "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnvVarsCrossplaneInit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema103"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
         }
       }
     },
@@ -2958,6 +3028,25 @@
       },
       "then": {
         "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "extraEnvVarsRBACManager": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema103"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+              }
+            }
+          },
           {
             "additionalProperties": {},
             "properties": {
@@ -3876,28 +3965,56 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "customAnnotations": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "customAnnotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema103"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
                   }
-                ],
-                "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "customAnnotations": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -4479,7 +4596,7 @@
           "description": "Affinity is a group of affinity scheduling rules."
         },
         {
-          "$ref": "#/$defs/schema147"
+          "$ref": "#/$defs/schema149"
         },
         {
           "not": {
@@ -4551,7 +4668,7 @@
     "customAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema147"
+          "$ref": "#/$defs/schema149"
         },
         {
           "$ref": "#/$defs/schema59"
@@ -4593,13 +4710,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema159"
-            },
-            {
               "$ref": "#/$defs/schema161"
             },
             {
               "$ref": "#/$defs/schema163"
+            },
+            {
+              "$ref": "#/$defs/schema165"
             },
             {
               "not": {
@@ -4612,16 +4729,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema132"
+              "$ref": "#/$defs/schema134"
             },
             {
               "$ref": "#/$defs/schema95"
             },
             {
-              "$ref": "#/$defs/schema145"
+              "$ref": "#/$defs/schema147"
             },
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema155"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
@@ -4639,13 +4756,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema159"
-            },
-            {
               "$ref": "#/$defs/schema161"
             },
             {
               "$ref": "#/$defs/schema163"
+            },
+            {
+              "$ref": "#/$defs/schema165"
             },
             {
               "not": {
@@ -4658,16 +4775,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema132"
+              "$ref": "#/$defs/schema134"
             },
             {
               "$ref": "#/$defs/schema95"
             },
             {
-              "$ref": "#/$defs/schema145"
+              "$ref": "#/$defs/schema147"
             },
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema155"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4688,7 +4805,7 @@
     "extraEnvVarsCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema162"
         },
         {
           "items": {},
@@ -4698,7 +4815,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema162"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -4706,7 +4823,7 @@
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema162"
         },
         {
           "items": {},
@@ -4716,7 +4833,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema162"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -4741,7 +4858,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema162"
         }
       ],
       "description": "To add arbitrary Kubernetes Objects during a Helm Install"
@@ -4749,7 +4866,7 @@
     "extraVolumeMountsCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema147"
+          "$ref": "#/$defs/schema149"
         },
         {
           "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
@@ -4774,7 +4891,7 @@
     "extraVolumesCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema147"
+          "$ref": "#/$defs/schema149"
         },
         {
           "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
@@ -4855,7 +4972,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema123"
+                    "$ref": "#/$defs/schema125"
                   }
                 },
                 "required": [
@@ -4872,7 +4989,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/schema122"
+                    "$ref": "#/$defs/schema124"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -4996,10 +5113,10 @@
                     "$ref": "#/$defs/schema14"
                   },
                   "name": {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema117"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema131"
+                    "$ref": "#/$defs/schema133"
                   }
                 },
                 "type": [
@@ -5094,7 +5211,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema154"
                   }
                 },
                 "type": [
@@ -5904,7 +6021,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema122"
+                    "$ref": "#/$defs/schema124"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -5986,10 +6103,10 @@
                               "$ref": "#/$defs/schema14"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema115"
+                              "$ref": "#/$defs/schema117"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema131"
+                              "$ref": "#/$defs/schema133"
                             }
                           },
                           "type": [
@@ -6032,7 +6149,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/schema115"
+                              "$ref": "#/$defs/schema117"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -6235,14 +6352,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema123"
+                    "$ref": "#/$defs/schema125"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/schema115"
+                        "$ref": "#/$defs/schema117"
                       }
                     },
                     "type": "object",
@@ -6341,7 +6458,7 @@
                     "$ref": "#/$defs/schema99"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema122"
+                    "$ref": "#/$defs/schema124"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/schema63"
@@ -6570,13 +6687,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema159"
-                },
-                {
                   "$ref": "#/$defs/schema161"
                 },
                 {
                   "$ref": "#/$defs/schema163"
+                },
+                {
+                  "$ref": "#/$defs/schema165"
                 },
                 {
                   "not": {
@@ -6589,16 +6706,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema132"
+                  "$ref": "#/$defs/schema134"
                 },
                 {
                   "$ref": "#/$defs/schema95"
                 },
                 {
-                  "$ref": "#/$defs/schema145"
+                  "$ref": "#/$defs/schema147"
                 },
                 {
-                  "$ref": "#/$defs/schema153"
+                  "$ref": "#/$defs/schema155"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6647,7 +6764,7 @@
               "port": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema118"
+                    "$ref": "#/$defs/schema120"
                   },
                   {
                     "not": {
@@ -6655,7 +6772,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema111"
+                    "$ref": "#/$defs/schema113"
                   }
                 ],
                 "description": "The port the metrics server listens on."
@@ -6703,7 +6820,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema147"
+          "$ref": "#/$defs/schema149"
         },
         {
           "$ref": "#/$defs/schema74"
@@ -6745,7 +6862,7 @@
                     "$ref": "#/$defs/schema31"
                   },
                   {
-                    "$ref": "#/$defs/schema124"
+                    "$ref": "#/$defs/schema126"
                   },
                   {
                     "not": {
@@ -6859,7 +6976,7 @@
           "$ref": "#/$defs/schema3"
         },
         {
-          "$ref": "#/$defs/schema147"
+          "$ref": "#/$defs/schema149"
         },
         {
           "not": {
@@ -7043,13 +7160,13 @@
                   "replicas": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema112"
+                        "$ref": "#/$defs/schema114"
+                      },
+                      {
+                        "$ref": "#/$defs/schema115"
                       },
                       {
                         "$ref": "#/$defs/schema113"
-                      },
-                      {
-                        "$ref": "#/$defs/schema111"
                       }
                     ],
                     "description": "The number of RBAC Manager pod `replicas` to deploy."
@@ -7062,10 +7179,10 @@
                   "revisionHistoryLimit": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema105"
+                        "$ref": "#/$defs/schema106"
                       },
                       {
-                        "$ref": "#/$defs/schema106"
+                        "$ref": "#/$defs/schema107"
                       },
                       {
                         "not": {
@@ -7073,7 +7190,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema111"
+                        "$ref": "#/$defs/schema113"
                       }
                     ],
                     "description": "The number of RBAC Manager ReplicaSets to retain."
@@ -7177,7 +7294,7 @@
         "port": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema118"
+              "$ref": "#/$defs/schema120"
             },
             {
               "not": {
@@ -7185,7 +7302,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema111"
+              "$ref": "#/$defs/schema113"
             }
           ],
           "description": "The port the readyz server listens on."
@@ -7216,13 +7333,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema159"
-                      },
-                      {
                         "$ref": "#/$defs/schema161"
                       },
                       {
                         "$ref": "#/$defs/schema163"
+                      },
+                      {
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "not": {
@@ -7240,16 +7357,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema132"
+                        "$ref": "#/$defs/schema134"
                       },
                       {
                         "$ref": "#/$defs/schema95"
                       },
                       {
-                        "$ref": "#/$defs/schema145"
+                        "$ref": "#/$defs/schema147"
                       },
                       {
-                        "$ref": "#/$defs/schema153"
+                        "$ref": "#/$defs/schema155"
                       }
                     ],
                     "type": "string"
@@ -7274,7 +7391,7 @@
               "$ref": "#/$defs/schema31"
             },
             {
-              "$ref": "#/$defs/schema124"
+              "$ref": "#/$defs/schema126"
             },
             {
               "not": {
@@ -7290,13 +7407,13 @@
     "replicas": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema112"
+          "$ref": "#/$defs/schema114"
+        },
+        {
+          "$ref": "#/$defs/schema115"
         },
         {
           "$ref": "#/$defs/schema113"
-        },
-        {
-          "$ref": "#/$defs/schema111"
         }
       ],
       "description": "The number of Crossplane pod `replicas` to deploy."
@@ -7314,7 +7431,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema154"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7338,7 +7455,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema154"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7370,10 +7487,10 @@
     "revisionHistoryLimit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema105"
+          "$ref": "#/$defs/schema106"
         },
         {
-          "$ref": "#/$defs/schema106"
+          "$ref": "#/$defs/schema107"
         },
         {
           "not": {
@@ -7381,7 +7498,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema111"
+          "$ref": "#/$defs/schema113"
         },
         {
           "type": "null"
@@ -7398,7 +7515,7 @@
         "customAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema147"
+              "$ref": "#/$defs/schema149"
             },
             {
               "$ref": "#/$defs/schema59"
@@ -7674,7 +7791,7 @@
                               "type": "string"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema115"
+                              "$ref": "#/$defs/schema117"
                             },
                             "optional": {
                               "description": "Specify whether the ConfigMap or its key must be defined",
@@ -7708,7 +7825,7 @@
                               "type": "string"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema115"
+                              "$ref": "#/$defs/schema117"
                             },
                             "optional": {
                               "description": "Specify whether the Secret or its key must be defined",
@@ -7760,7 +7877,7 @@
                       "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                       "properties": {
                         "name": {
-                          "$ref": "#/$defs/schema115"
+                          "$ref": "#/$defs/schema117"
                         },
                         "optional": {
                           "description": "Specify whether the ConfigMap must be defined",
@@ -7787,7 +7904,7 @@
                       "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                       "properties": {
                         "name": {
-                          "$ref": "#/$defs/schema115"
+                          "$ref": "#/$defs/schema117"
                         },
                         "optional": {
                           "description": "Specify whether the Secret must be defined",
@@ -7857,7 +7974,7 @@
                   "description": "ContainerPort represents a network port in a single container.",
                   "properties": {
                     "containerPort": {
-                      "$ref": "#/$defs/schema118"
+                      "$ref": "#/$defs/schema120"
                     },
                     "hostIP": {
                       "description": "What host IP to bind the external port to.",
@@ -8175,7 +8292,7 @@
               "port": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema118"
+                    "$ref": "#/$defs/schema120"
                   },
                   {
                     "not": {
@@ -8189,13 +8306,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema159"
-                              },
-                              {
                                 "$ref": "#/$defs/schema161"
                               },
                               {
                                 "$ref": "#/$defs/schema163"
+                              },
+                              {
+                                "$ref": "#/$defs/schema165"
                               },
                               {
                                 "not": {
@@ -8208,10 +8325,10 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema132"
+                                "$ref": "#/$defs/schema134"
                               },
                               {
-                                "$ref": "#/$defs/schema153"
+                                "$ref": "#/$defs/schema155"
                               }
                             ],
                             "type": "string"
@@ -8224,7 +8341,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema111"
+                            "$ref": "#/$defs/schema113"
                           },
                           {
                             "type": "integer"
@@ -8237,7 +8354,7 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/schema111"
+                    "$ref": "#/$defs/schema113"
                   }
                 ],
                 "description": "The port the webhook server listens on."

@@ -11117,6 +11117,46 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "extraPorts": {
+          "anyOf": [
+            {
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/schema264"
+                  },
+                  {
+                    "$ref": "#/$defs/schema267"
+                  },
+                  {
+                    "$ref": "#/$defs/schema269"
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema270"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "fullnameOverride": {

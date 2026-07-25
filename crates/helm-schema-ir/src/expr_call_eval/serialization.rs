@@ -179,6 +179,15 @@ pub(super) fn eval_replace(
         }
         Some(AbstractValue::StringSet(rendered))
     };
+    // `replace` renders the subject's own characters except OLD → NEW, so an
+    // unquoted slot's lexical language still projects back onto a ranged KEY
+    // when neither token can introduce or remove a token-ending character
+    // (crossplane's `replace "." "_"` over ranged env var keys).
+    if replace_preserves_plain_token_language(&old_values, &new_values) {
+        effects
+            .plain_text_range_key_paths
+            .extend(raw_range_key_paths.iter().cloned());
+    }
     super::strict_operands::record_string_transform_effects(
         "replace",
         value.as_ref(),
@@ -252,6 +261,15 @@ pub(super) fn eval_replace_pipeline(
         }
         Some(AbstractValue::StringSet(rendered))
     };
+    // `replace` renders the subject's own characters except OLD → NEW, so an
+    // unquoted slot's lexical language still projects back onto a ranged KEY
+    // when neither token can introduce or remove a token-ending character
+    // (crossplane's `replace "." "_"` over ranged env var keys).
+    if replace_preserves_plain_token_language(&old_values, &new_values) {
+        effects
+            .plain_text_range_key_paths
+            .extend(raw_range_key_paths.iter().cloned());
+    }
     super::strict_operands::record_string_transform_effects(
         "replace",
         value.as_ref(),
@@ -260,6 +278,26 @@ pub(super) fn eval_replace_pipeline(
         &mut effects,
     );
     EvalResult::with_effects(value, effects)
+}
+
+/// Whether a `replace OLD NEW` provably leaves the UNQUOTED-slot language
+/// alone: both literals must be statically known and free of every character
+/// that can end a plain YAML token, so the replacement can neither sanitize an
+/// unsafe raw value nor corrupt a safe one.
+fn replace_preserves_plain_token_language(
+    old_values: &BTreeSet<String>,
+    new_values: &BTreeSet<String>,
+) -> bool {
+    let irrelevant = |text: &String| {
+        !text.is_empty()
+            && !text
+                .chars()
+                .any(|character| ":#\r\n \t!&*{}[],|>@`%-?'\"".contains(character))
+    };
+    !old_values.is_empty()
+        && !new_values.is_empty()
+        && old_values.iter().all(irrelevant)
+        && new_values.iter().all(irrelevant)
 }
 
 /// The single nonempty OLD literal of a `replace` call, when static.
@@ -340,6 +378,7 @@ pub(super) fn eval_tpl(
         record_string_consumer_effects(&subject_paths, &mut effects);
         if let Some(AbstractValue::ValuesPath(path)) = template.value.as_ref() {
             effects.nil_strict_identity_paths.insert(path.clone());
+            effects.templated_text_identity_paths.insert(path.clone());
         }
         record_range_key_string_consumer_effects(template.value.as_ref(), &mut effects);
         // The rendered result is DERIVED TEXT: the raw argument is a Go

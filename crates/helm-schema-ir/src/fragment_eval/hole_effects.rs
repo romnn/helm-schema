@@ -636,9 +636,12 @@ fn runtime_requirement_paths(
     use crate::eval_effect::CaptureKind;
 
     match &capture.kind {
-        CaptureKind::RangeKeyStrings { paths } | CaptureKind::CollectionItems { paths, .. } => {
-            paths.clone()
-        }
+        // `RangeKeyPlainSlot` binds the collection's KEYS, but the
+        // runtime-kind lane still keys on the collection itself.
+        CaptureKind::RangeKeyStrings { paths }
+        | CaptureKind::RangeKeyPlainSlot { paths }
+        | CaptureKind::CollectionItems { paths, .. }
+        | CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
         CaptureKind::IndexAccess { path, .. }
         | CaptureKind::ValueType { path, .. }
         | CaptureKind::DigSubject { path }
@@ -647,8 +650,8 @@ fn runtime_requirement_paths(
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. }
+        | CaptureKind::PlainSlotText { path, .. }
         | CaptureKind::RangeSelection { path, .. } => [path.clone()].into_iter().collect(),
-        CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
             .conjunction
             .last()

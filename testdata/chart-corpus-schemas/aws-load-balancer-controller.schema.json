@@ -3219,6 +3219,48 @@
               "env": {
                 "anyOf": [
                   {
+                    "propertyNames": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/schema137"
+                        },
+                        {
+                          "$ref": "#/$defs/schema139"
+                        },
+                        {
+                          "$ref": "#/$defs/schema142"
+                        },
+                        {
+                          "not": {
+                            "pattern": "[ \\t]#"
+                          }
+                        },
+                        {
+                          "not": {
+                            "pattern": "[\\r\\n]"
+                          }
+                        }
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "env": {
+                "anyOf": [
+                  {
                     "type": "array"
                   },
                   {

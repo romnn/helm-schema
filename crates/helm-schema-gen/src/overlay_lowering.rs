@@ -948,8 +948,11 @@ fn requirement_admits_runtime_type(
         | FailValueRequirement::FieldHelmFalsy { .. }
         | FailValueRequirement::FieldNotEquals { .. }
         | FailValueRequirement::NotEquals(_)
-        // Constrains rendered content, not the value's kind.
-        | FailValueRequirement::QuotedSerializationSafe { .. } => true,
+        // Constrains rendered content, not the value's kind (non-strings
+        // format as safe plain tokens, and every string kind has token-safe
+        // inhabitants).
+        | FailValueRequirement::QuotedSerializationSafe { .. }
+        | FailValueRequirement::PlainScalarSafe { .. } => true,
         FailValueRequirement::HelmTruthy => runtime_type != "null",
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }

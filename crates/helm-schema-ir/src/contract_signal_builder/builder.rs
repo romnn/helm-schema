@@ -1274,6 +1274,30 @@ fn record_fail_conjunction(
         );
         return;
     }
+    if let crate::eval_effect::CaptureKind::PlainSlotText {
+        path,
+        token_initial,
+        templated,
+    } = &capture.kind
+    {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::PlainScalarSafe {
+                token_initial: *token_initial,
+                templated: *templated,
+            },
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
+        paths: collection_paths,
+    } = &capture.kind
+    {
+        record_range_key_plain_slot_requirements(paths, capture, collection_paths, range_modes);
+        return;
+    }
     // An approximate enclosing condition abstains unless it admits a sound
     // positive strengthening (it can only ever be an OUTER guard — the
     // requirement extraction below never negates one), and a `$local` name
@@ -1879,6 +1903,54 @@ fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
     }
 }
 
+/// The escape alternative a per-member type dispatch leaves open: members the
+/// tested branch does not claim satisfy the negated test instead. Only the
+/// exact `typeIs` partition qualifies — its complement is a plain type
+/// alternative, which every other member condition (truthiness, equality,
+/// member reads) cannot spell without losing soundness.
+fn member_dispatch_escape(
+    predicate: &Predicate,
+    member_path: &str,
+) -> Option<FailValueRequirement> {
+    let (negated, guard) = match predicate {
+        Predicate::Guard(guard) => (false, guard),
+        Predicate::Not(inner) => match inner.as_ref() {
+            Predicate::Guard(guard) => (true, guard),
+            _ => return None,
+        },
+        _ => return None,
+    };
+    let (schema_type, excluded) = match guard {
+        Guard::TypeIs { path, schema_type } if path == member_path => (schema_type, false),
+        Guard::NotTypeIs { path, schema_type } if path == member_path => (schema_type, true),
+        _ => return None,
+    };
+    if negated == excluded {
+        Some(FailValueRequirement::NotSchemaType(schema_type.clone()))
+    } else {
+        Some(FailValueRequirement::SchemaType(schema_type.clone()))
+    }
+}
+
+/// Whether the two requirements partition every value, which makes their
+/// alternation accept everything.
+fn complements_requirement(
+    escape: &FailValueRequirement,
+    requirement: &FailValueRequirement,
+) -> bool {
+    match (escape, requirement) {
+        (
+            FailValueRequirement::NotSchemaType(excluded),
+            FailValueRequirement::SchemaType(required),
+        )
+        | (
+            FailValueRequirement::SchemaType(required),
+            FailValueRequirement::NotSchemaType(excluded),
+        ) => excluded == required,
+        _ => false,
+    }
+}
+
 #[expect(
     clippy::too_many_lines,
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
@@ -1887,7 +1959,7 @@ fn record_value_requirement_capture(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
     path: &str,
-    requirement: FailValueRequirement,
+    mut requirement: FailValueRequirement,
 ) {
     if path.trim().is_empty() {
         return;
@@ -1977,6 +2049,7 @@ fn record_value_requirement_capture(
     {
         let mut outer_guards = Vec::new();
         let mut prefix = None;
+        let mut dispatch_escapes = Vec::new();
         for predicate in &capture.conjunction {
             match predicate {
                 Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
@@ -1989,6 +2062,19 @@ fn record_value_requirement_capture(
                     }
                 }
                 _ => {
+                    // A conjunct testing the MEMBER's own kind is the chart's
+                    // per-member type dispatch, not an outer guard: its path is
+                    // per-member, so the requirement binds only the members the
+                    // dispatch routes here and the others escape through the
+                    // negated test. Traefik and Sealed Secrets render each
+                    // `extraObjects`/`extraDeploy` member either as `tpl` text
+                    // (a string) or as a serialized document (a mapping), and
+                    // dropping the else arm's placement left the item domain
+                    // open to scalars Helm cannot decode.
+                    if let Some(escape) = member_dispatch_escape(predicate, path) {
+                        dispatch_escapes.push(vec![escape]);
+                        continue;
+                    }
                     let Some(guard) = predicate_to_guard(predicate, None) else {
                         return;
                     };
@@ -2002,6 +2088,22 @@ fn record_value_requirement_capture(
                     outer_guards.push(guard);
                 }
             }
+        }
+        if !dispatch_escapes.is_empty() {
+            // The tested branch's own requirement IS the dispatch condition
+            // whenever it types the member the test already selected (the
+            // string arm's `tpl` operand), so the alternation would accept
+            // every value: record nothing rather than a vacuous arm.
+            if dispatch_escapes
+                .iter()
+                .flatten()
+                .any(|escape| complements_requirement(escape, &requirement))
+            {
+                return;
+            }
+            let mut alternatives = vec![vec![requirement]];
+            alternatives.append(&mut dispatch_escapes);
+            requirement = FailValueRequirement::AnyOf(alternatives);
         }
         outer_guards.sort();
         outer_guards.dedup();
@@ -2308,6 +2410,45 @@ fn record_range_key_string_requirements(
             outer_guards,
             target: ContractRequirementTarget::Keys,
             requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
+        };
+        let acc = path_accumulator(paths, path);
+        acc.referenced = true;
+        if !acc.fail_implications.contains(&implication) {
+            acc.fail_implications.push(implication);
+        }
+    }
+}
+
+/// Lower an unquoted-slot claim on a ranged collection's KEYS. The keys are
+/// what renders, so the requirement rides `propertyNames` — the same lane the
+/// strict-consumer key contract uses, and with the same direct-iteration
+/// precondition (only a direct range has member key identities).
+fn record_range_key_plain_slot_requirements(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    collection_paths: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
+) {
+    if capture.contains_approximation() {
+        return;
+    }
+    for path in collection_paths {
+        if path_contains_wildcard(path)
+            || (!range_modes.mode(path).direct && !capture.ranged.mode(path).direct)
+            || has_selection_chain_marker_stamp(&capture.conjunction)
+        {
+            continue;
+        }
+        let Some(outer_guards) = lowerable_range_outer_guards(path, &capture.conjunction) else {
+            continue;
+        };
+        let implication = ContractFailImplication {
+            outer_guards,
+            target: ContractRequirementTarget::Keys,
+            requirements: vec![FailValueRequirement::PlainScalarSafe {
+                token_initial: true,
+                templated: false,
+            }],
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;

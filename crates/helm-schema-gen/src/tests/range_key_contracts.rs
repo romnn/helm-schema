@@ -7,6 +7,10 @@ use super::*;
 /// Dead branches accept unrelated shapes; live branches constrain every
 /// iterable lane after broad fragment/default alternatives are assembled.
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "one full-schema pin: splitting it would hide which lanes belong to the same emission"
+)]
 fn guarded_range_member_string_contract_stays_branch_scoped() {
     let src = indoc! {r"
         {{- if .Values.enabled }}
@@ -60,19 +64,37 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
     properties.insert("templates".to_string(), serde_json::json!({}));
     let all_of = vec![serde_json::json!({
         "if": live_guard.clone(),
-        "then": root_property_schema(
-            "templates",
-            serde_json::json!({
-                "anyOf": [
-                    { "items": { "type": "string" }, "type": "array" },
-                    {
-                        "additionalProperties": { "type": "string" },
-                        "type": "object",
-                    },
-                    { "type": "null" },
-                ]
-            }),
-        ),
+        "then": { "allOf": [
+            root_property_schema(
+                "templates",
+                serde_json::json!({
+                    "anyOf": [
+                        { "items": { "type": "string" }, "type": "array" },
+                        {
+                            "additionalProperties": { "type": "string" },
+                            "type": "object",
+                        },
+                        { "type": "null" },
+                    ]
+                }),
+            ),
+            // `{{ $key }}: |-` splices the key raw into an unquoted mapping-key
+            // slot, so a key holding `: ` opens a nested mapping there. A
+            // list's integer indices always render as safe plain tokens.
+            root_property_schema(
+                "templates",
+                serde_json::json!({
+                    "anyOf": [
+                        {
+                            "propertyNames": { "allOf": plain_token_exclusions(true) },
+                            "type": "object",
+                        },
+                        { "type": "array" },
+                        { "type": "null" },
+                    ]
+                }),
+            ),
+        ] },
     })];
     sim_assert_eq!(
         have: &schema,

@@ -289,8 +289,27 @@ impl Interpreter<'_> {
         } else {
             ValueKind::Scalar
         };
+        let document_root =
+            !self.helper_scope && width.is_none() && self.line_indent(span.start) == 0;
         if let Some(spliced) = self.splice_helper_call_hole(&exprs) {
             let mut out = spliced;
+            // A helper spliced at column zero renders its own document, so the
+            // rule below reaches whatever ranged member its body emits WHOLE
+            // there, under that arm's own conditions (traefik and Sealed
+            // Secrets route each `extraObjects`/`extraDeploy` member through a
+            // `<chart>.render` helper whose `typeIs "string"` arms decide
+            // between the member's raw text and its serialization).
+            if document_root {
+                for (condition, fragment) in &out.arms.clone() {
+                    if let AbstractFragment::Splice(splice) = fragment
+                        && splice.kind == ValueKind::Fragment
+                        && splice.values_path.ends_with(".*")
+                    {
+                        let path = splice.values_path.clone();
+                        self.record_document_root_mapping(&path, vec![condition.clone()]);
+                    }
+                }
+            }
             out.extend(inlined);
             self.restore_site(previous_site);
             return (out, width);
@@ -299,31 +318,25 @@ impl Interpreter<'_> {
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
-        // A ranged member spliced as a whole fragment at COLUMN ZERO with no
-        // explicit indent renders as document-root content, and Helm decodes
-        // every manifest as a mapping: a present non-null member must be an
-        // object (nats renders each `extraResources` item as its own
-        // document; null members decode to empty manifests and are skipped).
-        // Helper bodies render at their caller's position and abstain.
-        if !self.helper_scope
-            && width.is_none()
+        if document_root
             && kind == ValueKind::Fragment
-            && self.line_indent(span.start) == 0
             && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
                 &value
             && path.ends_with(".*")
         {
-            let capture = crate::eval_effect::FailCapture {
-                conjunction: self.fail_capture_conjunction(Vec::new()),
-                ranged: self.capture_ranged_modes(),
-                kind: crate::eval_effect::CaptureKind::ComparableKind {
-                    path: path.clone(),
-                    schema_type: "object".to_string(),
-                },
-            };
-            if !self.fail_conditions.contains(&capture) {
-                self.fail_conditions.push(capture);
-            }
+            let path = path.clone();
+            self.record_document_root_mapping(&path, Vec::new());
+        }
+        // The hole IS the whole scalar of a VALUE slot here (a partial scalar
+        // routes through `eval_hole_parts`), so it renders an unquoted plain
+        // token: no literal text — quotes included — sits beside the hole.
+        // Document-level content is excluded: there a `: ` is the manifest's
+        // own structure, which is what the ranged-document dispatch renders.
+        // Helper bodies render at their CALLER's position — jenkins' JCasC
+        // helper lands in a ConfigMap block scalar, where a `: ` is opaque
+        // text — so, as for the document-root rule, they abstain.
+        if kind == ValueKind::Scalar && self.in_value_slot && !self.helper_scope {
+            self.record_plain_slot_text(value.as_ref(), &hole.effects);
         }
         let defaulted = hole.effects.default_paths_with_local();
         // Direct helper flows collapsed by transfer functions (printf over
@@ -388,6 +401,85 @@ impl Interpreter<'_> {
         out.extend(inlined);
         self.restore_site(previous_site);
         (out, width)
+    }
+
+    /// Claim the document-root mapping shape for a ranged member spliced as a
+    /// whole fragment at COLUMN ZERO with no explicit indent: it renders as
+    /// document-root content, and Helm decodes every manifest as a mapping, so
+    /// a present non-null member must be an object (nats renders each
+    /// `extraResources` item as its own document; null members decode to empty
+    /// manifests and are skipped). Helper bodies render at their caller's
+    /// position and abstain — the caller records the claim for them.
+    fn record_document_root_mapping(&mut self, path: &str, condition: Vec<PathCondition>) {
+        let capture = crate::eval_effect::FailCapture {
+            conjunction: self.fail_capture_conjunction(condition),
+            ranged: self.capture_ranged_modes(),
+            kind: crate::eval_effect::CaptureKind::ComparableKind {
+                path: path.to_string(),
+                schema_type: "object".to_string(),
+            },
+        };
+        if !self.fail_conditions.contains(&capture) {
+            self.fail_conditions.push(capture);
+        }
+    }
+
+    /// Claim the unquoted-slot lexical language for the text an UNQUOTED
+    /// scalar slot renders. Two identities reach it, and both render the raw
+    /// value's own characters, so text that ends the plain token there — `: `,
+    /// ` #`, a line break, or a leading indicator — corrupts the document:
+    ///
+    /// - a directly ranged collection's KEY (crossplane's
+    ///   `- name: {{ $key | replace "." "_" }}`), whose claim binds the
+    ///   collection's keys; a lexical escape rides along only when its token
+    ///   and replacement cannot change the token-ending characters;
+    /// - a `tpl` operand that IS a values path (external-dns's
+    ///   `mountPath: {{ tpl .Values….mountPath $ }}`), which `tpl` renders
+    ///   verbatim unless the value carries a template action.
+    fn record_plain_slot_text(&mut self, value: Option<&AbstractValue>, effects: &Effects) {
+        // A later stage that reshapes the text (`b64enc`, `quote`) is what the
+        // slot renders, so the raw value's own characters no longer reach it
+        // (external-dns's `{{ tpl $value $ | b64enc | quote }}`).
+        let reaches_slot = |path: &String| {
+            !effects.shape_erased_paths.contains(path)
+                && !effects.encoded_paths.contains(path)
+                && !effects.yaml_serialized_paths.contains(path)
+        };
+        let mut captures = Vec::new();
+        // A key the hole already converted (`{{ $key | quote }}`) renders the
+        // conversion's text, not the key's own characters — ingress-nginx
+        // quotes each `sysctls` key into the `name:` slot. The identity-
+        // preserving `replace` re-adds its keys through the channel below.
+        let mut key_paths = value
+            .map(AbstractValue::range_key_paths)
+            .unwrap_or_default();
+        key_paths.retain(|path| !effects.derived_range_key_paths.contains(path));
+        key_paths.extend(effects.plain_text_range_key_paths.iter().cloned());
+        key_paths.retain(reaches_slot);
+        if !key_paths.is_empty() {
+            captures.push(crate::eval_effect::CaptureKind::RangeKeyPlainSlot { paths: key_paths });
+        }
+        if let Some(AbstractValue::ValuesPath(path)) = value
+            && effects.templated_text_identity_paths.contains(path)
+            && reaches_slot(path)
+        {
+            captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
+                path: path.clone(),
+                token_initial: true,
+                templated: true,
+            });
+        }
+        let captures: Vec<crate::eval_effect::FailCapture> = captures
+            .into_iter()
+            .map(|kind| crate::eval_effect::FailCapture {
+                conjunction: Vec::new(),
+                ranged: crate::range_modes::RangeModes::default(),
+                kind,
+            })
+            .collect();
+        if !captures.is_empty() {
+            self.absorb_helper_fails(&captures);
+        }
     }
 
     /// Splice a bound helper call's summary fragment at an entire-hole
@@ -554,6 +646,8 @@ impl Interpreter<'_> {
         };
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
+        self.run_templated_text_paths
+            .extend(hole.effects.templated_text_identity_paths.iter().cloned());
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind != ValueKind::Fragment);
         let defaulted = hole.effects.default_paths_with_local();
@@ -629,10 +723,28 @@ impl Interpreter<'_> {
 
     /// Evaluate a scalar run (an entry value, item value, or scalar line).
     pub(super) fn eval_scalar_parts(&mut self, parts: &ScalarParts) -> Guarded<AbstractFragment> {
+        // A scalar the YAML grammar itself quoted carries its quotes outside
+        // the templated parts, so neither the entire-hole shape nor the
+        // completed-token scanner can see them: the slot is not a plain token
+        // (jenkins' `jenkinsUrl: "{{ tpl .Values.agent.jenkinsUrl . }}"`).
+        let quoted = self.text(parts.span).trim_start().starts_with(['"', '\'']);
+        let previous_slot = self.in_value_slot;
+        self.in_value_slot = previous_slot && !quoted;
+        let out = self.eval_scalar_parts_inner(parts);
+        self.in_value_slot = previous_slot;
+        out
+    }
+
+    fn eval_scalar_parts_inner(&mut self, parts: &ScalarParts) -> Guarded<AbstractFragment> {
         let segments = self.scalar_segments(parts);
         if let Some(span) = entire_hole_span(&segments) {
             return self.eval_entire_hole(span);
         }
+        // A `tpl` operand renders as DERIVED text, so its holes contribute
+        // taint rather than a splice; the completed-token pass needs to know
+        // which of those taints still carry the raw value's own characters,
+        // and this run's holes are exactly the ones about to be evaluated.
+        self.run_templated_text_paths.clear();
         let mut arms: Vec<(PathCondition, Vec<StringPart>)> = vec![(Predicate::True, Vec::new())];
         for segment in segments {
             let segment_arms = match segment {
@@ -725,9 +837,14 @@ impl Interpreter<'_> {
             token_initial: std::collections::BTreeSet<String>,
             double_quoted: std::collections::BTreeSet<String>,
             single_quoted: std::collections::BTreeSet<String>,
+            plain_templated: std::collections::BTreeSet<String>,
         }
 
-        fn arm_claims(parts: &[StringPart]) -> ArmClaims {
+        fn arm_claims(
+            parts: &[StringPart],
+            templated: &std::collections::BTreeSet<String>,
+            value_slot: bool,
+        ) -> ArmClaims {
             let mut claims = ArmClaims::default();
             let mut state = QuoteContext::None;
             let mut preceding_text = false;
@@ -759,6 +876,24 @@ impl Interpreter<'_> {
                             && splice.meta.split_segment.is_none()
                             && !splice.meta.range_key
                             && !splice.values_path.is_empty();
+                        // A `tpl` render is the raw value's own text whenever
+                        // that value carries no template action, so an
+                        // UNQUOTED position still binds the plain token's
+                        // language even though `tpl` bound a string contract
+                        // (cluster-autoscaler's
+                        // `- --cluster-name={{ tpl .Values.magnumClusterName . }}`,
+                        // where a `: ` turns the command item into a mapping).
+                        if state == QuoteContext::None
+                            && value_slot
+                            && templated.contains(&splice.values_path)
+                            && !splice.meta.encoded
+                            && !splice.meta.shape_erased
+                            && !splice.meta.yaml_serialized
+                            && !splice.meta.json_serialized
+                            && splice.meta.split_segment.is_none()
+                        {
+                            claims.plain_templated.insert(splice.values_path.clone());
+                        }
                         if !raw {
                             continue;
                         }
@@ -787,7 +922,11 @@ impl Interpreter<'_> {
             claims
         }
 
-        let mut per_arm = arms.iter().map(|(_, parts)| arm_claims(parts));
+        let templated = self.run_templated_text_paths.clone();
+        let value_slot = self.in_value_slot && !self.helper_scope;
+        let mut per_arm = arms
+            .iter()
+            .map(|(_, parts)| arm_claims(parts, &templated, value_slot));
         let Some(mut agreed) = per_arm.next() else {
             return;
         };
@@ -801,6 +940,9 @@ impl Interpreter<'_> {
             agreed
                 .single_quoted
                 .retain(|path| arm.single_quoted.contains(path));
+            agreed
+                .plain_templated
+                .retain(|path| arm.plain_templated.contains(path));
         }
         let mut captures = Vec::new();
         for path in agreed.token_initial {
@@ -830,6 +972,19 @@ impl Interpreter<'_> {
                     kind: crate::eval_effect::CaptureKind::QuotedSerialization { path, style },
                 });
             }
+        }
+        for path in agreed.plain_templated {
+            captures.push(crate::eval_effect::FailCapture {
+                conjunction: Vec::new(),
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::PlainSlotText {
+                    path,
+                    // Literal text shares the token, so only its interior
+                    // characters can end it; a leading indicator cannot.
+                    token_initial: false,
+                    templated: true,
+                },
+            });
         }
         if !captures.is_empty() {
             self.absorb_helper_fails(&captures);

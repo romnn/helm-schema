@@ -807,14 +807,23 @@ fn plain_scalar_provider_preimage_with(schema: Value, allowed: ImplicitTokenAllo
     }
 }
 
+/// The exclusions that keep a PLAIN (unquoted) YAML token intact. `interior`
+/// characters end the token wherever they appear; the leading-indicator rules
+/// apply only to text that OPENS the token.
+pub(crate) fn plain_scalar_structural_exclusions(token_initial: bool) -> Vec<Value> {
+    let mut exclusions = Vec::new();
+    if token_initial {
+        exclusions.push(serde_json::json!({ "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } }));
+        exclusions.push(serde_json::json!({ "not": { "pattern": "^[-?:]([ \\t]|$)" } }));
+    }
+    exclusions.push(serde_json::json!({ "not": { "pattern": ":[ \\t]|:$" } }));
+    exclusions.push(serde_json::json!({ "not": { "pattern": "[ \\t]#" } }));
+    exclusions.push(serde_json::json!({ "not": { "pattern": "[\\r\\n]" } }));
+    exclusions
+}
+
 fn scalar_plain_string_preimage(schema: Value, allowed: ImplicitTokenAllowance) -> Value {
-    let mut exclusions = vec![
-        serde_json::json!({ "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } }),
-        serde_json::json!({ "not": { "pattern": "^[-?:]([ \\t]|$)" } }),
-        serde_json::json!({ "not": { "pattern": ":[ \\t]|:$" } }),
-        serde_json::json!({ "not": { "pattern": "[ \\t]#" } }),
-        serde_json::json!({ "not": { "pattern": "[\\r\\n]" } }),
-    ];
+    let mut exclusions = plain_scalar_structural_exclusions(true);
     if !allowed.null {
         exclusions
             .push(serde_json::json!({ "not": { "pattern": PLAIN_SCALAR_NULL_TOKEN_PATTERN } }));

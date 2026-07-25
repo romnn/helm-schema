@@ -114,16 +114,36 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
     let all_of = vec![
         serde_json::json!({
             "if": range_condition,
-            "then": root_property_schema(
-                "environment",
-                serde_json::json!({
-                    "anyOf": [
-                        { "type": "array" },
-                        { "type": "object" },
-                        { "type": "null" },
-                    ]
-                }),
-            ),
+            "then": { "allOf": [
+                // The KEY renders raw into the unquoted `name:` slot, so a key
+                // holding `: `, ` #`, a line break, or a leading indicator
+                // breaks the token Helm decodes.
+                root_property_schema(
+                    "environment",
+                    serde_json::json!({
+                        "anyOf": [
+                            {
+                                "propertyNames": {
+                                    "allOf": plain_token_exclusions(true),
+                                },
+                                "type": "object",
+                            },
+                            { "type": "array" },
+                            { "type": "null" },
+                        ]
+                    }),
+                ),
+                root_property_schema(
+                    "environment",
+                    serde_json::json!({
+                        "anyOf": [
+                            { "type": "array" },
+                            { "type": "object" },
+                            { "type": "null" },
+                        ]
+                    }),
+                ),
+            ] },
         }),
         // The range KEY renders at the string-only `name:` slot, so a
         // non-empty list's integer keys are excluded.

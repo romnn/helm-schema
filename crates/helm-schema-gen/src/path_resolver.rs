@@ -474,6 +474,18 @@ pub(crate) fn fail_requirement_schema<'a>(
                             }
                             key_schemas.push(Value::Object(bounds));
                         }
+                        // Keys are always strings, so the exclusions apply
+                        // directly rather than through the non-string escape.
+                        helm_schema_core::FailValueRequirement::PlainScalarSafe {
+                            token_initial,
+                            ..
+                        } => {
+                            key_schemas.push(serde_json::json!({
+                                "allOf": crate::resolve_policy::plain_scalar_structural_exclusions(
+                                    *token_initial,
+                                )
+                            }));
+                        }
                         _ => {}
                     }
                 }
@@ -644,8 +656,11 @@ fn requirements_allow_runtime_kind(
         // Applies only to present fields on objects; every other kind
         // passes vacuously (a missing field differs from every literal).
         | FailValueRequirement::FieldNotEquals { .. }
-        // The requirement constrains rendered CONTENT, not the value's kind.
+        // The requirement constrains rendered CONTENT, not the value's kind
+        // (non-strings format as safe plain tokens, and every string kind
+        // has token-safe inhabitants).
         | FailValueRequirement::QuotedSerializationSafe { .. }
+        | FailValueRequirement::PlainScalarSafe { .. }
         // The field constraint applies only to objects carrying the field;
         // every other kind passes vacuously.
         | FailValueRequirement::FieldHelmFalsy { .. } => true,
@@ -866,6 +881,12 @@ fn fail_value_requirement_schema(
             FailValueRequirement::QuotedSerializationSafe { style } => {
                 parts.push(crate::quoted_serialization::reference_schema(*style));
             }
+            FailValueRequirement::PlainScalarSafe {
+                token_initial,
+                templated,
+            } => {
+                parts.push(plain_scalar_safe_schema(*token_initial, *templated));
+            }
             // Presence rides the equality (Go's `eq` aborts on nil), so
             // every wrapping level requires its segment and the host must
             // be an object.
@@ -965,6 +986,27 @@ fn fail_value_requirement_schema(
         1 => conjuncts.remove(0),
         _ => serde_json::json!({ "allOf": conjuncts }),
     }
+}
+
+/// A value whose text must keep an unquoted YAML token intact. Only strings
+/// carry the risk — every other scalar formats as plain digits or words — and a
+/// `tpl` render escapes through any value carrying a template action, whose
+/// rendered text is not the raw value at all.
+fn plain_scalar_safe_schema(token_initial: bool, templated: bool) -> Value {
+    let mut safe = serde_json::json!({ "type": "string" });
+    if let Some(object) = safe.as_object_mut() {
+        object.insert(
+            "allOf".to_string(),
+            Value::Array(crate::resolve_policy::plain_scalar_structural_exclusions(
+                token_initial,
+            )),
+        );
+    }
+    let mut arms = vec![safe, serde_json::json!({ "not": { "type": "string" } })];
+    if templated {
+        arms.push(serde_json::json!({ "type": "string", "pattern": "\\{\\{" }));
+    }
+    serde_json::json!({ "anyOf": arms })
 }
 
 fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {

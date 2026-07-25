@@ -611,6 +611,24 @@ pub enum FailValueRequirement {
         /// YAML quoting grammar that serialized content must satisfy.
         style: QuotedScalarStyle,
     },
+    /// The value's own text renders into an UNQUOTED YAML slot, so text that
+    /// closes the plain token there corrupts the document: a `: ` (or
+    /// trailing `:`) turns the slot into a nested mapping, a ` #` truncates
+    /// it as a comment, and a line break ends it. Non-string scalars format
+    /// as plain digits/words and are always safe.
+    ///
+    /// This is a STRUCTURAL claim only — the resolver-token exclusions that
+    /// keep a plain token from reparsing as a number/bool/null belong to the
+    /// provider-slot preimage, which knows the sink's declared type.
+    PlainScalarSafe {
+        /// The text OPENS the token, so leading YAML indicators break it too.
+        /// False for a splice with literal text ahead of it.
+        token_initial: bool,
+        /// The rendered text is a `tpl` render of the value, which is the
+        /// identity only on template-ACTION-free input: a value carrying
+        /// `{{` renders to something else entirely and escapes the claim.
+        templated: bool,
+    },
 }
 
 impl ContractPathSchemaEvidence {

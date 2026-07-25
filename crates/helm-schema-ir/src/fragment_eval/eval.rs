@@ -594,6 +594,14 @@ pub(super) struct Interpreter<'a> {
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(super) fail_conditions: Vec<FailCapture>,
+    /// Paths whose text the CURRENT scalar run renders through `tpl`. Reset
+    /// per run: the completed-token pass reads it to tell an identity-carrying
+    /// taint from a genuinely transformed one.
+    pub(super) run_templated_text_paths: BTreeSet<String>,
+    /// Whether the walk is inside a mapping-entry or sequence-item VALUE
+    /// slot. Document-level content is not a slot: it renders whole manifests,
+    /// where a `: ` is structure rather than a broken plain token.
+    pub(super) in_value_slot: bool,
     /// Object-producing mutations observed before subsequent member reads.
     pub(super) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Directly ranged paths active on the walk. Helper-scope ranges mark
@@ -685,6 +693,8 @@ impl<'a> Interpreter<'a> {
             string_contract_paths: BTreeSet::new(),
             range_modes: crate::range_modes::RangeModes::default(),
             fail_conditions: Vec::new(),
+            run_templated_text_paths: BTreeSet::new(),
+            in_value_slot: false,
             member_host_conversions: BTreeSet::new(),
             active_direct_ranged_paths: Vec::new(),
             alternative_capture_approximates: Vec::new(),
@@ -1097,6 +1107,26 @@ impl<'a> Interpreter<'a> {
         let EntryKey::Dynamic(string) = key else {
             return;
         };
+        // A key spliced WHOLE is an unquoted plain key, so a ranged
+        // collection's key must keep that token intact: external-dns emits
+        // `  {{ $key }}: …` under a Secret's `data:`, where a key holding
+        // `: ` opens a nested mapping and Helm's decode fails.
+        if let [StringPart::Splice(splice)] = string.parts.as_slice()
+            && splice.meta.range_key
+            && !splice.values_path.is_empty()
+            && !self.helper_scope
+        {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: self.fail_capture_conjunction(Vec::new()),
+                ranged: self.capture_ranged_modes(),
+                kind: crate::eval_effect::CaptureKind::RangeKeyPlainSlot {
+                    paths: [splice.values_path.clone()].into_iter().collect(),
+                },
+            };
+            if !self.fail_conditions.contains(&capture) {
+                self.fail_conditions.push(capture);
+            }
+        }
         for part in &string.parts {
             match part {
                 StringPart::Text(_) => {}
@@ -1504,7 +1534,10 @@ impl<'a> Interpreter<'a> {
                     if self.same_line(text_span.end, value_action.span.start) =>
                 {
                     consumed = 2;
-                    self.eval_entire_hole(value_action.span)
+                    let previous_slot = std::mem::replace(&mut self.in_value_slot, true);
+                    let value = self.eval_entire_hole(value_action.span);
+                    self.in_value_slot = previous_slot;
+                    value
                 }
                 _ => Guarded::empty(),
             }
@@ -1675,7 +1708,9 @@ impl<'a> Interpreter<'a> {
                     value.extend(self.eval_block_scalar(block));
                 }
                 if let Some(parts) = &entry.value {
+                    let previous_slot = std::mem::replace(&mut self.in_value_slot, true);
                     let evaluated = self.eval_scalar_parts(parts);
+                    self.in_value_slot = previous_slot;
                     // A sourced value hole that lowered to nothing still
                     // occupies the value position: without an arm the entry
                     // would read as an OPEN header and adopt a following
@@ -1727,7 +1762,9 @@ impl<'a> Interpreter<'a> {
                     value.extend(self.eval_block_scalar(block));
                 }
                 if let Some(parts) = &item.value {
+                    let previous_slot = std::mem::replace(&mut self.in_value_slot, true);
                     value.extend(self.eval_scalar_parts(parts));
+                    self.in_value_slot = previous_slot;
                 }
                 let (children, siblings) = self.split_structural_children(view, item.indent);
                 if !children.is_empty() {

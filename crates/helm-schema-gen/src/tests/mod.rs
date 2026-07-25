@@ -152,6 +152,14 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
     )
 }
 
+/// The unquoted-token exclusions a plain YAML slot projects back onto its
+/// source (at `propertyNames` when the source's KEYS render there). Shared with
+/// the production grammar so a pin fixes the structure and placement, while the
+/// dedicated lexical pins assert the accepted/rejected strings themselves.
+fn plain_token_exclusions(token_initial: bool) -> Vec<Value> {
+    crate::resolve_policy::plain_scalar_structural_exclusions(token_initial)
+}
+
 fn expected_values_schema(
     properties: serde_json::Map<String, Value>,
     all_of: Vec<Value>,

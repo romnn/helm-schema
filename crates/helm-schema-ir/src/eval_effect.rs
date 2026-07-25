@@ -77,6 +77,19 @@ pub(crate) struct Effects {
     /// derived operand renders whatever its derivation produced, so the
     /// path's own absence is not what the consumer reads.
     pub(crate) nil_strict_identity_paths: BTreeSet<String>,
+    /// Paths whose rendered text in THIS expression is `tpl`'s render of the
+    /// raw value. `tpl` is the identity on template-ACTION-free input, so the
+    /// sink's LEXICAL language still projects back onto the raw value (modulo
+    /// values carrying `{{`) even though the semantic constraints observed on
+    /// the render do not — those belong to the program's output, which is why
+    /// the same paths are `derived_text_paths`.
+    pub(crate) templated_text_identity_paths: BTreeSet<String>,
+    /// Range-key paths whose rendered text in THIS expression still carries
+    /// the raw key's token-ending characters: a `replace` whose token and
+    /// replacement cannot introduce or remove one leaves the unquoted-slot
+    /// language projectable back onto the collection's keys (crossplane's
+    /// `replace "." "_"` over ranged env var keys).
+    pub(crate) plain_text_range_key_paths: BTreeSet<String>,
     pub(crate) chart_default_paths: BTreeSet<String>,
     pub(crate) local_default_paths: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
@@ -245,6 +258,18 @@ pub(crate) enum CaptureKind {
         path: String,
         style: helm_schema_core::QuotedScalarStyle,
     },
+    /// A raw splice inside an UNQUOTED scalar: the path's own text must keep
+    /// the plain token intact (`: `, ` #`, and line breaks end it).
+    PlainSlotText {
+        path: String,
+        token_initial: bool,
+        templated: bool,
+    },
+    /// Collections whose range KEY renders raw into an unquoted slot — the
+    /// mapping key it becomes (`{{ $key }}:`) or a plain value slot it fills
+    /// (`name: {{ $key }}`). The claim binds the collection's KEYS, so it
+    /// lowers onto `propertyNames` rather than a member.
+    RangeKeyPlainSlot { paths: BTreeSet<String> },
     /// A member-access capture (`[outer…, ¬object(P)]` from a field access
     /// through `P`): the signal builder folds these per path into one
     /// bypass-proof arm instead of lowering each as its own implication.
@@ -276,6 +301,7 @@ impl CaptureKind {
         match self {
             Self::Fail | Self::MemberAccess { .. } => {}
             Self::RangeKeyStrings { paths }
+            | Self::RangeKeyPlainSlot { paths }
             | Self::CollectionItems { paths, .. }
             | Self::SplitIndexAccess { paths, .. } => {
                 *paths = paths.iter().map(|path| map(path)).collect();
@@ -287,7 +313,8 @@ impl CaptureKind {
             | Self::AbsenceAborts { path }
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
-            | Self::QuotedSerialization { path, .. } => {
+            | Self::QuotedSerialization { path, .. }
+            | Self::PlainSlotText { path, .. } => {
                 *path = map(path);
             }
             Self::RangeSelection { path, chain, .. } => {
@@ -337,6 +364,8 @@ impl Effects {
             range_modes,
             direct_string_consumer_paths,
             nil_strict_identity_paths,
+            templated_text_identity_paths,
+            plain_text_range_key_paths,
             chart_default_paths,
             local_default_paths,
             local_output_meta,
@@ -377,6 +406,10 @@ impl Effects {
             .extend(direct_string_consumer_paths);
         self.nil_strict_identity_paths
             .extend(nil_strict_identity_paths);
+        self.templated_text_identity_paths
+            .extend(templated_text_identity_paths);
+        self.plain_text_range_key_paths
+            .extend(plain_text_range_key_paths);
         self.chart_default_paths.extend(chart_default_paths);
         self.local_default_paths.extend(local_default_paths);
         self.local_source_paths.extend(local_source_paths);
@@ -486,6 +519,8 @@ impl Effects {
             range_modes,
             direct_string_consumer_paths,
             nil_strict_identity_paths,
+            templated_text_identity_paths,
+            plain_text_range_key_paths,
             chart_default_paths,
             local_default_paths: _,
             local_output_meta: _,
@@ -532,6 +567,8 @@ impl Effects {
             range_modes,
             direct_string_consumer_paths,
             nil_strict_identity_paths,
+            templated_text_identity_paths,
+            plain_text_range_key_paths,
             chart_default_paths,
             local_default_paths: BTreeSet::new(),
             local_output_meta: BTreeMap::new(),

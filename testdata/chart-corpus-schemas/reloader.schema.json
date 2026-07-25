@@ -5379,22 +5379,78 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "reloader": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "podMonitor": {
+              "reloader": {
                 "additionalProperties": {},
                 "properties": {
-                  "namespace": {
-                    "$ref": "#/$defs/schema105"
+                  "podMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "namespace": {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema106"
+                              },
+                              {
+                                "$ref": "#/$defs/schema109"
+                              },
+                              {
+                                "$ref": "#/$defs/schema111"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              }
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "not": {
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "pattern": "\\{\\{",
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "reloader": {
+                "additionalProperties": {},
+                "properties": {
+                  "podMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/schema105"
+                      }
+                    }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {

@@ -988,27 +988,83 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkPolicy": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "ingressNSMatchLabels": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
+              "networkPolicy": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressNSMatchLabels": {
+                    "anyOf": [
+                      {
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^[-?:]([ \\t]|$)"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressNSMatchLabels": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1118,27 +1174,83 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkPolicy": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "ingressNSPodMatchLabels": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
+              "networkPolicy": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressNSPodMatchLabels": {
+                    "anyOf": [
+                      {
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "^[-?:]([ \\t]|$)"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": ":[ \\t]|:$"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
-                ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingressNSPodMatchLabels": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1299,32 +1411,93 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkPolicy": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "metrics": {
+              "networkPolicy": {
                 "additionalProperties": {},
                 "properties": {
-                  "ingressNSMatchLabels": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
+                  "metrics": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ingressNSMatchLabels": {
+                        "anyOf": [
+                          {
+                            "propertyNames": {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^[-?:]([ \\t]|$)"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ]
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
-                    ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ingressNSMatchLabels": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -1485,32 +1658,93 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkPolicy": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "metrics": {
+              "networkPolicy": {
                 "additionalProperties": {},
                 "properties": {
-                  "ingressNSPodMatchLabels": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
+                  "metrics": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ingressNSPodMatchLabels": {
+                        "anyOf": [
+                          {
+                            "propertyNames": {
+                              "allOf": [
+                                {
+                                  "not": {
+                                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "^[-?:]([ \\t]|$)"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": ":[ \\t]|:$"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[ \\t]#"
+                                  }
+                                },
+                                {
+                                  "not": {
+                                    "pattern": "[\\r\\n]"
+                                  }
+                                }
+                              ]
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
-                    ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ingressNSPodMatchLabels": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {

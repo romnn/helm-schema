@@ -168,6 +168,70 @@ fn ranged_type_branch_keeps_serialized_object_alternative() {
     }
 }
 
+/// A `typeIs "string"` dispatch over ranged DOCUMENT members keeps both arms'
+/// placements: the string arm splices the member's own text, the else arm
+/// serializes it at document root, and Helm decodes every manifest as a
+/// mapping — so the item domain is exactly `string ∨ object ∨ null` and the
+/// scalars Helm cannot decode as a document stay rejected. The dispatch is
+/// pinned in BOTH spellings the corpus uses: inline in the ranging template
+/// (grafana) and behind a render helper (traefik, sealed-secrets).
+#[test]
+fn ranged_document_type_dispatch_bounds_the_item_domain() {
+    let inline = indoc! {r#"
+        {{- range .Values.extraObjects }}
+        ---
+        {{- if typeIs "string" . }}
+        {{ tpl . $ }}
+        {{- else }}
+        {{ tpl (. | toYaml) $ }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let through_helper = indoc! {r#"
+        {{- range .Values.extraObjects }}
+        ---
+        {{ include "chart.render" (dict "value" . "context" $) }}
+        {{- end }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "chart.render" -}}
+          {{- if typeIs "string" .value }}
+            {{- tpl .value .context }}
+          {{ else }}
+            {{- tpl (.value | toYaml) .context }}
+          {{- end }}
+        {{- end -}}
+    "#};
+
+    for (label, ir) in [
+        ("inline dispatch", parse_ir(inline)),
+        (
+            "render helper",
+            parse_ir_with_helpers(through_helper, helpers),
+        ),
+    ] {
+        let schema = schema_for_values_yaml(ir, Some("extraObjects: []\n"));
+        for (item, want, case) in [
+            (serde_json::json!("kind: ConfigMap"), true, "raw text"),
+            (
+                serde_json::json!({"apiVersion": "v1", "kind": "ConfigMap"}),
+                true,
+                "a serialized mapping",
+            ),
+            (serde_json::json!(null), true, "a skipped null member"),
+            (serde_json::json!(7), false, "an integer document"),
+            (serde_json::json!(["a"]), false, "a sequence document"),
+        ] {
+            let instance = serde_json::json!({ "extraObjects": [item] });
+            sim_assert_eq!(
+                have: schema_accepts_instance(&schema, &instance),
+                want: want,
+                "{label} must decide {case}: {schema}"
+            );
+        }
+    }
+}
+
 #[test]
 fn structural_conversion_and_kind_guards_preserve_input_shape_alternatives() {
     let src = indoc! {r#"

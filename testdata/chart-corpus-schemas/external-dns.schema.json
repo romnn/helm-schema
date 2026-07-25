@@ -141,7 +141,7 @@
                   "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/schema146"
+                      "$ref": "#/$defs/schema147"
                     },
                     "optional": {
                       "description": "Specify whether the ConfigMap must be defined",
@@ -168,7 +168,7 @@
                   "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/schema146"
+                      "$ref": "#/$defs/schema147"
                     },
                     "optional": {
                       "description": "Specify whether the Secret must be defined",
@@ -368,7 +368,7 @@
                 "$ref": "#/$defs/schema93"
               },
               "readOnlyRootFilesystem": {
-                "$ref": "#/$defs/schema135"
+                "$ref": "#/$defs/schema136"
               },
               "runAsGroup": {
                 "$ref": "#/$defs/schema88"
@@ -814,6 +814,36 @@
         "null"
       ]
     },
+    "schema129": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
     "schema13": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
@@ -895,14 +925,14 @@
       },
       "type": "object"
     },
-    "schema135": {
+    "schema136": {
       "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema136": {
+    "schema137": {
       "anyOf": [
         {
           "allOf": [
@@ -940,7 +970,7 @@
         }
       ]
     },
-    "schema137": {
+    "schema138": {
       "properties": {
         "requiredDuringSchedulingIgnoredDuringExecution": {
           "required": [
@@ -1020,7 +1050,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema140": {
+    "schema141": {
       "additionalProperties": {},
       "properties": {
         "preferredDuringSchedulingIgnoredDuringExecution": {
@@ -1041,11 +1071,11 @@
         }
       }
     },
-    "schema143": {
+    "schema144": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "schema146": {
+    "schema147": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
@@ -1108,30 +1138,19 @@
       "x-kubernetes-patch-merge-key": "mountPath",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "schema154": {
+    "schema155": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema155": {
+    "schema156": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
-    },
-    "schema159": {
-      "additionalProperties": {},
-      "properties": {
-        "preferredDuringSchedulingIgnoredDuringExecution": {
-          "required": [
-            "*"
-          ],
-          "type": "object"
-        }
-      }
     },
     "schema16": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
@@ -1173,6 +1192,17 @@
     "schema160": {
       "additionalProperties": {},
       "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "required": [
+            "*"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    "schema161": {
+      "additionalProperties": {},
+      "properties": {
         "requiredDuringSchedulingIgnoredDuringExecution": {
           "required": [
             "*"
@@ -1189,18 +1219,18 @@
         "null"
       ]
     },
-    "schema172": {
+    "schema173": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "schema174": {
+    "schema175": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema175": {
+    "schema176": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -1243,7 +1273,7 @@
         "null"
       ]
     },
-    "schema187": {
+    "schema188": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
@@ -1298,7 +1328,7 @@
         "null"
       ]
     },
-    "schema193": {
+    "schema194": {
       "description": "Added capabilities",
       "items": {
         "type": [
@@ -1311,7 +1341,7 @@
         "null"
       ]
     },
-    "schema195": {
+    "schema196": {
       "not": {
         "properties": {
           "provider": {
@@ -1322,11 +1352,6 @@
           "provider"
         ],
         "type": "object"
-      }
-    },
-    "schema199": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
     "schema20": {
@@ -1388,27 +1413,16 @@
         }
       ]
     },
-    "schema203": {
+    "schema200": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "schema204": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
-    },
-    "schema209": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "integer",
-            "null"
-          ]
-        }
-      ]
     },
     "schema21": {
       "allOf": [
@@ -1477,24 +1491,40 @@
         },
         {
           "type": [
-            "number",
+            "integer",
             "null"
           ]
         }
       ]
     },
     "schema211": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema212": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema215": {
+    "schema216": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema218": {
+    "schema219": {
       "anyOf": [
         {
           "type": "null"
@@ -1504,22 +1534,22 @@
         }
       ]
     },
-    "schema219": {
+    "schema220": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema220": {
+    "schema221": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema221": {
+    "schema222": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema224": {
+    "schema225": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3929,7 +3959,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema140"
+                "$ref": "#/$defs/schema141"
               }
             }
           }
@@ -4033,7 +4063,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema159"
+                "$ref": "#/$defs/schema160"
               }
             }
           }
@@ -4105,7 +4135,7 @@
               "affinity": {
                 "properties": {
                   "podAffinity": {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema138"
                   }
                 },
                 "required": [
@@ -4233,7 +4263,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema160"
+                "$ref": "#/$defs/schema161"
               }
             }
           }
@@ -4425,7 +4455,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema140"
+                "$ref": "#/$defs/schema141"
               }
             }
           }
@@ -4529,7 +4559,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema159"
+                "$ref": "#/$defs/schema160"
               }
             }
           }
@@ -4601,7 +4631,7 @@
               "affinity": {
                 "properties": {
                   "podAntiAffinity": {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema138"
                   }
                 },
                 "required": [
@@ -4729,7 +4759,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema160"
+                "$ref": "#/$defs/schema161"
               }
             }
           }
@@ -4992,7 +5022,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema215"
+                "$ref": "#/$defs/schema216"
               },
               {
                 "not": {
@@ -5073,7 +5103,7 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/schema215"
+                "$ref": "#/$defs/schema216"
               },
               {
                 "type": "null"
@@ -5292,7 +5322,7 @@
                           ]
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema155"
+                          "$ref": "#/$defs/schema156"
                         }
                       },
                       "required": [
@@ -5309,7 +5339,7 @@
                       "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                       "properties": {
                         "readOnly": {
-                          "$ref": "#/$defs/schema154"
+                          "$ref": "#/$defs/schema155"
                         },
                         "secretName": {
                           "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -5433,10 +5463,10 @@
                           "$ref": "#/$defs/schema16"
                         },
                         "name": {
-                          "$ref": "#/$defs/schema146"
+                          "$ref": "#/$defs/schema147"
                         },
                         "optional": {
-                          "$ref": "#/$defs/schema174"
+                          "$ref": "#/$defs/schema175"
                         }
                       },
                       "type": [
@@ -5531,7 +5561,7 @@
                           ]
                         },
                         "sizeLimit": {
-                          "$ref": "#/$defs/schema210"
+                          "$ref": "#/$defs/schema211"
                         }
                       },
                       "type": [
@@ -6341,7 +6371,7 @@
                           ]
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema154"
+                          "$ref": "#/$defs/schema155"
                         },
                         "volumeID": {
                           "description": "volumeID uniquely identifies a Portworx volume",
@@ -6423,10 +6453,10 @@
                                     "$ref": "#/$defs/schema16"
                                   },
                                   "name": {
-                                    "$ref": "#/$defs/schema146"
+                                    "$ref": "#/$defs/schema147"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/schema174"
+                                    "$ref": "#/$defs/schema175"
                                   }
                                 },
                                 "type": [
@@ -6469,7 +6499,7 @@
                                     ]
                                   },
                                   "name": {
-                                    "$ref": "#/$defs/schema146"
+                                    "$ref": "#/$defs/schema147"
                                   },
                                   "optional": {
                                     "description": "optional field specify whether the Secret or its key must be defined",
@@ -6672,14 +6702,14 @@
                           ]
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema155"
+                          "$ref": "#/$defs/schema156"
                         },
                         "secretRef": {
                           "additionalProperties": false,
                           "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                           "properties": {
                             "name": {
-                              "$ref": "#/$defs/schema146"
+                              "$ref": "#/$defs/schema147"
                             }
                           },
                           "type": "object",
@@ -6778,7 +6808,7 @@
                           "$ref": "#/$defs/schema121"
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema154"
+                          "$ref": "#/$defs/schema155"
                         },
                         "secretRef": {
                           "$ref": "#/$defs/schema80"
@@ -7069,13 +7099,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema220"
                       },
                       {
-                        "$ref": "#/$defs/schema221"
+                        "$ref": "#/$defs/schema222"
                       },
                       {
-                        "$ref": "#/$defs/schema224"
+                        "$ref": "#/$defs/schema225"
                       },
                       {
                         "not": {
@@ -7088,16 +7118,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema176"
                       },
                       {
                         "$ref": "#/$defs/schema116"
                       },
                       {
-                        "$ref": "#/$defs/schema199"
+                        "$ref": "#/$defs/schema200"
                       },
                       {
-                        "$ref": "#/$defs/schema211"
+                        "$ref": "#/$defs/schema212"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -7128,13 +7158,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema219"
+                            "$ref": "#/$defs/schema220"
                           },
                           {
-                            "$ref": "#/$defs/schema221"
+                            "$ref": "#/$defs/schema222"
                           },
                           {
-                            "$ref": "#/$defs/schema224"
+                            "$ref": "#/$defs/schema225"
                           },
                           {
                             "not": {
@@ -7147,19 +7177,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema220"
+                            "$ref": "#/$defs/schema221"
                           },
                           {
-                            "$ref": "#/$defs/schema175"
+                            "$ref": "#/$defs/schema176"
                           },
                           {
                             "$ref": "#/$defs/schema116"
                           },
                           {
-                            "$ref": "#/$defs/schema199"
+                            "$ref": "#/$defs/schema200"
                           },
                           {
-                            "$ref": "#/$defs/schema211"
+                            "$ref": "#/$defs/schema212"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -8604,7 +8634,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema195"
+                "$ref": "#/$defs/schema196"
               }
             ]
           },
@@ -8635,7 +8665,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema195"
+            "$ref": "#/$defs/schema196"
           },
           {
             "$ref": "#/$defs/schema73"
@@ -8749,31 +8779,212 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "secretConfiguration": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "data": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "$ref": "#/$defs/schema215"
-                  },
-                  {
-                    "type": "null"
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "data": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "$ref": "#/$defs/schema216"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "`Secret` data."
                   }
-                ],
-                "description": "`Secret` data."
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "data": {
+                    "anyOf": [
+                      {
+                        "propertyNames": {
+                          "allOf": [
+                            {
+                              "$ref": "#/$defs/schema220"
+                            },
+                            {
+                              "$ref": "#/$defs/schema222"
+                            },
+                            {
+                              "$ref": "#/$defs/schema225"
+                            },
+                            {
+                              "not": {
+                                "pattern": "[ \\t]#"
+                              }
+                            },
+                            {
+                              "not": {
+                                "pattern": "[\\r\\n]"
+                              }
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "`Secret` data."
+                  }
+                }
               }
             }
           }
-        }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "extraVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraVolumeMounts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "secretConfiguration": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretConfiguration"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountPath": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema129"
+                      },
+                      {
+                        "not": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "pattern": "\\{\\{",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Mount path for the `Secret`, this can be templated."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountPath": {
+                    "description": "Mount path for the `Secret`, this can be templated.",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secretConfiguration": {
+                "additionalProperties": {},
+                "properties": {
+                  "subPath": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Sub-path for mounting the `Secret`, this can be templated."
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -8898,6 +9109,25 @@
             "type": "object"
           },
           {
+            "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "subPath": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "subPath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "properties": {
@@ -8934,48 +9164,31 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "secretConfiguration": {
             "additionalProperties": {},
             "properties": {
-              "secretConfiguration": {
-                "additionalProperties": {},
-                "properties": {
-                  "mountPath": {
-                    "description": "Mount path for the `Secret`, this can be templated.",
+              "subPath": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema129"
+                  },
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "pattern": "\\{\\{",
                     "type": "string"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "secretConfiguration": {
-                "additionalProperties": {},
-                "properties": {
-                  "subPath": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Sub-path for mounting the `Secret`, this can be templated."
-                  }
-                }
+                ],
+                "description": "Sub-path for mounting the `Secret`, this can be templated."
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -9156,7 +9369,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema215"
+                        "$ref": "#/$defs/schema216"
                       },
                       {
                         "type": "null"
@@ -9892,7 +10105,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema195"
+                    "$ref": "#/$defs/schema196"
                   }
                 ]
               },
@@ -9923,7 +10136,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema195"
+                "$ref": "#/$defs/schema196"
               },
               {
                 "$ref": "#/$defs/schema73"
@@ -10919,7 +11132,7 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema203"
+          "$ref": "#/$defs/schema204"
         },
         {
           "$ref": "#/$defs/schema76"
@@ -10946,10 +11159,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema209"
+                  "$ref": "#/$defs/schema210"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema209"
+                  "$ref": "#/$defs/schema210"
                 }
               },
               "type": [
@@ -11058,13 +11271,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema219"
+              "$ref": "#/$defs/schema220"
             },
             {
-              "$ref": "#/$defs/schema221"
+              "$ref": "#/$defs/schema222"
             },
             {
-              "$ref": "#/$defs/schema224"
+              "$ref": "#/$defs/schema225"
             },
             {
               "not": {
@@ -11077,16 +11290,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema175"
+              "$ref": "#/$defs/schema176"
             },
             {
               "$ref": "#/$defs/schema116"
             },
             {
-              "$ref": "#/$defs/schema199"
+              "$ref": "#/$defs/schema200"
             },
             {
-              "$ref": "#/$defs/schema211"
+              "$ref": "#/$defs/schema212"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -11408,7 +11621,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema203"
+          "$ref": "#/$defs/schema204"
         },
         {
           "additionalProperties": {
@@ -11438,7 +11651,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema203"
+          "$ref": "#/$defs/schema204"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -11631,7 +11844,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema136"
+                "$ref": "#/$defs/schema137"
               }
             ]
           },
@@ -11813,7 +12026,7 @@
                                 "$ref": "#/$defs/schema93"
                               },
                               "readOnlyRootFilesystem": {
-                                "$ref": "#/$defs/schema135"
+                                "$ref": "#/$defs/schema136"
                               },
                               "runAsGroup": {
                                 "$ref": "#/$defs/schema88"
@@ -11883,7 +12096,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema136"
+                "$ref": "#/$defs/schema137"
               }
             ]
           },
@@ -11899,10 +12112,10 @@
                       "port": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema187"
+                            "$ref": "#/$defs/schema188"
                           },
                           {
-                            "$ref": "#/$defs/schema143"
+                            "$ref": "#/$defs/schema144"
                           }
                         ]
                       }
@@ -11954,7 +12167,7 @@
           "$ref": "#/$defs/schema13"
         },
         {
-          "$ref": "#/$defs/schema203"
+          "$ref": "#/$defs/schema204"
         },
         {
           "not": {
@@ -12052,14 +12265,14 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/schema193"
+                      "$ref": "#/$defs/schema194"
                     },
                     "drop": {
                       "anyOf": [
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema218"
+                            "$ref": "#/$defs/schema219"
                           },
                           "type": "array"
                         },
@@ -12165,7 +12378,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema203"
+              "$ref": "#/$defs/schema204"
             },
             {
               "$ref": "#/$defs/schema76"
@@ -12210,13 +12423,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema219"
+                  "$ref": "#/$defs/schema220"
                 },
                 {
-                  "$ref": "#/$defs/schema221"
+                  "$ref": "#/$defs/schema222"
                 },
                 {
-                  "$ref": "#/$defs/schema224"
+                  "$ref": "#/$defs/schema225"
                 },
                 {
                   "not": {
@@ -12229,16 +12442,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema175"
+                  "$ref": "#/$defs/schema176"
                 },
                 {
                   "$ref": "#/$defs/schema116"
                 },
                 {
-                  "$ref": "#/$defs/schema199"
+                  "$ref": "#/$defs/schema200"
                 },
                 {
-                  "$ref": "#/$defs/schema211"
+                  "$ref": "#/$defs/schema212"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -12262,10 +12475,10 @@
         "port": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema187"
+              "$ref": "#/$defs/schema188"
             },
             {
-              "$ref": "#/$defs/schema143"
+              "$ref": "#/$defs/schema144"
             }
           ],
           "description": "Service HTTP port."
@@ -12360,7 +12573,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema172"
+                        "$ref": "#/$defs/schema173"
                       }
                     ],
                     "description": "Set this to `false` to [opt out of API credential automounting](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#opt-out-of-api-credential-automounting) for the `ServiceAccount`."
@@ -12396,13 +12609,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema219"
+                            "$ref": "#/$defs/schema220"
                           },
                           {
-                            "$ref": "#/$defs/schema221"
+                            "$ref": "#/$defs/schema222"
                           },
                           {
-                            "$ref": "#/$defs/schema224"
+                            "$ref": "#/$defs/schema225"
                           },
                           {
                             "not": {
@@ -12415,16 +12628,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema175"
+                            "$ref": "#/$defs/schema176"
                           },
                           {
                             "$ref": "#/$defs/schema116"
                           },
                           {
-                            "$ref": "#/$defs/schema199"
+                            "$ref": "#/$defs/schema200"
                           },
                           {
-                            "$ref": "#/$defs/schema211"
+                            "$ref": "#/$defs/schema212"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -12476,13 +12689,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema219"
+                  "$ref": "#/$defs/schema220"
                 },
                 {
-                  "$ref": "#/$defs/schema221"
+                  "$ref": "#/$defs/schema222"
                 },
                 {
-                  "$ref": "#/$defs/schema224"
+                  "$ref": "#/$defs/schema225"
                 },
                 {
                   "not": {
@@ -12495,16 +12708,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema175"
+                  "$ref": "#/$defs/schema176"
                 },
                 {
                   "$ref": "#/$defs/schema116"
                 },
                 {
-                  "$ref": "#/$defs/schema199"
+                  "$ref": "#/$defs/schema200"
                 },
                 {
-                  "$ref": "#/$defs/schema211"
+                  "$ref": "#/$defs/schema212"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -12551,7 +12764,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema215"
+                        "$ref": "#/$defs/schema216"
                       },
                       {
                         "not": {
@@ -12569,7 +12782,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema215"
+                        "$ref": "#/$defs/schema216"
                       },
                       {
                         "not": {
@@ -12824,7 +13037,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema172"
+          "$ref": "#/$defs/schema173"
         }
       ],
       "description": "If `true`, the `Pod` will have [process namespace sharing](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) enabled."
@@ -12870,7 +13083,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema143"
+          "$ref": "#/$defs/schema144"
         },
         {
           "type": "null"

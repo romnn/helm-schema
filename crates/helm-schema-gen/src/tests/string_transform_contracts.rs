@@ -1,5 +1,6 @@
 use super::*;
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 /// A total stringification is neutral evidence about its own input; an
 /// INDEPENDENT unconditional string consumer still binds. Cilium's
@@ -853,5 +854,107 @@ fn nil_strict_string_consumers_require_their_operand_to_exist() {
             schema_accepts_instance(&schema, &instance) == want,
             "{label}: instance={instance}; want={want}; schema={schema}"
         );
+    }
+}
+
+/// A raw splice in an UNQUOTED slot renders the value's own characters, so text
+/// that ends the plain token there corrupts the document. Two identities reach
+/// such a slot and both now carry the claim: a directly ranged collection's KEY
+/// (bare, and through a `replace` whose token cannot change the token-ending
+/// characters), and a `tpl` operand — `tpl` is the identity on
+/// template-ACTION-free input, so a value carrying `{{` escapes.
+#[test]
+fn unquoted_slots_bound_the_lexical_language_of_their_source() {
+    let key_in_value_slot = indoc! {r#"
+        env:
+        {{- range $key, $value := .Values.extraEnvVars }}
+          - name: {{ $key | replace "." "_" }}
+            value: {{ $value | quote }}
+        {{- end }}
+    "#};
+    let key_in_key_slot = indoc! {r"
+        apiVersion: v1
+        kind: Secret
+        data:
+        {{- range $key, $value := .Values.data }}
+          {{ $key }}: {{ tpl $value $ | b64enc | quote }}
+        {{- end }}
+    "};
+    let tpl_whole_slot = indoc! {r"
+        volumeMounts:
+          - name: secrets
+            mountPath: {{ tpl .Values.mountPath $ }}
+    "};
+    let tpl_partial_slot = indoc! {r"
+        command:
+          - --cluster-name={{ tpl (.Values.clusterName) . }}
+    "};
+
+    for (label, src, values_yaml, cases) in [
+        (
+            "a ranged key in a plain value slot",
+            key_in_value_slot,
+            "extraEnvVars: {}\n",
+            vec![
+                (
+                    serde_json::json!({ "extraEnvVars": { "BAD: KEY": "x" } }),
+                    false,
+                ),
+                (
+                    serde_json::json!({ "extraEnvVars": { "A #b": "x" } }),
+                    false,
+                ),
+                (
+                    serde_json::json!({ "extraEnvVars": { "GOOD.KEY": "x" } }),
+                    true,
+                ),
+            ],
+        ),
+        (
+            "a ranged key in a mapping-key slot",
+            key_in_key_slot,
+            "data: {}\n",
+            vec![
+                (serde_json::json!({ "data": { "BAD: KEY": "x" } }), false),
+                (serde_json::json!({ "data": { "GOOD_KEY": "x" } }), true),
+                // The VALUE renders through `b64enc | quote`, which reshapes
+                // the text, so its own characters never reach a plain token.
+                (serde_json::json!({ "data": { "K": "a: b" } }), true),
+            ],
+        ),
+        (
+            "a tpl operand filling a whole plain slot",
+            tpl_whole_slot,
+            "mountPath: /etc/secrets\n",
+            vec![
+                (serde_json::json!({ "mountPath": "/etc/a: b" }), false),
+                (serde_json::json!({ "mountPath": "/etc/secrets" }), true),
+                (
+                    serde_json::json!({ "mountPath": "{{ .Release.Name }}: x" }),
+                    true,
+                ),
+            ],
+        ),
+        (
+            "a tpl operand inside a partial plain token",
+            tpl_partial_slot,
+            "clusterName: prod\n",
+            vec![
+                (serde_json::json!({ "clusterName": "x: y" }), false),
+                (serde_json::json!({ "clusterName": "prod" }), true),
+                // Literal text opens this token, so a leading indicator is
+                // ordinary content rather than YAML structure.
+                (serde_json::json!({ "clusterName": "- x" }), true),
+            ],
+        ),
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+        for (instance, want) in cases {
+            sim_assert_eq!(
+                have: schema_accepts_instance(&schema, &instance),
+                want: want,
+                "{label}: instance={instance}; schema={schema}"
+            );
+        }
     }
 }
