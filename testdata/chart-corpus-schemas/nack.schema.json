@@ -2148,6 +2148,37 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbacRules": {}
+              },
+              "required": [
+                "rbacRules"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbacRules": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbacRules"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

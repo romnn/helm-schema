@@ -9924,6 +9924,188 @@
             "properties": {
               "operator": {
                 "properties": {
+                  "builtInTrivyServer": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "builtInTrivyServer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "serverPassword": {}
+                      },
+                      "required": [
+                        "serverPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "serverPassword": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serverPassword"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "builtInTrivyServer": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "builtInTrivyServer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "serverUser": {}
+                      },
+                      "required": [
+                        "serverUser"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "serverUser": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serverUser"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "properties": {
                   "clusterComplianceEnabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -10312,6 +10494,76 @@
               },
               {
                 "$ref": "#/$defs/schema107"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "externalRegoPoliciesEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "externalRegoPoliciesEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivyOperator": {
+                      "properties": {
+                        "policiesConfig": {}
+                      },
+                      "required": [
+                        "policiesConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivyOperator"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivyOperator": {
+                    "properties": {
+                      "policiesConfig": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "policiesConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivyOperator"
+                ],
+                "type": "object"
               }
             ]
           }
@@ -10894,6 +11146,68 @@
             },
             "required": [
               "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "targetNamespaces": {}
+              },
+              "required": [
+                "targetNamespaces"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "targetNamespaces": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "targetNamespaces"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "targetWorkloads": {}
+              },
+              "required": [
+                "targetWorkloads"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "targetWorkloads": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "targetWorkloads"
             ],
             "type": "object"
           }

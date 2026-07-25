@@ -488,6 +488,17 @@ impl Interpreter<'_> {
         if !self.active_predicates.is_empty() {
             self.absorb_condition_string_captures(&effects.direct_string_consumer_paths.clone());
         }
+        // The same consumers abort on a nil operand, which the truthy⇒string
+        // capture above can never say. This claim needs no ambient predicates
+        // of its own: an unconditional consumer demands the key outright. Only
+        // operands that ARE the path qualify — a derivation carrying it
+        // renders its own text whatever the path does.
+        let presence_paths: std::collections::BTreeSet<String> = effects
+            .direct_string_consumer_paths
+            .intersection(&effects.nil_strict_identity_paths)
+            .cloned()
+            .collect();
+        self.absorb_string_consumer_presence_captures(&presence_paths);
 
         let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
         for path in bound_reads {
@@ -632,6 +643,7 @@ fn runtime_requirement_paths(
         | CaptureKind::ValueType { path, .. }
         | CaptureKind::DigSubject { path }
         | CaptureKind::RequiredPresence { path }
+        | CaptureKind::AbsenceAborts { path }
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. }

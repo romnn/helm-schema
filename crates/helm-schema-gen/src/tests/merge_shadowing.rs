@@ -611,33 +611,33 @@ fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
         {{- end }}
         {{- end }}
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir_with_helpers(src, helpers),
-        Some(indoc! {r#"
-            uid: 50000
-            gid: 0
-            executor: "CeleryExecutor"
+    let values_yaml = indoc! {r#"
+        uid: 50000
+        gid: 0
+        executor: "CeleryExecutor"
+        securityContext: {}
+        securityContexts:
+          pod: {}
+        workers:
+          securityContext: {}
+          securityContexts:
+            pod: {}
+            container: {}
+          labels: {}
+          persistence:
+            enabled: false
+          celery:
+            enableDefault: true
+            sets: []
             securityContext: {}
             securityContexts:
               pod: {}
-            workers:
-              securityContext: {}
-              securityContexts:
-                pod: {}
-                container: {}
-              labels: {}
-              persistence:
-                enabled: false
-              celery:
-                enableDefault: true
-                sets: []
-                securityContext: {}
-                securityContexts:
-                  pod: {}
-                  container: {}
-        "#}),
-    );
-    for (instance, want, label) in [
+              container: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    // Cases compose over the declared defaults: the executor comparison
+    // reads `.Values.executor` on every render and aborts on a nil operand.
+    for (overrides, want, label) in [
         (
             serde_json::json!({ "executor": "CeleryExecutor", "workers": {
                 "securityContexts": { "pod": { "runAsUser": "oops" } },
@@ -707,6 +707,7 @@ fn rerooted_worker_set_merges_keep_layered_provider_payloads() {
             "a nonempty set list alone keeps the family live",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "rerooted worker-set layers ({label}): instance={instance}; want={want}; schema={schema}"

@@ -504,7 +504,7 @@
         "null"
       ]
     },
-    "schema142": {
+    "schema143": {
       "oneOf": [
         {
           "type": [
@@ -520,7 +520,7 @@
         }
       ]
     },
-    "schema143": {
+    "schema144": {
       "oneOf": [
         {
           "type": [
@@ -536,17 +536,17 @@
         }
       ]
     },
-    "schema144": {
+    "schema145": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema150": {
+    "schema151": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema151": {
+    "schema152": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -3550,6 +3550,12 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/schema55"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -4300,10 +4306,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema150"
+              "$ref": "#/$defs/schema151"
             },
             {
-              "$ref": "#/$defs/schema151"
+              "$ref": "#/$defs/schema152"
             },
             {
               "not": {
@@ -4330,7 +4336,7 @@
               "$ref": "#/$defs/schema135"
             },
             {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema145"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4668,7 +4674,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema143"
+                    "$ref": "#/$defs/schema144"
                   }
                 },
                 "type": [
@@ -6018,10 +6024,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema150"
+              "$ref": "#/$defs/schema151"
             },
             {
-              "$ref": "#/$defs/schema151"
+              "$ref": "#/$defs/schema152"
             },
             {
               "not": {
@@ -6048,7 +6054,7 @@
               "$ref": "#/$defs/schema135"
             },
             {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema145"
             }
           ],
           "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6622,10 +6628,10 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/schema150"
+                      "$ref": "#/$defs/schema151"
                     },
                     {
-                      "$ref": "#/$defs/schema151"
+                      "$ref": "#/$defs/schema152"
                     },
                     {
                       "not": {
@@ -6646,7 +6652,7 @@
                       "$ref": "#/$defs/schema114"
                     },
                     {
-                      "$ref": "#/$defs/schema144"
+                      "$ref": "#/$defs/schema145"
                     }
                   ],
                   "type": "string"
@@ -7101,12 +7107,12 @@
                   "description": "Spec to control the desired behavior of rolling update.",
                   "properties": {
                     "maxSurge": {
-                      "$ref": "#/$defs/schema142"
+                      "$ref": "#/$defs/schema143"
                     },
                     "maxUnavailable": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema142"
+                          "$ref": "#/$defs/schema143"
                         },
                         {
                           "type": "integer"

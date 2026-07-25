@@ -1235,6 +1235,10 @@ fn record_fail_conjunction(
         );
         return;
     }
+    if let crate::eval_effect::CaptureKind::AbsenceAborts { path } = &capture.kind {
+        record_absence_abort_clause(terminal_clauses, capture, path);
+        return;
+    }
     if let crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } = &capture.kind {
         record_value_requirement_capture(
             paths,
@@ -2064,6 +2068,66 @@ fn record_collection_item_requirements(
         if !acc.fail_implications.contains(&implication) {
             acc.fail_implications.push(implication);
         }
+    }
+}
+
+/// Lower a nil-strict string consumer's presence claim: rendering aborts
+/// wherever the capture's guards hold and the operand is absent, which is a
+/// document-level terminal clause. The clause form reaches a TOP-LEVEL
+/// operand (a parent member requirement has no slot for one) and carries the
+/// `Absent` guard's ownership semantics.
+fn record_absence_abort_clause(
+    terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
+    capture: &crate::eval_effect::FailCapture,
+    path: &str,
+) {
+    let segments = helm_schema_core::split_value_path(path);
+    // A wildcard member has no absence to claim: the range only visits
+    // members that exist.
+    if segments.iter().any(|segment| segment == "*") {
+        return;
+    }
+    // Helm injects the parent's `global` into every subchart's values root,
+    // so `global` is a faithful spelling only at the document root or
+    // directly under a dependency root. A DEEPER `global` segment means the
+    // read resolved through a re-rooted context whose spelling this claim
+    // cannot trust — and a presence claim on a key the chart never declares
+    // rejects its own defaults (k8s-infra's `otelAgent.global.cloud`).
+    if segments
+        .iter()
+        .skip(2)
+        .any(|segment| segment == "global" || segment == "Values")
+    {
+        return;
+    }
+    let mut clause = Vec::new();
+    for predicate in &capture.conjunction {
+        let Some(guard) = terminal_clause_guard(predicate) else {
+            // An enclosing condition this encoding cannot spell would make
+            // the clause fire outside the states the consumer runs in.
+            return;
+        };
+        // Any enclosing guard that talks about the OPERAND ITSELF may
+        // already exclude absence, and the clause cannot tell: a
+        // self-truthiness gate (`with .Values.x`, `if .Values.x`, `hasKey`)
+        // excludes it outright, while a DISJUNCTIVE selection that mentions
+        // the operand in one alternative excludes it only together with the
+        // sibling conjuncts that kill the other alternatives
+        // (cluster-autoscaler's `or $isAzure (and $isAws
+        // $awsCredentialsProvided) $isCivo` around the aws `b64enc` arm).
+        // Both cases abstain.
+        if guard.value_paths().contains(path) {
+            return;
+        }
+        clause.push(guard);
+    }
+    clause.push(ConditionalGuard::Absent {
+        path: path.to_string(),
+    });
+    clause.sort();
+    clause.dedup();
+    if !terminal_clauses.contains(&clause) {
+        terminal_clauses.push(clause);
     }
 }
 

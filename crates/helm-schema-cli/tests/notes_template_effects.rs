@@ -93,13 +93,21 @@ fn notes_template_consumers_and_validators_become_schema_evidence() -> eyre::Res
         "a truthy non-string reaches the notes' tpl call and aborts rendering",
     );
 
-    // The notes' migration `fail` rejects the legacy map form.
+    // The notes' migration `fail` rejects the legacy map form. Both cases
+    // carry `targetNamespaces`: the notes `tpl` it on every render and helm
+    // aborts on a nil operand, so a document without it is a different state.
     assert!(
-        validator.is_valid(&serde_json::json!({ "backupStorageLocation": [{ "name": "x" }] })),
+        validator.is_valid(&serde_json::json!({
+            "targetNamespaces": "ns-a",
+            "backupStorageLocation": [{ "name": "x" }]
+        })),
         "the supported list form renders",
     );
     assert!(
-        !validator.is_valid(&serde_json::json!({ "backupStorageLocation": { "name": "x" } })),
+        !validator.is_valid(&serde_json::json!({
+            "targetNamespaces": "ns-a",
+            "backupStorageLocation": { "name": "x" }
+        })),
         "the notes validator terminates rendering for the legacy map form",
     );
 

@@ -524,6 +524,30 @@ impl Interpreter<'_> {
         self.absorb_helper_fails(&captures);
     }
 
+    /// Absorb the abort-grade PRESENCE claim of every nil-strict string
+    /// consumer subject. `tpl`, `b64enc`, `trim`, `nindent`, `htpasswd`, and
+    /// the rest of the string-transform catalog read their operand as a Go
+    /// `string`, so a nil operand — an absent key, or one the user
+    /// null-deleted — aborts rendering with "wrong type for value; expected
+    /// string" wherever the consumer runs. The truthy⇒string capture beside
+    /// this one cannot state that: absence is Helm-falsy, so its own guard
+    /// excuses exactly the state that aborts.
+    ///
+    /// The nil-TOLERANT stringifications never reach this lane — `quote`,
+    /// `squote`, `toString`, and `urlquery` return from
+    /// `string_call_operand_facts` before any string contract is recorded.
+    pub(super) fn absorb_string_consumer_presence_captures(&mut self, paths: &BTreeSet<String>) {
+        let captures: Vec<crate::eval_effect::FailCapture> = paths
+            .iter()
+            .map(|path| crate::eval_effect::FailCapture {
+                conjunction: Vec::new(),
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
+            })
+            .collect();
+        self.absorb_helper_fails(&captures);
+    }
+
     fn activate_if(
         &mut self,
         header: Option<&TemplateHeader>,

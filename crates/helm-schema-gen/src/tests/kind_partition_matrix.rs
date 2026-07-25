@@ -113,7 +113,10 @@ fn inline_local_kind_partition_projects_per_arm_provider_schemas() {
         ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
     );
 
-    for instance in [
+    // Cases compose over the declared defaults: `contains "Local"
+    // .Values.executor` reads the executor on every render and aborts on a
+    // nil operand.
+    for overrides in [
         serde_json::json!({ "strategy": { "rollingUpdate": { "maxSurge": "25%" } } }),
         serde_json::json!({ "strategy": { "type": "RollingUpdate" } }),
         serde_json::json!({
@@ -129,6 +132,7 @@ fn inline_local_kind_partition_projects_per_arm_provider_schemas() {
             "strategy": 7,
         }),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance),
             "the arm-matching strategy shape renders and validates: \
@@ -186,7 +190,10 @@ fn shared_slot_kind_arms_resolve_through_selecting_predicates() {
         ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
     );
 
-    for instance in [
+    // Cases compose over the declared defaults: `contains "Local"
+    // .Values.executor` reads the executor on every render and aborts on a
+    // nil operand.
+    for overrides in [
         // The default executor keeps the DaemonSet arm live: its slot
         // accepts maxSurge, which the primary (first-literal) StatefulSet
         // schema would reject.
@@ -197,6 +204,7 @@ fn shared_slot_kind_arms_resolve_through_selecting_predicates() {
             "updateStrategy": { "rollingUpdate": { "partition": 1 } },
         }),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance),
             "each arm's row resolves to its OWN kind's slot schema: \

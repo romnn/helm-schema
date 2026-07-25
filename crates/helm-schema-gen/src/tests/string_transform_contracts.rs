@@ -367,15 +367,15 @@ fn htpasswd_operands_require_strings() {
         {{- end }}
         {{- end -}}
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir_with_helpers(src, helpers),
-        Some(indoc! {"
-            adminPassword: hunter2
-            basicAuthUsers: {}
-        "}),
-    );
+    let values_yaml = indoc! {"
+        adminPassword: hunter2
+        basicAuthUsers: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    for (instance, want) in [
+    // Cases compose over the declared defaults: the direct `htpasswd` reads
+    // `adminPassword` on every render and aborts on a nil operand.
+    for (overrides, want) in [
         (serde_json::json!({ "adminPassword": 7 }), false),
         (serde_json::json!({ "adminPassword": "ok" }), true),
         (
@@ -391,6 +391,7 @@ fn htpasswd_operands_require_strings() {
             true,
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "htpasswd consumes Go strings only: instance={instance}; schema={schema}"
@@ -417,15 +418,15 @@ fn checksum_operands_require_strings_through_ranged_default_selection() {
             user {{ .username }} {{ if $password }}#{{ sha256sum $password }}{{ else }}nopass{{ end }}
             {{- end }}
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir(src),
-        Some(indoc! {"
-            seed: audit
-            users: []
-        "}),
-    );
+    let values_yaml = indoc! {"
+        seed: audit
+        users: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for (instance, want, label) in [
+    // Cases compose over the declared defaults: the direct `sha256sum` reads
+    // `seed` on every render and aborts on a nil operand.
+    for (overrides, want, label) in [
         (serde_json::json!({ "seed": 7 }), false, "direct numeric"),
         (serde_json::json!({ "seed": "ok" }), true, "direct string"),
         (
@@ -449,6 +450,7 @@ fn checksum_operands_require_strings_through_ranged_default_selection() {
             "falsy member escapes the hash",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "checksum operand {label}: instance={instance}; schema={schema}"
@@ -778,6 +780,78 @@ fn checksum_digest_splices_project_no_slot_language_onto_the_operand() {
             schema_accepts_instance(&schema, &instance) == want,
             "checksum operand slot-language abstention ({label}): \
              instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Every nil-strict string consumer — `tpl`, `b64enc`, `trim`, `trunc`,
+/// `htpasswd`, and the rest of the transform catalog — reads its operand as
+/// a Go string, so a NIL operand aborts rendering ("wrong type for value;
+/// expected string") wherever the consumer runs. Absence is Helm-falsy, so
+/// the truthy⇒string capture cannot state that; the presence claim is its
+/// own abort-grade clause, scoped by the consumer's ambient guards and
+/// exempt where the operand's own truthiness gates the read.
+#[test]
+fn nil_strict_string_consumers_require_their_operand_to_exist() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.assert }}
+          secret: {{ tpl .Values.config.secret $ | b64enc }}
+          {{- end }}
+          plain: {{ .Values.name | trim }}
+          {{- with .Values.guarded }}
+          guarded: {{ tpl . $ }}
+          {{- end }}
+          derived: {{ printf "%s-%s" .Values.name .Values.suffix | trunc 63 }}
+    "#};
+    let values_yaml = indoc! {"
+        assert: true
+        config:
+          secret: value
+        name: chart
+        guarded: text
+        suffix: x
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (label, overrides, want) in [
+        ("baseline", serde_json::json!({}), true),
+        (
+            "the live gate's operand must exist",
+            serde_json::json!({ "config": { "secret": null } }),
+            false,
+        ),
+        (
+            "a dormant gate keeps the deletion open",
+            serde_json::json!({ "assert": false, "config": { "secret": null } }),
+            true,
+        ),
+        (
+            "an unconditional consumer demands its operand outright",
+            serde_json::json!({ "name": null }),
+            false,
+        ),
+        (
+            "a with-scoped operand renders when absent",
+            serde_json::json!({ "guarded": null }),
+            true,
+        ),
+        (
+            // `printf` renders `%!s(<nil>)` for a missing operand, and only
+            // its DERIVED text reaches the trim.
+            "a derived operand claims nothing about its influences",
+            serde_json::json!({ "suffix": null }),
+            true,
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; want={want}; schema={schema}"
         );
     }
 }

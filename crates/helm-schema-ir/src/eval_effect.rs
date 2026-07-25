@@ -70,6 +70,13 @@ pub(crate) struct Effects {
     /// a called helper's path-level contract flags lost their body-internal
     /// guards and stay row evidence.
     pub(crate) direct_string_consumer_paths: BTreeSet<String>,
+    /// Paths a nil-strict string consumer in THIS expression read as their
+    /// whole operand — the operand IS that values path, not a derivation
+    /// carrying it (`printf … | trimSuffix`, an `include`'s text, a
+    /// `default` chain). Only these may claim abort-grade PRESENCE: a
+    /// derived operand renders whatever its derivation produced, so the
+    /// path's own absence is not what the consumer reads.
+    pub(crate) nil_strict_identity_paths: BTreeSet<String>,
     pub(crate) chart_default_paths: BTreeSet<String>,
     pub(crate) local_default_paths: BTreeSet<String>,
     pub(crate) local_output_meta: BTreeMap<String, HelperOutputMeta>,
@@ -213,6 +220,14 @@ pub(crate) enum CaptureKind {
     /// `storage_config`). Lowers to a `HasMember` presence requirement on
     /// the parent path.
     RequiredPresence { path: String },
+    /// Rendering ABORTS wherever the capture's execution predicates hold and
+    /// this path is absent: a nil-strict string consumer reads it (helm
+    /// answers `wrong type for value; expected string; got interface {}`
+    /// for `tpl`, `b64enc`, `trim`, `nindent`, … on a nil operand).
+    /// Lowers to a document-level terminal clause, which — unlike a parent
+    /// member requirement — reaches a top-level path and carries the
+    /// `Absent` guard's ownership semantics.
+    AbsenceAborts { path: String },
     /// A comparison operand must have the named JSON Schema type when
     /// PRESENT and non-null; `eq`/`ne` compare `nil` against anything.
     ComparableKind { path: String, schema_type: String },
@@ -269,6 +284,7 @@ impl CaptureKind {
             | Self::ValueType { path, .. }
             | Self::DigSubject { path }
             | Self::RequiredPresence { path }
+            | Self::AbsenceAborts { path }
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
             | Self::QuotedSerialization { path, .. } => {
@@ -320,6 +336,7 @@ impl Effects {
             string_contract_paths,
             range_modes,
             direct_string_consumer_paths,
+            nil_strict_identity_paths,
             chart_default_paths,
             local_default_paths,
             local_output_meta,
@@ -358,6 +375,8 @@ impl Effects {
         self.range_modes.merge(&range_modes);
         self.direct_string_consumer_paths
             .extend(direct_string_consumer_paths);
+        self.nil_strict_identity_paths
+            .extend(nil_strict_identity_paths);
         self.chart_default_paths.extend(chart_default_paths);
         self.local_default_paths.extend(local_default_paths);
         self.local_source_paths.extend(local_source_paths);
@@ -466,6 +485,7 @@ impl Effects {
             string_contract_paths,
             range_modes,
             direct_string_consumer_paths,
+            nil_strict_identity_paths,
             chart_default_paths,
             local_default_paths: _,
             local_output_meta: _,
@@ -511,6 +531,7 @@ impl Effects {
             string_contract_paths,
             range_modes,
             direct_string_consumer_paths,
+            nil_strict_identity_paths,
             chart_default_paths,
             local_default_paths: BTreeSet::new(),
             local_output_meta: BTreeMap::new(),

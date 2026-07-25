@@ -34364,6 +34364,86 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "serviceType": {}
+                      },
+                      "required": [
+                        "serviceType"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "serviceType": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceType"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "hostName": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "hostName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -38843,6 +38923,293 @@
                   "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected."
                 }
               }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "admin": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "createSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createSecret"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "username": {}
+                              },
+                              "required": [
+                                "username"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "username": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "username"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
+              "description": "When enabling LDAP or another non-Jenkins identity source, the built-in admin account will no longer exist.\nIf you disable the non-Jenkins identity store and instead use the Jenkins internal one,\nyou should revert controller.admin.username to your preferred admin user:"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "httpsKeyStore": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "enable": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enable"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "jenkinsKeyStoreBase64Encoded": {}
+                              },
+                              "required": [
+                                "jenkinsKeyStoreBase64Encoded"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "jenkinsKeyStoreBase64Encoded": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "jenkinsKeyStoreBase64Encoded"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "disableSecretMount": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableSecretMount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "jenkinsHttpsJksSecretName": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "jenkinsHttpsJksSecretName"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "httpsKeyStore": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "enable": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enable"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "password": {}
+                              },
+                              "required": [
+                                "password"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "password": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "password"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "disableSecretMount": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableSecretMount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "jenkinsHttpsJksSecretName": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "jenkinsHttpsJksSecretName"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "secondaryingress": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "hostName": {}
+                              },
+                              "required": [
+                                "hostName"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "hostName": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "hostName"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
+              "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration"
             }
           }
         },

@@ -17286,6 +17286,54 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceType": {}
+                  },
+                  "required": [
+                    "serviceType"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceType": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceType"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "isClusterService": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "isClusterService"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

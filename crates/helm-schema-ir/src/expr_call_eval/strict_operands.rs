@@ -50,6 +50,7 @@ pub(super) fn record_string_transform_effects(
         return;
     }
     record_string_consumer_effects(string_paths, effects);
+    record_nil_strict_identity_operand(value, effects);
     record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
     effects
         .derived_text_paths
@@ -125,7 +126,25 @@ pub(super) fn record_string_call_consumers(
 ) {
     let (paths, raw_range_key_paths) = string_call_operand_facts(function, args, env, resolver);
     record_string_consumer_effects(&paths, effects);
+    for index in string_operand_indices(function, args.len()) {
+        let Some(arg) = args.get(index) else {
+            continue;
+        };
+        let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        record_nil_strict_identity_operand(operand.value.as_ref(), effects);
+    }
     record_raw_range_key_string_consumer_paths(&raw_range_key_paths, effects);
+}
+
+/// Record a nil-strict consumer's operand as a PRESENCE subject when the
+/// operand IS one values path. A derived operand (`printf … | trimSuffix`,
+/// an `include`'s rendered text, a `default` chain) only carries paths as
+/// influences: it renders whatever the derivation produced, so those paths'
+/// own absence is not what the consumer reads.
+fn record_nil_strict_identity_operand(value: Option<&AbstractValue>, effects: &mut Effects) {
+    if let Some(AbstractValue::ValuesPath(path)) = value {
+        effects.nil_strict_identity_paths.insert(path.clone());
+    }
 }
 
 pub(super) fn record_strict_parser_call(

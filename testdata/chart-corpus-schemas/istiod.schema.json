@@ -31499,6 +31499,96 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema70"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "istiodRemote": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "istiodRemote"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabledLocalInjectorIstiod": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabledLocalInjectorIstiod"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "properties": {
           "istiodRemote": {
             "enum": [

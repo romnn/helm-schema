@@ -9647,6 +9647,110 @@
         "allOf": [
           {
             "properties": {
+              "secretConfiguration": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "secretConfiguration": {
+                      "properties": {
+                        "mountPath": {}
+                      },
+                      "required": [
+                        "mountPath"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "secretConfiguration"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "secretConfiguration": {
+                    "properties": {
+                      "mountPath": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mountPath"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretConfiguration"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "extraVolumeMounts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraVolumeMounts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "secretConfiguration": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secretConfiguration"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "txtPrefix": {
                 "$ref": "#/$defs/helm-truthy"
               }

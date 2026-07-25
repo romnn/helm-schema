@@ -844,12 +844,19 @@ fn condition_pipeline_order_scopes_string_consumers() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
+    // Both trims read their operand on every render and abort on a nil, so
+    // the cases compose over the declared defaults.
+    let numeric_tag = composed_instance(values_yaml, serde_json::json!({ "tag": 7 }));
     assert!(
-        schema_accepts_instance(&schema, &serde_json::json!({ "tag": 7 })),
+        schema_accepts_instance(&schema, &numeric_tag),
         "toString converts before the trim, so numbers render: {schema}"
     );
+    let bad_suffix = composed_instance(
+        values_yaml,
+        serde_json::json!({ "suffix": { "bad": true } }),
+    );
     assert!(
-        !schema_accepts_instance(&schema, &serde_json::json!({ "suffix": { "bad": true } })),
+        !schema_accepts_instance(&schema, &bad_suffix),
         "a consumer ahead of the conversion still needs a string: {schema}"
     );
 }

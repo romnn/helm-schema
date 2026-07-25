@@ -147,8 +147,12 @@ fn unlowerable_outer_guard_abstains_from_child_string_contract() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
+    // The instance composes over the defaults: `airflowVersion` reaches
+    // `semverCompare`, which aborts on a nil operand, so a document without
+    // it is not the state this case is about.
+    let instance = composed_instance(values_yaml, serde_json::json!({ "baseUrl": { "a": 1 } }));
     assert!(
-        schema_accepts_instance(&schema, &serde_json::json!({ "baseUrl": { "a": 1 } })),
+        schema_accepts_instance(&schema, &instance),
         "the semver guard cannot lower; the branch-scoped string contract \
          must abstain rather than bind globally: {schema}"
     );
@@ -216,16 +220,27 @@ fn approximate_guard_hints_stay_branch_scoped() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    assert!(
-        schema_accepts_instance(&schema, &serde_json::json!({ "password": "secret" })),
-        "strings always render: {schema}"
-    );
-    assert!(
-        schema_accepts_instance(&schema, &serde_json::json!({ "password": 123 })),
-        "the default-literal string hint lives behind a semver guard the \
-         encoding cannot represent; it must not bind the base the total \
-         stringification renders: {schema}"
-    );
+    // `semverCompare` reads `appVersion` on every render and aborts on a
+    // nil operand, so every case supplies it; the guard itself still cannot
+    // be decoded, which is what this pins.
+    for (password, label) in [
+        (serde_json::json!("secret"), "strings always render"),
+        (
+            serde_json::json!(123),
+            "the default-literal string hint lives behind a semver guard the \
+             encoding cannot represent; it must not bind the base the total \
+             stringification renders",
+        ),
+    ] {
+        let instance = composed_instance(
+            values_yaml,
+            serde_json::json!({ "password": password, "appVersion": "1.2.3" }),
+        );
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// bitnami's `common.images.pullSecrets` shape: a helper that ranges a

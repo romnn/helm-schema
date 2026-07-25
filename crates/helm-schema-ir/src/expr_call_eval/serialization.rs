@@ -338,6 +338,9 @@ pub(super) fn eval_tpl(
         // string-only consumer.
         let subject_paths = identity_value_paths(template.value.as_ref());
         record_string_consumer_effects(&subject_paths, &mut effects);
+        if let Some(AbstractValue::ValuesPath(path)) = template.value.as_ref() {
+            effects.nil_strict_identity_paths.insert(path.clone());
+        }
         record_range_key_string_consumer_effects(template.value.as_ref(), &mut effects);
         // The rendered result is DERIVED TEXT: the raw argument is a Go
         // template PROGRAM, and constraints observed on the evaluated
