@@ -8808,3 +8808,136 @@ battery flips.
 the corpus fixtures byte-identical to one clean dump run of the final
 build. The luup2 `check:local` downstream gate passes with the
 installed binary.
+
+## Navigation-host round (2026-07-25, twenty-eighth round)
+
+F63 (receiver hosts neither present nor consistently typed) closed on
+its two halves, with helm's dependency-coalescing type assertion landing
+as collateral. Go template member access ABORTS on a nil receiver, so a
+navigated host must exist in the coalesced document and must be a
+mapping when present; the corpus accepted both violations.
+
+### The presence half: one abort-grade claim, expressed as a clause
+
+The member-access lane already recorded each host's access guard sets,
+but its presence claim lowered as `HasMember` on the host's PARENT, and
+that form loses the fact three ways: the default-supplied `required`
+relaxation strips it for every declared host (the F63 symptom), a
+`properties`-anchored arm passes vacuously when the parent itself is
+missing, and a TOP-LEVEL host has no parent slot at all (the same wall
+F107's dig presence hit). The claim now lowers as a terminal clause
+`[folded guards …, Absent{host}]`, which:
+
+- carries the ownership semantics the `Absent` guard encoding already
+  audited (a parent-owned key goes missing only through helm's
+  null-deletion; a dependency-owned one is refilled by the subchart);
+- anchors above every union lane, at the root or the guards' shared
+  ancestor;
+- reaches top-level hosts, and needs no second representation.
+
+Guard sets that scope a read by the HOST'S OWN presence contribute no
+absent-abort state and drop out (`guard_implies_present`): the nil-safe
+grouped form `(.Values.x).member` and `with`-scoped hosts render at an
+absent or null-deleted receiver, so their clauses would be
+contradictions. Dependency-owned subtrees abstain entirely — a missing
+dependency values root is rebuilt from the subchart's own defaults
+(`coalesceDeps` creates the table, then the subchart coalesces into
+it), while a deletion INSIDE a present root does stick; separating the
+two needs a structural presence test on the root, which `Absent` cannot
+spell for dependency-owned paths (it encodes "reads as nil", and a
+refilled root never does). Verified on a synthetic parent/subchart
+pair: `sub: {a: null}` reaches the subchart as absent (`hasKey` false),
+`sub: null` reads the SUBCHART's default, `sub: {}` reads the parent's.
+
+### The typing half: the arm must survive the emitted base
+
+An unconditional member-host requirement was dropped whenever the
+RESOLVED base already enforced it — but that comparison runs before
+emission, and the emitted base can end up wider (an open-map merge or a
+union lane drops `type: object`). reloader's `serviceAccount` and
+cert-manager's three `podDisruptionBudget` families were exactly that:
+a union base with no `type`, no arm, and a present-scalar host that
+aborts the immediate `.create`/`.enabled` read. The shortcut is gone;
+`fold_unconditional_object_host_into_base` still folds the requirement
+into the real tree when it can, so unaffected charts emit no new arm.
+
+### Collateral: dependency values roots must be tables
+
+Removing the presence arm exposed that it had been the only thing
+typing prometheus' `prometheus-pushgateway`: the relaxation stripped its
+`required`, leaving a bare `type: object`. The real fact is helm's, not
+the template's — `coalesceDeps` type-asserts every loaded dependency's
+values root BEFORE any rendering and regardless of the dependency's own
+activation (`grafana-agent-operator: 7` aborts with "type mismatch on
+grafana-agent-operator" even at `installOperator: false`). Accepted
+dependency values roots now carry an unconditional null-tolerant
+`SchemaType("object")`: the chart declares the key as a mapping, so a
+user null is deleted by the values coalesce that runs first and reaches
+the check as absence.
+
+### Program-wrapper interaction
+
+nats' root `$tplYaml` wrapper document replaces the whole tree, so the
+root conditional arms must not read it as a document missing every
+navigated host. Each root-level arm's condition gains a
+not-a-singleton-wrapper conjunct (`scope_conditional_arms_to_non_
+wrappers`), which keeps per-arm error attribution — moving the arms
+into the ordinary `anyOf` alternative also works but relocates every
+rejection to the root.
+
+### Adjudication
+
+53 corpus fixtures regenerate from one clean dump run of the final
+build. The old-versus-new probe battery (every top-level and
+second-level key × null/int/str/member/item) reports 1351 acceptance
+flips, all tightenings, zero loosenings, zero baseline changes; every
+flip was run through `helm template --skip-schema-validation` on the
+composed document:
+
+- 1333 ABORT — the F63 class. 1300 are null-deletions of a navigated
+  host ("nil pointer evaluating interface {}.create" and friends across
+  49 charts); the rest are present scalars at hosts with an immediate
+  member read (cert-manager `podDisruptionBudget`, reloader
+  `serviceAccount`, prometheus `server.podDisruptionBudget`, nats
+  `config.websocket`, vault `server.service`, airflow's five component
+  hosts, external-secrets `podDisruptionBudget`, ingress-nginx
+  `controller.service`, KPS `alertmanager.service`/`prometheus.service`,
+  argo-cd `configs.rbac`).
+- 18 RENDER — nine declared-mapping paths (argo-cd `redis-ha.haproxy`/
+  `redis-ha.redis`, bitnami-postgresql `backup.cronjob`, datadog
+  `datadog.sbom`, KPS `thanosRuler.service`/`thanosRulerSpec`,
+  oauth2-proxy `sessionStorage.redis`, traefik `hub.providers`, vault
+  `csi.daemonSet`) × int/str. Their bases had been EMPTIED by the
+  removed presence arm (a guarded-only conditional target hands base
+  ownership to the arms); with the claim moved to a clause, each
+  declared mapping keeps its ordinary `type: object`, the same typing
+  ~70% of comparable declared mappings already carried. helm renders
+  the scalar in these dormant states without reading it, so the
+  rejection is the declared-default policy, not an abort claim. Signoz's
+  `clickhouse.zookeeper.metrics` is the same class and its pin was
+  updated to match (map-shaped overrides stay open in both activation
+  states).
+
+Pinned by `navigated_hosts_must_exist_in_the_coalesced_document` (gen:
+top-level, ancestor, nested, nil-safe, `with`-scoped, empty-map),
+`metrics_server_navigated_hosts_reject_null_deletion`,
+`reloader_service_account_host_rejects_present_scalars`, and
+`prometheus_dependency_values_roots_must_be_tables` (CLI).
+
+### Test-model collateral
+
+Gen and chart tests that passed SPARSE documents now compose them over
+the chart defaults (`composed_instance`, `chart_instances::with_override`,
+and the schema-behavior harness, which treats every expectation as an
+override): helm validates the coalesced document, so a bare `{}` models
+a user who null-deleted every declared key — a state that aborts as soon
+as anything is navigated. The batteries' intent is unchanged; only their
+documents became faithful.
+
+### Validation
+
+`task test` green (916 unit tests), `task test:integration` green (487,
+including every chart pin), clippy clean, corpus fixtures byte-identical
+to one clean dump run of the final build, and the luup2 `check:local`
+downstream gate passes with the installed binary (64 chart lints,
+schemas regenerated by the new binary). Production source: +74 lines.

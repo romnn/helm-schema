@@ -1,13 +1,19 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-24 after the twenty-sixth fixture/source audit
-and the reopened-items round that followed it (twenty-seventh round).
-All 55 committed corpus fixtures, 122 focused chart checks, Draft-07
+Last reconciled 2026-07-25 after the navigated-host round
+(twenty-eighth round), which closed F63.
+All 55 committed corpus fixtures, 125 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
 fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below. The reopened-items round
-closed three of them — F80's Airflow empty-worker over-constraint
+reopened the bounded findings listed below. The navigated-host round
+closed F63 on both halves — abort-grade host presence as a terminal
+clause (top-level hosts reached, dependency-owned subtrees abstaining)
+and unconditional host typing that survives union bases — with helm's
+dependency-coalescing table assertion as collateral; 1351 corpus probe
+flips were adjudicated against `helm template`, 1333 of them aborts.
+The preceding reopened-items round closed three findings — F80's
+Airflow empty-worker over-constraint
 (merge-arm gates now lower the maximal exact-conjunct subset, with
 per-layer truthy spellings of one merged read collapsed out of the
 conjunctive form), F105's checksum backward attribution (digest
@@ -261,8 +267,11 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F61 strict collection-call signatures for audited functions (the unknown
   long tail is Rejected)
 - F62 opening empty declared containers erasing the container type
-- F63 chained member reads requiring intermediate members (bounded; current
-  host type/presence residual is listed separately In progress)
+- F63 chained member reads requiring intermediate members, completed by the
+  navigated-host round: presence lowers as an abort-grade terminal clause
+  (top-level hosts included, nil-safe and `with`-scoped receivers exempt)
+  and the unconditional object typing survives union bases (the
+  dependency-owned presence residual is noted with the round entry below)
 - F64 dead-branch strict contracts under unlowerable guards, completed by
   the exact semver comparator-to-regex arm (airflow base_url)
 - F65 ordered helper mutation in accepted input domains, including the
@@ -1340,28 +1349,40 @@ same recursive map-null deletion as `chart_instances::with_override`.
   SigNoZ `imagePullSecrets:[7]` and migration `additionalVolumes:[7]` are
   the provider-item variants: Helm renders them, then strict validation
   rejects them.
-- **F63 — unconditional receiver hosts are neither present nor consistently
-  typed.** Null-deleted intermediate maps validate but Helm dereferences
-  them: metrics-server `apiService`, KEDA `certificates`, Harbor
-  `registry.credentials`, Prometheus `server.image`, Sealed Secrets
-  `ingress`, Vault `server`, Velero `configuration`, and Zalando
-  `configGeneral` are representative. Existing-but-scalar hosts also remain
-  open at cert-manager's three `podDisruptionBudget` families and ReLoader
-  `serviceAccount`, despite immediate `.enabled`/`.create` member reads.
-  Default or explicit map controls render.
-  SCOPING (verified twenty-seventh round): both spot checks reproduce
-  (metrics-server `apiService: null` aborts helm with "nil pointer
-  evaluating interface {}.create" while the schema accepts; a scalar
-  reloader `serviceAccount` aborts the member read). Go template member
-  navigation on a nil OR absent host aborts, so navigation-host
-  presence is ABORT-grade — the member-access lane's `HasMember`
-  implications exist but the default-supplied `required` relaxation
-  strips them for declared hosts, the same dropper F107's dig presence
-  was exempted from via `HasMemberEvenDefaulted`. Fix direction: emit
-  the abort-grade presence form from the member-access presence site
-  (`record_member_access_implications`' HasMember lowering) under its
-  existing factored guards, and let the MemberHost object typing reject
-  present-scalar hosts with immediate member reads.
+- **F63 — navigated receiver hosts (twenty-eighth round; CLOSED).** Go
+  template member access aborts on a nil receiver, so a navigated host
+  must EXIST in the coalesced document and must be a mapping when
+  present. Both halves landed. (a) The member-access lane's presence
+  claim lowers as a terminal clause `[folded guards …, Absent{host}]`
+  instead of `HasMember` on the parent: the clause carries the audited
+  ownership semantics of `Absent` (a parent-owned key goes missing only
+  through helm's null-deletion), anchors above every union lane, and
+  reaches TOP-LEVEL hosts, which have no parent slot — the wall that
+  also limits F107's dig presence. Guard sets scoping a read by the
+  host's own presence drop out (`guard_implies_present`), so the
+  nil-safe grouped form and `with`-scoped hosts keep every absent state
+  open. (b) An unconditional member-host requirement is no longer
+  dropped by comparing against the RESOLVED base: that comparison runs
+  before emission and the emitted base can be wider (a union lane drops
+  `type: object`), which is exactly how cert-manager's three
+  `podDisruptionBudget` families and reloader's `serviceAccount` stayed
+  open to present scalars. Collateral: accepted dependency values roots
+  carry an unconditional null-tolerant `object` type — helm's
+  `coalesceDeps` type-asserts them before any rendering and regardless
+  of the dependency's activation. 1351 corpus probe flips, all
+  tightenings, 1333 helm-ABORT; the 18 that render are nine declared
+  mappings whose bases had been emptied by the removed presence arm and
+  now keep their ordinary declared-mapping typing (a values error, not
+  an abort claim — see the round entry). Pinned by
+  `navigated_hosts_must_exist_in_the_coalesced_document` (gen) plus
+  `metrics_server_navigated_hosts_reject_null_deletion`,
+  `reloader_service_account_host_rejects_present_scalars`, and
+  `prometheus_dependency_values_roots_must_be_tables` (CLI). Residual:
+  DEPENDENCY-owned subtrees abstain from the presence claim — a missing
+  dependency root is rebuilt from the subchart's own defaults while a
+  deletion inside a present root sticks, and separating the two needs a
+  structural presence test on the root that `Absent` cannot spell for
+  dependency-owned paths.
 - **F76 — dynamic keys and `tpl` results lose their YAML-slot lexical
   preimages.** Crossplane accepts `extraEnvVars*:{"BAD: KEY":"x"}` even
   though the ranged key, after `replace "." "_"`, breaks the unquoted
@@ -1420,6 +1441,24 @@ same recursive map-null deletion as `chart_instances::with_override`.
   joined per-iteration flag state of the unrolled walk (iteration K's
   `$shouldContinue` is exactly the prior iterations' `hasKey`
   conjunction, which the subject's own presence conjunct implies).
+  LANE SCOPING (twenty-eighth round, not yet implemented): the flag's
+  state already exists in the model — `SymbolicLocalState::
+  truthy_reductions` takes the RHS condition predicate on declaration
+  (`$shouldContinue := true` is a faithful `Predicate::True`) and
+  `conjoin_changed_truthy_reductions` stamps arm conditions onto
+  changed reductions at branch joins, which is the per-iteration
+  conjunction the fix wants. What is missing is the CHANNEL: the
+  poisoning conjunct is added in `eval_short_circuit_args`
+  (`expr_call_eval/mod.rs`), whose `EvalEnv` carries `locals`
+  (`AbstractValue`s) but no truthy-reduction view, so a non-identity
+  operand can only become `Predicate::approximate`. The scoped fix is
+  to surface the exact reductions on `EvalEnv` (populated where
+  `fragment_eval` builds it from the local state, as
+  `value_path_context` already does for the header decode) and use the
+  operand's exact reduction — falling back to `approximate` only when
+  none exists. Open question for that round: whether the join really
+  leaves iteration K's flag an EXACT conjunction rather than an
+  approximate marker, which decides whether the deeper segments bind.
 - **F105 — checksum backward attribution (twenty-seventh round; CLOSED).**
   The checksum family now SHAPE-ERASES its operand identities (call and
   pipeline forms): the digest shares no text or shape with the subject,
