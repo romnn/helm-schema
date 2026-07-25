@@ -9238,3 +9238,202 @@ one clean dump run of the final build, and the luup2 `check:local`
 downstream gate passes with the installed binary after a forced
 `schema:generate:all`, with no schema drift downstream. Production source:
 +143 lines.
+
+## Document-item round (2026-07-25, thirty-second round)
+
+F40/F59's document-item half closed: a `typeIs "string"` dispatch over
+ranged DOCUMENT members now keeps both arms' placements, so
+`extraObjects`/`extraDeploy` members must decode as manifests.
+
+### The defect: two half-claims that never met
+
+A direct `{{ tpl (toYaml .) $ }}` at column zero already claimed the
+document-root mapping shape for the ranged member. Both spellings the
+corpus actually uses lost it:
+
+1. **The dispatch dropped it in the builder.** grafana writes the dispatch
+   inline. The else arm's capture WAS recorded, with conjunction
+   `[Range{extraObjects}, ¬TypeIs{extraObjects.*, "string"}]` — and then
+   `record_value_requirement_capture` abstained, because its `.*` branch
+   requires every non-range conjunct to be an OUTER guard and rejects any
+   guard whose paths contain a wildcard. The dispatch condition names the
+   member itself, so the whole implication disappeared and the item domain
+   stayed `{}`.
+2. **The helper splice never reached the claim site.** traefik,
+   sealed-secrets and external-secrets route the member through
+   `{{ include "<chart>.render" (dict "value" . "context" $) }}`, which
+   returns from `splice_helper_call_hole` before the claim site. The helper
+   body is evaluated in helper scope, where the site deliberately abstains
+   ("helper bodies render at their caller's position").
+
+### A member condition is a scoping, not an outer guard
+
+A conjunct testing the member's own kind cannot be an outer guard (its path
+is per-member), but it need not sink the implication either: the
+requirement then binds only the members the dispatch routes there, and the
+members the other arm handles satisfy the negated test. That is exactly
+`escape ∨ requirement`, which `FailValueRequirement::AnyOf` already spells:
+
+    AnyOf([[ComparableKind("object")], [SchemaType("string")]])
+
+Only the `typeIs` partition qualifies — its complement is a plain type
+alternative. Truthiness, equality and member reads have no sound
+requirement-level complement, so they keep abstaining. The string arm's own
+`tpl` operand produces the complementary pair
+(`SchemaType("string")` under `TypeIs{…,"string"}`); that alternation is a
+tautology, so it is dropped rather than emitted as a vacuous arm.
+
+### The caller owns the helper's placement
+
+A helper spliced at column zero with no `nindent` renders its own document,
+so the caller — which is the only party that knows the placement — walks
+the rebased fragment's arms and records the claim for every arm that is a
+whole-FRAGMENT splice of a `.*` path, under that arm's own condition. A
+body that wraps its splice in structure assembles to a `Mapping`, not a
+`Splice`, and is skipped. Both sites now call one
+`record_document_root_mapping`.
+
+### Adjudication
+
+Five fixtures move (traefik, sealed-secrets, grafana, external-secrets,
+kube-prometheus-stack). 44 probe flips, all tightenings:
+
+- **38 helm confirms.** Every scalar and sequence member aborts with
+  "json: cannot unmarshal number/array into Go value of type
+  util.SimpleHead" — integer, `0`, float, boolean, sequence and the EMPTY
+  sequence, in the list container for all five charts and in the map
+  container for kube-prometheus-stack. `extraObjects: 3` and
+  `extraObjects: 0` abort too (Go's `range` cannot iterate an int here).
+  The documented shapes keep rendering: raw manifest text, a mapping, and a
+  null member (an empty manifest Helm skips).
+- **6 helm renders.** kube-prometheus-stack's `grafana.extraObjects`, under
+  the grafana-enabled gate, now rejects a MAP container with a string,
+  empty-string, mapping, empty-mapping or null member, and the empty map
+  itself. These are not the new claim: once a `Members` implication shares
+  the overlay's guards, `member_implication_owns_range_domain` hands the
+  range domain to that arm, and the branch lane falls back to grafana's
+  declared `extraObjects: []` — `type: array`. That is the established
+  behaviour for declared-list ranged paths (standalone grafana and eight
+  sibling `grafana.extra*` paths already reject a map container the same
+  way, and the gen pin
+  `guarded_ranged_member_access_constrains_collection_lanes` fixes the
+  arm-only lane for the null-declared case), so this flip aligns the
+  dependency lane with the chart's own schema. Relaxing it means scoping
+  that carve-out to empty declared projections, which would widen dozens of
+  declared-`[]` paths corpus-wide — a separate finding, not this one.
+
+Pinned by `ranged_document_type_dispatch_bounds_the_item_domain` (gen: both
+spellings × five member kinds; each half of the fix was verified
+load-bearing by disabling it) and
+`ranged_document_members_must_decode_as_manifests` (CLI: traefik,
+sealed-secrets, grafana).
+
+### Validation
+
+`task test` green (921 unit tests), `task test:integration` green (490),
+`task lint` and `cargo fmt --check` clean, corpus fixtures byte-identical to
+one clean dump run of the final build, and the luup2 `check:local`
+downstream gate passes with the installed binary after a forced
+`schema:generate:all`, with no schema drift downstream. Production source:
++101 lines.
+
+## Unquoted-slot round (2026-07-25, thirty-third round)
+
+F76 closed: text spliced raw into an UNQUOTED YAML slot now binds its
+source's lexical language, in all four spellings the corpus uses.
+
+### One claim, two identities that reach a plain token
+
+The plain-token grammar already existed
+(`scalar_plain_string_preimage`), but only the PROVIDER-slot preimage could
+reach it, and only for a value whose identity survived to the sink. The four
+F76 examples are two identities that never got there:
+
+- a directly ranged collection's KEY, spliced into a plain value slot
+  (crossplane's `- name: {{ $key | replace "." "_" }}`) or into a raw
+  mapping-key slot (external-dns's `  {{ $key }}: …` under a Secret's
+  `data:`);
+- a `tpl` operand, filling a whole plain slot (external-dns's
+  `mountPath: {{ tpl .Values.secretConfiguration.mountPath $ }}`) or sitting
+  inside a partial one (cluster-autoscaler's
+  `- --cluster-name={{ tpl .Values.magnumClusterName . }}`).
+
+`FailValueRequirement::PlainScalarSafe { token_initial, templated }` states
+the fact; the generator owns the grammar, now factored into
+`plain_scalar_structural_exclusions(token_initial)` and shared with the
+provider preimage. It is deliberately STRUCTURAL only — the resolver-token
+exclusions that stop a plain token reparsing as a number/bool/null stay with
+the preimage, which knows the sink's declared type. On the KEYS target the
+exclusions ride `propertyNames`; on a value they ride an `anyOf` beside the
+non-string escape (a number formats as safe digits).
+
+`tpl` is the identity on template-ACTION-free input, so its operand keeps a
+projectable lexical language even though its SEMANTIC constraints belong to
+the render (redis-ha matches `masterGroupName` against a regex only after
+`tpl`). The two facts now travel separately: `derived_text_paths` as before,
+plus `templated_text_identity_paths`, whose claim carries a `{{`-carrying
+escape arm.
+
+### Four scopings, each found by a false rejection
+
+Every one of these came from a corpus flip that helm rendered happily:
+
+1. **A converted key renders the conversion's text.** ingress-nginx quotes
+   each `sysctls` key into the `name:` slot. `derived_range_key_paths` marks
+   exactly that, and the identity-preserving `replace` re-adds its keys
+   through `plain_text_range_key_paths` — recorded only when the token AND
+   replacement contain no character that can end a plain token, so a
+   sanitizing `replace ":" "_"` abstains.
+2. **A reshaping stage takes the slot.** external-dns's own
+   `{{ tpl $value $ | b64enc | quote }}` value slot is not the tpl text, so
+   the claim needs the hole's value to still BE the raw path.
+3. **Document content is not a slot.** A bare hole at document level renders
+   a whole manifest, where a `: ` is the manifest's own structure — this is
+   what the ranged-document dispatch of the previous round emits. The
+   interpreter now tracks `in_value_slot` (a mapping-entry or sequence-item
+   value), and a scalar the YAML grammar itself quoted clears it, since its
+   quotes live outside the templated parts (jenkins'
+   `jenkinsUrl: "{{ tpl .Values.agent.jenkinsUrl . }}"`).
+4. **Helper bodies render at their caller's position.** jenkins' JCasC
+   helper lands inside a ConfigMap block scalar, where `: ` is opaque text.
+   Helper scope abstains, exactly as the document-root rule does.
+
+### Adjudication
+
+33 corpus fixtures move (32 chart-corpus, 1 gen-corpus). 80 acceptance
+flips, all tightenings, no loosenings:
+
+- **77 helm confirms** with an abort — "mapping values are not allowed in
+  this context", or "error converting YAML to JSON" when the broken token
+  reaches the manifest decode.
+- **3 render, and the manifest is structurally wrong** — the class F76
+  documented for cluster-autoscaler. Verified by re-parsing the render:
+  kube-prometheus-stack's `enableFeatures` becomes `[{"a": "b"}]` where the
+  Prometheus CRD requires `[]string`, and both
+  `prometheusOperator.secretFieldSelector` and oauth2-proxy's
+  `config.cookieName` turn a container arg into
+  `{"--cookie-name=a": "b"}`.
+
+The adjudication instrument needed two repairs worth recording: a schema
+walker must RESOLVE `$ref`s to recover absolute values paths (definitions
+are shared bodies whose property chains are relative — without this, 174 of
+184 sites probed a nonexistent top-level key), and a flip is only meaningful
+when the SAFE sibling validates under both schemas, which screens out
+overrides that were invalid for unrelated reasons.
+
+Pinned by `unquoted_slots_bound_the_lexical_language_of_their_source` (gen:
+all four spellings, each with its safe sibling and the templated escape) and
+`unquoted_slots_reject_token_breaking_sources` (CLI: crossplane,
+external-dns, cluster-autoscaler). Two existing full-schema pins gained the
+`propertyNames` lane their charts always deserved
+(`destructured_range_with_len_guard_preserves_shape_erased_members`,
+`guarded_range_member_string_contract_stays_branch_scoped`).
+
+### Validation
+
+`task test` green (922 unit tests), `task test:integration` green (491),
+`task lint` and `cargo fmt --check` clean, corpus fixtures byte-identical to
+one clean dump run of the final build, and the luup2 `check:local`
+downstream gate passes with the installed binary after a forced
+`schema:generate:all`, with no schema drift downstream. Production source:
++484 lines.

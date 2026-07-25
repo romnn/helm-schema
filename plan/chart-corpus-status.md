@@ -1,12 +1,26 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-25 after the operand-presence round
-(thirty-first round), which closed F53/F66/F98's nil-strict string lane.
-All 55 committed corpus fixtures, 127 focused chart checks, Draft-07
+Last reconciled 2026-07-25 after the unquoted-slot round (thirty-third
+round), which closed F76. All 55 committed corpus
+fixtures, 129 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
 fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below. The operand-presence round
+reopened the bounded findings listed below. The unquoted-slot round made
+text spliced raw into an unquoted YAML slot bind its source's lexical
+language — a ranged collection's KEY (bare, and through an
+identity-preserving `replace`) and a `tpl` operand, which is the identity on
+template-action-free input — with four scopings that keep converted keys,
+reshaped slots, document content, and helper bodies out of the claim (80
+flips, all tightenings; 77 helm-confirmed aborts and 3 structurally invalid
+manifests). The preceding document-item round made a
+`typeIs "string"` dispatch over ranged DOCUMENT members keep both arms'
+placements — a member's own kind test is a per-member SCOPING rather than an
+outer guard, and a helper spliced at column zero has its placement recorded
+by the caller — so `extraObjects`/`extraDeploy` members must decode as
+manifests (44 flips, all tightenings, 38 helm-confirmed aborts; the 6
+remaining are kube-prometheus-stack's declared-`[]` dependency lane
+aligning with grafana's own schema). The preceding operand-presence round
 made a nil-strict string consumer's operand abort-grade PRESENT wherever it
 runs (117 helm-adjudicated flips, zero mismatches, no loosenings), with
 three scopings that keep derived operands, self-mentioning guards, and
@@ -253,7 +267,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F36 executing catch-all branches losing structural requirements
 - F37 nested type dispatch leaking provider typing across siblings
 - F39 integer range widening ignoring loop-body requirements
-- F40 nested range requirements through ranged locals
+- F40 nested range requirements through ranged locals, completed by the
+  overlaid-member and document-item rounds (see F59 below)
 - F41 `with`-rebound dot losing the originating path in type dispatch
 - F42 `default`/`coalesce`-guarded contracts (direct, helper-boundary, and
   fallback-selection scope)
@@ -277,8 +292,10 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F57 broad fragment alternatives bypassing member/range contracts
 - F58 integer rangeability vs range-variable arity (jenkins hasKey/member
   slot degradation)
-- F59 range-body requirements reaching iterable lanes (bounded; current
-  helper-ranged document/member losses are listed separately In progress)
+- F59 range-body requirements reaching iterable lanes, completed by the
+  overlaid-member and document-item rounds: an overlaid range keeps the
+  overlaid map's member identity, and a ranged document member keeps both
+  arms of a `typeIs` dispatch (inline and through a render helper)
 - F60 `eq`/`ne` operand domains incl. missing/null tolerance
 - F61 strict collection-call signatures for audited functions (the unknown
   long tail is Rejected)
@@ -309,7 +326,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   allowances, numeric-grammar exclusions, double/single-quoted content,
   flow style, mapping keys, completed-token contracts, composite-in-quotes
   recursive serialization preimage (F76.2), empty-scalar defaults under
-  member projection, and go-yaml v2 resolver-token coverage
+  member projection, go-yaml v2 resolver-token coverage, and — completed by
+  the unquoted-slot round — the ranged-KEY and `tpl`-operand preimages of
+  an unquoted slot's structural language
 - F77 `and`/`or` selected-operand values
 - F78 value-selecting functions keeping candidate-selection predicates
 - F79 `break`/`continue` suppressing later-iteration contracts
@@ -376,7 +395,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   keys-must-be-strings arm when the slot is string-only — non-empty lists
   excluded, maps and empty lists open (minio `environment`, and the
   `extraObjects`-family arms across the corpus). Provider lexical constraints
-  are complete; raw YAML-key lexical preimages are tracked under F76.
+  are complete; raw YAML-key lexical preimages landed with the
+  unquoted-slot round (see F76).
 - F71 optional-dependency helper availability: unconditional include
   closures over define bodies plus define ownership by chart directory
   yield terminal clauses for the inactive states of an optional
@@ -1388,27 +1408,51 @@ same recursive map-null deletion as `chart_instances::with_override`.
   Each corresponding provider-shaped control passes. Do not include Sealed
   Secrets `commonLabels`/`commonAnnotations`; exact composition already
   rejects their numeric members.
-- **F40/F59 — ranged document identity through render helpers (the
-  OVERLAY-MEMBER half closed in the thirtieth round).** Traefik
+- **F40/F59 — ranged document identity through render helpers (overlay
+  member half in the thirtieth round, document-item half in the
+  thirty-second; CLOSED).** Traefik
   `service.additionalServices.audit=false` (also `0`, `""`, a string, or a
-  list) now rejects: ranging a local dict that a `set` overlaid on a
+  list) rejects: ranging a local dict that a `set` overlaid on a
   values-backed map keeps the overlaid map's member identity
   (`AbstractValue::fragment_range_item` treats an overlay like the merge
   layers — the union of its literal entries and the overlaid member), so
-  the members' own consumers bind. STILL OPEN: Sealed Secrets
-  `extraDeploy:[7]` and Traefik `extraObjects:[7]` validate with
-  `items:{}` although Helm cannot decode the scalar documents; ConfigMap
-  members pass. Diagnosed in the thirtieth round: a DIRECT
-  `{{ tpl (toYaml .) $ }}` document splice already claims
-  `items: object|null`, and the loss is the `typeIs "string"` DISPATCH
-  those charts render through (`{{- if typeIs "string" . }}{{ tpl . $ }}
-  {{ else }}{{ tpl (. | toYaml) $ }}{{- end }}`, inline in grafana and
-  behind a `<chart>.render` helper in traefik/sealed-secrets): the two
-  branch claims should union to `string ∨ object`, but the item level
-  collapses to a parent-kind union and the else-branch object claim
-  disappears. SigNoZ `imagePullSecrets:[7]` and migration
-  `additionalVolumes:[7]` are the provider-item variants: Helm renders
-  them, then strict validation rejects them.
+  the members' own consumers bind. The document-item half landed in the
+  thirty-second round: Sealed Secrets `extraDeploy:[7]`, Traefik and
+  grafana `extraObjects:[7]` (and `0`, a float, a boolean, a sequence, an
+  empty sequence, or a whole non-zero/zero integer) now reject, while raw
+  manifest text, a mapping, and a null member keep rendering. Two
+  independent losses, both repaired: (a) the `typeIs "string"` DISPATCH
+  those charts render through recorded the else arm's capture with the
+  member's own kind test in its conjunction, and the `.*` lowering
+  abstained on any guard whose paths carry a wildcard — a member condition
+  is now a SCOPING, lowering to
+  `AnyOf([[ComparableKind object], [SchemaType string]])`, and only the
+  `typeIs` partition qualifies because only its complement is a plain type
+  alternative (a complementary pair is dropped as a tautology); (b) the
+  helper-spliced spelling (`{{ include "<chart>.render" (dict "value" .
+  "context" $) }}` in traefik/sealed-secrets/external-secrets) returned
+  before the claim site, so the CALLER — the only party that knows the
+  placement — now walks the rebased fragment's arms at column zero and
+  records the claim for each whole-fragment `.*` splice under that arm's
+  own condition. 44 flips, all tightenings; 38 helm-confirmed aborts
+  ("json: cannot unmarshal number/array into Go value of type
+  util.SimpleHead"). Pinned by
+  `ranged_document_type_dispatch_bounds_the_item_domain` (gen, both
+  spellings) and `ranged_document_members_must_decode_as_manifests` (CLI).
+  Collateral: kube-prometheus-stack's `grafana.extraObjects` now rejects a
+  MAP container (and the empty map) under the grafana-enabled gate, which
+  helm renders — once a `Members` implication shares the overlay's guards,
+  `member_implication_owns_range_domain` hands the range domain to that arm
+  and the branch lane falls back to the declared `extraObjects: []`. That
+  is the established declared-list behaviour standalone grafana and eight
+  sibling `grafana.extra*` paths already have, so the flip aligns the
+  dependency lane with the chart's own schema; relaxing it means scoping
+  that carve-out to empty declared projections, which would widen dozens of
+  declared-`[]` paths corpus-wide (a separate finding). RESIDUAL: SigNoZ
+  `imagePullSecrets:[7]` and migration `additionalVolumes:[7]` are the
+  provider-item variants — Helm renders them, then strict validation
+  rejects them — which is the F56/F62/F8 provider-projection lane, not this
+  document-placement one.
 - **F63 — navigated receiver hosts (twenty-eighth round; CLOSED).** Go
   template member access aborts on a nil receiver, so a navigated host
   must EXIST in the coalesced document and must be a mapping when
@@ -1443,17 +1487,46 @@ same recursive map-null deletion as `chart_instances::with_override`.
   deletion inside a present root sticks, and separating the two needs a
   structural presence test on the root that `Absent` cannot spell for
   dependency-owned paths.
-- **F76 — dynamic keys and `tpl` results lose their YAML-slot lexical
-  preimages.** Crossplane accepts `extraEnvVars*:{"BAD: KEY":"x"}` even
-  though the ranged key, after `replace "." "_"`, breaks the unquoted
-  `name:` slot; External DNS accepts the same bad key in live
-  `secretConfiguration.data` before raw `{{ $key }}:` emission. It also
-  accepts live `mountPath:"/etc/a: b"` through `tpl`, which breaks YAML, and
-  Cluster Autoscaler accepts Magnum `clusterName:"x: y"`, which renders an
-  object where a command string is required. Safe keys/strings pass, and the
-  External DNS disabled branch stays open. Project the slot language back to
-  the source map's `propertyNames` or representable `tpl` operand under the
-  exact live gate.
+- **F76 — dynamic keys and `tpl` results lost their YAML-slot lexical
+  preimages (thirty-third round; CLOSED).** Text spliced raw into an
+  UNQUOTED slot renders the value's own characters, so `: ` (or a trailing
+  `:`), ` #`, a line break, and — when the text OPENS the token — a leading
+  YAML indicator end it. All four examples now reject and their safe
+  siblings still render: Crossplane's `extraEnvVars*` keys through
+  `replace "." "_"` into the `name:` slot, External DNS's
+  `secretConfiguration.data` keys before raw `{{ $key }}:` emission and its
+  `mountPath` through `tpl`, and Cluster Autoscaler's Magnum `clusterName`.
+  `FailValueRequirement::PlainScalarSafe { token_initial, templated }`
+  states the fact and the generator owns the grammar, factored into
+  `plain_scalar_structural_exclusions` and shared with the provider
+  preimage; it is STRUCTURAL only, since the resolver-token exclusions need
+  the sink's declared type. The claim binds `propertyNames` for a ranged
+  KEY and an `anyOf` beside the non-string escape for a value. `tpl`'s
+  operand keeps a projectable LEXICAL language (it is the identity on
+  template-action-free input) while its semantic constraints stay with the
+  render, so the two facts travel separately —
+  `templated_text_identity_paths` beside `derived_text_paths` — and the
+  claim carries a `{{`-carrying escape arm. Four scopings, each found by a
+  helm-rendering flip: a converted key renders the CONVERSION's text
+  (ingress-nginx quotes its `sysctls` keys; the identity-preserving
+  `replace` re-enters through `plain_text_range_key_paths`, recorded only
+  when neither token can change a token-ending character); a reshaping
+  stage takes the slot (external-dns's own `b64enc | quote` value); DOCUMENT
+  content is not a slot (a bare hole at document level renders a manifest,
+  where `: ` is structure — the interpreter now tracks `in_value_slot`, and
+  a grammar-quoted scalar clears it because its quotes live outside the
+  templated parts); and helper bodies abstain because they render at their
+  caller's position (jenkins' JCasC helper lands in a ConfigMap block
+  scalar). 80 flips, all tightenings: 77 helm-confirmed aborts, and 3 that
+  render a structurally invalid manifest — kube-prometheus-stack's
+  `enableFeatures` becomes `[{"a": "b"}]` where the CRD requires
+  `[]string`, and two container args become `{"--flag=a": "b"}`. Pinned by
+  `unquoted_slots_bound_the_lexical_language_of_their_source` (gen, all four
+  spellings) and `unquoted_slots_reject_token_breaking_sources` (CLI).
+  RESIDUAL: a splice inside a BLOCK SCALAR keeps no lexical claim, so a
+  chart whose embedded config document breaks (jenkins' JCasC `annotations`
+  keys and `envVars` values) stays open — the manifest itself is valid, and
+  only the consuming application rejects it.
 - **F80 — Airflow's empty worker family (twenty-seventh round; CLOSED).**
   The synthesized merge-layer arms were gated all-or-nothing: one
   unlowerable conjunct (the member-local wildcard anyOfs) emptied the
