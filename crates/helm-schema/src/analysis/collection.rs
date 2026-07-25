@@ -6,7 +6,7 @@ use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::local_crd_projection::collect_static_crd_universe;
 use super::manifest_contract::{
-    ManifestContractAnalysis, collect_manifest_contract_for_chart,
+    DefineCorpus, ManifestContractAnalysis, collect_manifest_contract_for_chart,
     optional_dependency_helpers_for_chart,
 };
 use super::values_seed::seed_top_level_values_yaml_keys;
@@ -43,6 +43,7 @@ pub(crate) fn analyze_charts(
         }
     }
 
+    let corpus = DefineCorpus::build(charts, defines);
     for chart in charts {
         if chart.is_library {
             continue;
@@ -52,7 +53,7 @@ pub(crate) fn analyze_charts(
             values_roots.string_defaults_for_prefix(&chart.values_prefix),
             kubernetes_version.map(str::to_string),
         );
-        let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, defines);
+        let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, &corpus);
         let ManifestContractAnalysis {
             contract: manifest_contract,
             local_resource_schemas,
@@ -61,7 +62,7 @@ pub(crate) fn analyze_charts(
             &symbolic_context,
             include_tests,
             &optional_helpers,
-            defines,
+            &corpus,
         )?;
         contract.append(manifest_contract);
         for resource_schema in local_resource_schemas {

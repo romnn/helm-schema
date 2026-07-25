@@ -5,17 +5,29 @@
 
 use crate::cst::{ControlKind, Span};
 
+thread_local! {
+    /// Whole-chart analysis parses tens of thousands of short action strings,
+    /// and a `Parser` is far more expensive to build than to reuse. Trees own
+    /// their data, so a parser can be handed the next source immediately.
+    static GO_TEMPLATE_PARSER: std::cell::RefCell<Option<tree_sitter::Parser>> =
+        std::cell::RefCell::new(new_go_template_parser());
+}
+
+fn new_go_template_parser() -> Option<tree_sitter::Parser> {
+    let language =
+        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
+    let mut parser = tree_sitter::Parser::new();
+    parser.set_language(&language).ok()?;
+    Some(parser)
+}
+
 /// Parse `source` with the tree-sitter Go-template grammar. This crate is
 /// the single owner of the raw Go-template tree parse; `helm-schema-ast`
 /// re-exports this function and layers the typed expression AST on top.
 #[tracing::instrument(skip_all, fields(bytes = source.len()))]
 #[must_use]
 pub fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
-    let language =
-        tree_sitter::Language::new(helm_schema_template_grammar::go_template::language());
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(&language).ok()?;
-    parser.parse(source, None)
+    GO_TEMPLATE_PARSER.with_borrow_mut(|parser| parser.as_mut()?.parse(source, None))
 }
 
 #[derive(Clone, Copy, Debug)]

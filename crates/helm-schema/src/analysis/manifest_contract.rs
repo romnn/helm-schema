@@ -13,7 +13,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
     symbolic_context: &SymbolicIrContext,
     include_tests: bool,
     optional_helpers: &[OptionalDependencyHelpers],
-    defines: &helm_schema_ast::DefineIndex,
+    corpus: &DefineCorpus,
 ) -> EngineResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
@@ -27,7 +27,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
     for path in manifests {
         let source = path.read_to_string()?;
         let (mut manifest_contract, template_local_resource_schemas) =
-            collect_manifest_contract_for_template(&path, symbolic_context)?;
+            collect_manifest_contract_for_template(&source, &path, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         // Rendering this template unconditionally reaches these helper
@@ -37,7 +37,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
         // scoping and BEFORE its activation guards (an optional chart's
         // clause must itself only fire while the chart is active).
         if !optional_helpers.is_empty() {
-            let reached = unconditional_include_closure(&source, defines);
+            let reached = unconditional_include_closure(&source, corpus);
             for entry in optional_helpers {
                 if reached.iter().any(|name| entry.helper_names.contains(name)) {
                     manifest_contract.add_terminal_fail_condition(entry.inactive.clone());
@@ -86,15 +86,15 @@ pub(crate) struct ManifestContractAnalysis {
 
 #[tracing::instrument(skip_all)]
 fn collect_manifest_contract_for_template(
+    source: &str,
     path: &VfsPath,
     symbolic_context: &SymbolicIrContext,
 ) -> EngineResult<(ContractIr, Vec<LocalResourceSchema>)> {
-    let source = path.read_to_string()?;
-    let contract = symbolic_context.generate_contract_ir_for_source(&source, path.as_str());
+    let contract = symbolic_context.generate_contract_ir_for_source(source, path.as_str());
     let local_resource_schemas = local_resource_schemas_from_template_source(
-        &source,
+        source,
         path.as_str(),
-        contains_template_action(&source)?,
+        contains_template_action(source)?,
     )?;
     Ok((contract, local_resource_schemas))
 }
@@ -228,37 +228,93 @@ pub(crate) struct OptionalDependencyHelpers {
     pub(crate) inactive: helm_schema_core::Predicate,
 }
 
+/// Everything the analysis knows about one define name.
+pub(crate) struct DefineFacts {
+    /// The body Helm's global define namespace resolves for the name (last
+    /// parse wins; the index's stable path order stands in for parse order).
+    body: String,
+    /// Every chart directory owning a file that defines the name: the deepest
+    /// chart whose directory contains the defining file. More than one owner
+    /// means the name's resolution is ambiguous and ownership-based reasoning
+    /// abstains.
+    owner_dirs: std::collections::BTreeSet<String>,
+}
+
+/// Per-define facts for the whole chart tree, parsed once per analysis.
+///
+/// Both consumers — include-closure walking (bodies) and sole-ownership
+/// decisions for optional dependencies (owner dirs) — read the same parse of
+/// the same helper files, so the corpus is one pass over the define index
+/// rather than two parallel projections that could drift.
+pub(crate) struct DefineCorpus {
+    facts: std::collections::BTreeMap<String, DefineFacts>,
+}
+
+impl DefineCorpus {
+    pub(crate) fn build(
+        charts: &[chart::ChartContext],
+        defines: &helm_schema_ast::DefineIndex,
+    ) -> Self {
+        let mut facts: std::collections::BTreeMap<String, DefineFacts> =
+            std::collections::BTreeMap::new();
+        for (path, src) in defines.file_sources() {
+            let owner = charts
+                .iter()
+                .map(normalized_chart_dir)
+                .filter(|dir| file_in_dir(path, dir))
+                .max_by_key(String::len);
+            for (name, body) in helm_schema_ir::define_bodies_in_source(src) {
+                let entry = facts.entry(name).or_insert_with(|| DefineFacts {
+                    body: String::new(),
+                    owner_dirs: std::collections::BTreeSet::new(),
+                });
+                entry.body = body;
+                if let Some(owner) = &owner {
+                    entry.owner_dirs.insert(owner.clone());
+                }
+            }
+        }
+        Self { facts }
+    }
+
+    fn body(&self, name: &str) -> Option<&str> {
+        self.facts.get(name).map(|facts| facts.body.as_str())
+    }
+
+    /// Define names whose every known owner lies inside `dir` (or is `dir`
+    /// itself). A name with no known owner is never "solely owned" — its
+    /// defining file sits outside every chart directory.
+    fn names_owned_solely_under(&self, dir: &str) -> std::collections::BTreeSet<String> {
+        self.facts
+            .iter()
+            .filter(|(_, facts)| {
+                !facts.owner_dirs.is_empty()
+                    && facts
+                        .owner_dirs
+                        .iter()
+                        .all(|owner| owner == dir || owner.starts_with(&format!("{dir}/")))
+            })
+            .map(|(name, _)| name.clone())
+            .collect()
+    }
+}
+
+/// Define-index paths are chart-relative while chart dirs carry a leading
+/// slash; compare both without it and on directory boundaries.
+fn normalized_chart_dir(chart: &chart::ChartContext) -> String {
+    chart.chart_dir.as_str().trim_start_matches('/').to_string()
+}
+
+fn file_in_dir(file: &str, dir: &str) -> bool {
+    let file = file.trim_start_matches('/');
+    dir.is_empty() || file == dir || file.starts_with(&format!("{dir}/"))
+}
+
 pub(crate) fn optional_dependency_helpers_for_chart(
     chart: &chart::ChartContext,
     charts: &[chart::ChartContext],
-    defines: &helm_schema_ast::DefineIndex,
+    corpus: &DefineCorpus,
 ) -> Vec<OptionalDependencyHelpers> {
-    // Owner of each define: the deepest chart whose directory contains the
-    // defining file. Names defined in several places have ambiguous
-    // resolution (Helm's global namespace, last parse wins) and abstain.
-    let mut owner_dirs: std::collections::BTreeMap<String, std::collections::BTreeSet<String>> =
-        std::collections::BTreeMap::new();
-    // Define-index paths are chart-relative while chart dirs carry a
-    // leading slash; compare both without it and on directory boundaries.
-    let normalized_dir =
-        |chart: &chart::ChartContext| chart.chart_dir.as_str().trim_start_matches('/').to_string();
-    let file_in_dir = |file: &str, dir: &str| {
-        let file = file.trim_start_matches('/');
-        dir.is_empty() || file == dir || file.starts_with(&format!("{dir}/"))
-    };
-    for (path, src) in defines.file_sources() {
-        let Some(owner) = charts
-            .iter()
-            .map(normalized_dir)
-            .filter(|dir| file_in_dir(path, dir))
-            .max_by_key(String::len)
-        else {
-            continue;
-        };
-        for name in helm_schema_ir::define_names_in_source(src) {
-            owner_dirs.entry(name).or_default().insert(owner.clone());
-        }
-    }
     let mut out = Vec::new();
     for dependency in charts {
         let direct_child = dependency.values_prefix.len() == chart.values_prefix.len() + 1
@@ -279,16 +335,7 @@ pub(crate) fn optional_dependency_helpers_for_chart(
         if activation_sets.is_empty() {
             continue;
         }
-        let dependency_dir = normalized_dir(dependency);
-        let helper_names: std::collections::BTreeSet<String> = owner_dirs
-            .iter()
-            .filter(|(_, owners)| {
-                owners.iter().all(|owner| {
-                    owner == &dependency_dir || owner.starts_with(&format!("{dependency_dir}/"))
-                })
-            })
-            .map(|(name, _)| name.clone())
-            .collect();
+        let helper_names = corpus.names_owned_solely_under(&normalized_chart_dir(dependency));
         if helper_names.is_empty() {
             continue;
         }
@@ -315,14 +362,8 @@ pub(crate) fn optional_dependency_helpers_for_chart(
 /// reached helper body's top-level includes.
 pub(crate) fn unconditional_include_closure(
     source: &str,
-    defines: &helm_schema_ast::DefineIndex,
+    corpus: &DefineCorpus,
 ) -> std::collections::BTreeSet<String> {
-    let mut bodies: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
-    for (_, src) in defines.file_sources() {
-        for (name, body) in helm_schema_ir::define_bodies_in_source(src) {
-            bodies.insert(name, body);
-        }
-    }
     let mut reached = std::collections::BTreeSet::new();
     let mut queue: Vec<String> = helm_schema_ast::unconditional_include_names(source)
         .into_iter()
@@ -331,7 +372,7 @@ pub(crate) fn unconditional_include_closure(
         if !reached.insert(name.clone()) {
             continue;
         }
-        if let Some(body) = bodies.get(&name) {
+        if let Some(body) = corpus.body(&name) {
             queue.extend(helm_schema_ast::unconditional_include_names(body));
         }
     }

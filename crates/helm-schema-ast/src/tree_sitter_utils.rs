@@ -28,12 +28,23 @@ pub fn parse_expr_text(text: &str) -> Vec<TemplateExpr> {
 /// layers the typed expression AST on top of the same trees).
 pub use helm_schema_syntax::parse_go_template;
 
-#[tracing::instrument(skip_all, fields(bytes = source.len()))]
-/// Parses a source file with the fused Helm-template grammar.
-pub fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
+thread_local! {
+    /// Reused for the same reason as the Go-template parser in
+    /// `helm-schema-syntax`: constructing one costs far more than parsing.
+    static HELM_TEMPLATE_PARSER: std::cell::RefCell<Option<tree_sitter::Parser>> =
+        std::cell::RefCell::new(new_helm_template_parser());
+}
+
+fn new_helm_template_parser() -> Option<tree_sitter::Parser> {
     let language =
         tree_sitter::Language::new(helm_schema_template_grammar::helm_template::language());
     let mut parser = tree_sitter::Parser::new();
     parser.set_language(&language).ok()?;
-    parser.parse(source, None)
+    Some(parser)
+}
+
+#[tracing::instrument(skip_all, fields(bytes = source.len()))]
+/// Parses a source file with the fused Helm-template grammar.
+pub fn parse_helm_template(source: &str) -> Option<tree_sitter::Tree> {
+    HELM_TEMPLATE_PARSER.with_borrow_mut(|parser| parser.as_mut()?.parse(source, None))
 }
