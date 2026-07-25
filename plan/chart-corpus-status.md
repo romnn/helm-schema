@@ -1,12 +1,17 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-25 after the navigated-host round
-(twenty-eighth round), which closed F63.
-All 55 committed corpus fixtures, 125 focused chart checks, Draft-07
+Last reconciled 2026-07-25 after the short-circuit-flag round
+(twenty-ninth round), which closed F99.
+All 55 committed corpus fixtures, 126 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
 fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below. The navigated-host round
+reopened the bounded findings listed below. The short-circuit-flag round
+closed F99: a statically-true `and` operand no longer contributes an
+approximate execution guard, so grafana's leaked-secret walk keeps the
+object-kind claim on every intermediate host it steps through (60 new
+helm-adjudicated rejections, 33 repaired false rejections, no
+regressions). The preceding navigated-host round
 closed F63 on both halves — abort-grade host presence as a terminal
 clause (top-level hosts reached, dependency-owned subtrees abstaining)
 and unconditional host typing that survives union bases — with helm's
@@ -322,7 +327,10 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F98 provider-required output fields requiring source leaves (bounded; the
   direct ranged array/map member half landed, while current strict-consumer
   presence losses are listed separately In progress)
-- F99 finite literal `fromYaml` path programs (traversal interpreter)
+- F99 finite literal `fromYaml` path programs (traversal interpreter),
+  completed by the short-circuit-flag round: a statically-true `and`
+  operand contributes no execution guard, so the walk's intermediate
+  hosts keep their object-kind claims under the assertion's own gate
 - F100 post-`tpl` regex requirements on raw template programs
 - F101 provider availability as a committed deterministic test input
   (`testdata/provider-bundle/`, cold/warm equivalence)
@@ -1423,42 +1431,43 @@ same recursive map-null deletion as `chart_instances::with_override`.
   when those components are disabled — unchanged direction), and a
   dropped wildcard-layer group leaves `waitForMigrations.env` junk
   rejected under `enabled: false` (pre-existing class, unchanged).
-- **F99 — finite Grafana traversal does not constrain intermediate hosts.**
-  With `assertNoLeakedSecrets=true`, scalar `grafana.ini.database` or the
-  atomic dotted-key host `grafana.ini["auth.basic"]` validates, then
-  `_helpers.tpl:260` passes an integer to `hasKey` and Helm aborts. Object
-  hosts pass, and disabling the assertion keeps the values dormant.
-  ROOT CAUSE (diagnosed twenty-seventh round): the walk unrolls exactly
-  — the leaf regex/string claims bind per sensitive path — and `hasKey`
-  already records strict object-kind subject captures (`ValueType`),
-  but the enclosing `and $shouldContinue (hasKey …)` short-circuit
-  wraps the capture with a truthiness conjunct on the BOOLEAN LOCAL
-  flag, which decodes approximately and poisons the capture
-  (reproduced minimally: `and $b (hasKey .Values.cfg "a")` with
-  `$b := true` records nothing while the `.Values.flag` operand form
-  survives). The fix needs the flag conjunct decodable: constant-fold
-  literal boolean locals in condition position, and decode the
-  joined per-iteration flag state of the unrolled walk (iteration K's
-  `$shouldContinue` is exactly the prior iterations' `hasKey`
-  conjunction, which the subject's own presence conjunct implies).
-  LANE SCOPING (twenty-eighth round, not yet implemented): the flag's
-  state already exists in the model — `SymbolicLocalState::
-  truthy_reductions` takes the RHS condition predicate on declaration
-  (`$shouldContinue := true` is a faithful `Predicate::True`) and
-  `conjoin_changed_truthy_reductions` stamps arm conditions onto
-  changed reductions at branch joins, which is the per-iteration
-  conjunction the fix wants. What is missing is the CHANNEL: the
-  poisoning conjunct is added in `eval_short_circuit_args`
-  (`expr_call_eval/mod.rs`), whose `EvalEnv` carries `locals`
-  (`AbstractValue`s) but no truthy-reduction view, so a non-identity
-  operand can only become `Predicate::approximate`. The scoped fix is
-  to surface the exact reductions on `EvalEnv` (populated where
-  `fragment_eval` builds it from the local state, as
-  `value_path_context` already does for the header decode) and use the
-  operand's exact reduction — falling back to `approximate` only when
-  none exists. Open question for that round: whether the join really
-  leaves iteration K's flag an EXACT conjunction rather than an
-  approximate marker, which decides whether the deeper segments bind.
+- **F99 — Grafana traversal intermediate hosts (twenty-ninth round;
+  CLOSED).** The walk's `hasKey` subject captures were poisoned by the
+  enclosing short circuit: `eval_short_circuit_args` decodes a
+  non-identity operand as `Predicate::approximate`, and a boolean flag
+  local (`$shouldContinue := true`) has no values-path identity, so every
+  capture the operand guarded carried an undecodable conjunct. The
+  interpreter already knew the flag's truthiness —
+  `SymbolicLocalState::truthy_reductions` binds the RHS condition
+  predicate on declaration — it just had no channel into expression
+  evaluation. `EvalEnv` now carries `local_truthy_reductions` (populated
+  where `eval_hole_exprs` builds the header env), and an `and` operand
+  that is statically TRUE (a `true` literal, or a local reduced to
+  `Predicate::True`) contributes NO execution guard at all instead of an
+  approximate stand-in. Only that polarity is sound: a reduction is a
+  SUFFICIENT truthiness condition, so it may stand in for an `and`'s
+  positive execution guard but never for an `or`'s negated one. The
+  answer to the previous round's open question is that the join does NOT
+  keep the exact per-iteration conjunction — `join_predicate_union`
+  short-circuits to `Predicate::True` as soon as one arm's reduction is
+  True, so iteration K's flag reads as unconditionally truthy. That is
+  still exact for THIS claim shape: the type requirement on the advanced
+  host only bites when the host is present, and its presence is what made
+  the earlier iterations' `hasKey` hold. With the guard exact, the arm
+  condition also decodes exactly, so the traversal advance is marked and
+  `$currentMap` stays a single path per iteration instead of a choice —
+  which removes the mis-attributed leaf string claim that used to let a
+  STRING host through the union base. Corpus effect (grafana +
+  kube-prometheus-stack, the only two fixtures that moved): 60 new
+  rejections at the 20 sensitive sections × non-map values, every one an
+  ABORT under `helm template`; 33 probe flips in the loosening direction
+  (`grafana.ini.{analytics,log,server}` and their leaves), every one a
+  RENDER — the old unconditional claim was false-rejecting the config
+  helper's explicitly handled non-map sections; zero regressions across
+  408 grafana and 1541 kube-prometheus-stack probe paths. Pinned by
+  `statically_true_flag_operands_keep_short_circuit_operand_contracts`,
+  `unrolled_traversal_binds_every_intermediate_host_kind`, and
+  `grafana_leaked_secret_walk_requires_map_hosts`.
 - **F105 — checksum backward attribution (twenty-seventh round; CLOSED).**
   The checksum family now SHAPE-ERASES its operand identities (call and
   pipeline forms): the digest shares no text or shape with the subject,
