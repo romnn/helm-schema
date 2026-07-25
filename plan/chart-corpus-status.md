@@ -1,12 +1,19 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-25 after the short-circuit-flag round
-(twenty-ninth round), which closed F99.
-All 55 committed corpus fixtures, 126 focused chart checks, Draft-07
+Last reconciled 2026-07-25 after the overlaid-member round
+(thirtieth round), which closed F40/F59's overlay-member half and
+re-measured F53/F66/F98 against helm.
+All 55 committed corpus fixtures, 127 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
 fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below. The short-circuit-flag round
+reopened the bounded findings listed below. The overlaid-member round
+made an overlaid range keep the overlaid map's member identity, so
+traefik's `service.additionalServices` members bind their own contracts
+(29 helm-adjudicated flips, zero mismatches), and re-measured the
+strict-consumer presence finding: all twelve examples abort, and the
+string-consumer catalog's nil behaviour is now a measured table in that
+entry. The preceding short-circuit-flag round
 closed F99: a statically-true `and` operand no longer contributes an
 approximate execution guard, so grafana's leaked-secret walk keeps the
 object-kind claim on every intermediate host it steps through (60 new
@@ -1337,6 +1344,37 @@ same recursive map-null deletion as `chart_instances::with_override`.
   `existingSecretKey` passed to `tpl` in `_helper_create_user.txt:98`.
   Present strings pass, and decoded dormant gates such as
   `requiredSecretKeys: []` or `tls.enabled: false` remain open.
+  RE-CONFIRMED (thirtieth round) against helm v4.2.3, each as a user
+  values file spelling the DELETION (`config: {cookieSecret: null}` — an
+  override that merely omits the key lets the chart default refill it, so
+  an omitting probe is not this state): all twelve listed examples abort,
+  eleven with `wrong type for value; expected string; got interface {}`
+  and the jenkins/harbor pair with `invalid value; expected string`.
+  MEASURED nil-strictness of the string-consumer catalog (same helm, one
+  synthetic chart per function, subject null-deleted; the present-string
+  control renders for every one of them):
+  - ABORTS on nil — `tpl`, `b64enc`, `b64dec`, `upper`, `lower`, `title`,
+    `trim`, `trimSuffix` (and the `trimAll`/`trimPrefix` siblings),
+    `trunc`, `substr`, `indent`, `nindent`, `sha256sum`, `htpasswd`,
+    `regexMatch`, `replace`, `repeat`, `splitList`, `semverCompare`,
+    `len`.
+  - RENDERS on nil — `quote`, `squote`, `toString`, `printf "%s"`,
+    `urlquery`, `toYaml`, `default`, `kindIs`, `typeIs`, `empty`.
+  That split is the missing input: `is_string_transform_function`
+  currently lumps the two together, so the lane cannot tell which
+  consumers make ABSENCE an abort. LANE SCOPING for the fix: the existing
+  truthy⇒string capture (`CaptureKind::ValueType` with a
+  `Predicate::truthy_path` conjunct) is correct only where the operand's
+  own truthiness gates the consumer; for a nil-ABORTING consumer whose
+  ambient guards do not imply the operand's presence, the claim is
+  abort-grade presence. Two lowerings already exist — F107's
+  `CaptureKind::RequiredPresence` (→ `HasMemberEvenDefaulted` on the
+  parent, which cannot reach the top-level `clusterName`/`config`/
+  `targetNamespaces` cases) and F63's terminal clause
+  `[outer guards …, Absent{path}]` (which reaches them and carries the
+  ownership semantics). Prefer the clause form, reuse
+  `guard_implies_present` for the exemption, and expect a large,
+  helm-adjudicable flip set.
 - **F56/F62/F8 — provider shapes are lost through serialized/helper
   splices.** Truthy malformed objects pass the generated schema, render, and
   fail strict Kubernetes validation. ReLoader still leaves `affinity`,
@@ -1348,15 +1386,27 @@ same recursive map-null deletion as `chart_instances::with_override`.
   Each corresponding provider-shaped control passes. Do not include Sealed
   Secrets `commonLabels`/`commonAnnotations`; exact composition already
   rejects their numeric members.
-- **F40/F59 — ranged document and member identity is still lost through
-  render helpers/overlays.** Sealed Secrets `extraDeploy:[7]` and Traefik
-  `extraObjects:[7]` validate with `items:{}` but Helm cannot decode the
-  scalar documents; ConfigMap members pass. Traefik
-  `service.additionalServices.audit=false` (also `0`, `""`, or a string)
-  validates but aborts at `$service.enabled`; an object member passes.
-  SigNoZ `imagePullSecrets:[7]` and migration `additionalVolumes:[7]` are
-  the provider-item variants: Helm renders them, then strict validation
-  rejects them.
+- **F40/F59 — ranged document identity through render helpers (the
+  OVERLAY-MEMBER half closed in the thirtieth round).** Traefik
+  `service.additionalServices.audit=false` (also `0`, `""`, a string, or a
+  list) now rejects: ranging a local dict that a `set` overlaid on a
+  values-backed map keeps the overlaid map's member identity
+  (`AbstractValue::fragment_range_item` treats an overlay like the merge
+  layers — the union of its literal entries and the overlaid member), so
+  the members' own consumers bind. STILL OPEN: Sealed Secrets
+  `extraDeploy:[7]` and Traefik `extraObjects:[7]` validate with
+  `items:{}` although Helm cannot decode the scalar documents; ConfigMap
+  members pass. Diagnosed in the thirtieth round: a DIRECT
+  `{{ tpl (toYaml .) $ }}` document splice already claims
+  `items: object|null`, and the loss is the `typeIs "string"` DISPATCH
+  those charts render through (`{{- if typeIs "string" . }}{{ tpl . $ }}
+  {{ else }}{{ tpl (. | toYaml) $ }}{{- end }}`, inline in grafana and
+  behind a `<chart>.render` helper in traefik/sealed-secrets): the two
+  branch claims should union to `string ∨ object`, but the item level
+  collapses to a parent-kind union and the else-branch object claim
+  disappears. SigNoZ `imagePullSecrets:[7]` and migration
+  `additionalVolumes:[7]` are the provider-item variants: Helm renders
+  them, then strict validation rejects them.
 - **F63 — navigated receiver hosts (twenty-eighth round; CLOSED).** Go
   template member access aborts on a nil receiver, so a navigated host
   must EXIST in the coalesced document and must be a mapping when

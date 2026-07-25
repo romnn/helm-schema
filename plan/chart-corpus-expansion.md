@@ -9059,3 +9059,100 @@ and the luup2 `check:local` downstream gate passes with the installed
 binary (64 chart lints) after a forced `schema:generate:all` — the
 regenerated schemas are byte-identical to the committed ones, so no
 downstream chart moved. Production source: +39 lines.
+
+## Overlaid-member round (2026-07-25, thirtieth round)
+
+F40/F59's overlay-member half closed: ranging a local dict that a `set`
+overlaid on a values-backed map now keeps the overlaid map's member
+identity, so traefik's `service.additionalServices` members bind their own
+contracts.
+
+### The defect: an overlay had no range item at all
+
+`AbstractValue::fragment_range_item` answered `None` for `Overlay`, so
+`{{- range $name, $service := $services }}` over
+`$services := .Values.service.additionalServices` plus
+`set $services "default" (omit .Values.service "additionalServices")`
+bound NO member identity. Every consumer inside the body — starting with
+`ne $service.enabled false`, which helm answers with "can't evaluate field
+enabled in type interface {}" on a present non-mapping — therefore bound
+nothing, and the members stayed open (`additionalProperties: {}`).
+
+An overlay's range visits its literal entries AND the members of what it
+overlays, which is the same union rule `MergedLayers` already follows, so
+the item domain is now that union.
+
+### Keeping the definite entry's terminal
+
+The overlay's literal entry is also what makes traefik's
+http3-without-tls `fail` reachable on every render: the twenty-fourth
+round decoded that member gate through
+`definite_range_member_values` as a sound subset, which only ran because
+the gate decoded NOTHING faithfully. With a member identity in hand the
+gate decodes to the overlaid path's wildcard members — and that decode
+goes dormant on an empty `additionalServices` map, which silently dropped
+the terminal.
+
+The resolution names what was actually true: a member condition over an
+overlaid range is NOT faithfully decoded by the wildcard alone, because
+the overlay's own entries iterate too. `activate_if` now recognizes that
+shape structurally — binding the definite entry moves the condition onto
+DIFFERENT paths — and routes it through the existing
+approximate-with-sound-subset form, which is what fail terminals and
+positive-polarity captures need.
+
+### Adjudication
+
+Three fixtures move (traefik, argo-cd, datadog). All 29 acceptance flips
+were run through `helm template --skip-schema-validation` on the composed
+document, and every one agrees with helm:
+
+- 9 new rejections in traefik, all ABORTS: the six member-kind probes at
+  `service.additionalServices.<member>` (int, string, bool, false, empty
+  list, list), the same claim reached through
+  `additionalServices: {probe: 7}`, and `service.enabled` as `[]`/`{}`
+  (`ne` on an incomparable operand).
+- 20 loosenings, all RENDERS: traefik `service.annotations{,TCP,UDP}` as
+  `false`/`[]` (their consumer is `default dict`, which substitutes on
+  every falsy operand) and `service.single` as `[]`/`{}` (a truthiness
+  read); argo-cd `global.logging.{format,level}` and
+  `repoServer.certificateSecret.enabled` junk, whose over-strong claims
+  came from the all-paths conjunction the sound-subset route now
+  replaces.
+- datadog's fixture churn is acceptance-neutral (0 flips over 1216 probe
+  paths).
+
+Pinned by `overlaid_range_members_keep_their_member_contracts` (gen) and
+`traefik_additional_service_members_must_be_mappings` (CLI), with the
+existing `traefik_http3_terminal_binds_through_the_services_overlay` and
+`overlay_range_member_gates_carry_definite_entry_sound_subsets` still
+green.
+
+### Validation
+
+`task test` green (919 unit tests), `task test:integration` green (489),
+`task lint` clean, corpus fixtures byte-identical to one clean dump run of
+the final build. Production source: +47 lines.
+
+### Measured input for the next round: string-consumer nil behaviour
+
+The strict-consumer presence finding (F53/F66/F98) was re-measured rather
+than fixed in this round. Two facts came out of it and are recorded in the
+status ledger's entry:
+
+1. Every listed example aborts under helm v4.2.3 when the deletion is
+   spelled as an explicit null in the user values file. A probe that merely
+   OMITS the key proves nothing — the chart default refills it, and the
+   coalesced document helm renders is not the one the schema was asked
+   about. (The nine "renders" readings a first pass produced were all this
+   mistake.)
+2. The string-consumer catalog splits cleanly into nil-aborting and
+   nil-tolerant functions, measured one function at a time against a
+   synthetic chart. `is_string_transform_function` lumps them together
+   today, which is why the lane cannot tell where ABSENCE is an abort.
+
+The fix was not attempted here: it needs the whole abort-grade presence
+lowering plus a corpus-wide adjudication pass, and starting it without
+finishing that pass would put unadjudicated rejections into the fixtures.
+The scoping paragraph in the status entry names the two existing lowerings
+and which one reaches the top-level cases.
