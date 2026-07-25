@@ -233,33 +233,21 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "acmesolver": {
             "additionalProperties": {},
             "properties": {
-              "acmesolver": {
-                "additionalProperties": {},
-                "properties": {
-                  "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "acmesolver": {
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -657,33 +645,21 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
             "additionalProperties": {},
             "properties": {
-              "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "leaderElection": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "leaderElection": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -1105,33 +1081,21 @@
         "type": "object"
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
             "additionalProperties": {},
             "properties": {
-              "prometheus": {
-                "additionalProperties": {},
-                "properties": {
-                  "servicemonitor": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "servicemonitor": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -2862,6 +2826,161 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "acmesolver": {}
+              },
+              "required": [
+                "acmesolver"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "acmesolver": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "acmesolver"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "prometheus": {}
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -5002,6 +5121,121 @@
     },
     "prometheus": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "podmonitor": {}
+                      },
+                      "required": [
+                        "podmonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podmonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "podmonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "servicemonitor": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "servicemonitor"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "servicemonitor": {}
+                      },
+                      "required": [
+                        "servicemonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "servicemonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "servicemonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "enabled": {
           "type": "boolean"

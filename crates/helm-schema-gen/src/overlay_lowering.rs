@@ -158,11 +158,16 @@ pub(crate) fn collect_conditional_schemas(
             {
                 continue;
             }
-            // Member-access requirements already enforced by the resolved
-            // base need no duplicate arm unless another use widens that base.
-            // A mapping default alone is insufficient: requirement-only
-            // parent paths deliberately do not import recursive values.yaml
-            // evidence, so their resolved base can still be unconstrained.
+            // An unconditional member-host requirement is dropped only when
+            // it can be folded INTO the emitted base
+            // (`fold_unconditional_object_host_into_base` below, applied to
+            // the real tree). Comparing against the RESOLVED schema here
+            // happens too early to know that: the emitted base can end up
+            // wider than the resolved one this loop sees (an open-map merge
+            // or a union lane drops `type: object`), and a dropped arm then
+            // leaves a scalar host accepted — helm aborts navigating it
+            // (reloader's `serviceAccount`, cert-manager's three
+            // `podDisruptionBudget` families).
             let member_host_only = !implication.requirements.is_empty()
                 && implication.requirements.iter().all(|requirement| {
                     matches!(
@@ -170,36 +175,6 @@ pub(crate) fn collect_conditional_schemas(
                         helm_schema_core::FailValueRequirement::MemberHost { .. }
                     )
                 });
-            if member_host_only {
-                let dispatched = implication.requirements.iter().any(|requirement| {
-                    matches!(
-                        requirement,
-                        helm_schema_core::FailValueRequirement::MemberHost { handled_kinds }
-                            if !handled_kinds.is_empty()
-                    )
-                });
-                let widened = evidence.facts.used_as_serialized
-                    || evidence.facts.used_as_yaml_serialized
-                    || evidence.facts.used_as_fragment
-                    || evidence.facts.has_render_use
-                    || evidence.facts.is_ranged_source
-                    || evidence.facts.is_partial_scalar_value_path
-                    || dispatched;
-                let requirement_domain = fail_requirement_runtime_types(implication);
-                let resolved_domain = schema_runtime_types(&resolved_target.schema);
-                let base_enforces_requirement =
-                    !resolved_domain.is_empty() && resolved_domain.is_subset(&requirement_domain);
-                // Only an UNCONDITIONAL requirement is provably redundant
-                // with the base: a guarded one must keep its own arm — the
-                // emitted base can end up wider than the resolved schema
-                // this check reads (an open-map merge drops `type: object`),
-                // and the guards may fire in states the base leaves open
-                // (external-secrets' header read of
-                // `.Values.webhook.podDisruptionBudget.enabled`).
-                if base_enforces_requirement && !widened && implication.outer_guards.is_empty() {
-                    continue;
-                }
-            }
             if !implication.outer_guards.is_empty()
                 && !implication_guards_supported(
                     &implication.outer_guards,

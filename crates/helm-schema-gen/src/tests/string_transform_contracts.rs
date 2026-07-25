@@ -123,10 +123,15 @@ fn join_use_does_not_erase_range_branch() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
+    // `.Values.rbac.namespacedRoles` is navigated on every render, so the
+    // composed document keeps the `rbac` host.
     assert!(
         schema_accepts_instance(
             &schema,
-            &serde_json::json!({ "additionalNamespaces": "ns-a" })
+            &composed_instance(
+                values_yaml,
+                serde_json::json!({ "additionalNamespaces": "ns-a" })
+            )
         ),
         "with namespaced roles off, only the join renders and a scalar is fine: {schema}"
     );
@@ -632,17 +637,17 @@ fn tpl_program_contract_survives_default_chain() {
         data:
           image: "{{ tpl .Values.image.registry $ | default (tpl .Values.global.imageRegistry $) | default "quay.io" }}/proxy"
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir(src),
-        Some(indoc! {r#"
-            image:
-              registry: ""
-            global:
-              imageRegistry: ""
-        "#}),
-    );
+    let values_yaml = indoc! {r#"
+        image:
+          registry: ""
+        global:
+          imageRegistry: ""
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for (instance, want) in [
+    // Cases compose over the declared defaults: both `image` and `global`
+    // are navigated on every render.
+    for (overrides, want) in [
         (serde_json::json!({ "image": { "registry": {} } }), false),
         (serde_json::json!({ "image": { "registry": ["x"] } }), false),
         (
@@ -660,6 +665,7 @@ fn tpl_program_contract_survives_default_chain() {
             true,
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "tpl parses raw program text before default selection: \

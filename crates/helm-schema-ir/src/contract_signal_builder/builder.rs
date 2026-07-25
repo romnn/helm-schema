@@ -42,6 +42,22 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
                 accepted_dependency_values_root_fragment: true,
                 ..ContractValuePathFacts::default()
             });
+            // Helm's dependency coalescing type-asserts every loaded
+            // dependency's values root BEFORE any rendering and regardless
+            // of the dependency's own activation: a present non-table
+            // aborts with "type mismatch on <name>" (verified against a
+            // condition-disabled dependency). The chart declares the key
+            // as a mapping, so a user null is deleted by the values
+            // coalesce that runs first and reaches the check as absent —
+            // hence the null-tolerant form.
+            let requires_table = ContractFailImplication {
+                outer_guards: Vec::new(),
+                target: ContractRequirementTarget::Value,
+                requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
+            };
+            if !acc.fail_implications.contains(&requires_table) {
+                acc.fail_implications.push(requires_table);
+            }
         }
     }
     // A path the chart consumes through a total stringification tolerates
@@ -2666,8 +2682,51 @@ fn fold_activation_pair(
     Some(folded)
 }
 
-fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAccumulator>) {
+/// Whether the guard can only hold while `path` is present and non-null,
+/// so a navigation scoped by it never runs on a nil receiver. `Absent`
+/// deliberately counts null as absent, matching the guard encoding.
+fn guard_implies_present(guard: &ConditionalGuard, path: &str) -> bool {
+    match guard {
+        ConditionalGuard::Truthy { path: guarded } | ConditionalGuard::With { path: guarded } => {
+            guarded == path
+        }
+        ConditionalGuard::TypeIs {
+            path: guarded,
+            schema_type,
+        } => guarded == path && schema_type != "null",
+        ConditionalGuard::HasKey { path: host, key } => {
+            // The key is an OPAQUE property name (it may contain dots), so
+            // it must be appended as one escaped segment, not concatenated.
+            helm_schema_core::append_value_path(host, key) == path
+        }
+        ConditionalGuard::Not(inner) => {
+            matches!(inner.as_ref(), ConditionalGuard::Absent { path: guarded } if guarded == path)
+        }
+        ConditionalGuard::AllOf(set) => set.iter().any(|guard| guard_implies_present(guard, path)),
+        ConditionalGuard::AnyOf(set) => set.iter().all(|guard| guard_implies_present(guard, path)),
+        _ => false,
+    }
+}
+
+fn record_member_access_implications(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
+) {
     const MEMBER_ACCESS_GUARD_FANOUT: usize = 8;
+    // Helm rebuilds a MISSING dependency values root from the subchart's own
+    // defaults (`coalesceDeps` creates the table, then the subchart
+    // coalesces into it), so absence at such a root reaches no consumer as
+    // nil. A deletion INSIDE a present root does stick and does abort, but
+    // separating the two states needs a STRUCTURAL presence test on the
+    // root, which `Absent` cannot spell for dependency-owned paths (it
+    // encodes the ownership-aware "reads as nil", and a refilled root never
+    // does). Dependency-owned subtrees therefore abstain from the presence
+    // claim entirely.
+    let dependency_roots: BTreeSet<String> = paths
+        .iter()
+        .filter(|(_, acc)| acc.facts.facts.accepted_dependency_values_root_fragment)
+        .map(|(path, _)| path.clone())
+        .collect();
     let pending: Vec<(String, MemberAccessGuardSets)> = paths
         .iter()
         .filter(|(path, acc)| {
@@ -2743,30 +2802,41 @@ fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAc
             }
         }
 
-        let all_guard_sets = grouped_guard_sets
+        if dependency_roots
+            .iter()
+            .any(|root| *root == path || path.starts_with(&format!("{root}.")))
+        {
+            continue;
+        }
+        let absent_abort_sets = grouped_guard_sets
             .into_values()
             .flatten()
+            // A set scoping the read by the host's own presence contributes
+            // no absent-abort state: the nil-safe grouped form
+            // (`(.Values.x).member`) and `with` chains render at an absent
+            // or null-deleted receiver.
+            .filter(|guards| {
+                !guards
+                    .iter()
+                    .any(|guard| guard_implies_present(guard, &path))
+            })
             .collect::<BTreeSet<_>>();
-        if capped(&all_guard_sets) {
+        if absent_abort_sets.is_empty() || capped(&absent_abort_sets) {
             continue;
         }
-        let outer_guards = fold_guards(all_guard_sets);
-        let mut segments = helm_schema_core::split_value_path(&path);
-        let Some(member) = segments.pop() else {
-            continue;
-        };
-        if segments.is_empty() {
-            continue;
-        }
-        let parent = helm_schema_core::join_value_path(segments);
-        let presence = ContractFailImplication {
-            outer_guards,
-            target: ContractRequirementTarget::Value,
-            requirements: vec![FailValueRequirement::HasMember(member)],
-        };
-        let acc = path_accumulator(paths, &parent);
-        if !acc.fail_implications.contains(&presence) {
-            acc.fail_implications.push(presence);
+        // Navigation ABORTS on a nil receiver, so a host read outside its
+        // own presence gate must exist. The claim lands as a terminal
+        // clause rather than a `required` member on the parent: `Absent`
+        // spells the ownership semantics a properties-anchored arm cannot,
+        // the clause anchors above every union lane, and it reaches
+        // TOP-LEVEL hosts, which have no parent slot to carry a member
+        // requirement.
+        let mut clause = fold_guards(absent_abort_sets);
+        clause.push(ConditionalGuard::Absent { path });
+        clause.sort();
+        clause.dedup();
+        if !terminal_clauses.contains(&clause) {
+            terminal_clauses.push(clause);
         }
     }
 }
@@ -2775,7 +2845,7 @@ fn finish_schema_signals(
     mut paths: BTreeMap<String, ContractPathAccumulator>,
     mut terminal_clauses: Vec<Vec<ConditionalGuard>>,
 ) -> ContractSchemaSignals {
-    record_member_access_implications(&mut paths);
+    record_member_access_implications(&mut paths, &mut terminal_clauses);
     let referenced_paths = paths
         .iter()
         .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))

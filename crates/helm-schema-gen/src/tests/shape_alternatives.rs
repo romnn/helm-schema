@@ -406,7 +406,10 @@ fn declared_object_members_open_only_the_closed_levels_that_reject_them() {
     );
 }
 
-/// A truthy guard is a control-flow fact, not a type assertion.
+/// A truthy guard is a control-flow fact, not a type assertion — the
+/// guarded members stay unconstrained. The HOST is a different matter: the
+/// header navigates it unconditionally, so the clause rejects the
+/// null-deleted document helm aborts on.
 #[test]
 fn guard_only_values_without_type_evidence_stay_unconstrained() {
     let src = indoc! {r"
@@ -420,6 +423,17 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "additionalProperties": false,
+        "allOf": [{
+            "if": {
+                "anyOf": [
+                    { "not": { "properties": { "feature": {} },
+                        "required": ["feature"], "type": "object" } },
+                    { "properties": { "feature": { "enum": [null] } },
+                        "required": ["feature"], "type": "object" },
+                ],
+            },
+            "then": false,
+        }],
         "properties": {
             "feature": {
                 "additionalProperties": {},

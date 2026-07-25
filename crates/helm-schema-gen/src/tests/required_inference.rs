@@ -348,9 +348,24 @@ fn core_schema_generation_yields_no_required() {
         {{- end }}
     "};
     let schema_signals = parse_contract(src).finalize().into_schema_signals();
-    let schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
-    // The core path must never emit `required` — that's the
-    // separation of concerns this module exists to enforce.
+    let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
+    // The core path must never place `required` on a PROPERTY — that's the
+    // separation of concerns this module exists to enforce. Conditional
+    // arms are exempt: a guard or terminal clause spells key presence with
+    // `required` inside its `if`, which is how the navigated host contract
+    // (`.Values.serviceAccount.create` aborts on a deleted host) is stated.
+    // Only the `if`-keyed arms are exempt — unconditional conjuncts stay
+    // under the assertion.
+    if let Some(arms) = schema
+        .as_object_mut()
+        .and_then(|object| object.get_mut("allOf"))
+        .and_then(Value::as_array_mut)
+    {
+        arms.retain(|arm| {
+            !arm.as_object()
+                .is_some_and(|object| object.contains_key("if"))
+        });
+    }
     let any_required_anywhere = serde_json::to_string(&schema)
         .unwrap()
         .contains("\"required\"");

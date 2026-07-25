@@ -360,6 +360,37 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "autoscaling": {}
+              },
+              "required": [
+                "autoscaling"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "autoscaling": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

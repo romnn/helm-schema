@@ -239,9 +239,11 @@ fn helper_internal_self_guarded_tpl_contract_reaches_callers() {
     "#};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
+    // The helper navigates `.Values.alphaConfig.configFile` on every call,
+    // so the composed document keeps the `alphaConfig` host.
     for instance in [
         serde_json::json!({ "alphaConfig": { "configFile": "cfg" } }),
-        serde_json::json!({}),
+        serde_json::json!({ "alphaConfig": { "configFile": "" } }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
@@ -309,7 +311,9 @@ fn tpl_behind_literal_helper_mode_condition_binds_branch_guards() {
     "#};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
-    for instance in [
+    // The mode chain navigates both `config` and `alphaConfig` on every
+    // render, so cases compose over the declared defaults.
+    for overrides in [
         serde_json::json!({ "config": { "configFile": "cfg" } }),
         serde_json::json!({ "config": { "existingConfig": "cm", "configFile": { "a": 1 } } }),
         serde_json::json!({
@@ -318,6 +322,7 @@ fn tpl_behind_literal_helper_mode_condition_binds_branch_guards() {
         }),
         serde_json::json!({}),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance),
             "strings render, and other modes never reach the tpl: \
@@ -487,11 +492,14 @@ fn required_nil_subject_is_a_guarded_terminal_clause() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for instance in [
+    // Both gate hosts are navigated on every render, so cases compose over
+    // the declared defaults.
+    for overrides in [
         serde_json::json!({ "elasticsearch": { "enabled": true } }),
         serde_json::json!({ "opensearch": { "enabled": true } }),
         serde_json::json!({}),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance),
             "outside the guarded branch the validator never runs: \

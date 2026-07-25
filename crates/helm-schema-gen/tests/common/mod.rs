@@ -328,9 +328,23 @@ pub fn assert_helm_render_case(case: &HelmRenderCase<'_>) -> eyre::Result<()> {
 
 pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) -> eyre::Result<()> {
     let schema = render_schema_case(&case.schema_case)?;
+    // Expectations are sparse OVERRIDES over the chart's declared defaults:
+    // helm validates the coalesced document, so a template that navigates
+    // `.Values.x.y` aborts on a document missing `x` — the state a user's
+    // `null` deletion produces, which is pinned separately.
+    let defaults = match case.schema_case.fixture_values_yaml {
+        Some(values_yaml) => values_yaml.to_string(),
+        None => test_util::read_testdata(case.schema_case.values_path)?,
+    };
+    let defaults: Value = serde_yaml::from_str::<serde_yaml::Value>(&defaults)
+        .ok()
+        .and_then(|doc| serde_json::to_value(doc).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
     for expectation in case.expectations {
-        let instance: Value = serde_json::from_str(expectation.instance)
+        let overrides: Value = serde_json::from_str(expectation.instance)
             .wrap_err_with(|| format!("parse behavior JSON: {}", expectation.message))?;
+        let mut instance = defaults.clone();
+        merge_composed_override(&mut instance, overrides);
         let accepted = schema_accepts_instance(&schema, &instance);
         sim_assert_eq!(
             have: accepted,
@@ -420,6 +434,25 @@ fn materialize_provider_root_schema(
         .lookup(resource, &YamlPath(Vec::new()))
         .into_schema_fragment()
         .map(helm_schema_core::ProviderSchemaFragment::into_schema)
+}
+
+/// Merge `overrides` into `base` the way helm coalesces user values: map
+/// keys merge member-wise and a null override DELETES its key.
+pub fn merge_composed_override(base: &mut Value, overrides: Value) {
+    let (Some(base), Value::Object(overrides)) = (base.as_object_mut(), overrides) else {
+        return;
+    };
+    for (key, value) in overrides {
+        if value.is_null() {
+            base.remove(&key);
+        } else if base.get(&key).is_some_and(Value::is_object) && value.is_object() {
+            if let Some(existing) = base.get_mut(&key) {
+                merge_composed_override(existing, value);
+            }
+        } else {
+            base.insert(key, value);
+        }
+    }
 }
 
 #[cfg(test)]

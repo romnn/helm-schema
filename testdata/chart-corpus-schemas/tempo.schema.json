@@ -391,26 +391,26 @@
         "null"
       ]
     },
-    "schema119": {
-      "additionalProperties": {},
+    "schema117": {
       "properties": {
-        "pullSecrets": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
+        "protocols": {
+          "properties": {
+            "grpc": {
+              "enum": [
+                null
+              ]
             }
-          ]
+          },
+          "required": [
+            "grpc"
+          ],
+          "type": "object"
         }
-      }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
     },
     "schema12": {
       "allOf": [
@@ -463,7 +463,28 @@
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "string"
     },
-    "schema121": {
+    "schema120": {
+      "additionalProperties": {},
+      "properties": {
+        "pullSecrets": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema122": {
       "additionalProperties": {},
       "properties": {
         "protocols": {
@@ -480,21 +501,26 @@
         }
       }
     },
-    "schema126": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-      "type": "string"
+    "schema124": {
+      "properties": {
+        "protocols": {
+          "properties": {
+            "grpc": {}
+          },
+          "required": [
+            "grpc"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
     },
     "schema128": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "schema129": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
     },
     "schema13": {
       "properties": {
@@ -508,6 +534,18 @@
         "config"
       ],
       "type": "object"
+    },
+    "schema130": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "schema131": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
     },
     "schema14": {
       "additionalProperties": false,
@@ -593,7 +631,7 @@
         "null"
       ]
     },
-    "schema140": {
+    "schema142": {
       "additionalProperties": {},
       "properties": {
         "endpoint": {
@@ -607,24 +645,6 @@
           ]
         }
       }
-    },
-    "schema148": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
-    },
-    "schema149": {
-      "properties": {
-        "type": {
-          "enum": [
-            "LoadBalancer"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
     },
     "schema15": {
       "additionalProperties": false,
@@ -692,7 +712,25 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
+    "schema150": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
     "schema151": {
+      "properties": {
+        "type": {
+          "enum": [
+            "LoadBalancer"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema153": {
       "properties": {
         "type": {
           "enum": [
@@ -705,7 +743,7 @@
       ],
       "type": "object"
     },
-    "schema152": {
+    "schema154": {
       "anyOf": [
         {
           "type": "array"
@@ -721,39 +759,18 @@
         }
       ]
     },
-    "schema153": {
+    "schema155": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema156": {
+    "schema158": {
       "additionalProperties": {},
       "properties": {
         "endpoint": {}
       },
       "type": "object"
-    },
-    "schema158": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema159": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
     },
     "schema16": {
       "additionalProperties": false,
@@ -818,22 +835,43 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "schema162": {
+    "schema160": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema161": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema164": {
       "additionalProperties": {},
       "properties": {},
       "type": "object"
     },
-    "schema163": {
+    "schema165": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema165": {
+    "schema167": {
       "pattern": "^([\\s\\S]*:)?[+-]?[0-9]+$",
       "type": "string"
     },
-    "schema167": {
+    "schema169": {
       "anyOf": [
         {
           "type": "string"
@@ -843,22 +881,22 @@
         }
       ]
     },
-    "schema168": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema169": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
     "schema17": {
       "enum": [
         "memberlist:\n  cluster_label: \"{{ .Release.Name }}.{{ .Release.Namespace }}\"\nmultitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}\nusage_report:\n  reporting_enabled: {{ .Values.tempo.reportingEnabled }}\ncompactor:\n  compaction:\n    block_retention: {{ .Values.tempo.retention }}\ndistributor:\n  receivers:\n    {{- toYaml .Values.tempo.receivers | nindent 8 }}\ningester:\n  {{- toYaml .Values.tempo.ingester | nindent 6 }}\nserver:\n  {{- toYaml .Values.tempo.server | nindent 6 }}\nstorage:\n  {{- toYaml .Values.tempo.storage | nindent 6 }}\nquerier:\n  {{- toYaml .Values.tempo.querier | nindent 6 }}\nquery_frontend:\n  {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}\noverrides:\n  {{- toYaml .Values.tempo.overrides | nindent 6 }}\n  {{- if .Values.tempo.metricsGenerator.enabled }}\nmetrics_generator:\n  {{- if .Values.tempo.metricsGenerator.processor }}\n  processor:\n    {{- toYaml .Values.tempo.metricsGenerator.processor | nindent 8 }}\n  {{- end }}\n  {{- if .Values.tempo.metricsGenerator.registry }}\n  registry:\n    {{- toYaml .Values.tempo.metricsGenerator.registry | nindent 8 }}\n  {{- end }}\n  storage:\n    path: {{ .Values.tempo.metricsGenerator.storage.path | quote }}\n    {{- if .Values.tempo.metricsGenerator.storage.remote_write }}\n    remote_write:\n      {{- toYaml .Values.tempo.metricsGenerator.storage.remote_write | nindent 10 }}\n    {{- else }}\n    remote_write:\n      - url: {{ .Values.tempo.metricsGenerator.remoteWriteUrl }}\n    {{- end }}\n  traces_storage:\n    path: {{ .Values.tempo.metricsGenerator.traces_storage.path | quote }}\n  {{- end }}\n"
       ]
     },
+    "schema170": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
     "schema171": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema173": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -2729,13 +2767,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema168"
-                      },
-                      {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema170"
                       },
                       {
                         "$ref": "#/$defs/schema171"
+                      },
+                      {
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -2753,16 +2791,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema129"
+                        "$ref": "#/$defs/schema131"
                       },
                       {
                         "$ref": "#/$defs/schema88"
                       },
                       {
-                        "$ref": "#/$defs/schema148"
+                        "$ref": "#/$defs/schema150"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema161"
                       }
                     ],
                     "type": "string"
@@ -3107,35 +3145,22 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
             "additionalProperties": {},
+            "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
             "properties": {
-              "networkPolicy": {
-                "additionalProperties": {},
-                "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
-                "properties": {
-                  "egress": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "egress": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -3251,7 +3276,7 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "$ref": "#/$defs/schema167"
+              "$ref": "#/$defs/schema169"
             }
           }
         }
@@ -3479,166 +3504,6 @@
             "allOf": [
               {
                 "properties": {
-                  "tempo": {
-                    "properties": {
-                      "metricsGenerator": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "metricsGenerator"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tempo"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema13"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tempo": {
-                        "properties": {
-                          "metricsGenerator": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metricsGenerator"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tempo"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "tempo": {
-                        "properties": {
-                          "metricsGenerator": {
-                            "properties": {
-                              "storage": {
-                                "properties": {
-                                  "remote_write": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "remote_write"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "storage"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metricsGenerator"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tempo"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema13"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tempo": {
-                        "properties": {
-                          "metricsGenerator": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metricsGenerator"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tempo"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema13"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tempo": {
-            "additionalProperties": {},
-            "properties": {
-              "metricsGenerator": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
                   "tempoQuery": {
                     "properties": {
                       "enabled": {
@@ -3712,7 +3577,7 @@
             "additionalProperties": {},
             "properties": {
               "tempo": {
-                "$ref": "#/$defs/schema119"
+                "$ref": "#/$defs/schema120"
               }
             }
           }
@@ -3752,7 +3617,7 @@
                                         }
                                       },
                                       {
-                                        "$ref": "#/$defs/schema165"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       {
                                         "type": "null"
@@ -3782,7 +3647,7 @@
                     "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                     "properties": {
                       "jaeger": {
-                        "$ref": "#/$defs/schema121"
+                        "$ref": "#/$defs/schema122"
                       }
                     }
                   }
@@ -3817,7 +3682,7 @@
                                         }
                                       },
                                       {
-                                        "$ref": "#/$defs/schema165"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       {
                                         "type": "null"
@@ -3896,7 +3761,7 @@
                                         }
                                       },
                                       {
-                                        "$ref": "#/$defs/schema165"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       {
                                         "type": "null"
@@ -3975,7 +3840,7 @@
                                         }
                                       },
                                       {
-                                        "$ref": "#/$defs/schema165"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       {
                                         "type": "null"
@@ -4066,54 +3931,11 @@
                     "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                     "properties": {
                       "jaeger": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "protocols": {
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "additionalProperties": {},
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "properties": {
-                      "jaeger": {
                         "anyOf": [
                           {
                             "type": "object"
                           }
                         ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "additionalProperties": {},
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "properties": {
-                      "jaeger": {
-                        "type": "object"
                       }
                     }
                   }
@@ -4148,7 +3970,7 @@
                                         }
                                       },
                                       {
-                                        "$ref": "#/$defs/schema165"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       {
                                         "type": "null"
@@ -4178,7 +4000,7 @@
                     "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                     "properties": {
                       "otlp": {
-                        "$ref": "#/$defs/schema121"
+                        "$ref": "#/$defs/schema122"
                       }
                     }
                   }
@@ -4213,7 +4035,7 @@
                                         }
                                       },
                                       {
-                                        "$ref": "#/$defs/schema165"
+                                        "$ref": "#/$defs/schema167"
                                       },
                                       {
                                         "type": "null"
@@ -4304,54 +4126,11 @@
                     "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                     "properties": {
                       "otlp": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "protocols": {
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "additionalProperties": {},
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "properties": {
-                      "otlp": {
                         "anyOf": [
                           {
                             "type": "object"
                           }
                         ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "additionalProperties": {},
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "properties": {
-                      "otlp": {
-                        "type": "object"
                       }
                     }
                   }
@@ -4372,20 +4151,6 @@
                       }
                     ],
                     "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "tempo": {
-                "additionalProperties": {},
-                "properties": {
-                  "receivers": {
-                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-                    "type": "object"
                   }
                 }
               }
@@ -4549,7 +4314,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "thrift_binary": {
-                            "$ref": "#/$defs/schema140"
+                            "$ref": "#/$defs/schema142"
                           }
                         }
                       }
@@ -4638,7 +4403,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "thrift_compact": {
-                            "$ref": "#/$defs/schema140"
+                            "$ref": "#/$defs/schema142"
                           }
                         }
                       }
@@ -4727,7 +4492,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "thrift_http": {
-                            "$ref": "#/$defs/schema140"
+                            "$ref": "#/$defs/schema142"
                           }
                         }
                       }
@@ -4895,7 +4660,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "http": {
-                            "$ref": "#/$defs/schema140"
+                            "$ref": "#/$defs/schema142"
                           }
                         }
                       }
@@ -5032,18 +4797,10 @@
             "additionalProperties": {},
             "properties": {
               "tag": {
-                "$ref": "#/$defs/schema167"
+                "$ref": "#/$defs/schema169"
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "tempo": {
-          "type": "object"
         }
       }
     },
@@ -5124,7 +4881,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema163"
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "type": "null"
@@ -5216,7 +4973,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema163"
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "maximum": 0,
@@ -5330,7 +5087,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema154"
                   }
                 }
               }
@@ -5461,7 +5218,7 @@
             "additionalProperties": {},
             "properties": {
               "tempoQuery": {
-                "$ref": "#/$defs/schema119"
+                "$ref": "#/$defs/schema120"
               }
             }
           }
@@ -5640,12 +5397,1709 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "tempoQuery": {
-          "type": "object"
-        }
-      }
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "metricsGenerator": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metricsGenerator"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema13"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "metricsGenerator": {
+                          "properties": {
+                            "traces_storage": {}
+                          },
+                          "required": [
+                            "traces_storage"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "metricsGenerator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "metricsGenerator": {
+                        "properties": {
+                          "traces_storage": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "traces_storage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metricsGenerator"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "server": {}
+                      },
+                      "required": [
+                        "server"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "server": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "server"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "networkPolicy": {}
+              },
+              "required": [
+                "networkPolicy"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "networkPolicy": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tempo": {}
+              },
+              "required": [
+                "tempo"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tempo": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tempo": {
+                  "properties": {
+                    "metricsGenerator": {}
+                  },
+                  "required": [
+                    "metricsGenerator"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tempo"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "metricsGenerator": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "metricsGenerator"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "metricsGenerator": {
+                          "properties": {
+                            "storage": {}
+                          },
+                          "required": [
+                            "storage"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "metricsGenerator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "metricsGenerator": {
+                        "properties": {
+                          "storage": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "storage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metricsGenerator"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "metricsGenerator": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metricsGenerator"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "metricsGenerator": {
+                            "properties": {
+                              "storage": {
+                                "properties": {
+                                  "remote_write": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "remote_write"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "storage"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metricsGenerator"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema13"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "metricsGenerator": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "metricsGenerator"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema13"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {}
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {}
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {}
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "$ref": "#/$defs/schema124"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "$ref": "#/$defs/schema117"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "thrift_binary": {}
+                                  },
+                                  "required": [
+                                    "thrift_binary"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "thrift_binary": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "thrift_binary"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "thrift_compact": {}
+                                  },
+                                  "required": [
+                                    "thrift_compact"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "thrift_compact": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "thrift_compact"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "thrift_http": {}
+                                  },
+                                  "required": [
+                                    "thrift_http"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "thrift_http": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "thrift_http"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "otlp": {}
+                          },
+                          "required": [
+                            "otlp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "otlp": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "otlp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "otlp": {
+                              "properties": {
+                                "protocols": {}
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "otlp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "otlp": {
+                            "properties": {
+                              "protocols": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "otlp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "otlp": {
+                              "$ref": "#/$defs/schema124"
+                            }
+                          },
+                          "required": [
+                            "otlp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "otlp": {
+                            "$ref": "#/$defs/schema117"
+                          }
+                        },
+                        "required": [
+                          "otlp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "otlp": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "http": {}
+                                  },
+                                  "required": [
+                                    "http"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "otlp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "otlp": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "http": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "http"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "otlp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema106"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tempoQuery": {}
+              },
+              "required": [
+                "tempoQuery"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tempoQuery": {
+                  "properties": {
+                    "ingress": {}
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tempoQuery"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempoQuery": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempoQuery"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema106"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -5804,7 +7258,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema153"
+          "$ref": "#/$defs/schema155"
         },
         {
           "not": {
@@ -5820,7 +7274,7 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema162"
+          "$ref": "#/$defs/schema164"
         },
         {
           "$ref": "#/$defs/schema55"
@@ -5853,7 +7307,7 @@
     "extraLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema162"
+          "$ref": "#/$defs/schema164"
         },
         {
           "$ref": "#/$defs/schema65"
@@ -6094,7 +7548,7 @@
                     "$ref": "#/$defs/schema108"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema130"
                   }
                 },
                 "type": [
@@ -6189,7 +7643,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema158"
+                    "$ref": "#/$defs/schema160"
                   }
                 },
                 "type": [
@@ -7084,7 +8538,7 @@
                               "$ref": "#/$defs/schema108"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema128"
+                              "$ref": "#/$defs/schema130"
                             }
                           },
                           "type": [
@@ -7536,7 +8990,7 @@
         "commonLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema164"
             },
             {
               "$ref": "#/$defs/schema65"
@@ -7820,6 +9274,90 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "egress": {}
+                      },
+                      "required": [
+                        "egress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "egress": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "egress"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "egress": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "egress"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
@@ -7910,7 +9448,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema153"
+          "$ref": "#/$defs/schema155"
         },
         {
           "additionalProperties": {
@@ -8012,13 +9550,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema168"
-                          },
-                          {
-                            "$ref": "#/$defs/schema169"
+                            "$ref": "#/$defs/schema170"
                           },
                           {
                             "$ref": "#/$defs/schema171"
+                          },
+                          {
+                            "$ref": "#/$defs/schema173"
                           },
                           {
                             "not": {
@@ -8031,16 +9569,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema131"
                           },
                           {
                             "$ref": "#/$defs/schema88"
                           },
                           {
-                            "$ref": "#/$defs/schema148"
+                            "$ref": "#/$defs/schema150"
                           },
                           {
-                            "$ref": "#/$defs/schema159"
+                            "$ref": "#/$defs/schema161"
                           }
                         ],
                         "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
@@ -8088,7 +9626,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema153"
+          "$ref": "#/$defs/schema155"
         },
         {
           "$ref": "#/$defs/schema55"
@@ -8107,7 +9645,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema153"
+          "$ref": "#/$defs/schema155"
         },
         {
           "$ref": "#/$defs/schema65"
@@ -8128,13 +9666,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema168"
-            },
-            {
-              "$ref": "#/$defs/schema169"
+              "$ref": "#/$defs/schema170"
             },
             {
               "$ref": "#/$defs/schema171"
+            },
+            {
+              "$ref": "#/$defs/schema173"
             },
             {
               "not": {
@@ -8147,16 +9685,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema129"
+              "$ref": "#/$defs/schema131"
             },
             {
               "$ref": "#/$defs/schema88"
             },
             {
-              "$ref": "#/$defs/schema148"
+              "$ref": "#/$defs/schema150"
             },
             {
-              "$ref": "#/$defs/schema159"
+              "$ref": "#/$defs/schema161"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -8350,7 +9888,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema151"
+                "$ref": "#/$defs/schema153"
               },
               {
                 "not": {
@@ -8375,13 +9913,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema168"
-                      },
-                      {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema170"
                       },
                       {
                         "$ref": "#/$defs/schema171"
+                      },
+                      {
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -8394,16 +9932,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema129"
+                        "$ref": "#/$defs/schema131"
                       },
                       {
                         "$ref": "#/$defs/schema88"
                       },
                       {
-                        "$ref": "#/$defs/schema148"
+                        "$ref": "#/$defs/schema150"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema161"
                       }
                     ],
                     "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
@@ -8428,14 +9966,14 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema149"
+                  "$ref": "#/$defs/schema151"
                 }
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema151"
+                      "$ref": "#/$defs/schema153"
                     },
                     {
                       "not": {
@@ -8487,13 +10025,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/schema149"
+                "$ref": "#/$defs/schema151"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema151"
+                      "$ref": "#/$defs/schema153"
                     },
                     {
                       "not": {
@@ -8523,13 +10061,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema168"
-                          },
-                          {
-                            "$ref": "#/$defs/schema169"
+                            "$ref": "#/$defs/schema170"
                           },
                           {
                             "$ref": "#/$defs/schema171"
+                          },
+                          {
+                            "$ref": "#/$defs/schema173"
                           },
                           {
                             "not": {
@@ -8542,16 +10080,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema131"
                           },
                           {
                             "$ref": "#/$defs/schema88"
                           },
                           {
-                            "$ref": "#/$defs/schema148"
+                            "$ref": "#/$defs/schema150"
                           },
                           {
-                            "$ref": "#/$defs/schema159"
+                            "$ref": "#/$defs/schema161"
                           }
                         ],
                         "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
@@ -8643,7 +10181,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema155"
             },
             {
               "$ref": "#/$defs/schema55"
@@ -8663,7 +10201,7 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema155"
             },
             {
               "$ref": "#/$defs/schema65"
@@ -8759,7 +10297,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema126"
+                        "$ref": "#/$defs/schema128"
                       }
                     ]
                   }
@@ -8819,13 +10357,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema168"
-                          },
-                          {
-                            "$ref": "#/$defs/schema169"
+                            "$ref": "#/$defs/schema170"
                           },
                           {
                             "$ref": "#/$defs/schema171"
+                          },
+                          {
+                            "$ref": "#/$defs/schema173"
                           },
                           {
                             "not": {
@@ -8838,16 +10376,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema131"
                           },
                           {
                             "$ref": "#/$defs/schema88"
                           },
                           {
-                            "$ref": "#/$defs/schema148"
+                            "$ref": "#/$defs/schema150"
                           },
                           {
-                            "$ref": "#/$defs/schema159"
+                            "$ref": "#/$defs/schema161"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -8886,7 +10424,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema126"
+              "$ref": "#/$defs/schema128"
             }
           ]
         },
@@ -8914,13 +10452,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema168"
-                },
-                {
-                  "$ref": "#/$defs/schema169"
+                  "$ref": "#/$defs/schema170"
                 },
                 {
                   "$ref": "#/$defs/schema171"
+                },
+                {
+                  "$ref": "#/$defs/schema173"
                 },
                 {
                   "not": {
@@ -8933,16 +10471,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema129"
+                  "$ref": "#/$defs/schema131"
                 },
                 {
                   "$ref": "#/$defs/schema88"
                 },
                 {
-                  "$ref": "#/$defs/schema148"
+                  "$ref": "#/$defs/schema150"
                 },
                 {
-                  "$ref": "#/$defs/schema159"
+                  "$ref": "#/$defs/schema161"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -8989,7 +10527,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema163"
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "not": {
@@ -9006,7 +10544,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema163"
+                        "$ref": "#/$defs/schema165"
                       },
                       {
                         "not": {
@@ -9026,13 +10564,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema168"
-                          },
-                          {
-                            "$ref": "#/$defs/schema169"
+                            "$ref": "#/$defs/schema170"
                           },
                           {
                             "$ref": "#/$defs/schema171"
+                          },
+                          {
+                            "$ref": "#/$defs/schema173"
                           },
                           {
                             "not": {
@@ -9050,16 +10588,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema131"
                           },
                           {
                             "$ref": "#/$defs/schema88"
                           },
                           {
-                            "$ref": "#/$defs/schema148"
+                            "$ref": "#/$defs/schema150"
                           },
                           {
-                            "$ref": "#/$defs/schema159"
+                            "$ref": "#/$defs/schema161"
                           }
                         ],
                         "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -9083,13 +10621,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema168"
-                          },
-                          {
-                            "$ref": "#/$defs/schema169"
+                            "$ref": "#/$defs/schema170"
                           },
                           {
                             "$ref": "#/$defs/schema171"
+                          },
+                          {
+                            "$ref": "#/$defs/schema173"
                           },
                           {
                             "not": {
@@ -9107,16 +10645,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema131"
                           },
                           {
                             "$ref": "#/$defs/schema88"
                           },
                           {
-                            "$ref": "#/$defs/schema148"
+                            "$ref": "#/$defs/schema150"
                           },
                           {
-                            "$ref": "#/$defs/schema159"
+                            "$ref": "#/$defs/schema161"
                           }
                         ],
                         "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -9164,7 +10702,7 @@
         "extraArgs": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema155"
             },
             {
               "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
@@ -9307,36 +10845,38 @@
         },
         "memBallastSizeMbs": {},
         "metricsGenerator": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "If true, enables Tempo's metrics generator (https://grafana.com/docs/tempo/next/metrics-generator/)",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "If true, enables Tempo's metrics generator (https://grafana.com/docs/tempo/next/metrics-generator/)",
+              "type": "boolean"
             },
-            {
+            "processor": {
               "additionalProperties": {},
-              "properties": {
-                "processor": {
+              "description": "Processor-specific configuration for metrics generator (optional)\nSupports service_graphs, span_metrics, and local_blocks processors\nlocal_blocks:\nflush_to_storage: true\nfilter_server_spans: false\nmax_block_duration: 1m\nservice_graphs:\nwait: 10s\nmax_items: 10000\nspan_metrics:\nenable_target_info: true",
+              "type": "object"
+            },
+            "registry": {
+              "additionalProperties": {},
+              "description": "Registry configuration for metrics generator (optional)\ncollection_interval: 15s\nexternal_labels:\ncluster: \"primary\"",
+              "type": "object"
+            },
+            "remoteWriteUrl": {
+              "type": "string"
+            },
+            "storage": {
+              "anyOf": [
+                {
                   "additionalProperties": {},
-                  "description": "Processor-specific configuration for metrics generator (optional)\nSupports service_graphs, span_metrics, and local_blocks processors\nlocal_blocks:\nflush_to_storage: true\nfilter_server_spans: false\nmax_block_duration: 1m\nservice_graphs:\nwait: 10s\nmax_items: 10000\nspan_metrics:\nenable_target_info: true",
-                  "type": "object"
-                },
-                "registry": {
-                  "additionalProperties": {},
-                  "description": "Registry configuration for metrics generator (optional)\ncollection_interval: 15s\nexternal_labels:\ncluster: \"primary\"",
-                  "type": "object"
-                },
-                "storage": {
-                  "additionalProperties": {},
-                  "description": "Storage configuration for metrics generator\nThis section configures the storage path and remote write endpoints",
                   "properties": {
                     "path": {
                       "description": "Path for storing metrics blocks. Defaults to /tmp/tempo for backward compatibility, but /var/tempo/metrics is recommended for production with persistent storage"
-                    },
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
                     "remote_write": {
                       "description": "Optional remote write configuration (will use remoteWriteUrl if not specified)\nSupports full Prometheus remote_write config: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write",
                       "items": {},
@@ -9344,21 +10884,20 @@
                     }
                   },
                   "type": "object"
-                },
-                "traces_storage": {
-                  "additionalProperties": {},
-                  "description": "Traces storage (WAL) configuration for metrics generator\nThis configures the Write Ahead Log for traces used by the metrics generator",
-                  "properties": {
-                    "path": {
-                      "description": "Path for traces storage WAL used by metrics generator"
-                    }
-                  },
-                  "type": "object"
                 }
-              },
-              "type": "object"
+              ],
+              "description": "Storage configuration for metrics generator\nThis section configures the storage path and remote write endpoints"
+            },
+            "traces_storage": {
+              "additionalProperties": {},
+              "description": "Traces storage (WAL) configuration for metrics generator\nThis configures the Write Ahead Log for traces used by the metrics generator",
+              "properties": {
+                "path": {
+                  "description": "Path for traces storage WAL used by metrics generator"
+                }
+              }
             }
-          ],
+          },
           "type": "object"
         },
         "multitenancyEnabled": {
@@ -9440,13 +10979,13 @@
                           "additionalProperties": {},
                           "properties": {
                             "thrift_binary": {
-                              "$ref": "#/$defs/schema156"
+                              "$ref": "#/$defs/schema158"
                             },
                             "thrift_compact": {
-                              "$ref": "#/$defs/schema156"
+                              "$ref": "#/$defs/schema158"
                             },
                             "thrift_http": {
-                              "$ref": "#/$defs/schema156"
+                              "$ref": "#/$defs/schema158"
                             }
                           },
                           "type": "object"
@@ -9467,10 +11006,10 @@
                       "additionalProperties": {},
                       "properties": {
                         "grpc": {
-                          "$ref": "#/$defs/schema156"
+                          "$ref": "#/$defs/schema158"
                         },
                         "http": {
-                          "$ref": "#/$defs/schema156"
+                          "$ref": "#/$defs/schema158"
                         }
                       },
                       "type": "object"
@@ -9503,7 +11042,7 @@
               "$ref": "#/$defs/schema4"
             },
             {
-              "$ref": "#/$defs/schema153"
+              "$ref": "#/$defs/schema155"
             },
             {
               "not": {
@@ -9785,7 +11324,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema163"
+                                "$ref": "#/$defs/schema165"
                               },
                               {
                                 "not": {
@@ -9984,13 +11523,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema168"
-                              },
-                              {
-                                "$ref": "#/$defs/schema169"
+                                "$ref": "#/$defs/schema170"
                               },
                               {
                                 "$ref": "#/$defs/schema171"
+                              },
+                              {
+                                "$ref": "#/$defs/schema173"
                               },
                               {
                                 "not": {
@@ -10003,16 +11542,16 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema129"
+                                "$ref": "#/$defs/schema131"
                               },
                               {
                                 "$ref": "#/$defs/schema88"
                               },
                               {
-                                "$ref": "#/$defs/schema148"
+                                "$ref": "#/$defs/schema150"
                               },
                               {
-                                "$ref": "#/$defs/schema159"
+                                "$ref": "#/$defs/schema161"
                               }
                             ],
                             "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",

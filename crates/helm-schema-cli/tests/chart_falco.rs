@@ -8,21 +8,31 @@
 
 use color_eyre::eyre;
 
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
 fn falco_rolearn_contract_is_branch_scoped() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("falco")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
+    // Cases compose over the chart defaults: helm validates the coalesced
+    // document, and the chart navigates hosts these overrides do not touch.
     let instance = |rolearn: serde_json::Value, useirsa: bool| {
-        serde_json::json!({
-            "falcosidekick": {
-                "enabled": true,
-                "config": { "aws": { "rolearn": rolearn, "useirsa": useirsa } }
-            }
-        })
+        chart_instances::with_override(
+            "falco",
+            serde_json::json!({
+                "falcosidekick": {
+                    "enabled": true,
+                    "config": { "aws": { "rolearn": rolearn, "useirsa": useirsa } }
+                }
+            }),
+        )
+        .expect("compose falco instance")
     };
 
     assert!(

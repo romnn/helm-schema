@@ -671,9 +671,13 @@ fn surveyor_range_members_and_intermediate_secrets_are_structural() -> eyre::Res
                     }
                 }),
             ),
+            // The intermediate secret's presence is an abort-grade
+            // navigation-host claim, which anchors at the document root
+            // (a `properties`-nested arm passes vacuously when the host
+            // itself is missing).
             SemanticCase::rejected(
                 "credentials without intermediate secret",
-                "/config/credentials",
+                "",
                 json!({ "config": { "credentials": { "audit": 1 } } }),
             ),
             SemanticCase::accepted(
@@ -686,7 +690,7 @@ fn surveyor_range_members_and_intermediate_secrets_are_structural() -> eyre::Res
             ),
             SemanticCase::rejected(
                 "password without intermediate secret",
-                "/config/password",
+                "/config",
                 json!({ "config": { "password": { "audit": 1 } } }),
             ),
             SemanticCase::accepted(
@@ -3525,6 +3529,103 @@ fn kube_prometheus_stack_dig_subjects_bind_the_even_null_contract() -> eyre::Res
                 "disabling defaultRules keeps every spelling dormant",
                 json!({ "customRules": "junk",
                     "defaultRules": { "create": false } }),
+            ),
+        ],
+    )
+}
+
+/// Go template navigation ABORTS on a nil receiver, so a null-deleted
+/// navigation host must be rejected even though the chart's own
+/// `values.yaml` supplies it: under coalesced-document semantics the
+/// member is absent exactly when the user deleted it, and helm then fails
+/// with "nil pointer evaluating interface {}.create". Every polarity
+/// verified with `helm template --skip-schema-validation`.
+#[test]
+fn metrics_server_navigated_hosts_reject_null_deletion() -> eyre::Result<()> {
+    assert_chart_cases(
+        "metrics-server",
+        vec![
+            SemanticCase::rejected(
+                "a deleted apiService host aborts the create read",
+                "",
+                json!({ "apiService": null }),
+            ),
+            SemanticCase::rejected(
+                "a deleted addonResizer host aborts the enabled read",
+                "",
+                json!({ "addonResizer": null }),
+            ),
+            SemanticCase::rejected(
+                "a deleted metrics host aborts the deployment read",
+                "",
+                json!({ "metrics": null }),
+            ),
+            SemanticCase::accepted(
+                "an empty apiService map reads create as nil",
+                json!({ "apiService": {} }),
+            ),
+            SemanticCase::accepted(
+                "an explicit apiService map renders",
+                json!({ "apiService": { "create": false } }),
+            ),
+        ],
+    )
+}
+
+/// A present-but-scalar navigation host aborts the immediate `.create`
+/// read, and the arm enforcing that must survive union lanes in the
+/// emitted base: comparing against the RESOLVED base classified this
+/// requirement as redundant while the emitted node stayed an open union.
+#[test]
+fn reloader_service_account_host_rejects_present_scalars() -> eyre::Result<()> {
+    assert_chart_cases(
+        "reloader",
+        vec![
+            SemanticCase::rejected(
+                "a scalar serviceAccount aborts the create read",
+                "/reloader/serviceAccount",
+                json!({ "reloader": { "serviceAccount": 7 } }),
+            ),
+            SemanticCase::rejected(
+                "a string serviceAccount aborts the same read",
+                "/reloader/serviceAccount",
+                json!({ "reloader": { "serviceAccount": "default" } }),
+            ),
+            SemanticCase::accepted(
+                "an object serviceAccount renders",
+                json!({ "reloader": { "serviceAccount": { "create": false } } }),
+            ),
+        ],
+    )
+}
+
+/// Helm's dependency coalescing type-asserts every loaded dependency's
+/// values root before any rendering and regardless of the dependency's own
+/// activation: a present non-table aborts with "type mismatch on
+/// prometheus-pushgateway". A null override composes to absence, which
+/// coalescing refills from the subchart's defaults.
+#[test]
+fn prometheus_dependency_values_roots_must_be_tables() -> eyre::Result<()> {
+    assert_chart_cases(
+        "prometheus",
+        vec![
+            SemanticCase::rejected(
+                "a scalar dependency root aborts dependency processing",
+                "/prometheus-pushgateway",
+                json!({ "prometheus-pushgateway": 7 }),
+            ),
+            SemanticCase::rejected(
+                "a list dependency root aborts the same way",
+                "/prometheus-pushgateway",
+                json!({ "prometheus-pushgateway": ["enabled"] }),
+            ),
+            SemanticCase::accepted(
+                "an empty dependency root table renders",
+                json!({ "prometheus-pushgateway": {} }),
+            ),
+            SemanticCase::accepted(
+                "a deleted dependency root falls back to subchart defaults",
+                json!({ "prometheus-pushgateway": null }),
             ),
         ],
     )

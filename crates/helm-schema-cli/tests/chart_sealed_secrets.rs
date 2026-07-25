@@ -6,21 +6,29 @@
 
 use color_eyre::eyre;
 
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
+#[path = "common/values_yaml.rs"]
+mod values_yaml;
 
 #[test]
 fn sealed_secrets_ranged_namespaces_domain_holds() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("sealed-secrets")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
-    // The coalesced document carries the declared `rbac.create: true`; a
-    // missing key was null-deleted and keeps the whole branch dormant.
+    // Cases compose over the chart defaults: helm validates the coalesced
+    // document, and the chart navigates hosts these overrides do not touch.
     let ranged = |value: serde_json::Value| {
-        serde_json::json!({
-            "rbac": { "create": true, "namespacedRoles": true, "clusterRole": false },
-            "additionalNamespaces": value
-        })
+        chart_instances::with_override(
+            "sealed-secrets",
+            serde_json::json!({
+                "rbac": { "create": true, "namespacedRoles": true, "clusterRole": false },
+                "additionalNamespaces": value
+            }),
+        )
+        .expect("compose sealed-secrets instance")
     };
     for value in [
         serde_json::json!(["ns-a"]),
@@ -41,10 +49,13 @@ fn sealed_secrets_ranged_namespaces_domain_holds() -> eyre::Result<()> {
         );
     }
     assert!(
-        validator.is_valid(&serde_json::json!({
-            "rbac": { "namespacedRoles": false },
-            "additionalNamespaces": "ns-a"
-        })),
+        validator.is_valid(&chart_instances::with_override(
+            "sealed-secrets",
+            serde_json::json!({
+                "rbac": { "namespacedRoles": false },
+                "additionalNamespaces": "ns-a"
+            })
+        )?),
         "outside the ranged branch only join consumes the value"
     );
     Ok(())

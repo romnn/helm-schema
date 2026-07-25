@@ -32,41 +32,58 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "config": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "config": {
+            "allOf": [
+              {
                 "properties": {
-                  "merge": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "config": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
                   }
                 },
                 "required": [
-                  "merge"
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "merge": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "merge"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -195,41 +212,58 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "config": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "config": {
+            "allOf": [
+              {
                 "properties": {
-                  "patch": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "config": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
                   }
                 },
                 "required": [
-                  "patch"
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "patch": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "patch"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -3864,81 +3898,98 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "config": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "config": {
+            "allOf": [
+              {
                 "properties": {
-                  "patch": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "config": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
                   }
                 },
                 "required": [
-                  "patch"
+                  "config"
                 ],
                 "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "merge": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "merge"
-                  ],
-                  "type": "object"
-                }
               },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "config": {
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "patch": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "patch"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
                   "properties": {
-                    "merge": {
+                    "config": {
+                      "properties": {
+                        "merge": {
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "merge"
+                    "config"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "config"
-              ],
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "merge": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
               "type": "object"
             }
           }
@@ -4706,22 +4757,39 @@
     },
     {
       "if": {
-        "properties": {
-          "config": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/helm-truthy"
+        "allOf": [
+          {
+            "properties": {
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
               }
-            ]
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -4798,41 +4866,58 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
+            "allOf": [
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
                   }
                 },
                 "required": [
-                  "enabled"
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -5067,77 +5152,38 @@
                 ]
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "maxProperties": 1,
-                          "minProperties": 1,
-                          "propertyNames": {
-                            "enum": [
-                              "$tplYaml",
-                              "$tplYamlSpread"
-                            ]
-                          },
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "additionalProperties": false,
-                    "maxProperties": 1,
-                    "minProperties": 1,
-                    "properties": {
-                      "$tplYaml": {
-                        "not": {
-                          "pattern": "^[ \\t\\r\\n]*\\[|^[ \\t\\r\\n]*-(?:[ \\t\\r\\n]|$)|^[ \\t\\r\\n]*(?:(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*(?:([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN)))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*(?:(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*(?:(|~|null|Null|NULL))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*\"[^\"]*\"[ \\t\\r\\n]*$|^[ \\t\\r\\n]*'[^']*'[ \\t\\r\\n]*$|^[ \\t\\r\\n]*[0-9A-Za-z_./+-]+[ \\t\\r\\n]*$"
-                        },
-                        "type": "string"
-                      },
-                      "$tplYamlSpread": {
-                        "anyOf": [
-                          {
-                            "pattern": "^[ \\t\\r\\n]*(?:(|~|null|Null|NULL))[ \\t\\r\\n]*$"
-                          },
-                          {
-                            "not": {
-                              "pattern": "^[ \\t\\r\\n]*(?:(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*(?:([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN)))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*(?:(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N))[ \\t\\r\\n]*$|^[ \\t\\r\\n]*\"[^\"]*\"[ \\t\\r\\n]*$|^[ \\t\\r\\n]*'[^']*'[ \\t\\r\\n]*$|^[ \\t\\r\\n]*[0-9A-Za-z_./+-]+[ \\t\\r\\n]*$|^[ \\t\\r\\n]*\\[|^[ \\t\\r\\n]*-(?:[ \\t\\r\\n]|$)"
-                            }
-                          }
-                        ],
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                ]
-              }
-            }
           }
         ]
       }
     },
     {
       "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
+        "allOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -5159,41 +5205,58 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "service": {
+            "allOf": [
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+            ]
           },
           {
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
                 ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -5491,86 +5554,103 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
+            "anyOf": [
               {
-                "properties": {
-                  "nameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "service": {
+                "allOf": [
+                  {
                     "properties": {
-                      "enabled": {
+                      "nameOverride": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "nameOverride"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
+                ]
               },
               {
-                "properties": {
-                  "service": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
+                "allOf": [
+                  {
+                    "properties": {
+                      "nameOverride": {
                         "$ref": "#/$defs/helm-truthy"
                       }
-                    ]
+                    },
+                    "required": [
+                      "nameOverride"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "fullnameOverride": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "fullnameOverride"
+                      ],
+                      "type": "object"
+                    }
                   }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
+                ]
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "nameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
               },
-              {
-                "not": {
-                  "properties": {
-                    "fullnameOverride": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+              "type": "object"
+            }
           }
         ]
       },
@@ -5831,60 +5911,77 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "service": {
+            "allOf": [
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "properties": {
-                  "merge": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "merge"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
                     "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "merge": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "merge"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -6013,60 +6110,77 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "service": {
+            "allOf": [
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "properties": {
-                  "patch": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "patch"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
                     "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "patch": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "patch"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -9701,100 +9815,117 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "service": {
+            "allOf": [
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "properties": {
-                  "patch": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "patch"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
                     "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "merge": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "merge"
-                  ],
-                  "type": "object"
-                }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
               },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "patch": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "patch"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
                   "properties": {
-                    "merge": {
+                    "service": {
+                      "properties": {
+                        "merge": {
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "merge"
+                    "service"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "service"
-              ],
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "merge": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "merge"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
               "type": "object"
             }
           }
@@ -10562,27 +10693,9 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "properties": {
-              "service": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
+            "anyOf": [
               {
                 "properties": {
                   "service": {
@@ -10602,25 +10715,60 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "service": {
+                "allOf": [
+                  {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "service": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
                       }
                     },
                     "required": [
-                      "enabled"
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
+                ]
               }
             ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
           }
         ]
       },
@@ -10684,6 +10832,337 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {}
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {}
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "ports": {}
+                          },
+                          "required": [
+                            "ports"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "ports": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ports"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "natsBox": {}
+                  },
+                  "required": [
+                    "natsBox"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "natsBox": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "natsBox"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "maxProperties": 1,
+              "minProperties": 1,
+              "propertyNames": {
+                "enum": [
+                  "$tplYaml",
+                  "$tplYamlSpread"
+                ]
+              },
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
     },
     {
       "not": {

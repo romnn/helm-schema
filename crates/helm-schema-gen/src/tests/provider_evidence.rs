@@ -1658,7 +1658,11 @@ fn block_scalar_adopted_includes_render_as_text_not_structure() {
     "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "defaults render"),
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "defaults render",
+        ),
         (
             serde_json::json!({ "redis": { "config": { "maxmemory": "100mb" } } }),
             true,
@@ -1744,7 +1748,11 @@ fn roundtrip_pod_templates_keep_ranged_flag_rows_at_item_depth() {
     "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "defaults render"),
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "defaults render",
+        ),
         (
             serde_json::json!({ "tracing": { "otlp": { "enabled": true,
                 "resourceAttributes": { "env": "prod" } } } }),
@@ -1810,7 +1818,11 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "defaults render"),
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "defaults render",
+        ),
         (
             serde_json::json!({ "probe": { "httpHeaders": [] } }),
             true,
@@ -1886,7 +1898,11 @@ fn quoted_ranged_leaves_bind_presence_through_the_pod_template_projection() {
     "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "defaults render"),
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "defaults render",
+        ),
         (
             serde_json::json!({ "plugins": { "p": { "mountPath": "/x" } } }),
             true,

@@ -246,6 +246,62 @@ fn expected_range_key_string_schema(path: &str) -> Value {
     )
 }
 
+/// The `if <host is absent> then false` arm a navigated host's presence
+/// claim emits: Go template member access aborts on a nil receiver, and a
+/// parent-owned key is absent exactly when the user null-deleted it.
+fn navigated_host_clause(segments: &[&str]) -> Value {
+    let chain = |leaf: Value| {
+        let mut node = leaf;
+        for segment in segments.iter().rev() {
+            node = serde_json::json!({
+                "type": "object",
+                "required": [*segment],
+                "properties": { *segment: node },
+            });
+        }
+        node
+    };
+    serde_json::json!({
+        "if": { "anyOf": [
+            { "not": chain(serde_json::json!({})) },
+            chain(serde_json::json!({ "enum": [null] })),
+        ] },
+        "then": false,
+    })
+}
+
+/// The chart's declared defaults with `overrides` merged the way helm
+/// coalesces user values: map keys merge member-wise and a null override
+/// DELETES its key. Helm validates the coalesced document, so a case that
+/// means "the chart's defaults render" must carry those defaults —
+/// dropping them models a user who null-deleted every declared key.
+fn composed_instance(values_yaml: &str, overrides: Value) -> Value {
+    let defaults = serde_yaml::from_str::<serde_yaml::Value>(values_yaml)
+        .ok()
+        .and_then(|doc| serde_json::to_value(doc).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
+    let mut instance = defaults;
+    merge_composed_override(&mut instance, overrides);
+    instance
+}
+
+fn merge_composed_override(base: &mut Value, overrides: Value) {
+    let (Some(base), Value::Object(overrides)) = (base.as_object_mut(), overrides) else {
+        return;
+    };
+    for (key, value) in overrides {
+        if value.is_null() {
+            base.remove(&key);
+        } else if base.get(&key).is_some_and(Value::is_object) && value.is_object() {
+            if let Some(existing) = base.get_mut(&key) {
+                merge_composed_override(existing, value);
+            }
+        } else {
+            base.insert(key, value);
+        }
+    }
+}
+
 fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
     // Schema FRAGMENTS reference helm-truthy without carrying the document
     // root that defines it; supply the definition then. A full document

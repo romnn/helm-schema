@@ -84,7 +84,7 @@
           "$ref": "#/$defs/schema29"
         },
         "name": {
-          "$ref": "#/$defs/schema404"
+          "$ref": "#/$defs/schema405"
         },
         "ports": {
           "$ref": "#/$defs/schema64"
@@ -120,7 +120,7 @@
           "$ref": "#/$defs/schema209"
         },
         "tty": {
-          "$ref": "#/$defs/schema420"
+          "$ref": "#/$defs/schema421"
         },
         "volumeDevices": {
           "$ref": "#/$defs/schema168"
@@ -394,7 +394,7 @@
           "$ref": "#/$defs/schema1"
         },
         {
-          "$ref": "#/$defs/schema545"
+          "$ref": "#/$defs/schema550"
         },
         {
           "not": {
@@ -7563,16 +7563,44 @@
       ],
       "type": "object"
     },
-    "schema403": {
+    "schema402": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "image": {}
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "image": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema404": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "null"
     },
-    "schema404": {
+    "schema405": {
       "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
       "type": "string"
     },
-    "schema406": {
+    "schema407": {
       "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
       "type": "string"
     },
@@ -7645,23 +7673,23 @@
         "null"
       ]
     },
-    "schema420": {
+    "schema421": {
       "description": "Whether this container should allocate a TTY for itself, also requires 'stdin' to be true. Default is false.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema421": {
+    "schema422": {
       "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
       "type": "string"
     },
-    "schema423": {
+    "schema424": {
       "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
       "format": "int32",
       "type": "integer"
     },
-    "schema424": {
+    "schema425": {
       "properties": {
         "config": {
           "properties": {
@@ -7747,7 +7775,7 @@
       },
       "type": "array"
     },
-    "schema434": {
+    "schema435": {
       "additionalProperties": {
         "items": {
           "type": "string"
@@ -7858,24 +7886,24 @@
         "null"
       ]
     },
-    "schema455": {
+    "schema456": {
       "description": "honorLabels when true preserves the metric's labels when they collide\nwith the target's labels.",
       "type": "boolean"
     },
-    "schema456": {
+    "schema457": {
       "description": "honorTimestamps defines whether Prometheus preserves the timestamps\nwhen exposed by the target.",
       "type": "boolean"
     },
-    "schema461": {
+    "schema462": {
       "description": "honorLabels defines when true the metric's labels when they collide\nwith the target's labels.",
       "type": "boolean"
     },
-    "schema472": {
+    "schema473": {
       "description": "proxyUrl defines the HTTP proxy server to use.",
       "pattern": "^(http|https|socks5)://.+$",
       "type": "string"
     },
-    "schema473": {
+    "schema474": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -7893,7 +7921,7 @@
         }
       }
     },
-    "schema478": {
+    "schema479": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
@@ -7966,11 +7994,11 @@
       },
       "type": "array"
     },
-    "schema486": {
+    "schema487": {
       "description": "followRedirects defines whether the client should follow HTTP 3xx\nredirects.",
       "type": "boolean"
     },
-    "schema490": {
+    "schema491": {
       "additionalProperties": {},
       "properties": {
         "podDisruptionBudget": {
@@ -7985,14 +8013,27 @@
         }
       }
     },
-    "schema494": {
+    "schema495": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema495": {
+    "schema496": {
       "description": "insecureSkipVerify defines how to disable target certificate validation.",
       "type": "boolean"
+    },
+    "schema499": {
+      "properties": {
+        "podDisruptionBudget": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "podDisruptionBudget"
+      ],
+      "type": "object"
     },
     "schema5": {
       "additionalProperties": false,
@@ -8414,30 +8455,65 @@
         "null"
       ]
     },
-    "schema523": {
+    "schema513": {
+      "properties": {
+        "metricsTLSConfig": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "metricsTLSConfig"
+      ],
+      "type": "object"
+    },
+    "schema524": {
+      "properties": {
+        "serviceAccount": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "schema526": {
       "description": "serverName is used to verify the hostname for the targets.",
       "type": "string"
     },
-    "schema529": {
+    "schema527": {
+      "properties": {
+        "podDisruptionBudget": {}
+      },
+      "required": [
+        "podDisruptionBudget"
+      ],
+      "type": "object"
+    },
+    "schema533": {
       "description": "Additional volume mounts to add to the cert-manager controller container."
     },
-    "schema539": {
+    "schema543": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema543": {
-      "description": "key is the label key that the selector applies to.",
-      "type": "string"
-    },
-    "schema545": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
+    "schema546": {
+      "properties": {
+        "metricsTLSConfig": {}
+      },
+      "required": [
+        "metricsTLSConfig"
+      ],
       "type": "object"
     },
-    "schema546": {
-      "description": "Additional volumes to add to the cert-manager controller pod."
+    "schema548": {
+      "description": "key is the label key that the selector applies to.",
+      "type": "string"
     },
     "schema55": {
       "additionalProperties": false,
@@ -8520,29 +8596,27 @@
         "null"
       ]
     },
-    "schema555": {
-      "description": "Automount API credentials for a Service Account."
+    "schema550": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
     },
-    "schema556": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
+    "schema551": {
+      "description": "Additional volumes to add to the cert-manager controller pod."
+    },
+    "schema558": {
+      "properties": {
+        "image": {
+          "enum": [
+            null
           ]
         }
-      ]
-    },
-    "schema557": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "schema56": {
       "allOf": [
@@ -8596,12 +8670,45 @@
       "type": "string"
     },
     "schema562": {
+      "description": "Automount API credentials for a Service Account."
+    },
+    "schema563": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema564": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema565": {
+      "properties": {
+        "image": {}
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "schema570": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema566": {
+    "schema574": {
       "anyOf": [
         {
           "type": "null"
@@ -8611,7 +8718,7 @@
         }
       ]
     },
-    "schema567": {
+    "schema575": {
       "anyOf": [
         {
           "type": "object"
@@ -8621,27 +8728,27 @@
         }
       ]
     },
-    "schema569": {
+    "schema577": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema570": {
+    "schema578": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema571": {
+    "schema579": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema574": {
+    "schema582": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema575": {
+    "schema583": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -10856,34 +10963,22 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "acmesolver": {
             "additionalProperties": {},
             "properties": {
-              "acmesolver": {
-                "additionalProperties": {},
-                "properties": {
-                  "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "The container registry to pull the acmesolver image from.\n+docs:property\nregistry: quay.io"
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "acmesolver": {
-                "type": "object"
+                ],
+                "description": "The container registry to pull the acmesolver image from.\n+docs:property\nregistry: quay.io"
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -11076,50 +11171,24 @@
         "type": "object"
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "cainjector": {
             "additionalProperties": {},
             "properties": {
-              "cainjector": {
+              "config": {
                 "additionalProperties": {},
+                "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
                 "properties": {
-                  "config": {
+                  "metricsTLSConfig": {
                     "additionalProperties": {},
-                    "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
                     "properties": {
-                      "metricsTLSConfig": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "dynamic": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              }
-                            ]
+                      "dynamic": {
+                        "anyOf": [
+                          {
+                            "type": "object"
                           }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cainjector": {
-                "additionalProperties": {},
-                "properties": {
-                  "config": {
-                    "additionalProperties": {},
-                    "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                    "properties": {
-                      "metricsTLSConfig": {
-                        "required": [
-                          "dynamic"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     }
                   }
@@ -11127,7 +11196,7 @@
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -11175,7 +11244,7 @@
                   "not": {
                     "properties": {
                       "cainjector": {
-                        "$ref": "#/$defs/schema424"
+                        "$ref": "#/$defs/schema425"
                       }
                     },
                     "required": [
@@ -11201,48 +11270,27 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "cainjector": {
             "additionalProperties": {},
             "properties": {
-              "cainjector": {
+              "config": {
                 "additionalProperties": {},
+                "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
                 "properties": {
-                  "config": {
-                    "additionalProperties": {},
-                    "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                    "properties": {
-                      "metricsTLSConfig": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          }
-                        ]
+                  "metricsTLSConfig": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cainjector": {
-                "additionalProperties": {},
-                "properties": {
-                  "config": {
-                    "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                    "required": [
-                      "metricsTLSConfig"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 }
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -11289,7 +11337,7 @@
             "additionalProperties": {},
             "properties": {
               "cainjector": {
-                "$ref": "#/$defs/schema567"
+                "$ref": "#/$defs/schema575"
               }
             }
           }
@@ -11387,7 +11435,7 @@
         "additionalProperties": {},
         "properties": {
           "cainjector": {
-            "$ref": "#/$defs/schema490"
+            "$ref": "#/$defs/schema491"
           }
         }
       }
@@ -11654,14 +11702,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "cainjector": {
-          "type": "object"
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "config": {
@@ -11715,7 +11755,7 @@
               "type": "array"
             },
             {
-              "$ref": "#/$defs/schema562"
+              "$ref": "#/$defs/schema570"
             },
             {
               "maximum": 0,
@@ -13144,7 +13184,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema562"
+                    "$ref": "#/$defs/schema570"
                   },
                   {
                     "not": {
@@ -13643,15 +13683,6 @@
             }
           ],
           "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates."
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "global": {
-          "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-          "type": "object"
         }
       }
     },
@@ -14758,13 +14789,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema569"
+                        "$ref": "#/$defs/schema577"
                       },
                       {
-                        "$ref": "#/$defs/schema571"
+                        "$ref": "#/$defs/schema579"
                       },
                       {
-                        "$ref": "#/$defs/schema574"
+                        "$ref": "#/$defs/schema582"
                       },
                       {
                         "not": {
@@ -14772,19 +14803,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema575"
+                        "$ref": "#/$defs/schema583"
                       },
                       {
-                        "$ref": "#/$defs/schema494"
+                        "$ref": "#/$defs/schema495"
                       },
                       {
                         "$ref": "#/$defs/schema316"
                       },
                       {
-                        "$ref": "#/$defs/schema539"
+                        "$ref": "#/$defs/schema543"
                       },
                       {
-                        "$ref": "#/$defs/schema557"
+                        "$ref": "#/$defs/schema564"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -14909,13 +14940,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema569"
+                    "$ref": "#/$defs/schema577"
                   },
                   {
-                    "$ref": "#/$defs/schema571"
+                    "$ref": "#/$defs/schema579"
                   },
                   {
-                    "$ref": "#/$defs/schema574"
+                    "$ref": "#/$defs/schema582"
                   },
                   {
                     "not": {
@@ -14923,22 +14954,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema575"
+                    "$ref": "#/$defs/schema583"
                   },
                   {
-                    "$ref": "#/$defs/schema570"
+                    "$ref": "#/$defs/schema578"
                   },
                   {
-                    "$ref": "#/$defs/schema494"
+                    "$ref": "#/$defs/schema495"
                   },
                   {
                     "$ref": "#/$defs/schema316"
                   },
                   {
-                    "$ref": "#/$defs/schema539"
+                    "$ref": "#/$defs/schema543"
                   },
                   {
-                    "$ref": "#/$defs/schema557"
+                    "$ref": "#/$defs/schema564"
                   }
                 ],
                 "description": "`namespace` is the namespace of the service. Required",
@@ -14999,7 +15030,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/schema490"
+        "$ref": "#/$defs/schema491"
       }
     },
     {
@@ -15751,34 +15782,22 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
             "additionalProperties": {},
             "properties": {
-              "prometheus": {
-                "additionalProperties": {},
-                "properties": {
-                  "podmonitor": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ],
-                    "description": "Note that you cannot enable both PodMonitor and ServiceMonitor as they are mutually exclusive. Enabling both will result in an error."
+              "podmonitor": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "prometheus": {
-                "type": "object"
+                ],
+                "description": "Note that you cannot enable both PodMonitor and ServiceMonitor as they are mutually exclusive. Enabling both will result in an error."
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -15830,7 +15849,7 @@
             "additionalProperties": {},
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/schema473"
+                "$ref": "#/$defs/schema474"
               }
             }
           },
@@ -16156,7 +16175,7 @@
             "additionalProperties": {},
             "properties": {
               "startupapicheck": {
-                "$ref": "#/$defs/schema567"
+                "$ref": "#/$defs/schema575"
               }
             }
           }
@@ -16412,143 +16431,6 @@
         "anyOf": [
           {
             "properties": {
-              "startupapicheck": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "startupapicheck"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "podSecurityPolicy": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "podSecurityPolicy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "startupapicheck": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "startupapicheck"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "startupapicheck": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "startupapicheck"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "startupapicheck": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
               "config": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -16696,50 +16578,24 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
             "additionalProperties": {},
             "properties": {
-              "webhook": {
+              "config": {
                 "additionalProperties": {},
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
                 "properties": {
-                  "config": {
+                  "metricsTLSConfig": {
                     "additionalProperties": {},
-                    "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
                     "properties": {
-                      "metricsTLSConfig": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "dynamic": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              }
-                            ]
+                      "dynamic": {
+                        "anyOf": [
+                          {
+                            "type": "object"
                           }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "config": {
-                    "additionalProperties": {},
-                    "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                    "properties": {
-                      "metricsTLSConfig": {
-                        "required": [
-                          "dynamic"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     }
                   }
@@ -16747,7 +16603,7 @@
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -16787,7 +16643,7 @@
                   "not": {
                     "properties": {
                       "webhook": {
-                        "$ref": "#/$defs/schema424"
+                        "$ref": "#/$defs/schema425"
                       }
                     },
                     "required": [
@@ -16813,48 +16669,27 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
             "additionalProperties": {},
             "properties": {
-              "webhook": {
+              "config": {
                 "additionalProperties": {},
+                "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
                 "properties": {
-                  "config": {
-                    "additionalProperties": {},
-                    "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                    "properties": {
-                      "metricsTLSConfig": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          }
-                        ]
+                  "metricsTLSConfig": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "config": {
-                    "description": "This is used to configure options for the webhook pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `webhook.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: webhook.config.cert-manager.io/v1alpha1\nkind: WebhookConfiguration\nThe port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250 therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers < 1000.\nThis should be uncommented and set as a default by the chart once\nthe apiVersion of WebhookConfiguration graduates beyond v1alpha1.\nsecurePort: 10250\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
-                    "required": [
-                      "metricsTLSConfig"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 }
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -16995,7 +16830,7 @@
         "additionalProperties": {},
         "properties": {
           "webhook": {
-            "$ref": "#/$defs/schema490"
+            "$ref": "#/$defs/schema491"
           }
         }
       }
@@ -17070,17 +16905,1984 @@
       "additionalProperties": {},
       "properties": {
         "webhook": {
-          "$ref": "#/$defs/schema567"
+          "$ref": "#/$defs/schema575"
         }
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "webhook": {
-          "type": "object"
-        }
-      }
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhook": {
+                      "properties": {
+                        "config": {}
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhook"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhook": {
+                    "properties": {
+                      "config": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "acmesolver": {}
+              },
+              "required": [
+                "acmesolver"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "acmesolver": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "acmesolver"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "cainjector": {}
+              },
+              "required": [
+                "cainjector"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "cainjector": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "cainjector": {
+                  "properties": {
+                    "config": {}
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "cainjector"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "cainjector": {
+                "properties": {
+                  "config": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "cainjector": {
+                  "$ref": "#/$defs/schema527"
+                }
+              },
+              "required": [
+                "cainjector"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "cainjector": {
+                "$ref": "#/$defs/schema499"
+              }
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "leaderElection": {}
+                      },
+                      "required": [
+                        "leaderElection"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "leaderElection": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "leaderElection"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "cainjector": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cainjector"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "podSecurityPolicy": {}
+                  },
+                  "required": [
+                    "podSecurityPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "podSecurityPolicy": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "podSecurityPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "rbac": {}
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "rbac": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema402"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/schema527"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema499"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "prometheus": {}
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {
+                      "properties": {
+                        "podmonitor": {}
+                      },
+                      "required": [
+                        "podmonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "properties": {
+                      "podmonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "podmonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "cainjector": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cainjector"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "cainjector": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cainjector"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {
+                          "properties": {
+                            "servicemonitor": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "servicemonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "podmonitor": {
+                            "properties": {
+                              "annotations": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "annotations"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podmonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "podmonitor": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podmonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "prometheus": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "prometheus"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "podmonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "podmonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "servicemonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "servicemonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "podmonitor": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podmonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "podmonitor": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podmonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "prometheus": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "prometheus"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "podmonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "podmonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "servicemonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "servicemonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "podmonitor": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podmonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "prometheus": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "prometheus"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "podmonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "podmonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "servicemonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "servicemonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {
+                          "properties": {
+                            "servicemonitor": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "servicemonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "properties": {
+                            "prometheus": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "prometheus"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "podmonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "podmonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "properties": {
+                                "prometheus": {
+                                  "properties": {
+                                    "servicemonitor": {
+                                      "properties": {
+                                        "enabled": {
+                                          "$ref": "#/$defs/helm-truthy"
+                                        }
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "servicemonitor"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "prometheus"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema524"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "startupapicheck": {}
+              },
+              "required": [
+                "startupapicheck"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "startupapicheck": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "startupapicheck"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "startupapicheck": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "startupapicheck"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "startupapicheck": {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "startupapicheck"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "podSecurityPolicy": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podSecurityPolicy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "startupapicheck": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "startupapicheck"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "startupapicheck": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "startupapicheck"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {}
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "$ref": "#/$defs/schema565"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "$ref": "#/$defs/schema558"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "livenessProbe": {}
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "livenessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "mutatingWebhookConfiguration": {}
+                  },
+                  "required": [
+                    "mutatingWebhookConfiguration"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "mutatingWebhookConfiguration": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "mutatingWebhookConfiguration"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "networkPolicy": {}
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "networkPolicy": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "$ref": "#/$defs/schema527"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "$ref": "#/$defs/schema499"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "readinessProbe": {}
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "readinessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "$ref": "#/$defs/schema524"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "url": {}
+                  },
+                  "required": [
+                    "url"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "url": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "validatingWebhookConfiguration": {}
+                  },
+                  "required": [
+                    "validatingWebhookConfiguration"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "validatingWebhookConfiguration": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "validatingWebhookConfiguration"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -17309,7 +19111,7 @@
                         "$ref": "#/$defs/schema399"
                       },
                       {
-                        "$ref": "#/$defs/schema403"
+                        "$ref": "#/$defs/schema404"
                       },
                       {
                         "$ref": "#/$defs/schema398"
@@ -17711,6 +19513,27 @@
               }
             ]
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema402"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {
@@ -17720,6 +19543,46 @@
         "automountServiceAccountToken": {},
         "config": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "metricsTLSConfig": {
+                        "properties": {
+                          "dynamic": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "dynamic"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metricsTLSConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/schema546"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema513"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
           "properties": {
             "apiVersion": {
@@ -17919,7 +19782,8 @@
             "maxUnavailable": {},
             "minAvailable": {},
             "unhealthyPodEvictionPolicy": {}
-          }
+          },
+          "type": "object"
         },
         "podLabels": {
           "description": "Optional additional labels to add to the CA Injector Pods."
@@ -17938,7 +19802,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/schema555"
+              "$ref": "#/$defs/schema562"
             },
             "create": {
               "anyOf": [
@@ -17972,12 +19836,13 @@
           "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core).\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
         },
         "volumeMounts": {
-          "$ref": "#/$defs/schema529"
+          "$ref": "#/$defs/schema533"
         },
         "volumes": {
-          "$ref": "#/$defs/schema546"
+          "$ref": "#/$defs/schema551"
         }
-      }
+      },
+      "type": "object"
     },
     "clusterResourceNamespace": {
       "description": "Override the namespace used to store DNS provider credentials etc. for ClusterIssuer\nresources. By default, the same namespace as cert-manager is deployed within is\nused. This namespace will not be automatically created by the Helm chart."
@@ -18153,7 +20018,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema562"
+          "$ref": "#/$defs/schema570"
         }
       ],
       "description": "Create dynamic manifests via values.\nFor example:\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: '{{ template \"cert-manager.fullname\" . }}-extra-configmap'"
@@ -18422,7 +20287,8 @@
             }
           ]
         }
-      }
+      },
+      "type": "object"
     },
     "hostAliases": {
       "anyOf": [
@@ -18505,7 +20371,7 @@
     "ingressShim": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema545"
+          "$ref": "#/$defs/schema550"
         },
         {
           "additionalProperties": {},
@@ -18800,7 +20666,8 @@
         "maxUnavailable": {},
         "minAvailable": {},
         "unhealthyPodEvictionPolicy": {}
-      }
+      },
+      "type": "object"
     },
     "podDnsConfig": {
       "anyOf": [
@@ -18835,13 +20702,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema569"
+              "$ref": "#/$defs/schema577"
             },
             {
-              "$ref": "#/$defs/schema571"
+              "$ref": "#/$defs/schema579"
             },
             {
-              "$ref": "#/$defs/schema574"
+              "$ref": "#/$defs/schema582"
             },
             {
               "not": {
@@ -18849,19 +20716,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema575"
+              "$ref": "#/$defs/schema583"
             },
             {
-              "$ref": "#/$defs/schema494"
+              "$ref": "#/$defs/schema495"
             },
             {
               "$ref": "#/$defs/schema316"
             },
             {
-              "$ref": "#/$defs/schema539"
+              "$ref": "#/$defs/schema543"
             },
             {
-              "$ref": "#/$defs/schema557"
+              "$ref": "#/$defs/schema564"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -18881,7 +20748,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema545"
+          "$ref": "#/$defs/schema550"
         },
         {
           "$ref": "#/$defs/schema256"
@@ -19006,7 +20873,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema562"
+                            "$ref": "#/$defs/schema570"
                           },
                           {
                             "not": {
@@ -19050,13 +20917,13 @@
                                 "$ref": "#/$defs/schema280"
                               },
                               "followRedirects": {
-                                "$ref": "#/$defs/schema486"
+                                "$ref": "#/$defs/schema487"
                               },
                               "honorLabels": {
-                                "$ref": "#/$defs/schema455"
+                                "$ref": "#/$defs/schema456"
                               },
                               "honorTimestamps": {
-                                "$ref": "#/$defs/schema456"
+                                "$ref": "#/$defs/schema457"
                               },
                               "interval": {
                                 "$ref": "#/$defs/schema299"
@@ -19071,10 +20938,10 @@
                                 "$ref": "#/$defs/schema10"
                               },
                               "params": {
-                                "$ref": "#/$defs/schema434"
+                                "$ref": "#/$defs/schema435"
                               },
                               "path": {
-                                "$ref": "#/$defs/schema406"
+                                "$ref": "#/$defs/schema407"
                               },
                               "port": {
                                 "description": "port defines the `Pod` port name which exposes the endpoint.\n\nIf the pod doesn't expose a port with the same name, it will result\nin no targets being discovered.\n\nIf a `Pod` has multiple `Port`s with the same name (which is not\nrecommended), one target instance per unique port number will be\ngenerated.\n\nIt takes precedence over the `portNumber` and `targetPort` fields.",
@@ -19094,7 +20961,7 @@
                                 "$ref": "#/$defs/schema298"
                               },
                               "proxyUrl": {
-                                "$ref": "#/$defs/schema472"
+                                "$ref": "#/$defs/schema473"
                               },
                               "relabelings": {
                                 "$ref": "#/$defs/schema43"
@@ -19135,7 +21002,7 @@
                                     "$ref": "#/$defs/schema71"
                                   },
                                   "insecureSkipVerify": {
-                                    "$ref": "#/$defs/schema495"
+                                    "$ref": "#/$defs/schema496"
                                   },
                                   "keySecret": {
                                     "$ref": "#/$defs/schema143"
@@ -19147,7 +21014,7 @@
                                     "$ref": "#/$defs/schema376"
                                   },
                                   "serverName": {
-                                    "$ref": "#/$defs/schema523"
+                                    "$ref": "#/$defs/schema526"
                                   }
                                 },
                                 "type": "object"
@@ -19180,10 +21047,10 @@
                       "honorLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema455"
+                            "$ref": "#/$defs/schema456"
                           },
                           {
-                            "$ref": "#/$defs/schema478"
+                            "$ref": "#/$defs/schema479"
                           }
                         ],
                         "description": "Keep labels from scraped data, overriding server-side labels."
@@ -19202,13 +21069,13 @@
                       "interval": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema569"
+                            "$ref": "#/$defs/schema577"
                           },
                           {
-                            "$ref": "#/$defs/schema571"
+                            "$ref": "#/$defs/schema579"
                           },
                           {
-                            "$ref": "#/$defs/schema574"
+                            "$ref": "#/$defs/schema582"
                           },
                           {
                             "not": {
@@ -19216,22 +21083,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema575"
+                            "$ref": "#/$defs/schema583"
                           },
                           {
-                            "$ref": "#/$defs/schema570"
+                            "$ref": "#/$defs/schema578"
                           },
                           {
-                            "$ref": "#/$defs/schema494"
+                            "$ref": "#/$defs/schema495"
                           },
                           {
                             "$ref": "#/$defs/schema316"
                           },
                           {
-                            "$ref": "#/$defs/schema539"
+                            "$ref": "#/$defs/schema543"
                           },
                           {
-                            "$ref": "#/$defs/schema557"
+                            "$ref": "#/$defs/schema564"
                           }
                         ],
                         "description": "The interval to scrape metrics.",
@@ -19252,7 +21119,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema562"
+                            "$ref": "#/$defs/schema570"
                           },
                           {
                             "not": {
@@ -19313,13 +21180,13 @@
                       "prometheusInstance": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema569"
+                            "$ref": "#/$defs/schema577"
                           },
                           {
-                            "$ref": "#/$defs/schema571"
+                            "$ref": "#/$defs/schema579"
                           },
                           {
-                            "$ref": "#/$defs/schema574"
+                            "$ref": "#/$defs/schema582"
                           },
                           {
                             "not": {
@@ -19327,22 +21194,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema575"
+                            "$ref": "#/$defs/schema583"
                           },
                           {
-                            "$ref": "#/$defs/schema570"
+                            "$ref": "#/$defs/schema578"
                           },
                           {
-                            "$ref": "#/$defs/schema494"
+                            "$ref": "#/$defs/schema495"
                           },
                           {
                             "$ref": "#/$defs/schema316"
                           },
                           {
-                            "$ref": "#/$defs/schema539"
+                            "$ref": "#/$defs/schema543"
                           },
                           {
-                            "$ref": "#/$defs/schema557"
+                            "$ref": "#/$defs/schema564"
                           }
                         ],
                         "description": "Specifies the `prometheus` label on the created PodMonitor. This is\nused when different Prometheus instances have label selectors matching\ndifferent PodMonitors.",
@@ -19362,13 +21229,13 @@
                       "scrapeTimeout": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema569"
+                            "$ref": "#/$defs/schema577"
                           },
                           {
-                            "$ref": "#/$defs/schema571"
+                            "$ref": "#/$defs/schema579"
                           },
                           {
-                            "$ref": "#/$defs/schema574"
+                            "$ref": "#/$defs/schema582"
                           },
                           {
                             "not": {
@@ -19376,22 +21243,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema575"
+                            "$ref": "#/$defs/schema583"
                           },
                           {
-                            "$ref": "#/$defs/schema570"
+                            "$ref": "#/$defs/schema578"
                           },
                           {
-                            "$ref": "#/$defs/schema494"
+                            "$ref": "#/$defs/schema495"
                           },
                           {
                             "$ref": "#/$defs/schema316"
                           },
                           {
-                            "$ref": "#/$defs/schema539"
+                            "$ref": "#/$defs/schema543"
                           },
                           {
-                            "$ref": "#/$defs/schema557"
+                            "$ref": "#/$defs/schema564"
                           }
                         ],
                         "description": "The timeout before a metrics scrape fails.",
@@ -19510,7 +21377,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema562"
+                            "$ref": "#/$defs/schema570"
                           },
                           {
                             "not": {
@@ -19557,13 +21424,13 @@
                                 "$ref": "#/$defs/schema280"
                               },
                               "followRedirects": {
-                                "$ref": "#/$defs/schema486"
+                                "$ref": "#/$defs/schema487"
                               },
                               "honorLabels": {
-                                "$ref": "#/$defs/schema461"
+                                "$ref": "#/$defs/schema462"
                               },
                               "honorTimestamps": {
-                                "$ref": "#/$defs/schema456"
+                                "$ref": "#/$defs/schema457"
                               },
                               "interval": {
                                 "$ref": "#/$defs/schema299"
@@ -19578,10 +21445,10 @@
                                 "$ref": "#/$defs/schema10"
                               },
                               "params": {
-                                "$ref": "#/$defs/schema434"
+                                "$ref": "#/$defs/schema435"
                               },
                               "path": {
-                                "$ref": "#/$defs/schema406"
+                                "$ref": "#/$defs/schema407"
                               },
                               "port": {
                                 "description": "port defines the name of the Service port which this endpoint refers to.\n\nIt takes precedence over `targetPort`.",
@@ -19594,7 +21461,7 @@
                                 "$ref": "#/$defs/schema298"
                               },
                               "proxyUrl": {
-                                "$ref": "#/$defs/schema472"
+                                "$ref": "#/$defs/schema473"
                               },
                               "relabelings": {
                                 "$ref": "#/$defs/schema43"
@@ -19643,7 +21510,7 @@
                                     "type": "string"
                                   },
                                   "insecureSkipVerify": {
-                                    "$ref": "#/$defs/schema495"
+                                    "$ref": "#/$defs/schema496"
                                   },
                                   "keyFile": {
                                     "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
@@ -19659,7 +21526,7 @@
                                     "$ref": "#/$defs/schema376"
                                   },
                                   "serverName": {
-                                    "$ref": "#/$defs/schema523"
+                                    "$ref": "#/$defs/schema526"
                                   }
                                 },
                                 "type": "object"
@@ -19691,10 +21558,10 @@
                       "honorLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema461"
+                            "$ref": "#/$defs/schema462"
                           },
                           {
-                            "$ref": "#/$defs/schema478"
+                            "$ref": "#/$defs/schema479"
                           }
                         ],
                         "description": "Keep labels from scraped data, overriding server-side labels."
@@ -19714,13 +21581,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema569"
+                                "$ref": "#/$defs/schema577"
                               },
                               {
-                                "$ref": "#/$defs/schema571"
+                                "$ref": "#/$defs/schema579"
                               },
                               {
-                                "$ref": "#/$defs/schema574"
+                                "$ref": "#/$defs/schema582"
                               },
                               {
                                 "not": {
@@ -19728,22 +21595,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema575"
+                                "$ref": "#/$defs/schema583"
                               },
                               {
-                                "$ref": "#/$defs/schema570"
+                                "$ref": "#/$defs/schema578"
                               },
                               {
-                                "$ref": "#/$defs/schema494"
+                                "$ref": "#/$defs/schema495"
                               },
                               {
                                 "$ref": "#/$defs/schema316"
                               },
                               {
-                                "$ref": "#/$defs/schema539"
+                                "$ref": "#/$defs/schema543"
                               },
                               {
-                                "$ref": "#/$defs/schema557"
+                                "$ref": "#/$defs/schema564"
                               }
                             ],
                             "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -19771,7 +21638,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema562"
+                            "$ref": "#/$defs/schema570"
                           },
                           {
                             "not": {
@@ -19854,13 +21721,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema569"
+                                "$ref": "#/$defs/schema577"
                               },
                               {
-                                "$ref": "#/$defs/schema571"
+                                "$ref": "#/$defs/schema579"
                               },
                               {
-                                "$ref": "#/$defs/schema574"
+                                "$ref": "#/$defs/schema582"
                               },
                               {
                                 "not": {
@@ -19868,22 +21735,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema575"
+                                "$ref": "#/$defs/schema583"
                               },
                               {
-                                "$ref": "#/$defs/schema570"
+                                "$ref": "#/$defs/schema578"
                               },
                               {
-                                "$ref": "#/$defs/schema494"
+                                "$ref": "#/$defs/schema495"
                               },
                               {
                                 "$ref": "#/$defs/schema316"
                               },
                               {
-                                "$ref": "#/$defs/schema539"
+                                "$ref": "#/$defs/schema543"
                               },
                               {
-                                "$ref": "#/$defs/schema557"
+                                "$ref": "#/$defs/schema564"
                               }
                             ],
                             "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -19913,13 +21780,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema569"
+                                "$ref": "#/$defs/schema577"
                               },
                               {
-                                "$ref": "#/$defs/schema571"
+                                "$ref": "#/$defs/schema579"
                               },
                               {
-                                "$ref": "#/$defs/schema574"
+                                "$ref": "#/$defs/schema582"
                               },
                               {
                                 "not": {
@@ -19927,16 +21794,16 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema575"
+                                "$ref": "#/$defs/schema583"
                               },
                               {
-                                "$ref": "#/$defs/schema570"
+                                "$ref": "#/$defs/schema578"
                               },
                               {
-                                "$ref": "#/$defs/schema494"
+                                "$ref": "#/$defs/schema495"
                               },
                               {
-                                "$ref": "#/$defs/schema557"
+                                "$ref": "#/$defs/schema564"
                               }
                             ],
                             "type": "string"
@@ -20201,7 +22068,7 @@
           "$ref": "#/$defs/schema399"
         },
         {
-          "$ref": "#/$defs/schema403"
+          "$ref": "#/$defs/schema404"
         },
         {
           "$ref": "#/$defs/schema398"
@@ -20215,7 +22082,7 @@
           "$ref": "#/$defs/schema67"
         },
         {
-          "$ref": "#/$defs/schema545"
+          "$ref": "#/$defs/schema550"
         },
         {
           "not": {
@@ -20275,7 +22142,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema473"
+            "$ref": "#/$defs/schema474"
           }
         },
         {
@@ -20342,7 +22209,7 @@
       "properties": {
         "annotations": {},
         "automountServiceAccountToken": {
-          "$ref": "#/$defs/schema555"
+          "$ref": "#/$defs/schema562"
         },
         "create": {
           "anyOf": [
@@ -20460,7 +22327,7 @@
                         "$ref": "#/$defs/schema347"
                       },
                       {
-                        "$ref": "#/$defs/schema478"
+                        "$ref": "#/$defs/schema479"
                       }
                     ],
                     "description": "enableServiceLinks indicates whether information about services should be\ninjected into pod's environment variables, matching the syntax of Docker\nlinks."
@@ -20805,7 +22672,7 @@
                             "$ref": "#/$defs/schema362"
                           },
                           {
-                            "$ref": "#/$defs/schema478"
+                            "$ref": "#/$defs/schema479"
                           }
                         ],
                         "description": "Automount API credentials for a Service Account.\n+docs:property"
@@ -20866,6 +22733,27 @@
               }
             ]
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema402"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {
@@ -20984,12 +22872,13 @@
           "$ref": "#/$defs/schema278"
         },
         "volumeMounts": {
-          "$ref": "#/$defs/schema529"
+          "$ref": "#/$defs/schema533"
         },
         "volumes": {
-          "$ref": "#/$defs/schema546"
+          "$ref": "#/$defs/schema551"
         }
-      }
+      },
+      "type": "object"
     },
     "strategy": {
       "anyOf": [
@@ -20997,7 +22886,7 @@
           "$ref": "#/$defs/schema173"
         },
         {
-          "$ref": "#/$defs/schema545"
+          "$ref": "#/$defs/schema550"
         },
         {
           "not": {
@@ -21043,10 +22932,10 @@
       "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
     },
     "volumeMounts": {
-      "$ref": "#/$defs/schema529"
+      "$ref": "#/$defs/schema533"
     },
     "volumes": {
-      "$ref": "#/$defs/schema546"
+      "$ref": "#/$defs/schema551"
     },
     "webhook": {
       "additionalProperties": {},
@@ -21079,7 +22968,7 @@
               "securePort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema423"
+                    "$ref": "#/$defs/schema424"
                   },
                   {
                     "$ref": "#/$defs/schema398"
@@ -21151,7 +23040,7 @@
                         "$ref": "#/$defs/schema29"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema404"
+                        "$ref": "#/$defs/schema405"
                       },
                       "ports": {
                         "$ref": "#/$defs/schema64"
@@ -21187,7 +23076,7 @@
                         "$ref": "#/$defs/schema209"
                       },
                       "tty": {
-                        "$ref": "#/$defs/schema420"
+                        "$ref": "#/$defs/schema421"
                       },
                       "volumeDevices": {
                         "$ref": "#/$defs/schema168"
@@ -21449,7 +23338,7 @@
                               "$ref": "#/$defs/schema209"
                             },
                             "tty": {
-                              "$ref": "#/$defs/schema420"
+                              "$ref": "#/$defs/schema421"
                             },
                             "volumeDevices": {
                               "$ref": "#/$defs/schema168"
@@ -21601,7 +23490,7 @@
                       },
                       "overhead": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema556"
+                          "$ref": "#/$defs/schema563"
                         },
                         "description": "Overhead represents the resource overhead associated with running a pod for a given RuntimeClass. This field will be autopopulated at admission time by the RuntimeClass admission controller. If the RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests. The RuntimeClass admission controller will reject Pod create requests which have the overhead already set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero. More info: https://git.k8s.io/enhancements/keps/sig-node/688-pod-overhead/README.md",
                         "type": [
@@ -22274,7 +24163,7 @@
                 "healthzPort": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema423"
+                      "$ref": "#/$defs/schema424"
                     },
                     {
                       "not": {
@@ -22315,7 +24204,7 @@
                 "securePort": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema423"
+                      "$ref": "#/$defs/schema424"
                     },
                     {
                       "not": {
@@ -22469,13 +24358,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema569"
+                  "$ref": "#/$defs/schema577"
                 },
                 {
-                  "$ref": "#/$defs/schema571"
+                  "$ref": "#/$defs/schema579"
                 },
                 {
-                  "$ref": "#/$defs/schema574"
+                  "$ref": "#/$defs/schema582"
                 },
                 {
                   "not": {
@@ -22483,19 +24372,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema575"
+                  "$ref": "#/$defs/schema583"
                 },
                 {
-                  "$ref": "#/$defs/schema494"
+                  "$ref": "#/$defs/schema495"
                 },
                 {
                   "$ref": "#/$defs/schema316"
                 },
                 {
-                  "$ref": "#/$defs/schema539"
+                  "$ref": "#/$defs/schema543"
                 },
                 {
-                  "$ref": "#/$defs/schema557"
+                  "$ref": "#/$defs/schema564"
                 }
               ],
               "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
@@ -22532,7 +24421,7 @@
                   "x-kubernetes-map-type": "atomic"
                 },
                 {
-                  "$ref": "#/$defs/schema545"
+                  "$ref": "#/$defs/schema550"
                 },
                 {
                   "not": {
@@ -22636,12 +24525,13 @@
               },
               "type": "object"
             }
-          ]
+          ],
+          "type": "object"
         },
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema545"
+              "$ref": "#/$defs/schema550"
             },
             {
               "$ref": "#/$defs/schema256"
@@ -22685,7 +24575,7 @@
               "$ref": "#/$defs/schema399"
             },
             {
-              "$ref": "#/$defs/schema403"
+              "$ref": "#/$defs/schema404"
             },
             {
               "$ref": "#/$defs/schema398"
@@ -22699,7 +24589,7 @@
               "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema545"
+              "$ref": "#/$defs/schema550"
             },
             {
               "not": {
@@ -22736,7 +24626,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/schema555"
+              "$ref": "#/$defs/schema562"
             },
             "create": {
               "anyOf": [
@@ -22820,7 +24710,7 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema545"
+              "$ref": "#/$defs/schema550"
             },
             {
               "$ref": "#/$defs/schema256"
@@ -22841,13 +24731,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema569"
+                  "$ref": "#/$defs/schema577"
                 },
                 {
-                  "$ref": "#/$defs/schema571"
+                  "$ref": "#/$defs/schema579"
                 },
                 {
-                  "$ref": "#/$defs/schema574"
+                  "$ref": "#/$defs/schema582"
                 },
                 {
                   "not": {
@@ -22855,19 +24745,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema575"
+                  "$ref": "#/$defs/schema583"
                 },
                 {
-                  "$ref": "#/$defs/schema494"
+                  "$ref": "#/$defs/schema495"
                 },
                 {
                   "$ref": "#/$defs/schema316"
                 },
                 {
-                  "$ref": "#/$defs/schema539"
+                  "$ref": "#/$defs/schema543"
                 },
                 {
-                  "$ref": "#/$defs/schema557"
+                  "$ref": "#/$defs/schema564"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -22886,7 +24776,7 @@
               "$ref": "#/$defs/schema173"
             },
             {
-              "$ref": "#/$defs/schema545"
+              "$ref": "#/$defs/schema550"
             },
             {
               "not": {
@@ -22977,17 +24867,17 @@
                                 "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
                                 "properties": {
                                   "key": {
-                                    "$ref": "#/$defs/schema543"
+                                    "$ref": "#/$defs/schema548"
                                   },
                                   "operator": {
-                                    "$ref": "#/$defs/schema421"
+                                    "$ref": "#/$defs/schema422"
                                   },
                                   "values": {
                                     "anyOf": [
                                       {
                                         "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                                         "items": {
-                                          "$ref": "#/$defs/schema566"
+                                          "$ref": "#/$defs/schema574"
                                         },
                                         "type": "array"
                                       },
@@ -23052,10 +24942,10 @@
           ]
         },
         "volumeMounts": {
-          "$ref": "#/$defs/schema529"
+          "$ref": "#/$defs/schema533"
         },
         "volumes": {
-          "$ref": "#/$defs/schema546"
+          "$ref": "#/$defs/schema551"
         }
       },
       "type": "object"

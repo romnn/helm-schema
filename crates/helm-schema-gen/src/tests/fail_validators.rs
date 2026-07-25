@@ -454,7 +454,10 @@ fn required_subjects_bind_nonempty_requirements() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for (instance, want, label) in [
+    // Cases compose over the declared defaults: `.Values.gate.enabled` is
+    // navigated on every render, so a document without `gate` is the
+    // null-deleted state helm aborts on.
+    for (overrides, want, label) in [
         (
             serde_json::json!({ "clusterName": "" }),
             false,
@@ -491,6 +494,7 @@ fn required_subjects_bind_nonempty_requirements() {
             "guarded subject stays free when the guard is off",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "{label}: instance={instance}; schema={schema}"
@@ -1046,8 +1050,9 @@ fn ranged_member_name_equality_fail_forbids_the_literal_names() {
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (instance, want, label) in [
-        // The coalesced document carries the declared `enabled: true`; a
-        // document missing it had the guard null-deleted and stays open.
+        // The coalesced document carries the declared `enabled: true`. A
+        // document MISSING the whole host aborts on the header's own member
+        // read, so only the explicit `enabled: false` arm is dormant.
         (
             serde_json::json!({
                 "k8sClientExponentialBackoff": { "enabled": true },
@@ -1058,11 +1063,12 @@ fn ranged_member_name_equality_fail_forbids_the_literal_names() {
         ),
         (
             serde_json::json!({ "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }] }),
-            true,
-            "forbidden name under a null-deleted guard",
+            false,
+            "a null-deleted guard host aborts the header read",
         ),
         (
-            serde_json::json!({ "extraEnv": [{ "name": "OTHER", "value": "1" }] }),
+            serde_json::json!({ "k8sClientExponentialBackoff": { "enabled": true },
+                "extraEnv": [{ "name": "OTHER", "value": "1" }] }),
             true,
             "unrelated name",
         ),
@@ -1779,7 +1785,10 @@ fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
             port: 8000
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    for (instance, want, label) in [
+    // Cases compose over the declared defaults: the local overlay reads
+    // `.Values.service.additionalServices` on every render, so the
+    // `service` host rides along.
+    for (overrides, want, label) in [
         (
             serde_json::json!({ "ports": { "web": { "http3": { "enabled": true } } } }),
             false,
@@ -1798,6 +1807,7 @@ fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
             "a disabled default service keeps the terminal dormant",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "overlay-range terminal ({label}): instance={instance}; schema={schema}"
@@ -1887,7 +1897,10 @@ fn compound_ranged_terminals_negate_to_member_alternatives() {
         ),
         (serde_json::json!(null), true, "a falsy port config escapes"),
     ] {
-        let instance = serde_json::json!({ "ports": { "web": port } });
+        // `.Values.gateway.listeners` is navigated on every render, so the
+        // composed instance keeps the `gateway` host.
+        let instance = serde_json::json!({ "gateway": { "listeners": {} },
+            "ports": { "web": port } });
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "http3 terminal ({label}): instance={instance}; schema={schema}"
@@ -1997,7 +2010,10 @@ fn defaulted_pipeline_and_negated_disjunction_tests_decode() {
           policy: Cluster
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    for (instance, want, label) in [
+    // Cases compose over the chart's declared defaults: the `gke` and
+    // `ingress` hosts are navigated on every render, so a document dropping
+    // them is the null-deleted state, not a dormant one.
+    for (overrides, want, label) in [
         (serde_json::json!({}), true, "defaults render"),
         (
             serde_json::json!({ "gke": { "enabled": true } }),
@@ -2035,6 +2051,7 @@ fn defaulted_pipeline_and_negated_disjunction_tests_decode() {
             "the disabled gate keeps the policy open",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "defaulted pipeline and negated disjunction ({label}): \
@@ -2079,7 +2096,9 @@ fn pipeline_tostring_gates_decode_in_helper_terminals() {
           enabled: false
     "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
-    for (instance, want, label) in [
+    // Cases compose over the declared defaults: the three gate hosts are
+    // navigated on every render.
+    for (overrides, want, label) in [
         (serde_json::json!({}), true, "defaults skip the gates"),
         (
             serde_json::json!({ "zones": { "enabled": true },
@@ -2103,6 +2122,7 @@ fn pipeline_tostring_gates_decode_in_helper_terminals() {
             "ha alone stays open",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "pipeline tostring gates ({label}): instance={instance}; schema={schema}"
@@ -2214,7 +2234,11 @@ fn helper_terminals_keep_caller_guards_and_boolean_include_arms() {
     "#};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "defaults skip the include"),
+        (
+            serde_json::json!({ "session": { "clientType": "" } }),
+            true,
+            "defaults skip the include",
+        ),
         (
             serde_json::json!({ "session": { "clientType": "standalone",
                 "url": "redis://myredis:6379" } }),
@@ -2285,7 +2309,9 @@ fn root_set_literal_chains_decode_as_value_dispatch_guards() {
           parentRefs: []
     "#};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
-    for (instance, want, label) in [
+    // Cases compose over the declared defaults: the `ha` and `route` hosts
+    // are navigated on every render.
+    for (overrides, want, label) in [
         (serde_json::json!({}), true, "defaults skip every gate"),
         (
             serde_json::json!({ "route": { "enabled": true } }),
@@ -2321,6 +2347,7 @@ fn root_set_literal_chains_decode_as_value_dispatch_guards() {
             "the external arm outranks the ha arm in the chain",
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "root-set value dispatch ({label}): instance={instance}; schema={schema}"
@@ -2406,8 +2433,17 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
         trivy: {}
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    // Instances are raw documents: the null SPELLING is what the subject's
+    // even-null type assertion rejects. (A null-DELETED top-level subject
+    // stays open — the presence claim has no parent slot at the root, the
+    // documented F107 residual.) Every instance carries the navigated
+    // `rules` host, whose deletion aborts on its own.
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "defaults render"),
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "defaults render",
+        ),
         (
             serde_json::json!({ "rules": { "create": true }, "customRules": null }),
             false,
@@ -2419,7 +2455,8 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
             "a scalar dig subject aborts",
         ),
         (
-            serde_json::json!({ "customRules": { "alpha": { "severity": "warning" } } }),
+            serde_json::json!({ "rules": { "create": true },
+                "customRules": { "alpha": { "severity": "warning" } } }),
             true,
             "a map subject renders",
         ),
@@ -2429,7 +2466,7 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
             "the create gate keeps the dig dormant",
         ),
         (
-            serde_json::json!({ "trivy": { "resources": null } }),
+            serde_json::json!({ "rules": { "create": true }, "trivy": { "resources": null } }),
             true,
             "a nil intermediate step falls back to the default",
         ),
@@ -2444,7 +2481,8 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
             "a scalar intermediate aborts",
         ),
         (
-            serde_json::json!({ "trivy": { "resources": { "requests": { "cpu": "1" } } } }),
+            serde_json::json!({ "rules": { "create": true },
+                "trivy": { "resources": { "requests": { "cpu": "1" } } } }),
             true,
             "map intermediates render",
         ),
@@ -2608,7 +2646,11 @@ fn dig_subject_presence_binds_through_selection_gates() {
     "};
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
     for (instance, want, label) in [
-        (serde_json::json!({}), true, "empty document stays dormant"),
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "empty document stays dormant",
+        ),
         (
             serde_json::json!({ "loki": { "storage": { "type": "s3" } } }),
             false,

@@ -320,6 +320,37 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "podPriorityClassName": {}
+              },
+              "required": [
+                "podPriorityClassName"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podPriorityClassName": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podPriorityClassName"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

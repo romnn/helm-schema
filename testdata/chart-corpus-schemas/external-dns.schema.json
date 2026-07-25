@@ -4276,38 +4276,22 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
             "additionalProperties": {},
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "affinity": {
-                "additionalProperties": {},
-                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-                "properties": {
-                  "podAffinity": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "podAffinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "affinity": {
-                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -4788,38 +4772,22 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
             "additionalProperties": {},
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
-              "affinity": {
-                "additionalProperties": {},
-                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-                "properties": {
-                  "podAntiAffinity": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "podAntiAffinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "affinity": {
-                "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-                "required": [
-                  "podAntiAffinity"
-                ],
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -8594,253 +8562,17 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "provider": {
-                "additionalProperties": {},
-                "properties": {
-                  "webhook": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "provider": {
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "service": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema73"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "serviceMonitor": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serviceMonitor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "serviceMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceMonitor"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema73"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "provider": {
-                        "properties": {
-                          "webhook": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "provider"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "provider": {
-                        "properties": {
-                          "webhook": {
-                            "properties": {
-                              "image": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "image"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "provider"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema73"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "provider": {
-                        "properties": {
-                          "webhook": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "provider"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema73"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
         "additionalProperties": {},
         "properties": {
           "provider": {
             "additionalProperties": {},
             "properties": {
               "webhook": {
-                "type": "object"
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             }
           }
@@ -9674,6 +9406,102 @@
               "provider": {
                 "properties": {
                   "webhook": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "webhook"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "properties": {
+                          "image": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema73"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "provider": {
+                "properties": {
+                  "webhook": {
                     "properties": {
                       "image": {
                         "anyOf": [
@@ -9836,6 +9664,404 @@
             },
             "required": [
               "txtSuffix"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {}
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema195"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema73"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema195"
+              },
+              {
+                "$ref": "#/$defs/schema73"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {}
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema73"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema73"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {}
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "secretConfiguration": {}
+              },
+              "required": [
+                "secretConfiguration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "secretConfiguration": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "secretConfiguration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
             ],
             "type": "object"
           }

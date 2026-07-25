@@ -1523,12 +1523,25 @@ fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Resul
         None,
     )?;
 
-    let terminal_clauses = contract_schema_signals!(collection)
+    // The validator's own operand is `auth.user`; the member-access lane
+    // separately claims that the navigated `auth` host must exist, which is
+    // an abort-grade fact about the receiver, not the validator's `fail`.
+    let validator_clauses = contract_schema_signals!(collection)
         .terminal_clauses()
-        .to_vec();
+        .iter()
+        .filter(|clause| {
+            clause.iter().any(|guard| {
+                guard
+                    .value_paths()
+                    .iter()
+                    .any(|path| path == "child.auth.user")
+            })
+        })
+        .cloned()
+        .collect::<Vec<_>>();
     assert!(
-        terminal_clauses.is_empty(),
-        "the conditional validator must not terminate the activated chart: {terminal_clauses:#?}"
+        validator_clauses.is_empty(),
+        "the conditional validator must not terminate the activated chart: {validator_clauses:#?}"
     );
 
     Ok(())

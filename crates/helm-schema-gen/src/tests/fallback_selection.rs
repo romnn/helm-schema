@@ -87,13 +87,16 @@ fn helper_default_fallback_keeps_helm_empty_inputs_open_for_string_consumers() {
         "#}),
     );
 
+    // The `config` host is navigated on every render, so every composed
+    // instance carries it — its absence is the null-deleted state helm
+    // aborts on, pinned separately.
     for instance in [
-        serde_json::json!({}),
-        serde_json::json!({ "nameOverride": null }),
-        serde_json::json!({ "nameOverride": false }),
-        serde_json::json!({ "nameOverride": "" }),
-        serde_json::json!({ "nameOverride": {} }),
-        serde_json::json!({ "nameOverride": "custom-name" }),
+        serde_json::json!({ "config": { "create": true } }),
+        serde_json::json!({ "nameOverride": null, "config": { "create": true } }),
+        serde_json::json!({ "nameOverride": false, "config": { "create": false } }),
+        serde_json::json!({ "nameOverride": "", "config": { "create": true } }),
+        serde_json::json!({ "nameOverride": {}, "config": { "create": false } }),
+        serde_json::json!({ "nameOverride": "custom-name", "config": { "create": true } }),
         serde_json::json!({ "nameOverride": false, "config": { "create": true } }),
         serde_json::json!({ "nameOverride": {}, "config": { "create": true } }),
         serde_json::json!({ "nameOverride": "custom", "config": { "create": true } }),
@@ -145,12 +148,15 @@ fn truthy_guarded_read_keeps_helm_falsy_inputs_open() {
         "#}),
     );
 
+    // Every instance carries the navigated `rbac` host: the chart reads
+    // `.Values.rbac.create` on every render, so a coalesced document
+    // without it is the null-deleted state helm aborts on.
     for instance in [
-        serde_json::json!({ "namespaceOverride": false }),
-        serde_json::json!({ "namespaceOverride": "" }),
-        serde_json::json!({ "namespaceOverride": {} }),
-        serde_json::json!({ "namespaceOverride": "custom-ns" }),
         serde_json::json!({ "namespaceOverride": false, "rbac": { "create": true } }),
+        serde_json::json!({ "namespaceOverride": "", "rbac": { "create": true } }),
+        serde_json::json!({ "namespaceOverride": {}, "rbac": { "create": true } }),
+        serde_json::json!({ "namespaceOverride": "custom-ns", "rbac": { "create": true } }),
+        serde_json::json!({ "namespaceOverride": false, "rbac": { "create": false } }),
         serde_json::json!({ "namespaceOverride": "ns", "rbac": { "create": true } }),
     ] {
         assert!(

@@ -68,15 +68,11 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "additionalProperties": false,
+        // The navigated hosts' presence claims; the object typing itself
+        // folded into the base below.
         "allOf": [
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "presets": {
-                        "type": "object"
-                    }
-                }
-            }
+            navigated_host_clause(&["presets"]),
+            navigated_host_clause(&["presets", "clusterMetrics"]),
         ],
         "properties": {
             "presets": {
@@ -175,14 +171,8 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
         "type": "object",
         "additionalProperties": false,
         "allOf": [
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "presets": {
-                        "type": "object"
-                    }
-                }
-            }
+            navigated_host_clause(&["presets"]),
+            navigated_host_clause(&["presets", "clusterMetrics"]),
         ],
         "properties": {
             "presets": {

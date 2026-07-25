@@ -312,12 +312,7 @@
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema102": {
-      "additionalProperties": {},
-      "properties": {},
-      "type": "object"
-    },
-    "schema104": {
+    "schema103": {
       "anyOf": [
         {
           "type": "boolean"
@@ -327,30 +322,34 @@
         }
       ]
     },
-    "schema105": {
+    "schema104": {
       "anyOf": [
         {
           "type": "null"
         },
         {
           "type": "string"
+        }
+      ]
+    },
+    "schema105": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
         }
       ]
     },
     "schema106": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema107": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
+    },
+    "schema107": {
+      "additionalProperties": {},
+      "type": "object"
     },
     "schema108": {
       "not": {
@@ -1952,7 +1951,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema106"
+            "$ref": "#/$defs/schema105"
           }
         }
       }
@@ -2529,7 +2528,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema106"
+            "$ref": "#/$defs/schema105"
           }
         }
       }
@@ -2754,7 +2753,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema106"
                   },
                   {
                     "$ref": "#/$defs/schema109"
@@ -3184,7 +3183,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "autoReloadAll": {
-                    "$ref": "#/$defs/schema104"
+                    "$ref": "#/$defs/schema103"
                   }
                 }
               }
@@ -3197,7 +3196,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "isArgoRollouts": {
-                    "$ref": "#/$defs/schema104"
+                    "$ref": "#/$defs/schema103"
                   }
                 }
               }
@@ -3210,7 +3209,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "reloadOnCreate": {
-                    "$ref": "#/$defs/schema104"
+                    "$ref": "#/$defs/schema103"
                   }
                 }
               }
@@ -3223,7 +3222,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "reloadOnDelete": {
-                    "$ref": "#/$defs/schema104"
+                    "$ref": "#/$defs/schema103"
                   }
                 }
               }
@@ -3257,7 +3256,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "syncAfterRestart": {
-                    "$ref": "#/$defs/schema104"
+                    "$ref": "#/$defs/schema103"
                   }
                 }
               }
@@ -4171,7 +4170,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_ADDITIONAL_INFO": {
-                            "$ref": "#/$defs/schema106"
+                            "$ref": "#/$defs/schema105"
                           }
                         }
                       }
@@ -4285,7 +4284,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_ON_RELOAD": {
-                            "$ref": "#/$defs/schema106"
+                            "$ref": "#/$defs/schema105"
                           }
                         }
                       }
@@ -4399,7 +4398,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_SINK": {
-                            "$ref": "#/$defs/schema106"
+                            "$ref": "#/$defs/schema105"
                           }
                         }
                       }
@@ -4513,7 +4512,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_WEBHOOK_URL": {
-                            "$ref": "#/$defs/schema106"
+                            "$ref": "#/$defs/schema105"
                           }
                         }
                       }
@@ -4930,48 +4929,25 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "reloader": {
             "additionalProperties": {},
             "properties": {
-              "reloader": {
+              "deployment": {
                 "additionalProperties": {},
                 "properties": {
-                  "deployment": {
+                  "env": {
                     "additionalProperties": {},
+                    "description": "Support for extra environment variables.",
                     "properties": {
-                      "env": {
-                        "additionalProperties": {},
-                        "description": "Support for extra environment variables.",
-                        "properties": {
-                          "secret": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              }
-                            ],
-                            "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
                           }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "reloader": {
-                "additionalProperties": {},
-                "properties": {
-                  "deployment": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "env": {
-                        "description": "Support for extra environment variables.",
-                        "type": "object"
+                        ],
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
                       }
                     }
                   }
@@ -4979,7 +4955,7 @@
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -4997,19 +4973,6 @@
                   "type": "null"
                 }
               ]
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "reloader": {
-          "additionalProperties": {},
-          "properties": {
-            "deployment": {
-              "type": "object"
             }
           }
         }
@@ -5234,7 +5197,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "from": {
-                    "$ref": "#/$defs/schema106"
+                    "$ref": "#/$defs/schema105"
                   }
                 }
               }
@@ -5425,7 +5388,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "namespace": {
-                    "$ref": "#/$defs/schema106"
+                    "$ref": "#/$defs/schema105"
                   }
                 }
               }
@@ -5530,7 +5493,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tlsConfig": {
-                    "$ref": "#/$defs/schema106"
+                    "$ref": "#/$defs/schema105"
                   }
                 }
               }
@@ -6628,7 +6591,7 @@
           "additionalProperties": {},
           "properties": {
             "watchGlobally": {
-              "$ref": "#/$defs/schema104"
+              "$ref": "#/$defs/schema103"
             }
           }
         }
@@ -6692,12 +6655,678 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "reloader": {
-          "type": "object"
-        }
-      }
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {}
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "custom_annotations": {}
+                  },
+                  "required": [
+                    "custom_annotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "custom_annotations": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "custom_annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "deployment": {}
+                  },
+                  "required": [
+                    "deployment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "deployment": {
+                      "properties": {
+                        "env": {}
+                      },
+                      "required": [
+                        "env"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "deployment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "env": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "deployment": {
+                      "properties": {
+                        "livenessProbe": {}
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "deployment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "livenessProbe": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "deployment": {
+                      "properties": {
+                        "pod": {}
+                      },
+                      "required": [
+                        "pod"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "deployment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "pod": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "pod"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "deployment": {
+                      "properties": {
+                        "readinessProbe": {}
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "deployment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "deployment": {
+                    "properties": {
+                      "readinessProbe": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deployment"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "netpol": {}
+                  },
+                  "required": [
+                    "netpol"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "netpol": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "netpol"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "podDisruptionBudget": {}
+                  },
+                  "required": [
+                    "podDisruptionBudget"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "podDisruptionBudget": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "podDisruptionBudget"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "podMonitor": {}
+                  },
+                  "required": [
+                    "podMonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "podMonitor": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "podMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "rbac": {}
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "rbac": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "reloader": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reloader"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "reloader": {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -9012,7 +9641,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema107"
+                                "$ref": "#/$defs/schema106"
                               },
                               {
                                 "$ref": "#/$defs/schema109"
@@ -9437,7 +10066,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/schema107"
+                                    "$ref": "#/$defs/schema106"
                                   },
                                   {
                                     "$ref": "#/$defs/schema109"
@@ -9598,7 +10227,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/schema107"
+                                    "$ref": "#/$defs/schema106"
                                   },
                                   {
                                     "$ref": "#/$defs/schema109"
@@ -9658,7 +10287,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/schema107"
+                                    "$ref": "#/$defs/schema106"
                                   },
                                   {
                                     "$ref": "#/$defs/schema109"
@@ -9916,7 +10545,7 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/schema107"
+                                    "$ref": "#/$defs/schema106"
                                   },
                                   {
                                     "$ref": "#/$defs/schema109"
@@ -10213,75 +10842,65 @@
               "description": "Specifies the deployment DNS configuration.\nnameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"1\"\n- name: attempts\nvalue: \"3\""
             },
             "env": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "existing": {
-                      "$ref": "#/$defs/schema23"
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "field": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema102"
-                        },
-                        {
-                          "items": {},
-                          "type": "array"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "ALERT_ON_RELOAD: <\"true\"|\"false\">\nALERT_SINK: <\"slack\"> # By default it will be a raw text based webhook\nALERT_WEBHOOK_URL: <\"webhook_url\">\nALERT_ADDITIONAL_INFO: <\"Additional Info like Cluster Name if needed\">\nfield supports Key value pair as environment variables. It gets the values from other fields of pod."
-                    },
-                    "open": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema102"
-                        },
-                        {
-                          "items": {},
-                          "type": "array"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "Open supports Key value pair as environment variables."
-                    },
-                    "secret": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "ALERT_ADDITIONAL_INFO": {},
-                            "ALERT_ON_RELOAD": {},
-                            "ALERT_SINK": {},
-                            "ALERT_WEBHOOK_URL": {}
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "items": {},
-                          "type": "array"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
-                    }
-                  },
-                  "type": "object"
-                }
-              ],
+              "additionalProperties": {},
               "description": "Support for extra environment variables.",
+              "properties": {
+                "existing": {
+                  "$ref": "#/$defs/schema23"
+                },
+                "field": {
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "$ref": "#/$defs/schema107"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "ALERT_ON_RELOAD: <\"true\"|\"false\">\nALERT_SINK: <\"slack\"> # By default it will be a raw text based webhook\nALERT_WEBHOOK_URL: <\"webhook_url\">\nALERT_ADDITIONAL_INFO: <\"Additional Info like Cluster Name if needed\">\nfield supports Key value pair as environment variables. It gets the values from other fields of pod."
+                },
+                "open": {
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "$ref": "#/$defs/schema107"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Open supports Key value pair as environment variables."
+                },
+                "secret": {
+                  "anyOf": [
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "ALERT_ADDITIONAL_INFO": {},
+                        "ALERT_ON_RELOAD": {},
+                        "ALERT_SINK": {},
+                        "ALERT_WEBHOOK_URL": {}
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
+                }
+              },
               "type": "object"
             },
             "gomaxprocsOverride": {
@@ -10293,7 +10912,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema105"
+                    "$ref": "#/$defs/schema104"
                   },
                   "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
                   "properties": {
@@ -10439,7 +11058,7 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/schema107"
+                      "$ref": "#/$defs/schema106"
                     },
                     {
                       "$ref": "#/$defs/schema109"
@@ -11071,7 +11690,9 @@
         "matchLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema102"
+              "additionalProperties": {},
+              "properties": {},
+              "type": "object"
             },
             {
               "$ref": "#/$defs/schema39"
@@ -11265,7 +11886,7 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/$defs/schema107"
+                          "$ref": "#/$defs/schema106"
                         },
                         {
                           "$ref": "#/$defs/schema109"
@@ -11318,7 +11939,8 @@
               "type": "object"
             }
           ],
-          "description": "Service account config for the agent pods"
+          "description": "Service account config for the agent pods",
+          "type": "object"
         },
         "serviceMonitor": {
           "additionalProperties": {},

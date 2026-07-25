@@ -195,18 +195,30 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         // the subchart's manually quoted `enabled: "{{ … }}"` splice
-        // breaks on content that corrupts the double-quoted token.
-        "allOf": [{
-            "additionalProperties": {},
-            "properties": {
-                "subchart": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "enabled": { "$ref": "#/$defs/helm-double-quoted-safe" }
+        // breaks on content that corrupts the double-quoted token, and
+        // helm's dependency coalescing type-asserts the subchart's values
+        // root before any rendering.
+        "allOf": [
+            {
+                "additionalProperties": {},
+                "properties": {
+                    "subchart": {
+                        "additionalProperties": {},
+                        "properties": {
+                            "enabled": { "$ref": "#/$defs/helm-double-quoted-safe" }
+                        }
+                    }
+                }
+            },
+            {
+                "additionalProperties": {},
+                "properties": {
+                    "subchart": {
+                        "anyOf": [{ "type": "object" }, { "type": "null" }]
                     }
                 }
             }
-        }],
+        ],
         "properties": {
             "subchart": {
                 "additionalProperties": {},

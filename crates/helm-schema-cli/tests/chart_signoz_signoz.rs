@@ -391,19 +391,36 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
         "a truthy scalar still aborts through the parent's own pull-secrets range: {schema}"
     );
     // The zookeeper templates' `.Values.metrics.*` navigations ride the
-    // same chain: junk under a disabled clickhouse renders (the
-    // doubly-nested activation product must not cross the member-access
-    // fanout cap and leak an unconditional host typing).
+    // same chain, but the subchart declares `metrics` as a mapping, so the
+    // path keeps that declared-default typing even where the clickhouse
+    // chain is dormant — a map-shaped override stays open in both states
+    // while a scalar is rejected as a values error (helm itself renders it,
+    // never reading the value: the declared-default policy, not an abort
+    // claim). The doubly-nested activation product must still not cross the
+    // member-access fanout cap, which the map-shaped states below pin.
     assert!(
-        schema_validates_instance(
+        !schema_validates_instance(
             &schema,
             &serde_json::json!({
                 "clickhouse": { "enabled": false, "zookeeper": { "metrics": "junk" } },
                 "externalClickhouse": { "host": "ch.example.com", "cluster": "cluster" }
             })
         ),
-        "zookeeper metrics junk renders while clickhouse is disabled: {schema}"
+        "a scalar zookeeper metrics map is a values error in both states: {schema}"
     );
+    for enabled in [false, true] {
+        assert!(
+            schema_validates_instance(
+                &schema,
+                &serde_json::json!({
+                    "clickhouse": { "enabled": enabled,
+                        "zookeeper": { "metrics": { "enabled": true, "containerPort": 7000 } } },
+                    "externalClickhouse": { "host": "ch.example.com", "cluster": "cluster" }
+                })
+            ),
+            "map-shaped zookeeper metrics render with clickhouse enabled={enabled}: {schema}"
+        );
+    }
     for field in ["pullPolicy", "repository", "tag"] {
         if field == "pullPolicy" {
             // pullPolicy is spliced plainly into `imagePullPolicy:`, so it

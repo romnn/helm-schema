@@ -1304,20 +1304,417 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "type": "object"
-        }
-      }
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "tls": {
-          "type": "object"
-        }
-      }
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "nodePorts": {}
+                      },
+                      "required": [
+                        "nodePorts"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "nodePorts": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "nodePorts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "nodePorts": {
+                            "properties": {
+                              "client": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "client"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "nodePorts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "disableBaseClientPort": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableBaseClientPort"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "LoadBalancer"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "NodePort"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "nodePorts": {
+                            "properties": {
+                              "tls": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "tls"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "nodePorts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "client": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "LoadBalancer"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "NodePort"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "ports": {}
+                  },
+                  "required": [
+                    "ports"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "ports": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ports"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tls": {}
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tls": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tls": {
+                  "properties": {
+                    "client": {}
+                  },
+                  "required": [
+                    "client"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "client": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

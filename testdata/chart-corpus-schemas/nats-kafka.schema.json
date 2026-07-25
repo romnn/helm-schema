@@ -1449,19 +1449,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "natskafka": {
-          "additionalProperties": {},
-          "properties": {
-            "monitoring": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "natskafka": {
@@ -1539,43 +1526,6 @@
                 }
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "natskafka": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "credentials": {
-                        "required": [
-                          "secret"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "natskafka": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "required": [
-                      "credentials"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
           }
         ]
       }
@@ -1599,12 +1549,301 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "natskafka": {
-          "type": "object"
-        }
-      }
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "natskafka": {}
+              },
+              "required": [
+                "natskafka"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "natskafka": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "natskafka": {
+                  "properties": {
+                    "logging": {}
+                  },
+                  "required": [
+                    "logging"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "natskafka"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "natskafka": {
+                "properties": {
+                  "logging": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "logging"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "natskafka": {
+                  "properties": {
+                    "monitoring": {}
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "natskafka"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "natskafka": {
+                "properties": {
+                  "monitoring": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "natskafka": {
+                  "properties": {
+                    "monitoring": {
+                      "properties": {
+                        "tls": {}
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "natskafka"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "natskafka": {
+                "properties": {
+                  "monitoring": {
+                    "properties": {
+                      "tls": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "natskafka": {
+                  "properties": {
+                    "nats": {}
+                  },
+                  "required": [
+                    "nats"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "natskafka"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "natskafka": {
+                "properties": {
+                  "nats": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "nats"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -1846,6 +2085,77 @@
                   ]
                 }
               }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "nats": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "credentials": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "credentials"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "credentials": {
+                                  "properties": {
+                                    "secret": {}
+                                  },
+                                  "required": [
+                                    "secret"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "credentials"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "credentials": {
+                                "properties": {
+                                  "secret": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "secret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "credentials"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
             }
           }
         }
@@ -3944,61 +4254,62 @@
           "type": "object"
         },
         "nats": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "connectTimeout": {
-                  "type": "integer"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "connectTimeout": {
+              "type": "integer"
             },
-            {
+            "credentials": {
               "additionalProperties": {},
               "properties": {
-                "credentials": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "secret": {
+                "secret": {
+                  "anyOf": [
+                    {
                       "additionalProperties": {},
                       "properties": {
-                        "key": {},
+                        "key": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
                         "name": {}
                       },
                       "type": "object"
                     }
-                  },
-                  "type": "object"
-                },
-                "maxReconnects": {
-                  "type": "integer"
-                },
-                "reconnectWait": {
-                  "type": "integer"
-                },
-                "servers": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {},
-                      "type": "object"
-                    },
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "null"
-                    }
                   ]
                 }
-              },
-              "type": "object"
+              }
+            },
+            "maxReconnects": {
+              "type": "integer"
+            },
+            "reconnectWait": {
+              "type": "integer"
+            },
+            "servers": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ]
             }
-          ],
+          },
           "type": "object"
         },
         "nodeSelector": {

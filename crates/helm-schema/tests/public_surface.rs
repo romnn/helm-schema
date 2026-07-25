@@ -550,28 +550,48 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
             "additionalProperties": false,
             // the manually quoted `mode: "{{ … }}"` splice breaks on
             // strings that are not valid double-quoted YAML content,
-            // scoped to its create-guarded render.
-            "allOf": [{
-                "if": {
-                    "properties": {
-                        "serviceAccount": {
-                            "properties": {
-                                "create": { "$ref": "#/$defs/helm-truthy" }
-                            },
-                            "required": ["create"],
-                            "type": "object"
-                        }
+            // scoped to its create-guarded render; the header's own
+            // `.Values.serviceAccount.create` navigation demands the host.
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "serviceAccount": {
+                                "properties": {
+                                    "create": { "$ref": "#/$defs/helm-truthy" }
+                                },
+                                "required": ["create"],
+                                "type": "object"
+                            }
+                        },
+                        "required": ["serviceAccount"],
+                        "type": "object"
                     },
-                    "required": ["serviceAccount"],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "mode": { "$ref": "#/$defs/helm-double-quoted-safe" }
+                    "then": {
+                        "additionalProperties": {},
+                        "properties": {
+                            "mode": { "$ref": "#/$defs/helm-double-quoted-safe" }
+                        }
                     }
+                },
+                {
+                    "if": {
+                        "anyOf": [
+                            { "not": {
+                                "properties": { "serviceAccount": {} },
+                                "required": ["serviceAccount"],
+                                "type": "object"
+                            } },
+                            {
+                                "properties": { "serviceAccount": { "enum": [null] } },
+                                "required": ["serviceAccount"],
+                                "type": "object"
+                            }
+                        ]
+                    },
+                    "then": false
                 }
-            }],
+            ],
             "properties": {
                 "mode": {},
                 "serviceAccount": {

@@ -255,14 +255,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "config": {
-          "type": "object"
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -454,6 +446,84 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "config": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "jetstream": {}
+                  },
+                  "required": [
+                    "jetstream"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "jetstream": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

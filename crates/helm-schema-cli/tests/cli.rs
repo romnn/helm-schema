@@ -20,6 +20,30 @@ fn generate_values_schema_for_chart(
         .map(|generated| generated.schema)
 }
 
+/// The `if <host is absent> then false` arm a navigated host's presence
+/// claim emits: Go template member access aborts on a nil receiver, and a
+/// parent-owned key is absent exactly when the user null-deleted it.
+fn navigated_host_clause(segments: &[&str]) -> serde_json::Value {
+    let chain = |leaf: serde_json::Value| {
+        let mut node = leaf;
+        for segment in segments.iter().rev() {
+            node = serde_json::json!({
+                "type": "object",
+                "required": [*segment],
+                "properties": { *segment: node },
+            });
+        }
+        node
+    };
+    serde_json::json!({
+        "if": { "anyOf": [
+            { "not": chain(serde_json::json!({})) },
+            chain(serde_json::json!({ "enum": [null] })),
+        ] },
+        "then": false,
+    })
+}
+
 fn schema_accepts_type(schema: &serde_json::Value, schema_type: &str) -> bool {
     (match schema.get("type") {
         Some(serde_json::Value::String(value)) => value == schema_type,
@@ -743,6 +767,24 @@ fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
     let expected = serde_json::json!({
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
+      // helm's dependency coalescing type-asserts the alias' values root,
+      // and the subchart navigates `.Values.global.…` on every render (its
+      // subchart-declared default makes only the explicit null spelling
+      // reach the read as nil).
+      "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": { "kid": { "anyOf": [{ "type": "object" }, { "type": "null" }] } }
+        },
+        {
+          "if": {
+            "properties": { "global": { "enum": [null] } },
+            "required": ["global"],
+            "type": "object"
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "global": global_schema,
         "kid": {
@@ -1515,6 +1557,8 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
+        // the helper navigates `.serviceAccount.name` on every render
+        "allOf": [navigated_host_clause(&["serviceAccount"])],
         "properties": {
             "serviceAccount": {
                 "additionalProperties": {},
@@ -1605,6 +1649,8 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
+        // the mutation navigates `.serviceAccount` on every render
+        "allOf": [navigated_host_clause(&["serviceAccount"])],
         "properties": {
             // the `default "fallback"` literal types only the
             // truthy arm, and the only consumer is `printf`, which totally

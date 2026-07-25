@@ -1547,6 +1547,50 @@
       "description": "noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain names\nthat should be excluded from proxying. IP and domain names can\ncontain port numbers.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
       "type": "string"
     },
+    "schema146": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {
+                "properties": {
+                  "image": {}
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "properties": {
+                "image": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "schema148": {
       "additionalProperties": {
         "oneOf": [
@@ -1851,6 +1895,34 @@
           }
         ]
       }
+    },
+    "schema219": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {}
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "schema22": {
       "additionalProperties": false,
@@ -2384,12 +2456,47 @@
       }
     },
     "schema324": {
+      "properties": {
+        "registry": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "registry"
+      ],
+      "type": "object"
+    },
+    "schema325": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
+    "schema328": {
+      "properties": {
+        "image": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
     "schema331": {
+      "properties": {
+        "registry": {}
+      },
+      "required": [
+        "registry"
+      ],
+      "type": "object"
+    },
+    "schema333": {
       "oneOf": [
         {
           "type": [
@@ -2405,29 +2512,23 @@
         }
       ]
     },
-    "schema332": {
+    "schema334": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema337": {
-      "description": "The key to select.",
-      "type": "string"
-    },
-    "schema338": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
+    "schema335": {
+      "properties": {
+        "image": {}
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "schema339": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
+      "description": "The key to select.",
+      "type": "string"
     },
     "schema34": {
       "additionalProperties": false,
@@ -2479,21 +2580,36 @@
       ]
     },
     "schema340": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema341": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema342": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema341": {
+    "schema343": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema343": {
+    "schema345": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema344": {
+    "schema346": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -5345,35 +5461,22 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
             "additionalProperties": {},
+            "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
             "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
-                "properties": {
-                  "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
       }
     },
     {
@@ -5952,7 +6055,7 @@
                                           "$ref": "#/$defs/schema142"
                                         },
                                         "sizeLimit": {
-                                          "$ref": "#/$defs/schema331"
+                                          "$ref": "#/$defs/schema333"
                                         }
                                       },
                                       "type": [
@@ -6167,7 +6270,7 @@
                               },
                               "limits": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/schema331"
+                                  "$ref": "#/$defs/schema333"
                                 },
                                 "description": "ephemeral-storage: \"2Gi\"",
                                 "type": [
@@ -6324,19 +6427,6 @@
               "trivy": {
                 "additionalProperties": {},
                 "properties": {
-                  "server": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "trivy": {
-                "additionalProperties": {},
-                "properties": {
                   "serverServiceName": {
                     "anyOf": [
                       {
@@ -6462,13 +6552,13 @@
               "managedBy": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema339"
-                  },
-                  {
                     "$ref": "#/$defs/schema341"
                   },
                   {
                     "$ref": "#/$defs/schema343"
+                  },
+                  {
+                    "$ref": "#/$defs/schema345"
                   },
                   {
                     "not": {
@@ -6476,10 +6566,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema344"
+                    "$ref": "#/$defs/schema346"
                   },
                   {
-                    "$ref": "#/$defs/schema340"
+                    "$ref": "#/$defs/schema342"
                   },
                   {
                     "$ref": "#/$defs/schema292"
@@ -6491,7 +6581,7 @@
                     "$ref": "#/$defs/schema321"
                   },
                   {
-                    "$ref": "#/$defs/schema332"
+                    "$ref": "#/$defs/schema334"
                   }
                 ],
                 "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
@@ -7002,13 +7092,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema339"
-                          },
-                          {
                             "$ref": "#/$defs/schema341"
                           },
                           {
                             "$ref": "#/$defs/schema343"
+                          },
+                          {
+                            "$ref": "#/$defs/schema345"
                           },
                           {
                             "not": {
@@ -7016,10 +7106,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema344"
+                            "$ref": "#/$defs/schema346"
                           },
                           {
-                            "$ref": "#/$defs/schema340"
+                            "$ref": "#/$defs/schema342"
                           },
                           {
                             "$ref": "#/$defs/schema292"
@@ -7031,7 +7121,7 @@
                             "$ref": "#/$defs/schema321"
                           },
                           {
-                            "$ref": "#/$defs/schema332"
+                            "$ref": "#/$defs/schema334"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -9406,100 +9496,34 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
             "properties": {
-              "operator": {
+              "trivy": {
                 "properties": {
-                  "builtInTrivyServer": {
+                  "createConfig": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "builtInTrivyServer"
+                  "createConfig"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "operator"
+              "trivy"
             ],
             "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema190"
-              }
-            ]
+            "$ref": "#/$defs/schema190"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "builtInTrivyServer": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "builtInTrivyServer"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "createConfig": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createConfig"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema190"
-                  }
-                ]
-              }
-            ]
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -9638,6 +9662,266 @@
         "allOf": [
           {
             "properties": {
+              "alternateReportStorage": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "alternateReportStorage"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "alternateReportStorage": {
+                      "properties": {
+                        "podSecurityContext": {}
+                      },
+                      "required": [
+                        "podSecurityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "alternateReportStorage"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "alternateReportStorage": {
+                    "properties": {
+                      "podSecurityContext": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "podSecurityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alternateReportStorage"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "alternateReportStorage": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "alternateReportStorage"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "podSecurityContext": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podSecurityContext"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "builtInTrivyServer": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "builtInTrivyServer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "server": {}
+                      },
+                      "required": [
+                        "server"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "server": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "server"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "builtInTrivyServer": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "builtInTrivyServer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "server": {
+                          "properties": {
+                            "extraServerVolumes": {}
+                          },
+                          "required": [
+                            "extraServerVolumes"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "server"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "server": {
+                        "properties": {
+                          "extraServerVolumes": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "extraServerVolumes"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "server"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "operator": {
                 "properties": {
                   "clusterComplianceEnabled": {
@@ -9767,6 +10051,63 @@
               },
               {
                 "$ref": "#/$defs/schema138"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "createConfig": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createConfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema190"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "$ref": "#/$defs/schema331"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "$ref": "#/$defs/schema324"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
               }
             ]
           }
@@ -9977,6 +10318,734 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "alternateReportStorage": {}
+              },
+              "required": [
+                "alternateReportStorage"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "alternateReportStorage": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "alternateReportStorage"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "compliance": {}
+              },
+              "required": [
+                "compliance"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "compliance": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "compliance"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema219"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "registry": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "operator": {
+                        "properties": {
+                          "builtInTrivyServer": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "builtInTrivyServer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "operator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema190"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema146"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "registry": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "registry"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "operator": {
+                        "properties": {
+                          "builtInTrivyServer": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "builtInTrivyServer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "operator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "image": {
+                            "properties": {
+                              "registry": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "registry"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema190"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/schema335"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema328"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "nodeCollector": {}
+              },
+              "required": [
+                "nodeCollector"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "nodeCollector": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "nodeCollector"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "operator": {}
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "operator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "policiesBundle": {}
+              },
+              "required": [
+                "policiesBundle"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "policiesBundle": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "policiesBundle"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {}
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "trivy": {}
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "trivy": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "$ref": "#/$defs/schema335"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "$ref": "#/$defs/schema328"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "operator": {
+                    "properties": {
+                      "builtInTrivyServer": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "builtInTrivyServer"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema190"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "trivyOperator": {}
+              },
+              "required": [
+                "trivyOperator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "trivyOperator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "trivyOperator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -10135,7 +11204,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema324"
+          "$ref": "#/$defs/schema325"
         },
         {
           "not": {
@@ -10171,13 +11240,13 @@
                   "mountPath": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema339"
-                      },
-                      {
                         "$ref": "#/$defs/schema341"
                       },
                       {
                         "$ref": "#/$defs/schema343"
+                      },
+                      {
+                        "$ref": "#/$defs/schema345"
                       },
                       {
                         "not": {
@@ -10185,10 +11254,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema344"
+                        "$ref": "#/$defs/schema346"
                       },
                       {
-                        "$ref": "#/$defs/schema340"
+                        "$ref": "#/$defs/schema342"
                       },
                       {
                         "$ref": "#/$defs/schema292"
@@ -10200,7 +11269,7 @@
                         "$ref": "#/$defs/schema321"
                       },
                       {
-                        "$ref": "#/$defs/schema332"
+                        "$ref": "#/$defs/schema334"
                       }
                     ],
                     "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
@@ -10381,7 +11450,7 @@
                     "description": "Selects a key from a ConfigMap.",
                     "properties": {
                       "key": {
-                        "$ref": "#/$defs/schema337"
+                        "$ref": "#/$defs/schema339"
                       },
                       "name": {
                         "$ref": "#/$defs/schema234"
@@ -10510,13 +11579,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema339"
-                },
-                {
                   "$ref": "#/$defs/schema341"
                 },
                 {
                   "$ref": "#/$defs/schema343"
+                },
+                {
+                  "$ref": "#/$defs/schema345"
                 },
                 {
                   "not": {
@@ -10524,7 +11593,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema344"
+                  "$ref": "#/$defs/schema346"
                 },
                 {
                   "$ref": "#/$defs/schema292"
@@ -10536,7 +11605,7 @@
                   "$ref": "#/$defs/schema321"
                 },
                 {
-                  "$ref": "#/$defs/schema332"
+                  "$ref": "#/$defs/schema334"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -10727,7 +11796,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema324"
+              "$ref": "#/$defs/schema325"
             },
             {
               "$ref": "#/$defs/schema99"
@@ -10788,7 +11857,7 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema324"
+              "$ref": "#/$defs/schema325"
             },
             {
               "$ref": "#/$defs/schema116"
@@ -10859,7 +11928,7 @@
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema324"
+              "$ref": "#/$defs/schema325"
             },
             {
               "$ref": "#/$defs/schema116"
@@ -11015,7 +12084,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema324"
+          "$ref": "#/$defs/schema325"
         },
         {
           "$ref": "#/$defs/schema99"
@@ -11187,7 +12256,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema324"
+          "$ref": "#/$defs/schema325"
         },
         {
           "not": {
@@ -11230,7 +12299,7 @@
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema338"
+                            "$ref": "#/$defs/schema340"
                           },
                           "type": "array"
                         },
@@ -11311,7 +12380,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema324"
+              "$ref": "#/$defs/schema325"
             },
             {
               "$ref": "#/$defs/schema99"
@@ -11336,13 +12405,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema339"
-                },
-                {
                   "$ref": "#/$defs/schema341"
                 },
                 {
                   "$ref": "#/$defs/schema343"
+                },
+                {
+                  "$ref": "#/$defs/schema345"
                 },
                 {
                   "not": {
@@ -11350,7 +12419,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema344"
+                  "$ref": "#/$defs/schema346"
                 },
                 {
                   "$ref": "#/$defs/schema292"
@@ -11362,7 +12431,7 @@
                   "$ref": "#/$defs/schema321"
                 },
                 {
-                  "$ref": "#/$defs/schema332"
+                  "$ref": "#/$defs/schema334"
                 }
               ],
               "description": "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
@@ -11419,13 +12488,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema339"
-                },
-                {
                   "$ref": "#/$defs/schema341"
                 },
                 {
                   "$ref": "#/$defs/schema343"
+                },
+                {
+                  "$ref": "#/$defs/schema345"
                 },
                 {
                   "not": {
@@ -11433,7 +12502,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema344"
+                  "$ref": "#/$defs/schema346"
                 },
                 {
                   "$ref": "#/$defs/schema292"
@@ -11445,7 +12514,7 @@
                   "$ref": "#/$defs/schema321"
                 },
                 {
-                  "$ref": "#/$defs/schema332"
+                  "$ref": "#/$defs/schema334"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -11514,13 +12583,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema339"
-                          },
-                          {
                             "$ref": "#/$defs/schema341"
                           },
                           {
                             "$ref": "#/$defs/schema343"
+                          },
+                          {
+                            "$ref": "#/$defs/schema345"
                           },
                           {
                             "not": {
@@ -11528,7 +12597,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema344"
+                            "$ref": "#/$defs/schema346"
                           },
                           {
                             "$ref": "#/$defs/schema292"
@@ -11540,7 +12609,7 @@
                             "$ref": "#/$defs/schema321"
                           },
                           {
-                            "$ref": "#/$defs/schema332"
+                            "$ref": "#/$defs/schema334"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -12026,13 +13095,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema339"
-                          },
-                          {
                             "$ref": "#/$defs/schema341"
                           },
                           {
                             "$ref": "#/$defs/schema343"
+                          },
+                          {
+                            "$ref": "#/$defs/schema345"
                           },
                           {
                             "not": {
@@ -12040,10 +13109,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema344"
+                            "$ref": "#/$defs/schema346"
                           },
                           {
-                            "$ref": "#/$defs/schema340"
+                            "$ref": "#/$defs/schema342"
                           },
                           {
                             "$ref": "#/$defs/schema292"
@@ -12055,7 +13124,7 @@
                             "$ref": "#/$defs/schema321"
                           },
                           {
-                            "$ref": "#/$defs/schema332"
+                            "$ref": "#/$defs/schema334"
                           }
                         ],
                         "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -12733,7 +13802,7 @@
                             "$ref": "#/$defs/schema142"
                           },
                           "sizeLimit": {
-                            "$ref": "#/$defs/schema331"
+                            "$ref": "#/$defs/schema333"
                           }
                         },
                         "type": "object"

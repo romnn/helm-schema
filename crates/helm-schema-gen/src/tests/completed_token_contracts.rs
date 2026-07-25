@@ -29,11 +29,13 @@ fn prefixed_argument_splice_keeps_fallback_typed_inputs_open() {
             logLevel: info
         "}),
     );
+    // The `ctrl` host is navigated on every render, so it rides along in
+    // every composed instance.
     for instance in [
-        serde_json::json!({ "logLevel": { "a": "b" } }),
-        serde_json::json!({ "logLevel": ["a"] }),
-        serde_json::json!({ "logLevel": "info" }),
-        serde_json::json!({ "logLevel": false }),
+        serde_json::json!({ "ctrl": { "create": true }, "logLevel": { "a": "b" } }),
+        serde_json::json!({ "ctrl": { "create": true }, "logLevel": ["a"] }),
+        serde_json::json!({ "ctrl": { "create": true }, "logLevel": "info" }),
+        serde_json::json!({ "ctrl": { "create": true }, "logLevel": false }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),

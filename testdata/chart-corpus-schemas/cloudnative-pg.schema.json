@@ -2294,33 +2294,36 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "monitoring": {
             "additionalProperties": {},
             "properties": {
-              "monitoring": {
-                "additionalProperties": {},
-                "properties": {
-                  "grafanaDashboard": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
+              "grafanaDashboard": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "monitoring": {
-                "type": "object"
+                ]
               }
             }
           }
-        ]
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "monitoring": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       }
     },
     {
@@ -2936,13 +2939,487 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "webhook": {
-          "description": "The webhook configuration.",
-          "type": "object"
-        }
-      }
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "config": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "monitoringQueriesConfigMap": {}
+              },
+              "required": [
+                "monitoringQueriesConfigMap"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "monitoringQueriesConfigMap": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "monitoringQueriesConfigMap"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {}
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {}
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "livenessProbe": {}
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "livenessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "mutating": {}
+                  },
+                  "required": [
+                    "mutating"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "mutating": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "mutating"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "readinessProbe": {}
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "readinessProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "startupProbe": {}
+                  },
+                  "required": [
+                    "startupProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "startupProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "startupProbe"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "validating": {}
+                  },
+                  "required": [
+                    "validating"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "validating": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "validating"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {

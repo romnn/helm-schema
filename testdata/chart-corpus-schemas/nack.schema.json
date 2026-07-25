@@ -889,10 +889,32 @@
       ]
     },
     "schema47": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "key": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {}
+              },
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    "schema48": {
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "null"
     },
-    "schema48": {
+    "schema49": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
@@ -965,28 +987,28 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema51": {
+    "schema52": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema52": {
+    "schema53": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema56": {
+    "schema58": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema57": {
+    "schema59": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -1028,12 +1050,12 @@
         "null"
       ]
     },
-    "schema65": {
+    "schema67": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema67": {
+    "schema69": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
@@ -1077,7 +1099,7 @@
         "null"
       ]
     },
-    "schema70": {
+    "schema72": {
       "oneOf": [
         {
           "type": [
@@ -1093,17 +1115,17 @@
         }
       ]
     },
-    "schema71": {
+    "schema73": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema74": {
+    "schema76": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema75": {
+    "schema77": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -1491,45 +1513,6 @@
                 }
               }
             }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "description": "NATS URL",
-                    "properties": {
-                      "credentials": {
-                        "required": [
-                          "secret"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "description": "NATS URL",
-                    "required": [
-                      "credentials"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
           }
         ]
       }
@@ -1610,45 +1593,6 @@
                         ]
                       }
                     }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "description": "NATS URL",
-                    "properties": {
-                      "nkey": {
-                        "required": [
-                          "secret"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "description": "NATS URL",
-                    "required": [
-                      "nkey"
-                    ],
-                    "type": "object"
                   }
                 }
               }
@@ -1888,53 +1832,27 @@
         ]
       },
       "then": {
-        "allOf": [
-          {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
             "additionalProperties": {},
             "properties": {
-              "jetstream": {
+              "tls": {
                 "additionalProperties": {},
+                "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
                 "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
-                    "properties": {
-                      "settings": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          }
-                        ],
-                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration"
+                  "settings": {
+                    "anyOf": [
+                      {
+                        "type": "object"
                       }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
-                    "type": "object"
+                    ],
+                    "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration"
                   }
                 }
               }
             }
           }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "jetstream": {
-          "type": "object"
         }
       }
     },
@@ -2058,6 +1976,178 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "jetstream": {}
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "jetstream": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "jetstream": {
+                  "properties": {
+                    "nats": {}
+                  },
+                  "required": [
+                    "nats"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "nats": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "nats"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "jetstream": {
+                  "properties": {
+                    "tls": {}
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "tls": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -2211,7 +2301,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema53"
                   }
                 },
                 "required": [
@@ -2228,7 +2318,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -2352,10 +2442,10 @@
                     "$ref": "#/$defs/schema6"
                   },
                   "name": {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema49"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema58"
                   }
                 },
                 "type": [
@@ -2450,7 +2540,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema70"
+                    "$ref": "#/$defs/schema72"
                   }
                 },
                 "type": [
@@ -3260,7 +3350,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -3342,10 +3432,10 @@
                               "$ref": "#/$defs/schema6"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema48"
+                              "$ref": "#/$defs/schema49"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema56"
+                              "$ref": "#/$defs/schema58"
                             }
                           },
                           "type": [
@@ -3388,7 +3478,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/schema48"
+                              "$ref": "#/$defs/schema49"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -3591,14 +3681,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema53"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/schema48"
+                        "$ref": "#/$defs/schema49"
                       }
                     },
                     "type": "object",
@@ -3697,7 +3787,7 @@
                     "$ref": "#/$defs/schema44"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/schema29"
@@ -3939,7 +4029,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema67"
+          "$ref": "#/$defs/schema69"
         },
         {
           "not": {
@@ -4074,7 +4164,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema67"
+          "$ref": "#/$defs/schema69"
         },
         {
           "not": {
@@ -4093,7 +4183,7 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema67"
+              "$ref": "#/$defs/schema69"
             },
             {
               "additionalProperties": {
@@ -4223,7 +4313,7 @@
                             "$ref": "#/$defs/schema17"
                           },
                           {
-                            "$ref": "#/$defs/schema47"
+                            "$ref": "#/$defs/schema48"
                           },
                           {
                             "not": {
@@ -4235,6 +4325,312 @@
                       }
                     }
                   }
+                }
+              ],
+              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "nats": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "credentials": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "credentials"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "credentials": {
+                                  "properties": {
+                                    "secret": {}
+                                  },
+                                  "required": [
+                                    "secret"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "credentials"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "credentials": {
+                                "properties": {
+                                  "secret": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "secret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "credentials"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
+              "description": "NATS URL"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "nats": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "nkey": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nkey"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "nkey": {
+                                  "properties": {
+                                    "secret": {}
+                                  },
+                                  "required": [
+                                    "secret"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "nkey"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "nkey": {
+                                "properties": {
+                                  "secret": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "secret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "nkey"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
+              "description": "NATS URL"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "tls": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "settings": {}
+                              },
+                              "required": [
+                                "settings"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "settings": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "properties": {
+                                  "settings": {
+                                    "properties": {
+                                      "client_ca": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "client_ca"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "settings"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "properties": {
+                                  "settings": {
+                                    "properties": {
+                                      "client_cert": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "client_cert"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "settings"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "properties": {
+                                  "settings": {
+                                    "properties": {
+                                      "client_key": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "client_key"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "settings"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
                 }
               ],
               "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
@@ -4278,101 +4674,60 @@
         },
         "klogLevel": {},
         "nats": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "credentials": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "secret": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "key": {}
-                          }
-                        },
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {}
-                          },
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "nkey": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "secret": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "key": {},
-                        "name": {}
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                },
-                "url": {}
-              },
-              "type": "object"
-            }
-          ],
+          "additionalProperties": {},
           "description": "NATS URL",
+          "properties": {
+            "credentials": {
+              "$ref": "#/$defs/schema47"
+            },
+            "nkey": {
+              "$ref": "#/$defs/schema47"
+            },
+            "url": {}
+          },
           "type": "object"
         },
         "pullPolicy": {},
         "tls": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "secretName": {
-                  "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
+          "additionalProperties": {},
+          "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "settings": {
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "secretName": {
+              "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
+            },
+            "settings": {
+              "anyOf": [
+                {
                   "additionalProperties": {},
-                  "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
                   "properties": {
-                    "client_ca": {},
+                    "client_ca": {}
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
                     "client_cert": {},
                     "client_key": {}
                   },
                   "type": "object"
-                },
-                "tlsFirst": {}
-              },
-              "type": "object"
-            }
-          ],
-          "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+                }
+              ],
+              "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration"
+            },
+            "tlsFirst": {}
+          },
           "type": "object"
         }
       },
@@ -4383,10 +4738,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema74"
+              "$ref": "#/$defs/schema76"
             },
             {
-              "$ref": "#/$defs/schema75"
+              "$ref": "#/$defs/schema77"
             },
             {
               "not": {
@@ -4404,16 +4759,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema59"
             },
             {
               "$ref": "#/$defs/schema40"
             },
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema71"
+              "$ref": "#/$defs/schema73"
             }
           ],
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -4435,10 +4790,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema74"
+              "$ref": "#/$defs/schema76"
             },
             {
-              "$ref": "#/$defs/schema75"
+              "$ref": "#/$defs/schema77"
             },
             {
               "not": {
@@ -4456,16 +4811,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema59"
             },
             {
               "$ref": "#/$defs/schema40"
             },
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema71"
+              "$ref": "#/$defs/schema73"
             }
           ],
           "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -4498,7 +4853,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema67"
+          "$ref": "#/$defs/schema69"
         },
         {
           "additionalProperties": {
@@ -4525,7 +4880,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema67"
+          "$ref": "#/$defs/schema69"
         },
         {
           "additionalProperties": {
@@ -4606,7 +4961,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema67"
+          "$ref": "#/$defs/schema69"
         },
         {
           "not": {
@@ -4719,7 +5074,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema67"
+          "$ref": "#/$defs/schema69"
         },
         {
           "not": {

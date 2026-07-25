@@ -74,6 +74,7 @@ pub(crate) fn apply_program_wrapper_alternatives(
         let keys: Vec<(&str, bool)> = keys.into_iter().collect();
         if scope.is_empty() {
             rewrite_document(root, &keys, &excluded);
+            scope_conditional_arms_to_non_wrappers(root, &keys);
             wrap_document_root(root, &keys);
             reject_root_spread_wrappers(root, &keys);
         } else if let Some(node) = properties_node_mut(root, scope) {
@@ -89,7 +90,8 @@ pub(crate) fn apply_program_wrapper_alternatives(
 /// spread form is rejected separately). Union the root's own value domain
 /// with the wrapper alternative, leaving `$schema`/`$defs` and the
 /// conditional `allOf` arms as top-level conjuncts — they constrain the
-/// REWRITTEN tree and evaluate vacuously against the raw singleton form.
+/// REWRITTEN tree, and `scope_conditional_arms_to_non_wrappers` makes each
+/// arm's condition vacuous for the raw singleton form.
 /// Children were already wrapped by `rewrite_document`, so no recursion.
 fn wrap_document_root(root: &mut Value, keys: &[(&str, bool)]) {
     const VALUE_DOMAIN: [&str; 5] = [
@@ -174,6 +176,33 @@ fn rewrite_document(root: &mut Value, keys: &[(&str, bool)], excluded: &BTreeSet
                 }
             }
             _ => {}
+        }
+    }
+}
+
+/// A singleton wrapper document REPLACES the tree the conditional arms
+/// describe, so every arm's condition gains a not-a-wrapper conjunct: an
+/// arm keyed on a navigated host's absence would otherwise reject the
+/// wrapper for keys the program supplies. Unconditional arms need no
+/// scoping — they constrain member values, which a singleton wrapper map
+/// does not carry.
+fn scope_conditional_arms_to_non_wrappers(root: &mut Value, keys: &[(&str, bool)]) {
+    let Some(arms) = root
+        .as_object_mut()
+        .and_then(|object| object.get_mut("allOf"))
+        .and_then(Value::as_array_mut)
+    else {
+        return;
+    };
+    for arm in arms {
+        let Some(condition) = arm.as_object_mut().and_then(|object| object.remove("if")) else {
+            continue;
+        };
+        if let Some(object) = arm.as_object_mut() {
+            object.insert(
+                "if".to_string(),
+                json!({ "allOf": [condition, { "not": sentinel_singleton_shape(keys) }] }),
+            );
         }
     }
 }

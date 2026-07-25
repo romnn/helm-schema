@@ -4,7 +4,10 @@
 
 use indoc::indoc;
 
-use super::{parse_ir, parse_ir_with_helpers, schema_accepts_instance, schema_for_values_yaml};
+use super::{
+    composed_instance, parse_ir, parse_ir_with_helpers, schema_accepts_instance,
+    schema_for_values_yaml,
+};
 
 /// The velero shape: the deprecated `securityContext` merges beneath
 /// `podSecurityContext` into a Deployment's pod security context. A legacy
@@ -117,7 +120,10 @@ fn merged_member_projection_reaches_both_layers() {
           featuresOverride: {}
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values));
-    for (instance, want, label) in [
+    // Cases compose over the declared defaults: the merge reads
+    // `.Values.ctrl.featuresOverride` on every render, so the `ctrl` host
+    // rides along.
+    for (overrides, want, label) in [
         (
             serde_json::json!({ "features": { "logging": { "format": "json", "verbosity": 4 } } }),
             true,
@@ -136,6 +142,7 @@ fn merged_member_projection_reaches_both_layers() {
             "scalar base unshadowed",
         ),
     ] {
+        let instance = composed_instance(values, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "merged member projection {label}: instance={instance}; schema={schema}"
@@ -218,14 +225,14 @@ fn fresh_dict_merge_layers_type_dynamic_members_with_shadow_refinement() {
         {{ toYaml $additionalAnnotations | indent 4 }}
         {{- end }}
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir(src),
-        Some(indoc! {"
-            additionalRuleAnnotations: {}
-            additionalRuleGroupAnnotations: {}
-        "}),
-    );
-    for (instance, want) in [
+    let values_yaml = indoc! {"
+        additionalRuleAnnotations: {}
+        additionalRuleGroupAnnotations: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    // Cases compose over the declared defaults: the group layer navigates
+    // `additionalRuleGroupAnnotations.mygroup` on every render.
+    for (overrides, want) in [
         (
             serde_json::json!({ "additionalRuleAnnotations": { "MyAlert": { "foo": 7 } } }),
             false,
@@ -261,6 +268,7 @@ fn fresh_dict_merge_layers_type_dynamic_members_with_shadow_refinement() {
             true,
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "fresh-dict merge layers bind dynamic-member payloads per layer: \
@@ -863,18 +871,19 @@ fn selection_chain_merge_layers_keep_the_has_key_gated_splice() {
               expr: vector(1)
         {{- end }}
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir(src),
-        Some(indoc! {r#"
-            defaultRules:
-              create: true
-              additionalRuleAnnotations: {}
-              additionalRuleGroupAnnotations:
-                alertmanager: {}
-              runbookUrl: "https://runbooks.example/runbooks"
-        "#}),
-    );
-    for (instance, want, label) in [
+    let values_yaml = indoc! {r#"
+        defaultRules:
+          create: true
+          additionalRuleAnnotations: {}
+          additionalRuleGroupAnnotations:
+            alertmanager: {}
+          runbookUrl: "https://runbooks.example/runbooks"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    // Cases compose over the declared defaults: the selection chain
+    // navigates `defaultRules.additionalRuleGroupAnnotations` on every
+    // render of the rule document.
+    for (overrides, want, label) in [
         (
             serde_json::json!({ "defaultRules": {
                 "create": true, "runbookUrl": [], "additionalRuleAnnotations": {} } }),
@@ -919,6 +928,7 @@ fn selection_chain_merge_layers_keep_the_has_key_gated_splice() {
         ),
         (serde_json::json!({}), true, "empty document"),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "selection-chain merge layer presence ({label}): \

@@ -2662,15 +2662,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "controller": {
-          "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
-          "type": "object"
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "fullnameOverride": {
@@ -3140,15 +3131,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "settings": {
-          "description": "Global Settings to configure Karpenter",
-          "type": "object"
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "topologySpreadConstraints": {
@@ -3183,6 +3165,435 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {}
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "healthProbe": {}
+                  },
+                  "required": [
+                    "healthProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "healthProbe": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "healthProbe"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "metrics": {}
+                  },
+                  "required": [
+                    "metrics"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "metrics": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "additionalAnnotations": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "additionalAnnotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "additionalAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "additionalAnnotations"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "annotations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "annotations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "settings": {}
+              },
+              "required": [
+                "settings"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "settings": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "settings": {
+                  "properties": {
+                    "featureGates": {}
+                  },
+                  "required": [
+                    "featureGates"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "settings"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "featureGates": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "featureGates"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {

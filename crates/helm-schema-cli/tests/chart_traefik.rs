@@ -182,11 +182,16 @@ fn traefik_listener_keys_carry_the_provider_section_name_domain() -> eyre::Resul
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
+    // Cases compose over the chart defaults: helm validates the coalesced
+    // document, and the chart navigates hosts these overrides do not touch.
+    let compose = |overrides: serde_json::Value| {
+        chart_instances::with_override("traefik", overrides).expect("compose traefik instance")
+    };
     let live_listeners = |listeners: serde_json::Value| {
-        serde_json::json!({
+        compose(serde_json::json!({
             "providers": { "kubernetesGateway": { "enabled": true } },
             "gateway": { "enabled": true, "listeners": listeners },
-        })
+        }))
     };
     let listener = || serde_json::json!({ "port": 8000, "protocol": "TCP" });
     for (instance, want, label) in [
@@ -211,17 +216,17 @@ fn traefik_listener_keys_carry_the_provider_section_name_domain() -> eyre::Resul
             "an empty listener key violates the SectionName minLength",
         ),
         (
-            serde_json::json!({
+            compose(serde_json::json!({
                 "gateway": { "enabled": true, "listeners": { "Audit": listener() } },
-            }),
+            })),
             true,
             "a dormant kubernetesGateway keeps every key spelling open",
         ),
         (
-            serde_json::json!({
+            compose(serde_json::json!({
                 "providers": { "kubernetesGateway": { "enabled": true } },
                 "gateway": { "enabled": false, "listeners": { "Audit": listener() } },
-            }),
+            })),
             true,
             "a disabled gateway keeps every key spelling open",
         ),

@@ -1710,11 +1710,15 @@ fn int_cast_guard_keeps_strict_operand_contract_alive() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for instance in [
+    // Instances compose over the declared defaults: `master`, `sentinel`
+    // and `auth` are navigated on every render, so a document dropping them
+    // is the null-deleted state helm aborts on.
+    for overrides in [
         serde_json::json!({ "architecture": "standalone", "auth": { "enabled": true } }),
         serde_json::json!({ "auth": { "enabled": true } }),
         serde_json::json!({ "auth": { "enabled": false } }),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance),
             "boolean operands and dead partitions render: instance={instance}; schema={schema}"
@@ -2106,17 +2110,17 @@ fn semver_guarded_string_contract_binds_conditionally() {
           probe: {{ tpl .Values.baseUrl . }}
         {{- end }}
     "#};
-    let schema = schema_for_values_yaml(
-        parse_ir(src),
-        Some(indoc! {r#"
-            webserver:
-              enabled: true
-            airflowVersion: "3.2.2"
-            baseUrl: "http://placeholder"
-        "#}),
-    );
+    let values_yaml = indoc! {r#"
+        webserver:
+          enabled: true
+        airflowVersion: "3.2.2"
+        baseUrl: "http://placeholder"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for (instance, want) in [
+    // Cases compose over the declared defaults: `.Values.webserver.enabled`
+    // is navigated on every render.
+    for (overrides, want) in [
         // Live version branch: the tpl subject must be a string.
         (
             serde_json::json!({
@@ -2161,6 +2165,7 @@ fn semver_guarded_string_contract_binds_conditionally() {
             true,
         ),
     ] {
+        let instance = composed_instance(values_yaml, overrides);
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "the semver comparator arm scopes the tpl string contract: \

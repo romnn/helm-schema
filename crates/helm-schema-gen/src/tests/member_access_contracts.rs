@@ -86,6 +86,25 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
         "strict".to_string(),
         serde_json::json!({
             "additionalProperties": {},
+            // The strict receiver's presence claim shares its `strict`
+            // ancestor with the enabled gate, so the clause anchors here
+            // instead of at the document root.
+            "allOf": [{
+                "if": { "allOf": [
+                    {
+                        "properties": { "enabled": { "$ref": "#/$defs/helm-truthy" } },
+                        "required": ["enabled"],
+                        "type": "object",
+                    },
+                    { "anyOf": [
+                        { "not": { "properties": { "receiver": {} },
+                            "required": ["receiver"], "type": "object" } },
+                        { "properties": { "receiver": { "enum": [null] } },
+                            "required": ["receiver"], "type": "object" },
+                    ] },
+                ] },
+                "then": false,
+            }],
             "properties": {
                 "enabled": {
                     "anyOf": [
@@ -101,45 +120,36 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
             "type": "object",
         }),
     );
-    // Arms sharing one encoded condition conjoin their contents into a
-    // single `if C then allOf [...]` (the emitter's size-bounding merge).
     let all_of = vec![
         serde_json::json!({
             "if": grouped_receiver_present,
-            "then": { "allOf": [
-                root_property_schema(
-                    "grouped",
-                    serde_json::json!({
-                        "additionalProperties": {},
-                        "properties": {
-                            "receiver": { "anyOf": [{ "type": "object" }] },
-                        },
-                    }),
-                ),
-                root_property_schema(
-                    "grouped",
-                    serde_json::json!({ "required": ["receiver"], "type": "object" }),
-                ),
-            ] },
+            "then": root_property_schema(
+                "grouped",
+                serde_json::json!({
+                    "additionalProperties": {},
+                    "properties": {
+                        "receiver": { "anyOf": [{ "type": "object" }] },
+                    },
+                }),
+            ),
         }),
         serde_json::json!({
             "if": strict_enabled,
-            "then": { "allOf": [
-                root_property_schema(
-                    "strict",
-                    serde_json::json!({
-                        "additionalProperties": {},
-                        "properties": {
-                            "receiver": { "anyOf": [{ "type": "object" }] },
-                        },
-                    }),
-                ),
-                root_property_schema(
-                    "strict",
-                    serde_json::json!({ "required": ["receiver"], "type": "object" }),
-                ),
-            ] },
+            "then": root_property_schema(
+                "strict",
+                serde_json::json!({
+                    "additionalProperties": {},
+                    "properties": {
+                        "receiver": { "anyOf": [{ "type": "object" }] },
+                    },
+                }),
+            ),
         }),
+        // The chains' own receivers are navigated unconditionally: the inner
+        // `.Values.grouped.receiver` read and the `strict.enabled` header
+        // both abort on a deleted host.
+        navigated_host_clause(&["grouped"]),
+        navigated_host_clause(&["strict"]),
     ];
     for instance in [
         serde_json::json!({ "grouped": {}, "strict": { "enabled": false } }),
@@ -548,6 +558,118 @@ fn nil_safe_grouped_receiver_with_declared_default_admits_null() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Navigation ABORTS on a nil receiver, so every host read outside its own
+/// presence gate must exist in the coalesced document — the state a user's
+/// `null` deletion produces (metrics-server's `apiService: null` aborts with
+/// "nil pointer evaluating interface {}.create"). The claim reaches
+/// TOP-LEVEL hosts, which have no parent slot for a `required` member, and
+/// it survives the chart's own mapping default, which the render-grade
+/// presence relaxation would otherwise drop. Nil-safe grouped receivers and
+/// `with`-scoped hosts keep every absent state open.
+#[test]
+fn navigated_hosts_must_exist_in_the_coalesced_document() {
+    let src = indoc! {r"
+        {{- if .Values.apiService.create }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: x
+        {{- end }}
+        ---
+        {{- if .Values.rbac.serviceAccount.create }}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: y
+        {{- end }}
+        ---
+        {{- if (.Values.nilSafe).enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: n
+        {{- end }}
+        ---
+        {{- with .Values.gated }}
+        {{- if .enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: g
+        {{- end }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        apiService:
+          create: true
+        rbac:
+          serviceAccount:
+            create: true
+        nilSafe: {}
+        gated: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let composed = serde_json::json!({
+        "apiService": { "create": true },
+        "rbac": { "serviceAccount": { "create": true } },
+        "nilSafe": {},
+        "gated": {},
+    });
+    let without = |path: &[&str]| {
+        let mut instance = composed.clone();
+        let mut node = &mut instance;
+        let Some((leaf, parents)) = path.split_last() else {
+            return instance;
+        };
+        for segment in parents {
+            node = &mut node[*segment];
+        }
+        if let Some(object) = node.as_object_mut() {
+            object.remove(*leaf);
+        }
+        instance
+    };
+    for (instance, want, label) in [
+        (composed.clone(), true, "the coalesced defaults render"),
+        (
+            without(&["apiService"]),
+            false,
+            "a deleted top-level host aborts the header read",
+        ),
+        (
+            without(&["rbac"]),
+            false,
+            "a deleted host ancestor aborts the chained read",
+        ),
+        (
+            without(&["rbac", "serviceAccount"]),
+            false,
+            "a deleted nested host aborts, default-supplied or not",
+        ),
+        (
+            without(&["nilSafe"]),
+            true,
+            "a nil-safe grouped receiver renders when deleted",
+        ),
+        (
+            without(&["gated"]),
+            true,
+            "a `with`-scoped host renders when deleted",
+        ),
+        (
+            serde_json::json!({ "apiService": {}, "rbac": { "serviceAccount": { "create": true } },
+                "nilSafe": {}, "gated": {} }),
+            true,
+            "an empty host map reads its member as nil",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "navigated host presence ({label}): instance={instance}; want={want}; schema={schema}"
         );
     }
 }

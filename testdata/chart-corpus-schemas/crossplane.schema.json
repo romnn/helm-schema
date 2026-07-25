@@ -4008,6 +4008,463 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configuration": {}
+              },
+              "required": [
+                "configuration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configuration": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "function": {}
+              },
+              "required": [
+                "function"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "function": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "function"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "functionCache": {}
+              },
+              "required": [
+                "functionCache"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "functionCache": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "functionCache"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "metrics": {}
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "metrics": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "packageCache": {}
+              },
+              "required": [
+                "packageCache"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "packageCache": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "packageCache"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "provider": {}
+              },
+              "required": [
+                "provider"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "provider": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbacManager": {}
+              },
+              "required": [
+                "rbacManager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbacManager": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbacManager"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "readiness": {}
+              },
+              "required": [
+                "readiness"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "readiness": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "readiness"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "registryCaBundleConfig": {}
+              },
+              "required": [
+                "registryCaBundleConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "registryCaBundleConfig": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "registryCaBundleConfig"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "secrets": {}
+              },
+              "required": [
+                "secrets"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "secrets": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "secrets"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhooks": {}
+              },
+              "required": [
+                "webhooks"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhooks": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
