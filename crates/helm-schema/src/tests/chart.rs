@@ -315,3 +315,36 @@ fn vendored_chart_archive_rejects_unsafe_entry_paths() {
         other => panic!("expected unsafe archive entry error, got {other:?}"),
     }
 }
+
+/// Entry-path policy must not depend on the host's path syntax: tar member
+/// names are `/`-separated on every platform, and a backslash entry that
+/// Windows parses as traversal must not slip through as one opaque Unix
+/// filename. Same verdicts on every OS.
+#[test]
+fn archive_entry_path_verdicts_are_platform_independent() {
+    for accepted in ["chart/Chart.yaml", "./chart/values.yaml"] {
+        assert!(
+            discovery::validate_archive_entry_path(
+                "charts/child.tgz",
+                std::path::Path::new(accepted)
+            )
+            .is_ok(),
+            "{accepted} must be accepted"
+        );
+    }
+    for rejected in [
+        "../child/Chart.yaml",
+        "..\\child\\Chart.yaml",
+        "chart/..\\..\\evil",
+        "/etc/passwd",
+    ] {
+        assert!(
+            discovery::validate_archive_entry_path(
+                "charts/child.tgz",
+                std::path::Path::new(rejected)
+            )
+            .is_err(),
+            "{rejected} must be rejected"
+        );
+    }
+}

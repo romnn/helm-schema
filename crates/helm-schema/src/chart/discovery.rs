@@ -208,9 +208,17 @@ fn extract_chart_archive(path: &VfsPath, load_budget: LoadBudget) -> EngineResul
 }
 
 pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> EngineResult<()> {
-    let is_safe = entry_path
-        .components()
-        .all(|component| matches!(component, Component::Normal(_) | Component::CurDir));
+    // `components()` parses with the HOST's separator rules, but tar entry
+    // names are platform-independent `/`-separated strings: an entry named
+    // `..\evil` parses as a traversal on Windows and as one opaque filename
+    // on Unix. Chart archives never legitimately contain backslashes (Helm
+    // requires `/`-separated member names), so reject them outright — the
+    // same entries then pass or fail identically on every platform.
+    let is_safe = entry_path.components().all(|component| match component {
+        Component::Normal(name) => !name.to_string_lossy().contains('\\'),
+        Component::CurDir => true,
+        _ => false,
+    });
     if is_safe {
         return Ok(());
     }
