@@ -1,20 +1,43 @@
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use test_util::prelude::sim_assert_eq;
 
 use super::{cache_home_for, default_cache_dir};
 
 /// A scripted environment for [`cache_home_for`], so both platform branches
-/// run under every host OS in CI. Values use host-absolute paths — the
-/// function checks absoluteness with the host's rules, and the logic under
-/// test is variable precedence, not path syntax.
-fn env(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<PathBuf> {
-    let map: BTreeMap<String, String> = pairs
+/// run under every host OS in CI. The logic under test is variable
+/// precedence, not path syntax, so values are built with [`abs`].
+fn env(pairs: &[(&str, &Path)]) -> impl Fn(&str) -> Option<PathBuf> {
+    let map: BTreeMap<String, PathBuf> = pairs
         .iter()
-        .map(|(key, value)| ((*key).to_string(), (*value).to_string()))
+        .map(|(key, value)| ((*key).to_string(), value.to_path_buf()))
         .collect();
-    move |var: &str| map.get(var).map(PathBuf::from)
+    move |var: &str| map.get(var).cloned()
+}
+
+/// `tail` placed directly under the host's filesystem root.
+///
+/// [`cache_home_for`] discards relative values and judges absoluteness with
+/// the host's rules, so scripted values must be absolute *there*: a bare
+/// `/xdg` has a root but no drive prefix, which makes it relative on
+/// Windows. Hardcoding the Unix spelling made every Windows-host run
+/// discard the whole environment and answer `None`, so the precedence the
+/// tests exist to pin was never reached.
+fn abs(tail: &str) -> PathBuf {
+    let path = if cfg!(windows) {
+        PathBuf::from(format!(r"C:\{tail}"))
+    } else {
+        PathBuf::from(format!("/{tail}"))
+    };
+    // Without this, a value that is relative on the host would fail the
+    // precedence assertions as a bare `None`, which says nothing about why.
+    assert!(
+        path.is_absolute(),
+        "scripted value must be absolute on this host, got {}",
+        path.display()
+    );
+    path
 }
 
 /// The resolved root must never be working-directory-relative, whatever the
@@ -54,17 +77,19 @@ fn default_cache_dir_separates_managed_roots_by_leaf() {
 
 #[test]
 fn unix_prefers_xdg_cache_home_over_home() {
+    let (xdg, home) = (abs("xdg"), abs("home/u"));
     sim_assert_eq!(
-        have: cache_home_for(false, env(&[("XDG_CACHE_HOME", "/xdg"), ("HOME", "/home/u")])),
-        want: Some(PathBuf::from("/xdg"))
+        have: cache_home_for(false, env(&[("XDG_CACHE_HOME", &xdg), ("HOME", &home)])),
+        want: Some(xdg)
     );
 }
 
 #[test]
 fn unix_home_fallback_appends_dot_cache() {
+    let home = abs("home/u");
     sim_assert_eq!(
-        have: cache_home_for(false, env(&[("HOME", "/home/u")])),
-        want: Some(PathBuf::from("/home/u").join(".cache"))
+        have: cache_home_for(false, env(&[("HOME", &home)])),
+        want: Some(home.join(".cache"))
     );
 }
 
@@ -73,9 +98,13 @@ fn unix_home_fallback_appends_dot_cache() {
 /// directory.
 #[test]
 fn unix_relative_xdg_cache_home_is_ignored() {
+    let home = abs("home/u");
     sim_assert_eq!(
-        have: cache_home_for(false, env(&[("XDG_CACHE_HOME", "rel/cache"), ("HOME", "/home/u")])),
-        want: Some(PathBuf::from("/home/u").join(".cache"))
+        have: cache_home_for(
+            false,
+            env(&[("XDG_CACHE_HOME", Path::new("rel/cache")), ("HOME", &home)]),
+        ),
+        want: Some(home.join(".cache"))
     );
 }
 
@@ -86,17 +115,22 @@ fn unix_without_profile_yields_none() {
 
 #[test]
 fn windows_prefers_localappdata() {
+    let (local, profile) = (abs("win/local"), abs("win/profile"));
     sim_assert_eq!(
-        have: cache_home_for(true, env(&[("LOCALAPPDATA", "/win/local"), ("USERPROFILE", "/win/profile")])),
-        want: Some(PathBuf::from("/win/local"))
+        have: cache_home_for(
+            true,
+            env(&[("LOCALAPPDATA", &local), ("USERPROFILE", &profile)]),
+        ),
+        want: Some(local)
     );
 }
 
 #[test]
 fn windows_userprofile_fallback_appends_appdata_local() {
+    let profile = abs("win/profile");
     sim_assert_eq!(
-        have: cache_home_for(true, env(&[("USERPROFILE", "/win/profile")])),
-        want: Some(PathBuf::from("/win/profile").join("AppData").join("Local"))
+        have: cache_home_for(true, env(&[("USERPROFILE", &profile)])),
+        want: Some(profile.join("AppData").join("Local"))
     );
 }
 
@@ -106,15 +140,19 @@ fn windows_userprofile_fallback_appends_appdata_local() {
 #[test]
 fn windows_ignores_home() {
     sim_assert_eq!(
-        have: cache_home_for(true, env(&[("HOME", "/home/u")])),
+        have: cache_home_for(true, env(&[("HOME", &abs("home/u"))])),
         want: None
     );
 }
 
 #[test]
 fn windows_relative_localappdata_is_ignored() {
+    let profile = abs("win/profile");
     sim_assert_eq!(
-        have: cache_home_for(true, env(&[("LOCALAPPDATA", "rel/local"), ("USERPROFILE", "/win/profile")])),
-        want: Some(PathBuf::from("/win/profile").join("AppData").join("Local"))
+        have: cache_home_for(
+            true,
+            env(&[("LOCALAPPDATA", Path::new("rel/local")), ("USERPROFILE", &profile)]),
+        ),
+        want: Some(profile.join("AppData").join("Local"))
     );
 }
