@@ -535,7 +535,7 @@
     "schema1": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
           "properties": {
             "labelSelector": {
@@ -1424,7 +1424,60 @@
       "properties": {},
       "type": "object"
     },
-    "schema21": {
+    "schema210": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema211": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema212": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema216": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema219": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema22": {
       "allOf": [
         {
           "not": {
@@ -1480,59 +1533,6 @@
       "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
       "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
       "type": "string"
-    },
-    "schema210": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "integer",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema211": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
-    "schema212": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "schema216": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema219": {
-      "anyOf": [
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
     },
     "schema220": {
       "not": {
@@ -1727,7 +1727,7 @@
       ]
     },
     "schema3": {
-      "additionalProperties": {},
+      "additionalProperties": false,
       "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
       "properties": {
         "exec": {
@@ -1792,7 +1792,7 @@
         "httpGet": {
           "anyOf": [
             {
-              "additionalProperties": {},
+              "additionalProperties": false,
               "description": "HTTPGetAction describes an action based on HTTP Get requests.",
               "properties": {
                 "host": {
@@ -8159,7 +8159,7 @@
                           "scrapeTimeout": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema21"
+                                "$ref": "#/$defs/schema22"
                               },
                               {
                                 "not": {
@@ -11111,9 +11111,7 @@
     "commonLabels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema204"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -11151,7 +11149,7 @@
     "deploymentStrategy": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "DeploymentStrategy describes how to replace existing pods with new ones.",
           "properties": {
             "rollingUpdate": {
@@ -11670,7 +11668,7 @@
     "podSecurityContext": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
           "properties": {
             "fsGroup": {
@@ -11725,7 +11723,7 @@
             "seccompProfile": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
@@ -12244,7 +12242,7 @@
     "securityContext": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
           "properties": {
             "allowPrivilegeEscalation": {
@@ -12261,7 +12259,7 @@
             "capabilities": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
@@ -12908,7 +12906,7 @@
                   "scrapeTimeout": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema21"
+                        "$ref": "#/$defs/schema22"
                       },
                       {
                         "not": {

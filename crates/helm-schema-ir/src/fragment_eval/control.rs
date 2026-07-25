@@ -17,7 +17,7 @@ use crate::value_path_context::{guard_value_is_truthy, predicate_any};
 use crate::{Guard, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
 
-use super::domain::{AbstractFragment, PathCondition, Splice, SpliceMeta, and_conditions};
+use super::domain::{AbstractFragment, Guarded, PathCondition, Splice, SpliceMeta, and_conditions};
 use super::eval::{Adopted, ArmSpec, Contributions, Interpreter, NodeView};
 
 /// Exact range sequences resolved from a statically known list iterable.
@@ -321,16 +321,16 @@ impl Interpreter<'_> {
     }
 
     /// Evaluate one deferred descendant batch and re-attach it under its
-    /// parent entry chain, letting explicitly-indented output keep floating
-    /// past entries it does not render inside.
+    /// parent container chain, letting explicitly-indented output keep
+    /// floating past containers it does not render inside.
     fn eval_deferred(&mut self, spec: &DeferredNodes<'_>, out: &mut Contributions) {
         let views: Vec<NodeView<'_>> = spec
             .nodes
             .iter()
             .map(|node| NodeView::plain(node))
             .collect();
-        // A mapping entry can only contain strictly deeper content: chain
-        // entries at or below the deferred nodes' own content indent are
+        // A container can only hold strictly deeper content: chain entries
+        // at or below the deferred nodes' own content indent are
         // structural-recovery artifacts (a trailing region hung under an
         // escaped open entry), not real parents. Control nodes measure by
         // their branch bodies (headers are conventionally unindented).
@@ -339,43 +339,62 @@ impl Interpreter<'_> {
             .iter()
             .filter_map(|node| self.structural_content_indent(node))
             .min();
-        let chain_entries: Vec<&helm_schema_syntax::MappingEntry> = match node_indent {
+        let chain_parents: Vec<DeferredParent<'_>> = match node_indent {
             Some(node_indent) => spec
                 .chain
                 .iter()
                 .copied()
-                .filter(|entry| entry.indent < node_indent)
+                .filter(|parent| parent.indent() < node_indent)
                 .collect(),
             None => spec.chain.clone(),
         };
         let mut contributions = self.eval_node_list(&views);
         let loop_control = contributions.take_loop_control();
-        let mut chain = chain_entries.iter().rev();
+        let mut chain = chain_parents.iter().rev();
         let Some(innermost) = chain.next() else {
             out.extend(contributions);
             return;
         };
-        let opened_empty = innermost.value.is_none() && innermost.block.is_none();
-        let mut value = contributions.take_floating_below(innermost.indent, opened_empty, None);
+        let mut value = contributions.take_floating_below(
+            innermost.indent(),
+            innermost.accepts_same_indent(),
+            None,
+        );
         let mut floating = std::mem::take(&mut contributions.floating);
         value.extend(contributions.assemble());
-        let mut key = self.entry_key(&innermost.key);
+        let mut pending = *innermost;
         for parent in chain {
             let mut wrapper = Contributions::default();
-            wrapper.merge_entry(key, value);
+            self.wrap_deferred(pending, value, &mut wrapper);
             wrapper.floating = floating;
-            let opened_empty = parent.value.is_none() && parent.block.is_none();
-            let mut parent_value = wrapper.take_floating_below(parent.indent, opened_empty, None);
+            let mut parent_value =
+                wrapper.take_floating_below(parent.indent(), parent.accepts_same_indent(), None);
             floating = std::mem::take(&mut wrapper.floating);
             parent_value.extend(wrapper.assemble());
             value = parent_value;
-            key = self.entry_key(&parent.key);
+            pending = *parent;
         }
         let mut re_attached = Contributions::default();
-        re_attached.merge_entry(key, value);
+        self.wrap_deferred(pending, value, &mut re_attached);
         re_attached.floating = floating;
         re_attached.loop_control = loop_control;
         out.extend(re_attached);
+    }
+
+    /// Place already-assembled deferred content inside one container level.
+    fn wrap_deferred(
+        &mut self,
+        parent: DeferredParent<'_>,
+        value: Guarded<AbstractFragment>,
+        out: &mut Contributions,
+    ) {
+        match parent {
+            DeferredParent::Entry(entry) => {
+                let key = self.entry_key(&entry.key);
+                out.merge_entry(key, value);
+            }
+            DeferredParent::Item(_) => out.items.push(value),
+        }
     }
 
     fn classify_branch(&self, region: &ControlRegion, index: usize) -> ArmSpec {
@@ -1422,11 +1441,43 @@ fn parse_else_header(text: &str) -> ArmSpec {
     ArmSpec::Else
 }
 
-/// One batch of deferred descendants: the entry chain they nest under (in
-/// document order, outermost first) and the deferred nodes themselves.
+/// One container a deferred batch nests under. A sequence item is a
+/// container in its own right: content trailing an ill-nested region that
+/// opened the item still renders *inside* that item, so dropping the level
+/// would place the batch beside the sequence instead of in it (reloader's
+/// `resources:` after the branch-selected `- image:` line).
+#[derive(Clone, Copy)]
+pub(super) enum DeferredParent<'n> {
+    Entry(&'n helm_schema_syntax::MappingEntry),
+    Item(&'n helm_schema_syntax::SequenceItem),
+}
+
+impl DeferredParent<'_> {
+    fn indent(self) -> usize {
+        match self {
+            Self::Entry(entry) => entry.indent,
+            Self::Item(item) => item.indent,
+        }
+    }
+
+    /// Whether output rendered at the container's own indent belongs inside
+    /// it. A key opened without inline content does accept it; a sequence
+    /// item never does, because its dash occupies that column — output there
+    /// opens the NEXT item (zalando's `toYaml .Values.extraEnvs | indent 8`
+    /// renders whole `env` entries, not content of the preceding one).
+    fn accepts_same_indent(self) -> bool {
+        match self {
+            Self::Entry(entry) => entry.value.is_none() && entry.block.is_none(),
+            Self::Item(_) => false,
+        }
+    }
+}
+
+/// One batch of deferred descendants: the container chain they nest under
+/// (in document order, outermost first) and the deferred nodes themselves.
 #[derive(Clone)]
 pub(super) struct DeferredNodes<'n> {
-    chain: Vec<&'n helm_schema_syntax::MappingEntry>,
+    chain: Vec<DeferredParent<'n>>,
     nodes: Vec<&'n Node>,
 }
 
@@ -1486,7 +1537,7 @@ pub(super) fn collect_deferred<'n>(
     node: &'n Node,
     limit: usize,
     upper: Option<usize>,
-    chain: &mut Vec<&'n helm_schema_syntax::MappingEntry>,
+    chain: &mut Vec<DeferredParent<'n>>,
     out: &mut Vec<DeferredNodes<'n>>,
 ) {
     let in_window = |child: &Node| {
@@ -1495,7 +1546,7 @@ pub(super) fn collect_deferred<'n>(
     };
     match node {
         Node::Mapping(entry) => {
-            chain.push(entry);
+            chain.push(DeferredParent::Entry(entry));
             let beyond: Vec<&Node> = entry.children.iter().filter(|c| in_window(c)).collect();
             if !beyond.is_empty() {
                 out.push(DeferredNodes {
@@ -1511,6 +1562,7 @@ pub(super) fn collect_deferred<'n>(
             chain.pop();
         }
         Node::Sequence(item) => {
+            chain.push(DeferredParent::Item(item));
             let beyond: Vec<&Node> = item.children.iter().filter(|c| in_window(c)).collect();
             if !beyond.is_empty() {
                 out.push(DeferredNodes {
@@ -1523,6 +1575,7 @@ pub(super) fn collect_deferred<'n>(
                     collect_deferred(child, limit, upper, chain, out);
                 }
             }
+            chain.pop();
         }
         Node::Control(region) => {
             for branch in &region.branches {

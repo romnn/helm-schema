@@ -328,10 +328,13 @@ fn enum_value_satisfies_scalar_schema(value: &Value, schema: &Map<String, Value>
     reason = "merging object keywords is clearer as one exhaustive, stateful operation"
 )]
 fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
+    fn is_meaningful_schema(schema: &Value) -> bool {
+        schema.as_object().is_some_and(|map| !map.is_empty())
+    }
+
     fn has_meaningful_additional_properties(obj: &Map<String, Value>) -> bool {
         obj.get("additionalProperties")
-            .and_then(|value| value.as_object())
-            .is_some_and(|map| !map.is_empty())
+            .is_some_and(is_meaningful_schema)
             || preserves_unknown_fields(obj)
     }
 
@@ -397,10 +400,18 @@ fn merge_object_schemas(a: &Value, b: &Value) -> Option<Value> {
                 merge_two_schemas(ap_a, ap_b),
             );
         }
-        (Some(Value::Bool(false)), Some(ap_b)) if ap_b.is_object() => {
+        // A typed `additionalProperties` is a real openness claim — unknown
+        // keys exist and have that shape — so it outranks the closed side.
+        // The EMPTY schema is not: `additionalProperties: {}` is the
+        // documented no-opinion stamp
+        // ([`crate::path_schema::stamp_explicit_map_openness`]), and a
+        // no-opinion side must never re-open a closed contract (a chart's
+        // declared `resources: {limits: …}` default must not erase the
+        // provider's strict ResourceRequirements closure).
+        (Some(Value::Bool(false)), Some(ap_b)) if is_meaningful_schema(&ap_b) => {
             out.insert("additionalProperties".to_string(), ap_b);
         }
-        (Some(ap_a), Some(Value::Bool(false))) if ap_a.is_object() => {
+        (Some(ap_a), Some(Value::Bool(false))) if is_meaningful_schema(&ap_a) => {
             out.insert("additionalProperties".to_string(), ap_a);
         }
         (Some(Value::Bool(false)), _) | (_, Some(Value::Bool(false))) => {

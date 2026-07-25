@@ -3821,3 +3821,78 @@ fn unquoted_slots_reject_token_breaking_sources() -> eyre::Result<()> {
         ],
     )
 }
+
+/// Provider shapes must survive the serialized and helper splices that carry
+/// them: a truthy malformed object used to pass the schema, render, and fail
+/// strict Kubernetes validation. Three losses closed here — a branch-selected
+/// container item losing its `[*]` slot (reloader), a no-opinion declared
+/// `additionalProperties: {}` re-opening a closed payload (zalando), and a
+/// declared or `omit`ted member the sink does not know dropping the closure
+/// outright (sealed-secrets' probe `enabled` flag).
+#[test]
+fn serialized_and_helper_splices_keep_their_provider_shapes() -> eyre::Result<()> {
+    assert_chart_cases(
+        "reloader",
+        vec![
+            SemanticCase::rejected(
+                "a container-item resources map keeps ResourceRequirements typing",
+                "/reloader/deployment/resources",
+                json!({ "reloader": { "deployment": { "resources": { "bogus": 7 } } } }),
+            ),
+            SemanticCase::rejected(
+                "a container-item volumeMounts list keeps VolumeMount typing",
+                "/reloader/deployment/volumeMounts",
+                json!({ "reloader": { "deployment": { "volumeMounts": [{ "bogus": 7 }] } } }),
+            ),
+            SemanticCase::rejected(
+                "a set-mutated containerSecurityContext keeps SecurityContext typing",
+                "/reloader/deployment/containerSecurityContext",
+                json!({ "reloader": { "deployment": { "containerSecurityContext": { "bogus": 7 } } } }),
+            ),
+            SemanticCase::accepted(
+                "the real container shapes still render",
+                json!({ "reloader": { "deployment": {
+                    "resources": { "limits": { "cpu": "100m" } },
+                    "volumeMounts": [{ "name": "tmp", "mountPath": "/tmp" }],
+                    "containerSecurityContext": { "runAsNonRoot": true },
+                } } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "zalando-postgres-operator",
+        vec![
+            SemanticCase::rejected(
+                "a populated declared default does not re-open the sink",
+                "/resources",
+                json!({ "resources": { "bogus": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "the chart's own declared resources still validate",
+                json!({ "resources": { "limits": { "cpu": "1" }, "requests": { "cpu": "1" } } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "sealed-secrets",
+        vec![
+            SemanticCase::rejected(
+                "an omitted `enabled` flag does not open the Probe payload",
+                "/livenessProbe",
+                json!({ "livenessProbe": { "enabled": true, "bogus": 7 } }),
+            ),
+            SemanticCase::rejected(
+                "an omitted `enabled` flag does not open the SecurityContext payload",
+                "/containerSecurityContext",
+                json!({ "containerSecurityContext": { "enabled": true, "bogus": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "the chart's own enabled-flagged probes and contexts still render",
+                json!({
+                    "livenessProbe": { "enabled": true, "periodSeconds": 20 },
+                    "containerSecurityContext": { "enabled": true, "runAsNonRoot": true },
+                }),
+            ),
+        ],
+    )
+}

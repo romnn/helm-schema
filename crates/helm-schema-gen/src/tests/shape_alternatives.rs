@@ -433,8 +433,12 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
     );
 }
 
+/// A declared member the schema does not know is admitted as an untyped
+/// property of its own closed level, not by dropping that level's closure:
+/// the chart ships the key, so it must validate, but every OTHER unknown key
+/// still belongs to the sink's rejected set.
 #[test]
-fn declared_object_members_open_only_the_closed_levels_that_reject_them() {
+fn declared_object_members_are_admitted_without_opening_their_closed_levels() {
     let schema = serde_json::json!({
         "type": "object",
         "additionalProperties": false,
@@ -459,11 +463,14 @@ fn declared_object_members_open_only_the_closed_levels_that_reject_them() {
         have: opened,
         want: serde_json::json!({
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "known": {"type": "string"},
+                "extra": {},
                 "nested": {
                     "type": "object",
-                    "properties": {"typed": {"type": "integer"}}
+                    "additionalProperties": false,
+                    "properties": {"typed": {"type": "integer"}, "extension": {}}
                 }
             }
         })

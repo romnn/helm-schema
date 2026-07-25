@@ -5870,23 +5870,18 @@
       }
     },
     "schema450": {
-      "additionalProperties": {},
-      "properties": {},
-      "type": "object"
-    },
-    "schema451": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema452": {
+    "schema451": {
       "required": [
         "fs-restore-action-config"
       ],
       "type": "object"
     },
-    "schema455": {
+    "schema454": {
       "anyOf": [
         {
           "not": {
@@ -5898,31 +5893,31 @@
         }
       ]
     },
-    "schema458": {
+    "schema457": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema459": {
+    "schema458": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema460": {
+    "schema459": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema461": {
+    "schema460": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema464": {
+    "schema463": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema465": {
+    "schema464": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -8263,7 +8258,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema451"
+                              "$ref": "#/$defs/schema450"
                             },
                             {
                               "not": {
@@ -8281,7 +8276,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema451"
+                              "$ref": "#/$defs/schema450"
                             },
                             {
                               "not": {
@@ -8771,7 +8766,7 @@
                             "name": {},
                             "prefix": {},
                             "provider": {
-                              "$ref": "#/$defs/schema455"
+                              "$ref": "#/$defs/schema454"
                             },
                             "validationFrequency": {}
                           },
@@ -8825,7 +8820,7 @@
                             "name": {},
                             "prefix": {},
                             "provider": {
-                              "$ref": "#/$defs/schema455"
+                              "$ref": "#/$defs/schema454"
                             },
                             "validationFrequency": {}
                           },
@@ -10548,7 +10543,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema451"
+                              "$ref": "#/$defs/schema450"
                             },
                             {
                               "not": {
@@ -10566,7 +10561,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema451"
+                              "$ref": "#/$defs/schema450"
                             },
                             {
                               "not": {
@@ -11110,7 +11105,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema451"
+                        "$ref": "#/$defs/schema450"
                       },
                       {
                         "type": "null"
@@ -11138,7 +11133,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema451"
+                        "$ref": "#/$defs/schema450"
                       },
                       {
                         "type": "null"
@@ -11657,7 +11652,7 @@
               "secretContents": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema459"
+                    "$ref": "#/$defs/schema458"
                   },
                   {
                     "$ref": "#/$defs/schema126"
@@ -18009,13 +18004,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema458"
+                            "$ref": "#/$defs/schema457"
                           },
                           {
-                            "$ref": "#/$defs/schema461"
+                            "$ref": "#/$defs/schema460"
                           },
                           {
-                            "$ref": "#/$defs/schema464"
+                            "$ref": "#/$defs/schema463"
                           },
                           {
                             "not": {
@@ -18023,10 +18018,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema465"
+                            "$ref": "#/$defs/schema464"
                           },
                           {
-                            "$ref": "#/$defs/schema460"
+                            "$ref": "#/$defs/schema459"
                           },
                           {
                             "$ref": "#/$defs/schema391"
@@ -20140,7 +20135,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema450"
+          "$ref": "#/$defs/schema435"
         },
         {
           "not": {
@@ -20202,7 +20197,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/schema452"
+            "$ref": "#/$defs/schema451"
           },
           "then": {
             "anyOf": [
@@ -20725,7 +20720,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema450"
+          "$ref": "#/$defs/schema435"
         },
         {
           "not": {
@@ -21005,7 +21000,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema459"
+          "$ref": "#/$defs/schema458"
         }
       ],
       "description": "Extra K8s manifests to deploy\n- apiVersion: secrets-store.csi.x-k8s.io/v1\nkind: SecretProviderClass\nmetadata:\nname: velero-secrets-store\nspec:\nprovider: aws\nparameters:\nobjects: |\n- objectName: \"velero\"\nobjectType: \"secretsmanager\"\njmesPath:\n- path: \"access_key\"\nobjectAlias: \"access_key\"\n- path: \"secret_key\"\nobjectAlias: \"secret_key\"\nsecretObjects:\n- data:\n- key: access_key\nobjectName: client-id\n- key: client-secret\nobjectName: client-secret\nsecretName: velero-secrets-store\ntype: Opaque"
@@ -21627,13 +21622,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema458"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
-                                "$ref": "#/$defs/schema461"
+                                "$ref": "#/$defs/schema460"
                               },
                               {
-                                "$ref": "#/$defs/schema464"
+                                "$ref": "#/$defs/schema463"
                               },
                               {
                                 "not": {
@@ -21641,7 +21636,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema465"
+                                "$ref": "#/$defs/schema464"
                               },
                               {
                                 "$ref": "#/$defs/schema391"
@@ -21687,13 +21682,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema458"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
-                                "$ref": "#/$defs/schema461"
+                                "$ref": "#/$defs/schema460"
                               },
                               {
-                                "$ref": "#/$defs/schema464"
+                                "$ref": "#/$defs/schema463"
                               },
                               {
                                 "not": {
@@ -21701,7 +21696,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema465"
+                                "$ref": "#/$defs/schema464"
                               },
                               {
                                 "$ref": "#/$defs/schema391"
@@ -21781,13 +21776,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema458"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
-                                "$ref": "#/$defs/schema461"
+                                "$ref": "#/$defs/schema460"
                               },
                               {
-                                "$ref": "#/$defs/schema464"
+                                "$ref": "#/$defs/schema463"
                               },
                               {
                                 "not": {
@@ -21795,7 +21790,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema465"
+                                "$ref": "#/$defs/schema464"
                               },
                               {
                                 "$ref": "#/$defs/schema391"
@@ -21867,13 +21862,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema458"
+                                "$ref": "#/$defs/schema457"
                               },
                               {
-                                "$ref": "#/$defs/schema461"
+                                "$ref": "#/$defs/schema460"
                               },
                               {
-                                "$ref": "#/$defs/schema464"
+                                "$ref": "#/$defs/schema463"
                               },
                               {
                                 "not": {
@@ -21881,7 +21876,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema465"
+                                "$ref": "#/$defs/schema464"
                               },
                               {
                                 "$ref": "#/$defs/schema391"
@@ -22623,7 +22618,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema450"
+          "$ref": "#/$defs/schema435"
         },
         {
           "$ref": "#/$defs/schema210"
@@ -22743,13 +22738,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema458"
+                            "$ref": "#/$defs/schema457"
                           },
                           {
-                            "$ref": "#/$defs/schema461"
+                            "$ref": "#/$defs/schema460"
                           },
                           {
-                            "$ref": "#/$defs/schema464"
+                            "$ref": "#/$defs/schema463"
                           },
                           {
                             "not": {
@@ -22757,7 +22752,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema465"
+                            "$ref": "#/$defs/schema464"
                           },
                           {
                             "$ref": "#/$defs/schema391"
@@ -22892,13 +22887,13 @@
               "clusterAdministratorName": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema458"
+                    "$ref": "#/$defs/schema457"
                   },
                   {
-                    "$ref": "#/$defs/schema461"
+                    "$ref": "#/$defs/schema460"
                   },
                   {
-                    "$ref": "#/$defs/schema464"
+                    "$ref": "#/$defs/schema463"
                   },
                   {
                     "not": {
@@ -22906,10 +22901,10 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema465"
+                    "$ref": "#/$defs/schema464"
                   },
                   {
-                    "$ref": "#/$defs/schema460"
+                    "$ref": "#/$defs/schema459"
                   },
                   {
                     "$ref": "#/$defs/schema391"
@@ -23065,7 +23060,7 @@
                         "annotations": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema451"
+                              "$ref": "#/$defs/schema450"
                             },
                             {
                               "not": {
@@ -23082,7 +23077,7 @@
                         "labels": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema451"
+                              "$ref": "#/$defs/schema450"
                             },
                             {
                               "not": {
@@ -23335,7 +23330,7 @@
                                 "metadata": {
                                   "properties": {
                                     "labels": {
-                                      "$ref": "#/$defs/schema451"
+                                      "$ref": "#/$defs/schema450"
                                     }
                                   },
                                   "type": "object"

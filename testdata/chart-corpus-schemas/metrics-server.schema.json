@@ -3259,7 +3259,7 @@
       ]
     },
     "schema7": {
-      "additionalProperties": {},
+      "additionalProperties": false,
       "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
       "properties": {
         "exec": {
@@ -3324,7 +3324,7 @@
         "httpGet": {
           "anyOf": [
             {
-              "additionalProperties": {},
+              "additionalProperties": false,
               "description": "HTTPGetAction describes an action based on HTTP Get requests.",
               "properties": {
                 "host": {
@@ -6594,9 +6594,7 @@
     "commonLabels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema268"
         },
         {
           "$ref": "#/$defs/schema96"
@@ -7443,7 +7441,7 @@
     "resources": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "ResourceRequirements describes the compute resource requirements.",
           "properties": {
             "claims": {
@@ -7581,7 +7579,7 @@
     "securityContext": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
           "properties": {
             "allowPrivilegeEscalation": {
@@ -7598,7 +7596,7 @@
             "capabilities": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
@@ -7675,7 +7673,7 @@
             "seccompProfile": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
@@ -8716,7 +8714,7 @@
     "tmpVolume": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "additionalProperties": false,
           "description": "Volume represents a named volume in a pod that may be accessed by any container in the pod.",
           "properties": {
             "awsElasticBlockStore": {

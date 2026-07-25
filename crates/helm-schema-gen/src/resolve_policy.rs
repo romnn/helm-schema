@@ -681,6 +681,12 @@ fn relax_template_supplied_required(
 /// the chart renders fine (external-secrets' OpenShift-adapted
 /// `runAsUser`). Keys with lowerable retain guards come back as dedicated
 /// conditional arms.
+///
+/// An omitted key stays an ACCEPTED, untyped member rather than an unknown
+/// one: the sink never sees it, so a closed payload must not reject the
+/// source for carrying it — and a key the provider does not know at all
+/// (sealed-secrets' `containerSecurityContext.enabled`) would otherwise
+/// force the whole object open through the declared-default rescue.
 fn subtract_omitted_members(
     mut schema: Value,
     omitted: &std::collections::BTreeMap<String, Vec<helm_schema_core::ConditionalGuard>>,
@@ -689,8 +695,17 @@ fn subtract_omitted_members(
         return schema;
     }
     if let Some(object) = schema.as_object_mut() {
-        if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
-            properties.retain(|key, _| !omitted.contains_key(key));
+        if object.contains_key("properties")
+            || object.get("additionalProperties") == Some(&Value::Bool(false))
+        {
+            let properties = object
+                .entry("properties")
+                .or_insert_with(|| Value::Object(serde_json::Map::new()));
+            if let Some(properties) = properties.as_object_mut() {
+                for key in omitted.keys() {
+                    properties.insert(key.clone(), empty_schema());
+                }
+            }
         }
         if let Some(required) = object.get_mut("required").and_then(Value::as_array_mut) {
             required.retain(|key| key.as_str().is_none_or(|key| !omitted.contains_key(key)));
@@ -1224,12 +1239,28 @@ fn preserve_declared_default(mut schema: Value, declared: &Value, preserve_scala
                 .collect::<std::collections::BTreeSet<_>>()
         })
         .unwrap_or_default();
-    if schema_object.get("additionalProperties") == Some(&Value::Bool(false))
-        && declared_object
+    // A declared key the schema does not know must stay accepted — the chart
+    // ships it — but only that key: dropping the closure outright would also
+    // admit every key the sink genuinely rejects. Each unknown declared key
+    // becomes an accepted, untyped member instead.
+    if schema_object.get("additionalProperties") == Some(&Value::Bool(false)) {
+        let unknown: Vec<String> = declared_object
             .keys()
-            .any(|key| !known_properties.contains(key))
-    {
-        schema_object.remove("additionalProperties");
+            .filter(|key| !known_properties.contains(*key))
+            .cloned()
+            .collect();
+        if !unknown.is_empty() {
+            let properties = schema_object
+                .entry("properties")
+                .or_insert_with(|| Value::Object(serde_json::Map::new()));
+            if let Some(properties) = properties.as_object_mut() {
+                for key in unknown {
+                    properties.insert(key, empty_schema());
+                }
+            } else {
+                schema_object.remove("additionalProperties");
+            }
+        }
     }
 
     let Some(properties) = schema_object

@@ -100,9 +100,18 @@ pub(crate) fn classify_base(
 /// Unclose fixed objects (top level or union arms) in a conditional target's
 /// base: overlays own keys the resolved shape does not know about, so a
 /// closed base would reject values the guarded renders accept.
-fn unclose_fixed_objects(mut schema: Value) -> Value {
+fn unclose_fixed_objects(schema: Value) -> Value {
+    unclose_fixed_objects_in_union(schema, false)
+}
+
+fn unclose_fixed_objects_in_union(mut schema: Value, in_union: bool) -> Value {
     let fixed_object = is_fixed_object_schema(&schema);
-    let exact_empty_object = schema.get("maxProperties").and_then(Value::as_u64) == Some(0)
+    // The declared-`{}` off-state placeholder only uncloses when it IS the
+    // base: inside a union its siblings already carry every lane the
+    // guarded renders reach, and opening it to any object would erase them
+    // (trivy's provider-typed `nodeSelector` sits beside the placeholder).
+    let exact_empty_object = !in_union
+        && schema.get("maxProperties").and_then(Value::as_u64) == Some(0)
         && schema.get("type").and_then(Value::as_str) == Some("object");
     if (fixed_object || exact_empty_object)
         && let Some(object) = schema.as_object_mut()
@@ -117,7 +126,7 @@ fn unclose_fixed_objects(mut schema: Value) -> Value {
         for key in ["anyOf", "oneOf"] {
             if let Some(Value::Array(arms)) = object.get_mut(key) {
                 for arm in arms {
-                    *arm = unclose_fixed_objects(std::mem::take(arm));
+                    *arm = unclose_fixed_objects_in_union(std::mem::take(arm), true);
                 }
             }
         }

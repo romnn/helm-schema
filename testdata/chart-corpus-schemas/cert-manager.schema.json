@@ -2150,7 +2150,7 @@
       "x-kubernetes-patch-merge-key": "topologyKey",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "schema110": {
+    "schema111": {
       "additionalProperties": {
         "items": {
           "additionalProperties": false,
@@ -2851,7 +2851,7 @@
       "description": "enableServiceLinks indicates whether information about services should be\ninjected into the pod's environment variables, matching the syntax of Docker\nlinks."
     },
     "schema15": {
-      "additionalProperties": {},
+      "additionalProperties": false,
       "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
       "properties": {
         "fsGroup": {
@@ -2937,7 +2937,7 @@
         "seccompProfile": {
           "anyOf": [
             {
-              "additionalProperties": {},
+              "additionalProperties": false,
               "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
               "properties": {
                 "localhostProfile": {
@@ -4826,7 +4826,7 @@
       "properties": {},
       "type": "object"
     },
-    "schema235": {
+    "schema236": {
       "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
       "format": "int64",
       "type": [
@@ -4882,7 +4882,7 @@
       ]
     },
     "schema24": {
-      "additionalProperties": {},
+      "additionalProperties": false,
       "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
       "properties": {
         "allowPrivilegeEscalation": {
@@ -4899,7 +4899,7 @@
         "capabilities": {
           "anyOf": [
             {
-              "additionalProperties": {},
+              "additionalProperties": false,
               "description": "Adds and removes POSIX capabilities from running containers.",
               "properties": {
                 "add": {
@@ -5174,14 +5174,6 @@
     "schema244": {
       "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
     },
-    "schema249": {
-      "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
     "schema25": {
       "additionalProperties": false,
       "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
@@ -5384,6 +5376,14 @@
       },
       "type": [
         "object",
+        "null"
+      ]
+    },
+    "schema250": {
+      "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+      "format": "int64",
+      "type": [
+        "integer",
         "null"
       ]
     },
@@ -20148,9 +20148,7 @@
         "commonLabels": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema550"
             },
             {
               "$ref": "#/$defs/schema256"
@@ -20955,7 +20953,7 @@
                                 "type": "integer"
                               },
                               "proxyConnectHeader": {
-                                "$ref": "#/$defs/schema110"
+                                "$ref": "#/$defs/schema111"
                               },
                               "proxyFromEnvironment": {
                                 "$ref": "#/$defs/schema298"
@@ -21455,7 +21453,7 @@
                                 "type": "string"
                               },
                               "proxyConnectHeader": {
-                                "$ref": "#/$defs/schema110"
+                                "$ref": "#/$defs/schema111"
                               },
                               "proxyFromEnvironment": {
                                 "$ref": "#/$defs/schema298"
@@ -23660,13 +23658,13 @@
                             "$ref": "#/$defs/schema200"
                           },
                           "runAsGroup": {
-                            "$ref": "#/$defs/schema249"
+                            "$ref": "#/$defs/schema250"
                           },
                           "runAsNonRoot": {
                             "$ref": "#/$defs/schema223"
                           },
                           "runAsUser": {
-                            "$ref": "#/$defs/schema235"
+                            "$ref": "#/$defs/schema236"
                           },
                           "seLinuxOptions": {
                             "$ref": "#/$defs/schema180"
@@ -24853,7 +24851,7 @@
             "namespaceSelector": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
                   "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
                   "properties": {
                     "matchExpressions": {
@@ -24863,7 +24861,7 @@
                           "items": {
                             "anyOf": [
                               {
-                                "additionalProperties": {},
+                                "additionalProperties": false,
                                 "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
                                 "properties": {
                                   "key": {

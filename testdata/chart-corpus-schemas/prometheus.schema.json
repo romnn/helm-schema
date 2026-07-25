@@ -88,6 +88,47 @@
       ]
     },
     "providerSchema1": {
+      "additionalProperties": false,
+      "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
+      "properties": {
+        "enabled": {},
+        "fsGroup": {
+          "$ref": "#/$defs/schema356"
+        },
+        "fsGroupChangePolicy": {
+          "$ref": "#/$defs/schema384"
+        },
+        "runAsGroup": {
+          "$ref": "#/$defs/schema453"
+        },
+        "runAsNonRoot": {
+          "$ref": "#/$defs/schema413"
+        },
+        "runAsUser": {
+          "$ref": "#/$defs/schema430"
+        },
+        "seLinuxOptions": {
+          "$ref": "#/$defs/schema351"
+        },
+        "seccompProfile": {
+          "$ref": "#/$defs/schema199"
+        },
+        "supplementalGroups": {
+          "$ref": "#/$defs/schema339"
+        },
+        "sysctls": {
+          "$ref": "#/$defs/schema358"
+        },
+        "windowsOptions": {
+          "$ref": "#/$defs/schema154"
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "providerSchema2": {
       "$ref": "#/$defs/schema33"
     },
     "providerShared1": {
@@ -20966,6 +21007,7 @@
       ]
     },
     "schema44": {
+      "additionalProperties": false,
       "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
       "properties": {
         "exec": {
@@ -21023,6 +21065,7 @@
             "null"
           ]
         },
+        "httpGet": {},
         "initialDelaySeconds": {
           "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
           "format": "int32",
@@ -73977,7 +74020,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/providerSchema1"
+                    "$ref": "#/$defs/providerSchema2"
                   }
                 }
               },
@@ -74211,7 +74254,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/providerSchema1"
+                    "$ref": "#/$defs/providerSchema2"
                   }
                 }
               },
@@ -77391,9 +77434,7 @@
     "commonMetaLabels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema1089"
         },
         {
           "$ref": "#/$defs/schema467"
@@ -77912,8 +77953,10 @@
                     "additionalProperties": {},
                     "properties": {
                       "startupProbe": {
+                        "additionalProperties": false,
                         "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
                         "properties": {
+                          "enabled": {},
                           "exec": {
                             "$ref": "#/$defs/schema338"
                           },
@@ -94064,43 +94107,7 @@
             "additionalProperties": {},
             "properties": {
               "securityContext": {
-                "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
-                "properties": {
-                  "fsGroup": {
-                    "$ref": "#/$defs/schema356"
-                  },
-                  "fsGroupChangePolicy": {
-                    "$ref": "#/$defs/schema384"
-                  },
-                  "runAsGroup": {
-                    "$ref": "#/$defs/schema453"
-                  },
-                  "runAsNonRoot": {
-                    "$ref": "#/$defs/schema413"
-                  },
-                  "runAsUser": {
-                    "$ref": "#/$defs/schema430"
-                  },
-                  "seLinuxOptions": {
-                    "$ref": "#/$defs/schema351"
-                  },
-                  "seccompProfile": {
-                    "$ref": "#/$defs/schema199"
-                  },
-                  "supplementalGroups": {
-                    "$ref": "#/$defs/schema339"
-                  },
-                  "sysctls": {
-                    "$ref": "#/$defs/schema358"
-                  },
-                  "windowsOptions": {
-                    "$ref": "#/$defs/schema154"
-                  }
-                },
-                "type": [
-                  "object",
-                  "null"
-                ]
+                "$ref": "#/$defs/providerSchema1"
               }
             }
           }
@@ -115906,7 +115913,7 @@
         "securityContext": {
           "anyOf": [
             {
-              "additionalProperties": {},
+              "additionalProperties": false,
               "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
               "properties": {
                 "fsGroup": {

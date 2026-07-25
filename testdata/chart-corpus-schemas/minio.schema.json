@@ -8628,24 +8628,10 @@
             "additionalProperties": {},
             "properties": {
               "securityContext": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "securityContext": {
+                "additionalProperties": false,
                 "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true",
                 "properties": {
+                  "enabled": {},
                   "fsGroup": {
                     "$ref": "#/$defs/schema86"
                   },
@@ -8681,6 +8667,22 @@
                   "object",
                   "null"
                 ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true"
               }
             }
           }
@@ -17412,29 +17414,10 @@
                 "description": "Merge jobs",
                 "properties": {
                   "securityContext": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "postJob": {
-                "additionalProperties": {},
-                "description": "Merge jobs",
-                "properties": {
-                  "securityContext": {
+                    "additionalProperties": false,
                     "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
                     "properties": {
+                      "enabled": {},
                       "fsGroup": {
                         "$ref": "#/$defs/schema86"
                       },
@@ -17469,6 +17452,27 @@
                     "type": [
                       "object",
                       "null"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "postJob": {
+                "additionalProperties": {},
+                "description": "Merge jobs",
+                "properties": {
+                  "securityContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   }
                 }
@@ -24806,173 +24810,221 @@
                       {
                         "additionalProperties": {},
                         "properties": {
+                          "interval": {
+                            "anyOf": [
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/$defs/schema292"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema294"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema297"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema300"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema298"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema293"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema234"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema164"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema266"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema281"
+                                  }
+                                ],
+                                "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+                                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                                "type": "string"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ],
+                            "description": "Scrape interval, for example `interval: 30s`"
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
                           "relabelConfigs": {
                             "anyOf": [
                               {
-                                "description": "endpoints defines the list of endpoints part of this ServiceMonitor.\nDefines how to scrape metrics from Kubernetes [Endpoints](https://kubernetes.io/docs/concepts/services-networking/service/#endpoints) objects.\nIn most cases, an Endpoints object is backed by a Kubernetes [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with the same name and labels.",
-                                "items": {
-                                  "additionalProperties": false,
-                                  "description": "Endpoint defines an endpoint serving Prometheus metrics to be scraped by\nPrometheus.",
-                                  "properties": {
-                                    "authorization": {
-                                      "$ref": "#/$defs/schema35"
-                                    },
-                                    "basicAuth": {
-                                      "$ref": "#/$defs/schema14"
-                                    },
-                                    "bearerTokenFile": {
-                                      "description": "bearerTokenFile defines the file to read bearer token for scraping the target.\n\nDeprecated: use `authorization` instead.",
-                                      "type": "string"
-                                    },
-                                    "bearerTokenSecret": {
-                                      "$ref": "#/$defs/schema42"
-                                    },
-                                    "enableHttp2": {
-                                      "description": "enableHttp2 can be used to disable HTTP2.",
-                                      "type": "boolean"
-                                    },
-                                    "filterRunning": {
-                                      "description": "filterRunning when true, the pods which are not running (e.g. either in Failed or\nSucceeded state) are dropped during the target discovery.\n\nIf unset, the filtering is enabled.\n\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase",
-                                      "type": "boolean"
-                                    },
-                                    "followRedirects": {
-                                      "$ref": "#/$defs/schema230"
-                                    },
-                                    "honorLabels": {
-                                      "description": "honorLabels defines when true the metric's labels when they collide\nwith the target's labels.",
-                                      "type": "boolean"
-                                    },
-                                    "honorTimestamps": {
-                                      "description": "honorTimestamps defines whether Prometheus preserves the timestamps\nwhen exposed by the target.",
-                                      "type": "boolean"
-                                    },
-                                    "interval": {
-                                      "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
-                                      "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                                      "type": "string"
-                                    },
-                                    "metricRelabelings": {
-                                      "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-                                      "items": {
-                                        "$ref": "#/$defs/schema11"
-                                      },
-                                      "type": "array"
-                                    },
-                                    "noProxy": {
-                                      "$ref": "#/$defs/schema148"
-                                    },
-                                    "oauth2": {
-                                      "$ref": "#/$defs/schema1"
-                                    },
-                                    "params": {
-                                      "additionalProperties": {
-                                        "items": {
-                                          "type": "string"
-                                        },
-                                        "type": "array"
-                                      },
-                                      "description": "params define optional HTTP URL parameters.",
-                                      "type": "object"
-                                    },
-                                    "path": {
-                                      "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
-                                      "type": "string"
-                                    },
-                                    "port": {
-                                      "description": "port defines the name of the Service port which this endpoint refers to.\n\nIt takes precedence over `targetPort`.",
-                                      "type": "string"
-                                    },
-                                    "proxyConnectHeader": {
-                                      "$ref": "#/$defs/schema43"
-                                    },
-                                    "proxyFromEnvironment": {
-                                      "$ref": "#/$defs/schema157"
-                                    },
-                                    "proxyUrl": {
-                                      "$ref": "#/$defs/schema224"
-                                    },
-                                    "relabelings": {
-                                      "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                                      "items": {
-                                        "$ref": "#/$defs/schema11"
-                                      },
-                                      "type": "array"
-                                    },
-                                    "scheme": {
-                                      "description": "scheme defines the HTTP scheme to use when scraping the metrics.",
-                                      "enum": [
-                                        "http",
-                                        "https",
-                                        "HTTP",
-                                        "HTTPS"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "scrapeTimeout": {
-                                      "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
-                                      "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                                      "type": "string"
-                                    },
-                                    "targetPort": {
-                                      "anyOf": [
-                                        {
-                                          "type": "integer"
-                                        },
-                                        {
-                                          "type": "string"
-                                        }
-                                      ],
-                                      "description": "targetPort defines the name or number of the target port of the `Pod` object behind the\nService. The port must be specified with the container's port property.",
-                                      "x-kubernetes-int-or-string": true
-                                    },
-                                    "tlsConfig": {
-                                      "additionalProperties": false,
-                                      "description": "tlsConfig defines TLS configuration used by the client.",
-                                      "properties": {
-                                        "ca": {
-                                          "$ref": "#/$defs/schema21"
-                                        },
-                                        "caFile": {
-                                          "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
-                                          "type": "string"
-                                        },
-                                        "cert": {
-                                          "$ref": "#/$defs/schema20"
-                                        },
-                                        "certFile": {
-                                          "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
-                                          "type": "string"
-                                        },
-                                        "insecureSkipVerify": {
-                                          "$ref": "#/$defs/schema235"
-                                        },
-                                        "keyFile": {
-                                          "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
-                                          "type": "string"
-                                        },
-                                        "keySecret": {
-                                          "$ref": "#/$defs/schema68"
-                                        },
-                                        "maxVersion": {
-                                          "$ref": "#/$defs/schema181"
-                                        },
-                                        "minVersion": {
-                                          "$ref": "#/$defs/schema182"
-                                        },
-                                        "serverName": {
-                                          "$ref": "#/$defs/schema257"
-                                        }
-                                      },
-                                      "type": "object"
-                                    },
-                                    "trackTimestampsStaleness": {
-                                      "description": "trackTimestampsStaleness defines whether Prometheus tracks staleness of\nthe metrics that have an explicit timestamp present in scraped data.\nHas no effect if `honorTimestamps` is false.\n\nIt requires Prometheus >= v2.48.0.",
-                                      "type": "boolean"
-                                    }
+                                "additionalProperties": false,
+                                "description": "Endpoint defines an endpoint serving Prometheus metrics to be scraped by\nPrometheus.",
+                                "properties": {
+                                  "authorization": {
+                                    "$ref": "#/$defs/schema35"
                                   },
-                                  "type": "object"
+                                  "basicAuth": {
+                                    "$ref": "#/$defs/schema14"
+                                  },
+                                  "bearerTokenFile": {
+                                    "description": "bearerTokenFile defines the file to read bearer token for scraping the target.\n\nDeprecated: use `authorization` instead.",
+                                    "type": "string"
+                                  },
+                                  "bearerTokenSecret": {
+                                    "$ref": "#/$defs/schema42"
+                                  },
+                                  "enableHttp2": {
+                                    "description": "enableHttp2 can be used to disable HTTP2.",
+                                    "type": "boolean"
+                                  },
+                                  "filterRunning": {
+                                    "description": "filterRunning when true, the pods which are not running (e.g. either in Failed or\nSucceeded state) are dropped during the target discovery.\n\nIf unset, the filtering is enabled.\n\nMore info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase",
+                                    "type": "boolean"
+                                  },
+                                  "followRedirects": {
+                                    "$ref": "#/$defs/schema230"
+                                  },
+                                  "honorLabels": {
+                                    "description": "honorLabels defines when true the metric's labels when they collide\nwith the target's labels.",
+                                    "type": "boolean"
+                                  },
+                                  "honorTimestamps": {
+                                    "description": "honorTimestamps defines whether Prometheus preserves the timestamps\nwhen exposed by the target.",
+                                    "type": "boolean"
+                                  },
+                                  "interval": {
+                                    "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
+                                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                                    "type": "string"
+                                  },
+                                  "metricRelabelings": {
+                                    "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+                                    "items": {
+                                      "$ref": "#/$defs/schema11"
+                                    },
+                                    "type": "array"
+                                  },
+                                  "noProxy": {
+                                    "$ref": "#/$defs/schema148"
+                                  },
+                                  "oauth2": {
+                                    "$ref": "#/$defs/schema1"
+                                  },
+                                  "params": {
+                                    "additionalProperties": {
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "type": "array"
+                                    },
+                                    "description": "params define optional HTTP URL parameters.",
+                                    "type": "object"
+                                  },
+                                  "path": {
+                                    "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
+                                    "type": "string"
+                                  },
+                                  "port": {
+                                    "description": "port defines the name of the Service port which this endpoint refers to.\n\nIt takes precedence over `targetPort`.",
+                                    "type": "string"
+                                  },
+                                  "proxyConnectHeader": {
+                                    "$ref": "#/$defs/schema43"
+                                  },
+                                  "proxyFromEnvironment": {
+                                    "$ref": "#/$defs/schema157"
+                                  },
+                                  "proxyUrl": {
+                                    "$ref": "#/$defs/schema224"
+                                  },
+                                  "relabelings": {
+                                    "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                                    "items": {
+                                      "$ref": "#/$defs/schema11"
+                                    },
+                                    "type": "array"
+                                  },
+                                  "scheme": {
+                                    "description": "scheme defines the HTTP scheme to use when scraping the metrics.",
+                                    "enum": [
+                                      "http",
+                                      "https",
+                                      "HTTP",
+                                      "HTTPS"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "scrapeTimeout": {
+                                    "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+                                    "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                                    "type": "string"
+                                  },
+                                  "targetPort": {
+                                    "anyOf": [
+                                      {
+                                        "type": "integer"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ],
+                                    "description": "targetPort defines the name or number of the target port of the `Pod` object behind the\nService. The port must be specified with the container's port property.",
+                                    "x-kubernetes-int-or-string": true
+                                  },
+                                  "tlsConfig": {
+                                    "additionalProperties": false,
+                                    "description": "tlsConfig defines TLS configuration used by the client.",
+                                    "properties": {
+                                      "ca": {
+                                        "$ref": "#/$defs/schema21"
+                                      },
+                                      "caFile": {
+                                        "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
+                                        "type": "string"
+                                      },
+                                      "cert": {
+                                        "$ref": "#/$defs/schema20"
+                                      },
+                                      "certFile": {
+                                        "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
+                                        "type": "string"
+                                      },
+                                      "insecureSkipVerify": {
+                                        "$ref": "#/$defs/schema235"
+                                      },
+                                      "keyFile": {
+                                        "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
+                                        "type": "string"
+                                      },
+                                      "keySecret": {
+                                        "$ref": "#/$defs/schema68"
+                                      },
+                                      "maxVersion": {
+                                        "$ref": "#/$defs/schema181"
+                                      },
+                                      "minVersion": {
+                                        "$ref": "#/$defs/schema182"
+                                      },
+                                      "serverName": {
+                                        "$ref": "#/$defs/schema257"
+                                      }
+                                    },
+                                    "type": "object"
+                                  },
+                                  "trackTimestampsStaleness": {
+                                    "description": "trackTimestampsStaleness defines whether Prometheus tracks staleness of\nthe metrics that have an explicit timestamp present in scraped data.\nHas no effect if `honorTimestamps` is false.\n\nIt requires Prometheus >= v2.48.0.",
+                                    "type": "boolean"
+                                  }
                                 },
-                                "type": "array"
+                                "type": "object"
                               },
                               {
                                 "not": {
@@ -24981,6 +25033,58 @@
                               }
                             ],
                             "description": "for node metrics"
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "scrapeTimeout": {
+                            "anyOf": [
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/$defs/schema292"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema294"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema297"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema300"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema298"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema293"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema234"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema164"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema266"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema281"
+                                  }
+                                ],
+                                "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
+                                "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                                "type": "string"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              }
+                            ],
+                            "description": "Scrape timeout, for example `scrapeTimeout: 10s`"
                           }
                         }
                       }

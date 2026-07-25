@@ -44512,9 +44512,7 @@
     "customLabels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema565"
         },
         {
           "$ref": "#/$defs/schema264"
@@ -47065,11 +47063,15 @@
                 "additionalProperties": {},
                 "properties": {
                   "containerSecurityContext": {
+                    "additionalProperties": false,
                     "description": "Security context to be added to the Redis containers.",
                     "properties": {
                       "allowPrivilegeEscalation": {
                         "$ref": "#/$defs/schema250"
                       },
+                      "capabilities": {},
+                      "enabled": {},
+                      "fsGroup": {},
                       "privileged": {
                         "$ref": "#/$defs/schema322"
                       },
@@ -47079,9 +47081,12 @@
                       "readOnlyRootFilesystem": {
                         "$ref": "#/$defs/schema406"
                       },
+                      "runAsGroup": {},
                       "runAsNonRoot": {
                         "$ref": "#/$defs/schema233"
                       },
+                      "runAsUser": {},
+                      "seLinuxOptions": {},
                       "seccompProfile": {
                         "$ref": "#/$defs/schema107"
                       },
@@ -49542,11 +49547,16 @@
                 "additionalProperties": {},
                 "properties": {
                   "securityContext": {
+                    "additionalProperties": false,
                     "description": "Security context to be added to the Redis StatefulSet.",
                     "properties": {
+                      "capabilities": {},
+                      "enabled": {},
+                      "fsGroup": {},
                       "fsGroupChangePolicy": {
                         "$ref": "#/$defs/schema216"
                       },
+                      "runAsGroup": {},
                       "runAsNonRoot": {
                         "description": "Assuming your kubelet allows it, you can the following instructions to configure\nspecific sysctl parameters\nsysctls:\n- name: net.core.somaxconn\nvalue: '10000'",
                         "type": [
@@ -49554,6 +49564,8 @@
                           "null"
                         ]
                       },
+                      "runAsUser": {},
+                      "seLinuxOptions": {},
                       "seccompProfile": {
                         "$ref": "#/$defs/schema107"
                       },
@@ -51589,11 +51601,15 @@
                     "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
                     "properties": {
                       "containerSecurityContext": {
+                        "additionalProperties": false,
                         "description": "Security context to be added to the HAProxy containers.",
                         "properties": {
                           "allowPrivilegeEscalation": {
                             "$ref": "#/$defs/schema250"
                           },
+                          "capabilities": {},
+                          "enabled": {},
+                          "fsGroup": {},
                           "privileged": {
                             "$ref": "#/$defs/schema322"
                           },
@@ -51603,9 +51619,12 @@
                           "readOnlyRootFilesystem": {
                             "$ref": "#/$defs/schema406"
                           },
+                          "runAsGroup": {},
                           "runAsNonRoot": {
                             "$ref": "#/$defs/schema233"
                           },
+                          "runAsUser": {},
+                          "seLinuxOptions": {},
                           "seccompProfile": {
                             "$ref": "#/$defs/schema107"
                           },
@@ -51943,14 +51962,21 @@
                     "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
                     "properties": {
                       "securityContext": {
+                        "additionalProperties": false,
                         "description": "Security context to be added to the HAProxy deployment.",
                         "properties": {
+                          "capabilities": {},
+                          "enabled": {},
+                          "fsGroup": {},
                           "fsGroupChangePolicy": {
                             "$ref": "#/$defs/schema216"
                           },
+                          "runAsGroup": {},
                           "runAsNonRoot": {
                             "$ref": "#/$defs/schema236"
                           },
+                          "runAsUser": {},
+                          "seLinuxOptions": {},
                           "seccompProfile": {
                             "$ref": "#/$defs/schema107"
                           },

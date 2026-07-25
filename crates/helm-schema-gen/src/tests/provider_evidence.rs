@@ -1,4 +1,4 @@
-use color_eyre::eyre::{self, WrapErr as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
@@ -1974,4 +1974,77 @@ fn ranged_member_required_leaves_keep_the_else_arm_escape() {
             "else-arm escape ({label}): instance={instance}; schema={schema}"
         );
     }
+}
+
+/// A container item whose `-` marker is emitted from a conditional branch is
+/// still a sequence item: the trailing keys the branch region does not cover
+/// belong INSIDE it, so a `toYaml` splice among them resolves the provider
+/// slot `containers[*].<key>` instead of `containers.<key>`, which owns no
+/// schema at all (reloader's `resources`, `volumeMounts`, and
+/// `securityContext` follow a digest/registry `if`/`else` chain that emits
+/// the item's `- image:` line).
+#[test]
+fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
+    let branch_selected = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+              {{- if .Values.digest }}
+              - image: "busybox@{{ .Values.digest }}"
+              {{- else }}
+              - image: busybox
+              {{- end }}
+                name: test
+                resources:
+                  {{- toYaml .Values.resources | nindent 8 }}
+    "#};
+    let plain = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+              - image: busybox
+                name: test
+                resources:
+                  {{- toYaml .Values.resources | nindent 8 }}
+    "};
+
+    for (label, src) in [("branch-selected", branch_selected), ("plain", plain)] {
+        let signals = schema_signals_for(parse_ir(src));
+        let evidence = signals
+            .evidence_for("resources")
+            .ok_or_eyre("resolved `resources` evidence")?;
+        let slots: Vec<Vec<String>> = evidence
+            .provider_schema_uses
+            .iter()
+            .map(|use_| use_.path.0.clone())
+            .collect();
+        sim_assert_eq!(
+            have: slots,
+            want: vec![vec![
+                "spec".to_string(),
+                "template".to_string(),
+                "spec".to_string(),
+                "containers[*]".to_string(),
+                "resources".to_string(),
+            ]],
+            "{label} item slot"
+        );
+        assert!(
+            schema_for(parse_ir(src))
+                .pointer("/properties/resources/properties/limits")
+                .is_some(),
+            "{label}: the item slot must reach ResourceRequirements typing"
+        );
+    }
+    Ok(())
 }
