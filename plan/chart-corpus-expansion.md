@@ -9156,3 +9156,85 @@ lowering plus a corpus-wide adjudication pass, and starting it without
 finishing that pass would put unadjudicated rejections into the fixtures.
 The scoping paragraph in the status entry names the two existing lowerings
 and which one reaches the top-level cases.
+
+## Operand-presence round (2026-07-25, thirty-first round)
+
+F53/F66/F98's nil-strict string lane closed: a consumer that reads its
+operand as a Go `string` now demands that the operand EXIST wherever the
+consumer runs.
+
+### The fact the truthy⇒string capture could not state
+
+Every function in the string-consumer lane aborts on a nil operand — the
+measured table lives in the status entry — while the capture that lane
+records is `truthy(path) ⇒ string(path)`. Absence is Helm-falsy, so that
+guard excuses exactly the state that aborts: a null-deleted
+`config.cookieSecret` reaches `tpl` as nil and helm answers "wrong type for
+value; expected string; got interface {}".
+
+The nil-TOLERANT stringifications never reach the lane at all:
+`record_string_transform_effects` returns early for `quote`, `squote`,
+`toString`, and `urlquery`, so "every path recorded here belongs to a
+nil-aborting consumer" is a structural property of the existing dispatch,
+not a second hand-maintained list.
+
+### The lowering
+
+`CaptureKind::AbsenceAborts` lowers to a document-level terminal clause
+`[ambient guards …, Absent{path}]`. The clause form (rather than F107's
+parent `HasMemberEvenDefaulted`) is what reaches a TOP-LEVEL operand —
+keda's `clusterName`, tempo's `config`, and trivy's `targetNamespaces` have
+no parent slot to host a member requirement — and it carries the `Absent`
+guard's ownership semantics for dependency-owned paths.
+
+### Three scopings, each found by a false rejection
+
+1. **Raw identity only.** `identity_value_paths` reports the paths an
+   operand CARRIES, which for derived text is its influences. datadog's
+   `part-of-label` pushes the fullname helper's output through `replace`,
+   so `fullnameOverride`/`nameOverride` looked like the operand and the
+   chart's own defaults were rejected. The claim now needs the operand to
+   BE the path (`nil_strict_identity_paths`).
+2. **Abstain when a guard mentions the operand.** A self-truthiness gate
+   excludes absence outright; a disjunctive selection excludes it only
+   together with the conjuncts that kill its other alternatives
+   (cluster-autoscaler's `or $isAzure (and $isAws $awsCredentialsProvided)
+   $isCivo` around the aws `b64enc` arm, where the surviving alternative
+   does imply presence but no per-guard test can see it).
+3. **Abstain on a re-rooted `global`.** Helm injects the parent's `global`
+   into every subchart values root, so a `global` segment deeper than a
+   dependency root is not a faithful spelling. k8s-infra's
+   `otelAgent.global.cloud` is one, and it failed the luup2 signoz lint on
+   the chart's own values.
+
+### Adjudication
+
+33 fixtures move. All 117 acceptance flips were run through
+`helm template --skip-schema-validation`, and every one agrees with helm:
+all 117 are tightenings, no loosenings, no mismatches.
+
+Two probe-methodology lessons came out of it, both worth keeping:
+
+- a deletion must be spelled as an explicit null in the user values file; an
+  override that merely omits the key lets the chart default refill it, and
+  the coalesced document helm renders is then not the probed one;
+- an `x: {}` override does NOT empty a declared subtree — it merges. The
+  probed document (subtree emptied) is reachable only by deleting each
+  member, and spelled that way helm aborts for every one of the 37
+  emptied-subtree probes that first looked like mismatches.
+
+Pinned by `nil_strict_string_consumers_require_their_operand_to_exist`
+(gen: live gate, dormant gate, unconditional consumer, `with`-scoped
+operand, derived operand). Test-model collateral: eight gen/CLI cases that
+passed sparse documents now compose over their chart defaults, because a
+document missing a key an unconditional strict consumer reads is a state
+helm aborts on rather than the state those cases meant to probe.
+
+### Validation
+
+`task test` green (920 unit tests), `task test:integration` green (489),
+`task lint` and `cargo fmt --check` clean, corpus fixtures byte-identical to
+one clean dump run of the final build, and the luup2 `check:local`
+downstream gate passes with the installed binary after a forced
+`schema:generate:all`, with no schema drift downstream. Production source:
++143 lines.

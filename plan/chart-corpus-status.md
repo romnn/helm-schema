@@ -1,13 +1,17 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-25 after the overlaid-member round
-(thirtieth round), which closed F40/F59's overlay-member half and
-re-measured F53/F66/F98 against helm.
+Last reconciled 2026-07-25 after the operand-presence round
+(thirty-first round), which closed F53/F66/F98's nil-strict string lane.
 All 55 committed corpus fixtures, 127 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
 fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below. The overlaid-member round
+reopened the bounded findings listed below. The operand-presence round
+made a nil-strict string consumer's operand abort-grade PRESENT wherever it
+runs (117 helm-adjudicated flips, zero mismatches, no loosenings), with
+three scopings that keep derived operands, self-mentioning guards, and
+re-rooted `global` spellings out of the claim. The preceding
+overlaid-member round
 made an overlaid range keep the overlaid map's member identity, so
 traefik's `service.additionalServices` members bind their own contracts
 (29 helm-adjudicated flips, zero mismatches), and re-measured the
@@ -1331,50 +1335,48 @@ Only currently reproducible, representable mismatches belong here. Every
 instance below was validated as a full composed values document using the
 same recursive map-null deletion as `chart_instances::with_override`.
 
-- **F53/F66/F98 — required operands of live strict consumers disappear after
-  null deletion.** The schema accepts missing values that Helm passes to
-  `tpl`, `b64enc`, `htpasswd`, or another strict call and then aborts on.
-  Verified examples: oauth2-proxy's required
-  `config.{cookieSecret,clientSecret,clientID}`, KEDA `clusterName`, promtail
-  `config.file`, prometheus `server.image.{repository,tag}`, live MinIO
-  `tls.certSecret`, Harbor secrets/registry credentials, Jenkins
-  `controller.admin.username`, Tempo `config`, and Trivy
-  `targetNamespaces`. MinIO also accepts
-  `users:[{accessKey:"a",existingSecret:"s"}]` without the
-  `existingSecretKey` passed to `tpl` in `_helper_create_user.txt:98`.
-  Present strings pass, and decoded dormant gates such as
-  `requiredSecretKeys: []` or `tls.enabled: false` remain open.
-  RE-CONFIRMED (thirtieth round) against helm v4.2.3, each as a user
-  values file spelling the DELETION (`config: {cookieSecret: null}` — an
-  override that merely omits the key lets the chart default refill it, so
-  an omitting probe is not this state): all twelve listed examples abort,
-  eleven with `wrong type for value; expected string; got interface {}`
-  and the jenkins/harbor pair with `invalid value; expected string`.
-  MEASURED nil-strictness of the string-consumer catalog (same helm, one
-  synthetic chart per function, subject null-deleted; the present-string
-  control renders for every one of them):
-  - ABORTS on nil — `tpl`, `b64enc`, `b64dec`, `upper`, `lower`, `title`,
-    `trim`, `trimSuffix` (and the `trimAll`/`trimPrefix` siblings),
-    `trunc`, `substr`, `indent`, `nindent`, `sha256sum`, `htpasswd`,
-    `regexMatch`, `replace`, `repeat`, `splitList`, `semverCompare`,
-    `len`.
-  - RENDERS on nil — `quote`, `squote`, `toString`, `printf "%s"`,
-    `urlquery`, `toYaml`, `default`, `kindIs`, `typeIs`, `empty`.
-  That split is the missing input: `is_string_transform_function`
-  currently lumps the two together, so the lane cannot tell which
-  consumers make ABSENCE an abort. LANE SCOPING for the fix: the existing
-  truthy⇒string capture (`CaptureKind::ValueType` with a
-  `Predicate::truthy_path` conjunct) is correct only where the operand's
-  own truthiness gates the consumer; for a nil-ABORTING consumer whose
-  ambient guards do not imply the operand's presence, the claim is
-  abort-grade presence. Two lowerings already exist — F107's
-  `CaptureKind::RequiredPresence` (→ `HasMemberEvenDefaulted` on the
-  parent, which cannot reach the top-level `clusterName`/`config`/
-  `targetNamespaces` cases) and F63's terminal clause
-  `[outer guards …, Absent{path}]` (which reaches them and carries the
-  ownership semantics). Prefer the clause form, reuse
-  `guard_implies_present` for the exemption, and expect a large,
-  helm-adjudicable flip set.
+- **F53/F66/F98 — strict-consumer operand presence (thirty-first round;
+  CLOSED for the nil-strict string lane).** Every nil-strict string consumer
+  — measured one function at a time against helm v4.2.3: `tpl`, `b64enc`,
+  `b64dec`, `upper`, `lower`, `title`, `trim`, the `trim*` siblings,
+  `trunc`, `substr`, `indent`, `nindent`, `sha256sum`, `htpasswd`,
+  `regexMatch`, `replace`, `repeat`, `splitList`, `semverCompare`, `len` —
+  reads its operand as a Go `string`, so a NIL operand aborts rendering
+  ("wrong type for value; expected string; got interface {}") wherever the
+  consumer runs. The truthy⇒string capture beside it can never say that:
+  absence is Helm-falsy, so its own guard excuses exactly the state that
+  aborts. The nil-TOLERANT stringifications (`quote`, `squote`, `toString`,
+  `urlquery`) never reach the lane — `record_string_transform_effects`
+  returns before recording any string contract for them, which is what
+  makes "everything in this lane aborts on nil" a structural fact rather
+  than a second table.
+  The claim lowers as the new `CaptureKind::AbsenceAborts` → a terminal
+  clause `[ambient guards …, Absent{path}]`, which reaches a TOP-LEVEL
+  operand (keda `clusterName`, tempo `config`, trivy `targetNamespaces` have
+  no parent slot for a member requirement) and carries the `Absent` guard's
+  ownership semantics. Three scopings keep it sound:
+  - only operands that ARE the values path (`nil_strict_identity_paths`): a
+    derived operand (`printf … | trimSuffix`, an `include`'s rendered text,
+    a `default` chain) renders its own text whatever the influencing paths
+    do — datadog's `part-of-label` passes the fullname helper's output
+    through `replace`, and claiming presence for the paths that output
+    carries rejected the chart's own defaults;
+  - abstain when any enclosing guard mentions the operand itself: a
+    self-truthiness gate excludes absence outright, and a DISJUNCTIVE
+    selection excludes it only together with the sibling conjuncts that kill
+    the other alternatives (cluster-autoscaler's `or $isAzure (and $isAws
+    $awsCredentialsProvided) $isCivo` around the aws `b64enc` arm);
+  - abstain when a `global`/`Values` segment sits deeper than a dependency
+    root: helm injects `global` into every subchart values root, so a deeper
+    spelling is a re-rooted read this claim cannot trust (k8s-infra's
+    `otelAgent.global.cloud`, which broke the luup2 signoz lint).
+  All twelve ledger examples now reject, and 117 corpus acceptance flips
+  were adjudicated against `helm template` with ZERO mismatches — all
+  tightenings, no loosenings. RESIDUAL: a consumer inside a helper body
+  whose branch guard is absent from the summary lane's predicates records no
+  claim (the same guard-loss the path-level contract flags have), and the
+  MinIO `users:[{accessKey,existingSecret}]` case is a ranged member, which
+  the wildcard exemption skips.
 - **F56/F62/F8 — provider shapes are lost through serialized/helper
   splices.** Truthy malformed objects pass the generated schema, render, and
   fail strict Kubernetes validation. ReLoader still leaves `affinity`,
