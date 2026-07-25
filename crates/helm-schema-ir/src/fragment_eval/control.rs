@@ -540,9 +540,33 @@ impl Interpreter<'_> {
             )
         };
         let helper_paths = self.absorb_header_execution_effects(header.expr());
+        // A member condition over a local-dict OVERLAY's ranged member is
+        // not faithfully decoded by the overlaid path's wildcard members
+        // alone: the overlay's own literal entries iterate too (traefik's
+        // synthetic "default" service). Binding the definite entry moves
+        // such a condition onto DIFFERENT paths, which is how this
+        // recognizes one; that binding's decode is then the sound subset the
+        // branch below reaches for, and it is what fail terminals and
+        // positive-polarity captures need — the wildcard decode alone goes
+        // dormant on an empty overlaid map.
+        let overlay_entry_subset = if faithful && predicate_reads_member_wildcard(&predicate) {
+            let subset = self.definite_member_condition_sound_subset(header.expr());
+            let subset_paths: BTreeSet<String> = subset
+                .iter()
+                .flat_map(|guard| guard.value_paths())
+                .map(str::to_string)
+                .collect();
+            (!subset.is_empty() && subset_paths != predicate.value_paths()).then_some(subset)
+        } else {
+            None
+        };
+        let faithful = faithful && overlay_entry_subset.is_none();
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            let mut sound_subset = self.first_iteration_dedup_sound_subset(header.expr());
+            let mut sound_subset = overlay_entry_subset.unwrap_or_default();
+            if sound_subset.is_empty() {
+                sound_subset = self.first_iteration_dedup_sound_subset(header.expr());
+            }
             if sound_subset.is_empty() {
                 sound_subset = self.definite_member_condition_sound_subset(header.expr());
             }
@@ -2103,4 +2127,14 @@ fn root_dispatch_literal(value: &AbstractValue) -> Option<GuardValue> {
         }
         _ => None,
     }
+}
+
+/// Whether a decoded condition reads a WILDCARD member path (`x.*.y`): the
+/// shape a ranged member's own condition takes.
+fn predicate_reads_member_wildcard(predicate: &Predicate) -> bool {
+    predicate.value_paths().iter().any(|path| {
+        helm_schema_core::split_value_path(path)
+            .iter()
+            .any(|segment| segment == "*")
+    })
 }

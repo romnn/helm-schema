@@ -102,6 +102,61 @@ fn traefik_http3_terminal_binds_through_the_services_overlay() -> eyre::Result<(
     Ok(())
 }
 
+/// Every `service.additionalServices` member is navigated by the services
+/// range (`ne $service.enabled false`, then its ports and annotations), so a
+/// present non-mapping member aborts with "can't evaluate field enabled in
+/// type interface {}". The synthetic "default" entry keeps rendering, and an
+/// object member with an exposed port renders.
+#[test]
+fn traefik_additional_service_members_must_be_mappings() -> eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+
+    for (override_, want, label) in [
+        (
+            serde_json::json!({ "service": { "additionalServices": { "audit": false } } }),
+            false,
+            "a false member aborts the member navigation",
+        ),
+        (
+            serde_json::json!({ "service": { "additionalServices": { "audit": "x" } } }),
+            false,
+            "a string member aborts the member navigation",
+        ),
+        (
+            serde_json::json!({ "service": { "additionalServices": { "audit": 7 } } }),
+            false,
+            "an integer member aborts the member navigation",
+        ),
+        (
+            serde_json::json!({ "service": { "additionalServices": { "audit": [] } } }),
+            false,
+            "a list member aborts the member navigation",
+        ),
+        (
+            serde_json::json!({
+                "service": { "additionalServices": { "audit": { "type": "ClusterIP" } } },
+                "ports": { "web": { "expose": { "audit": true } } }
+            }),
+            true,
+            "an object member with an exposed port renders",
+        ),
+        (
+            serde_json::json!({ "service": { "additionalServices": {} } }),
+            true,
+            "the declared empty map keeps the default service alone",
+        ),
+    ] {
+        let instance =
+            chart_instances::with_override("traefik", override_).expect("compose instance");
+        assert!(
+            validator.is_valid(&instance) == want,
+            "{label}: instance={instance}"
+        );
+    }
+    Ok(())
+}
+
 /// Each `experimental.localPlugins` member renders a Deployment
 /// volumeMount whose `mountPath` splices `{{ $plugin.mountPath | quote }}`
 /// through the pod-template projection. Sprig `quote` SKIPS nil operands,

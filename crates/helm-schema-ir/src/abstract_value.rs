@@ -473,6 +473,20 @@ impl AbstractValue {
                     .filter_map(Self::fragment_range_item)
                     .collect(),
             ),
+            // An overlay's range visits its literal entries AND the members
+            // of what it overlays, so the item domain is that union — the
+            // same rule the merge layers follow. Without it, ranging a
+            // `set`-mutated local dict (traefik's `$services :=
+            // .Values.service.additionalServices` plus a synthetic
+            // "default" entry) loses every member identity and the members'
+            // own consumers bind nothing.
+            Self::Overlay { entries, fallback } => Self::choice(
+                entries
+                    .values()
+                    .cloned()
+                    .chain(fallback.fragment_range_item())
+                    .collect(),
+            ),
             Self::Top
             | Self::Unknown
             | Self::RangeKey(_)
@@ -480,7 +494,6 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::Dict(_)
-            | Self::Overlay { .. }
             | Self::Widened(_) => None,
         }
     }

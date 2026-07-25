@@ -673,3 +673,64 @@ fn navigated_hosts_must_exist_in_the_coalesced_document() {
         );
     }
 }
+
+/// Ranging a local dict that a `set` overlaid on a values-backed map still
+/// visits that map's members, so the members' own consumers bind to them:
+/// navigating one aborts on a present non-mapping exactly as a direct range
+/// would (traefik's `$services := .Values.service.additionalServices` plus a
+/// synthetic "default" entry).
+#[test]
+fn overlaid_range_members_keep_their_member_contracts() {
+    let src = indoc! {r#"
+        {{- $services := .Values.additionalServices }}
+        {{- $services = set $services "default" (omit .Values.service "additionalServices") }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range $name, $service := $services }}
+          {{- if ne $service.enabled false }}
+          {{ $name }}: live
+          {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        additionalServices: {}
+        service:
+          enabled: true
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (overrides, want) in [
+        (
+            serde_json::json!({ "additionalServices": { "audit": { "enabled": true } } }),
+            true,
+        ),
+        (serde_json::json!({ "additionalServices": {} }), true),
+        // A present non-mapping member aborts the member navigation.
+        (
+            serde_json::json!({ "additionalServices": { "audit": false } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalServices": { "audit": "x" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalServices": { "audit": 7 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalServices": { "audit": [] } }),
+            false,
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the overlaid range binds its member contracts: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
