@@ -522,6 +522,56 @@ fn grafana_nested_ranges_and_has_key_require_object_members() -> eyre::Result<()
     )
 }
 
+/// grafana's leaked-secret assertion walks each sensitive path segment by
+/// segment (`and $shouldContinue (hasKey $currentMap $elem)`), so every
+/// INTERMEDIATE host it steps through must be a map: helm aborts with
+/// "wrong type for value; expected map[string]interface {}" on a present
+/// scalar, whatever the leaf looks like. Disabling the assertion keeps those
+/// values dormant.
+#[test]
+fn grafana_leaked_secret_walk_requires_map_hosts() -> eyre::Result<()> {
+    assert_chart_cases(
+        "grafana",
+        vec![
+            SemanticCase::rejected(
+                "integer sensitive host",
+                "/grafana.ini/database",
+                json!({ "grafana.ini": { "database": 7 } }),
+            ),
+            SemanticCase::rejected(
+                "string sensitive host",
+                "/grafana.ini/database",
+                json!({ "grafana.ini": { "database": "text" } }),
+            ),
+            SemanticCase::rejected(
+                "list sensitive host",
+                "/grafana.ini/database",
+                json!({ "grafana.ini": { "database": [] } }),
+            ),
+            SemanticCase::rejected(
+                "atomic dotted-key sensitive host",
+                "/grafana.ini/auth.basic",
+                json!({ "grafana.ini": { "auth.basic": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "empty sensitive host",
+                json!({ "grafana.ini": { "database": {} } }),
+            ),
+            SemanticCase::accepted(
+                "variable-expanded sensitive leaf",
+                json!({ "grafana.ini": { "database": { "password": "${DB_PASS}" } } }),
+            ),
+            SemanticCase::accepted(
+                "dormant assertion keeps scalar hosts open",
+                json!({
+                    "assertNoLeakedSecrets": false,
+                    "grafana.ini": { "database": 7 }
+                }),
+            ),
+        ],
+    )
+}
+
 #[test]
 fn sealed_secrets_liveness_probe_keeps_its_object_type() -> eyre::Result<()> {
     assert_chart_cases(

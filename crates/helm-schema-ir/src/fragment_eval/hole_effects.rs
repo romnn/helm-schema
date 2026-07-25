@@ -333,6 +333,7 @@ impl Interpreter<'_> {
         );
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
+        env.local_truthy_reductions = self.locals.truthy_reductions.clone();
         env.member_host_conversions = self.member_host_conversions.clone();
         env.active_predicates = self.active_predicates.clone();
         env.root_truthy_predicates = self.root_truthy_predicates.clone();

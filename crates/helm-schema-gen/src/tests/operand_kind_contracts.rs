@@ -2173,3 +2173,115 @@ fn semver_guarded_string_contract_binds_conditionally() {
         );
     }
 }
+
+/// A boolean flag local carries no values-path identity, so an
+/// `and $flag (hasKey …)` short circuit used to gate its `hasKey` capture on
+/// an approximate stand-in — which dropped the enclosing guard and left the
+/// operand claim unconditional. A statically-true flag contributes no guard
+/// of its own, so the capture keeps exactly the ambient one.
+#[test]
+fn statically_true_flag_operands_keep_short_circuit_operand_contracts() {
+    let src = indoc! {r#"
+        {{- $shouldContinue := true }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.assert }}
+          {{- if and $shouldContinue (hasKey .Values.cfg "a") }}
+          key: {{ index .Values.cfg "a" }}
+          {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        assert: true
+        cfg:
+          a: value
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (overrides, want) in [
+        (serde_json::json!({ "cfg": { "a": "x" } }), true),
+        // `hasKey` on a present non-map aborts under the live assertion.
+        (serde_json::json!({ "cfg": 7 }), false),
+        (serde_json::json!({ "cfg": "text" }), false),
+        // The ambient guard survives: the operand claim is not unconditional.
+        (serde_json::json!({ "assert": false, "cfg": 7 }), true),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the flag-guarded hasKey operand claim keeps its ambient guard: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// The unrolled traversal shape behind grafana's leaked-secret assertion:
+/// each iteration tests `hasKey` on the host it stepped into last, so every
+/// INTERMEDIATE host must be a map wherever it is present. The kill-switch
+/// flag is what carries the earlier iterations' presence tests, and only its
+/// exact decode lets the deeper hosts bind at all.
+#[test]
+fn unrolled_traversal_binds_every_intermediate_host_kind() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- $sensitive := list (dict "path" (list "database" "password")) }}
+          {{- if .Values.assert }}
+          {{- range $_, $secret := $sensitive }}
+            {{- $currentMap := $.Values.cfg }}
+            {{- $shouldContinue := true }}
+            {{- range $index, $elem := $secret.path }}
+              {{- if and $shouldContinue (hasKey $currentMap $elem) }}
+                {{- if eq (len $secret.path) (add1 $index) }}
+                  {{- if not (regexMatch "^expanded$" (index $currentMap $elem)) }}
+                    {{- fail "leaked secret" }}
+                  {{- end }}
+                {{- else }}
+                  {{- $currentMap = index $currentMap $elem }}
+                {{- end }}
+              {{- else }}
+                {{- $shouldContinue = false }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          rendered: "yes"
+    "#};
+    let values_yaml = indoc! {"
+        assert: true
+        cfg:
+          database:
+            password: expanded
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (overrides, want) in [
+        (serde_json::json!({}), true),
+        // A present scalar host aborts the walk's next `hasKey`.
+        (serde_json::json!({ "cfg": { "database": 7 } }), false),
+        (serde_json::json!({ "cfg": { "database": "text" } }), false),
+        // The leaf claim still binds under the walk.
+        (
+            serde_json::json!({ "cfg": { "database": { "password": "plain" } } }),
+            false,
+        ),
+        // Dormant assertion: the walk never runs.
+        (
+            serde_json::json!({ "assert": false, "cfg": { "database": 7 } }),
+            true,
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the unrolled walk binds each intermediate host: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

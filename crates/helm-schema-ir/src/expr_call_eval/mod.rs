@@ -908,31 +908,66 @@ fn eval_short_circuit_args(
         if index + 1 == args.len() {
             break;
         }
-        execution_predicates.insert(condition_path.map_or_else(
-            || {
-                Predicate::approximate(
+        // A statically TRUE operand lets an `and` fall through with no guard
+        // at all: the later operands execute exactly where the ambient
+        // predicates already say. Without this, a boolean flag local
+        // (`$shouldContinue := true`, and the joined state an unrolled
+        // traversal's kill switch leaves behind) contributes an approximate
+        // stand-in that poisons every capture the operand guards — grafana's
+        // `and $shouldContinue (hasKey $currentMap $elem)` lost the walk's
+        // object-kind claim on each intermediate host that way.
+        //
+        // Only this polarity is sound: a reduction is a SUFFICIENT condition
+        // for truthiness, so it may stand in for an `and`'s positive
+        // execution guard but never for an `or`'s negated one, which would
+        // widen the guard into states the operands never run in.
+        let falls_through =
+            previous_truthy && condition_path.is_none() && statically_truthy_operand(arg, env);
+        if !falls_through {
+            execution_predicates.insert(condition_path.map_or_else(
+                || {
+                    Predicate::approximate(
+                        if previous_truthy {
+                            "and operand truthiness"
+                        } else {
+                            "or operand truthiness"
+                        },
+                        BTreeSet::new(),
+                    )
+                },
+                |path| {
+                    let truthy = Predicate::truthy_path(path);
                     if previous_truthy {
-                        "and operand truthiness"
+                        truthy
                     } else {
-                        "or operand truthiness"
-                    },
-                    BTreeSet::new(),
-                )
-            },
-            |path| {
-                let truthy = Predicate::truthy_path(path);
-                if previous_truthy {
-                    truthy
-                } else {
-                    truthy.negated()
-                }
-            },
-        ));
+                        truthy.negated()
+                    }
+                },
+            ));
+        }
         constrained_env.bound_values = constrained_env
             .bound_values
             .with_predicate_constraints(arg, previous_truthy);
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+/// Whether a short-circuit operand is truthy on EVERY render: a `true`
+/// literal, or a local the fragment interpreter reduced to unconditional
+/// truthiness. Neither carries a values-path identity, so the operand's own
+/// evaluation cannot witness this.
+fn statically_truthy_operand(arg: &TemplateExpr, env: &EvalEnv) -> bool {
+    let reductions = &env.local_truthy_reductions;
+    match arg.deparen() {
+        TemplateExpr::Literal(Literal::Bool(value)) => *value,
+        TemplateExpr::Variable(name) => {
+            let reduction = reductions
+                .get(name)
+                .or_else(|| reductions.get(name.trim_start_matches('$')));
+            matches!(reduction, Some(Predicate::True))
+        }
+        _ => false,
+    }
 }
 
 fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predicate>) {

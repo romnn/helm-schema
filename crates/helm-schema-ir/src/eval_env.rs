@@ -16,6 +16,11 @@ pub(crate) struct EvalEnv {
     pub(crate) locals: HashMap<String, AbstractValue>,
     pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    /// Structural conditions under which a local is truthy, as the fragment
+    /// interpreter reduced them. A boolean flag carries no values-path
+    /// identity, so short-circuit operand truthiness has no other way to
+    /// decode it.
+    pub(crate) local_truthy_reductions: HashMap<String, Predicate>,
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
     pub(crate) active_predicates: Vec<Predicate>,
     pub(crate) bound_values: BoundValueContext,
