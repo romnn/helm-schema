@@ -184,8 +184,15 @@ tasks:
     cmds:
       - cargo nextest run -P integration --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
+  test:network:
+    desc: "run the live fetch-on-demand tests against real upstream schema hosts"
+    cmds:
+      # Keeps the profile's retries: a failure here is usually an upstream
+      # outage, not a defect in this repository.
+      - cargo nextest run -P network --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
+
   test:all:
-    desc: "run all tests in cargo workspace"
+    desc: "run ALL tests in cargo workspace, including the live network tests"
     aliases: [test:ci]
     cmds:
       - cargo nextest run -P ci --workspace --all-targets --no-tests warn {{.CLI_ARGS}}

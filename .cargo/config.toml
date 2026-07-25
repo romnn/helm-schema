@@ -5,7 +5,12 @@ CARGO_WORKSPACE_DIR = { value = "", relative = true }
 c = "check --workspace --all-targets"
 t = "nextest run -P default --retries 0 --no-tests warn --all-targets"
 ti = "nextest run -P integration --retries 0 --no-tests warn --all-targets"
-tci = "nextest run -P ci --retries 0 --no-tests warn --all-targets"
+# tnet and tci omit --retries: the network tests (all of tnet; part of tci
+# via a profile override) retry upstream blips, which are not defects in
+# this repo. Every offline test still runs with retries = 0 from its
+# profile.
+tnet = "nextest run -P network --no-tests warn --all-targets"
+tci = "nextest run -P ci --no-tests warn --all-targets"
 clippy-wrapper = "run --package clippy-wrapper --"
 
 # linting

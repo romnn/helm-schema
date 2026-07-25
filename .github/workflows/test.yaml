@@ -69,6 +69,38 @@ jobs:
       - name: Integration tests
         run: task test:integration
 
+  network:
+    name: network (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: false
+          cache: true
+          env: false
+      - run: mise install task aqua:nextest-rs/nextest/cargo-nextest
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@v0.0.10
+      # Kept in its own job because it is the only suite that reaches the
+      # network: an upstream outage fails this job alone and leaves the
+      # deterministic suites green. It runs on every OS because what it
+      # proves — fetch, then write a reusable cache entry — is filesystem
+      # behavior that differs per platform.
+      - name: Fetch-on-demand tests
+        run: task test:network
+
   publish:
     name: publish (dry-run)
     runs-on: ubuntu-24.04

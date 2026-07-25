@@ -1,16 +1,72 @@
+# Three classes of test, split by what can make them fail.
+#
+#   default     — unit tests. Offline, hermetic.
+#   integration — `tests/` binaries except `network_*`. Offline, but heavy:
+#                 they generate whole chart schemas and shell out to `helm`.
+#   network     — `tests/network_*.rs` only. Reaches real upstream schema
+#                 hosts, so it is the one class allowed to retry.
+#
+# `network` is carved out of the other two so a GitHub outage can never fail
+# a run that has nothing to do with the network. Everything else reads the
+# vendored bundle under `testdata/provider-bundle/` (or a cold cache root)
+# with downloads disabled, which is what lets `retries = 0` mean something
+# there: a failure is a real defect, and retrying would only hide it.
+#
+# The `ci` profile runs ALL classes — `task test:all` means all — with the
+# network settings applied per-binary through an override.
+#
+# `period` is when a test is REPORTED slow; `period * terminate-after` is
+# when it is KILLED. Keep those far apart. Whole-chart analysis takes tens of
+# seconds in debug mode and a CI runner is several times slower than a
+# developer machine, so a kill threshold set near the observed runtime turns
+# ordinary hardware variance into a red build — that is how the Windows
+# runner failed three `tests::analysis` chart tests at exactly 60s while
+# Linux passed the same tests at 38-46s. The SLOW line keeps slow tests
+# visible; termination is reserved for a test that is genuinely stuck.
+
 [profile.default]
 default-filter = "not kind(test)"
 fail-fast = { max-fail = "all" }
 retries = 0
-slow-timeout = { period = "60s", terminate-after = 1, grace-period = "10s" }
+slow-timeout = { period = "60s", terminate-after = 5, grace-period = "10s" }
 
 [profile.integration]
-default-filter = "kind(test)"
+default-filter = "kind(test) and not binary(/^network_/)"
 fail-fast = { max-fail = "all" }
-retries = 3
-slow-timeout = { period = "300s", terminate-after = 1, grace-period = "10s" }
+retries = 0
+# These shell out to `helm lint`, whose schema validator is far slower than
+# generation itself, so the ceiling is higher than the default profile's.
+slow-timeout = { period = "120s", terminate-after = 5, grace-period = "10s" }
+
+[profile.network]
+default-filter = "binary(/^network_/)"
+fail-fast = { max-fail = "all" }
+# Immediate retries tend to hit the same upstream blip; back off instead.
+retries = { backoff = "exponential", count = 3, delay = "5s", jitter = true }
+# Each test fetches a few files and does trivial compute, so a stuck test is
+# a stuck connection — no need for the analysis suites' generous ceiling.
+slow-timeout = { period = "60s", terminate-after = 2, grace-period = "10s" }
 
 [profile.ci]
 default-filter = "all()"
 fail-fast = false
-slow-timeout = { period = "300s", terminate-after = 1, grace-period = "10s" }
+retries = 0
+slow-timeout = { period = "120s", terminate-after = 5, grace-period = "10s" }
+
+# Network binaries keep their retry/backoff/serialization semantics inside
+# the all-inclusive ci profile.
+[[profile.ci.overrides]]
+filter = "binary(/^network_/)"
+retries = { backoff = "exponential", count = 3, delay = "5s", jitter = true }
+slow-timeout = { period = "60s", terminate-after = 2, grace-period = "10s" }
+test-group = "upstream-schemas"
+
+[test-groups]
+# One request at a time against the upstream schema hosts: these tests exist
+# to prove fetch-on-demand works, not to hammer raw.githubusercontent.com
+# from every runner in the OS matrix at once.
+upstream-schemas = { max-threads = 1 }
+
+[[profile.network.overrides]]
+filter = "binary(/^network_/)"
+test-group = "upstream-schemas"
