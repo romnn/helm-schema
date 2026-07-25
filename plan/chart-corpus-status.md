@@ -287,8 +287,11 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   equality members (bounded; further helper-local operands remain In progress)
 - F54 type-dispatch overlays making supported arms impossible
 - F55 partial type dispatch re-closing the unmatched complement
-- F56 generic fragment fallback vs structural placement (bounded; current
-  helper/provider projection losses are listed separately In progress)
+- F56 generic fragment fallback vs structural placement, completed by the
+  provider-shape round: a branch-selected container item keeps its `[*]`
+  slot, and a closed provider payload survives both a populated declared
+  default and an `omit`ted member (the action-line placement residual is
+  noted with the round entry below)
 - F57 broad fragment alternatives bypassing member/range contracts
 - F58 integer rangeability vs range-variable arity (jenkins hasKey/member
   slot degradation)
@@ -1397,17 +1400,49 @@ same recursive map-null deletion as `chart_instances::with_override`.
   claim (the same guard-loss the path-level contract flags have), and the
   MinIO `users:[{accessKey,existingSecret}]` case is a ranged member, which
   the wildcard exemption skips.
-- **F56/F62/F8 — provider shapes are lost through serialized/helper
-  splices.** Truthy malformed objects pass the generated schema, render, and
-  fail strict Kubernetes validation. ReLoader still leaves `affinity`,
-  `resources`, `containerSecurityContext`, `volumeMounts`, and `volumes`
-  open. The same projection loss is verified for Sealed Secrets security
-  contexts/probes, Tempo annotations/security contexts/probes, Trivy
-  nodeSelector/securityContext, Vault strategy and metadata fragments,
-  SigNoz resources/migration volumes, and Zalando resources/securityContext.
-  Each corresponding provider-shaped control passes. Do not include Sealed
-  Secrets `commonLabels`/`commonAnnotations`; exact composition already
-  rejects their numeric members.
+- **F56/F62/F8 — provider shapes lost through serialized/helper splices
+  (thirty-fourth round; CLOSED except the action-line residual).** Twenty of
+  the twenty-one named paths now reject a truthy malformed object — every
+  ReLoader path (`affinity`, `resources`, `containerSecurityContext`,
+  `volumeMounts`, `volumes`), Sealed Secrets' security contexts and probes,
+  Tempo's annotations/security contexts/probes, Trivy's
+  nodeSelector/securityContext, SigNoz resources, Zalando
+  resources/securityContext — while each provider-shaped control still
+  renders. One bullet hid four independent losses:
+  (a) a container item whose `-` marker comes from a branch lost its `[*]`
+  slot, because the ill-nested region's DEFERRAL chain tracked only mapping
+  entries — `DeferredParent::{Entry,Item}` restores the level, with the
+  asymmetry that a key opened empty accepts output at its own indent while a
+  sequence item never does (its dash owns that column, so same-indent output
+  opens the NEXT item — zalando's `extraEnvs`);
+  (b) the documented no-op `additionalProperties: {}` stamp beat a closed
+  provider payload inside `merge_object_schemas`, so any populated declared
+  default erased the sink's closure (zalando `resources`);
+  (c) an unknown declared member — and an `omit`ted one — DROPPED the
+  closure instead of admitting itself, so every key the sink rejects came
+  back with it (sealed-secrets' probe `enabled` flag, which is not a Probe
+  field);
+  (d) the declared-`{}` off-state was unclosed as a "fixed object" inside a
+  conditional target's base, and that vacuous union arm swallowed its
+  siblings (trivy's `nodeSelector` string map).
+  76 acceptance flips, all tightenings: 74 render manifests `kubeconform
+  -strict` rejects (cert-manager's six needed a synthesized `Chart.yaml` —
+  the vendored copy ships `Chart.template.yaml`) and 2 abort helm.
+  Pinned by `branch_selected_sequence_items_keep_their_item_slot` and
+  `declared_object_members_are_admitted_without_opening_their_closed_levels`
+  (gen) plus `serialized_and_helper_splices_keep_their_provider_shapes`
+  (CLI). RESIDUAL: Vault's `injector.strategy` stays open. Its
+  `{{ template "injector.strategy" . }}` sits on its own line at column 2,
+  but the layout parser treats action-only lines as transparent to nesting,
+  so the CST hangs it under the preceding `matchLabels` and the slot becomes
+  `spec.selector.strategy`. Two repairs were built and withdrawn after
+  measurement (floating a bare output by its line indent, and reading
+  `tpl`'s argument for the width) — each fixed vault or its neighbours while
+  mis-slotting jenkins' `persistence.volumes`. Closing it needs the helper
+  BODY's own leading indent as the splice's rendered width, which the CST
+  deliberately does not model. Do not include Sealed Secrets
+  `commonLabels`/`commonAnnotations`; exact composition already rejects
+  their numeric members.
 - **F40/F59 — ranged document identity through render helpers (overlay
   member half in the thirtieth round, document-item half in the
   thirty-second; CLOSED).** Traefik

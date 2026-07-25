@@ -9437,3 +9437,166 @@ one clean dump run of the final build, and the luup2 `check:local`
 downstream gate passes with the installed binary after a forced
 `schema:generate:all`, with no schema drift downstream. Production source:
 +484 lines.
+
+## Provider-shape round (2026-07-26, thirty-fourth round)
+
+F56/F62/F8's "provider shapes are lost through serialized/helper splices"
+was one ledger bullet covering seven charts, and the diagnosis found four
+independent losses behind it — three structural, one that only looked
+structural. Twenty of the finding's twenty-one named paths now reject a
+truthy malformed object; the twenty-first is scoped as a residual below.
+
+### A branch-selected sequence item is still an item
+
+Reloader opens its container with a three-way registry/digest chain:
+
+```yaml
+      containers:
+      {{- if .Values.global.imageRegistry }}
+      - image: "{{ .Values.global.imageRegistry }}/…"
+      {{- else }}
+      …
+      {{- end }}
+        imagePullPolicy: …
+        resources:
+{{ toYaml .Values.reloader.deployment.resources | indent 10 }}
+```
+
+The CST is right — `resources:` nests under the else-branch's `- image:`
+item — but the interpreter lost that level. An ill-nested region ADOPTS the
+escaped sibling items, and children of an adopted node that start after
+`{{ end }}` are deferred and re-attached outside the branch scope. The
+deferral chain only tracked MAPPING ENTRIES (`Vec<&MappingEntry>`), so a
+batch whose parent was a sequence item re-attached with an EMPTY chain: the
+content landed beside the sequence instead of in it, and the recorded
+provider slot was `containers.resources` — a path no Kubernetes schema owns,
+so lookup abstained and the value stayed open.
+
+`DeferredParent::{Entry,Item}` gives the chain both container kinds and
+`eval_deferred` wraps by kind (`merge_entry` for a key, `items.push` for an
+item). One asymmetry is load-bearing: a mapping key opened without an inline
+value accepts output rendered at its OWN indent, but a sequence item never
+does — its dash occupies that column, so same-indent output opens the NEXT
+item. Zalando splices `toYaml .Values.extraEnvs | indent 8` at exactly the
+dash column of the preceding `- name: CONTROLLER_ID`; without the asymmetry
+that whole-array splice became an `env[*]` ITEM slot and lost the array
+shape (`zalando_extra_envs_keeps_podspec_envvar_shape` catches it).
+
+Collateral in the IR corpus: four fixtures dropped a
+`template_supplied_member_keys` entry that only existed because the escaped
+content had joined the wrong mapping (bitnami-redis' `extraEgress` claimed
+the literal `to` key of a different item; cert-manager `volumes` claimed
+`configMap`; signoz `initContainers` claimed `volumeMounts`; zalando
+`extraEnvs` claimed `value`).
+
+### A no-opinion `additionalProperties` must not re-open a closed sink
+
+`stamp_explicit_map_openness` writes `additionalProperties: {}` onto every
+declared non-empty map — documented as semantically a no-op. It was not one
+inside `merge_object_schemas`, whose "a typed `additionalProperties`
+outranks the closed side" rule fired on the EMPTY schema too. So any chart
+that ships a populated default at a provider-typed slot lost the sink's
+closure: zalando's `resources: {limits: …, requests: …}` erased
+ResourceRequirements' `additionalProperties: false`. The rule now requires
+the winning side to be a MEANINGFUL schema, reusing the same "not the empty
+object" test `has_meaningful_additional_properties` already applied.
+
+### An unknown declared member admits itself, not everything
+
+`open_objects_rejecting_declared_members` protected the chart's own default
+by DROPPING `additionalProperties: false` at any level whose declared value
+carried an unknown key. That is a blunt repair — it also admits every key
+the sink genuinely rejects. Each unknown declared key now becomes an
+accepted, untyped property of its own level and the closure survives.
+
+The `omit` lane needed the same treatment from the other side.
+`subtract_omitted_members` REMOVED the omitted members from the payload, so
+a closed payload then rejected the source for carrying them, and the rescue
+above opened the whole object. Omitted keys now stay as accepted, untyped
+properties: the sink never sees them, their typing still abstains, and the
+guard-scoped re-add arms still intersect. Sealed Secrets' probes and
+security contexts carry exactly this shape —
+`omit .Values.livenessProbe "enabled" | toYaml` — and the `enabled` flag is
+not a Probe field at all.
+
+### The declared-`{}` off-state is not a fixed object
+
+A conditional target's base gets its fixed objects unclosed
+(`unclose_fixed_objects`) because overlays own keys the resolved shape does
+not know. The declared-`{}` placeholder was treated as one of those, so
+`maxProperties: 0` became `additionalProperties: {}` — and when the base is
+a UNION, that vacuous arm swallows every sibling. Trivy's `nodeSelector`
+resolved to `anyOf[{}-placeholder, NodeSelector string map, falsy, null]`
+and the unclosed placeholder made the string map unreachable. The
+placeholder now only uncloses when it IS the base; inside a union its
+siblings already carry every lane the guarded renders reach.
+
+### The residual: an action-only line's rendered indent
+
+Vault's `injector.strategy` stays open. The helper call
+
+```yaml
+  selector:
+    matchLabels:
+      component: webhook
+  {{ template "injector.strategy" . }}
+```
+
+renders `  strategy:` at column 2, a sibling of `selector` — but the layout
+parser treats action-only lines as transparent (deliberately: control
+actions routinely do not nest with YAML), so the CST hangs the output under
+`matchLabels` and the slot becomes `spec.selector.strategy`, which owns no
+schema.
+
+Two repairs were built and both were withdrawn after measurement. Floating a
+bare output by its own LINE indent fixed vault and broke jenkins'
+`persistence.volumes` and `controller.podAnnotations` plus KPS'
+`additionalDataSources`, whose `{{ tpl (toYaml … | indent N) . }}` spellings
+hide the real width inside a call argument. Teaching
+`fragment_indent_width` to look through `tpl`'s first argument (correct on
+its own terms — `tpl` re-renders its operand's text) fixed the annotations
+and datasources but left `persistence.volumes` mis-slotted, because routing
+it through the floating lane reaches a different container than its tree
+position. One named example did not justify a delicate global layout change
+with measured collateral, so both were reverted. Closing this needs the
+helper BODY's own leading indent as the splice's rendered width, which the
+CST deliberately does not model today.
+
+### Adjudication
+
+36 chart-corpus fixtures, 19 gen-corpus fixtures, and 4 IR-corpus fixtures
+move. 76 acceptance flips, ALL tightenings, zero loosenings:
+
+- **74 render a manifest strict Kubernetes validation rejects** — the exact
+  class the finding describes. Every one was re-rendered with
+  `helm template --skip-schema-validation` and validated with `kubeconform
+  -strict` against the committed provider bundle; each report names the
+  offending path (`at '/spec/template/spec/containers/0/securityContext':
+  additional properties 'probe-member' not allowed`). cert-manager's six
+  needed a synthesized `Chart.yaml` — the vendored copy ships
+  `Chart.template.yaml`, so helm cannot render it in place.
+- **2 abort helm outright** — kube-state-metrics' and tempo's `annotations`,
+  where the nested map reaches a string-map metadata slot.
+
+The probe battery is the three-granularity old-vs-new prober: every
+top-level key, every second-level key, and the empty member/item probes,
+composed onto chart defaults with map-wise null deletion. The
+`{X: {probe-member: {}}}` granularity is what surfaces this whole finding —
+a foreign key inside an otherwise valid provider object is invisible to
+type-only probes.
+
+Pinned by `branch_selected_sequence_items_keep_their_item_slot` (gen: the
+slot survives both the branch-selected and plain spellings and reaches
+ResourceRequirements typing),
+`declared_object_members_are_admitted_without_opening_their_closed_levels`
+(gen: the closure survives the declared-key rescue), and
+`serialized_and_helper_splices_keep_their_provider_shapes` (CLI: reloader's
+three container-item paths, zalando's populated declared default, sealed
+secrets' omitted `enabled` flag, each with the supported lane beside it).
+
+### Validation
+
+`task test` green (923 unit tests), `task test:integration` green (491),
+`task lint` and `cargo fmt --check` clean, corpus fixtures byte-identical to
+one clean dump run of the final build, and the luup2 `check:local`
+downstream gate passes. Production source: +101 lines.
