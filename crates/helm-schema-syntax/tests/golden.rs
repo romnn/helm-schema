@@ -204,3 +204,34 @@ fn block_scalar_body_continues_across_control_lines() {
     "#};
     assert_dump(source, expected);
 }
+
+/// A `{{/* … */}}` comment spanning lines is one action: the columns of its
+/// body lines — and of the `*/}}` that closes it — are the comment's own text,
+/// not container structure. Jenkins' controller statefulset comments out a
+/// `securityContext` block that way and closes it at column 4, which would
+/// otherwise pop the pod `spec:` the block sits in.
+#[test]
+fn multiline_template_comment_bodies_are_transparent_to_layout() {
+    let source = indoc! {r"
+        spec:
+          template:
+            spec:
+              securityContext:
+                {{/* replace this block with:
+                runAsUser: 1000
+            */}}
+                runAsUser: {{ .Values.runAsUser }}
+              containers: []
+    "};
+    let expected = indoc! {r#"
+        document 0 [0..186)
+        entry [0..5) open indent=0 key="spec"
+          entry [8..17) open indent=2 key="template"
+            entry [22..27) open indent=4 key="spec"
+              entry [34..50) open indent=6 key="securityContext"
+                opaque template-comment [59..121) "{{/* replace this block with:\n        runAsUser: 1000\n    */}}"
+                entry [130..164) open indent=8 key="runAsUser" value="⟦{{ .Values.runAsUser }}⟧"
+              entry [171..185) closed indent=6 key="containers" value="[]"
+    "#};
+    assert_dump(source, expected);
+}

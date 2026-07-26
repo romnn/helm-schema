@@ -3896,3 +3896,49 @@ fn serialized_and_helper_splices_keep_their_provider_shapes() -> eyre::Result<()
         ],
     )
 }
+
+/// A splice written on its own line renders at that line's column, not at the
+/// column of whatever entry the CST left open above it. Vault writes
+/// `{{ template "injector.strategy" . }}` at column 2 under a `matchLabels:`
+/// whose members are at 6, and jenkins closes a commented-out block with
+/// `    */}}` inside its pod `spec:`; both used to strand the surrounding
+/// payloads outside the slots they render into.
+#[test]
+fn own_line_splices_reach_the_slot_their_column_names() -> eyre::Result<()> {
+    assert_chart_cases(
+        "vault",
+        vec![
+            SemanticCase::rejected(
+                "the injector strategy lands in DeploymentStrategy, not the selector",
+                "/injector/strategy",
+                json!({ "injector": { "strategy": { "bogus": 7 } } }),
+            ),
+            SemanticCase::rejected(
+                "a scalar strategy is not a DeploymentStrategy either",
+                "/injector/strategy",
+                json!({ "injector": { "strategy": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "the documented rolling-update strategy still renders",
+                json!({ "injector": { "strategy": {
+                    "type": "RollingUpdate",
+                    "rollingUpdate": { "maxSurge": 1, "maxUnavailable": 1 },
+                } } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "jenkins",
+        vec![
+            SemanticCase::rejected(
+                "the pod spec survives a multiline template comment",
+                "/persistence/volumes",
+                json!({ "persistence": { "volumes": [{ "bogus": 7 }] } }),
+            ),
+            SemanticCase::accepted(
+                "real pod volumes still render",
+                json!({ "persistence": { "volumes": [{ "name": "extra", "emptyDir": {} }] } }),
+            ),
+        ],
+    )
+}

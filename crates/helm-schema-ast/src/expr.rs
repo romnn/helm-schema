@@ -162,6 +162,13 @@ impl TemplateExpr {
             {
                 indent_width_from_call_args(args)
             }
+            // `tpl` is the identity on text that carries no template action,
+            // so an indent applied to its SUBJECT survives the render:
+            // prometheus writes `{{ tpl (toYaml .Values.server.ingress.tls |
+            // indent 4) $ }}` at column 0 and the rows still land at column 4.
+            TemplateExpr::Call { function, args } if function == "tpl" => {
+                args.first().and_then(TemplateExpr::fragment_indent_width)
+            }
             TemplateExpr::Pipeline(stages) => stages
                 .iter()
                 .rev()

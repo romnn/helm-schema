@@ -16006,6 +16006,19 @@
           {
             "additionalProperties": {},
             "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "istioNamespace": {
+                    "$ref": "#/$defs/schema40"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
               "pilot": {
                 "$ref": "#/$defs/schema650"
               }
@@ -17460,6 +17473,67 @@
                 ]
               },
               {
+                "$ref": "#/$defs/schema291"
+              },
+              {
+                "$ref": "#/$defs/schema267"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema666"
+                    },
+                    {
+                      "properties": {
+                        "meshConfig": {
+                          "anyOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "meshConfig"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/$defs/schema255"
+              },
+              {
+                "$ref": "#/$defs/schema70"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema674"
+                  },
+                  {
+                    "properties": {
+                      "configMap": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configMap"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
                 "not": {
                   "anyOf": [
                     {
@@ -17511,179 +17585,6 @@
                 "$ref": "#/$defs/schema70"
               }
             ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema70"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "istiodRemote": {
-                          "properties": {
-                            "enabled": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "istiodRemote"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "istiodRemote": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "istiodRemote"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "global": {
-                                "properties": {
-                                  "configCluster": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "configCluster"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "global"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "istiodRemote": {
-                                "properties": {
-                                  "enabledLocalInjectorIstiod": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabledLocalInjectorIstiod"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "istiodRemote"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "istioNamespace": {
-                "$ref": "#/$defs/schema40"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema674"
-              },
-              {
-                "properties": {
-                  "configMap": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "configMap"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema291"
-          },
-          {
-            "$ref": "#/$defs/schema267"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/schema666"
-                },
-                {
-                  "properties": {
-                    "meshConfig": {
-                      "anyOf": [
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "meshConfig"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/$defs/schema255"
-          },
-          {
-            "$ref": "#/$defs/schema70"
           }
         ]
       },
@@ -18540,31 +18441,6 @@
         "allOf": [
           {
             "$ref": "#/$defs/schema322"
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "meshConfig": {
-                "additionalProperties": {},
-                "properties": {
-                  "rootNamespace": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema41"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
           },
           {
             "additionalProperties": {},

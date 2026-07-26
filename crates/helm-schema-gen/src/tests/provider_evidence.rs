@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -2045,6 +2047,97 @@ fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
                 .is_some(),
             "{label}: the item slot must reach ResourceRequirements typing"
         );
+    }
+    Ok(())
+}
+
+/// An action-only line renders at its own column, but the CST attaches it to
+/// whatever entry was still open — which can sit several levels deeper. The
+/// escape has to be transitive: stranding the splice one level up puts it in
+/// the wrong provider slot, which is where signoz's service-account pull
+/// secrets and vault's injector `strategy:` used to land.
+#[test]
+fn bare_splices_escape_to_the_container_their_column_names() -> eyre::Result<()> {
+    let helpers = indoc! {r#"
+        {{- define "x.pullSecrets" -}}
+        imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+          - name: {{ . }}
+        {{- end }}
+        {{- end }}
+        {{- define "x.saName" -}}
+        fixed
+        {{- end -}}
+        {{- define "x.strategy" -}}
+          strategy:
+            type: {{ .Values.strategyType }}
+        {{- end -}}
+    "#};
+    // The include follows `name: {{ … }}`, whose templated value opens a
+    // scope, so the CST nests it two levels below its own column 0.
+    let service_account = indoc! {r#"
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: {{ include "x.saName" . }}
+        {{- include "x.pullSecrets" . }}
+    "#};
+    // The splice sits at column 2 under a `matchLabels:` whose members are at
+    // 6, so it has to climb out of both `matchLabels` and `selector`.
+    let deployment = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          {{ template "x.strategy" . }}
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: test
+                  image: busybox
+    "#};
+
+    for (label, source, value_path, want) in [
+        (
+            "pull secret item",
+            service_account,
+            "imagePullSecrets.*",
+            vec!["imagePullSecrets[*]", "name"],
+        ),
+        (
+            "branch-selected strategy",
+            deployment,
+            "strategyType",
+            vec!["spec", "strategy", "type"],
+        ),
+    ] {
+        let signals = schema_signals_for(parse_ir_with_helpers(source, helpers));
+        let evidence = signals
+            .schema_evidence_by_value_path()
+            .get(value_path)
+            .ok_or_eyre(format!("{label}: no evidence for {value_path}"))?;
+        let slots: BTreeSet<Vec<String>> = evidence
+            .provider_schema_uses
+            .iter()
+            .chain(
+                evidence
+                    .conditional_overlays
+                    .iter()
+                    .flat_map(|overlay| &overlay.evidence.provider_schema_uses),
+            )
+            .map(|use_| use_.path.0.clone())
+            .collect();
+        let want: BTreeSet<Vec<String>> = [want.into_iter().map(str::to_string).collect()]
+            .into_iter()
+            .collect();
+        sim_assert_eq!(have: slots, want: want, "{label}");
     }
     Ok(())
 }

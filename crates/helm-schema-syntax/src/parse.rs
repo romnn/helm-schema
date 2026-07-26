@@ -47,6 +47,7 @@ pub(crate) fn parse_document(source: &str, tokens: Vec<ActionToken>) -> Template
         owners: vec![OwnerFrame::root()],
         region_modes: HashMap::new(),
         next_token: 0,
+        suppressed_until: 0,
     };
     parser.run(&lines)
 }
@@ -130,6 +131,9 @@ struct Parser<'src> {
     owners: Vec<OwnerFrame>,
     region_modes: HashMap<usize, RegionMode>,
     next_token: usize,
+    /// End of the furthest action token consumed so far. Lines that finish
+    /// inside it are that action's own text, not YAML layout.
+    suppressed_until: usize,
 }
 
 impl<'src> Parser<'src> {
@@ -164,6 +168,14 @@ impl<'src> Parser<'src> {
         let trimmed = replay.trim_start();
         let indent = replay.len() - trimmed.len();
         if trimmed.is_empty() {
+            return;
+        }
+        // Inside a multi-line action: a `{{/* … */}}` comment body, or a
+        // header wrapped across lines. Its text is the action's, so the
+        // columns on those lines say nothing about container structure —
+        // jenkins closes a commented-out block with `    */}}`, whose column
+        // would otherwise pop the pod spec that encloses it.
+        if le <= self.suppressed_until {
             return;
         }
         // Body of an open block scalar: any line deeper than the block
@@ -312,6 +324,7 @@ impl<'src> Parser<'src> {
             self.next_token += 1;
             self.attach_gap_text(pos, token.span.start.min(le));
             pos = pos.max(token.span.end);
+            self.suppressed_until = self.suppressed_until.max(token.span.end);
             self.handle_token_structural(token);
         }
         self.attach_gap_text(pos, le);
@@ -441,6 +454,7 @@ impl<'src> Parser<'src> {
             .filter(|token| token.span.start < le)
         {
             self.next_token += 1;
+            self.suppressed_until = self.suppressed_until.max(token.span.end);
             match token.kind {
                 TokenKind::RegionOpen {
                     region, region_end, ..

@@ -252,6 +252,43 @@ fn collect_control_facts(
     }
 }
 
+/// Where a container first holds content of its own — the earliest child that
+/// renders DEEPER than the container's indent, counting splices and control
+/// bodies as well as visible lines.
+///
+/// Unlike [`content_child_mark`], which asks the narrower "has a visible line
+/// established this as a mapping", this decides whether the container is still
+/// an empty value slot at a given point in the source. Vault opens
+/// `annotations:` and fills it with a splice written at column 0, then adds one
+/// conditional key AFTER it; signoz opens `annotations:` and fills it with a
+/// `nindent 4` splice BEFORE the column-0 splice that follows. Only the first
+/// container is still open when its splice runs.
+pub(super) fn established_content_mark(
+    interpreter: &Interpreter<'_>,
+    children: &[Node],
+    container_indent: usize,
+) -> Option<usize> {
+    children
+        .iter()
+        .filter_map(|child| match child {
+            Node::Mapping(entry) => (entry.indent > container_indent).then_some(entry.span.start),
+            Node::Sequence(item) => (item.indent > container_indent).then_some(item.span.start),
+            Node::Scalar(line) => (line.indent > container_indent).then_some(line.span.start),
+            Node::Output(action) => (interpreter.output_render_indent(action.span)
+                > container_indent)
+                .then_some(action.span.start),
+            Node::Control(region) => region
+                .branches
+                .iter()
+                .filter_map(|branch| {
+                    established_content_mark(interpreter, &branch.body, container_indent)
+                })
+                .min(),
+            Node::Comment(_) | Node::Opaque(_) => None,
+        })
+        .min()
+}
+
 /// The byte where a container's first deeper *content* child appears (the
 /// open-slot query's "mark": action lines, comments, and blanks are
 /// transparent; only visible YAML lines deeper than the container mark it).
@@ -340,10 +377,17 @@ fn any_conditions(mut conditions: Vec<PathCondition>) -> PathCondition {
     }
 }
 
-/// One explicitly-indented fragment output looking for its container.
+/// One fragment output looking for its container.
 pub(super) struct FloatingOutput {
     /// The rendered indent (`nindent`/`indent` width).
     pub(super) width: usize,
+    /// Whether `width` is only the action's source column, because the
+    /// expression states no width of its own. Such a column is a LOWER bound:
+    /// vault's `{{ template "vault.service.annotations" . }}` sits at column 0
+    /// and expands a body that emits `nindent 4`. A container that has not
+    /// held content yet therefore still owns the splice, while a stated width
+    /// is exact and only a strictly deeper container does.
+    pub(super) column_only: bool,
     /// The action's byte position (decides whether a same-indent container
     /// had already been "marked" by a deeper child when the output ran).
     pub(super) origin: usize,
@@ -406,13 +450,23 @@ impl Contributions {
         container_indent: usize,
         accepts_same_indent: bool,
         marked_at: Option<usize>,
+        content_at: Option<usize>,
     ) -> Guarded<AbstractFragment> {
         let mut attached = Guarded::empty();
         let mut keep = Vec::new();
         for floating in std::mem::take(&mut self.floating) {
-            let same_indent_ok = floating.width == container_indent
-                && accepts_same_indent
-                && marked_at.is_none_or(|marked| marked >= floating.origin);
+            // A stated width lands exactly, so only the container's own indent
+            // (where a sequence may be written) is a second chance for it. A
+            // column-only width is a lower bound, so any still-empty container
+            // enclosing it is one — the width the splice really renders at can
+            // live inside the body it expands.
+            let same_indent_ok = if floating.column_only {
+                accepts_same_indent && content_at.is_none_or(|at| at >= floating.origin)
+            } else {
+                floating.width == container_indent
+                    && accepts_same_indent
+                    && marked_at.is_none_or(|marked| marked >= floating.origin)
+            };
             if floating.width > container_indent || same_indent_ok {
                 attached.extend(floating.value);
             } else {
@@ -1502,14 +1556,17 @@ impl<'a> Interpreter<'a> {
         });
         let Some((text_span, key_suffix, rest)) = key_line else {
             let (value, width) = self.eval_output_action(action.span);
-            match width {
-                Some(width) => out.floating.push(FloatingOutput {
-                    width,
-                    origin: action.span.start,
-                    value,
-                }),
-                None => out.values.extend(value),
-            }
+            // Every standalone splice floats: a stated width lands exactly,
+            // and a bare one still renders at its own column, which bounds
+            // how far out it can belong. Keeping widthless splices out of the
+            // float pool used to pin them to whichever container the CST left
+            // open, however much deeper that was than their own line.
+            out.floating.push(FloatingOutput {
+                width: width.unwrap_or_else(|| self.line_indent(action.span.start)),
+                column_only: width.is_none(),
+                origin: action.span.start,
+                value,
+            });
             return 0;
         };
 
@@ -1679,6 +1736,16 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    /// The column a bare output's text renders at: the width its expression
+    /// states, else the action's own source column.
+    pub(super) fn output_render_indent(&self, span: Span) -> usize {
+        parse_expr_text(self.text(span))
+            .iter()
+            .rev()
+            .find_map(TemplateExpr::fragment_indent_width)
+            .unwrap_or_else(|| self.line_indent(span.start))
+    }
+
     /// The indentation of the line containing `byte`.
     pub(super) fn line_indent(&self, byte: usize) -> usize {
         let line_start = self
@@ -1724,15 +1791,6 @@ impl<'a> Interpreter<'a> {
                     }
                 }
                 let (children, siblings) = self.split_structural_children(view, entry.indent);
-                if !children.is_empty() {
-                    let mut child = self.eval_node_list(&children);
-                    let opened_empty = entry.value.is_none() && entry.block.is_none();
-                    let marked_at = content_child_mark(&entry.children, entry.indent);
-                    value.extend(child.take_floating_below(entry.indent, opened_empty, marked_at));
-                    out.floating.append(&mut child.floating);
-                    out.loop_control.extend(child.take_loop_control());
-                    value.extend(child.assemble());
-                }
                 // A bare output hanging at or above a block-scalar entry's
                 // indent (`key: |` followed by a column-0 `{{- include … }}`)
                 // renders into the still-open block whenever its text is
@@ -1751,6 +1809,20 @@ impl<'a> Interpreter<'a> {
                 } else {
                     siblings
                 };
+                let mut child = self.eval_node_list(&children);
+                let siblings = self.float_escaping_outputs(siblings, &mut child);
+                let opened_empty = entry.value.is_none() && entry.block.is_none();
+                let marked_at = content_child_mark(&entry.children, entry.indent);
+                let content_at = established_content_mark(self, &entry.children, entry.indent);
+                value.extend(child.take_floating_below(
+                    entry.indent,
+                    opened_empty,
+                    marked_at,
+                    content_at,
+                ));
+                out.floating.append(&mut child.floating);
+                out.loop_control.extend(child.take_loop_control());
+                value.extend(child.assemble());
                 out.merge_entry(key, value);
                 if !siblings.is_empty() {
                     out.extend(self.eval_node_list(&siblings));
@@ -1767,15 +1839,6 @@ impl<'a> Interpreter<'a> {
                     self.in_value_slot = previous_slot;
                 }
                 let (children, siblings) = self.split_structural_children(view, item.indent);
-                if !children.is_empty() {
-                    let mut child = self.eval_node_list(&children);
-                    // Items never accept same-indent output (the open-slot
-                    // query pushes item frames without that allowance).
-                    value.extend(child.take_floating_below(item.indent, false, None));
-                    out.floating.append(&mut child.floating);
-                    out.loop_control.extend(child.take_loop_control());
-                    value.extend(child.assemble());
-                }
                 // `- |` items adopt shallow bare outputs as block text, the
                 // same as block-scalar mapping entries above.
                 let siblings = if item.block.is_some() {
@@ -1791,6 +1854,14 @@ impl<'a> Interpreter<'a> {
                 } else {
                     siblings
                 };
+                let mut child = self.eval_node_list(&children);
+                let siblings = self.float_escaping_outputs(siblings, &mut child);
+                // Items never accept same-indent output (the open-slot
+                // query pushes item frames without that allowance).
+                value.extend(child.take_floating_below(item.indent, false, None, None));
+                out.floating.append(&mut child.floating);
+                out.loop_control.extend(child.take_loop_control());
+                value.extend(child.assemble());
                 out.items.push(value);
                 if !siblings.is_empty() {
                     out.extend(self.eval_node_list(&siblings));
@@ -1819,6 +1890,54 @@ impl<'a> Interpreter<'a> {
             Node::Control(_) | Node::Output(_) | Node::Comment(_) | Node::Opaque(_) => {}
         }
         out
+    }
+
+    /// Move bare outputs that render OUTSIDE the container they were nested
+    /// under into the float pool, keyed by the column they render at, and
+    /// return the siblings that stay.
+    ///
+    /// The CST attaches an action-only line to whatever entry was still open,
+    /// which can sit several levels below the column the line renders at:
+    /// vault writes `{{ template "injector.strategy" . }}` at column 2 under a
+    /// `matchLabels:` whose members are at 6, and signoz's service account ends
+    /// `name: {{ include … }}` — a templated value opens a scope — before a
+    /// column-0 `{{- include "signoz.imagePullSecrets" . }}`. Evaluating such
+    /// a line beside its container strands it exactly ONE level up; the float
+    /// pool already knows how to carry content out until some container's own
+    /// indent contains it, so the escape becomes transitive by construction.
+    fn float_escaping_outputs<'n>(
+        &mut self,
+        siblings: Vec<NodeView<'n>>,
+        out: &mut Contributions,
+    ) -> Vec<NodeView<'n>> {
+        let mut ordered = siblings;
+        ordered.sort_by_key(|view| view.node.span_start());
+        let mut kept = Vec::with_capacity(ordered.len());
+        for (index, view) in ordered.iter().copied().enumerate() {
+            let Node::Output(action) = view.node else {
+                kept.push(view);
+                continue;
+            };
+            // `{{ key }}: value` is a mapping-entry line, not a bare splice:
+            // its trailing literal text has to stay beside the action so the
+            // dynamic-key lookahead still sees it.
+            let opens_dynamic_entry = matches!(
+                ordered.get(index + 1).map(|next| next.node),
+                Some(Node::Opaque(opaque)) if opaque.kind == OpaqueKind::ActionLineText
+            );
+            if opens_dynamic_entry {
+                kept.push(view);
+                continue;
+            }
+            let (value, width) = self.eval_output_action(action.span);
+            out.floating.push(FloatingOutput {
+                width: width.unwrap_or_else(|| self.line_indent(action.span.start)),
+                column_only: width.is_none(),
+                origin: action.span.start,
+                value,
+            });
+        }
+        kept
     }
 
     /// Split a container's in-scope children into real children and nodes

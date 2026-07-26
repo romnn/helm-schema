@@ -359,6 +359,7 @@ impl Interpreter<'_> {
             innermost.indent(),
             innermost.accepts_same_indent(),
             None,
+            super::eval::established_content_mark(self, innermost.children(), innermost.indent()),
         );
         let mut floating = std::mem::take(&mut contributions.floating);
         value.extend(contributions.assemble());
@@ -367,8 +368,12 @@ impl Interpreter<'_> {
             let mut wrapper = Contributions::default();
             self.wrap_deferred(pending, value, &mut wrapper);
             wrapper.floating = floating;
-            let mut parent_value =
-                wrapper.take_floating_below(parent.indent(), parent.accepts_same_indent(), None);
+            let mut parent_value = wrapper.take_floating_below(
+                parent.indent(),
+                parent.accepts_same_indent(),
+                None,
+                super::eval::established_content_mark(self, parent.children(), parent.indent()),
+            );
             floating = std::mem::take(&mut wrapper.floating);
             parent_value.extend(wrapper.assemble());
             value = parent_value;
@@ -1095,6 +1100,7 @@ impl Interpreter<'_> {
                 match shape.dynamic_entry_indent {
                     Some(width) => extra.floating.push(super::eval::FloatingOutput {
                         width,
+                        column_only: false,
                         origin: region_start,
                         value,
                     }),
@@ -1452,7 +1458,7 @@ pub(super) enum DeferredParent<'n> {
     Item(&'n helm_schema_syntax::SequenceItem),
 }
 
-impl DeferredParent<'_> {
+impl<'n> DeferredParent<'n> {
     fn indent(self) -> usize {
         match self {
             Self::Entry(entry) => entry.indent,
@@ -1469,6 +1475,13 @@ impl DeferredParent<'_> {
         match self {
             Self::Entry(entry) => entry.value.is_none() && entry.block.is_none(),
             Self::Item(_) => false,
+        }
+    }
+
+    fn children(self) -> &'n [helm_schema_syntax::Node] {
+        match self {
+            Self::Entry(entry) => &entry.children,
+            Self::Item(item) => &item.children,
         }
     }
 }
