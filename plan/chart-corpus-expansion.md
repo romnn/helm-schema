@@ -9749,3 +9749,136 @@ shape accepted beside the rejection).
 one clean dump run of the final build, and the luup2 downstream gate passes
 (`cargo install` + forced `schema:generate:all` with zero schema drift, then
 `check:local` exit 0). Production source: +279/-33 lines across five files.
+
+## Presence-host round (2026-07-26, thirty-sixth round)
+
+Closes two presence residuals that turned out to be the same gap. The
+operand-presence round (F53/F66/F98) left the minio `users` case open
+because the claim's path carries a member wildcard, and the dig round (F107)
+left a top-level subject open because the claim's path has no parent. Both
+are the same statement:
+
+> A presence claim is a claim about a NAMED slot. Where that slot lives
+> follows from the path's shape — a member field's slot is the item, a
+> top-level path's slot is the document — and a claim with nowhere obvious
+> to sit was simply dropped instead of being placed.
+
+### A wildcard is a host, not an obstacle
+
+`record_absence_abort_clause` abstained on any wildcard, with the comment
+"a wildcard member has no absence to claim: the range only visits members
+that exist". That is true of the MEMBER (`A.*`) and false of a member's
+FIELD (`A.*.field`): a range visits existing members, and each one may
+still omit the field its body reads. minio's
+`_helper_create_user.txt` reads `tpl .accessKey $` per visited `users`
+member and helm aborts on the first member without it ("wrong type for
+value; expected string; got interface {}").
+
+The item slot states that exactly, so a wildcard-carrying absence claim now
+routes to the member as `HasMemberEvenDefaulted`, which the existing
+per-member requirement machinery already lowers. Only the bare member path
+keeps no claim.
+
+One scoping came out of the corpus: a gate on the operand's OWN truthiness
+excludes absence outright, so the claim would only restate the gate —
+grafana reads `tpl .prefix $` inside `if .prefix`, and jenkins and airflow
+do the same for `additionalContainers[*].jenkinsUrl` and
+`extraConfigMaps[*].data`. That is the member-quantified case of the
+self-mention rule the document-level clause already applied, and adding it
+removed four charts' worth of tautological arms (velero's fixture went back
+to byte-identical).
+
+### A member-local gate belongs in the member
+
+The other half of the same MinIO case: `existingSecretKey` is read only
+inside `if .existingSecret`, so the requirement is per-member AND its gate
+is per-member. `record_value_requirement_capture` abstained on any guard
+whose paths carry a wildcard, because the document level has no way to name
+"this member" — but the item slot can hold the gate beside the requirement:
+
+```json
+{ "if":   { "properties": { "existingSecret": { "$ref": "#/$defs/helm-truthy" } },
+            "required": ["existingSecret"], "type": "object" },
+  "then": { "properties": { "existingSecretKey": { "type": "string" } },
+            "type": "object" } }
+```
+
+`ContractRequirementTarget::MembersAtWhereTruthy` carries that selector, and
+`MembersWhereEquals` was already the equality-selector precedent. A member
+that fails the selector — and every non-object member, which cannot hold the
+selector field at all — passes the arm unconstrained, so the integer and
+null lanes keep the bounds `MembersAt` gives them.
+
+### The gate says which members, not that the field is there
+
+The first attempt reused `MembersAt`'s presence rule for the gated target
+and introduced a false rejection: traefik writes
+`merge $ingressClassAnnotations (default $config.annotations dict)` under
+`if $config.enabled`, and helm renders a DELETED `annotations` (the merge
+skips a nil operand) while aborting on `""`, `7`, and `[1]`. Requiring the
+field because its type requirement is intolerant confuses two facts.
+
+So the gated leaf stays optional and presence arrives only through the
+absence claim, which is the signal that actually knows the consumer aborts
+on nil. traefik gets the exact claim (map-or-absent), minio gets both arms —
+the type from the string contract, the presence from the nil-strict absence
+capture — and the pre-existing unguarded lane is untouched.
+
+### The document is a host too
+
+`CaptureKind::RequiredPresence` hosted its claim as a required member of the
+subject's parent and abstained when the subject had no parent. That is
+kube-prometheus-stack's `customRules`, dug 139 times across its rule files;
+deleting it aborts every one of them ("interface conversion: interface {} is
+nil, not map[string]interface {}"). The nil-strict-operand and
+navigated-host lanes already answer this with a document-level absence
+clause that needs no parent, so the top-level case now takes that vehicle.
+loki's `dig … .Values.loki` and trivy-operator's `dig … .Values.trivy` gain
+the same clause; both were already rejected through their other claims.
+
+### Adjudication
+
+15 corpus fixtures move. The full probe battery over those charts — every
+top-level and second-level key as junk, as an empty map member, as an empty
+item member, and DELETED — produces 3 acceptance flips, all tightenings, all
+confirmed by `helm template`:
+
+- grafana `image.pullSecrets[{…}]` and `global.imagePullSecrets[{…}]`: the
+  chart's `grafana.imagePullSecrets` helper dispatches on `typeOf` and calls
+  `tpl .name $root` on map members, which aborts without `name`. `- name: x`
+  and a plain string still render.
+- kube-prometheus-stack `customRules: null`: the abort above.
+
+The claims the battery cannot reach by construction (gated members, deeper
+paths) were enumerated straight out of the emitted schemas and adjudicated
+one at a time — 13 new per-member presence claims and 19 new gated arms:
+
+- **confirmed**: minio `users`/`svcaccts` and loki's vendored
+  `minio.users`/`minio.svcaccts` gated `existingSecretKey` (helm aborts;
+  naming the key renders, and a member with no secret reference keeps the
+  gate dormant); grafana `imageRenderer.image.pullSecrets[*].name`.
+- **no acceptance change**: traefik's `ingressRoute` arms (a custom member
+  without `annotations` renders and stays accepted), airflow's keda-gated
+  `sets` arms (a set without `persistence` renders and stays accepted),
+  nats' `natsBox.contexts` creds arm, and jenkins' `additionalClouds` /
+  `agent.additionalContainers` arms, which their pre-existing lanes already
+  rejected.
+
+No loosenings and no unjustified flips this round.
+
+Pinned by `ranged_member_nil_strict_operands_must_be_present`,
+`member_local_guards_scope_member_local_requirements`,
+`root_level_dig_subjects_must_stay_present`,
+`member_local_guard_binds_only_the_members_it_selects` (gen, beside the
+rewritten `member_local_guard_does_not_leak_its_string_contract` shape pin)
+and `member_and_root_presence_claims_reach_their_hosts` (CLI: minio's real
+users/svcaccts shapes and kube-prometheus-stack's `customRules`).
+
+### Validation
+
+`task test` green (928 unit tests), `task test:integration` green (495),
+`task lint` exit 0 and `cargo fmt --all --check` clean, corpus fixtures
+adopted from one clean dump run of the final build, and the luup2 downstream
+gate passes (`cargo install` + forced `schema:generate:all` with zero schema
+drift, then `check:local` exit 0). Production source: +143 lines across five
+files.

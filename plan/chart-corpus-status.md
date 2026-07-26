@@ -1395,11 +1395,10 @@ same recursive map-null deletion as `chart_instances::with_override`.
     `otelAgent.global.cloud`, which broke the luup2 signoz lint).
   All twelve ledger examples now reject, and 117 corpus acceptance flips
   were adjudicated against `helm template` with ZERO mismatches — all
-  tightenings, no loosenings. RESIDUAL: a consumer inside a helper body
+  tightenings, no loosenings. The MinIO ranged-member residual is CLOSED in
+  the thirty-sixth round below. RESIDUAL: a consumer inside a helper body
   whose branch guard is absent from the summary lane's predicates records no
-  claim (the same guard-loss the path-level contract flags have), and the
-  MinIO `users:[{accessKey,existingSecret}]` case is a ranged member, which
-  the wildcard exemption skips.
+  claim (the same guard-loss the path-level contract flags have).
 - **F56/F62/F8 — provider shapes lost through serialized/helper splices
   (thirty-fourth round; CLOSED except the action-line residual).** Twenty of
   the twenty-one named paths now reject a truthy malformed object — every
@@ -1701,11 +1700,53 @@ same recursive map-null deletion as `chart_instances::with_override`.
   `defaultRules.additionalRuleAnnotations`; helm aborts — verified).
   Pinned by `dig_subject_presence_binds_through_selection_gates` and
   the regenerated loki/KPS fixtures; the existing KPS/trivy/cilium dig
-  pins stay green. Residuals: a ROOT-LEVEL dig subject has no parent
-  slot to host the presence requirement and abstains, and a
-  present-but-falsy CHAIN subject still false-rejects through the
-  pre-existing member-host base typing (the digchain shape) — a lane
-  outside the dig machinery, newly documented.
+  pins stay green. The root-level residual is CLOSED in the thirty-sixth
+  round below. Residual: a present-but-falsy CHAIN subject still
+  false-rejects through the pre-existing member-host base typing (the
+  digchain shape) — a lane outside the dig machinery, newly documented.
+- **F53 residual / F107 residual — a presence claim takes the host its
+  path shape provides (thirty-sixth round; CLOSED).** Both residuals were
+  one gap: the claim was dropped whenever its slot was not an ordinary
+  parent property. (a) A wildcard-carrying absence claim now lands in the
+  ITEM as `HasMemberEvenDefaulted` — a range visits only members that
+  exist, but each visited member may still omit the field the body reads,
+  so MinIO's `users`/`svcaccts` members must carry the
+  `existingSecretKey` their `tpl` reads (helm: "wrong type for value;
+  expected string"). Only the bare `A.*` member keeps no claim, and a gate
+  on the operand's OWN truthiness abstains — that would only restate the
+  gate (grafana's `if .prefix` around `tpl .prefix $`, jenkins'
+  `additionalContainers[*].jenkinsUrl`, airflow's
+  `extraConfigMaps[*].data`), which is the member-quantified case of the
+  document clause's self-mention rule. (b) A per-member GATE now scopes a
+  per-member requirement through
+  `ContractRequirementTarget::MembersAtWhereTruthy` (the
+  `MembersWhereEquals` precedent, with truthiness): MinIO reads
+  `existingSecretKey` only inside `if .existingSecret`, and the item slot
+  is the only host that can name "this member". The gated leaf stays
+  OPTIONAL — the gate says WHICH members reach the consumer, not that the
+  field is there; presence comes only from the absence claim, which is the
+  signal that knows the consumer aborts on nil. Traefik found that
+  boundary: `merge $ingressClassAnnotations (default $config.annotations
+  dict)` renders with `annotations` deleted while aborting on `""`, `7`,
+  and `[1]`. (c) A TOP-LEVEL `dig` subject takes the document-level
+  absence clause instead of a parent's required member — KPS'
+  `customRules`, dug 139 times, aborts on deletion ("interface
+  conversion: interface {} is nil"); loki's and trivy-operator's root dig
+  subjects gain the same clause and were already rejected otherwise.
+  15 fixtures move. The full probe battery (junk, empty map member, empty
+  item member, and DELETED at both granularities) yields 3 flips, all
+  helm-confirmed tightenings: grafana's two `pullSecrets` map members
+  without `name` and KPS' `customRules` deletion. The 13 new per-member
+  presence claims and 19 new gated arms the battery cannot reach were
+  enumerated from the emitted schemas and adjudicated individually: MinIO,
+  loki and grafana's remaining lanes confirm, and traefik's, airflow's,
+  nats' and jenkins' change no acceptance. No loosenings, no unjustified
+  flips. Pinned by
+  `ranged_member_nil_strict_operands_must_be_present`,
+  `member_local_guards_scope_member_local_requirements`,
+  `root_level_dig_subjects_must_stay_present`,
+  `member_local_guard_binds_only_the_members_it_selects` (gen) and
+  `member_and_root_presence_claims_reach_their_hosts` (CLI).
 
 ## Rejected (invalid or won't fix by design)
 
