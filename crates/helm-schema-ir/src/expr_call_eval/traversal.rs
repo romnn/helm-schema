@@ -42,15 +42,25 @@ pub(super) fn eval_dig(
     }
     let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
     let default_result = eval_expr_with_helper_calls(default_expr, env, resolver);
-    // Subject-level claims hold only for a RAW identity subject: a
-    // selection chain (`x | default dict`) reaches the dig with its
-    // fallback exactly in the states the raw path is falsy or absent, so
-    // claiming the raw path's presence or even-null type there would
-    // reject documents that render through the fallback.
+    // Subject-level claims hold in their strict form only for a RAW
+    // identity subject: a selection chain (`x | default dict`) reaches the
+    // dig with its fallback exactly in the states the raw path is falsy or
+    // absent, so claiming the raw path's presence or even-null type there
+    // would reject documents that render through the fallback.
     let raw_subject = matches!(
         subject.value.as_ref(),
         Some(AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_))
     );
+    // A chain still type-asserts whatever it does pass through, so its
+    // TRUTHY states carry the assertion. The claim needs a single
+    // identity: with several candidates (`coalesce a b`) only the first
+    // truthy one is dug, and a truthy-scoped claim on each would reject a
+    // shadowed candidate the dig never sees.
+    let chain_subject_path = (!raw_subject)
+        .then(|| identity_value_paths(subject.value.as_ref()))
+        .filter(|paths| paths.len() == 1)
+        .and_then(|paths| paths.into_iter().next())
+        .filter(|path| !path.is_empty());
     let mut effects = subject.effects;
     effects.merge(default_result.effects);
     for path in identity_value_paths(subject.value.as_ref()) {
@@ -67,40 +77,15 @@ pub(super) fn eval_dig(
             if step.is_empty() {
                 continue;
             }
-            let capture = if prefix_len == 0 {
-                if !raw_subject {
-                    continue;
-                }
-                // The SUBJECT is type-asserted before any missing-key
-                // handling, so a present-but-null subject aborts too
-                // (KPS's nulled `customRules`). The strict `HasKey`
-                // conjunct self-scopes the claim — the dig-subject kind
-                // keeps null rejected where a truthy-scoped arm would go
-                // vacuous — while the companion presence capture below
-                // covers the absent state (a missing subject reads as
-                // nil and aborts the same assertion; loki's null-deleted
-                // `storage_config`).
-                let Some((parent, leaf)) = helm_schema_core::split_value_path(&step)
-                    .split_last()
-                    .map(|(leaf, parents)| (parents.join("."), leaf.clone()))
-                else {
-                    continue;
-                };
-                let presence = crate::eval_effect::FailCapture {
-                    conjunction: Vec::new(),
-                    ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::RequiredPresence { path: step.clone() },
-                };
-                if !effects.helper_fails.contains(&presence) {
-                    effects.helper_fails.push(presence);
-                }
-                crate::eval_effect::FailCapture {
-                    conjunction: vec![Predicate::from(crate::Guard::HasKey {
-                        path: parent,
-                        key: leaf,
-                    })],
-                    ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::DigSubject { path: step.clone() },
+            let captures = if prefix_len == 0 {
+                if raw_subject {
+                    raw_subject_captures(&step)
+                } else {
+                    chain_subject_path
+                        .as_ref()
+                        .filter(|path| *path == &step)
+                        .map(|path| vec![chain_subject_capture(path)])
+                        .unwrap_or_default()
                 }
             } else {
                 // An INTERMEDIATE step falls back to the default when nil
@@ -108,7 +93,7 @@ pub(super) fn eval_dig(
                 // aborts on any other non-map — including Helm-falsy
                 // scalars — so the exact scope is present-and-non-null,
                 // which is `Guard::Absent`'s negation.
-                crate::eval_effect::FailCapture {
+                vec![crate::eval_effect::FailCapture {
                     conjunction: vec![
                         Predicate::from(crate::Guard::Absent { path: step.clone() }).negated(),
                         Predicate::from(crate::Guard::TypeIs {
@@ -119,10 +104,12 @@ pub(super) fn eval_dig(
                     ],
                     ranged: crate::range_modes::RangeModes::default(),
                     kind: crate::eval_effect::CaptureKind::Fail,
-                }
+                }]
             };
-            if !effects.helper_fails.contains(&capture) {
-                effects.helper_fails.push(capture);
+            for capture in captures {
+                if !effects.helper_fails.contains(&capture) {
+                    effects.helper_fails.push(capture);
+                }
             }
         }
     }
@@ -135,6 +122,61 @@ pub(super) fn eval_dig(
         effects.defaults.insert(path);
     }
     EvalResult::with_effects(value, effects)
+}
+
+/// The claims a RAW identity subject carries. `dig` type-asserts the
+/// subject before any missing-key handling, so a present-but-null subject
+/// aborts too (kube-prometheus-stack's nulled `customRules`). The strict
+/// `HasKey` conjunct self-scopes the type claim — the dig-subject kind keeps
+/// null rejected where a truthy-scoped arm would go vacuous — while the
+/// companion presence claim covers the absent state (a missing subject reads
+/// as nil and aborts the same assertion; loki's null-deleted
+/// `storage_config`).
+fn raw_subject_captures(path: &str) -> Vec<crate::eval_effect::FailCapture> {
+    let Some((parent, leaf)) = helm_schema_core::split_value_path(path)
+        .split_last()
+        .map(|(leaf, parents)| (parents.join("."), leaf.clone()))
+    else {
+        return Vec::new();
+    };
+    vec![
+        crate::eval_effect::FailCapture {
+            conjunction: Vec::new(),
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::RequiredPresence {
+                path: path.to_string(),
+            },
+        },
+        crate::eval_effect::FailCapture {
+            conjunction: vec![Predicate::from(crate::Guard::HasKey {
+                path: parent,
+                key: leaf,
+            })],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::DigSubject {
+                path: path.to_string(),
+            },
+        },
+    ]
+}
+
+/// The claim a SELECTION chain subject carries. `dig` type-asserts whatever
+/// the chain hands it, so a TRUTHY non-map aborts ("interface conversion:
+/// interface {} is string, not map[string]interface {}") while `""`, `0`,
+/// `false`, an empty collection, null, and absence all render the fallback.
+/// The self-truthy guard states that, and it keeps the falsy set out of the
+/// base host, which the dug leaf's own read would otherwise type as an
+/// object.
+fn chain_subject_capture(path: &str) -> crate::eval_effect::FailCapture {
+    crate::eval_effect::FailCapture {
+        conjunction: vec![Predicate::from(crate::Guard::Truthy {
+            path: path.to_string(),
+        })],
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::DigSubject {
+            path: path.to_string(),
+        },
+    }
 }
 
 #[expect(

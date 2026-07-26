@@ -2684,14 +2684,51 @@ fn dig_subject_presence_binds_through_selection_gates() {
         ),
         // A DELETED chain subject stays open: the `| default dict`
         // fallback renders, and the raw-identity gate keeps the presence
-        // claim off the chain. (Present-but-falsy chain subjects still
-        // false-reject through the pre-existing member-host typing — a
-        // documented residual outside the dig lane.)
+        // claim off the chain.
         (
             serde_json::json!({ "loki": { "storage": { "type": "s3" },
                 "storage_config": {} } }),
             true,
             "a deleted chain subject renders through the dict fallback",
+        ),
+        // The chain hands `dig` whatever is truthy, so the type assertion
+        // rides the subject's own truthiness: every falsy spelling renders
+        // the fallback, and a truthy non-map aborts.
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" }, "extra": "" } }),
+            true,
+            "an empty-string chain subject renders the fallback",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" }, "extra": [] } }),
+            true,
+            "an empty-list chain subject renders the fallback",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" }, "extra": 0 } }),
+            true,
+            "a zero chain subject renders the fallback",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" }, "extra": false } }),
+            true,
+            "a false chain subject renders the fallback",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" }, "extra": "junk" } }),
+            false,
+            "a truthy string chain subject aborts the type assertion",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" }, "extra": [1] } }),
+            false,
+            "a truthy list chain subject aborts the type assertion",
+        ),
+        (
+            serde_json::json!({ "loki": { "storage": { "type": "local" },
+                "extra": { "a": "dug" } } }),
+            true,
+            "a map chain subject digs its member",
         ),
     ] {
         assert!(
