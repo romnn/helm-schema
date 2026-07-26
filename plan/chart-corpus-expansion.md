@@ -9882,3 +9882,104 @@ adopted from one clean dump run of the final build, and the luup2 downstream
 gate passes (`cargo install` + forced `schema:generate:all` with zero schema
 drift, then `check:local` exit 0). Production source: +143 lines across five
 files.
+
+## Dependency-root round (2026-07-26, thirty-seventh round)
+
+Closes F63's dependency residual. A navigated host under a dependency
+values root now carries its presence claim, and the `Absent` encoding
+states what helm's `coalesceDeps` actually does with a root the document
+drops.
+
+### What helm does with a dependency root, measured
+
+helm v4.2.3 on a synthetic parent/subchart pair — under the `sub` root,
+`parentOnly` declared only by the parent, `parentDeclared` by both,
+`subOnly` only by the subchart:
+
+- `sub: {}` renders: the parent's and the subchart's defaults both coalesce
+  in.
+- `sub: {subOnly: null}`, `sub: {parentDeclared: null}`, and
+  `sub: {parentOnly: null}` all leave the key GONE from the coalesced
+  document and abort the read ("nil pointer evaluating interface {}.z").
+  A deletion inside a present root sticks through every later merge stage
+  whoever declared the key — the subchart default does not resurrect it.
+- `sub: null` at a parent-DECLARED root renders: `coalesceDeps` recreates
+  the table and coalesces the subchart's own values into it. The parent's
+  defaults for that root went with the deletion, so `parentDeclared` reads
+  the SUBCHART's value and `parentOnly` is gone — a read of it aborts.
+- `sub: null` at a root the parent does not declare fails outright: "type
+  mismatch on sub".
+
+The same pair says which document those claims are about: a
+`values.schema.json` requiring a subchart-only key passes with no
+overrides and reports "missing property" once the deletion lands, so helm
+validates the coalesced document with the subchart defaults already in it.
+
+### The claim's host is the root, not the whole subtree
+
+The twenty-eighth round gave every navigated host an abort-grade presence
+claim and then made dependency-owned subtrees abstain WHOLE, because the
+`Absent` encoding could not separate "the root is gone" (refilled,
+renders) from "a key inside the root is gone" (sticks, aborts). The
+abstention now covers only the root itself, where absence genuinely never
+reads as nil, and the encoding says both halves below it:
+
+- the deleted-key arms build INSIDE the root's own schema, under its
+  presence and `type: object`. The table type is what a `required` chain
+  cannot state: `properties` and `required` pass vacuously on a null, so
+  the unanchored arms fired on a null root that helm recreates;
+- a deleted root joins them only where the refill leaves the path unset,
+  which needs a document the subtracted deeper-stage defaults cannot
+  provide — it drops exactly the parent-declared keys the refill also
+  drops. `build_dependency_refill_values_yaml` composes the subchart
+  defaults without that subtraction and travels as
+  `dependency_refill_values_yaml`; `AbsenceDefaults` bundles the two
+  documents with the dependency root set so the guard encoders keep their
+  arity.
+
+The anchor is the DEEPEST root enclosing the path, since a nested subchart
+refills independently (signoz's `clickhouse.zookeeper`), and its own
+required chain keeps the outer roots present.
+
+### Adjudication
+
+13 corpus fixtures move. The probe battery — junk, empty map/list, empty
+member, empty item, DELETED and surviving-null, over every path in each
+chart's own values.yaml to depth 5 plus every subchart-declared path to
+depth 4 — yields 69 flips, all confirmed against `helm template`:
+
+- **67 tightenings**, every one a helm abort: 43 signoz (the clickhouse
+  and nested zookeeper subcharts, including the junk values its
+  `tls.*.enabled` reads now reject), 14 kube-prometheus-stack (grafana's
+  sidecar chain and the parent-only `grafana.operator`), 8 kyverno (the
+  `crds` root's groups and migration), 1 prometheus
+  (`alertmanager.persistence`), 1 cloudnative-pg (the aliased `monitoring`
+  root's `grafanaDashboard`).
+- **2 loosenings**, both confirmed renders: airflow's `postgresql` and
+  kyverno's `grafana` root deleted whole — every key those charts read
+  under them comes back from the subchart, which is exactly the refill the
+  old encoding could not see.
+
+RESIDUAL: a clause whose other guards anchor it INSIDE the root states
+only the live-root half. The refilled states sit outside what a schema
+nested under `properties.<root>` can reach, so a deleted root whose
+parent-only reads abort stays open there (the document-root-anchored
+clauses, which are the majority, do state it).
+
+Pinned by `dependency_owned_hosts_bind_while_their_root_survives` and
+`deleted_dependency_roots_refill_from_their_subchart` (gen, all four
+states plus the anchored-inside-the-root abstention) and
+`dependency_owned_deletions_bind_under_a_surviving_root` (CLI:
+kube-prometheus-stack's sidecar/operator hosts and its refilled root,
+kyverno's refilled root beside a deletion inside it, and signoz's nested
+subchart).
+
+### Validation
+
+`task test` green (930 unit tests), `task test:integration` green (496),
+`task lint` exit 0 and `cargo fmt --all --check` clean, corpus fixtures
+adopted from one clean dump run of the final build (re-dumped afterwards
+byte-for-byte identical), and the luup2 downstream gate passes
+(`cargo install` + forced `schema:generate:all` with zero schema drift,
+then `check:local` exit 0). Production source: +116 lines across seven
+files.

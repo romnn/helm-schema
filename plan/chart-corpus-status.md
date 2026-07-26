@@ -1552,12 +1552,8 @@ same recursive map-null deletion as `chart_instances::with_override`.
   `navigated_hosts_must_exist_in_the_coalesced_document` (gen) plus
   `metrics_server_navigated_hosts_reject_null_deletion`,
   `reloader_service_account_host_rejects_present_scalars`, and
-  `prometheus_dependency_values_roots_must_be_tables` (CLI). Residual:
-  DEPENDENCY-owned subtrees abstain from the presence claim — a missing
-  dependency root is rebuilt from the subchart's own defaults while a
-  deletion inside a present root sticks, and separating the two needs a
-  structural presence test on the root that `Absent` cannot spell for
-  dependency-owned paths.
+  `prometheus_dependency_values_roots_must_be_tables` (CLI). The
+  dependency residual is CLOSED in the thirty-seventh round below.
 - **F76 — dynamic keys and `tpl` results lost their YAML-slot lexical
   preimages (thirty-third round; CLOSED).** Text spliced raw into an
   UNQUOTED slot renders the value's own characters, so `: ` (or a trailing
@@ -1747,6 +1743,41 @@ same recursive map-null deletion as `chart_instances::with_override`.
   `root_level_dig_subjects_must_stay_present`,
   `member_local_guard_binds_only_the_members_it_selects` (gen) and
   `member_and_root_presence_claims_reach_their_hosts` (CLI).
+- **F63 residual — dependency-owned presence binds under a surviving root
+  (thirty-seventh round; CLOSED).** Measured on a parent/subchart pair
+  against helm v4.2.3: a deletion INSIDE a present dependency values root
+  sticks through every later merge stage and aborts the read, whoever
+  declared the key — the subchart default does not resurrect it; deleting
+  the ROOT instead has `coalesceDeps` recreate the table from the
+  SUBCHART's own values, which renders, drops the parent's defaults for
+  that root, and leaves exactly the parent-only keys gone (a read of one
+  aborts). A schema requiring a subchart-only key passes helm's own
+  validation with no overrides, so those claims are about the coalesced
+  document. The twenty-eighth round abstained for the whole subtree
+  because `Absent` could not separate the two; the abstention now covers
+  only the root itself. Below it the deleted-key arms build INSIDE the
+  root's schema, under its presence AND `type: object` — the type is what
+  a `required` chain cannot state, since `properties`/`required` pass
+  vacuously on a null root helm recreates — and the deleted-root state
+  joins them only where the refill leaves the path unset, which needs the
+  UNSUBTRACTED subchart defaults (`build_dependency_refill_values_yaml`,
+  carried with the deeper-stage document and the root set in
+  `AbsenceDefaults`). The anchor is the deepest enclosing root, since a
+  nested subchart refills on its own (signoz's `clickhouse.zookeeper`).
+  13 fixtures move; the probe battery (junk, empty map/list, empty member,
+  empty item, DELETED and surviving-null, over every values.yaml path to
+  depth 5 plus every subchart-declared path to depth 4) yields 69 flips,
+  all helm-confirmed: 67 tightenings that abort (43 signoz, 14 KPS
+  including the parent-only `grafana.operator`, 8 kyverno, 1 prometheus,
+  1 cloudnative-pg) and 2 loosenings that render (airflow's `postgresql`
+  and kyverno's `grafana` roots deleted whole, refilled by their
+  subcharts). Pinned by
+  `dependency_owned_hosts_bind_while_their_root_survives` (gen) and
+  `dependency_owned_deletions_bind_under_a_surviving_root` (CLI).
+  RESIDUAL: a clause whose other guards anchor it INSIDE the root states
+  only the live-root half — the refilled states sit outside what a schema
+  nested under `properties.<root>` can reach, so a deleted root whose
+  parent-only reads abort stays open there.
 
 ## Rejected (invalid or won't fix by design)
 
