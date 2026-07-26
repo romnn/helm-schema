@@ -1431,18 +1431,54 @@ same recursive map-null deletion as `chart_instances::with_override`.
   Pinned by `branch_selected_sequence_items_keep_their_item_slot` and
   `declared_object_members_are_admitted_without_opening_their_closed_levels`
   (gen) plus `serialized_and_helper_splices_keep_their_provider_shapes`
-  (CLI). RESIDUAL: Vault's `injector.strategy` stays open. Its
-  `{{ template "injector.strategy" . }}` sits on its own line at column 2,
-  but the layout parser treats action-only lines as transparent to nesting,
-  so the CST hangs it under the preceding `matchLabels` and the slot becomes
-  `spec.selector.strategy`. Two repairs were built and withdrawn after
-  measurement (floating a bare output by its line indent, and reading
-  `tpl`'s argument for the width) — each fixed vault or its neighbours while
-  mis-slotting jenkins' `persistence.volumes`. Closing it needs the helper
-  BODY's own leading indent as the splice's rendered width, which the CST
-  deliberately does not model. Do not include Sealed Secrets
-  `commonLabels`/`commonAnnotations`; exact composition already rejects
-  their numeric members.
+  (CLI). The action-line residual closed in the thirty-fifth round below.
+  Do not include Sealed Secrets `commonLabels`/`commonAnnotations`; exact
+  composition already rejects their numeric members.
+- **F56 residual / F40 residual — an own-line splice reaches the slot its
+  column names (thirty-fifth round; CLOSED).** Both open residuals were one
+  fact: an action-only line renders at the column it is written at, while
+  the CST attaches it to whatever entry was still open — which can sit
+  several levels deeper. `node_belongs_inside` already knew such a child does
+  not belong, but evaluating it as a SIBLING escaped exactly one container,
+  so vault's `{{ template "injector.strategy" . }}` (column 2, nested under a
+  `matchLabels:` whose members are at 6) stopped inside `selector` and
+  signoz's `{{- include "signoz.imagePullSecrets" . }}` (column 0, nested
+  under a templated `name:` that opens a scope) stopped inside `metadata`.
+  Every standalone splice now enters the float pool, which already carries
+  content out level by level. Three facts make that sound:
+  (a) a bare splice's column is a LOWER bound — the body it expands can
+  indent further (vault's `vault.service.annotations` writes `nindent 4`
+  under a column-0 caller) — so `FloatingOutput::column_only` marks it, and
+  such a float is additionally owned by any enclosing container that has not
+  held content yet, decided by `established_content_mark` (the earliest child
+  rendering deeper than the container, counting splices by their stated width
+  and control bodies, not only visible lines);
+  (b) `fragment_indent_width` looks through `tpl`'s first argument — `tpl` is
+  the identity on template-action-free text, so
+  `tpl (toYaml … | indent 4) $` lands at column 4 however its line is
+  written;
+  (c) a multi-line `{{/* … */}}` comment is ONE action, so its body lines —
+  including the `    */}}` that closes jenkins' commented-out
+  `securityContext` — are that action's text, not YAML layout
+  (`Parser::suppressed_until`). Before this, that closing column popped
+  jenkins' pod `spec:` frame and every container-level key after it hung off
+  `template`.
+  483 acceptance flips adjudicated against `helm template` plus `kubeconform
+  -strict` over the Kubernetes bundle AND the CRD catalog: 445 confirmed
+  tightenings (437 strict-validation rejections, 8 helm aborts; 395 are
+  jenkins, whose pod-spec chain is intact for the first time) and 13
+  confirmed loosenings that helm renders and Kubernetes accepts. Pinned by
+  `bare_splices_escape_to_the_container_their_column_names` (gen),
+  `multiline_template_comment_bodies_are_transparent_to_layout` (syntax
+  golden), and `own_line_splices_reach_the_slot_their_column_names` (CLI).
+  RESIDUALS, all in lanes this round did not touch: 20 tightenings are the
+  established scalar-sink preimage (helm renders a map through `{{ . }}` as
+  Go's `map[k:v]`, a valid string the preimage rejects) newly reaching
+  correctly-slotted jenkins and signoz paths; 13 loosenings are KPS'
+  `*.serviceMonitor.*Relabelings` under a `[{unknown-key: …}]` probe, where
+  the slot is right but provider ARRAY ITEMS are emitted open corpus-wide (4
+  closed against ~180 open in that schema, in the old fixture as much as the
+  new); 2 are grafana datasource strings whose ConfigMap still validates.
 - **F40/F59 — ranged document identity through render helpers (overlay
   member half in the thirtieth round, document-item half in the
   thirty-second; CLOSED).** Traefik
@@ -1483,11 +1519,12 @@ same recursive map-null deletion as `chart_instances::with_override`.
   sibling `grafana.extra*` paths already have, so the flip aligns the
   dependency lane with the chart's own schema; relaxing it means scoping
   that carve-out to empty declared projections, which would widen dozens of
-  declared-`[]` paths corpus-wide (a separate finding). RESIDUAL: SigNoZ
-  `imagePullSecrets:[7]` and migration `additionalVolumes:[7]` are the
-  provider-item variants — Helm renders them, then strict validation
-  rejects them — which is the F56/F62/F8 provider-projection lane, not this
-  document-placement one.
+  declared-`[]` paths corpus-wide (a separate finding). The SigNoZ
+  provider-item residual is CLOSED: migration `additionalVolumes:[7]` fell
+  to the thirty-fourth round and `imagePullSecrets:[7]` to the thirty-fifth
+  (the pull-secret helper is spliced on its own line, so its items only
+  reached `ServiceAccount.imagePullSecrets[*].name` once the escape became
+  transitive).
 - **F63 — navigated receiver hosts (twenty-eighth round; CLOSED).** Go
   template member access aborts on a nil receiver, so a navigated host
   must EXIST in the coalesced document and must be a mapping when

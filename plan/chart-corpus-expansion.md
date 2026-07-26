@@ -9600,3 +9600,152 @@ secrets' omitted `enabled` flag, each with the supported lane beside it).
 `task lint` and `cargo fmt --check` clean, corpus fixtures byte-identical to
 one clean dump run of the final build, and the luup2 `check:local`
 downstream gate passes. Production source: +101 lines.
+
+## Own-line splice round (2026-07-26, thirty-fifth round)
+
+Closes the thirty-fourth round's stated residual — vault's
+`injector.strategy` — and, through the same repair, the document-item
+round's provider-item residual (SigNoz's `imagePullSecrets`). One statement
+covers both:
+
+> An action-only line renders at the column it is written at. The CST
+> attaches it to whatever entry was still open, which can be several levels
+> deeper. That attachment is a parse artifact, not the rendered position.
+
+### The escape was one level deep
+
+`Interpreter::node_belongs_inside` already asked whether a child renders
+inside its container, and `eval_node` evaluated the ones that do not as
+SIBLINGS. But a sibling was evaluated at the container's own level, so it
+escaped exactly one container — and the CST can nest a line several levels
+below its column:
+
+```yaml
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: …          # indent 6
+  {{ template "injector.strategy" . }}   # column 2
+```
+
+The splice escaped `matchLabels` (indent 4) and stopped inside `selector`
+(indent 2), producing `spec.selector.strategy` — a slot no schema owns.
+SigNoz's ServiceAccount is the same shape one level shallower: a templated
+`name:` value opens a scope, so a column-0
+`{{- include "signoz.imagePullSecrets" . }}` stopped at `metadata` and its
+`- name: {{ . }}` items were typed against `ObjectMeta` instead of
+`ServiceAccount.imagePullSecrets[*].name`.
+
+The repair reuses the mechanism that already carries content out of
+containers level by level: every standalone splice now enters the float
+pool. A stated width (`nindent N`) keeps its exact meaning; a bare splice
+floats at its own source column.
+
+### A column is a lower bound, a stated width is exact
+
+A bare splice's column does not name where its text lands: the body it
+expands can indent further. Vault writes
+
+```yaml
+  annotations:
+{{ template "vault.service.annotations" .}}
+```
+
+at column 0 and that helper emits `nindent 4`. Floating it at column 0
+alone would sail past `annotations:` and lose the string-map typing (a
+measured 8-flip loosening, all helm-aborts).
+
+`FloatingOutput::column_only` states which kind a float is, and the
+adoption rule follows from it: a stated width is owned only by a strictly
+deeper container (or by its own indent, where a sequence may be written); a
+column-only float is additionally owned by any enclosing container that has
+not held content yet. "Has not held content yet" is `established_content_mark`
+— the earliest child rendering deeper than the container, counting splices
+(by their stated width) and control bodies, not only visible lines. Vault's
+`annotations:` is unfilled at the splice (its one conditional key follows
+it), so it takes it; signoz's `annotations:` already took a `nindent 4`
+splice before it, so it does not.
+
+The other half of the withdrawn round-34 repair also becomes correct here:
+`TemplateExpr::fragment_indent_width` now looks through `tpl`'s first
+argument. `tpl` is the identity on template-action-free text, so
+`tpl (toYaml .Values.server.ingress.tls | indent 4) $` lands at column 4
+however its own line is written. Without it, prometheus' and KPS' `tls:`
+payloads floated out of the Ingress and became document-level content (24
+measured false rejections).
+
+### A multi-line template comment is one action, not YAML lines
+
+Jenkins' controller statefulset comments out a `securityContext` block:
+
+```yaml
+    spec:
+      securityContext:
+        {{/* replace this block with:
+        runAsUser: 1000
+    */}}
+```
+
+The layout parser processed each of those lines on its own. The body lines
+became mapping entries, and the closing `    */}}` became a scalar at column
+4 — which popped the pod `spec:` frame. Every container-level key after it
+(`containers:`, `volumes:`, …) hung off `template` instead of
+`template.spec`, so `persistence.volumes` typed against `PodTemplateSpec`
+and `jenkinsHome` against nothing at all.
+
+`Parser::suppressed_until` records the end of the furthest action token
+consumed; a line that finishes inside it is that action's own text and is
+transparent to layout. Three golden CST fixtures lose the phantom scalars
+they used to pin.
+
+### Adjudication
+
+13 chart-corpus fixtures move. 483 acceptance flips over the affected
+charts, adjudicated one by one with `helm template
+--skip-schema-validation` plus `kubeconform -strict` against BOTH the
+committed Kubernetes bundle and the committed CRD catalog (the earlier
+rounds' invocation omitted the catalog, which silently skipped every
+ServiceMonitor and made 38 correct rejections look like false ones):
+
+- **445 tightenings are confirmed** — 437 render a manifest strict
+  validation rejects, 8 abort helm. 395 of them are jenkins alone: the pod
+  spec chain is intact for the first time, so its container payloads finally
+  reach their provider slots.
+- **13 loosenings are confirmed** — vault's and KPS' payloads that helm
+  renders and Kubernetes accepts, previously rejected only as collateral of
+  a mis-slotted fragment.
+
+25 flips are NOT justified by that standard and are the round's residuals,
+all in lanes this round did not touch:
+
+- 20 tightenings are the established scalar-sink preimage: helm renders a
+  map through `{{ . }}` as Go's `map[k:v]`, which is a valid string, and the
+  preimage rejects maps for scalar sinks (pinned by
+  `quoted_empty_membership_scopes_raw_provider_preimages`). Newly reachable
+  on jenkins' `jenkinsHome` and `configAutoReload.folder` and on signoz's
+  pull-secret items, all correctly slotted now.
+- 13 loosenings are KPS' `*.serviceMonitor.*Relabelings` under a
+  `[{unknown-key: …}]` probe. The slot is right
+  (`spec.endpoints[*].relabelings`) but provider ARRAY ITEMS are emitted
+  open corpus-wide — 4 closed against ~180 open in that one schema, in the
+  OLD fixture as much as the new — so a foreign key inside a valid item
+  passes. The old rejection came from the mis-slotted fragment poisoning the
+  document, not from a claim on that path.
+- 2 loosenings are grafana's `additionalDataSources`/`deleteDatasources`
+  taking a string: the ConfigMap still validates, and only the consuming
+  application rejects it — the same class as F76's block-scalar residual.
+
+Pinned by `bare_splices_escape_to_the_container_their_column_names` (gen:
+both the templated-`name:` and the deep-`matchLabels` shapes),
+`multiline_template_comment_bodies_are_transparent_to_layout` (syntax
+golden), and `own_line_splices_reach_the_slot_their_column_names` (CLI:
+vault's DeploymentStrategy and jenkins' pod volumes, each with the real
+shape accepted beside the rejection).
+
+### Validation
+
+`task test` green (924 unit tests), `task test:integration` green (494),
+`task lint` exit 0 and `cargo fmt --all` clean, corpus fixtures adopted from
+one clean dump run of the final build, and the luup2 downstream gate passes
+(`cargo install` + forced `schema:generate:all` with zero schema drift, then
+`check:local` exit 0). Production source: +279/-33 lines across five files.
