@@ -2426,7 +2426,7 @@
       "x-kubernetes-patch-merge-key": "name",
       "x-kubernetes-patch-strategy": "merge,retainKeys"
     },
-    "schema101": {
+    "schema102": {
       "allOf": [
         {
           "not": {
@@ -2483,7 +2483,7 @@
       "nullable": true,
       "type": "string"
     },
-    "schema102": {
+    "schema103": {
       "allOf": [
         {
           "not": {
@@ -2540,7 +2540,7 @@
       "format": "byte",
       "type": "string"
     },
-    "schema103": {
+    "schema104": {
       "allOf": [
         {
           "not": {
@@ -2597,7 +2597,7 @@
       "nullable": true,
       "type": "string"
     },
-    "schema104": {
+    "schema105": {
       "allOf": [
         {
           "not": {
@@ -2647,48 +2647,6 @@
       ],
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "string"
-    },
-    "schema105": {
-      "description": "BackupResourceHook defines a hook for a resource.",
-      "properties": {
-        "exec": {
-          "description": "Exec defines an exec hook.",
-          "properties": {
-            "command": {
-              "description": "Command is the command and arguments to execute.",
-              "items": {
-                "type": "string"
-              },
-              "minItems": 1,
-              "type": "array"
-            },
-            "container": {
-              "description": "Container is the container in the pod where the command should be executed. If not specified,\nthe pod's first container is used.",
-              "type": "string"
-            },
-            "onError": {
-              "description": "OnError specifies how Velero should behave if it encounters an error executing this hook.",
-              "enum": [
-                "Continue",
-                "Fail"
-              ],
-              "type": "string"
-            },
-            "timeout": {
-              "description": "Timeout defines the maximum amount of time Velero should wait for the hook to complete before\nconsidering the execution a failure.",
-              "type": "string"
-            }
-          },
-          "required": [
-            "command"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "exec"
-      ],
-      "type": "object"
     },
     "schema106": {
       "allOf": [
@@ -2852,7 +2810,7 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "schema112": {
+    "schema113": {
       "allOf": [
         {
           "not": {
@@ -2908,7 +2866,7 @@
       "description": "Provider is the provider of the backup storage.",
       "type": "string"
     },
-    "schema113": {
+    "schema114": {
       "allOf": [
         {
           "not": {
@@ -2964,7 +2922,7 @@
       "description": "Provider is the provider of the volume storage.",
       "type": "string"
     },
-    "schema121": {
+    "schema122": {
       "allOf": [
         {
           "not": {
@@ -7682,9 +7640,10 @@
         }
       ]
     },
-    "schema93": {
+    "schema92": {
       "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
       "items": {
+        "additionalProperties": false,
         "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
         "properties": {
           "key": {
@@ -7768,6 +7727,50 @@
       ],
       "description": "path of the directory on the host. If the path is a symlink, it will follow the link to the real path. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath",
       "type": "string"
+    },
+    "schema99": {
+      "additionalProperties": false,
+      "description": "BackupResourceHook defines a hook for a resource.",
+      "properties": {
+        "exec": {
+          "additionalProperties": false,
+          "description": "Exec defines an exec hook.",
+          "properties": {
+            "command": {
+              "description": "Command is the command and arguments to execute.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "container": {
+              "description": "Container is the container in the pod where the command should be executed. If not specified,\nthe pod's first container is used.",
+              "type": "string"
+            },
+            "onError": {
+              "description": "OnError specifies how Velero should behave if it encounters an error executing this hook.",
+              "enum": [
+                "Continue",
+                "Fail"
+              ],
+              "type": "string"
+            },
+            "timeout": {
+              "description": "Timeout defines the maximum amount of time Velero should wait for the hook to complete before\nconsidering the execution a failure.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "command"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "exec"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -8306,7 +8309,7 @@
                         "backupSyncPeriod": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema103"
+                              "$ref": "#/$defs/schema104"
                             },
                             {
                               "not": {
@@ -8324,6 +8327,54 @@
                         "backupSyncPeriod": {
                           "anyOf": [
                             {
+                              "$ref": "#/$defs/schema104"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configuration": {
+                "additionalProperties": {},
+                "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+                "properties": {
+                  "backupStorageLocation": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "caCert": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/$defs/schema103"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "caCert": {
+                          "anyOf": [
+                            {
                               "$ref": "#/$defs/schema103"
                             },
                             {
@@ -8351,54 +8402,6 @@
                     "additionalProperties": {
                       "additionalProperties": {},
                       "properties": {
-                        "caCert": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/$defs/schema102"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "caCert": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/$defs/schema102"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configuration": {
-                "additionalProperties": {},
-                "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
-                "properties": {
-                  "backupStorageLocation": {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
                         "default": {
                           "anyOf": [
                             {
@@ -8456,7 +8459,7 @@
                         "name": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema121"
+                              "$ref": "#/$defs/schema122"
                             },
                             {
                               "not": {
@@ -8474,7 +8477,7 @@
                         "name": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema121"
+                              "$ref": "#/$defs/schema122"
                             },
                             {
                               "not": {
@@ -8502,7 +8505,7 @@
                       "additionalProperties": {},
                       "properties": {
                         "provider": {
-                          "$ref": "#/$defs/schema112"
+                          "$ref": "#/$defs/schema113"
                         }
                       }
                     },
@@ -8513,7 +8516,7 @@
                         "provider": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema112"
+                              "$ref": "#/$defs/schema113"
                             },
                             {
                               "const": ""
@@ -8541,7 +8544,7 @@
                         "validationFrequency": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema101"
+                              "$ref": "#/$defs/schema102"
                             },
                             {
                               "not": {
@@ -8559,7 +8562,7 @@
                         "validationFrequency": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema101"
+                              "$ref": "#/$defs/schema102"
                             },
                             {
                               "not": {
@@ -10591,7 +10594,7 @@
                         "name": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema121"
+                              "$ref": "#/$defs/schema122"
                             },
                             {
                               "not": {
@@ -10609,7 +10612,7 @@
                         "name": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema121"
+                              "$ref": "#/$defs/schema122"
                             },
                             {
                               "not": {
@@ -10637,7 +10640,7 @@
                       "additionalProperties": {},
                       "properties": {
                         "provider": {
-                          "$ref": "#/$defs/schema113"
+                          "$ref": "#/$defs/schema114"
                         }
                       }
                     },
@@ -10648,7 +10651,7 @@
                         "provider": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema113"
+                              "$ref": "#/$defs/schema114"
                             },
                             {
                               "const": ""
@@ -17950,7 +17953,7 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema104"
+                        "$ref": "#/$defs/schema105"
                       },
                       {
                         "$ref": "#/$defs/schema282"
@@ -23136,6 +23139,7 @@
                         "template": {
                           "anyOf": [
                             {
+                              "additionalProperties": false,
                               "description": "Template is the definition of the Backup to be run\non the provided schedule",
                               "properties": {
                                 "csiSnapshotTimeout": {
@@ -23189,11 +23193,13 @@
                                   "type": "array"
                                 },
                                 "hooks": {
+                                  "additionalProperties": false,
                                   "description": "Hooks represent custom behaviors that should be executed at different phases of the backup.",
                                   "properties": {
                                     "resources": {
                                       "description": "Resources are hooks that should be executed when backing up individual instances of a resource.",
                                       "items": {
+                                        "additionalProperties": false,
                                         "description": "BackupResourceHookSpec defines one or more BackupResourceHooks that should be executed based on\nthe rules defined for namespaces, resources, and label selector.",
                                         "properties": {
                                           "excludedNamespaces": {
@@ -23229,11 +23235,12 @@
                                             "type": "array"
                                           },
                                           "labelSelector": {
+                                            "additionalProperties": false,
                                             "description": "LabelSelector, if specified, filters the resources to which this hook spec applies.",
                                             "nullable": true,
                                             "properties": {
                                               "matchExpressions": {
-                                                "$ref": "#/$defs/schema93"
+                                                "$ref": "#/$defs/schema92"
                                               },
                                               "matchLabels": {
                                                 "$ref": "#/$defs/schema218"
@@ -23249,14 +23256,14 @@
                                           "post": {
                                             "description": "PostHooks is a list of BackupResourceHooks to execute after storing the item in the backup.\nThese are executed after all \"additional items\" from item actions are processed.",
                                             "items": {
-                                              "$ref": "#/$defs/schema105"
+                                              "$ref": "#/$defs/schema99"
                                             },
                                             "type": "array"
                                           },
                                           "pre": {
                                             "description": "PreHooks is a list of BackupResourceHooks to execute prior to storing the item in the backup.\nThese are executed before any \"additional items\" from item actions are processed.",
                                             "items": {
-                                              "$ref": "#/$defs/schema105"
+                                              "$ref": "#/$defs/schema99"
                                             },
                                             "type": "array"
                                           }
@@ -23314,11 +23321,12 @@
                                   "type": "string"
                                 },
                                 "labelSelector": {
+                                  "additionalProperties": false,
                                   "description": "LabelSelector is a metav1.LabelSelector to filter with\nwhen adding individual objects to the backup. If empty\nor nil, all objects are included. Optional.",
                                   "nullable": true,
                                   "properties": {
                                     "matchExpressions": {
-                                      "$ref": "#/$defs/schema93"
+                                      "$ref": "#/$defs/schema92"
                                     },
                                     "matchLabels": {
                                       "$ref": "#/$defs/schema218"
@@ -23328,6 +23336,7 @@
                                   "x-kubernetes-map-type": "atomic"
                                 },
                                 "metadata": {
+                                  "additionalProperties": false,
                                   "properties": {
                                     "labels": {
                                       "$ref": "#/$defs/schema450"
@@ -23338,10 +23347,11 @@
                                 "orLabelSelectors": {
                                   "description": "OrLabelSelectors is list of metav1.LabelSelector to filter with\nwhen adding individual objects to the backup. If multiple provided\nthey will be joined by the OR operator. LabelSelector as well as\nOrLabelSelectors cannot co-exist in backup request, only one of them\ncan be used.",
                                   "items": {
+                                    "additionalProperties": false,
                                     "description": "A label selector is a label query over a set of resources. The result of matchLabels and\nmatchExpressions are ANDed. An empty label selector matches all objects. A null\nlabel selector matches no objects.",
                                     "properties": {
                                       "matchExpressions": {
-                                        "$ref": "#/$defs/schema93"
+                                        "$ref": "#/$defs/schema92"
                                       },
                                       "matchLabels": {
                                         "$ref": "#/$defs/schema218"
@@ -23362,6 +23372,7 @@
                                   "type": "object"
                                 },
                                 "resourcePolicy": {
+                                  "additionalProperties": false,
                                   "description": "ResourcePolicy specifies the referenced resource policies that backup should follow",
                                   "properties": {
                                     "apiGroup": {
@@ -23401,6 +23412,7 @@
                                   "type": "string"
                                 },
                                 "uploaderConfig": {
+                                  "additionalProperties": false,
                                   "description": "UploaderConfig specifies the configuration for the uploader.",
                                   "nullable": true,
                                   "properties": {
@@ -23691,7 +23703,7 @@
             "name": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema104"
+                  "$ref": "#/$defs/schema105"
                 },
                 {
                   "$ref": "#/$defs/schema282"

@@ -5715,6 +5715,31 @@
         "null"
       ]
     },
+    "schema57": {
+      "additionalProperties": false,
+      "description": "ClientAuth defines the server's policy for TLS Client Authentication.",
+      "properties": {
+        "clientAuthType": {
+          "description": "ClientAuthType defines the client authentication type to apply.",
+          "enum": [
+            "NoClientCert",
+            "RequestClientCert",
+            "RequireAnyClientCert",
+            "VerifyClientCertIfGiven",
+            "RequireAndVerifyClientCert"
+          ],
+          "type": "string"
+        },
+        "secretNames": {
+          "description": "SecretNames defines the names of the referenced Kubernetes Secret storing certificate details.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "schema6": {
       "additionalProperties": false,
       "description": "LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.",
@@ -5881,7 +5906,7 @@
         "null"
       ]
     },
-    "schema60": {
+    "schema61": {
       "anyOf": [
         {
           "not": {
@@ -5942,30 +5967,6 @@
           "type": "object"
         }
       ]
-    },
-    "schema63": {
-      "description": "ClientAuth defines the server's policy for TLS Client Authentication.",
-      "properties": {
-        "clientAuthType": {
-          "description": "ClientAuthType defines the client authentication type to apply.",
-          "enum": [
-            "NoClientCert",
-            "RequestClientCert",
-            "RequireAnyClientCert",
-            "VerifyClientCertIfGiven",
-            "RequireAndVerifyClientCert"
-          ],
-          "type": "string"
-        },
-        "secretNames": {
-          "description": "SecretNames defines the names of the referenced Kubernetes Secret storing certificate details.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
     },
     "schema64": {
       "anyOf": [
@@ -53016,7 +53017,7 @@
                 "$ref": "#/$defs/schema326"
               },
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "$ref": "#/$defs/schema156"
@@ -53075,7 +53076,7 @@
                 "$ref": "#/$defs/schema325"
               },
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "$ref": "#/$defs/schema156"
@@ -57691,7 +57692,7 @@
                   "clientAuth": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema63"
+                        "$ref": "#/$defs/schema57"
                       },
                       {
                         "not": {
@@ -57814,7 +57815,7 @@
                   "clientAuth": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema63"
+                        "$ref": "#/$defs/schema57"
                       },
                       {
                         "not": {

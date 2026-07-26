@@ -1572,6 +1572,25 @@
       ]
     },
     "schema60": {
+      "additionalProperties": false,
+      "description": "Attributes defines custom attributes on resources.",
+      "properties": {
+        "key": {
+          "description": "The key of the attribute.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value of the attribute.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "type": "object"
+    },
+    "schema61": {
       "additionalProperties": {
         "oneOf": [
           {
@@ -1594,7 +1613,7 @@
         "null"
       ]
     },
-    "schema63": {
+    "schema64": {
       "anyOf": [
         {
           "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -1605,24 +1624,6 @@
           "type": "null"
         }
       ]
-    },
-    "schema64": {
-      "description": "Attributes defines custom attributes on resources.",
-      "properties": {
-        "key": {
-          "description": "The key of the attribute.",
-          "type": "string"
-        },
-        "value": {
-          "description": "The value of the attribute.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "key",
-        "value"
-      ],
-      "type": "object"
     },
     "schema65": {
       "anyOf": [
@@ -3959,6 +3960,7 @@
                   "spec": {
                     "anyOf": [
                       {
+                        "additionalProperties": false,
                         "description": "IngressClassParamsSpec defines the desired state of IngressClassParams",
                         "properties": {
                           "PrefixListsIDs": {
@@ -3976,6 +3978,7 @@
                             "type": "array"
                           },
                           "group": {
+                            "additionalProperties": false,
                             "description": "Group defines the IngressGroup for all Ingresses that belong to IngressClass with this IngressClassParams.",
                             "properties": {
                               "name": {
@@ -4005,6 +4008,7 @@
                             "type": "string"
                           },
                           "ipamConfiguration": {
+                            "additionalProperties": false,
                             "description": "IPAMConfiguration defines the IPAM settings for a Load Balancer.",
                             "properties": {
                               "ipv4IPAMPoolId": {
@@ -4017,11 +4021,12 @@
                           "listeners": {
                             "description": "Listeners define a list of listeners with their protocol, port and attributes.",
                             "items": {
+                              "additionalProperties": false,
                               "properties": {
                                 "listenerAttributes": {
                                   "description": "The attributes of the listener",
                                   "items": {
-                                    "$ref": "#/$defs/schema64"
+                                    "$ref": "#/$defs/schema60"
                                   },
                                   "type": "array"
                                 },
@@ -4042,7 +4047,7 @@
                           "loadBalancerAttributes": {
                             "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
                             "items": {
-                              "$ref": "#/$defs/schema64"
+                              "$ref": "#/$defs/schema60"
                             },
                             "type": "array"
                           },
@@ -4051,6 +4056,7 @@
                             "type": "string"
                           },
                           "minimumLoadBalancerCapacity": {
+                            "additionalProperties": false,
                             "description": "MinimumLoadBalancerCapacity define the capacity reservation for LoadBalancers for all Ingress that belong to IngressClass with this IngressClassParams.",
                             "properties": {
                               "capacityUnits": {
@@ -4065,11 +4071,13 @@
                             "type": "object"
                           },
                           "namespaceSelector": {
+                            "additionalProperties": false,
                             "description": "NamespaceSelector restrict the namespaces of Ingresses that are allowed to specify the IngressClass with this IngressClassParams.\n* if absent or present but empty, it selects all namespaces.",
                             "properties": {
                               "matchExpressions": {
                                 "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
                                 "items": {
+                                  "additionalProperties": false,
                                   "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
                                   "properties": {
                                     "key": {
@@ -4132,6 +4140,7 @@
                             "type": "string"
                           },
                           "subnets": {
+                            "additionalProperties": false,
                             "description": "Subnets defines the subnets for all Ingresses that belong to IngressClass with this IngressClassParams.",
                             "properties": {
                               "ids": {
@@ -4160,6 +4169,7 @@
                           "tags": {
                             "description": "Tags defines list of Tags on AWS resources provisioned for Ingresses that belong to IngressClass with this IngressClassParams.",
                             "items": {
+                              "additionalProperties": false,
                               "description": "Tag defines a AWS Tag on resources.",
                               "properties": {
                                 "key": {
@@ -8932,7 +8942,7 @@
                             "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                             "properties": {
                               "limits": {
-                                "$ref": "#/$defs/schema60"
+                                "$ref": "#/$defs/schema61"
                               },
                               "requests": {
                                 "$ref": "#/$defs/schema42"
@@ -10116,7 +10126,7 @@
               "$ref": "#/$defs/schema24"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/schema63"
+              "$ref": "#/$defs/schema64"
             }
           },
           "type": "object"
@@ -10474,7 +10484,7 @@
               "$ref": "#/$defs/schema24"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/schema63"
+              "$ref": "#/$defs/schema64"
             }
           },
           "type": "object"
@@ -10527,7 +10537,7 @@
           "x-kubernetes-list-type": "map"
         },
         "limits": {
-          "$ref": "#/$defs/schema60"
+          "$ref": "#/$defs/schema61"
         },
         "requests": {
           "$ref": "#/$defs/schema42"

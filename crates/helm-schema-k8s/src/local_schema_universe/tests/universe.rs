@@ -90,6 +90,94 @@ fn ignores_unserved_crd_versions() {
 }
 
 #[test]
+fn structural_crd_schemas_carry_their_pruning_contract() {
+    let universe = universe_from_crd_documents([json!({
+        "apiVersion": "apiextensions.k8s.io/v1",
+        "kind": "CustomResourceDefinition",
+        "spec": {
+            "group": "example.com",
+            "names": {"kind": "Widget"},
+            "versions": [
+                {
+                    "name": "v1",
+                    "served": true,
+                    "schema": {
+                        "openAPIV3Schema": {
+                            "type": "object",
+                            "properties": {
+                                "metadata": {
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}}
+                                },
+                                "spec": {
+                                    "type": "object",
+                                    "properties": {
+                                        "labels": {
+                                            "type": "object",
+                                            "additionalProperties": {"type": "string"}
+                                        },
+                                        "rules": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {"action": {"type": "string"}}
+                                            }
+                                        },
+                                        "either": {
+                                            "type": "object",
+                                            "oneOf": [
+                                                {"properties": {"left": {"type": "string"}}},
+                                                {"properties": {"right": {"type": "string"}}}
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    })]);
+
+    let root = universe
+        .schema_doc_for_resource(&resource("example.com/v1"))
+        .map(|schema_doc| schema_doc.root().clone())
+        .unwrap_or(Value::Null);
+
+    for (pointer, want, label) in [
+        ("/additionalProperties", None, "the root stays open"),
+        (
+            "/properties/metadata/additionalProperties",
+            None,
+            "metadata is never pruned",
+        ),
+        (
+            "/properties/spec/additionalProperties",
+            Some(&json!(false)),
+            "a declared object closes",
+        ),
+        (
+            "/properties/spec/properties/rules/items/additionalProperties",
+            Some(&json!(false)),
+            "a declared item closes",
+        ),
+        (
+            "/properties/spec/properties/labels/additionalProperties",
+            Some(&json!({"type": "string"})),
+            "a map keeps its value schema",
+        ),
+        (
+            "/properties/spec/properties/either/oneOf/0/additionalProperties",
+            None,
+            "a junctor arm states no structure",
+        ),
+    ] {
+        sim_assert_eq!(have: root.pointer(pointer), want: want, "{label}");
+    }
+}
+
+#[test]
 fn inserts_direct_resource_schema_without_crd_envelope() {
     let mut universe = LocalSchemaUniverse::default();
     universe.insert_resource_schema(LocalResourceSchema {

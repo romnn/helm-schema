@@ -124,6 +124,8 @@ pub fn resource_schemas_from_crd_document_with_source(
         return resource_schemas;
     };
 
+    let prunes = crd_prunes_unknown_fields(document, api_version);
+
     if let Some(versions) = document.pointer("/spec/versions").and_then(Value::as_array) {
         for version in versions {
             if version
@@ -136,9 +138,12 @@ pub fn resource_schemas_from_crd_document_with_source(
             let Some(name) = version.get("name").and_then(Value::as_str) else {
                 continue;
             };
-            let Some(schema) = version.pointer("/schema/openAPIV3Schema").cloned() else {
+            let Some(mut schema) = version.pointer("/schema/openAPIV3Schema").cloned() else {
                 continue;
             };
+            if prunes {
+                close_pruned_object_nodes(&mut schema, true);
+            }
             resource_schemas.push(resource_schema_for_version(
                 group,
                 name,
@@ -154,12 +159,15 @@ pub fn resource_schemas_from_crd_document_with_source(
     let Some(version) = document.pointer("/spec/version").and_then(Value::as_str) else {
         return resource_schemas;
     };
-    let Some(schema) = document
+    let Some(mut schema) = document
         .pointer("/spec/validation/openAPIV3Schema")
         .cloned()
     else {
         return resource_schemas;
     };
+    if prunes {
+        close_pruned_object_nodes(&mut schema, true);
+    }
     resource_schemas.push(resource_schema_for_version(
         group,
         version,
@@ -169,6 +177,74 @@ pub fn resource_schemas_from_crd_document_with_source(
         source_filename,
     ));
     resource_schemas
+}
+
+/// Whether the API server prunes fields the CRD's schema does not declare.
+///
+/// `apiextensions.k8s.io/v1` only accepts structural schemas and always
+/// prunes; `v1beta1` keeps unknown fields unless the CRD opts in.
+fn crd_prunes_unknown_fields(document: &Value, api_version: Option<&str>) -> bool {
+    if api_version == Some("apiextensions.k8s.io/v1") {
+        return true;
+    }
+    document
+        .pointer("/spec/preserveUnknownFields")
+        .and_then(Value::as_bool)
+        == Some(false)
+}
+
+/// Stamps a pruning CRD's structural contract onto its object nodes.
+///
+/// A pruned resource carries only the fields its schema declares, so an
+/// object that declares `properties` accepts nothing else. The CRDs catalog
+/// bakes that stamp into its documents; without it here, a chart that ships
+/// the very same CRD would hand out an open contract for a resource the
+/// catalog closes, and which provider answered would decide what the values
+/// schema accepts.
+///
+/// Three subtrees keep the open reading. `metadata` is validated by the API
+/// machinery rather than the structural schema and is never pruned; a
+/// subtree can opt out with `x-kubernetes-preserve-unknown-fields`; and an
+/// embedded resource carries a schema for a foreign object, which charts
+/// routinely declare only in part. Only the structural keywords are walked:
+/// a structural schema states its structure outside `allOf`/`anyOf`/`oneOf`/
+/// `not`, so a stamp inside a junctor arm would reject documents the sibling
+/// arm accepts.
+fn close_pruned_object_nodes(schema: &mut Value, root: bool) {
+    let Some(object) = schema.as_object_mut() else {
+        return;
+    };
+    for opt_out in [
+        "x-kubernetes-preserve-unknown-fields",
+        "x-kubernetes-embedded-resource",
+    ] {
+        if object.get(opt_out).and_then(Value::as_bool) == Some(true) {
+            return;
+        }
+    }
+
+    let mut declares_properties = false;
+    if let Some(properties) = object.get_mut("properties").and_then(Value::as_object_mut) {
+        declares_properties = !properties.is_empty();
+        for (key, child) in properties.iter_mut() {
+            if root && key == "metadata" {
+                continue;
+            }
+            close_pruned_object_nodes(child, false);
+        }
+    }
+    for key in ["items", "additionalProperties"] {
+        if let Some(child) = object.get_mut(key) {
+            close_pruned_object_nodes(child, false);
+        }
+    }
+
+    // The document root keeps its open reading, matching the catalog
+    // conversion: `apiVersion`, `kind`, and `metadata` reach every custom
+    // resource whether or not the CRD spells them.
+    if !root && declares_properties && !object.contains_key("additionalProperties") {
+        object.insert("additionalProperties".to_string(), Value::Bool(false));
+    }
 }
 
 fn resource_schema_for_version(
