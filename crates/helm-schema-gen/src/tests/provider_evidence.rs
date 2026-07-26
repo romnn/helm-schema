@@ -61,6 +61,51 @@ fn quoted_empty_membership_scopes_raw_provider_preimages() {
     );
 }
 
+/// A COLLECTION spliced raw into a plain scalar slot keeps the slot typed by
+/// its own scalar domain. Go formats a mapping as `map[key:value]`, which
+/// reads back as a string, so JSON-Schema-level validation of the rendered
+/// manifest accepts it — but the slots this reaches are validated by the API
+/// server beyond their schema (a `mountPath` must be absolute and must not
+/// contain `:`, which is exactly what the formatted text carries), and a
+/// sequence's `[a b]` opens a flow sequence and stops being a string at all.
+/// The scalar domain is therefore kept as the chart's contract.
+#[test]
+fn plain_scalar_slots_reject_go_formatted_collections() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              volumeMounts:
+                - name: data
+                  mountPath: {{ .Values.home }}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("home: /var/lib\n"));
+
+    for (instance, want, label) in [
+        (serde_json::json!({ "home": "/var/data" }), true, "a path"),
+        (
+            serde_json::json!({ "home": { "a": "b" } }),
+            false,
+            "a mapping",
+        ),
+        (
+            serde_json::json!({ "home": ["/var/data"] }),
+            false,
+            "a sequence",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "formatted collection {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 #[test]
 fn plain_string_provider_preimage_rejects_yaml_unsafe_spellings() {
     let src = indoc! {r"
