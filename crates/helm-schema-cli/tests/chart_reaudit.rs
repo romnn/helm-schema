@@ -3995,3 +3995,63 @@ fn member_and_root_presence_claims_reach_their_hosts() -> eyre::Result<()> {
         ],
     )
 }
+
+/// Helm recreates a MISSING or null dependency values root and coalesces
+/// the subchart's own defaults into it, so a deletion binds only while the
+/// root survives — and a deleted root takes the parent's own keys for that
+/// root with it. Every case here was rendered with `helm template`:
+/// kube-prometheus-stack aborts on the deleted sidecar host ("nil pointer
+/// evaluating interface {}.enabled") and on the deleted `grafana` root
+/// (`grafana.operator.dashboardsConfigMapRefEnabled`, a key the grafana
+/// chart knows nothing about), while kyverno renders with its whole
+/// `grafana` root deleted because every key it reads there comes back from
+/// the subchart.
+#[test]
+fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> {
+    assert_chart_cases(
+        "kube-prometheus-stack",
+        vec![
+            SemanticCase::rejected(
+                "a deleted dependency-owned host aborts the member read",
+                "",
+                json!({ "grafana": { "sidecar": { "dashboards": null } } }),
+            ),
+            SemanticCase::rejected(
+                "a deleted parent-only host under the dependency root aborts",
+                "",
+                json!({ "grafana": { "operator": null } }),
+            ),
+            SemanticCase::rejected(
+                "the refilled root drops the parent's own keys for it",
+                "",
+                json!({ "grafana": null }),
+            ),
+            SemanticCase::accepted(
+                "turning the sidecar off keeps the host present",
+                json!({ "grafana": { "sidecar": { "dashboards": { "enabled": false } } } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "kyverno",
+        vec![
+            SemanticCase::accepted(
+                "a deleted root whose every read is subchart-declared refills",
+                json!({ "grafana": null }),
+            ),
+            SemanticCase::rejected(
+                "a deletion inside that same root still aborts",
+                "",
+                json!({ "crds": { "migration": null } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "signoz-signoz",
+        vec![SemanticCase::rejected(
+            "a nested subchart deletion aborts its own read",
+            "",
+            json!({ "clickhouse": { "image": null } }),
+        )],
+    )
+}

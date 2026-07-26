@@ -1224,7 +1224,7 @@ pub(crate) fn append_terminal_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
     values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
+    absence: crate::condition_encoding::AbsenceDefaults<'_>,
 ) {
     for guards in clauses {
         // A clause every guard of which can hold VACUOUSLY (with the
@@ -1238,21 +1238,17 @@ pub(crate) fn append_terminal_clauses(
         } else {
             shared_guard_ancestor_segments(guards)
         };
-        if !guards.iter().all(|guard| {
-            guard_encodes_fully(
-                guard,
-                &ancestor_segments,
-                values_yaml_doc,
-                subchart_defaults_doc,
-            )
-        }) {
+        if !guards
+            .iter()
+            .all(|guard| guard_encodes_fully(guard, &ancestor_segments, values_yaml_doc, absence))
+        {
             continue;
         }
         let condition = SchemaNode::all_of(build_condition_clauses(
             guards,
             &ancestor_segments,
             values_yaml_doc,
-            subchart_defaults_doc,
+            absence,
         ));
         root_schema.append_conditional(
             &ancestor_segments,
@@ -1317,7 +1313,7 @@ pub(crate) fn append_conditional_schemas(
     root_schema: &mut SchemaDocument,
     mut conditionals: Vec<ConditionalResolvedSchema>,
     values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
+    absence: crate::condition_encoding::AbsenceDefaults<'_>,
 ) {
     let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     conditionals.retain(|conditional| {
@@ -1432,7 +1428,7 @@ pub(crate) fn append_conditional_schemas(
                         &guards,
                         &ancestor_segments,
                         values_yaml_doc,
-                        subchart_defaults_doc,
+                        absence,
                         &mut condition_cache,
                     ))
                 })

@@ -61,6 +61,7 @@ struct PreparedSession {
     analysis: Analysis,
     values_yaml: Option<String>,
     dependency_values_yaml: Option<String>,
+    dependency_refill_values_yaml: Option<String>,
     explicit_value_paths: BTreeSet<String>,
     values_descriptions: BTreeMap<String, String>,
     subchart_value_prefixes: Vec<Vec<String>>,
@@ -79,6 +80,14 @@ impl PreparedSession {
         // null-deletion).
         let dependency_values_yaml = if opts.include_subchart_values {
             chart::build_dependency_values_yaml(charts)?
+        } else {
+            None
+        };
+        // What a DELETED dependency root refills with, which the subtracted
+        // document above cannot say: it drops exactly the parent-declared
+        // keys the refill also drops.
+        let dependency_refill_values_yaml = if opts.include_subchart_values {
+            chart::build_dependency_refill_values_yaml(charts)?
         } else {
             None
         };
@@ -104,6 +113,7 @@ impl PreparedSession {
             },
             values_yaml,
             dependency_values_yaml,
+            dependency_refill_values_yaml,
             explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
             subchart_value_prefixes: charts
@@ -381,6 +391,9 @@ impl AnalysisSession {
                 ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
                     .with_values_yaml(prepared.values_yaml.as_deref())
                     .with_dependency_values_yaml(prepared.dependency_values_yaml.as_deref())
+                    .with_dependency_refill_values_yaml(
+                        prepared.dependency_refill_values_yaml.as_deref(),
+                    )
                     .with_values_descriptions(&prepared.values_descriptions),
             );
 

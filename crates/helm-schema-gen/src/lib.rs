@@ -59,6 +59,13 @@ pub struct ValuesSchemaInput<'a> {
     /// paths reads as the subchart default instead of nil. When absent,
     /// every missing key reads as nil.
     pub dependency_values_yaml: Option<&'a str>,
+    /// The same dependency defaults WITHOUT the parent-declared
+    /// subtraction: what helm refills a missing or null dependency values
+    /// root with. Absence below such a root reads as nil only while the
+    /// root survives — deleting the root itself hands the whole subtree
+    /// back to the subchart's own defaults, and only the keys they miss
+    /// stay gone.
+    pub dependency_refill_values_yaml: Option<&'a str>,
     /// Documentation strings keyed by canonical values path.
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
 }
@@ -74,6 +81,7 @@ impl<'a> ValuesSchemaInput<'a> {
             provider,
             values_yaml: None,
             dependency_values_yaml: None,
+            dependency_refill_values_yaml: None,
             values_descriptions: None,
         }
     }
@@ -89,6 +97,16 @@ impl<'a> ValuesSchemaInput<'a> {
     #[must_use]
     pub fn with_dependency_values_yaml(mut self, dependency_values_yaml: Option<&'a str>) -> Self {
         self.dependency_values_yaml = dependency_values_yaml;
+        self
+    }
+
+    /// Attaches the defaults a deleted dependency values root refills with.
+    #[must_use]
+    pub fn with_dependency_refill_values_yaml(
+        mut self,
+        dependency_refill_values_yaml: Option<&'a str>,
+    ) -> Self {
+        self.dependency_refill_values_yaml = dependency_refill_values_yaml;
         self
     }
 
@@ -111,6 +129,10 @@ impl<'a> ValuesSchemaInput<'a> {
 /// function isolates a heuristic feature from the core schema-generation
 /// pipeline.
 #[tracing::instrument(skip_all)]
+#[expect(
+    clippy::large_types_passed_by_value,
+    reason = "the input is a Copy bundle of borrows built by chained `with_*` calls, and generation runs once per chart"
+)]
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
     let empty_values_descriptions = BTreeMap::new();
     let values_descriptions = input
@@ -139,10 +161,21 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         input.contract_schema_signals.values_default_sources(),
     );
 
+    let mut dependency_refill_doc = input
+        .dependency_refill_values_yaml
+        .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
+        .unwrap_or(YamlValue::Null);
+    values_yaml::copy_values_default_sources(
+        &mut dependency_refill_doc,
+        &values_yaml_doc,
+        input.contract_schema_signals.values_default_sources(),
+    );
+
     let root_schema = build_root_schema(
         input.contract_schema_signals,
         &values_yaml_doc,
         &subchart_defaults_doc,
+        &dependency_refill_doc,
         values_descriptions,
         input.provider,
     );
@@ -177,6 +210,7 @@ fn build_root_schema(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
+    dependency_refill_doc: &YamlValue,
     values_descriptions: &BTreeMap<String, String>,
     provider: &dyn ResourceSchemaOracle,
 ) -> Value {
@@ -201,6 +235,12 @@ fn build_root_schema(
         .filter(|evidence| evidence.facts.accepted_values_root_fragment)
         .map(|evidence| split_value_path(&evidence.value_path))
         .collect::<Vec<_>>();
+    let dependency_roots = contract_schema_signals
+        .schema_evidence_by_value_path()
+        .values()
+        .filter(|evidence| evidence.facts.accepted_dependency_values_root_fragment)
+        .map(|evidence| split_value_path(&evidence.value_path))
+        .collect::<BTreeSet<_>>();
     let no_owning_ancestors = BTreeSet::new();
     let base_span = tracing::info_span!("base_path_insertion").entered();
     let owning_paths = resolved_paths
@@ -223,17 +263,22 @@ fn build_root_schema(
         }
     }
     drop(base_span);
+    let absence = condition_encoding::AbsenceDefaults {
+        deeper_stage: subchart_defaults_doc,
+        dependency_refill: dependency_refill_doc,
+        dependency_roots: &dependency_roots,
+    };
     append_conditional_schemas(
         &mut root_schema,
         conditional_schemas,
         values_yaml_doc,
-        subchart_defaults_doc,
+        absence,
     );
     append_terminal_clauses(
         &mut root_schema,
         contract_schema_signals.terminal_clauses(),
         values_yaml_doc,
-        subchart_defaults_doc,
+        absence,
     );
     // A serialized path's schema is deliberately unconstrained; the
     // declared-default filler must keep the slot present without re-typing

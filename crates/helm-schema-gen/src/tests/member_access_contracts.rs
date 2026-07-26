@@ -799,3 +799,164 @@ fn overlaid_range_members_keep_their_member_contracts() {
         );
     }
 }
+
+/// The parent's own values.yaml declares only the `parentOnly` hosts, so
+/// the subchart declarations are what a missing key reads instead of nil,
+/// and only they come back when a root is deleted whole.
+fn dependency_owned_values_yaml() -> &'static str {
+    indoc! {"
+        sub:
+          parentOnly:
+            create: true
+          subDeclared:
+            enabled: true
+        other:
+          subDeclared:
+            enabled: true
+        gated:
+          enabled: true
+          parentOnly:
+            create: true
+    "}
+}
+
+fn dependency_owned_host_schema() -> Value {
+    let src = indoc! {r"
+        {{- if .Values.sub.parentOnly.create }}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: p
+        {{- end }}
+        ---
+        {{- if .Values.sub.subDeclared.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: s
+        {{- end }}
+        ---
+        {{- if .Values.other.subDeclared.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: o
+        {{- end }}
+        ---
+        {{- if .Values.gated.enabled }}
+        {{- if .Values.gated.parentOnly.create }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: g
+        {{- end }}
+        {{- end }}
+    "};
+    let subchart_yaml = indoc! {"
+        sub:
+          subDeclared:
+            enabled: true
+        other:
+          subDeclared:
+            enabled: true
+        gated:
+          subDeclared:
+            enabled: true
+    "};
+    let mut contract = parse_ir(src);
+    contract.push_pathless_dependency_fragment("sub");
+    contract.push_pathless_dependency_fragment("other");
+    contract.push_pathless_dependency_fragment("gated");
+    schema_for_dependency_values_yaml(
+        contract,
+        dependency_owned_values_yaml(),
+        subchart_yaml,
+        subchart_yaml,
+    )
+}
+
+/// A navigated host under a DEPENDENCY values root binds while that root
+/// survives: a deletion INSIDE a present root sticks through every later
+/// merge stage and reaches the consumer as nil, whoever declared the key
+/// (measured against helm v4.2.3 on a parent/subchart pair). A key the
+/// subchart itself declares still fills at its own coalesce stage when the
+/// parent-level document simply omits it.
+#[test]
+fn dependency_owned_hosts_bind_while_their_root_survives() {
+    let schema = dependency_owned_host_schema();
+    for (overrides, want, label) in [
+        (serde_json::json!({}), true, "the coalesced defaults render"),
+        (
+            serde_json::json!({ "sub": { "parentOnly": null } }),
+            false,
+            "a deletion inside a present root sticks and aborts",
+        ),
+        (
+            serde_json::json!({ "sub": { "subDeclared": null } }),
+            true,
+            "an omitted subchart-declared host reads its own default",
+        ),
+        (
+            serde_json::json!({ "gated": { "parentOnly": null } }),
+            false,
+            "a gated read binds its host inside the live root",
+        ),
+        (
+            serde_json::json!({ "gated": { "enabled": false, "parentOnly": null } }),
+            true,
+            "the dormant gate keeps the deletion open",
+        ),
+    ] {
+        let instance = composed_instance(dependency_owned_values_yaml(), overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "dependency-owned host presence ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+
+    let surviving_null = serde_json::json!({
+        "sub": { "parentOnly": { "create": true }, "subDeclared": null },
+        "other": { "subDeclared": { "enabled": true } },
+    });
+    assert!(
+        !schema_accepts_instance(&schema, &surviving_null),
+        "a surviving null reads as nil whoever declared the key: schema={schema}"
+    );
+}
+
+/// Deleting the ROOT hands the whole subtree back to the subchart's own
+/// defaults (`coalesceDeps` recreates the table and coalesces them in),
+/// taking the parent's keys for that root with it — so a parent-only read
+/// aborts there while a subchart-declared one renders. A clause whose other
+/// guards anchor it INSIDE the root states only the live-root half: the
+/// refilled states sit outside what a schema nested under
+/// `properties.<root>` can see, so they stay open.
+#[test]
+fn deleted_dependency_roots_refill_from_their_subchart() {
+    let schema = dependency_owned_host_schema();
+    for (overrides, want, label) in [
+        (
+            serde_json::json!({ "sub": null }),
+            false,
+            "a deleted root drops the parent's own keys for it",
+        ),
+        (
+            serde_json::json!({ "other": null }),
+            true,
+            "a deleted root refills every key the subchart declares",
+        ),
+        (
+            serde_json::json!({ "gated": null }),
+            true,
+            "a clause the gate anchors inside the root cannot see the refill",
+        ),
+    ] {
+        let instance = composed_instance(dependency_owned_values_yaml(), overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "deleted dependency root ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

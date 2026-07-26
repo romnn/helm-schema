@@ -152,6 +152,25 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
     )
 }
 
+/// Schema for a chart with dependencies: the composed defaults, the
+/// deeper-stage defaults a missing key reads instead of nil (the subchart
+/// declarations the parent's own values.yaml does not repeat), and the
+/// defaults helm refills a DELETED dependency values root with.
+fn schema_for_dependency_values_yaml(
+    source: impl SchemaSignalSource,
+    values_yaml: &str,
+    deeper_stage_yaml: &str,
+    refill_yaml: &str,
+) -> Value {
+    let schema_signals = source.into_schema_signals();
+    generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &provider())
+            .with_values_yaml(Some(values_yaml))
+            .with_dependency_values_yaml(Some(deeper_stage_yaml))
+            .with_dependency_refill_values_yaml(Some(refill_yaml)),
+    )
+}
+
 /// The unquoted-token exclusions a plain YAML slot projects back onto its
 /// source (at `propertyNames` when the source's KEYS render there). Shared with
 /// the production grammar so a pin fixes the structure and placement, while the

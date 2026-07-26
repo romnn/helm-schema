@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use helm_schema_core::{ConditionalGuard, GuardValue};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -11,17 +13,12 @@ pub(crate) fn build_condition_clauses(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
+    absence: AbsenceDefaults<'_>,
 ) -> Vec<SchemaNode> {
     guards
         .iter()
         .filter_map(|guard| {
-            build_single_condition_fragment(
-                guard,
-                ancestor_segments,
-                values_yaml_doc,
-                subchart_defaults_doc,
-            )
+            build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc, absence)
         })
         .collect()
 }
@@ -36,7 +33,7 @@ pub(crate) fn build_condition_clauses_cached(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
+    absence: AbsenceDefaults<'_>,
     cache: &mut ConditionFragmentCache,
 ) -> Vec<SchemaNode> {
     guards
@@ -49,7 +46,7 @@ pub(crate) fn build_condition_clauses_cached(
                         guard,
                         ancestor_segments,
                         values_yaml_doc,
-                        subchart_defaults_doc,
+                        absence,
                     )
                 })
                 .clone()
@@ -57,12 +54,26 @@ pub(crate) fn build_condition_clauses_cached(
         .collect()
 }
 
-/// `subchart_defaults_doc` carries the composed defaults MINUS everything
-/// the parent chart's own values.yaml declares: exactly the paths whose
-/// value a parent-level document supplies from a DEEPER coalesce stage
-/// when the key is missing. A missing parent-owned key was null-deleted
-/// and reads as nil; a missing dependency-owned key reads as the
-/// subchart's declared default.
+/// What a values document reads where it supplies nothing itself.
+#[derive(Clone, Copy)]
+pub(crate) struct AbsenceDefaults<'a> {
+    /// The composed defaults MINUS everything the parent chart's own
+    /// values.yaml declares: exactly the paths whose value a parent-level
+    /// document supplies from a DEEPER coalesce stage when the key is
+    /// missing. A missing parent-owned key was null-deleted and reads as
+    /// nil; a missing dependency-owned key reads as the subchart's
+    /// declared default.
+    pub deeper_stage: &'a YamlValue,
+    /// The dependency charts' own composed defaults, without that
+    /// subtraction: what helm hands a DELETED dependency values root
+    /// (`coalesceDeps` recreates the table and coalesces the subchart's
+    /// values into it, while the parent's defaults for that root went with
+    /// the deletion).
+    pub dependency_refill: &'a YamlValue,
+    /// The values roots those dependency charts own.
+    pub dependency_roots: &'a BTreeSet<Vec<String>>,
+}
+
 #[expect(
     clippy::too_many_lines,
     reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
@@ -71,8 +82,10 @@ fn build_single_condition_fragment(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
+    absence: AbsenceDefaults<'_>,
 ) -> Option<SchemaNode> {
+    let subchart_defaults_doc = absence.deeper_stage;
+    let dependency_roots = absence.dependency_roots;
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
             let declared = yaml_value_at_path(values_yaml_doc, path);
@@ -190,19 +203,55 @@ fn build_single_condition_fragment(
             // missing key. Strict key-presence (Sprig `hasKey`/`dig`
             // observability, where a present nil is PRESENT) is the
             // separate `HasKey` guard.
+            // That deletion sticks below a dependency root too, but only
+            // while the root SURVIVES: deleting the root hands the whole
+            // subtree back to the subchart's defaults. The arms therefore
+            // build inside the root's own schema, under its presence and
+            // table type — a fragment already anchored below the root needs
+            // neither, since the enclosing `properties` chain stops at a
+            // null root before reaching it.
+            let root_relative = enclosing_dependency_root(dependency_roots, &segments)
+                .and_then(|root| strip_ancestor_prefix(root, ancestor_segments));
+            let arm_segments =
+                relative_segments.get(root_relative.as_ref().map_or(0, Vec::len)..)?;
             let explicit_null = build_required_condition_fragment(
-                &relative_segments,
+                arm_segments,
                 SchemaNode::enum_values(vec![Value::Null]),
             )?;
             let subchart_default_fills = matches!(yaml_value_at_path(subchart_defaults_doc, path), Some(value) if !matches!(value, YamlValue::Null));
-            if subchart_default_fills {
-                return Some(explicit_null);
+            let deleted = if subchart_default_fills {
+                explicit_null
+            } else {
+                let missing = SchemaNode::not(build_required_condition_fragment(
+                    arm_segments,
+                    SchemaNode::empty(),
+                )?);
+                SchemaNode::any_of(vec![missing, explicit_null])
+            };
+            let Some(root_relative) = root_relative else {
+                return Some(deleted);
+            };
+            let live_root = SchemaNode::all_of(vec![SchemaNode::type_named("object"), deleted]);
+            if root_relative.is_empty() {
+                // The clause anchors AT the root, so the fragment states the
+                // root's own table state and the refilled states stay out of
+                // its reach.
+                return Some(live_root);
             }
-            let missing = SchemaNode::not(build_required_condition_fragment(
-                &relative_segments,
-                SchemaNode::empty(),
+            let under_live_root = build_required_condition_fragment(&root_relative, live_root)?;
+            let refill_fills = matches!(yaml_value_at_path(absence.dependency_refill, path), Some(value) if !matches!(value, YamlValue::Null));
+            if refill_fills {
+                return Some(under_live_root);
+            }
+            // A parent-only key the subchart never declares stays gone
+            // through the refill too, so the deleted root reads nil as
+            // well (kube-prometheus-stack's `grafana.operator.*`, which
+            // the grafana chart knows nothing about).
+            let root_gone = SchemaNode::not(build_required_condition_fragment(
+                &root_relative,
+                SchemaNode::type_named("object"),
             )?);
-            Some(SchemaNode::any_of(vec![missing, explicit_null]))
+            Some(SchemaNode::any_of(vec![under_live_root, root_gone]))
         }
         ConditionalGuard::TypeIs { path, schema_type } => {
             build_default_aware_leaf_condition_fragment(
@@ -319,7 +368,7 @@ fn build_single_condition_fragment(
                 inner,
                 ancestor_segments,
                 values_yaml_doc,
-                subchart_defaults_doc,
+                absence,
             )?);
             // A negated MEMBER-quantified guard admits a second exact arm:
             // beside "not every member satisfies it" (which is vacuously
@@ -339,21 +388,13 @@ fn build_single_condition_fragment(
             Some(negated)
         }
         ConditionalGuard::AllOf(guards) => {
-            let clauses = build_condition_clauses(
-                guards,
-                ancestor_segments,
-                values_yaml_doc,
-                subchart_defaults_doc,
-            );
+            let clauses =
+                build_condition_clauses(guards, ancestor_segments, values_yaml_doc, absence);
             (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
-            let clauses = build_condition_clauses(
-                guards,
-                ancestor_segments,
-                values_yaml_doc,
-                subchart_defaults_doc,
-            );
+            let clauses =
+                build_condition_clauses(guards, ancestor_segments, values_yaml_doc, absence);
             (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
         }
     }
@@ -368,34 +409,39 @@ pub(crate) fn guard_encodes_fully(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
-    subchart_defaults_doc: &YamlValue,
+    absence: AbsenceDefaults<'_>,
 ) -> bool {
     match guard {
-        ConditionalGuard::Not(inner) => guard_encodes_fully(
-            inner,
-            ancestor_segments,
-            values_yaml_doc,
-            subchart_defaults_doc,
-        ),
+        ConditionalGuard::Not(inner) => {
+            guard_encodes_fully(inner, ancestor_segments, values_yaml_doc, absence)
+        }
         ConditionalGuard::AllOf(guards) | ConditionalGuard::AnyOf(guards) => {
             !guards.is_empty()
                 && guards.iter().all(|guard| {
-                    guard_encodes_fully(
-                        guard,
-                        ancestor_segments,
-                        values_yaml_doc,
-                        subchart_defaults_doc,
-                    )
+                    guard_encodes_fully(guard, ancestor_segments, values_yaml_doc, absence)
                 })
         }
-        other => build_single_condition_fragment(
-            other,
-            ancestor_segments,
-            values_yaml_doc,
-            subchart_defaults_doc,
-        )
-        .is_some(),
+        other => {
+            build_single_condition_fragment(other, ancestor_segments, values_yaml_doc, absence)
+                .is_some()
+        }
     }
+}
+
+/// The deepest dependency values root STRICTLY enclosing `segments`, whose
+/// presence every absence claim below it hangs on. Nested subcharts own
+/// nested roots (`clickhouse.zookeeper`), and each refills independently,
+/// so the innermost one carries the claim — its own required chain already
+/// keeps the outer roots present.
+fn enclosing_dependency_root<'a>(
+    dependency_roots: &'a BTreeSet<Vec<String>>,
+    segments: &[String],
+) -> Option<&'a [String]> {
+    dependency_roots
+        .iter()
+        .filter(|root| root.len() < segments.len() && segments.starts_with(root))
+        .max_by_key(|root| root.len())
+        .map(Vec::as_slice)
 }
 
 fn guard_value_enum_schema(value: &GuardValue) -> Option<SchemaNode> {

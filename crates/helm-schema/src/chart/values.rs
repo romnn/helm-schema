@@ -63,6 +63,26 @@ pub fn build_dependency_values_yaml(charts: &[ChartContext]) -> EngineResult<Opt
     }
 }
 
+/// The dependency charts' declared defaults, composed under their value
+/// prefixes, WITHOUT the parent-declared subtraction: what helm refills a
+/// missing or null dependency values root with. `coalesceDeps` recreates
+/// the root table and coalesces the subchart's own values into it, and the
+/// parent's defaults for that root went with the deletion — so a key the
+/// subchart declares comes back while a parent-only key stays gone.
+#[instrument(skip_all)]
+pub fn build_dependency_refill_values_yaml(
+    charts: &[ChartContext],
+) -> EngineResult<Option<String>> {
+    let mut doc = YamlValue::Mapping(serde_yaml::Mapping::default());
+    compose_subchart_values(charts, &mut doc)?;
+    let serialized = serde_yaml::to_string(&doc)?;
+    if serialized.trim().is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(serialized))
+    }
+}
+
 /// `composed` minus every path `parent` declares: keys both documents
 /// carry recurse member-wise (a parent `falco-talon: {}` stub keeps the
 /// subchart's keys underneath), keys only `composed` carries survive

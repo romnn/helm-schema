@@ -2992,15 +2992,13 @@ fn record_member_access_implications(
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
 ) {
     const MEMBER_ACCESS_GUARD_FANOUT: usize = 8;
-    // Helm rebuilds a MISSING dependency values root from the subchart's own
-    // defaults (`coalesceDeps` creates the table, then the subchart
-    // coalesces into it), so absence at such a root reaches no consumer as
-    // nil. A deletion INSIDE a present root does stick and does abort, but
-    // separating the two states needs a STRUCTURAL presence test on the
-    // root, which `Absent` cannot spell for dependency-owned paths (it
-    // encodes the ownership-aware "reads as nil", and a refilled root never
-    // does). Dependency-owned subtrees therefore abstain from the presence
-    // claim entirely.
+    // Helm rebuilds a MISSING or null dependency values root from the
+    // subchart's own defaults (`coalesceDeps` creates the table, then the
+    // subchart coalesces into it), so a root itself never reaches a consumer
+    // as nil and its clause would be a contradiction. A deletion INSIDE a
+    // present root does stick and does abort; that claim rides the `Absent`
+    // encoding, which anchors every dependency-owned absence on the root
+    // being present as a table.
     let dependency_roots: BTreeSet<String> = paths
         .iter()
         .filter(|(_, acc)| acc.facts.facts.accepted_dependency_values_root_fragment)
@@ -3081,10 +3079,7 @@ fn record_member_access_implications(
             }
         }
 
-        if dependency_roots
-            .iter()
-            .any(|root| *root == path || path.starts_with(&format!("{root}.")))
-        {
+        if dependency_roots.contains(&path) {
             continue;
         }
         let absent_abort_sets = grouped_guard_sets
