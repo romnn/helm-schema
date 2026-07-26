@@ -9983,3 +9983,151 @@ byte-for-byte identical), and the luup2 downstream gate passes
 (`cargo install` + forced `schema:generate:all` with zero schema drift,
 then `check:local` exit 0). Production source: +116 lines across seven
 files.
+
+## Structural-CRD round (2026-07-26, thirty-eighth round)
+
+Closes two residuals the thirty-fifth and twenty-seventh rounds left open,
+and re-adjudicates a third. The chart-shipped CRD lane handed out an OPEN
+contract for resources the catalog lane closes, and a `dig` subject reached
+through a fallback chain was typed as if the fallback did not exist.
+
+### A pruning CRD states its whole contract
+
+`apiextensions.k8s.io/v1` only accepts structural schemas, and the API
+server prunes every field such a schema does not declare — with the default
+strict field validation, it rejects them. The CRDs catalog bakes that into
+its conversion: every object with `properties` carries
+`additionalProperties: false` (the document root and `metadata`, which the
+API machinery validates itself, are the exceptions).
+
+A chart that SHIPS the same CRD did not. `crds/` documents entered the
+chart-local universe as raw `openAPIV3Schema` values, so
+kube-prometheus-stack — whose ServiceMonitor, Alertmanager, and Prometheus
+schemas come from its own `crds` subchart rather than the catalog — gave
+every CR-backed values path an open object contract. That is the real
+shape of the thirty-fifth round's residual "provider ARRAY ITEMS are
+emitted open corpus-wide (4 closed against ~180 open in that one schema)":
+it is not an array-item rule at all. Both halves of that lane were open,
+objects and items alike, and the closed nodes were the ones the Kubernetes
+bundle and the catalog owned. Two charts spelling the same ServiceMonitor
+got different contracts depending on which provider answered.
+
+The stamp belongs at INGESTION
+(`resource_schemas_from_crd_document_with_source`), not at emission: a
+fragment that leaves the provider then carries the contract, and every
+consumer — the fragment lane, the member lane, the merges — sees exactly
+what the catalog lane already gave them. Four scopings keep it faithful:
+
+- `metadata` under the root keeps its open reading: ObjectMeta is validated
+  by the API machinery and is never pruned, so closing a CRD's partial
+  `metadata` declaration would reject the labels and annotations every
+  chart writes;
+- an `x-kubernetes-preserve-unknown-fields` subtree opts out, and an
+  embedded resource does too — its schema describes a foreign object that
+  charts routinely declare only in part;
+- only the structural keywords are walked (`properties`, `items`,
+  `additionalProperties`). A structural schema states its structure OUTSIDE
+  `allOf`/`anyOf`/`oneOf`/`not`, so a stamp inside a junctor arm would
+  reject documents the sibling arm accepts;
+- `v1beta1` prunes only when the CRD opts in with
+  `spec.preserveUnknownFields: false`; without that its schema is a partial
+  description and stays open.
+
+### A chain subject asserts what it passes through
+
+`dig` type-asserts its subject (`ps[len-1].(map[string]interface{})`), and
+the twenty-seventh round scoped the presence and even-null claims to a RAW
+identity subject because a `| default dict` chain renders its fallback
+wherever the raw path is falsy. Measured on helm v4.2.3 with
+`dig "a" "b" "fallback" (.Values.cfg | default dict)`:
+
+- `""`, `[]`, `0`, `false`, an explicit null, and absence all RENDER the
+  fallback;
+- `"x"`, `[1]`, and `7` ABORT ("interface conversion: interface {} is
+  string, not map[string]interface {}").
+
+The claims were off the chain, but the schema still rejected every falsy
+spelling: the dug leaf is a READ of `cfg.a.b`, and materializing that
+descendant types `cfg` as an object host. The chain now records the same
+`DigSubject` type claim under a self-truthy guard, which states the
+measured table exactly — the arm rejects the truthy non-maps, and
+`implication_has_self_truthy_guard` routes the base to the guarded-only
+lane so the falsy set stays open. The claim needs a SINGLE identity: with
+several candidates (`coalesce a b`) only the first truthy one is dug, and a
+truthy-scoped claim on each would reject a shadowed candidate the dig never
+sees.
+
+### The scalar-sink residual, re-adjudicated
+
+The thirty-fifth round left 20 tightenings as unjustified: helm renders a
+map through `{{ . }}` as Go's `map[k:v]`, "a valid string the preimage
+rejects". A prototype that admitted the formatted mapping at every
+unconstrained string sink (a self-recursive `$defs` mirroring
+`quoted_serialization`, with the plain-token exclusions on every embedded
+string and key) was built and DISCARDED, because the premise does not hold
+for the slots the class actually reaches:
+
+- jenkins' `jenkinsHome` and `configAutoReload.folder` both land in
+  `volumeMounts[*].mountPath`, which Kubernetes requires to be absolute and
+  to not contain `:` — `map[a:b]` fails both, and neither rule is in the
+  JSON schema the adjudication used;
+- the widening moves every plain scalar slot corpus-wide (10 gen pins and
+  the fixtures) for acceptances that are user errors everywhere the corpus
+  shows them.
+
+The scalar domain therefore stays as the chart's contract, pinned by
+`plain_scalar_slots_reject_go_formatted_collections`, and the finding moves
+to Rejected as policy. One bounded exception is recorded with it: signoz's
+pull-secret ITEM names reach `imagePullSecrets[*].name`, which the API
+server does not format-validate, so that instance stays over-tightened by
+the same grammar.
+
+### Adjudication
+
+Seven corpus fixtures move (aws-load-balancer-controller,
+kube-prometheus-stack, loki, signoz-signoz, traefik, velero,
+zalando-postgres-operator); every change is a closure the chart's own CRD
+already stated. The probe battery — junk, empty map/list, empty member,
+empty item, an unknown key inside a member and inside an ITEM, deletion and
+surviving null, over every path in each chart's values.yaml to depth 5 (7
+for the moved charts) plus every subchart-declared path — yields 105 flips,
+ALL tightenings, every one an unknown-key injection (`probe-member`, a key
+no corpus CRD declares):
+
+- **45 are confirmed rejections** under `kubeconform -strict` against the
+  Kubernetes bundle AND the CRD catalog: the ServiceMonitor lanes
+  (`*.serviceMonitor.{relabelings,metricRelabelings,tlsConfig,selector}`
+  and friends), whose kind the catalog carries.
+- **60 sit on kinds the committed catalog bundle does not carry**
+  (Alertmanager and Prometheus for kube-prometheus-stack, postgresql for
+  zalando, clickhouse for signoz), so kubeconform SKIPS them and cannot
+  adjudicate. Their arbiter is a differential check against the catalog's
+  independent conversion: over the 8 (kind, version) pairs a corpus chart
+  ships AND the catalog carries, the round's rule and the catalog agree on
+  **730 of 730** shared object nodes, with zero disagreements
+  (`crdparity.py` in the round's scratch, walking every `crds/` document
+  with `yq`). The rule this round applies is the same rule the catalog
+  applied to the same documents.
+
+The ci-values sweep is unchanged at 4 rejections over 116 files (the same
+adjudicated entries: aws-load-balancer-controller's `required` clusterName,
+datadog's stale `securityAgent` key, oauth2-proxy's two tpl-indirection
+files), so no chart's own CI values entered a newly closed object.
+
+The `dig` chain half moves no corpus fixture — the corpus digs are all raw
+identities or local chains — and is pinned by the extended
+`dig_subject_presence_binds_through_selection_gates`, whose seven new cases
+are the measured helm table (`""`, `[]`, `0`, `false` render; `"junk"`,
+`[1]` abort; a map digs its member).
+
+### Validation
+
+`task test` green (934 unit tests), `task test:integration` green (496),
+`task lint` exit 0 (one pre-existing ast-grep warning in
+`serialization.rs`) and `cargo fmt --all --check` clean, the 55 corpus
+tests green against fixtures adopted from ONE clean dump run of the final
+build, and the luup2 downstream gate passes (`cargo install` + forced
+`schema:generate:all` with zero schema drift, then `check:local` exit 0).
+Production source: +78 lines in `local_schema_universe/universe.rs`, +80/-49
+in `expr_call_eval/traversal.rs` (the subject claims factored out of
+`eval_dig`).

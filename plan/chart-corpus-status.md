@@ -1,7 +1,9 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-25 after the unquoted-slot round (thirty-third
-round), which closed F76. All 55 committed corpus
+Last reconciled 2026-07-26 after the structural-CRD round (thirty-eighth
+round), which closed the chart-shipped CRD lane's open contract and the
+`dig` chain-subject false rejection, and re-adjudicated the scalar-sink
+preimage residual as policy. All 55 committed corpus
 fixtures, 129 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
@@ -1473,11 +1475,14 @@ same recursive map-null deletion as `chart_instances::with_override`.
   RESIDUALS, all in lanes this round did not touch: 20 tightenings are the
   established scalar-sink preimage (helm renders a map through `{{ . }}` as
   Go's `map[k:v]`, a valid string the preimage rejects) newly reaching
-  correctly-slotted jenkins and signoz paths; 13 loosenings are KPS'
-  `*.serviceMonitor.*Relabelings` under a `[{unknown-key: …}]` probe, where
-  the slot is right but provider ARRAY ITEMS are emitted open corpus-wide (4
-  closed against ~180 open in that schema, in the old fixture as much as the
-  new); 2 are grafana datasource strings whose ConfigMap still validates.
+  correctly-slotted jenkins and signoz paths — RE-ADJUDICATED as policy in
+  the thirty-eighth round and moved to Rejected, because the slots involved
+  (`volumeMounts[*].mountPath`) are validated beyond their schema; 13
+  loosenings are KPS' `*.serviceMonitor.*Relabelings` under a
+  `[{unknown-key: …}]` probe, where the slot is right but the CHART-SHIPPED
+  CRD lane emitted its whole contract open — CLOSED in the thirty-eighth
+  round below; 2 are grafana datasource strings whose ConfigMap still
+  validates.
 - **F40/F59 — ranged document identity through render helpers (overlay
   member half in the thirtieth round, document-item half in the
   thirty-second; CLOSED).** Traefik
@@ -1697,9 +1702,8 @@ same recursive map-null deletion as `chart_instances::with_override`.
   Pinned by `dig_subject_presence_binds_through_selection_gates` and
   the regenerated loki/KPS fixtures; the existing KPS/trivy/cilium dig
   pins stay green. The root-level residual is CLOSED in the thirty-sixth
-  round below. Residual: a present-but-falsy CHAIN subject still
-  false-rejects through the pre-existing member-host base typing (the
-  digchain shape) — a lane outside the dig machinery, newly documented.
+  round below, and the present-but-falsy CHAIN subject in the
+  thirty-eighth.
 - **F53 residual / F107 residual — a presence claim takes the host its
   path shape provides (thirty-sixth round; CLOSED).** Both residuals were
   one gap: the claim was dropped whenever its slot was not an ordinary
@@ -1777,7 +1781,53 @@ same recursive map-null deletion as `chart_instances::with_override`.
   RESIDUAL: a clause whose other guards anchor it INSIDE the root states
   only the live-root half — the refilled states sit outside what a schema
   nested under `properties.<root>` can reach, so a deleted root whose
-  parent-only reads abort stays open there.
+  parent-only reads abort stays open there. Design note (thirty-eighth
+  round, not implemented): the anchor is chosen by
+  `shared_guard_ancestor_segments` in `append_terminal_clauses`, which
+  already has a root-anchoring escape for clauses whose guards ALL hold
+  vacuously; a dependency-owned `Absent` clause needs the same escape, and
+  the remaining work is checking that every SIBLING guard still encodes
+  faithfully when evaluated against the refill document (`AbsenceDefaults`
+  carries it), abstaining when one does not.
+- **F56/F40 residual (b) — a chart-shipped CRD states its whole contract
+  (thirty-eighth round; CLOSED).** `apiextensions.k8s.io/v1` only accepts
+  structural schemas, so the API server prunes — and under the default
+  strict field validation rejects — every field the schema does not
+  declare. The CRDs catalog bakes that into its conversion; a chart that
+  ships the SAME CRD did not, so kube-prometheus-stack (whose
+  ServiceMonitor, Alertmanager, and Prometheus schemas come from its own
+  `crds` subchart) handed every CR-backed values path an open object. That
+  is what the thirty-fifth round measured as "provider ARRAY ITEMS are
+  emitted open corpus-wide": not an array rule at all — the whole
+  chart-CRD lane was open, objects and items alike, and which provider
+  answered decided the contract. The stamp now lands at INGESTION
+  (`resource_schemas_from_crd_document_with_source`), so every consumer
+  sees what the catalog lane already gave. Four scopings: `metadata` under
+  the root stays open (the API machinery validates ObjectMeta and never
+  prunes it), `x-kubernetes-preserve-unknown-fields` and embedded-resource
+  subtrees opt out, only the structural keywords are walked (a structural
+  schema states its structure outside `allOf`/`anyOf`/`oneOf`/`not`), and
+  `v1beta1` prunes only with `spec.preserveUnknownFields: false`. 105 probe
+  flips, all tightenings, every one an unknown-key injection: 45 confirmed
+  by `kubeconform -strict` against the catalog, and 60 on kinds the
+  committed catalog bundle does not carry, adjudicated by a differential
+  check in which the round's rule and the catalog's independent conversion
+  agree on 730 of 730 shared object nodes. Pinned by
+  `chart_shipped_crds_close_the_fields_their_schema_prunes` and
+  `non_pruning_crds_keep_their_undeclared_fields_open` (gen) plus
+  `structural_crd_schemas_carry_their_pruning_contract` (k8s).
+- **F107 residual — a chain subject asserts what it passes through
+  (thirty-eighth round; CLOSED).** `dig` type-asserts its subject, and the
+  twenty-seventh round correctly kept the presence/even-null claims off a
+  `| default dict` chain — but the dug leaf is still a READ, and
+  materializing it typed the chain's raw path as an object host, so every
+  Helm-falsy spelling was rejected although helm renders the fallback
+  (measured: `""`, `[]`, `0`, `false`, null, absence render; `"x"`, `[1]`,
+  `7` abort). The chain now records the same `DigSubject` type claim under
+  a self-truthy guard, which states that table exactly and sends the base
+  to the guarded-only lane. A chain with several candidates (`coalesce a
+  b`) abstains: only the first truthy one is dug. Pinned by the extended
+  `dig_subject_presence_binds_through_selection_gates`.
 
 ## Rejected (invalid or won't fix by design)
 
@@ -1839,6 +1889,25 @@ evidence or a model extension, not more of the same analysis.
   AND shadowing it everywhere. The merged-member projection fix (layered
   precedence through `pick`/`deepCopy`) landed; the declared-shape typing
   stays as policy, like the F12 strict-mode adjudications.
+- **Scalar sinks and Go-formatted collections — preimage policy
+  (thirty-eighth round).** A map spliced raw into a plain scalar slot
+  renders as Go's `map[k:v]`, which reads back as a string, so the
+  thirty-fifth round recorded the preimage's rejection of it as 20
+  unjustified tightenings. Re-measured: the premise holds only at the
+  JSON-schema level. jenkins' `jenkinsHome` and `configAutoReload.folder`
+  — the named instances — both land in `volumeMounts[*].mountPath`, which
+  Kubernetes requires to be absolute and to not contain `:`, so
+  `map[a:b]` is rejected by the API server for two reasons the schema
+  arbiter cannot see. A prototype admitting the formatted mapping at every
+  unconstrained string sink (a self-recursive `$defs` mirroring
+  `quoted_serialization`) was built and discarded: it widens every plain
+  scalar slot corpus-wide for acceptances that are user errors wherever
+  the corpus shows them. Pinned by
+  `plain_scalar_slots_reject_go_formatted_collections`. Bounded exception
+  kept with the policy: signoz's pull-secret ITEM names reach
+  `imagePullSecrets[*].name`, which the API server does not
+  format-validate, so that instance stays over-tightened by the same
+  grammar.
 - **Adjudicated-wrong audit claims.** AWS LBC `nameOverride: "null"`:
   rendering yields a null label value that the strict v1.35.0 schemas
   reject on every resource, so the plain-token exclusion is correct.
