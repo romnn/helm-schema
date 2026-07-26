@@ -3942,3 +3942,56 @@ fn own_line_splices_reach_the_slot_their_column_names() -> eyre::Result<()> {
         ],
     )
 }
+
+/// Presence claims reach the hosts their path shape provides. A ranged
+/// MEMBER FIELD's absence lands in the item slot beside the chart's own
+/// per-member gate — the minio chart reads `tpl .existingSecretKey $` only
+/// for the `users`/`svcaccts` members carrying a truthy `.existingSecret`,
+/// and helm aborts on the ones that omit it ("wrong type for value;
+/// expected string"). A TOP-LEVEL `dig` subject has no parent slot at all,
+/// so its absence becomes a document-level clause: deleting
+/// kube-prometheus-stack's `customRules` makes `dig` type-assert nil.
+#[test]
+fn member_and_root_presence_claims_reach_their_hosts() -> eyre::Result<()> {
+    assert_chart_cases(
+        "minio",
+        vec![
+            SemanticCase::rejected(
+                "a secret-backed user must name the secret key it reads",
+                "/users",
+                json!({ "users": [{ "accessKey": "a", "secretKey": "b",
+                    "policy": "readonly", "existingSecret": "sec" }] }),
+            ),
+            SemanticCase::rejected(
+                "the same holds for service accounts",
+                "/svcaccts",
+                json!({ "svcaccts": [{ "accessKey": "a", "secretKey": "b",
+                    "user": "console", "existingSecret": "sec" }] }),
+            ),
+            SemanticCase::accepted(
+                "naming the key renders",
+                json!({ "users": [{ "accessKey": "a", "secretKey": "b", "policy": "readonly",
+                    "existingSecret": "sec", "existingSecretKey": "k" }] }),
+            ),
+            SemanticCase::accepted(
+                "a user with no secret reference keeps the gate dormant",
+                json!({ "users": [{ "accessKey": "a", "secretKey": "b",
+                    "policy": "readonly" }] }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "kube-prometheus-stack",
+        vec![
+            SemanticCase::rejected(
+                "deleting the dug custom rules aborts the type assertion",
+                "",
+                json!({ "customRules": null }),
+            ),
+            SemanticCase::accepted(
+                "a populated rule override renders",
+                json!({ "customRules": { "PrometheusBadConfig": { "for": "5m" } } }),
+            ),
+        ],
+    )
+}

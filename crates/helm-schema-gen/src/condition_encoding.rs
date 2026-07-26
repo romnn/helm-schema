@@ -724,7 +724,7 @@ pub(crate) fn value_references_helm_truthy(value: &Value) -> bool {
 /// many guarded renders.
 pub(crate) const HELM_TRUTHY_DEFINITION_NAME: &str = "helm-truthy";
 
-fn helm_truthy_condition_schema() -> SchemaNode {
+pub(crate) fn helm_truthy_condition_schema() -> SchemaNode {
     SchemaNode::foreign(serde_json::json!({
         "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
     }))

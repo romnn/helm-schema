@@ -2294,11 +2294,7 @@
         "null"
       ]
     },
-    "schema213": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "null"
-    },
-    "schema219": {
+    "schema211": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -2311,7 +2307,14 @@
         },
         "value": {}
       },
+      "required": [
+        "value"
+      ],
       "type": "object"
+    },
+    "schema214": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "null"
     },
     "schema22": {
       "additionalProperties": {},
@@ -2392,7 +2395,22 @@
       },
       "type": "object"
     },
-    "schema224": {
+    "schema220": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
+        },
+        "value": {}
+      },
+      "type": "object"
+    },
+    "schema225": {
       "properties": {
         "podSecurityContextOverride": {
           "type": "object"
@@ -2403,7 +2421,7 @@
       ],
       "type": "object"
     },
-    "schema225": {
+    "schema226": {
       "additionalProperties": {
         "properties": {
           "value": {
@@ -2417,23 +2435,9 @@
       },
       "type": "object"
     },
-    "schema226": {
+    "schema227": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
-    },
-    "schema229": {
-      "additionalProperties": {},
-      "properties": {
-        "type": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        }
-      },
-      "type": "object"
     },
     "schema23": {
       "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
@@ -2491,7 +2495,21 @@
       "x-kubernetes-patch-merge-key": "mountPath",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "schema232": {
+    "schema230": {
+      "additionalProperties": {},
+      "properties": {
+        "type": {
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "schema233": {
       "additionalProperties": {},
       "properties": {
         "key": {},
@@ -2501,19 +2519,30 @@
       },
       "type": "object"
     },
-    "schema233": {
+    "schema234": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema234": {
+    "schema235": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema235": {
+    "schema236": {
+      "additionalProperties": {},
+      "properties": {
+        "keyName": {},
+        "name": {}
+      },
+      "required": [
+        "keyName"
+      ],
+      "type": "object"
+    },
+    "schema237": {
       "items": {
         "properties": {
           "value": {
@@ -2527,7 +2556,7 @@
       },
       "type": "array"
     },
-    "schema236": {
+    "schema238": {
       "description": "Scheme to use for connecting to the host. Defaults to HTTP.",
       "type": [
         "string",
@@ -2571,10 +2600,27 @@
         "null"
       ]
     },
-    "schema246": {
-      "description": "The port that will be exposed by this service.",
-      "format": "int32",
-      "type": "integer"
+    "schema245": {
+      "additionalProperties": {},
+      "properties": {
+        "keyName": {},
+        "name": {}
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "schema249": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {},
+        "value": {}
+      },
+      "required": [
+        "value"
+      ],
+      "type": "object"
     },
     "schema25": {
       "additionalProperties": false,
@@ -2641,17 +2687,10 @@
         "null"
       ]
     },
-    "schema256": {
-      "description": "Set the Pod's HTTP path for the liveness probe",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "schema257": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
+    "schema250": {
+      "description": "The port that will be exposed by this service.",
+      "format": "int32",
+      "type": "integer"
     },
     "schema26": {
       "additionalProperties": {},
@@ -2717,21 +2756,33 @@
         }
       }
     },
+    "schema260": {
+      "description": "Set the Pod's HTTP path for the liveness probe",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "schema261": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "schema265": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema262": {
+    "schema266": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "schema263": {
+    "schema267": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "schema271": {
+    "schema275": {
       "oneOf": [
         {
           "type": [
@@ -2747,7 +2798,7 @@
         }
       ]
     },
-    "schema272": {
+    "schema276": {
       "oneOf": [
         {
           "type": [
@@ -2763,16 +2814,10 @@
         }
       ]
     },
-    "schema273": {
+    "schema277": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
-    },
-    "schema276": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
     },
     "schema28": {
       "additionalProperties": false,
@@ -2812,29 +2857,15 @@
         "null"
       ]
     },
-    "schema285": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema286": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "schema287": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema288": {
-      "items": {
+    "schema280": {
+      "additionalProperties": {
         "type": "string"
       },
-      "type": "array"
+      "type": "object"
     },
     "schema289": {
       "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema29": {
@@ -2887,17 +2918,37 @@
         "null"
       ]
     },
+    "schema290": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema291": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
     "schema292": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema293": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema296": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema293": {
+    "schema297": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "schema295": {
+    "schema299": {
       "not": {
         "pattern": "[ \\t]#"
       }
@@ -7660,6 +7711,599 @@
             "properties": {
               "agent": {
                 "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "JCasC": {
+                    "properties": {
+                      "defaultConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "defaultConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "JCasC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalClouds": {
+            "anyOf": [
+              {
+                "items": {
+                  "if": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "componentName": {
+                            "$ref": "#/$defs/helm-double-quoted-safe"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "if": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "componentName": {
+                            "$ref": "#/$defs/helm-double-quoted-safe"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "additionalClouds": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalClouds"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "garbageCollection": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "garbageCollection"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "garbageCollection": {
+                    "properties": {
+                      "namespaces": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespaces"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "garbageCollection"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "JCasC": {
+                    "properties": {
+                      "defaultConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "defaultConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "JCasC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalClouds": {
+            "anyOf": [
+              {
+                "items": {
+                  "if": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "namespaces": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "not": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "if": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "namespaces": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "not": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "additionalClouds": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalClouds"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "garbageCollection": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "garbageCollection"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "JCasC": {
+                    "properties": {
+                      "defaultConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "defaultConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "JCasC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalClouds": {
+            "anyOf": [
+              {
+                "items": {
+                  "if": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "timeout": {
+                                "$ref": "#/$defs/helm-double-quoted-safe"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "if": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "properties": {
+                      "agent": {
+                        "properties": {
+                          "garbageCollection": {
+                            "properties": {
+                              "timeout": {
+                                "$ref": "#/$defs/helm-double-quoted-safe"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "garbageCollection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "additionalClouds": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalClouds"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
                   "namespace": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -9334,6 +9978,36 @@
                     "anyOf": [
                       {
                         "items": {
+                          "$ref": "#/$defs/schema249"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/schema249"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Environment variables for the agent Pod\n- name: PATH\nvalue: /usr/local/bin"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "agent": {
+                "additionalProperties": {},
+                "properties": {
+                  "envVars": {
+                    "anyOf": [
+                      {
+                        "items": {
                           "additionalProperties": {},
                           "properties": {
                             "name": {},
@@ -9373,10 +10047,10 @@
                   "envVars": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema235"
+                        "$ref": "#/$defs/schema237"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema226"
                       },
                       {
                         "type": "null"
@@ -9398,13 +10072,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema232"
+                          "$ref": "#/$defs/schema233"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema232"
+                          "$ref": "#/$defs/schema233"
                         },
                         "type": "object"
                       },
@@ -12755,10 +13429,10 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema288"
+                    "$ref": "#/$defs/schema292"
                   },
                   {
-                    "$ref": "#/$defs/schema276"
+                    "$ref": "#/$defs/schema280"
                   },
                   {
                     "type": "null"
@@ -13194,10 +13868,10 @@
               "podTemplates": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema288"
+                    "$ref": "#/$defs/schema292"
                   },
                   {
-                    "$ref": "#/$defs/schema276"
+                    "$ref": "#/$defs/schema280"
                   },
                   {
                     "type": "null"
@@ -13780,13 +14454,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema229"
+                          "$ref": "#/$defs/schema230"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema229"
+                          "$ref": "#/$defs/schema230"
                         },
                         "type": "object"
                       },
@@ -15911,6 +16585,66 @@
                     "anyOf": [
                       {
                         "items": {
+                          "$ref": "#/$defs/schema236"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/schema236"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of additional existing secrets to mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalExistingSecrets:\n- name: secret-name-1\nkeyName: username\n- name: secret-name-1\nkeyName: password"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalExistingSecrets": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/$defs/schema245"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/$defs/schema245"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of additional existing secrets to mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalExistingSecrets:\n- name: secret-name-1\nkeyName: username\n- name: secret-name-1\nkeyName: password"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalExistingSecrets": {
+                    "anyOf": [
+                      {
+                        "items": {
                           "additionalProperties": {},
                           "properties": {
                             "keyName": {},
@@ -16173,10 +16907,10 @@
             "additionalPlugins": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema288"
+                  "$ref": "#/$defs/schema292"
                 },
                 {
-                  "$ref": "#/$defs/schema276"
+                  "$ref": "#/$defs/schema280"
                 },
                 {
                   "maximum": 0,
@@ -16224,13 +16958,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema219"
+                          "$ref": "#/$defs/schema211"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema219"
+                          "$ref": "#/$defs/schema211"
                         },
                         "type": "object"
                       },
@@ -16257,10 +16991,44 @@
                   "additionalSecrets": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema235"
+                        "items": {
+                          "$ref": "#/$defs/schema220"
+                        },
+                        "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "additionalProperties": {
+                          "$ref": "#/$defs/schema220"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "List of additional secrets to create and mount\nref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets\nadditionalSecrets:\n- name: nameOfSecret\nvalue: secretText"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "additionalSecrets": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema237"
+                      },
+                      {
+                        "$ref": "#/$defs/schema226"
                       },
                       {
                         "maximum": 0,
@@ -18275,10 +19043,10 @@
               "initScripts": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema288"
+                    "$ref": "#/$defs/schema292"
                   },
                   {
-                    "$ref": "#/$defs/schema276"
+                    "$ref": "#/$defs/schema280"
                   },
                   {
                     "type": "null"
@@ -18300,10 +19068,10 @@
             "installPlugins": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema288"
+                  "$ref": "#/$defs/schema292"
                 },
                 {
-                  "$ref": "#/$defs/schema276"
+                  "$ref": "#/$defs/schema280"
                 },
                 {
                   "maximum": 0,
@@ -18721,10 +19489,10 @@
               "overrideArgs": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema288"
+                    "$ref": "#/$defs/schema292"
                   },
                   {
-                    "$ref": "#/$defs/schema276"
+                    "$ref": "#/$defs/schema280"
                   },
                   {
                     "maximum": 0,
@@ -18879,31 +19647,31 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema285"
-                          },
-                          {
                             "$ref": "#/$defs/schema289"
-                          },
-                          {
-                            "$ref": "#/$defs/schema292"
-                          },
-                          {
-                            "$ref": "#/$defs/schema295"
                           },
                           {
                             "$ref": "#/$defs/schema293"
                           },
                           {
-                            "$ref": "#/$defs/schema234"
+                            "$ref": "#/$defs/schema296"
+                          },
+                          {
+                            "$ref": "#/$defs/schema299"
+                          },
+                          {
+                            "$ref": "#/$defs/schema297"
+                          },
+                          {
+                            "$ref": "#/$defs/schema235"
                           },
                           {
                             "$ref": "#/$defs/schema151"
                           },
                           {
-                            "$ref": "#/$defs/schema257"
+                            "$ref": "#/$defs/schema261"
                           },
                           {
-                            "$ref": "#/$defs/schema273"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -21637,7 +22405,7 @@
           "extraLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema276"
+                "$ref": "#/$defs/schema280"
               },
               {
                 "not": {
@@ -21955,7 +22723,7 @@
               "fullnameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema276"
+                    "$ref": "#/$defs/schema280"
                   },
                   {
                     "not": {
@@ -21981,31 +22749,31 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema285"
-                      },
-                      {
                         "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema292"
-                      },
-                      {
-                        "$ref": "#/$defs/schema295"
                       },
                       {
                         "$ref": "#/$defs/schema293"
                       },
                       {
-                        "$ref": "#/$defs/schema234"
+                        "$ref": "#/$defs/schema296"
+                      },
+                      {
+                        "$ref": "#/$defs/schema299"
+                      },
+                      {
+                        "$ref": "#/$defs/schema297"
+                      },
+                      {
+                        "$ref": "#/$defs/schema235"
                       },
                       {
                         "$ref": "#/$defs/schema151"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema261"
                       },
                       {
-                        "$ref": "#/$defs/schema273"
+                        "$ref": "#/$defs/schema277"
                       }
                     ],
                     "type": "string"
@@ -24402,31 +25170,31 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema285"
-                      },
-                      {
                         "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema292"
-                      },
-                      {
-                        "$ref": "#/$defs/schema295"
                       },
                       {
                         "$ref": "#/$defs/schema293"
                       },
                       {
-                        "$ref": "#/$defs/schema234"
+                        "$ref": "#/$defs/schema296"
+                      },
+                      {
+                        "$ref": "#/$defs/schema299"
+                      },
+                      {
+                        "$ref": "#/$defs/schema297"
+                      },
+                      {
+                        "$ref": "#/$defs/schema235"
                       },
                       {
                         "$ref": "#/$defs/schema151"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema261"
                       },
                       {
-                        "$ref": "#/$defs/schema273"
+                        "$ref": "#/$defs/schema277"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -24457,34 +25225,34 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema285"
-                          },
-                          {
                             "$ref": "#/$defs/schema289"
-                          },
-                          {
-                            "$ref": "#/$defs/schema292"
-                          },
-                          {
-                            "$ref": "#/$defs/schema295"
                           },
                           {
                             "$ref": "#/$defs/schema293"
                           },
                           {
-                            "$ref": "#/$defs/schema287"
+                            "$ref": "#/$defs/schema296"
                           },
                           {
-                            "$ref": "#/$defs/schema234"
+                            "$ref": "#/$defs/schema299"
+                          },
+                          {
+                            "$ref": "#/$defs/schema297"
+                          },
+                          {
+                            "$ref": "#/$defs/schema291"
+                          },
+                          {
+                            "$ref": "#/$defs/schema235"
                           },
                           {
                             "$ref": "#/$defs/schema151"
                           },
                           {
-                            "$ref": "#/$defs/schema257"
+                            "$ref": "#/$defs/schema261"
                           },
                           {
-                            "$ref": "#/$defs/schema273"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -32458,7 +33226,7 @@
                             "$ref": "#/$defs/schema49"
                           },
                           {
-                            "$ref": "#/$defs/schema213"
+                            "$ref": "#/$defs/schema214"
                           },
                           {
                             "not": {
@@ -32564,7 +33332,7 @@
                   "agentListenerPort": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema250"
                       },
                       {
                         "$ref": "#/$defs/schema62"
@@ -32784,31 +33552,31 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema285"
-                      },
-                      {
                         "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema292"
-                      },
-                      {
-                        "$ref": "#/$defs/schema295"
                       },
                       {
                         "$ref": "#/$defs/schema293"
                       },
                       {
-                        "$ref": "#/$defs/schema234"
+                        "$ref": "#/$defs/schema296"
+                      },
+                      {
+                        "$ref": "#/$defs/schema299"
+                      },
+                      {
+                        "$ref": "#/$defs/schema297"
+                      },
+                      {
+                        "$ref": "#/$defs/schema235"
                       },
                       {
                         "$ref": "#/$defs/schema151"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema261"
                       },
                       {
-                        "$ref": "#/$defs/schema273"
+                        "$ref": "#/$defs/schema277"
                       }
                     ],
                     "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
@@ -32894,7 +33662,7 @@
                     "$ref": "#/$defs/schema49"
                   },
                   {
-                    "$ref": "#/$defs/schema213"
+                    "$ref": "#/$defs/schema214"
                   },
                   {
                     "not": {
@@ -33070,7 +33838,7 @@
                   "servicePort": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema250"
                       },
                       {
                         "$ref": "#/$defs/schema195"
@@ -33233,7 +34001,7 @@
                     "$ref": "#/$defs/schema49"
                   },
                   {
-                    "$ref": "#/$defs/schema213"
+                    "$ref": "#/$defs/schema214"
                   },
                   {
                     "not": {
@@ -33391,7 +34159,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema224"
+                "$ref": "#/$defs/schema225"
               }
             ]
           },
@@ -33572,7 +34340,7 @@
                                 "$ref": "#/$defs/schema71"
                               },
                               "path": {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema260"
                               },
                               "port": {
                                 "description": "Set the Pod's HTTP port to use for the liveness probe",
@@ -33592,7 +34360,7 @@
                                 ]
                               },
                               "scheme": {
-                                "$ref": "#/$defs/schema236"
+                                "$ref": "#/$defs/schema238"
                               }
                             },
                             "required": [
@@ -33681,7 +34449,7 @@
                                 "$ref": "#/$defs/schema71"
                               },
                               "path": {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema260"
                               },
                               "port": {
                                 "description": "Set the Pod's HTTP port to use for the readiness probe",
@@ -33701,7 +34469,7 @@
                                 ]
                               },
                               "scheme": {
-                                "$ref": "#/$defs/schema236"
+                                "$ref": "#/$defs/schema238"
                               }
                             },
                             "required": [
@@ -33814,7 +34582,7 @@
                                 ]
                               },
                               "scheme": {
-                                "$ref": "#/$defs/schema236"
+                                "$ref": "#/$defs/schema238"
                               }
                             },
                             "required": [
@@ -33921,7 +34689,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/schema224"
+                  "$ref": "#/$defs/schema225"
                 }
               }
             ]
@@ -34203,7 +34971,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -34230,7 +34998,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -34284,34 +35052,34 @@
                           "scrapeInterval": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema285"
-                              },
-                              {
                                 "$ref": "#/$defs/schema289"
-                              },
-                              {
-                                "$ref": "#/$defs/schema292"
-                              },
-                              {
-                                "$ref": "#/$defs/schema295"
                               },
                               {
                                 "$ref": "#/$defs/schema293"
                               },
                               {
-                                "$ref": "#/$defs/schema287"
+                                "$ref": "#/$defs/schema296"
                               },
                               {
-                                "$ref": "#/$defs/schema234"
+                                "$ref": "#/$defs/schema299"
+                              },
+                              {
+                                "$ref": "#/$defs/schema297"
+                              },
+                              {
+                                "$ref": "#/$defs/schema291"
+                              },
+                              {
+                                "$ref": "#/$defs/schema235"
                               },
                               {
                                 "$ref": "#/$defs/schema151"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema261"
                               },
                               {
-                                "$ref": "#/$defs/schema273"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "default": "1m",
@@ -34370,7 +35138,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -34448,34 +35216,34 @@
                           "fileName": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema285"
-                              },
-                              {
                                 "$ref": "#/$defs/schema289"
-                              },
-                              {
-                                "$ref": "#/$defs/schema292"
-                              },
-                              {
-                                "$ref": "#/$defs/schema295"
                               },
                               {
                                 "$ref": "#/$defs/schema293"
                               },
                               {
-                                "$ref": "#/$defs/schema287"
+                                "$ref": "#/$defs/schema296"
                               },
                               {
-                                "$ref": "#/$defs/schema234"
+                                "$ref": "#/$defs/schema299"
+                              },
+                              {
+                                "$ref": "#/$defs/schema297"
+                              },
+                              {
+                                "$ref": "#/$defs/schema291"
+                              },
+                              {
+                                "$ref": "#/$defs/schema235"
                               },
                               {
                                 "$ref": "#/$defs/schema151"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema261"
                               },
                               {
-                                "$ref": "#/$defs/schema273"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Jenkins keystore filename which will appear under controller.httpsKeyStore.path",
@@ -34489,34 +35257,34 @@
                           "jenkinsHttpsJksSecretKey": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema285"
-                              },
-                              {
                                 "$ref": "#/$defs/schema289"
-                              },
-                              {
-                                "$ref": "#/$defs/schema292"
-                              },
-                              {
-                                "$ref": "#/$defs/schema295"
                               },
                               {
                                 "$ref": "#/$defs/schema293"
                               },
                               {
-                                "$ref": "#/$defs/schema287"
+                                "$ref": "#/$defs/schema296"
                               },
                               {
-                                "$ref": "#/$defs/schema234"
+                                "$ref": "#/$defs/schema299"
+                              },
+                              {
+                                "$ref": "#/$defs/schema297"
+                              },
+                              {
+                                "$ref": "#/$defs/schema291"
+                              },
+                              {
+                                "$ref": "#/$defs/schema235"
                               },
                               {
                                 "$ref": "#/$defs/schema151"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema261"
                               },
                               {
-                                "$ref": "#/$defs/schema273"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Name of the key in the secret that already has SSL keystore",
@@ -34683,31 +35451,31 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema285"
-                              },
-                              {
                                 "$ref": "#/$defs/schema289"
-                              },
-                              {
-                                "$ref": "#/$defs/schema292"
-                              },
-                              {
-                                "$ref": "#/$defs/schema295"
                               },
                               {
                                 "$ref": "#/$defs/schema293"
                               },
                               {
-                                "$ref": "#/$defs/schema234"
+                                "$ref": "#/$defs/schema296"
+                              },
+                              {
+                                "$ref": "#/$defs/schema299"
+                              },
+                              {
+                                "$ref": "#/$defs/schema297"
+                              },
+                              {
+                                "$ref": "#/$defs/schema235"
                               },
                               {
                                 "$ref": "#/$defs/schema151"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema261"
                               },
                               {
-                                "$ref": "#/$defs/schema273"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -34838,31 +35606,31 @@
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/schema285"
-                                  },
-                                  {
                                     "$ref": "#/$defs/schema289"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/schema292"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/schema295"
                                   },
                                   {
                                     "$ref": "#/$defs/schema293"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema234"
+                                    "$ref": "#/$defs/schema296"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema299"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema297"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema235"
                                   },
                                   {
                                     "$ref": "#/$defs/schema151"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema257"
+                                    "$ref": "#/$defs/schema261"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema273"
+                                    "$ref": "#/$defs/schema277"
                                   }
                                 ],
                                 "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
@@ -34888,34 +35656,34 @@
                           "pathType": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema285"
-                              },
-                              {
                                 "$ref": "#/$defs/schema289"
-                              },
-                              {
-                                "$ref": "#/$defs/schema292"
-                              },
-                              {
-                                "$ref": "#/$defs/schema295"
                               },
                               {
                                 "$ref": "#/$defs/schema293"
                               },
                               {
-                                "$ref": "#/$defs/schema287"
+                                "$ref": "#/$defs/schema296"
                               },
                               {
-                                "$ref": "#/$defs/schema234"
+                                "$ref": "#/$defs/schema299"
+                              },
+                              {
+                                "$ref": "#/$defs/schema297"
+                              },
+                              {
+                                "$ref": "#/$defs/schema291"
+                              },
+                              {
+                                "$ref": "#/$defs/schema235"
                               },
                               {
                                 "$ref": "#/$defs/schema151"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema261"
                               },
                               {
-                                "$ref": "#/$defs/schema273"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix",
@@ -35253,7 +36021,7 @@
                           "alertingRulesAdditionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -35489,34 +36257,34 @@
                           "scrapeInterval": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema285"
-                              },
-                              {
                                 "$ref": "#/$defs/schema289"
-                              },
-                              {
-                                "$ref": "#/$defs/schema292"
-                              },
-                              {
-                                "$ref": "#/$defs/schema295"
                               },
                               {
                                 "$ref": "#/$defs/schema293"
                               },
                               {
-                                "$ref": "#/$defs/schema287"
+                                "$ref": "#/$defs/schema296"
                               },
                               {
-                                "$ref": "#/$defs/schema234"
+                                "$ref": "#/$defs/schema299"
+                              },
+                              {
+                                "$ref": "#/$defs/schema297"
+                              },
+                              {
+                                "$ref": "#/$defs/schema291"
+                              },
+                              {
+                                "$ref": "#/$defs/schema235"
                               },
                               {
                                 "$ref": "#/$defs/schema151"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema261"
                               },
                               {
-                                "$ref": "#/$defs/schema273"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "How often prometheus should scrape metrics",
@@ -35531,7 +36299,7 @@
                           "serviceMonitorAdditionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -35600,7 +36368,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -35618,7 +36386,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema276"
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -35932,34 +36700,34 @@
                               "folder": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/schema285"
-                                  },
-                                  {
                                     "$ref": "#/$defs/schema289"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/schema292"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/schema295"
                                   },
                                   {
                                     "$ref": "#/$defs/schema293"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema287"
+                                    "$ref": "#/$defs/schema296"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema234"
+                                    "$ref": "#/$defs/schema299"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema297"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema291"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/schema235"
                                   },
                                   {
                                     "$ref": "#/$defs/schema151"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema257"
+                                    "$ref": "#/$defs/schema261"
                                   },
                                   {
-                                    "$ref": "#/$defs/schema273"
+                                    "$ref": "#/$defs/schema277"
                                   }
                                 ],
                                 "description": "folder in the pod that should hold the collected dashboards:",
@@ -35975,31 +36743,31 @@
                                   {
                                     "allOf": [
                                       {
-                                        "$ref": "#/$defs/schema285"
-                                      },
-                                      {
                                         "$ref": "#/$defs/schema289"
-                                      },
-                                      {
-                                        "$ref": "#/$defs/schema292"
-                                      },
-                                      {
-                                        "$ref": "#/$defs/schema295"
                                       },
                                       {
                                         "$ref": "#/$defs/schema293"
                                       },
                                       {
-                                        "$ref": "#/$defs/schema234"
+                                        "$ref": "#/$defs/schema296"
+                                      },
+                                      {
+                                        "$ref": "#/$defs/schema299"
+                                      },
+                                      {
+                                        "$ref": "#/$defs/schema297"
+                                      },
+                                      {
+                                        "$ref": "#/$defs/schema235"
                                       },
                                       {
                                         "$ref": "#/$defs/schema151"
                                       },
                                       {
-                                        "$ref": "#/$defs/schema257"
+                                        "$ref": "#/$defs/schema261"
                                       },
                                       {
-                                        "$ref": "#/$defs/schema273"
+                                        "$ref": "#/$defs/schema277"
                                       }
                                     ],
                                     "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -36795,10 +37563,10 @@
         "additionalPlugins": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema288"
+              "$ref": "#/$defs/schema292"
             },
             {
-              "$ref": "#/$defs/schema288"
+              "$ref": "#/$defs/schema292"
             },
             {
               "type": "integer"
@@ -36807,7 +37575,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema276"
+              "$ref": "#/$defs/schema280"
             }
           ],
           "description": "List of plugins to install in addition to those listed in controller.installPlugins"
@@ -37008,7 +37776,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "not": {
@@ -37387,7 +38155,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "not": {
@@ -37669,7 +38437,7 @@
               "$ref": "#/$defs/schema49"
             },
             {
-              "$ref": "#/$defs/schema213"
+              "$ref": "#/$defs/schema214"
             },
             {
               "not": {
@@ -37797,7 +38565,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "not": {
@@ -37867,34 +38635,34 @@
         "jenkinsHome": {
           "allOf": [
             {
-              "$ref": "#/$defs/schema285"
-            },
-            {
               "$ref": "#/$defs/schema289"
-            },
-            {
-              "$ref": "#/$defs/schema292"
-            },
-            {
-              "$ref": "#/$defs/schema295"
             },
             {
               "$ref": "#/$defs/schema293"
             },
             {
-              "$ref": "#/$defs/schema287"
+              "$ref": "#/$defs/schema296"
             },
             {
-              "$ref": "#/$defs/schema234"
+              "$ref": "#/$defs/schema299"
+            },
+            {
+              "$ref": "#/$defs/schema297"
+            },
+            {
+              "$ref": "#/$defs/schema291"
+            },
+            {
+              "$ref": "#/$defs/schema235"
             },
             {
               "$ref": "#/$defs/schema151"
             },
             {
-              "$ref": "#/$defs/schema257"
+              "$ref": "#/$defs/schema261"
             },
             {
-              "$ref": "#/$defs/schema273"
+              "$ref": "#/$defs/schema277"
             }
           ],
           "description": "Custom Jenkins home path",
@@ -37971,7 +38739,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "not": {
@@ -38007,7 +38775,7 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "additionalProperties": {
@@ -38056,7 +38824,7 @@
         "podAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "$ref": "#/$defs/schema92"
@@ -38103,7 +38871,7 @@
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema276"
+              "$ref": "#/$defs/schema280"
             },
             {
               "items": {},
@@ -38113,7 +38881,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema286"
+              "$ref": "#/$defs/schema290"
             }
           ],
           "description": "Custom Pod labels (an object with `label-key: label-value` pairs)"
@@ -38126,31 +38894,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema285"
-                },
-                {
                   "$ref": "#/$defs/schema289"
-                },
-                {
-                  "$ref": "#/$defs/schema292"
-                },
-                {
-                  "$ref": "#/$defs/schema295"
                 },
                 {
                   "$ref": "#/$defs/schema293"
                 },
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema296"
+                },
+                {
+                  "$ref": "#/$defs/schema299"
+                },
+                {
+                  "$ref": "#/$defs/schema297"
+                },
+                {
+                  "$ref": "#/$defs/schema235"
                 },
                 {
                   "$ref": "#/$defs/schema151"
                 },
                 {
-                  "$ref": "#/$defs/schema257"
+                  "$ref": "#/$defs/schema261"
                 },
                 {
-                  "$ref": "#/$defs/schema273"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -38273,7 +39041,7 @@
                   "anyOf": [
                     {
                       "additionalProperties": {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema276"
                       },
                       "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                       "properties": {
@@ -38295,7 +39063,7 @@
                   "anyOf": [
                     {
                       "additionalProperties": {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema276"
                       },
                       "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                       "properties": {
@@ -38360,31 +39128,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema285"
-                },
-                {
                   "$ref": "#/$defs/schema289"
-                },
-                {
-                  "$ref": "#/$defs/schema292"
-                },
-                {
-                  "$ref": "#/$defs/schema295"
                 },
                 {
                   "$ref": "#/$defs/schema293"
                 },
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema296"
+                },
+                {
+                  "$ref": "#/$defs/schema299"
+                },
+                {
+                  "$ref": "#/$defs/schema297"
+                },
+                {
+                  "$ref": "#/$defs/schema235"
                 },
                 {
                   "$ref": "#/$defs/schema151"
                 },
                 {
-                  "$ref": "#/$defs/schema257"
+                  "$ref": "#/$defs/schema261"
                 },
                 {
-                  "$ref": "#/$defs/schema273"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.",
@@ -38663,7 +39431,7 @@
         "statefulSetAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "$ref": "#/$defs/schema92"
@@ -38682,7 +39450,7 @@
         "statefulSetLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema276"
+              "$ref": "#/$defs/schema280"
             },
             {
               "items": {},
@@ -38692,7 +39460,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema286"
+              "$ref": "#/$defs/schema290"
             }
           ],
           "description": "Jenkins controller custom labels for the StatefulSet\nfoo: bar\nbar: foo"
@@ -38710,31 +39478,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema285"
-                },
-                {
                   "$ref": "#/$defs/schema289"
-                },
-                {
-                  "$ref": "#/$defs/schema292"
-                },
-                {
-                  "$ref": "#/$defs/schema295"
                 },
                 {
                   "$ref": "#/$defs/schema293"
                 },
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema296"
+                },
+                {
+                  "$ref": "#/$defs/schema299"
+                },
+                {
+                  "$ref": "#/$defs/schema297"
+                },
+                {
+                  "$ref": "#/$defs/schema235"
                 },
                 {
                   "$ref": "#/$defs/schema151"
                 },
                 {
-                  "$ref": "#/$defs/schema257"
+                  "$ref": "#/$defs/schema261"
                 },
                 {
-                  "$ref": "#/$defs/schema273"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "Optional: Path at which the file to which the container's termination message will be written is mounted into the container's filesystem. Message written is intended to be brief final status, such as an assertion failure message. Will be truncated by the node if greater than 4096 bytes. The total message length across all containers will be limited to 12kb. Defaults to /dev/termination-log. Cannot be updated.",
@@ -38760,31 +39528,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema285"
-                },
-                {
                   "$ref": "#/$defs/schema289"
-                },
-                {
-                  "$ref": "#/$defs/schema292"
-                },
-                {
-                  "$ref": "#/$defs/schema295"
                 },
                 {
                   "$ref": "#/$defs/schema293"
                 },
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema296"
+                },
+                {
+                  "$ref": "#/$defs/schema299"
+                },
+                {
+                  "$ref": "#/$defs/schema297"
+                },
+                {
+                  "$ref": "#/$defs/schema235"
                 },
                 {
                   "$ref": "#/$defs/schema151"
                 },
                 {
-                  "$ref": "#/$defs/schema257"
+                  "$ref": "#/$defs/schema261"
                 },
                 {
-                  "$ref": "#/$defs/schema273"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
@@ -38974,7 +39742,7 @@
                   "description": "RollingUpdateStatefulSetStrategy is used to communicate parameter for RollingUpdateStatefulSetStrategyType.",
                   "properties": {
                     "maxUnavailable": {
-                      "$ref": "#/$defs/schema271"
+                      "$ref": "#/$defs/schema275"
                     },
                     "partition": {
                       "description": "Partition indicates the ordinal at which the StatefulSet should be partitioned for updates. During a rolling update, all pods from ordinal Replicas-1 to Partition are updated. All pods from ordinal Partition-1 to 0 remain untouched. This is helpful in being able to do a canary based deployment. The default value is 0.",
@@ -39001,7 +39769,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema261"
+              "$ref": "#/$defs/schema265"
             },
             {
               "not": {
@@ -39037,7 +39805,7 @@
     "extraLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema261"
+          "$ref": "#/$defs/schema265"
         },
         {
           "$ref": "#/$defs/schema108"
@@ -39292,10 +40060,10 @@
                             "$ref": "#/$defs/schema153"
                           },
                           "kind": {
-                            "$ref": "#/$defs/schema262"
+                            "$ref": "#/$defs/schema266"
                           },
                           "name": {
-                            "$ref": "#/$defs/schema263"
+                            "$ref": "#/$defs/schema267"
                           }
                         },
                         "required": [
@@ -39379,34 +40147,34 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema285"
-                      },
-                      {
                         "$ref": "#/$defs/schema289"
-                      },
-                      {
-                        "$ref": "#/$defs/schema292"
-                      },
-                      {
-                        "$ref": "#/$defs/schema295"
                       },
                       {
                         "$ref": "#/$defs/schema293"
                       },
                       {
-                        "$ref": "#/$defs/schema287"
+                        "$ref": "#/$defs/schema296"
                       },
                       {
-                        "$ref": "#/$defs/schema234"
+                        "$ref": "#/$defs/schema299"
+                      },
+                      {
+                        "$ref": "#/$defs/schema297"
+                      },
+                      {
+                        "$ref": "#/$defs/schema291"
+                      },
+                      {
+                        "$ref": "#/$defs/schema235"
                       },
                       {
                         "$ref": "#/$defs/schema151"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema261"
                       },
                       {
-                        "$ref": "#/$defs/schema273"
+                        "$ref": "#/$defs/schema277"
                       }
                     ],
                     "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
@@ -39549,31 +40317,31 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema285"
-                },
-                {
                   "$ref": "#/$defs/schema289"
-                },
-                {
-                  "$ref": "#/$defs/schema292"
-                },
-                {
-                  "$ref": "#/$defs/schema295"
                 },
                 {
                   "$ref": "#/$defs/schema293"
                 },
                 {
-                  "$ref": "#/$defs/schema234"
+                  "$ref": "#/$defs/schema296"
+                },
+                {
+                  "$ref": "#/$defs/schema299"
+                },
+                {
+                  "$ref": "#/$defs/schema297"
+                },
+                {
+                  "$ref": "#/$defs/schema235"
                 },
                 {
                   "$ref": "#/$defs/schema151"
                 },
                 {
-                  "$ref": "#/$defs/schema257"
+                  "$ref": "#/$defs/schema261"
                 },
                 {
-                  "$ref": "#/$defs/schema273"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
@@ -39819,7 +40587,7 @@
                         "$ref": "#/$defs/schema200"
                       },
                       "optional": {
-                        "$ref": "#/$defs/schema233"
+                        "$ref": "#/$defs/schema234"
                       }
                     },
                     "type": [
@@ -39914,7 +40682,7 @@
                         ]
                       },
                       "sizeLimit": {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema276"
                       }
                     },
                     "type": [
@@ -40189,10 +40957,10 @@
                                     "$ref": "#/$defs/schema153"
                                   },
                                   "kind": {
-                                    "$ref": "#/$defs/schema262"
+                                    "$ref": "#/$defs/schema266"
                                   },
                                   "name": {
-                                    "$ref": "#/$defs/schema263"
+                                    "$ref": "#/$defs/schema267"
                                   },
                                   "namespace": {
                                     "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -40784,7 +41552,7 @@
                                   "$ref": "#/$defs/schema200"
                                 },
                                 "optional": {
-                                  "$ref": "#/$defs/schema233"
+                                  "$ref": "#/$defs/schema234"
                                 }
                               },
                               "type": [
@@ -41362,7 +42130,7 @@
                         "$ref": "#/$defs/schema49"
                       },
                       {
-                        "$ref": "#/$defs/schema213"
+                        "$ref": "#/$defs/schema214"
                       },
                       {
                         "not": {
@@ -41414,7 +42182,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema226"
+              "$ref": "#/$defs/schema227"
             }
           ],
           "description": "Auto-mount ServiceAccount token"
@@ -41515,7 +42283,7 @@
                         "$ref": "#/$defs/schema49"
                       },
                       {
-                        "$ref": "#/$defs/schema213"
+                        "$ref": "#/$defs/schema214"
                       },
                       {
                         "not": {

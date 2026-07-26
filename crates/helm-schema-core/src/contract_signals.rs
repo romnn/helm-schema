@@ -425,6 +425,21 @@ pub enum ContractRequirementTarget {
         /// Whether Helm's integer-count range form remains accepted.
         allow_integer: bool,
     },
+    /// [`Self::MembersAt`] restricted to the ranged members whose own field
+    /// at `guard_path` is Helm-truthy: the chart gates the read per member,
+    /// which only the member's own slot can express (the minio chart reads
+    /// `.existingSecretKey` inside `if .existingSecret`). The gate selects
+    /// WHICH members the requirements bind, so it never implies that the
+    /// target itself is present — that stays the absence claim's own fact.
+    MembersAtWhereTruthy {
+        /// Relative member path whose truthiness selects the members.
+        guard_path: Vec<String>,
+        /// Relative member path the requirements constrain; empty when they
+        /// constrain the selected member itself.
+        target_path: Vec<String>,
+        /// Whether Helm's integer-count range form remains accepted.
+        allow_integer: bool,
+    },
     /// Every key produced by ranging the path.
     Keys,
 }

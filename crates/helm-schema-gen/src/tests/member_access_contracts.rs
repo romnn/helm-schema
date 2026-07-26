@@ -273,25 +273,14 @@ fn synthetic_member_parent_does_not_seed_unreferenced_values_siblings() {
     );
 }
 
-/// A member-local predicate cannot be represented as a root Draft 7 guard.
-/// Its body contract must therefore abstain instead of becoming an
-/// unconditional item/value constraint.
+/// A member-local predicate cannot be represented as a root Draft 7 guard,
+/// so it must never become an unconditional item/value constraint. It is
+/// still exact INSIDE the member: the item slot states the gate beside the
+/// body's own contract, so `template` binds for the members the chart's
+/// `if $item.enabled` routes to `tpl` and stays open for the rest.
 #[test]
 fn member_local_guard_does_not_leak_its_string_contract() {
-    let src = indoc! {r"
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: test
-        data:
-          output: |-
-            {{- range $item := .Values.items }}
-            {{- if $item.enabled }}
-            {{ tpl $item.template $ }}
-            {{- end }}
-            {{- end }}
-    "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("items: []\n"));
+    let schema = member_local_guard_schema();
     // The member-local predicate cannot lower as a document guard, but its
     // `enabled` lookup still proves the structural member host in every
     // array/map lane. The host stays untyped in the broad default lane so
@@ -318,39 +307,115 @@ fn member_local_guard_does_not_leak_its_string_contract() {
             ]
         }),
     );
+    // Every range implication reaches its members through the same four
+    // lanes: array items, map values, the zero-iteration integer bound, and
+    // null.
+    let member_lanes = |member: &Value| {
+        serde_json::json!({
+            "additionalProperties": {},
+            "properties": {
+                "items": {
+                    "anyOf": [
+                        { "items": member, "type": "array" },
+                        { "additionalProperties": member, "type": "object" },
+                        { "maximum": 0, "type": "integer" },
+                        { "type": "null" },
+                    ]
+                }
+            },
+        })
+    };
     // The unconditional arm's carrier stays untyped: it must hold vacuously
     // for falsy ancestors a `with` chain would skip. Grafting the untyped
     // `enabled` carrier into the arm keeps the member's OBJECT kind — the
     // typeless carrier conjoins into the typed member slot instead of
     // widening it into a union alternative.
-    let all_of = vec![serde_json::json!({
-        "additionalProperties": {},
-        "properties": {
-            "items": {
-                "anyOf": [
-                    { "items": object_member.clone(), "type": "array" },
-                    {
-                        "additionalProperties": object_member,
-                        "type": "object",
-                    },
-                    { "maximum": 0, "type": "integer" },
-                    { "type": "null" },
-                ]
-            }
+    //
+    // Two gated arms beside it, one per fact the gate scopes: `tpl`'s operand
+    // must be a string, and — because `tpl` aborts on nil — it must be there
+    // at all. A non-object member cannot satisfy the selector, so it passes
+    // both arms unconstrained.
+    let gate = serde_json::json!({
+        "properties": { "enabled": { "$ref": "#/$defs/helm-truthy" } },
+        "required": ["enabled"],
+        "type": "object",
+    });
+    let gated_type = serde_json::json!({
+        "if": gate,
+        "then": {
+            "properties": { "template": { "type": "string" } },
+            "type": "object",
         },
-    })];
+    });
+    let gated_presence = serde_json::json!({
+        "if": gate,
+        "then": { "required": ["template"], "type": "object" },
+    });
+    let all_of = vec![
+        member_lanes(&object_member),
+        member_lanes(&gated_type),
+        member_lanes(&gated_presence),
+    ];
     sim_assert_eq!(
         have: &schema,
-        want: &expected_values_schema(properties, all_of, false)
+        want: &expected_values_schema(properties, all_of, true)
     );
+}
 
-    for instance in [
-        serde_json::json!({ "items": [{ "enabled": false, "template": 7 }] }),
-        serde_json::json!({ "items": [{ "enabled": true, "template": "body" }] }),
+/// The schema of the member-local guard shape above, shared with the
+/// acceptance cases below.
+fn member_local_guard_schema() -> Value {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          output: |-
+            {{- range $item := .Values.items }}
+            {{- if $item.enabled }}
+            {{ tpl $item.template $ }}
+            {{- end }}
+            {{- end }}
+    "};
+    schema_for_values_yaml(parse_ir(src), Some("items: []\n"))
+}
+
+/// The gate's own semantics: `tpl` binds the members `if $item.enabled`
+/// routes to it and nothing else.
+#[test]
+fn member_local_guard_binds_only_the_members_it_selects() {
+    let schema = member_local_guard_schema();
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "items": [{ "enabled": false, "template": 7 }] }),
+            true,
+            "a dead member consumer stays open",
+        ),
+        (
+            serde_json::json!({ "items": [{ "enabled": true, "template": "body" }] }),
+            true,
+            "a live string renders",
+        ),
+        (
+            serde_json::json!({ "items": [{ "enabled": true, "template": 7 }] }),
+            false,
+            "a live non-string operand aborts",
+        ),
+        (
+            serde_json::json!({ "items": [{ "enabled": true }] }),
+            false,
+            "a live member omitting the operand aborts",
+        ),
+        (
+            serde_json::json!({ "items": [{ "enabled": false }, { "enabled": true }] }),
+            false,
+            "one live member among dead ones still aborts",
+        ),
     ] {
         assert!(
-            schema_accepts_instance(&schema, &instance),
-            "dead member consumers and live strings remain valid: instance={instance}; schema={schema}"
+            schema_accepts_instance(&schema, &instance) == want,
+            "member-local guard scope ({label}): instance={instance}; want={want}; schema={schema}"
         );
     }
 }

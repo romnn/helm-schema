@@ -903,7 +903,8 @@ fn fail_requirement_runtime_types(
     };
     match &implication.target {
         ContractRequirementTarget::Members { allow_integer }
-        | ContractRequirementTarget::MembersAt { allow_integer, .. } => {
+        | ContractRequirementTarget::MembersAt { allow_integer, .. }
+        | ContractRequirementTarget::MembersAtWhereTruthy { allow_integer, .. } => {
             let mut types = BTreeSet::from(["array", "null", "object"]);
             if *allow_integer {
                 types.insert("integer");

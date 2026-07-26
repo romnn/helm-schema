@@ -371,6 +371,11 @@ pub(crate) fn fail_requirement_schema<'a>(
             helm_schema_core::ContractRequirementTarget::MembersAt {
                 target_path,
                 allow_integer,
+            }
+            | helm_schema_core::ContractRequirementTarget::MembersAtWhereTruthy {
+                target_path,
+                allow_integer,
+                ..
             } => {
                 // Nil-tolerant requirements (comparison operands, and
                 // truthy-scoped types whose absent leaf is falsy and escapes
@@ -393,10 +398,31 @@ pub(crate) fn fail_requirement_schema<'a>(
                         helm_schema_core::FailValueRequirement::NotSchemaType(_)
                     )
                 });
-                let member = if tolerant_leaf {
-                    optional_leaf_object_path_schema(target_path, requirement)
-                } else {
-                    required_object_path_schema(target_path, requirement)
+                let member = match &implication.target {
+                    // A per-member selector binds only the members the
+                    // chart's own gate routes to the consumer; every other
+                    // member — and every non-object one, which cannot hold
+                    // the selector field — passes the arm unconstrained. The
+                    // gated leaf stays OPTIONAL: the selector says which
+                    // members reach the consumer, not that the consumer
+                    // aborts when its operand is missing, which is the
+                    // separate absence claim's fact (an empty target path
+                    // carries exactly that claim, as its own required
+                    // member).
+                    helm_schema_core::ContractRequirementTarget::MembersAtWhereTruthy {
+                        guard_path,
+                        ..
+                    } => serde_json::json!({
+                        "if": required_object_path_schema(
+                            guard_path,
+                            crate::condition_encoding::helm_truthy_condition_schema().into_value(),
+                        ),
+                        "then": optional_leaf_object_path_schema(target_path, requirement),
+                    }),
+                    _ if tolerant_leaf => {
+                        optional_leaf_object_path_schema(target_path, requirement)
+                    }
+                    _ => required_object_path_schema(target_path, requirement),
                 };
                 let mut arms = vec![
                     serde_json::json!({ "type": "array", "items": member }),

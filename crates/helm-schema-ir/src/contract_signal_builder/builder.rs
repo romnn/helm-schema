@@ -1217,13 +1217,17 @@ fn record_fail_conjunction(
     }
     if let crate::eval_effect::CaptureKind::RequiredPresence { path } = &capture.kind {
         // The presence claim lands on the PARENT as a required member so
-        // the arm fires when the subject itself is absent; a root-level
-        // subject has no parent slot to host it and abstains.
+        // the arm fires when the subject itself is absent. A TOP-LEVEL
+        // subject has no parent slot to carry that member, so it takes the
+        // document-level absence clause instead — the same vehicle the
+        // navigated-host and nil-strict-operand claims use for their own
+        // top-level paths (kube-prometheus-stack's `customRules`).
         let mut segments = helm_schema_core::split_value_path(path);
         let Some(member) = segments.pop() else {
             return;
         };
         if segments.is_empty() {
+            record_absence_abort_clause(terminal_clauses, capture, path);
             return;
         }
         let parent = segments.join(".");
@@ -1236,6 +1240,42 @@ fn record_fail_conjunction(
         return;
     }
     if let crate::eval_effect::CaptureKind::AbsenceAborts { path } = &capture.kind {
+        // A ranged MEMBER FIELD's absence has no document-level spelling —
+        // the clause would have to name one visited member — but the member's
+        // own slot states it exactly, as a required member of every visited
+        // member (the minio chart's `tpl .accessKey $`). The member itself
+        // (a bare `A.*`) keeps no claim: a range only visits members that
+        // exist.
+        if path_contains_wildcard(path) {
+            let mut segments = helm_schema_core::split_value_path(path);
+            let Some(member) = segments.pop() else {
+                return;
+            };
+            if member == "*" || segments.is_empty() {
+                return;
+            }
+            // A gate on the operand's OWN truthiness excludes absence
+            // outright, so the claim would only restate the gate (grafana
+            // reads `tpl .prefix $` inside `if .prefix`). This is the
+            // member-quantified case of the same self-mention rule the
+            // document-level clause applies.
+            if capture.conjunction.iter().any(|predicate| {
+                matches!(
+                    predicate,
+                    Predicate::Guard(Guard::Truthy { path: guard } | Guard::With { path: guard })
+                        if guard == path
+                )
+            }) {
+                return;
+            }
+            record_value_requirement_capture(
+                paths,
+                capture,
+                &segments.join("."),
+                FailValueRequirement::HasMemberEvenDefaulted(member),
+            );
+            return;
+        }
         record_absence_abort_clause(terminal_clauses, capture, path);
         return;
     }
@@ -1982,6 +2022,7 @@ fn record_value_requirement_capture(
             .collect();
         let mut outer_guards = Vec::new();
         let mut self_truthy_selected = false;
+        let mut member_selector = None;
         for predicate in &conjunction {
             match predicate {
                 Predicate::Guard(Guard::Range { path })
@@ -1995,6 +2036,14 @@ fn record_value_requirement_capture(
                     self_truthy_selected = true;
                 }
                 _ => {
+                    if let Some(relative) =
+                        member_local_truthy_selector(collection_path, predicate, Some(path))
+                    {
+                        if member_selector.replace(relative).is_some() {
+                            return;
+                        }
+                        continue;
+                    }
                     // Fail polarity admits strengthened guards: the arm then
                     // enforces its requirement less often, never more (the
                     // document-level `if (include "redis.createConfigmap" .)`
@@ -2031,11 +2080,19 @@ fn record_value_requirement_capture(
             let mode = capture.ranged.mode(collection_path);
             mode.direct && !mode.destructured && !mode.json_decoded
         };
+        let target_path = helm_schema_core::split_value_path(member_suffix);
         let implication = ContractFailImplication {
             outer_guards,
-            target: ContractRequirementTarget::MembersAt {
-                target_path: helm_schema_core::split_value_path(member_suffix),
-                allow_integer,
+            target: match member_selector {
+                Some(guard_path) => ContractRequirementTarget::MembersAtWhereTruthy {
+                    guard_path,
+                    target_path,
+                    allow_integer,
+                },
+                None => ContractRequirementTarget::MembersAt {
+                    target_path,
+                    allow_integer,
+                },
             },
             requirements: vec![requirement],
         };
@@ -2049,6 +2106,7 @@ fn record_value_requirement_capture(
     {
         let mut outer_guards = Vec::new();
         let mut prefix = None;
+        let mut member_selector = None;
         let mut dispatch_escapes = Vec::new();
         for predicate in &capture.conjunction {
             match predicate {
@@ -2073,6 +2131,14 @@ fn record_value_requirement_capture(
                     // open to scalars Helm cannot decode.
                     if let Some(escape) = member_dispatch_escape(predicate, path) {
                         dispatch_escapes.push(vec![escape]);
+                        continue;
+                    }
+                    if let Some(relative) =
+                        member_local_truthy_selector(collection_path, predicate, None)
+                    {
+                        if member_selector.replace(relative).is_some() {
+                            return;
+                        }
                         continue;
                     }
                     let Some(guard) = predicate_to_guard(predicate, None) else {
@@ -2111,10 +2177,18 @@ fn record_value_requirement_capture(
             let mode = capture.ranged.mode(collection_path);
             mode.direct && !mode.destructured && !mode.json_decoded
         };
-        let target = prefix.map_or(
-            ContractRequirementTarget::Members { allow_integer },
-            |prefix| ContractRequirementTarget::MembersMatchingPrefix { prefix },
-        );
+        let target = match (prefix, member_selector) {
+            (Some(prefix), _) => ContractRequirementTarget::MembersMatchingPrefix { prefix },
+            // The requirement binds the member itself, so it needs no
+            // relative path — only the selector deciding which members it
+            // reaches.
+            (None, Some(guard_path)) => ContractRequirementTarget::MembersAtWhereTruthy {
+                guard_path,
+                target_path: Vec::new(),
+                allow_integer,
+            },
+            (None, None) => ContractRequirementTarget::Members { allow_integer },
+        };
         (collection_path, target, outer_guards)
     } else {
         if path_contains_wildcard(path) {
@@ -4195,6 +4269,36 @@ fn path_contains_wildcard(path: &str) -> bool {
     helm_schema_core::split_value_path(path)
         .iter()
         .any(|segment| segment == "*")
+}
+
+/// The member-relative field `path` names, when it addresses one field of
+/// `collection`'s ranged members (`users.*.existingSecret` under `users`).
+/// A deeper wildcard abstains: it names members of that field, not the
+/// field itself.
+fn member_relative_field(collection: &str, path: &str) -> Option<Vec<String>> {
+    let suffix = path.strip_prefix(collection)?.strip_prefix(".*.")?;
+    (!suffix.is_empty() && !suffix.contains('*'))
+        .then(|| helm_schema_core::split_value_path(suffix))
+}
+
+/// A truthiness gate over one field of `collection`'s ranged members, which
+/// selects WHICH members reach the consumer. It can never become an outer
+/// guard — the document level has no way to name "this member" — but the
+/// member's own slot can carry it beside the requirement. `constrained` is
+/// the path the requirement itself binds, whose own truthiness scopes the
+/// requirement rather than selecting members.
+fn member_local_truthy_selector(
+    collection: &str,
+    predicate: &Predicate,
+    constrained: Option<&str>,
+) -> Option<Vec<String>> {
+    let Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) = predicate else {
+        return None;
+    };
+    if constrained == Some(path.as_str()) {
+        return None;
+    }
+    member_relative_field(collection, path)
 }
 
 fn ranged_member_parent(path: &str) -> Option<&str> {

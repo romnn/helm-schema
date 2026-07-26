@@ -2434,10 +2434,10 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     // Instances are raw documents: the null SPELLING is what the subject's
-    // even-null type assertion rejects. (A null-DELETED top-level subject
-    // stays open — the presence claim has no parent slot at the root, the
-    // documented F107 residual.) Every instance carries the navigated
-    // `rules` host, whose deletion aborts on its own.
+    // even-null type assertion rejects, and a coalesced document can never
+    // carry it for a declared key. They still spell every declared root the
+    // template digs, because a top-level subject that goes MISSING is now
+    // claimed too — the absent and null states abort the same assertion.
     for (instance, want, label) in [
         (
             composed_instance(values_yaml, serde_json::json!({})),
@@ -2445,17 +2445,19 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
             "defaults render",
         ),
         (
-            serde_json::json!({ "rules": { "create": true }, "customRules": null }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": null,
+                "trivy": {} }),
             false,
             "a null dig subject aborts the type assertion",
         ),
         (
-            serde_json::json!({ "rules": { "create": true }, "customRules": "junk" }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": "junk",
+                "trivy": {} }),
             false,
             "a scalar dig subject aborts",
         ),
         (
-            serde_json::json!({ "rules": { "create": true },
+            serde_json::json!({ "rules": { "create": true }, "trivy": {},
                 "customRules": { "alpha": { "severity": "warning" } } }),
             true,
             "a map subject renders",
@@ -2466,25 +2468,33 @@ fn dig_subjects_reject_null_while_intermediate_nils_fall_back() {
             "the create gate keeps the dig dormant",
         ),
         (
-            serde_json::json!({ "rules": { "create": true }, "trivy": { "resources": null } }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": {},
+                "trivy": { "resources": null } }),
             true,
             "a nil intermediate step falls back to the default",
         ),
         (
-            serde_json::json!({ "rules": { "create": true }, "trivy": { "resources": false } }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": {},
+                "trivy": { "resources": false } }),
             false,
             "a falsy non-nil intermediate aborts",
         ),
         (
-            serde_json::json!({ "rules": { "create": true }, "trivy": { "resources": "junk" } }),
+            serde_json::json!({ "rules": { "create": true }, "customRules": {},
+                "trivy": { "resources": "junk" } }),
             false,
             "a scalar intermediate aborts",
         ),
         (
-            serde_json::json!({ "rules": { "create": true },
+            serde_json::json!({ "rules": { "create": true }, "customRules": {},
                 "trivy": { "resources": { "requests": { "cpu": "1" } } } }),
             true,
             "map intermediates render",
+        ),
+        (
+            serde_json::json!({ "rules": { "create": true }, "customRules": {} }),
+            false,
+            "a deleted top-level subject aborts the same assertion",
         ),
     ] {
         assert!(
@@ -2687,6 +2697,192 @@ fn dig_subject_presence_binds_through_selection_gates() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "dig subject presence ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A TOP-LEVEL `dig` subject aborts on absence exactly like a nested one —
+/// kube-prometheus-stack's `customRules`, whose deletion makes `dig`
+/// type-assert nil ("interface {} is nil, not map[string]interface {}").
+/// It has no parent slot to carry a member requirement, so the claim lands
+/// as a document-level absence clause, and a dormant gate keeps the
+/// deletion open.
+#[test]
+fn root_level_dig_subjects_must_stay_present() {
+    let src = indoc! {r#"
+        {{- if .Values.rules.enabled }}
+        for: {{ dig "Alert" "for" "10m" .Values.customRules }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r"
+        customRules: {}
+        rules:
+          enabled: true
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "the chart's own defaults render",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "customRules": { "Alert": { "for": "5m" } } }),
+            ),
+            true,
+            "a populated subject renders",
+        ),
+        (
+            composed_instance(values_yaml, serde_json::json!({ "customRules": null })),
+            false,
+            "a live deleted subject aborts the type assertion",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "customRules": null, "rules": { "enabled": false } }),
+            ),
+            true,
+            "a dormant gate keeps the deletion open",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "root dig subject presence ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A ranged MEMBER's nil-strict operand: the minio chart's
+/// `tpl .accessKey $` runs once per visited `users` member, so every member
+/// must carry the key — helm aborts with "wrong type for value; expected
+/// string" on the first one that omits it. The claim's only possible host is
+/// the item slot, which states it per member instead of once for the
+/// collection.
+#[test]
+fn ranged_member_nil_strict_operands_must_be_present() {
+    let src = indoc! {r"
+        {{- range .Values.users }}
+        key: {{ tpl .accessKey $ }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {r"
+        users:
+          - accessKey: console
+            policy: readonly
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "the chart's own defaults render",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "accessKey": "a", "policy": "p" }] }),
+            ),
+            true,
+            "a member carrying the key renders",
+        ),
+        (
+            composed_instance(values_yaml, serde_json::json!({ "users": [] })),
+            true,
+            "an empty collection visits nothing",
+        ),
+        (
+            composed_instance(values_yaml, serde_json::json!({ "users": null })),
+            true,
+            "a deleted collection visits nothing",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "policy": "p" }] }),
+            ),
+            false,
+            "a member omitting the key aborts the operand",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "accessKey": "a" }, { "policy": "p" }] }),
+            ),
+            false,
+            "one bad member among good ones still aborts",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "ranged member presence ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A per-member requirement scoped by a per-member GUARD: the minio chart
+/// reads `.existingSecretKey` through `tpl` only for the `users` members
+/// that carry a truthy `.existingSecret`, so the claim belongs inside the
+/// item beside its selector — a collection-level guard cannot address "this
+/// member".
+#[test]
+fn member_local_guards_scope_member_local_requirements() {
+    let src = indoc! {r"
+        {{- range .Values.users }}
+        {{- if .existingSecret }}
+        key: {{ tpl .existingSecretKey $ }}
+        {{- end }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {r"
+        users:
+          - accessKey: console
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            composed_instance(values_yaml, serde_json::json!({})),
+            true,
+            "the chart's own defaults render",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "existingSecret": "s", "existingSecretKey": "k" }] }),
+            ),
+            true,
+            "a selected member carrying the key renders",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "existingSecret": "" }] }),
+            ),
+            true,
+            "a falsy selector keeps the member dormant",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "existingSecret": "s" }] }),
+            ),
+            false,
+            "a selected member omitting the key aborts the operand",
+        ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [{ "existingSecret": "s", "existingSecretKey": 7 }] }),
+            ),
+            false,
+            "a selected member's non-string key aborts the operand",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "member-local guard ({label}): instance={instance}; want={want}; schema={schema}"
         );
     }
 }
