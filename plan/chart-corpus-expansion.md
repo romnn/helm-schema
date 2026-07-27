@@ -10271,3 +10271,118 @@ gate passes (`cargo install` + forced `schema:generate:all` with zero schema
 drift, then `check:local` exit 0). Production source: +47 lines in
 `condition_encoding.rs`, +17 in `overlay_lowering.rs`, +19/-8 in
 `contract_signal_builder/builder.rs`.
+
+## Block-scalar round (2026-07-27, fortieth round)
+
+F76's last residual closed, and with it the ledger's last open item: a plain
+slot inside a HELPER BODY now binds its source's lexical language wherever
+the caller consumes the body's text as YAML — including the ConfigMap block
+scalar jenkins routes its JCasC document through.
+
+### The captures were never wrong, they were unhosted
+
+The unquoted-slot round (thirty-third) already knew the fact and already
+computed the captures. What it could not do was place them: a helper body
+renders at its CALLER's position, so whether the body's `- key: {{ $key }}`
+is a plain slot of some document depends on a sink the body cannot see. Both
+recording sites — `record_plain_slot_text` for an entire-hole slot and the
+completed-token pass for a partial one — therefore dropped everything under
+`helper_scope`, which is why jenkins' `agent.annotations` keys, jenkins'
+`agent.envVars.*` `tpl` operands, promtail's `extraContainers` keys,
+datadog's `envDict` keys, falco's `service.ports` keys and grafana's whole
+`_pod.tpl` family of `tpl` slots claimed nothing at all.
+
+They now travel instead of dying. `Interpreter::text_fails` holds the
+captures a source's own plain slots imply, scoped by that source's ambient
+guards exactly like `fail_conditions`, and reaches the caller on
+`FragmentSummary::text_fails` and `Effects::helper_text_fails`.
+`record_yaml_text_fails` is the one place they are recorded: outside a
+helper body it absorbs them as ordinary fail captures, and inside one it
+defers them again, so a helper spliced into a helper composes without any
+extra machinery — jenkins' `jenkins.casc.podTemplate` hands its claims to
+`jenkins.casc.defaults`, which hands them to the block scalar.
+
+### Two sinks certify, everything else keeps abstaining
+
+The ledger asked the caller to certify three things. All three are decided
+at the two call sites that record:
+
+- a MANIFEST position: `splice_helper_call_hole` fired, which IS the raw
+  condition (the plain `include`/`template` shape, alone or piped only
+  through indent shaping — `nindent` moves text, it cannot change a
+  token-ending character), at a position that is not a value slot. The
+  body's text becomes document content, so the body's slots are slots of
+  that document;
+- a BLOCK SCALAR whose entry key names a YAML document. Block text is opaque
+  to YAML by default; a data key is a file name, and its extension is the
+  chart's only static statement that whatever consumes the block parses it
+  (`key_names_yaml_document`, reading a templated key's own literal tail so
+  `{{ $key }}.yaml` qualifies and `plugins.txt` does not). The same raw
+  condition applies, via `splice_target_helper_call` on the hole.
+
+Everything else ignores the channel, so the abstentions stay structural
+rather than becoming a list of exceptions:
+
+1. **An argument's text.** `Effects::execution_only` drops the channel: an
+   eagerly-evaluated argument renders into whatever the callee does with it,
+   and that is what decides the language.
+2. **A value slot.** `foo: {{ include "chart.x" . }}` renders the body as
+   one scalar token; the body's interior is the caller's token, not
+   structure.
+3. **A reshaping stage.** `{{ include "chart.x" . | b64enc }}` is not the
+   plain call shape, so neither site fires.
+4. **A block scalar naming no document**, and a block-scalar splice with no
+   indent shaping at all (falco's `{{- include "falco.removedConfigGuard"
+   . -}}` inside `falco.yaml`), which stays on the partial-scalar lane and
+   claims nothing — the sound direction, and cheap to revisit if a chart
+   ever needs it.
+
+### Flips
+
+15 acceptance flips over the probe battery (extended for this round with
+lexical probes: `a: b`, `a #b`, a line break, a leading `&`, a
+token-breaking map KEY and item member, plus a safe control string), ALL
+tightenings:
+
+- **10 helm aborts.** promtail's `extraContainers` key and datadog's
+  `clusterAgent.envDict` key (both `- name: {{ $key }}` in a helper body
+  spliced with `indent`/`nindent` into a pod spec), and grafana's
+  `envFromSecret`, `envFromSecrets[*].name` and `envFromConfigMaps[*].name`
+  `tpl` operands in `_pod.tpl`, mirrored through
+  kube-prometheus-stack's grafana dependency.
+- **1 embedded-document break.** jenkins `agent.annotations` with a `a: b`
+  key: `helm template` succeeds, `kubeconform -strict` accepts all 14
+  documents, and the ConfigMap's `jcasc-default-config.yaml` block no longer
+  parses ("mapping values are not allowed here"). This is the arbiter the
+  thirty-ninth round designed, now implemented as a script that extracts
+  every `data`/`stringData` entry keyed `*.yaml`/`*.yml` and parses it.
+  `agent.envVars[*].value` is a twelfth adjudicated rejection the battery
+  cannot reach (it needs a live list member) and breaks the same way.
+- **4 that render a manifest Kubernetes accepts while the value silently
+  stops being the one the values document supplied**: ` #` ends the plain
+  token at a comment, so `envFromSecret: "a #b"` renders `name: a #b` and
+  parses back as `name: a`; a leading `&` renders an anchor, so
+  `"&anchor"` parses back as `name: null`. Both are grafana and its
+  kube-prometheus-stack mirror. These are the established structural
+  exclusions of the unquoted-slot round reaching a helper body's slot — not
+  a new policy — and rejecting them keeps the claim consistent between a
+  template's own slots and a helper's.
+
+Eight fixtures moved (datadog, falco, grafana, jenkins,
+kube-prometheus-stack, loki, minio, promtail); falco, loki and minio gained
+a claim occurrence with no acceptance change (the path already carried the
+same lexical claim from another site).
+
+### Validation
+
+`task test` green (936 unit tests), `task test:integration` green (497),
+`task lint` exit 0 (the same pre-existing ast-grep warning in
+`serialization.rs`) and `cargo fmt --all --check` clean, the 55 corpus
+tests green against fixtures adopted from ONE clean dump run of the final
+build — verified byte-identical to the dump the adjudication used — the
+ci-values sweep unchanged at 4 rejections over 116 files, and the luup2
+downstream gate passes (`cargo install` + forced `schema:generate:all` with
+zero schema drift, then `check:local` exit 0). Production source: +74/-3
+lines in `fragment_eval/eval.rs`, +31/-7 in `fragment_eval/holes.rs`, +15 in
+`eval_effect.rs`, +6 in `fragment_eval/summary.rs`, +1 in
+`fragment_expr_eval/bound_helper_resolver.rs`.

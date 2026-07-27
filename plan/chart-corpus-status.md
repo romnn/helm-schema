@@ -1,7 +1,12 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-27 after the ledger-residual round (thirty-ninth
-round), which closed three of the four open residuals: a deleted dependency
+Last reconciled 2026-07-27 after the block-scalar round (fortieth round),
+which closed the LAST open residual: a helper body's plain slots now bind
+their lexical language wherever the caller certifies that the body's text is
+consumed as YAML — a manifest position, or a block scalar whose entry key
+names a `.yaml`/`.yml` document (F76; 15 acceptance flips, all tightenings,
+10 helm aborts plus jenkins' embedded `JCasC` document). The preceding
+ledger-residual round closed three residuals: a deleted dependency
 values root's own terminating fact (F63), a range body's liveness as a
 guard a terminal clause can spell (F53/F66/F98), and a wildcard merge
 layer's collection non-emptiness standing in for the layer it cannot spell
@@ -1598,31 +1603,17 @@ same recursive map-null deletion as `chart_instances::with_override`.
   a grammar-quoted scalar clears it because its quotes live outside the
   templated parts); and helper bodies abstain because they render at their
   caller's position (jenkins' JCasC helper lands in a ConfigMap block
-  scalar). 80 flips, all tightenings: 77 helm-confirmed aborts, and 3 that
+  scalar) — that fourth scoping became a DEFERRAL in the fortieth round
+  below, which closes the residual. 80 flips, all tightenings: 77
+  helm-confirmed aborts, and 3 that
   render a structurally invalid manifest — kube-prometheus-stack's
   `enableFeatures` becomes `[{"a": "b"}]` where the CRD requires
   `[]string`, and two container args become `{"--flag=a": "b"}`. Pinned by
   `unquoted_slots_bound_the_lexical_language_of_their_source` (gen, all four
   spellings) and `unquoted_slots_reject_token_breaking_sources` (CLI).
-  RESIDUAL: a splice inside a BLOCK SCALAR keeps no lexical claim, so a
-  chart whose embedded config document breaks (jenkins' JCasC `annotations`
-  keys and `envVars` values) stays open — the manifest itself is valid, and
-  only the consuming application rejects it. MEASURED in the thirty-ninth
-  round: `agent.annotations` key `"broken: key"` renders a manifest
-  `kubeconform` accepts whose `jcasc-default-config.yaml` block no longer
-  parses ("mapping values are not allowed in this context" at the helper's
-  `- key: {{ $key }}` line), so extracting the block and parsing it IS an
-  objective arbiter and the claim is adjudicable. What blocks it is the
-  SCOPING, not the claim: the captures already exist inside the helper body
-  (`RangeKeyPlainSlot`, `PlainSlotText`) and `record_plain_slot_text` drops
-  them for every helper body because a helper renders at its CALLER's
-  position. Recording them needs the caller to certify three things about
-  its own sink — the splice is RAW (no `b64enc`/`quote`/`toYaml` stage
-  between the helper's text and the sink), the sink's text is consumed as
-  YAML (a manifest position, or a block scalar whose entry key names a
-  `.yaml`/`.yml` document), and the caller's own slot is plain — and only
-  the last is available at that point today. Getting it wrong widens a
-  corpus-wide claim class, so it wants its own round.
+  The block-scalar residual — jenkins' JCasC `annotations` keys and
+  `envVars` values, where the manifest stays valid and only the embedded
+  document breaks — is CLOSED in the fortieth round below.
 - **F80 — Airflow's empty worker family (twenty-seventh round; CLOSED).**
   The synthesized merge-layer arms were gated all-or-nothing: one
   unlowerable conjunct (the member-local wildcard anyOfs) emptied the
@@ -1895,6 +1886,47 @@ same recursive map-null deletion as `chart_instances::with_override`.
   manifest is one strict validation rejects). Pinned by
   `dormant_component_gates_survive_their_wildcard_merge_layer` (gen), beside
   the unchanged `rerooted_worker_set_merges_keep_layered_provider_payloads`.
+- **F76 residual — a helper body's slots belong to the document its caller
+  renders (fortieth round; CLOSED).** A helper body renders at its CALLER's
+  position, so `record_plain_slot_text` and the completed-token pass dropped
+  every plain-slot capture under `helper_scope`: jenkins' JCasC keys and
+  `tpl` values, promtail's `extraContainers` keys, datadog's `envDict` keys,
+  falco's `service.ports` keys, and grafana's whole `_pod.tpl` family of
+  `tpl` slots claimed nothing at all. The captures now travel instead of
+  dying. `Interpreter::text_fails` holds them with the body's own ambient
+  guards, `FragmentSummary::text_fails` and `Effects::helper_text_fails`
+  carry them to the caller, and `record_yaml_text_fails` is the only place
+  they are recorded — at the two sites that can certify a sink: a MANIFEST
+  position (`splice_helper_call_hole` fired, which IS the raw condition — the
+  plain `include`/`template` shape piped only through indent shaping — at a
+  position that is not a value slot) and a BLOCK SCALAR whose entry key names
+  a YAML document (`key_names_yaml_document`, reading a templated key's own
+  literal tail so `{{ $key }}.yaml` qualifies). Inside a helper body both
+  sites defer once more, so nesting composes without extra machinery
+  (jenkins' `casc.podTemplate` → `casc.defaults` → the ConfigMap block).
+  Every other position ignores the channel, which keeps the abstentions
+  structural rather than a list of exceptions: `Effects::execution_only`
+  drops an argument's text (the callee decides its language), a value slot
+  renders the body as one token, a reshaping stage is not the plain call
+  shape, and a block scalar naming no document (jenkins' `plugins.txt`) or
+  spliced with no indent shaping at all (falco's `{{- include … -}}` inside
+  `falco.yaml`, which stays on the partial-scalar lane) claims nothing. 15
+  acceptance flips, ALL tightenings: 10 helm aborts (promtail's and
+  datadog's ranged keys, grafana's and kube-prometheus-stack's `envFrom*`
+  `tpl` operands), 1 embedded-document break (jenkins' `agent.annotations`
+  key, whose manifest `kubeconform` still accepts), and 4 that render a
+  manifest Kubernetes accepts while the value silently stops being the one
+  the values document supplied — ` #` truncates the plain token at a comment
+  (`name: a`) and a leading `&` renders an anchor (`name: null`) — which is
+  the established plain-token exclusion set from the unquoted-slot round
+  reaching a helper body's slot, not a new policy. jenkins'
+  `agent.envVars.*.value` is a twelfth adjudicated rejection the probe
+  battery cannot reach (it needs a live list member); its embedded document
+  breaks the same way. Pinned by
+  `helper_slots_bind_their_language_where_the_caller_consumes_yaml` (gen,
+  all three sinks) and
+  `helper_body_slots_bind_the_document_their_caller_renders` (CLI, the
+  promtail and grafana manifests beside the jenkins block scalar).
 
 ## Rejected (invalid or won't fix by design)
 
