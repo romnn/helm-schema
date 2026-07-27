@@ -817,6 +817,11 @@ fn dependency_owned_values_yaml() -> &'static str {
           enabled: true
           parentOnly:
             create: true
+        refilled:
+          subDeclared:
+            enabled: true
+          parentOnly:
+            create: true
     "}
 }
 
@@ -851,6 +856,15 @@ fn dependency_owned_host_schema() -> Value {
           name: g
         {{- end }}
         {{- end }}
+        ---
+        {{- if .Values.refilled.subDeclared.enabled }}
+        {{- if .Values.refilled.parentOnly.create }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: r
+        {{- end }}
+        {{- end }}
     "};
     let subchart_yaml = indoc! {"
         sub:
@@ -862,11 +876,15 @@ fn dependency_owned_host_schema() -> Value {
         gated:
           subDeclared:
             enabled: true
+        refilled:
+          subDeclared:
+            enabled: true
     "};
     let mut contract = parse_ir(src);
     contract.push_pathless_dependency_fragment("sub");
     contract.push_pathless_dependency_fragment("other");
     contract.push_pathless_dependency_fragment("gated");
+    contract.push_pathless_dependency_fragment("refilled");
     schema_for_dependency_values_yaml(
         contract,
         dependency_owned_values_yaml(),
@@ -906,6 +924,23 @@ fn dependency_owned_hosts_bind_while_their_root_survives() {
             true,
             "the dormant gate keeps the deletion open",
         ),
+        (
+            serde_json::json!({ "refilled": { "parentOnly": null } }),
+            false,
+            "a subchart-gated read binds its host inside the live root",
+        ),
+        (
+            serde_json::json!({
+                "refilled": { "subDeclared": { "enabled": false }, "parentOnly": null },
+            }),
+            true,
+            "its dormant gate keeps the deletion open",
+        ),
+        (
+            serde_json::json!({ "refilled": {} }),
+            true,
+            "an empty table coalesces the parent's own defaults back in",
+        ),
     ] {
         let instance = composed_instance(dependency_owned_values_yaml(), overrides);
         assert!(
@@ -928,10 +963,11 @@ fn dependency_owned_hosts_bind_while_their_root_survives() {
 /// Deleting the ROOT hands the whole subtree back to the subchart's own
 /// defaults (`coalesceDeps` recreates the table and coalesces them in),
 /// taking the parent's keys for that root with it — so a parent-only read
-/// aborts there while a subchart-declared one renders. A clause whose other
-/// guards anchor it INSIDE the root states only the live-root half: the
-/// refilled states sit outside what a schema nested under
-/// `properties.<root>` can see, so they stay open.
+/// aborts there while a subchart-declared one renders. A gate the refill
+/// keeps alive carries its host's read along: the clause holds against the
+/// refill whatever else the document says, which is a document-level fact
+/// even where the clause's own anchor sits inside the root. A gate the
+/// parent alone declares goes with the deletion and silences the read.
 #[test]
 fn deleted_dependency_roots_refill_from_their_subchart() {
     let schema = dependency_owned_host_schema();
@@ -949,7 +985,12 @@ fn deleted_dependency_roots_refill_from_their_subchart() {
         (
             serde_json::json!({ "gated": null }),
             true,
-            "a clause the gate anchors inside the root cannot see the refill",
+            "the parent-declared gate goes with the deletion",
+        ),
+        (
+            serde_json::json!({ "refilled": null }),
+            false,
+            "a refilled gate keeps the parent-only read live",
         ),
     ] {
         let instance = composed_instance(dependency_owned_values_yaml(), overrides);

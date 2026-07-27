@@ -1226,6 +1226,26 @@ pub(crate) fn append_terminal_clauses(
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
 ) {
+    // A deleted dependency values root is not the document minus a key:
+    // helm recreates the table from the SUBCHART's own values, so a clause
+    // whose guards all hold against that refill terminates every document
+    // missing the root — the half a clause anchored inside the root cannot
+    // reach. One clause per root states it.
+    let mut deleted_roots = BTreeSet::new();
+    for guards in clauses {
+        if let Some(root) =
+            crate::condition_encoding::deleted_dependency_root_terminates(guards, absence)
+        {
+            deleted_roots.insert(root);
+        }
+    }
+    for root in deleted_roots {
+        let Some(condition) = crate::condition_encoding::dependency_root_gone_condition(root)
+        else {
+            continue;
+        };
+        root_schema.append_conditional(&[], condition, SchemaNode::foreign(Value::Bool(false)));
+    }
     for guards in clauses {
         // A clause every guard of which can hold VACUOUSLY (with the
         // guarded path or an ancestor absent) must anchor at the root: an

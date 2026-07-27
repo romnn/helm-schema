@@ -247,10 +247,7 @@ fn build_single_condition_fragment(
             // through the refill too, so the deleted root reads nil as
             // well (kube-prometheus-stack's `grafana.operator.*`, which
             // the grafana chart knows nothing about).
-            let root_gone = SchemaNode::not(build_required_condition_fragment(
-                &root_relative,
-                SchemaNode::type_named("object"),
-            )?);
+            let root_gone = dependency_root_gone_condition(&root_relative)?;
             Some(SchemaNode::any_of(vec![under_live_root, root_gone]))
         }
         ConditionalGuard::TypeIs { path, schema_type } => {
@@ -426,6 +423,52 @@ pub(crate) fn guard_encodes_fully(
                 .is_some()
         }
     }
+}
+
+/// The document says a dependency values root is gone: absent, null, or a
+/// non-table `coalesceDeps` refuses outright. Helm recreates the root in
+/// each of those states and coalesces the subchart's own values into it.
+pub(crate) fn dependency_root_gone_condition(root_segments: &[String]) -> Option<SchemaNode> {
+    build_required_condition_fragment(root_segments, SchemaNode::type_named("object"))
+        .map(SchemaNode::not)
+}
+
+/// The dependency values root whose DELETION this terminal clause proves
+/// fatal. Everything under a deleted root reads the refill — the subchart's
+/// own values, with the parent's defaults for that root gone — so a clause
+/// whose guards ALL hold there terminates the render whatever the rest of
+/// the document says. That is a document-level fact, and a clause anchored
+/// under `properties.<root>` (its guards share an ancestor inside the root)
+/// can never state it: no document missing the root enters that subschema.
+///
+/// A guard reaching outside the root abstains, since its truth is the
+/// document's rather than the refill's. So does a re-rooted `global`
+/// spelling — helm injects the PARENT's globals into the recreated table —
+/// and a wildcard path, which names no single value to read.
+pub(crate) fn deleted_dependency_root_terminates<'a>(
+    guards: &[ConditionalGuard],
+    absence: AbsenceDefaults<'a>,
+) -> Option<&'a [String]> {
+    let paths = guards
+        .iter()
+        .flat_map(ConditionalGuard::value_paths)
+        .map(|path| split_value_path(&path))
+        .collect::<Vec<_>>();
+    if paths.is_empty()
+        || paths.iter().any(|path| {
+            path.iter()
+                .any(|segment| segment == "*" || segment == "global")
+        })
+    {
+        return None;
+    }
+    let root = absence
+        .dependency_roots
+        .iter()
+        .filter(|root| paths.iter().all(|path| path.starts_with(root)))
+        .max_by_key(|root| root.len())?;
+    (evaluate_guard_set_on_values(guards, absence.dependency_refill) == Some(true))
+        .then_some(root.as_slice())
 }
 
 /// The deepest dependency values root STRICTLY enclosing `segments`, whose
