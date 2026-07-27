@@ -10131,3 +10131,143 @@ build, and the luup2 downstream gate passes (`cargo install` + forced
 Production source: +78 lines in `local_schema_universe/universe.rs`, +80/-49
 in `expr_call_eval/traversal.rs` (the subject claims factored out of
 `eval_dig`).
+
+## Ledger-residual round (2026-07-27, thirty-ninth round)
+
+Three of the four open residuals close: F63's deleted-dependency-root half,
+F53/F66/F98's range-guarded operand, and F80's dormant merge-arm gates. Each
+turned out to be one missing spelling rather than a missing analysis — a
+fact the pipeline already had, with no lowering that could state it.
+
+### F63 — a deleted root's own fact is a document-level fact
+
+`coalesceDeps` recreates a deleted values root from the SUBCHART's values,
+so everything under it then reads the refill and nothing else in the
+document can change that. When a terminal clause's guards all hold against
+the refill, deleting the root terminates the render outright — and the
+thirty-seventh round's encoding could only say so where the clause happened
+to anchor above the root. A clause whose guards share an ancestor INSIDE the
+root emits under `properties.<root>`, a subschema no document missing the
+root ever enters.
+
+Measured on a parent/subchart pair against helm v4.2.3: with the gate
+subchart-declared (`refilled.subDeclared.enabled`) and the host parent-only
+(`refilled.parentOnly.create`), deleting the root aborts — the refill keeps
+the gate live while the parent's key goes with the deletion. With the gate
+PARENT-declared instead, the same deletion drops the gate too and helm
+renders. An `x: {}` override is not that state: coalescing merges the
+parent's defaults back in, and it renders.
+
+`deleted_dependency_root_terminates` states it as one clause per root:
+every guard path lies under the root (a guard reaching outside abstains,
+since its truth is the document's rather than the refill's, and so do
+re-rooted `global` spellings and wildcard paths), and every guard evaluates
+true on the refill document. The clause is then unconditional — the root
+must be present as an object — which is exactly the `root_gone` fragment the
+`Absent` encoding already builds, hoisted to the document root.
+
+Two corpus roots qualify, both confirmed by `helm template`: kyverno's
+`crds` (`nil pointer evaluating interface {}.enabled` on
+`crds.migration.enabled`) and kube-prometheus-stack's `grafana` (`nil
+pointer evaluating interface {}.dashboardsConfigMapRefEnabled` on the
+parent-only `grafana.operator`). A non-table root errors in
+`coalesceDeps` itself ("type mismatch on crds"), and `grafana: {}` renders —
+the clause accepts it, since `required` + `type: object` is what it says.
+Neither state was reachable by the probe battery: both documents were
+already rejected by an unrelated claim, so the round adds the clause without
+an acceptance flip. Pinned by the extended
+`deleted_dependency_roots_refill_from_their_subchart` and
+`dependency_owned_hosts_bind_while_their_root_survives`.
+
+### F53/F66/F98 — a range body's liveness has a spelling
+
+A nil-strict consumer inside a `range` body recorded its
+`AbsenceAborts` capture with the ambient `Range` predicate in the
+conjunction, and `guard_to_conditional_guard` has no encoding for `Range`,
+so the whole clause abstained. Truthiness IS that encoding for a
+TERMINATING clause: the body runs for a non-empty collection, and every
+remaining truthy value is one `range` refuses to iterate, so both readings
+of a truthy subject terminate. Measured on a mini chart against helm
+v4.2.3: `ranged: null` with non-empty `items` aborts ("wrong type for
+value; expected string"), `items: []` and `items: null` render, and
+`items: abc` / `items: 3` abort at the range itself ("range can't iterate
+over abc").
+
+Four corpus clauses appear, each helm-confirmed:
+
+- airflow `ingress.web.path` and `ingress.flower.path` — NOTES.txt ranges
+  `hosts | default (list host)` and calls `hasSuffix "/" $path` inside;
+  deleting the path aborts ("invalid value; expected string") while the
+  same document renders with it;
+- prometheus `server.ingress.path` — `tpl ($ingressPath) $` inside
+  `range .Values.server.ingress.hosts`;
+- loki `enterprise.provisioner.apiUrl` — `tpl` inside
+  `range .Values.enterprise.provisioner.additionalTenants` ("wrong type for
+  value; expected string"; the loki state needs `useTestSchema` and an
+  admin-token secret to isolate from the chart's own `fail`s).
+
+The probe battery reaches none of them — each needs three or four paths set
+at once — so they were adjudicated as composed documents, with the
+baseline of each state rendering.
+
+### F80 — a wildcard merge layer can still say something
+
+`collapse_layered_truthy_gates` rewrote the per-layer spellings of one
+merged read into their disjunction, but DROPPED the group whole when any
+layer was a per-set wildcard, since `workers.celery.sets.*.x` has no
+document-root spelling. Dropping the group leaves the arm with no component
+gate at all, which is why airflow rejected junk under `keda`, both kerberos
+containers, `persistence`, `podDisruptionBudget`, and `waitForMigrations`
+while those components were DISABLED.
+
+The wildcard layer does have a spelling: a per-set member can only supply
+the merged value while the set collection HAS members, so the layer
+contributes `Truthy(workers.celery.sets)`. That is implied by every state
+the real layer holds in, which is what an arm gate needs, and it is false in
+exactly the default state (`sets: []`) where the corpus false-rejected.
+
+85 acceptance flips, all loosenings, all in airflow, and all confirmed
+RENDERS-VALID: `helm template` renders each and `kubeconform -strict`
+validates the manifests against both the Kubernetes bundle and the CRD
+catalog. The live direction is unchanged — `workers.securityContexts.pod.runAsUser`
+junk still rejects, and the manifest it renders is one strict validation
+rejects. Pinned by the new
+`dormant_component_gates_survive_their_wildcard_merge_layer` (base-layer,
+celery-layer, and per-set-layer gates each keep the payload live; all-off
+keeps it open) beside the unchanged round-27
+`rerooted_worker_set_merges_keep_layered_provider_payloads`.
+
+### F76 stays open, with an arbiter
+
+The block-scalar residual is now MEASURED rather than asserted: jenkins'
+`agent.annotations` key `"broken: key"` renders a valid manifest whose
+embedded JCasC document fails to parse ("mapping values are not allowed in
+this context" at the `- key:` line), because the JCasC helper's `- key:
+{{ $key }}` is a plain slot of the document nested in the ConfigMap's
+`jcasc-default-config.yaml` block scalar. Extracting that block and parsing
+it is an objective arbiter, so the claim is adjudicable after all.
+
+What it needs is not the claim but its SCOPING. The captures already exist
+inside the helper body (`RangeKeyPlainSlot` for the ranged key,
+`PlainSlotText` for the `tpl` operand); `record_plain_slot_text` drops them
+for every helper body, because a helper renders at its CALLER's position.
+Recording them means the caller certifying three things about its own sink,
+and only the first is available today: the splice is RAW (no `b64enc` /
+`quote` / `toYaml` stage between the helper's text and the sink), the sink's
+text is consumed as YAML (a manifest position, or a block scalar whose entry
+key names a `.yaml`/`.yml` document), and the caller's own slot is a plain
+one. Getting that wrong widens a corpus-wide claim class, so it wants its
+own round with its own adjudication rather than a rider on this one.
+
+### Validation
+
+`task test` green (935 unit tests), `task test:integration` green (496),
+`task lint` exit 0 (the same pre-existing ast-grep warning in
+`serialization.rs`) and `cargo fmt --all --check` clean, the 55 corpus tests
+green against fixtures adopted from ONE clean dump run of the final build
+(airflow, kube-prometheus-stack, kyverno, loki, prometheus), the ci-values
+sweep unchanged at 4 rejections over 116 files, and the luup2 downstream
+gate passes (`cargo install` + forced `schema:generate:all` with zero schema
+drift, then `check:local` exit 0). Production source: +47 lines in
+`condition_encoding.rs`, +17 in `overlay_lowering.rs`, +19/-8 in
+`contract_signal_builder/builder.rs`.

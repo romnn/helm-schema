@@ -1,9 +1,15 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-26 after the structural-CRD round (thirty-eighth
-round), which closed the chart-shipped CRD lane's open contract and the
-`dig` chain-subject false rejection, and re-adjudicated the scalar-sink
-preimage residual as policy. All 55 committed corpus
+Last reconciled 2026-07-27 after the ledger-residual round (thirty-ninth
+round), which closed three of the four open residuals: a deleted dependency
+values root's own terminating fact (F63), a range body's liveness as a
+guard a terminal clause can spell (F53/F66/F98), and a wildcard merge
+layer's collection non-emptiness standing in for the layer it cannot spell
+(F80 — 85 dormant-state false rejections repaired, every one confirmed to
+render and validate). The preceding structural-CRD round closed the
+chart-shipped CRD lane's open contract and the `dig` chain-subject false
+rejection, and re-adjudicated the scalar-sink preimage residual as policy.
+All 55 committed corpus
 fixtures, 129 focused chart checks, Draft-07
 metaschema checks, pattern compilation, and local `$ref` checks pass. Those
 results establish fixture consistency, not semantic completeness: fresh
@@ -1398,9 +1404,12 @@ same recursive map-null deletion as `chart_instances::with_override`.
   All twelve ledger examples now reject, and 117 corpus acceptance flips
   were adjudicated against `helm template` with ZERO mismatches — all
   tightenings, no loosenings. The MinIO ranged-member residual is CLOSED in
-  the thirty-sixth round below. RESIDUAL: a consumer inside a helper body
-  whose branch guard is absent from the summary lane's predicates records no
-  claim (the same guard-loss the path-level contract flags have).
+  the thirty-sixth round below, and the range-guarded operand in the
+  thirty-ninth. RESIDUAL: a consumer whose enclosing branch guard is an
+  APPROXIMATE predicate (an `eq` over a helper's rendered text) still
+  records no claim — the clause abstains on any conjunct it cannot decode,
+  which is the sound direction and the same wall the path-level contract
+  flags have.
 - **F56/F62/F8 — provider shapes lost through serialized/helper splices
   (thirty-fourth round; CLOSED except the action-line residual).** Twenty of
   the twenty-one named paths now reject a truthy malformed object — every
@@ -1598,7 +1607,22 @@ same recursive map-null deletion as `chart_instances::with_override`.
   RESIDUAL: a splice inside a BLOCK SCALAR keeps no lexical claim, so a
   chart whose embedded config document breaks (jenkins' JCasC `annotations`
   keys and `envVars` values) stays open — the manifest itself is valid, and
-  only the consuming application rejects it.
+  only the consuming application rejects it. MEASURED in the thirty-ninth
+  round: `agent.annotations` key `"broken: key"` renders a manifest
+  `kubeconform` accepts whose `jcasc-default-config.yaml` block no longer
+  parses ("mapping values are not allowed in this context" at the helper's
+  `- key: {{ $key }}` line), so extracting the block and parsing it IS an
+  objective arbiter and the claim is adjudicable. What blocks it is the
+  SCOPING, not the claim: the captures already exist inside the helper body
+  (`RangeKeyPlainSlot`, `PlainSlotText`) and `record_plain_slot_text` drops
+  them for every helper body because a helper renders at its CALLER's
+  position. Recording them needs the caller to certify three things about
+  its own sink — the splice is RAW (no `b64enc`/`quote`/`toYaml` stage
+  between the helper's text and the sink), the sink's text is consumed as
+  YAML (a manifest position, or a block scalar whose entry key names a
+  `.yaml`/`.yml` document), and the caller's own slot is plain — and only
+  the last is available at that point today. Getting it wrong widens a
+  corpus-wide claim class, so it wants its own round.
 - **F80 — Airflow's empty worker family (twenty-seventh round; CLOSED).**
   The synthesized merge-layer arms were gated all-or-nothing: one
   unlowerable conjunct (the member-local wildcard anyOfs) emptied the
@@ -1622,12 +1646,11 @@ same recursive map-null deletion as `chart_instances::with_override`.
   the extended `rerooted_worker_set_merges_keep_layered_provider_payloads`
   (the faithful enableDefault-concat shape, both liveness polarities)
   and the regenerated airflow fixture (zero probe-battery flips; the
-  target states verified as composed documents). Residual: gates still
-  fire in dormant states whose conjuncts are genuinely unlowerable
-  (keda/kerberos component junk keeps its pre-existing false rejection
-  when those components are disabled — unchanged direction), and a
-  dropped wildcard-layer group leaves `waitForMigrations.env` junk
-  rejected under `enabled: false` (pre-existing class, unchanged).
+  target states verified as composed documents). The dormant-gate
+  residual — keda/kerberos/persistence/podDisruptionBudget component junk
+  and `waitForMigrations.env` rejected while those components are disabled,
+  because a dropped wildcard-layer group left the arms with no component
+  gate at all — is CLOSED in the thirty-ninth round below.
 - **F99 — Grafana traversal intermediate hosts (twenty-ninth round;
   CLOSED).** The walk's `hasKey` subject captures were poisoned by the
   enclosing short circuit: `eval_short_circuit_args` decodes a
@@ -1778,17 +1801,7 @@ same recursive map-null deletion as `chart_instances::with_override`.
   subcharts). Pinned by
   `dependency_owned_hosts_bind_while_their_root_survives` (gen) and
   `dependency_owned_deletions_bind_under_a_surviving_root` (CLI).
-  RESIDUAL: a clause whose other guards anchor it INSIDE the root states
-  only the live-root half — the refilled states sit outside what a schema
-  nested under `properties.<root>` can reach, so a deleted root whose
-  parent-only reads abort stays open there. Design note (thirty-eighth
-  round, not implemented): the anchor is chosen by
-  `shared_guard_ancestor_segments` in `append_terminal_clauses`, which
-  already has a root-anchoring escape for clauses whose guards ALL hold
-  vacuously; a dependency-owned `Absent` clause needs the same escape, and
-  the remaining work is checking that every SIBLING guard still encodes
-  faithfully when evaluated against the refill document (`AbsenceDefaults`
-  carries it), abstaining when one does not.
+  The anchoring residual is CLOSED in the thirty-ninth round below.
 - **F56/F40 residual (b) — a chart-shipped CRD states its whole contract
   (thirty-eighth round; CLOSED).** `apiextensions.k8s.io/v1` only accepts
   structural schemas, so the API server prunes — and under the default
@@ -1828,6 +1841,60 @@ same recursive map-null deletion as `chart_instances::with_override`.
   to the guarded-only lane. A chain with several candidates (`coalesce a
   b`) abstains: only the first truthy one is dug. Pinned by the extended
   `dig_subject_presence_binds_through_selection_gates`.
+- **F63 residual — a deleted dependency root's fact is document-level
+  (thirty-ninth round; CLOSED).** Everything under a deleted root reads the
+  refill, whatever the rest of the document says, so a terminal clause whose
+  guards ALL hold against the refill terminates every document missing the
+  root. The thirty-seventh round could only say so where the clause anchored
+  above the root; a clause whose guards share an ancestor INSIDE the root
+  emits under `properties.<root>`, which no document missing the root
+  enters. `deleted_dependency_root_terminates` states it as one
+  document-level clause per root — the `root_gone` fragment the `Absent`
+  encoding already builds — under three conditions: every guard path lies
+  under the root (a guard reaching outside abstains, since its truth is the
+  document's rather than the refill's), no re-rooted `global` or wildcard
+  spelling, and every guard evaluates true on the refill document. Two
+  corpus roots qualify, both helm-confirmed: kyverno's `crds`
+  (`crds.migration.enabled` reads through nil) and kube-prometheus-stack's
+  `grafana` (the parent-only `grafana.operator`). `grafana: {}` still
+  renders and is still accepted — coalescing merges the parent's defaults
+  back in — and a non-table root errors inside `coalesceDeps` itself. No
+  acceptance flip: both states were already rejected by an unrelated claim.
+  Pinned by the extended
+  `deleted_dependency_roots_refill_from_their_subchart` and
+  `dependency_owned_hosts_bind_while_their_root_survives` (gen).
+- **F53/F66/F98 residual — a range body's liveness has a spelling
+  (thirty-ninth round; CLOSED for the range lane).** A nil-strict consumer
+  inside a `range` body recorded its `AbsenceAborts` capture with the
+  ambient `Range` predicate, which had no `ConditionalGuard` encoding, so
+  the clause abstained whole. Truthiness is that encoding for a TERMINATING
+  clause: the body runs for a non-empty collection, and every other truthy
+  value is one `range` refuses to iterate, so both readings of a truthy
+  subject terminate (helm-measured: `items: []`/`null` render, `items:
+  abc`/`3` abort at the range). Four corpus clauses appear, each confirmed
+  as a composed document — airflow's `ingress.web.path` and
+  `ingress.flower.path` through NOTES.txt's `hasSuffix "/" $path`,
+  prometheus' `server.ingress.path`, and loki's
+  `enterprise.provisioner.apiUrl` — with each state's baseline rendering.
+  The probe battery reaches none of them (each needs three or four paths set
+  at once).
+- **F80 residual — a wildcard merge layer can still say something
+  (thirty-ninth round; CLOSED).** `collapse_layered_truthy_gates` dropped a
+  layered-truthy group whole when any layer was a per-set wildcard, leaving
+  the arm with NO component gate — which is why airflow rejected junk under
+  `keda`, both kerberos containers, `persistence`, `podDisruptionBudget`,
+  and `waitForMigrations` while those components were disabled. A per-set
+  member can only supply the merged value while the set collection HAS
+  members, so the layer now contributes `Truthy(workers.celery.sets)`: it is
+  implied by every state the real layer holds in (what an arm gate needs)
+  and false in exactly the `sets: []` default the corpus false-rejected. 85
+  acceptance flips, all loosenings, every one RENDERS-VALID under `helm
+  template` plus `kubeconform -strict` against the Kubernetes bundle and the
+  CRD catalog. The live direction is unchanged
+  (`workers.securityContexts.pod.runAsUser` junk still rejects, and its
+  manifest is one strict validation rejects). Pinned by
+  `dormant_component_gates_survive_their_wildcard_merge_layer` (gen), beside
+  the unchanged `rerooted_worker_set_merges_keep_layered_provider_payloads`.
 
 ## Rejected (invalid or won't fix by design)
 
