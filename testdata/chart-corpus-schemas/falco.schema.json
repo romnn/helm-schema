@@ -2175,7 +2175,7 @@
       },
       "type": "array"
     },
-    "schema1024": {
+    "schema1025": {
       "description": "targetLabels defines the labels which are transferred from the\nassociated Kubernetes `Service` object onto the ingested metrics.",
       "items": {
         "type": "string"
@@ -39596,7 +39596,7 @@
                       "targetLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema1024"
+                            "$ref": "#/$defs/schema1025"
                           },
                           {
                             "not": {
@@ -66234,7 +66234,7 @@
                       "targetLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema1024"
+                            "$ref": "#/$defs/schema1025"
                           },
                           {
                             "not": {
@@ -67098,40 +67098,74 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "k8s-metacollector": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "service": {
+              "k8s-metacollector": {
                 "additionalProperties": {},
-                "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
                 "properties": {
-                  "ports": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "$ref": "#/$defs/schema1520"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "$ref": "#/$defs/schema1520"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
+                    "properties": {
+                      "ports": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "$ref": "#/$defs/schema1520"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/$defs/schema1520"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ports denotes all the ports on which the Service will listen."
                       }
-                    ],
-                    "description": "ports denotes all the ports on which the Service will listen."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "k8s-metacollector": {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
+                    "properties": {
+                      "ports": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema764"
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ports denotes all the ports on which the Service will listen."
+                      }
+                    }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -126429,7 +126463,7 @@
                   "targetLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema1024"
+                        "$ref": "#/$defs/schema1025"
                       },
                       {
                         "not": {

@@ -8103,6 +8103,51 @@
                 "description": "TLS Settings for MinIO",
                 "properties": {
                   "certSecret": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/schema300"
+                          },
+                          {
+                            "$ref": "#/$defs/schema302"
+                          },
+                          {
+                            "$ref": "#/$defs/schema305"
+                          },
+                          {
+                            "$ref": "#/$defs/schema308"
+                          },
+                          {
+                            "$ref": "#/$defs/schema306"
+                          }
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "pattern": "\\{\\{",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Create a secret with private.key and public.crt files and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS Settings for MinIO",
+                "properties": {
+                  "certSecret": {
                     "description": "Create a secret with private.key and public.crt files and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret",
                     "type": "string"
                   }

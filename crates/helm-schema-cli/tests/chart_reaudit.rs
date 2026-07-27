@@ -3822,6 +3822,62 @@ fn unquoted_slots_reject_token_breaking_sources() -> eyre::Result<()> {
     )
 }
 
+/// A helper body renders at its CALLER's position, so its own plain slots
+/// bind a lexical language exactly where the caller consumes the body's text
+/// as YAML. Two sinks certify that. A MANIFEST position is one by
+/// construction: promtail's `_pod.tpl` splices each `extraContainers` key
+/// into a container `name:` slot and grafana's splices `envFromSecret`
+/// through `tpl`, and helm aborts on both. A block scalar whose entry key
+/// names a YAML document is the other: jenkins' `jcasc-default-config.yaml`
+/// keeps rendering a `kubeconform`-valid config map whose embedded `JCasC`
+/// document no longer parses once an `agent.annotations` key breaks its
+/// plain token — the fact the manifest itself can never state.
+#[test]
+fn helper_body_slots_bind_the_document_their_caller_renders() -> eyre::Result<()> {
+    assert_chart_cases(
+        "promtail",
+        vec![
+            SemanticCase::rejected(
+                "a ranged container key holding `: ` breaks the name slot",
+                "/extraContainers",
+                json!({ "extraContainers": { "a: b": { "image": "nginx" } } }),
+            ),
+            SemanticCase::accepted(
+                "a plain container key renders",
+                json!({ "extraContainers": { "proxy": { "image": "nginx" } } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "grafana",
+        vec![
+            SemanticCase::rejected(
+                "a templated envFrom secret holding `: ` breaks the envFrom slot",
+                "/envFromSecret",
+                json!({ "envFromSecret": "a: b" }),
+            ),
+            SemanticCase::accepted(
+                "a plain envFrom secret renders",
+                json!({ "envFromSecret": "grafana-env" }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "jenkins",
+        vec![
+            SemanticCase::rejected(
+                "a JCasC annotation key holding `: ` breaks the embedded document",
+                "/agent/annotations",
+                json!({ "agent": { "annotations": { "a: b": "x" } } }),
+            ),
+            SemanticCase::accepted(
+                "a plain annotation key renders",
+                json!({ "agent": { "annotations": { "example.com/scrape": "x" } } }),
+            ),
+        ],
+    )
+}
+
 /// Provider shapes must survive the serialized and helper splices that carry
 /// them: a truthy malformed object used to pass the schema, render, and fail
 /// strict Kubernetes validation. Three losses closed here — a branch-selected

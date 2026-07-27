@@ -132,6 +132,10 @@ pub(crate) struct Effects {
     /// `fail` captures of called helpers, carrying helper-internal
     /// predicates only; the absorbing site prepends its ambient state.
     pub(crate) helper_fails: Vec<FailCapture>,
+    /// Captures of called helpers that hold only where the called body's
+    /// rendered TEXT is consumed as YAML. Ordinary absorption ignores them:
+    /// only a site that certified its own sink records them.
+    pub(crate) helper_text_fails: Vec<FailCapture>,
     /// Object-producing mutations that have executed before later member
     /// reads. Their outer predicates remain attached so only accesses that
     /// imply the mutation's execution may accept the converted input kind.
@@ -382,6 +386,7 @@ impl Effects {
             helper_dependency_rendered,
             helper_suppressed_paths,
             helper_fails,
+            helper_text_fails,
             member_host_conversions,
         } = other;
         self.output_paths.extend(output_paths);
@@ -454,6 +459,11 @@ impl Effects {
         for condition in helper_fails {
             if !self.helper_fails.contains(&condition) {
                 self.helper_fails.push(condition);
+            }
+        }
+        for condition in helper_text_fails {
+            if !self.helper_text_fails.contains(&condition) {
+                self.helper_text_fails.push(condition);
             }
         }
         self.member_host_conversions.extend(member_host_conversions);
@@ -537,6 +547,10 @@ impl Effects {
             mut helper_dependency_rendered,
             helper_suppressed_paths,
             helper_fails,
+            // Describes the text the argument RENDERS, which never reaches a
+            // sink of its own: whatever the callee does with it decides the
+            // language, and only a certifying sink may record the claim.
+            helper_text_fails: _,
             member_host_conversions,
         } = self;
         for row in helper_rendered {
@@ -585,6 +599,7 @@ impl Effects {
             helper_dependency_rendered,
             helper_suppressed_paths,
             helper_fails,
+            helper_text_fails: Vec::new(),
             member_host_conversions,
         }
     }

@@ -99,6 +99,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             helper_rendered: summary.rendered.clone(),
             helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
             helper_fails: summary.fail_conditions.clone(),
+            helper_text_fails: summary.text_fails.clone(),
             member_host_conversions: summary.member_host_conversions.clone(),
             ..Effects::default()
         };

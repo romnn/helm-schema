@@ -70,6 +70,11 @@ pub(crate) struct FragmentSummary {
     pub(crate) range_modes: crate::range_modes::RangeModes,
     /// `fail` captures of the body, helper-internal state only.
     pub(crate) fail_conditions: Vec<crate::eval_effect::FailCapture>,
+    /// Captures that hold only where the body's rendered TEXT is consumed as
+    /// YAML: the plain-slot lexical language of the body's own slots. The
+    /// body renders at its caller's position, so the caller certifies the
+    /// sink (see [`Interpreter::record_yaml_text_fails`]).
+    pub(crate) text_fails: Vec<crate::eval_effect::FailCapture>,
     /// Object-producing value mutations observed in source order.
     pub(crate) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Chart-level `set … default` normalizations the body applies.
@@ -165,6 +170,7 @@ pub(crate) fn eval_bound_helper_fragment(
         string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
         fail_conditions: interpreter.fail_conditions,
+        text_fails: interpreter.text_fails,
         member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,
         root_set_mutations: interpreter.root_set_mutations_observed,

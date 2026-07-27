@@ -958,3 +958,109 @@ fn unquoted_slots_bound_the_lexical_language_of_their_source() {
         }
     }
 }
+
+/// A helper body renders at its CALLER's position, so its own plain slots
+/// bind a lexical language only where the caller consumes the body's text as
+/// YAML. Jenkins routes its `JCasC` defaults through two nested helpers into
+/// a config map block scalar keyed `jcasc-default-config.yaml`: the manifest
+/// stays valid, but the embedded document no longer parses. A block scalar
+/// whose key names no YAML document is opaque text, and a reshaping stage
+/// between the body and the sink renders its own characters, so both abstain.
+#[test]
+fn helper_slots_bind_their_language_where_the_caller_consumes_yaml() {
+    let helpers = indoc! {r#"
+        {{- define "chart.casc.podTemplate" -}}
+        - name: "default"
+        {{- if .Values.agent.annotations }}
+          annotations:
+          {{- range $key, $value := .Values.agent.annotations }}
+          - key: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end }}
+        {{- end }}
+          envVars:
+          {{- range $var := .Values.agent.envVars }}
+          - envVar:
+              key: {{ $var.name | quote }}
+              value: {{ tpl $var.value $ }}
+          {{- end }}
+        {{- end -}}
+        {{- define "chart.casc.defaults" -}}
+        jenkins:
+          clouds:
+          - kubernetes:
+              templates:
+              {{- include "chart.casc.podTemplate" . | nindent 8 }}
+        {{- end -}}
+    "#};
+    let yaml_document_sink = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: casc
+        data:
+          jcasc-default-config.yaml: |-
+            {{- include "chart.casc.defaults" . | nindent 4 }}
+    "#};
+    let opaque_document_sink = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: casc
+        data:
+          jcasc-default-config.txt: |-
+            {{- include "chart.casc.defaults" . | nindent 4 }}
+    "#};
+    let encoded_sink = indoc! {r#"
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: casc
+        data:
+          jcasc-default-config.yaml: {{ include "chart.casc.defaults" . | b64enc | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        agent:
+          annotations: {}
+          envVars: []
+    "};
+
+    let broken_key = serde_json::json!({ "agent": { "annotations": { "broken: key": "x" } } });
+    let broken_value = serde_json::json!({
+        "agent": { "envVars": [{ "name": "URL", "value": "http: //x" }] },
+    });
+    let safe = serde_json::json!({
+        "agent": {
+            "annotations": { "kubernetes.io/scrape": "true" },
+            "envVars": [{ "name": "URL", "value": "http://x" }],
+        },
+    });
+
+    for (label, src, cases) in [
+        (
+            "a block scalar naming a YAML document",
+            yaml_document_sink,
+            vec![(&broken_key, false), (&broken_value, false), (&safe, true)],
+        ),
+        (
+            "a block scalar naming no YAML document",
+            opaque_document_sink,
+            vec![(&broken_key, true), (&broken_value, true), (&safe, true)],
+        ),
+        (
+            "a reshaping stage between the body and the sink",
+            encoded_sink,
+            vec![(&broken_key, true), (&broken_value, true), (&safe, true)],
+        ),
+    ] {
+        let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+        for (overrides, want) in cases {
+            let instance = composed_instance(values_yaml, overrides.clone());
+            sim_assert_eq!(
+                have: schema_accepts_instance(&schema, &instance),
+                want: want,
+                "{label}: instance={instance}; schema={schema}"
+            );
+        }
+    }
+}

@@ -304,6 +304,34 @@ fn content_child_mark(children: &[Node], container_indent: usize) -> Option<usiz
         .min()
 }
 
+/// Whether a block-scalar entry key names a YAML document
+/// (`jcasc-default-config.yaml`, `{{ $key }}.yml`). A config map's data keys
+/// are file names, and the extension is the chart's only static statement
+/// that whatever consumes the block parses it as YAML rather than keeping it
+/// as opaque bytes (jenkins' `plugins.txt` beside its `JCasC` document).
+fn key_names_yaml_document(key: &EntryKey) -> bool {
+    let names_document = |text: &str| {
+        // Not `Path::extension`: a templated key contributes only its literal
+        // tail (`.yaml`), which that reads as a dotfile with no extension.
+        text.trim_end()
+            .rsplit_once('.')
+            .is_some_and(|(_, extension)| {
+                extension.eq_ignore_ascii_case("yaml") || extension.eq_ignore_ascii_case("yml")
+            })
+    };
+    match key {
+        EntryKey::Literal(literal) => names_document(literal),
+        // A templated key names one only when its own literal tail does: the
+        // rendered prefix cannot take the extension away.
+        EntryKey::Dynamic(string) => match string.parts.last() {
+            Some(StringPart::Text(alternatives)) => {
+                !alternatives.is_empty() && alternatives.iter().all(|text| names_document(text))
+            }
+            _ => false,
+        },
+    }
+}
+
 fn collect_inline_regions(nodes: &[Node], out: &mut Vec<Span>) {
     for node in nodes {
         match node {
@@ -648,6 +676,11 @@ pub(super) struct Interpreter<'a> {
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(super) fail_conditions: Vec<FailCapture>,
+    /// Captures that hold only where this source's rendered TEXT is consumed
+    /// as YAML. A helper body renders at its caller's position, so its plain
+    /// slots corrupt a document only when the caller splices the body raw
+    /// into one; the caller certifies that and absorbs (or defers again).
+    pub(super) text_fails: Vec<FailCapture>,
     /// Paths whose text the CURRENT scalar run renders through `tpl`. Reset
     /// per run: the completed-token pass reads it to tell an identity-carrying
     /// taint from a genuinely transformed one.
@@ -656,6 +689,11 @@ pub(super) struct Interpreter<'a> {
     /// slot. Document-level content is not a slot: it renders whole manifests,
     /// where a `: ` is structure rather than a broken plain token.
     pub(super) in_value_slot: bool,
+    /// Whether the block scalar being walked holds a YAML document — its
+    /// entry key names one (`jcasc-default-config.yaml`). Block text is
+    /// otherwise opaque to YAML: only a named document makes a splice's own
+    /// characters structure again.
+    pub(super) block_text_is_yaml: bool,
     /// Object-producing mutations observed before subsequent member reads.
     pub(super) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Directly ranged paths active on the walk. Helper-scope ranges mark
@@ -747,8 +785,10 @@ impl<'a> Interpreter<'a> {
             string_contract_paths: BTreeSet::new(),
             range_modes: crate::range_modes::RangeModes::default(),
             fail_conditions: Vec::new(),
+            text_fails: Vec::new(),
             run_templated_text_paths: BTreeSet::new(),
             in_value_slot: false,
+            block_text_is_yaml: false,
             member_host_conversions: BTreeSet::new(),
             active_direct_ranged_paths: Vec::new(),
             alternative_capture_approximates: Vec::new(),
@@ -1332,6 +1372,31 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn absorb_helper_fails(&mut self, fails: &[FailCapture]) {
+        for capture in self.scope_helper_fails(fails) {
+            if !self.fail_conditions.contains(&capture) {
+                self.fail_conditions.push(capture);
+            }
+        }
+    }
+
+    /// Record captures that hold only where this source's rendered text is
+    /// consumed as YAML, at a site that certified exactly that. Inside a
+    /// helper body the sink is still the caller's to certify, so they defer
+    /// once more instead of binding here.
+    pub(super) fn record_yaml_text_fails(&mut self, fails: &[FailCapture]) {
+        if !self.helper_scope {
+            self.absorb_helper_fails(fails);
+            return;
+        }
+        for capture in self.scope_helper_fails(fails) {
+            if !self.text_fails.contains(&capture) {
+                self.text_fails.push(capture);
+            }
+        }
+    }
+
+    fn scope_helper_fails(&self, fails: &[FailCapture]) -> Vec<FailCapture> {
+        let mut scoped = Vec::new();
         for body_capture in fails {
             let mut ranged = self.capture_ranged_modes();
             ranged.merge(&body_capture.ranged);
@@ -1376,10 +1441,9 @@ impl<'a> Interpreter<'a> {
             {
                 continue;
             }
-            if !self.fail_conditions.contains(&capture) {
-                self.fail_conditions.push(capture);
-            }
+            scoped.push(capture);
         }
+        scoped
     }
 
     pub(super) fn absorb_helper_reads_with_suppression(
@@ -1771,8 +1835,12 @@ impl<'a> Interpreter<'a> {
                 self.push_key_reads(&key);
                 self.restore_site(previous_site);
                 let mut value = Guarded::empty();
+                let block_holds_yaml = key_names_yaml_document(&key);
                 if let Some(block) = &entry.block {
+                    let previous_block =
+                        std::mem::replace(&mut self.block_text_is_yaml, block_holds_yaml);
                     value.extend(self.eval_block_scalar(block));
+                    self.block_text_is_yaml = previous_block;
                 }
                 if let Some(parts) = &entry.value {
                     let previous_slot = std::mem::replace(&mut self.in_value_slot, true);
@@ -1800,11 +1868,14 @@ impl<'a> Interpreter<'a> {
                     let (adopted, rest): (Vec<_>, Vec<_>) = siblings
                         .into_iter()
                         .partition(|child| matches!(child.node, Node::Output(_)));
+                    let previous_block =
+                        std::mem::replace(&mut self.block_text_is_yaml, block_holds_yaml);
                     for adopted_view in adopted {
                         if let Node::Output(action) = adopted_view.node {
                             value.extend(self.eval_block_adopted_output(action.span));
                         }
                     }
+                    self.block_text_is_yaml = previous_block;
                     rest
                 } else {
                     siblings

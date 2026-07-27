@@ -332,10 +332,7 @@ impl Interpreter<'_> {
         // token: no literal text — quotes included — sits beside the hole.
         // Document-level content is excluded: there a `: ` is the manifest's
         // own structure, which is what the ranged-document dispatch renders.
-        // Helper bodies render at their CALLER's position — jenkins' JCasC
-        // helper lands in a ConfigMap block scalar, where a `: ` is opaque
-        // text — so, as for the document-root rule, they abstain.
-        if kind == ValueKind::Scalar && self.in_value_slot && !self.helper_scope {
+        if kind == ValueKind::Scalar && self.in_value_slot {
             self.record_plain_slot_text(value.as_ref(), &hole.effects);
         }
         let defaulted = hole.effects.default_paths_with_local();
@@ -436,6 +433,9 @@ impl Interpreter<'_> {
     /// - a `tpl` operand that IS a values path (external-dns's
     ///   `mountPath: {{ tpl .Values….mountPath $ }}`), which `tpl` renders
     ///   verbatim unless the value carries a template action.
+    ///
+    /// Both claims describe the TEXT this source renders, so a helper body
+    /// defers them to whatever sink its caller splices the body into.
     fn record_plain_slot_text(&mut self, value: Option<&AbstractValue>, effects: &Effects) {
         // A later stage that reshapes the text (`b64enc`, `quote`) is what the
         // slot renders, so the raw value's own characters no longer reach it
@@ -478,7 +478,7 @@ impl Interpreter<'_> {
             })
             .collect();
         if !captures.is_empty() {
-            self.absorb_helper_fails(&captures);
+            self.record_yaml_text_fails(&captures);
         }
     }
 
@@ -540,6 +540,14 @@ impl Interpreter<'_> {
         claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
         self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);
         self.absorb_helper_fails(&summary.fail_conditions);
+        // This splice reached a STRUCTURAL position through nothing but
+        // indent shaping, so the body's text renders as document content:
+        // its own plain slots are slots of this document. A value slot
+        // renders the body as one scalar instead, where the text is the
+        // caller's own token rather than structure.
+        if !self.in_value_slot {
+            self.record_yaml_text_fails(&summary.text_fails);
+        }
         self.absorb_member_host_conversions(&summary.member_host_conversions);
         for (path, hints) in &summary.type_hints {
             if path.trim().is_empty() {
@@ -923,7 +931,7 @@ impl Interpreter<'_> {
         }
 
         let templated = self.run_templated_text_paths.clone();
-        let value_slot = self.in_value_slot && !self.helper_scope;
+        let value_slot = self.in_value_slot;
         let mut per_arm = arms
             .iter()
             .map(|(_, parts)| arm_claims(parts, &templated, value_slot));
@@ -973,8 +981,13 @@ impl Interpreter<'_> {
                 });
             }
         }
+        // The slot language describes this source's own TEXT, so a helper
+        // body defers it to the sink its caller splices the body into. The
+        // claims above are about the value's SHAPE at the position and bind
+        // wherever the position renders.
+        let mut text_captures = Vec::new();
         for path in agreed.plain_templated {
-            captures.push(crate::eval_effect::FailCapture {
+            text_captures.push(crate::eval_effect::FailCapture {
                 conjunction: Vec::new(),
                 ranged: crate::range_modes::RangeModes::default(),
                 kind: crate::eval_effect::CaptureKind::PlainSlotText {
@@ -988,6 +1001,9 @@ impl Interpreter<'_> {
         }
         if !captures.is_empty() {
             self.absorb_helper_fails(&captures);
+        }
+        if !text_captures.is_empty() {
+            self.record_yaml_text_fails(&text_captures);
         }
     }
 
@@ -1137,6 +1153,14 @@ impl Interpreter<'_> {
         let _ = self.inline_static_file_fragments(&exprs);
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::Document);
+        // The block's text is opaque unless its key names a YAML document,
+        // and only a splice that reaches it through nothing but indent
+        // shaping still renders the called body's own characters. Both hold
+        // for jenkins' `jcasc-default-config.yaml: |-`, whose embedded
+        // document stops parsing when a JCasC key breaks its plain token.
+        if self.block_text_is_yaml && splice_target_helper_call(&exprs).is_some() {
+            self.record_yaml_text_fails(&hole.effects.helper_text_fails);
+        }
         self.push_effects_reads(&hole, ValueKind::Fragment);
         self.restore_site(previous_site);
     }
