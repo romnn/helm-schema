@@ -14,6 +14,13 @@ pub(crate) struct EvalEnv {
     pub(crate) root_truthy_predicates: HashMap<String, Predicate>,
     pub(crate) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
     pub(crate) locals: HashMap<String, AbstractValue>,
+    /// Locals bound by `:=`/`=` rather than by `range`. Go stores a pipeline
+    /// result through `reflect.ValueOf(value.Interface())`, which turns a nil
+    /// interface into an INVALID value, and field access on an invalid
+    /// receiver yields zero instead of aborting — so navigating one of these
+    /// is nil-safe for its own hop, while a range member variable (set
+    /// straight from `MapIndex`) keeps the abort.
+    pub(crate) pipeline_bound_locals: std::collections::HashSet<String>,
     pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     /// Structural conditions under which a local is truthy, as the fragment

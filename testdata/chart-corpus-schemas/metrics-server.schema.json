@@ -5870,48 +5870,6 @@
                 "type": "object"
               },
               {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "certManager": {
-                            "properties": {
-                              "existingIssuer": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "existingIssuer"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "certManager"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema203"
-                  }
-                ]
-              },
-              {
                 "$ref": "#/$defs/schema203"
               }
             ]
@@ -8460,43 +8418,8 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/schema271"
+                "$ref": "#/$defs/schema266"
               },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "helm": {}
-                      },
-                      "required": [
-                        "helm"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "helm": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "helm"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
               {
                 "anyOf": [
                   {
@@ -8540,45 +8463,42 @@
                     "type": "object"
                   }
                 ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema271"
               },
               {
                 "anyOf": [
                   {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "certManager": {
-                            "properties": {
-                              "existingIssuer": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "existingIssuer"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "certManager"
-                        ],
-                        "type": "object"
+                    "not": {
+                      "properties": {
+                        "helm": {}
                       },
-                      {
-                        "$ref": "#/$defs/schema266"
-                      }
-                    ]
+                      "required": [
+                        "helm"
+                      ],
+                      "type": "object"
+                    }
                   },
                   {
-                    "$ref": "#/$defs/schema266"
+                    "properties": {
+                      "helm": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "helm"
+                    ],
+                    "type": "object"
                   }
                 ]
               }

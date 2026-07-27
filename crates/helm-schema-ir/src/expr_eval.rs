@@ -258,15 +258,32 @@ pub(crate) fn eval_expr_with_helper_calls(
                 let selected_paths = value.fragment_source_paths();
                 let mut result = local_value_result(var, value, Some(&selected_paths), env);
                 if let Some(base) = local_base {
-                    let mut segments = helm_schema_core::split_value_path(&base);
-                    let accessed_from = segments.len();
-                    segments.extend(path.iter().cloned());
-                    record_member_access_captures(
-                        &segments,
-                        accessed_from,
-                        env,
-                        &mut result.effects,
-                    );
+                    // A `:=`-bound local is nil-SAFE to navigate for its own
+                    // hop, exactly like the grouped receiver form:
+                    // `$preset := .Values.global.affinity` renders with
+                    // `affinity` deleted (argo-cd), while `$preset.a.b` still
+                    // aborts on a missing `a` and a present non-object still
+                    // aborts with "can't evaluate field". A RANGE member
+                    // variable never went through a pipeline, so it keeps the
+                    // direct chain's abort on every nil member.
+                    if env.pipeline_bound_locals.contains(var) {
+                        record_grouped_member_access_captures(
+                            &base,
+                            path,
+                            env,
+                            &mut result.effects,
+                        );
+                    } else {
+                        let mut segments = helm_schema_core::split_value_path(&base);
+                        let accessed_from = segments.len();
+                        segments.extend(path.iter().cloned());
+                        record_member_access_captures(
+                            &segments,
+                            accessed_from,
+                            env,
+                            &mut result.effects,
+                        );
+                    }
                 }
                 return with_bound_selector_paths(result, expr, env);
             }

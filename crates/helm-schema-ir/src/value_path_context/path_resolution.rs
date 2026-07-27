@@ -53,6 +53,7 @@ impl ValuePathContext<'_> {
         // Locals and root bindings are distinct namespaces (see the hole
         // evaluator); roots resolve through `root_fields` only.
         env.locals = self.template_bindings.clone();
+        env.pipeline_bound_locals = self.pipeline_bound_bindings.clone();
         env.local_default_paths = self.template_default_paths.clone();
         env.local_output_meta = self.template_output_meta.clone();
         env.bound_values = BoundValueContext::new(self.range_domains, self.get_bindings);

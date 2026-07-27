@@ -2886,9 +2886,115 @@ fn record_member_access_capture(
 
 /// Fold each path's member-access guard sets into one fail implication.
 /// Unconditional accesses bind unconditionally; guarded-only accesses key
-/// the arm on the any-of of their guard sets. Fanout past the cap abstains
-/// rather than exploding umbrella-chart schemas.
+/// the arm on the any-of of their guard sets. Fanout past the cap keeps a
+/// bounded subset of those arms rather than exploding umbrella-chart
+/// schemas.
 type MemberAccessGuardSets = BTreeMap<Vec<String>, BTreeSet<Vec<ConditionalGuard>>>;
+
+/// The most arms one path's member-access implication may fan out into.
+const MEMBER_ACCESS_GUARD_FANOUT: usize = 8;
+
+/// Whether the arm set is too wide to spell as one any-of. An unconditional
+/// access folds to no guards at all, so it binds regardless of how many
+/// guarded siblings exist — decoding MORE guards must never lose an
+/// unconditional navigation's typing (oauth2-proxy reads
+/// `.Values.sessionStorage.type` on every render; a scalar `sessionStorage`
+/// aborts helm).
+fn member_access_arms_capped(guard_sets: &BTreeSet<Vec<ConditionalGuard>>) -> bool {
+    !guard_sets.contains(&Vec::new()) && guard_sets.len() > MEMBER_ACCESS_GUARD_FANOUT
+}
+
+/// Narrow an over-wide arm set instead of dropping it. Each arm is on its own
+/// a state where the access runs, so any subset of the disjunction states a
+/// real (smaller) abort region, while dropping them all states nothing. The
+/// kept subset is the SHORTEST arms — fewer conjuncts cover more documents —
+/// with the arm order breaking ties so the choice stays deterministic.
+///
+/// Only the absent-abort CLAUSE narrows this way — it is a bare
+/// `then: false`, so a smaller disjunction is simply a weaker claim. The
+/// typing arm cannot: see [`absorb_subsumed_guard_sets`] for why changing how
+/// many arms a host has moves its BASE.
+fn bound_member_access_arms(
+    guard_sets: BTreeSet<Vec<ConditionalGuard>>,
+) -> BTreeSet<Vec<ConditionalGuard>> {
+    if !member_access_arms_capped(&guard_sets) {
+        return guard_sets;
+    }
+    let mut arms: Vec<Vec<ConditionalGuard>> = guard_sets.into_iter().collect();
+    arms.sort_by(|left, right| left.len().cmp(&right.len()).then_with(|| left.cmp(right)));
+    arms.truncate(MEMBER_ACCESS_GUARD_FANOUT);
+    arms.into_iter().collect()
+}
+
+/// Spell an arm set as the outer guards of one implication: no guards at all
+/// when some access is unconditional, that access's own conjuncts when there
+/// is exactly one arm, and an any-of otherwise.
+fn fold_member_access_arms(guard_sets: BTreeSet<Vec<ConditionalGuard>>) -> Vec<ConditionalGuard> {
+    let mut outer_guards = Vec::new();
+    if guard_sets.contains(&Vec::new()) {
+        return outer_guards;
+    }
+    let mut arms: Vec<ConditionalGuard> = guard_sets
+        .into_iter()
+        .map(|mut set| {
+            if set.len() == 1 {
+                set.remove(0)
+            } else {
+                ConditionalGuard::AllOf(set)
+            }
+        })
+        .collect();
+    if arms.len() == 1 {
+        match arms.remove(0) {
+            ConditionalGuard::AllOf(set) => outer_guards.extend(set),
+            guard => outer_guards.push(guard),
+        }
+    } else {
+        outer_guards.push(ConditionalGuard::AnyOf(arms));
+    }
+    outer_guards.sort();
+    outer_guards.dedup();
+    outer_guards
+}
+
+/// Drop every arm a weaker arm already absorbs. These sets are read as a
+/// DISJUNCTION of conjunctions, where `A ∨ (A ∧ B) ≡ A`: an arm carrying a
+/// superset of another arm's guards holds nowhere that arm does not, so
+/// removing it is exact rather than an approximation. Charts reach one host
+/// from many nested branches — cilium reads `.Values.cni.*` from 47 distinct
+/// guard contexts, nearly all of them refinements of a handful of component
+/// gates — and without this the fanout cap sees redundancy as complexity.
+///
+/// Applied to the absent-abort CLAUSE only, even though the reduction is
+/// exact. The typing arm's guards do not just state a requirement: an arm
+/// with non-empty guards makes the path a conditional target whose resolved
+/// schema is empty, which classifies its base as guarded-only and EMPTIES it.
+/// Whether that happens turns on the arm count alone, because crossing
+/// [`MEMBER_ACCESS_GUARD_FANOUT`] drops the arm entirely — so an exact
+/// reduction that merely brings a host under the cap widens its base.
+/// Datadog's `clusterChecksRunner.rbac` folds 47 arms to 1 and then accepts
+/// `rbac: 7`, which `helm template` aborts on: the `.dedicated` navigation
+/// inside that chart's own `or` condition never produced an arm, so the
+/// surviving arm does not cover the state that aborts.
+///
+/// Letting the base survive an incomplete arm set instead is worse, not
+/// better: measured over the corpus it turns 122 of 138 adjudicated flips
+/// into rejections of documents helm renders.
+fn absorb_subsumed_guard_sets(
+    sets: BTreeSet<Vec<ConditionalGuard>>,
+) -> BTreeSet<Vec<ConditionalGuard>> {
+    let sets: Vec<Vec<ConditionalGuard>> = sets.into_iter().collect();
+    sets.iter()
+        .filter(|set| {
+            // Strictly shorter keeps the relation antisymmetric, so two arms
+            // never absorb each other and the reduction is order-free.
+            !sets.iter().any(|other| {
+                other.len() < set.len() && other.iter().all(|guard| set.contains(guard))
+            })
+        })
+        .cloned()
+        .collect()
+}
 
 /// Exact Boolean factoring over a disjunction of guard conjunctions,
 /// deliberately bounded to the dependency-activation shape: two
@@ -2991,7 +3097,6 @@ fn record_member_access_implications(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
 ) {
-    const MEMBER_ACCESS_GUARD_FANOUT: usize = 8;
     // Helm rebuilds a MISSING or null dependency values root from the
     // subchart's own defaults (`coalesceDeps` creates the table, then the
     // subchart coalesces into it), so a root itself never reaches a consumer
@@ -3015,7 +3120,7 @@ fn record_member_access_implications(
             // alternatives, and a doubly-nested subchart (signoz's
             // clickhouse→zookeeper) would cross the cap on clone count
             // alone, silently dropping the guarded-only arm.
-            let factored = acc
+            let factored: MemberAccessGuardSets = acc
                 .member_access_guard_sets
                 .iter()
                 .map(|(kinds, sets)| (kinds.clone(), factor_guard_sets(sets.clone())))
@@ -3024,48 +3129,11 @@ fn record_member_access_implications(
         })
         .collect();
     for (path, grouped_guard_sets) in pending {
-        // The cap bounds the ANY-OF arm built from guarded-only accesses.
-        // An unconditional access folds to no guards at all, so it binds
-        // regardless of how many guarded siblings exist — decoding MORE
-        // guards must never lose an unconditional navigation's typing
-        // (oauth2-proxy reads `.Values.sessionStorage.type` on every
-        // render; a scalar `sessionStorage` aborts helm).
-        let capped = |guard_sets: &BTreeSet<Vec<ConditionalGuard>>| {
-            !guard_sets.contains(&Vec::new()) && guard_sets.len() > MEMBER_ACCESS_GUARD_FANOUT
-        };
-        let fold_guards = |guard_sets: BTreeSet<Vec<ConditionalGuard>>| {
-            let mut outer_guards = Vec::new();
-            if guard_sets.contains(&Vec::new()) {
-                return outer_guards;
-            }
-            let mut arms: Vec<ConditionalGuard> = guard_sets
-                .into_iter()
-                .map(|mut set| {
-                    if set.len() == 1 {
-                        set.remove(0)
-                    } else {
-                        ConditionalGuard::AllOf(set)
-                    }
-                })
-                .collect();
-            if arms.len() == 1 {
-                match arms.remove(0) {
-                    ConditionalGuard::AllOf(set) => outer_guards.extend(set),
-                    guard => outer_guards.push(guard),
-                }
-            } else {
-                outer_guards.push(ConditionalGuard::AnyOf(arms));
-            }
-            outer_guards.sort();
-            outer_guards.dedup();
-            outer_guards
-        };
-
         for (handled_kinds, guard_sets) in &grouped_guard_sets {
-            if capped(guard_sets) {
+            if member_access_arms_capped(guard_sets) {
                 continue;
             }
-            let outer_guards = fold_guards(guard_sets.clone());
+            let outer_guards = fold_member_access_arms(guard_sets.clone());
             let implication = ContractFailImplication {
                 outer_guards,
                 target: ContractRequirementTarget::Value,
@@ -3095,7 +3163,9 @@ fn record_member_access_implications(
                     .any(|guard| guard_implies_present(guard, &path))
             })
             .collect::<BTreeSet<_>>();
-        if absent_abort_sets.is_empty() || capped(&absent_abort_sets) {
+        let absent_abort_sets =
+            bound_member_access_arms(absorb_subsumed_guard_sets(absent_abort_sets));
+        if absent_abort_sets.is_empty() {
             continue;
         }
         // Navigation ABORTS on a nil receiver, so a host read outside its
@@ -3105,7 +3175,7 @@ fn record_member_access_implications(
         // the clause anchors above every union lane, and it reaches
         // TOP-LEVEL hosts, which have no parent slot to carry a member
         // requirement.
-        let mut clause = fold_guards(absent_abort_sets);
+        let mut clause = fold_member_access_arms(absent_abort_sets);
         clause.push(ConditionalGuard::Absent { path });
         clause.sort();
         clause.dedup();

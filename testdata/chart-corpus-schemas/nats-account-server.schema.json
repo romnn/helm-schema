@@ -716,6 +716,74 @@
                   "properties": {
                     "operator": {
                       "properties": {
+                        "operatorjwt": {
+                          "properties": {
+                            "configMap": {}
+                          },
+                          "required": [
+                            "configMap"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "operatorjwt"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "operator": {
+                    "properties": {
+                      "operatorjwt": {
+                        "$ref": "#/$defs/schema12"
+                      }
+                    },
+                    "required": [
+                      "operatorjwt"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
                         "systemaccountjwt": {}
                       },
                       "required": [
@@ -759,144 +827,18 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "accountserver": {}
-              },
-              "required": [
-                "accountserver"
-              ],
-              "type": "object"
-            }
-          },
+        "allOf": [
           {
             "properties": {
-              "accountserver": {
-                "enum": [
-                  null
-                ]
+              "operator": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "accountserver"
+              "operator"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "operator": {
-                      "properties": {
-                        "operatorjwt": {
-                          "properties": {
-                            "configMap": {}
-                          },
-                          "required": [
-                            "configMap"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "operatorjwt"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "operator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "operatorjwt": {
-                        "$ref": "#/$defs/schema12"
-                      }
-                    },
-                    "required": [
-                      "operatorjwt"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              }
-            ]
           },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "operator": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "operator"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "operator": {
-                        "properties": {
-                          "operatorjwt": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "operatorjwt"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "operator"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
           {
             "anyOf": [
               {
@@ -946,55 +888,37 @@
                 "type": "object"
               }
             ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "accountserver": {}
+              },
+              "required": [
+                "accountserver"
+              ],
+              "type": "object"
+            }
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "operator": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "operator"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "operator": {
-                        "properties": {
-                          "systemaccountjwt": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "systemaccountjwt"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "operator"
-                    ],
-                    "type": "object"
-                  }
+            "properties": {
+              "accountserver": {
+                "enum": [
+                  null
                 ]
               }
-            ]
+            },
+            "required": [
+              "accountserver"
+            ],
+            "type": "object"
           }
         ]
       },

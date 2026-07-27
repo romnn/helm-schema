@@ -1,4 +1,4 @@
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 
 use super::*;
@@ -735,6 +735,183 @@ fn navigated_hosts_must_exist_in_the_coalesced_document() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "navigated host presence ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Ten independently gated reads of one host, more than the arm cap admits.
+fn gated_host_reads() -> String {
+    (1..=10)
+        .map(|index| {
+            format!(
+                "  {{{{- if .Values.g{index} }}}}\n  \
+                 g{index}: {{{{ .Values.host.leaf | quote }}}}\n  {{{{- end }}}}"
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// One host reached from many nested branches states ONE abort condition,
+/// not one per branch. The guard sets are read as a disjunction, so an arm
+/// refining another (`ce ∧ g1` beside `ce`) holds nowhere the weaker arm
+/// does not and drops out exactly. Without that reduction the redundancy
+/// alone crossed the fanout cap and the whole claim disappeared — which is
+/// how cilium's `cni`, `eni`, `image` and eleven more hosts stayed optional
+/// while `helm template` aborted on every one of them.
+#[test]
+fn redundant_branch_refinements_keep_one_host_claim() {
+    let src = formatdoc! {r"
+        {{{{- if .Values.componentEnabled }}}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          base: {{{{ .Values.host.leaf | quote }}}}
+        {gated}
+        {{{{- end }}}}
+    ",
+        gated = gated_host_reads()
+    };
+    let values_yaml = indoc! {"
+        componentEnabled: true
+        host:
+          leaf: v
+        g1: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "componentEnabled": true, "host": { "leaf": "v" } }),
+            true,
+            "the declared document renders",
+        ),
+        (
+            serde_json::json!({ "componentEnabled": true }),
+            false,
+            "the live component aborts on the deleted host",
+        ),
+        (
+            serde_json::json!({ "componentEnabled": false }),
+            true,
+            "the dormant component never reads the host",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "subsumed host arms ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Past the arm cap the claim NARROWS rather than vanishing: every arm is on
+/// its own a state where the access runs, so keeping a bounded subset states
+/// a real (smaller) abort region while dropping them all states nothing.
+#[test]
+fn host_claims_past_the_arm_cap_keep_a_bounded_subset() {
+    let src = formatdoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+        {gated}
+    ",
+        gated = gated_host_reads()
+    };
+    let values_yaml = indoc! {"
+        host:
+          leaf: v
+        g1: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+    let all_gates = |value: bool| {
+        (1..=10)
+            .map(|index| (format!("g{index}"), serde_json::json!(value)))
+            .collect::<serde_json::Map<_, _>>()
+    };
+    let mut live = all_gates(true);
+    let mut dormant = all_gates(false);
+    let mut declared = all_gates(true);
+    declared.insert("host".to_string(), serde_json::json!({ "leaf": "v" }));
+    for (instance, want, label) in [
+        (
+            serde_json::Value::Object(declared),
+            true,
+            "the declared document renders",
+        ),
+        (
+            serde_json::Value::Object(std::mem::take(&mut live)),
+            false,
+            "a live gate aborts on the deleted host",
+        ),
+        (
+            serde_json::Value::Object(std::mem::take(&mut dormant)),
+            true,
+            "no gate reaches the host",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "capped host arms ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Go stores a pipeline result through `reflect.ValueOf(value.Interface())`,
+/// which turns a nil interface into an INVALID reflect value, and field
+/// access on an invalid receiver yields zero instead of aborting. So a
+/// `:=`-bound local is nil-SAFE for its own hop — argo-cd renders with
+/// `global.affinity` deleted although `$preset := .Values.global.affinity`
+/// is followed by `$preset.podAntiAffinity` — while a present non-object
+/// still aborts ("can't evaluate field") and the hop BELOW the variable
+/// still aborts on its own missing key. A RANGE member variable comes
+/// straight from `MapIndex` and never gets that unwrap, so it keeps the
+/// direct chain's abort; `ranged_member_access_rejects_falsy_members_only_when_live`
+/// pins that side.
+#[test]
+fn assigned_locals_are_nil_safe_for_their_own_hop() {
+    let src = indoc! {r"
+        {{- $preset := .Values.host }}
+        {{- if eq $preset.leaf.deep 'x' }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        host:
+          leaf:
+            deep: x
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "host": { "leaf": { "deep": "x" } } }),
+            true,
+            "the declared document renders",
+        ),
+        (
+            serde_json::json!({}),
+            true,
+            "a deleted variable source navigates to nil without aborting",
+        ),
+        (
+            serde_json::json!({ "host": 7 }),
+            false,
+            "a present non-object variable source cannot host the field",
+        ),
+        (
+            serde_json::json!({ "host": {} }),
+            false,
+            "the hop below the variable aborts on its own missing key",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "assigned-local nil safety ({label}): instance={instance}; want={want}; schema={schema}"
         );
     }
 }

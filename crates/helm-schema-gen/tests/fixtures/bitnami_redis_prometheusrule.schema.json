@@ -766,6 +766,17 @@
           "if": {
             "allOf": [
               {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -790,108 +801,6 @@
                       "prometheusRule"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "prometheusRule": {
-                            "properties": {
-                              "additionalLabels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "additionalLabels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "prometheusRule"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "prometheusRule": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "prometheusRule"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "prometheusRule": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "prometheusRule"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   }
                 ]
               }

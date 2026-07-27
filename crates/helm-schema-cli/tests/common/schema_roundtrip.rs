@@ -23,6 +23,14 @@ pub fn generate_chart_schema_for_path(chart_relative_path: &str) -> eyre::Result
 
     let opts = GenerateOptions {
         chart_dir: chart_dir(chart_relative_path),
+        // Helm RENDERS `templates/tests/*` and only filters them out of the
+        // output afterwards, so those roots ARE real contracts and the
+        // shipped default includes them. Switching the corpus over waits on
+        // the provider-required-leaf family: kyverno's
+        // `test.nodeSelector`/`tolerations` accept values that render but
+        // whose manifest strict validation rejects, which is a claim about
+        // the rendered sink, not about the guards the test template adds.
+        // Tracked in `plan/chart-corpus-status.md`.
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),

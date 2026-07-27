@@ -599,66 +599,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema367"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "$ref": "#/$defs/schema343"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "ports": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "ports"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           },
@@ -667,57 +608,40 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
               {
                 "$ref": "#/$defs/schema313"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "serviceAccount": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
+                "$ref": "#/$defs/schema367"
               }
             ]
           },
@@ -1231,7 +1155,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema367"
+                "$ref": "#/$defs/schema313"
               }
             ]
           },
@@ -1241,56 +1165,18 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/schema313"
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "serviceAccount": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
+                "$ref": "#/$defs/schema367"
               }
             ]
           },
@@ -14913,6 +14799,159 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "multitenancy": {}
+                  },
+                  "required": [
+                    "multitenancy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "multitenancy": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "multitenancy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "helmController": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "helmController"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "imageAutomationController": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "imageAutomationController"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "imageReflectionController": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "imageReflectionController"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "kustomizeController": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "kustomizeController"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "notificationController": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "notificationController"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -16251,16 +16290,6 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema367"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "anyOf": [
                   {
                     "not": {
@@ -16287,338 +16316,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "envFrom": {
-                            "properties": {
-                              "map": {
-                                "properties": {
-                                  "name": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "name"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "map"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "envFrom"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "map": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "map"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "secret": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "secret"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "envFrom": {
-                            "properties": {
-                              "secret": {
-                                "properties": {
-                                  "name": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "name"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "secret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "envFrom"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "map": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "map"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "secret": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "secret"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "envFrom": {
-                              "properties": {
-                                "map": {
-                                  "properties": {
-                                    "name": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "name"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "map"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "envFrom"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "map": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "map"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "secret": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "secret"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           },
@@ -16627,6 +16324,17 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
               {
                 "anyOf": [
                   {
@@ -16670,194 +16378,48 @@
                     "type": "object"
                   }
                 ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "envFrom": {
-                            "properties": {
-                              "map": {
-                                "properties": {
-                                  "name": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "name"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "map"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "envFrom"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "map": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "map"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "secret": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "secret"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "map": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "map"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "secret": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "secret"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
+                "$ref": "#/$defs/schema313"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema367"
               }
             ]
           },
@@ -16926,106 +16488,6 @@
                         "type": "object"
                       },
                       {
-                        "properties": {
-                          "envFrom": {
-                            "properties": {
-                              "secret": {
-                                "properties": {
-                                  "name": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "name"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "secret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "envFrom"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "map": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "map"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "envFrom": {
-                                "properties": {
-                                  "secret": {
-                                    "properties": {
-                                      "name": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "name"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "secret"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "envFrom"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
                         "not": {
                           "properties": {
                             "envFrom": {
@@ -17126,65 +16588,6 @@
                             "type": "object"
                           }
                         ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema313"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "serviceAccount": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
                       }
                     ]
                   }
@@ -18422,7 +17825,157 @@
                 "type": "object"
               },
               {
+                "$ref": "#/$defs/schema343"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema313"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
+              {
                 "$ref": "#/$defs/schema367"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "webhookReceiver": {}
+                      },
+                      "required": [
+                        "webhookReceiver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "webhookReceiver": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "webhookReceiver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "webhookReceiver": {
+                          "properties": {
+                            "ingress": {}
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhookReceiver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "webhookReceiver": {
+                        "properties": {
+                          "ingress": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhookReceiver"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -18467,600 +18020,6 @@
                       "webhookReceiver"
                     ],
                     "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema343"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "ports": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "ports"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema313"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "serviceAccount": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "webhookReceiver": {}
-                      },
-                      "required": [
-                        "webhookReceiver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "webhookReceiver": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "webhookReceiver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "ingressClassName": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "ingressClassName"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "tls": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tls"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "webhookReceiver": {
-                          "properties": {
-                            "ingress": {}
-                          },
-                          "required": [
-                            "ingress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookReceiver"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "webhookReceiver": {
-                        "properties": {
-                          "ingress": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "ingress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhookReceiver"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "ingressClassName": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "ingressClassName"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "webhookReceiver": {
-                            "properties": {
-                              "ingress": {
-                                "properties": {
-                                  "tls": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tls"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingress"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhookReceiver"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   }
                 ]
               }

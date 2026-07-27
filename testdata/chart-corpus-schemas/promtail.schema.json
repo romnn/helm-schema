@@ -16367,6 +16367,186 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "snippets": {}
+                      },
+                      "required": [
+                        "snippets"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "snippets": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "snippets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "configmap": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "configmap"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema41"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "daemonset": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "daemonset"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema41"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "deployment": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "deployment"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema41"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/schema41"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "configmap": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "configmap"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -16891,56 +17071,6 @@
                 "type": "object"
               },
               {
-                "allOf": [
-                  {
-                    "properties": {
-                      "daemonset": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "daemonset"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "sidecar": {
-                        "properties": {
-                          "configReloader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configReloader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecar"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
                 "properties": {
                   "deployment": {
                     "properties": {
@@ -16963,56 +17093,6 @@
                 "allOf": [
                   {
                     "properties": {
-                      "deployment": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "deployment"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "sidecar": {
-                        "properties": {
-                          "configReloader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configReloader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecar"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
                       "serviceMonitor": {
                         "anyOf": [
                           {
@@ -17045,74 +17125,6 @@
                     },
                     "required": [
                       "serviceMonitor"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "serviceMonitor": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "sidecar": {
-                        "properties": {
-                          "configReloader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configReloader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecar"
                     ],
                     "type": "object"
                   }
@@ -17193,56 +17205,6 @@
                 "type": "object"
               },
               {
-                "allOf": [
-                  {
-                    "properties": {
-                      "daemonset": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "daemonset"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "sidecar": {
-                        "properties": {
-                          "configReloader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configReloader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecar"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
                 "properties": {
                   "deployment": {
                     "properties": {
@@ -17265,56 +17227,6 @@
                 "allOf": [
                   {
                     "properties": {
-                      "deployment": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "deployment"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "sidecar": {
-                        "properties": {
-                          "configReloader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configReloader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecar"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
                       "serviceMonitor": {
                         "anyOf": [
                           {
@@ -17347,74 +17259,6 @@
                     },
                     "required": [
                       "serviceMonitor"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "serviceMonitor": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "sidecar": {
-                        "properties": {
-                          "configReloader": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "configReloader"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "sidecar"
                     ],
                     "type": "object"
                   }
@@ -18213,6 +18057,17 @@
           "if": {
             "allOf": [
               {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -18235,55 +18090,6 @@
                     },
                     "required": [
                       "autoscaling"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "autoscaling": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "autoscaling"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
                     ],
                     "type": "object"
                   }
@@ -19892,6 +19698,17 @@
           "if": {
             "allOf": [
               {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -19916,108 +19733,6 @@
                       "prometheusRule"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "prometheusRule": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "prometheusRule"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "prometheusRule": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "prometheusRule"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "prometheusRule": {
-                            "properties": {
-                              "rules": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "rules"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "prometheusRule"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   }
                 ]
               }

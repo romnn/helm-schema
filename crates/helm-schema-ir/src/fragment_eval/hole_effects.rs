@@ -331,6 +331,7 @@ impl Interpreter<'_> {
                 .iter()
                 .map(|(name, value)| (name.clone(), value.clone())),
         );
+        env.pipeline_bound_locals = self.locals.fragment_values.keys().cloned().collect();
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
         env.local_truthy_reductions = self.locals.truthy_reductions.clone();

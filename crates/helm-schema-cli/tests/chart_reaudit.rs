@@ -722,12 +722,13 @@ fn surveyor_range_members_and_intermediate_secrets_are_structural() -> eyre::Res
                 }),
             ),
             // The intermediate secret's presence is an abort-grade
-            // navigation-host claim, which anchors at the document root
-            // (a `properties`-nested arm passes vacuously when the host
-            // itself is missing).
+            // navigation-host claim. Its clause anchors at the shared
+            // ancestor of the guards it carries, and every one of those
+            // guards already requires `config` — so an arm nested there
+            // cannot pass vacuously the way a guard-free clause could.
             SemanticCase::rejected(
                 "credentials without intermediate secret",
-                "",
+                "/config",
                 json!({ "config": { "credentials": { "audit": 1 } } }),
             ),
             SemanticCase::accepted(

@@ -784,6 +784,25 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "not": {
@@ -812,131 +831,33 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "commonLabels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "commonLabels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
+            "not": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "podmonitor": {
                       "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "podmonitor": {
-                              "properties": {
-                                "enabled": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "podmonitor"
-                          ],
-                          "type": "object"
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
                         }
                       },
                       "required": [
-                        "prometheus"
+                        "enabled"
                       ],
                       "type": "object"
                     }
-                  }
-                ]
+                  },
+                  "required": [
+                    "podmonitor"
+                  ],
+                  "type": "object"
+                }
               },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "podmonitor": {
-                              "properties": {
-                                "enabled": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "podmonitor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
           }
         ]
       },

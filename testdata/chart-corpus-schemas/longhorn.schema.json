@@ -8350,6 +8350,206 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "openshift": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "openshift"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "openshift": {
+                "properties": {
+                  "ui": {
+                    "properties": {
+                      "route": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "route"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ui"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "openshift"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "openshift": {}
+                      },
+                      "required": [
+                        "openshift"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "$ref": "#/$defs/schema94"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "openshift": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "openshift"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "openshift": {
+                "properties": {
+                  "ui": {
+                    "properties": {
+                      "route": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "route"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ui"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "openshift"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "openshift": {
+                          "properties": {
+                            "oauthProxy": {}
+                          },
+                          "required": [
+                            "oauthProxy"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "openshift"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "openshift": {
+                        "properties": {
+                          "oauthProxy": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "oauthProxy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "openshift"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -8482,6 +8682,1203 @@
                   "properties": {
                     "global": {
                       "properties": {
+                        "cattle": {}
+                      },
+                      "required": [
+                        "cattle"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "privateRegistry": {
+                      "properties": {
+                        "registryUrl": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "registryUrl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "privateRegistry"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornDriver": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornDriver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornManager": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornUI": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornUI"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornDriver": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornDriver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornManager": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornUI": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornUI"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema22"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "cattle": {
+                          "properties": {
+                            "windowsCluster": {}
+                          },
+                          "required": [
+                            "windowsCluster"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "cattle"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornDriver": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornDriver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornManager": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornUI": {
+                        "properties": {
+                          "nodeSelector": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "nodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornUI"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornDriver": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornDriver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornManager": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "longhornUI": {
+                        "properties": {
+                          "tolerations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tolerations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "longhornUI"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema22"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema30"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
                         "cattle": {
                           "properties": {
                             "windowsCluster": {
@@ -8553,254 +9950,6 @@
           },
           {
             "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "cattle": {
-                            "properties": {
-                              "windowsCluster": {
-                                "properties": {
-                                  "defaultSetting": {
-                                    "properties": {
-                                      "systemManagedComponentsNodeSelector": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "systemManagedComponentsNodeSelector"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "defaultSetting"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "windowsCluster"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "cattle"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "cattle": {
-                            "properties": {
-                              "windowsCluster": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "windowsCluster"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "cattle"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema22"
-                      },
-                      {
-                        "properties": {
-                          "global": {
-                            "properties": {
-                              "cattle": {
-                                "properties": {
-                                  "windowsCluster": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "windowsCluster"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "cattle"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "global"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "cattle": {
-                            "properties": {
-                              "windowsCluster": {
-                                "properties": {
-                                  "defaultSetting": {
-                                    "properties": {
-                                      "taintToleration": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "taintToleration"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "defaultSetting"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "windowsCluster"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "cattle"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "cattle": {
-                            "properties": {
-                              "windowsCluster": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "windowsCluster"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "cattle"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema30"
-                      },
-                      {
-                        "properties": {
-                          "global": {
-                            "properties": {
-                              "cattle": {
-                                "properties": {
-                                  "windowsCluster": {
-                                    "properties": {
-                                      "enabled": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "enabled"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "windowsCluster"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "cattle"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "global"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
               {
                 "allOf": [
                   {
@@ -9923,392 +11072,6 @@
               "image"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "openshift": {}
-                      },
-                      "required": [
-                        "openshift"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "$ref": "#/$defs/schema94"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "openshift": {
-                            "properties": {
-                              "oauthProxy": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "oauthProxy"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "openshift"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "ui": {
-                            "properties": {
-                              "route": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "route"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "ui"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "ui": {
-                            "properties": {
-                              "route": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "route"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "ui"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "openshift": {
-                          "properties": {
-                            "oauthProxy": {}
-                          },
-                          "required": [
-                            "oauthProxy"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "openshift"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "oauthProxy": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "oauthProxy"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "openshift": {
-                            "properties": {
-                              "oauthProxy": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "oauthProxy"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "openshift"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "ui": {
-                            "properties": {
-                              "route": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "route"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "ui"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "openshift": {
-                        "properties": {
-                          "ui": {
-                            "properties": {
-                              "route": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "route"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "ui"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
           }
         ]
       },
@@ -13839,6 +14602,17 @@
           "if": {
             "allOf": [
               {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -13847,55 +14621,6 @@
                   },
                   {
                     "$ref": "#/$defs/schema100"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "ui": {
-                            "properties": {
-                              "route": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "route"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "ui"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   }
                 ]
               }
@@ -13969,6 +14694,17 @@
           "if": {
             "allOf": [
               {
+                "properties": {
+                  "createStorageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createStorageClass"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -13995,55 +14731,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "backingImage": {
-                            "properties": {
-                              "enable": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enable"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "backingImage"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "createStorageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createStorageClass"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "createStorageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createStorageClass"
-                    ],
-                    "type": "object"
-                  }
-                ]
               }
             ]
           },
@@ -14052,6 +14739,17 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "createStorageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createStorageClass"
+                ],
+                "type": "object"
+              },
               {
                 "anyOf": [
                   {
@@ -14079,55 +14777,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "createStorageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createStorageClass"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "createStorageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createStorageClass"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "defaultDiskSelector": {
-                            "properties": {
-                              "enable": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enable"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "defaultDiskSelector"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           },
@@ -14136,6 +14785,17 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "createStorageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createStorageClass"
+                ],
+                "type": "object"
+              },
               {
                 "anyOf": [
                   {
@@ -14163,55 +14823,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "createStorageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createStorageClass"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "createStorageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createStorageClass"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "defaultNodeSelector": {
-                            "properties": {
-                              "enable": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enable"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "defaultNodeSelector"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           },
@@ -14220,6 +14831,17 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "createStorageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createStorageClass"
+                ],
+                "type": "object"
+              },
               {
                 "anyOf": [
                   {
@@ -14247,55 +14869,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "createStorageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createStorageClass"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "createStorageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createStorageClass"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "recurringJobSelector": {
-                            "properties": {
-                              "enable": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enable"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "recurringJobSelector"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           },
@@ -14304,6 +14877,17 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "createStorageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createStorageClass"
+                ],
+                "type": "object"
+              },
               {
                 "anyOf": [
                   {
@@ -14331,55 +14915,6 @@
                     "type": "object"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "createStorageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createStorageClass"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "createStorageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createStorageClass"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "shareManagerNodeSelector": {
-                            "properties": {
-                              "enable": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enable"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "shareManagerNodeSelector"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           },
@@ -14388,6 +14923,17 @@
         {
           "if": {
             "allOf": [
+              {
+                "properties": {
+                  "createStorageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createStorageClass"
+                ],
+                "type": "object"
+              },
               {
                 "anyOf": [
                   {
@@ -14413,55 +14959,6 @@
                       "shareManagerTolerations"
                     ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "createStorageClass": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createStorageClass"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "createStorageClass": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createStorageClass"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "shareManagerTolerations": {
-                            "properties": {
-                              "enable": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enable"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "shareManagerTolerations"
-                        ],
-                        "type": "object"
-                      }
-                    ]
                   }
                 ]
               }

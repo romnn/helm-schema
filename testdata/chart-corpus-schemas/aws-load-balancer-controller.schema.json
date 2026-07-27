@@ -6091,6 +6091,98 @@
         "allOf": [
           {
             "properties": {
+              "createIngressClassResource": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "createIngressClassResource"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ingressClassParams": {}
+                  },
+                  "required": [
+                    "ingressClassParams"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "enableCertManager": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableCertManager"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "certManager": {}
+                  },
+                  "required": [
+                    "certManager"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "certManager": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "enableCertManager": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -6206,6 +6298,104 @@
                 },
                 "required": [
                   "cluster"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableServiceMutatorWebhook"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceMutatorWebhookConfig": {}
+                  },
+                  "required": [
+                    "serviceMutatorWebhookConfig"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceMutatorWebhookConfig": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceMutatorWebhookConfig"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "enableServiceMutatorWebhook": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableServiceMutatorWebhook"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceMutatorWebhookConfig": {
+                      "properties": {
+                        "objectSelector": {}
+                      },
+                      "required": [
+                        "objectSelector"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceMutatorWebhookConfig"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceMutatorWebhookConfig": {
+                    "$ref": "#/$defs/schema117"
+                  }
+                },
+                "required": [
+                  "serviceMutatorWebhookConfig"
                 ],
                 "type": "object"
               }
@@ -6364,126 +6554,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "certManager": {}
-                  },
-                  "required": [
-                    "certManager"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "certManager": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "certManager"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "issuerRef": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "issuerRef"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "enableCertManager": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableCertManager"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "enableCertManager": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableCertManager"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enableCertManager": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableCertManager"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "certManager": {
-                          "properties": {
-                            "issuerRef": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "issuerRef"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -6586,261 +6656,6 @@
               "image"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ingressClassParams": {}
-                  },
-                  "required": [
-                    "ingressClassParams"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ingressClassParams": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "ingressClassParams"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "createIngressClassResource": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "createIngressClassResource"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "ingressClassParams": {
-                          "properties": {
-                            "name": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ingressClassParams"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "ingressClassParams": {
-                          "properties": {
-                            "name": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ingressClassParams"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "ingressClassParams": {
-                            "properties": {
-                              "name": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "ingressClassParams"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "properties": {
-                              "ingressClassParams": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingressClassParams"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "ingressClassParams": {
-                                "properties": {
-                                  "spec": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "spec"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "ingressClassParams"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
           }
         ]
       },
@@ -7023,314 +6838,6 @@
               "serviceMonitor"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceMutatorWebhookConfig": {}
-                  },
-                  "required": [
-                    "serviceMutatorWebhookConfig"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceMutatorWebhookConfig": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceMutatorWebhookConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "enableServiceMutatorWebhook": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableServiceMutatorWebhook"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMutatorWebhookConfig": {
-                        "properties": {
-                          "namespaceSelectors": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespaceSelectors"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMutatorWebhookConfig"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMutatorWebhookConfig": {
-                        "properties": {
-                          "objectSelector": {
-                            "properties": {
-                              "matchExpressions": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "matchExpressions"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "objectSelector"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMutatorWebhookConfig"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMutatorWebhookConfig": {
-                        "properties": {
-                          "objectSelector": {
-                            "properties": {
-                              "matchLabels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "matchLabels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "objectSelector"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMutatorWebhookConfig"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceMutatorWebhookConfig": {
-                      "properties": {
-                        "objectSelector": {}
-                      },
-                      "required": [
-                        "objectSelector"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceMutatorWebhookConfig"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceMutatorWebhookConfig": {
-                    "$ref": "#/$defs/schema117"
-                  }
-                },
-                "required": [
-                  "serviceMutatorWebhookConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "enableServiceMutatorWebhook": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableServiceMutatorWebhook"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMutatorWebhookConfig": {
-                        "properties": {
-                          "objectSelector": {
-                            "properties": {
-                              "matchExpressions": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "matchExpressions"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "objectSelector"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMutatorWebhookConfig"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enableServiceMutatorWebhook": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enableServiceMutatorWebhook"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "serviceMutatorWebhookConfig": {
-                        "properties": {
-                          "objectSelector": {
-                            "properties": {
-                              "matchLabels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "matchLabels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "objectSelector"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMutatorWebhookConfig"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
           }
         ]
       },

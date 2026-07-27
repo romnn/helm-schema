@@ -4515,6 +4515,17 @@
                   "if": {
                     "allOf": [
                       {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      },
+                      {
                         "anyOf": [
                           {
                             "not": {
@@ -4539,123 +4550,6 @@
                               "settings"
                             ],
                             "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              },
-                              {
-                                "properties": {
-                                  "settings": {
-                                    "properties": {
-                                      "client_ca": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "client_ca"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "settings"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              },
-                              {
-                                "properties": {
-                                  "settings": {
-                                    "properties": {
-                                      "client_cert": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "client_cert"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "settings"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              },
-                              {
-                                "properties": {
-                                  "settings": {
-                                    "properties": {
-                                      "client_key": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    "required": [
-                                      "client_key"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "settings"
-                                ],
-                                "type": "object"
-                              }
-                            ]
                           }
                         ]
                       }

@@ -979,6 +979,7 @@ impl<'a> Interpreter<'a> {
             root_bindings: &self.root_bindings,
             root_truthy_predicates: &self.root_truthy_predicates,
             root_value_dispatches: &self.root_value_dispatches,
+            pipeline_bound_bindings: self.locals.fragment_values.keys().cloned().collect(),
             template_bindings,
             range_domains: &self.locals.range_domains,
             get_bindings: &self.locals.get_bindings,
