@@ -1,71 +1,46 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-27 after the block-scalar round (fortieth round),
-which closed the LAST open residual: a helper body's plain slots now bind
-their lexical language wherever the caller certifies that the body's text is
-consumed as YAML — a manifest position, or a block scalar whose entry key
-names a `.yaml`/`.yml` document (F76; 15 acceptance flips, all tightenings,
-10 helm aborts plus jenkins' embedded `JCasC` document). The preceding
-ledger-residual round closed three residuals: a deleted dependency
-values root's own terminating fact (F63), a range body's liveness as a
-guard a terminal clause can spell (F53/F66/F98), and a wildcard merge
-layer's collection non-emptiness standing in for the layer it cannot spell
-(F80 — 85 dormant-state false rejections repaired, every one confirmed to
-render and validate). The preceding structural-CRD round closed the
-chart-shipped CRD lane's open contract and the `dig` chain-subject false
-rejection, and re-adjudicated the scalar-sink preimage residual as policy.
-All 55 committed corpus
-fixtures, 129 focused chart checks, Draft-07
-metaschema checks, pattern compilation, and local `$ref` checks pass. Those
-results establish fixture consistency, not semantic completeness: fresh
-fully-composed-value probes against Helm and strict Kubernetes schemas
-reopened the bounded findings listed below. The unquoted-slot round made
-text spliced raw into an unquoted YAML slot bind its source's lexical
-language — a ranged collection's KEY (bare, and through an
-identity-preserving `replace`) and a `tpl` operand, which is the identity on
-template-action-free input — with four scopings that keep converted keys,
-reshaped slots, document content, and helper bodies out of the claim (80
-flips, all tightenings; 77 helm-confirmed aborts and 3 structurally invalid
-manifests). The preceding document-item round made a
-`typeIs "string"` dispatch over ranged DOCUMENT members keep both arms'
-placements — a member's own kind test is a per-member SCOPING rather than an
-outer guard, and a helper spliced at column zero has its placement recorded
-by the caller — so `extraObjects`/`extraDeploy` members must decode as
-manifests (44 flips, all tightenings, 38 helm-confirmed aborts; the 6
-remaining are kube-prometheus-stack's declared-`[]` dependency lane
-aligning with grafana's own schema). The preceding operand-presence round
-made a nil-strict string consumer's operand abort-grade PRESENT wherever it
-runs (117 helm-adjudicated flips, zero mismatches, no loosenings), with
-three scopings that keep derived operands, self-mentioning guards, and
-re-rooted `global` spellings out of the claim. The preceding
-overlaid-member round
-made an overlaid range keep the overlaid map's member identity, so
-traefik's `service.additionalServices` members bind their own contracts
-(29 helm-adjudicated flips, zero mismatches), and re-measured the
-strict-consumer presence finding: all twelve examples abort, and the
-string-consumer catalog's nil behaviour is now a measured table in that
-entry. The preceding short-circuit-flag round
-closed F99: a statically-true `and` operand no longer contributes an
-approximate execution guard, so grafana's leaked-secret walk keeps the
-object-kind claim on every intermediate host it steps through (60 new
-helm-adjudicated rejections, 33 repaired false rejections, no
-regressions). The preceding navigated-host round
-closed F63 on both halves — abort-grade host presence as a terminal
-clause (top-level hosts reached, dependency-owned subtrees abstaining)
-and unconditional host typing that survives union bases — with helm's
-dependency-coalescing table assertion as collateral; 1351 corpus probe
-flips were adjudicated against `helm template`, 1333 of them aborts.
-The preceding reopened-items round closed three findings — F80's
-Airflow empty-worker over-constraint
-(merge-arm gates now lower the maximal exact-conjunct subset, with
-per-layer truthy spellings of one merged read collapsed out of the
-conjunctive form), F105's checksum backward attribution (digest
-operands are shape-erased; no slot language projects through a
-checksum), and F107's Loki dig-subject presence (a nested raw-identity
-dig subject records an abort-grade `HasMemberEvenDefaulted` presence
-requirement exempt from the default-supplied `required` relaxation) —
-each helm-adjudicated with regenerated fixtures (airflow, datadog,
-external-dns, jenkins, kube-prometheus-stack, loki, nats, traefik).
+Last reconciled 2026-07-27 after the arm-set completeness round
+(forty-third), which reconciled the navigated-host round (forty-second)
+against the full integration gate and disproved the blocker that round had
+recorded. The forty-second round closed the navigated-receiver half of the
+audit's broadest family: a host read outside its own presence gate must
+exist, and the claim had been computed all along but thrown away as
+arm-count "fanout" that was really redundancy (cilium recorded 47 guard sets
+for `cni`, 54 for `eni`; the cap is 8). 33 of the audit's 70 root deletions
+now reject, every one helm-confirmed, with zero loosenings. The preceding
+forty-first fixture-accuracy audit established the inventory below.
+
+**Disproved (forty-third round): "`relax_untyped_host` strips declared
+typing under a guarded member-host arm."** Not a defect, and not
+`relax_untyped_host` — the switch is `preserve_base_schema` via the
+`!is_empty_schema(...)` conjunct in
+`resolved_schema_admits_fail_requirement_domain`, and emptying a
+guarded-only host's base is CORRECT (helm renders airflow's
+`pgbouncer.podDisruptionBudget: 7`; removing that conjunct produces 7,025
+flips). What broke datadog's `clusterChecksRunner.rbac` was reducing the
+typing arm's ARM COUNT below `MEMBER_ACCESS_GUARD_FANOUT`, which mints an
+arm where the cap had dropped one — the prior correctness was an accident of
+the cap. The principled repair (mark an arm set incomplete when a navigation
+abstained, and refuse to let it empty the base) rejects 122 of 138
+adjudicated documents that helm renders, so it was reverted. Details in the
+forty-third round of `plan/chart-corpus-expansion.md`. Do not re-open this
+as a base-classification bug; the residual is that a navigation whose guard
+does not decode leaves no trace at all.
+The committed corpus fixtures and focused tests pass, but that establishes
+internal consistency rather than semantic completeness. Fresh, fully
+composed probes against Helm 4.2.3 and strict Kubernetes schemas reopened
+the bounded findings below.
+
+The broadest check deleted every top-level default that the generated schema
+still permits: 1,127 schema-accepted deletions were rendered with each
+chart's shipped `values.schema.json` deliberately bypassed. After excluding
+the non-renderable vendored cert-manager setup and the library-only chart, 70
+deletions across 26 charts abort Helm; all 26 unmodified baselines render.
+Targeted live/dormant controls then confirmed additional nested presence,
+provider-projection, `tpl`, root-rewrite, and formatted-text residuals.
+Previously fixed representative cases were rerun too; those remain in
+Completed unless a narrower residual is explicitly reopened below.
 
 This ledger has three status buckets. A finding may have a completed bounded
 part and a separately listed residual. Detailed round history remains in
@@ -117,8 +92,8 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `default "x" .Values.y|quote` idiom included) and
   `oauth2_proxy_redis_script_reads_stay_partial_text`.
 - **F65 — accepted inputs through root rewrite (twenty-first round;
-  closes the residual).** An overwrite-merge whose destination is the
-  LITERAL values root (`mustMergeOverwrite $.Values (index $.Values
+  completed bounded overlay support).** An overwrite-merge whose
+  destination is the LITERAL values root (`mustMergeOverwrite $.Values (index $.Values
   "pilot")` — istiod's zzy descope; a copied destination like `deepCopy
   $.Values` deliberately does not qualify) records a
   `values_root_overlay_prefixes` fact that rides interpreter → contract
@@ -995,7 +970,7 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   portable spelling; differential-verified against the RE2 semantics
   (`folded_patterns_accept_exactly_the_re2_language`).
 
-### Additional completed rounds
+### Earlier completed rounds
 
 - **F28/F51 residual — ranged terminals and accumulator state (bounded;
   seventeenth round).** Landed in four pieces. (a) Compound ranged
@@ -1365,14 +1340,15 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `per_op_requirement_binds_in_a_direct_range`,
   `per_op_requirement_binds_through_the_helper_roundtrip`).
 
-## In progress
+### Later completed rounds
 
-Only currently reproducible, representable mismatches belong here. Every
-instance below was validated as a full composed values document using the
-same recursive map-null deletion as `chart_instances::with_override`.
+These closed round records were previously misplaced under In progress.
+Narrower residuals discovered by the current audit are listed in the real
+In progress bucket below.
 
 - **F53/F66/F98 — strict-consumer operand presence (thirty-first round;
-  CLOSED for the nil-strict string lane).** Every nil-strict string consumer
+  completed bounded implementation; residuals reopened below).** Every
+  nil-strict string consumer
   — measured one function at a time against helm v4.2.3: `tpl`, `b64enc`,
   `b64dec`, `upper`, `lower`, `title`, `trim`, the `trim*` siblings,
   `trunc`, `substr`, `indent`, `nindent`, `sha256sum`, `htpasswd`,
@@ -1406,9 +1382,12 @@ same recursive map-null deletion as `chart_instances::with_override`.
     root: helm injects `global` into every subchart values root, so a deeper
     spelling is a re-rooted read this claim cannot trust (k8s-infra's
     `otelAgent.global.cloud`, which broke the luup2 signoz lint).
-  All twelve ledger examples now reject, and 117 corpus acceptance flips
-  were adjudicated against `helm template` with ZERO mismatches — all
-  tightenings, no loosenings. The MinIO ranged-member residual is CLOSED in
+  The round's 117 corpus acceptance flips were adjudicated against
+  `helm template` with zero mismatches — all tightenings, no loosenings.
+  The current audit shows the former all-operands closure claim was too
+  broad: Harbor's first `htpasswd` argument and several sibling strict or
+  typed consumers remain open and are explicitly reopened below. The MinIO
+  ranged-member residual is CLOSED in
   the thirty-sixth round below, and the range-guarded operand in the
   thirty-ninth. RESIDUAL: a consumer whose enclosing branch guard is an
   APPROXIMATE predicate (an `eq` over a helper's rendered text) still
@@ -1416,7 +1395,7 @@ same recursive map-null deletion as `chart_instances::with_override`.
   which is the sound direction and the same wall the path-level contract
   flags have.
 - **F56/F62/F8 — provider shapes lost through serialized/helper splices
-  (thirty-fourth round; CLOSED except the action-line residual).** Twenty of
+  (thirty-fourth round; completed bounded repairs).** Twenty of
   the twenty-one named paths now reject a truthy malformed object — every
   ReLoader path (`affinity`, `resources`, `containerSecurityContext`,
   `volumeMounts`, `volumes`), Sealed Secrets' security contexts and probes,
@@ -1543,7 +1522,8 @@ same recursive map-null deletion as `chart_instances::with_override`.
   (the pull-secret helper is spliced on its own line, so its items only
   reached `ServiceAccount.imagePullSecrets[*].name` once the escape became
   transitive).
-- **F63 — navigated receiver hosts (twenty-eighth round; CLOSED).** Go
+- **F63 — navigated receiver hosts (twenty-eighth round; completed bounded
+  implementation, residuals reopened below).** Go
   template member access aborts on a nil receiver, so a navigated host
   must EXIST in the coalesced document and must be a mapping when
   present. Both halves landed. (a) The member-access lane's presence
@@ -1574,7 +1554,8 @@ same recursive map-null deletion as `chart_instances::with_override`.
   `prometheus_dependency_values_roots_must_be_tables` (CLI). The
   dependency residual is CLOSED in the thirty-seventh round below.
 - **F76 — dynamic keys and `tpl` results lost their YAML-slot lexical
-  preimages (thirty-third round; CLOSED).** Text spliced raw into an
+  preimages (thirty-third round; completed unquoted-slot support, quoted
+  and transformed-result residuals reopened below).** Text spliced raw into an
   UNQUOTED slot renders the value's own characters, so `: ` (or a trailing
   `:`), ` #`, a line break, and — when the text OPENS the token — a leading
   YAML indicator end it. All four examples now reject and their safe
@@ -1927,6 +1908,227 @@ same recursive map-null deletion as `chart_instances::with_override`.
   all three sinks) and
   `helper_body_slots_bind_the_document_their_caller_renders` (CLI, the
   promtail and grafana manifests beside the jenkins block scalar).
+
+## In progress
+
+Only currently reproducible, representable mismatches belong here. Every
+instance below was validated as a full composed values document using the
+same recursive map-null deletion as `chart_instances::with_override`;
+provider-validity findings that reached manifests additionally failed a
+strict Kubernetes schema while their valid controls passed.
+
+- **F53/F63/F66/F82/F86/F98/F107 — missing-key facts still disappear at
+  strict consumers, typed calls, and navigated receivers.** The systematic
+  top-level sweep found 70 schema-accepted deletions that abort Helm. This
+  is a cross-family regression inventory; the F65 root rewrite, F73/F76
+  text sinks, and Metrics Server's F56/F98 fragment failure have their own
+  entries below:
+
+  - Airflow: `airflowHome`, `airflowPodAnnotations`,
+    `defaultAirflowRepository`, `enableBuiltInSecretEnvVars`,
+    `multiNamespaceMode`, `ports`; Bitnami Redis: `architecture`,
+    `useExternalDNS`.
+  - Cilium: `alibabacloud`, `cni`, `daemon`, `debug`, `egressGateway`,
+    `eni`, `etcd`, `extraConfig`, `gke`, `image`, `ipam`, `ipv4`, `ipv6`,
+    `k8s`, `k8sNetworkPolicy`, `l2announcements`, `l2podAnnouncements`,
+    `maglev`, `sctp`.
+  - CoreDNS: `serviceAccount`; Datadog: `existingClusterAgent`, `fips`,
+    `remoteConfiguration`; dict-config: `podDisruptionBudget`; External
+    DNS: `namespaced`; External Secrets: `global`.
+  - Fluent Bit: `daemonSetVolumeMounts`, `daemonSetVolumes`, `hotReload`,
+    `testFramework`; Flux2: `multitenancy`; Grafana: `env`, `global`, the
+    literal dotted root `grafana.ini`, `route`, `testFramework`.
+  - Harbor: `logLevel`; Istiod: `_internal_defaults_do_not_set`;
+    kube-prometheus-stack: `defaultRules`, `kubernetesServiceMonitors`,
+    `windowsMonitoring`; kube-state-metrics: `global`; Kyverno: `test`;
+    MetalLB: `tls`; Metrics Server: `tmpVolume`.
+  - MinIO: `etcd`, `oidc`, `persistence`; NACK: `namespaced`; NATS:
+    `podDisruptionBudget`, `promExporter`, `service`, `serviceAccount`,
+    `statefulSet`; OAuth2 Proxy: `extraVolumeMounts`, `extraVolumes`,
+    `httpScheme`.
+  - SigNoz: `global`; Traefik: `log`; Vault: `ui`; Velero: `configMaps`,
+    `kubectl`.
+
+  Test-template roots remain real contracts here because Helm evaluates
+  those templates before output filtering.
+
+  Targeted probes show the same loss below the root. Harbor accepts a
+  deleted `registry.credentials.username` although the first argument of
+  `htpasswd` aborts; the second argument (`password`) is correctly fixed,
+  and `htpasswdString`/`existingSecret` keep the username dormant. Other
+  exact witnesses include kube-state-metrics probe `scheme`, Jenkins
+  `agent.args`, Tempo `tempo.tag`, Longhorn `global.cattle` and the
+  separately deletable `global.cattle.windowsCluster`, ingress-nginx
+  `controller.keda`, `controller.service.internal`,
+  `controller.admissionWebhooks.certManager`/`patch`, `controller.image`,
+  and `global.image`, Kyverno `global.caCertificates` (both deletion and a
+  present scalar abort), Traefik's `log.otlp`, `accessLog.otlp`,
+  namespace lists, `metrics.prometheus.entryPoint`, and the root
+  `service.additionalServices` map, Vault storage/service hosts (including
+  `server.service.port`) plus `server.standalone.config`, Velero
+  `configuration.repositoryMaintenanceJob`, and SigNoz
+  `clickhouse.service`/`clickhouse.image.tag`/`otelCollector.ports`.
+  Enumerate every evaluated call operand (not only the final string
+  argument), model
+  strict map/list/bool calls such as `hasKey`, `index`, `len`, `deepCopy`,
+  `set`, and `ternary`, retain explicit terminal `fail` conditions, and
+  keep receiver presence/type through direct selector guards.
+  `.host.enabled` dereferences `host`; only a construct such as `with
+  .host` makes its absence safe. Keep the verified scopes exact:
+  `airflowPodAnnotations` is dormant for an empty Airflow worker family,
+  Datadog `remoteConfiguration` when both consumers are disabled,
+  kube-state-metrics probe schemes behind `kubeRBACProxy`, Jenkins
+  `agent.args` behind `disableDefaultAgent`, and the named ingress-nginx
+  hosts behind their individual component gates. Require a `global` host
+  without closing its deliberately open contents.
+
+  **Navigated-receiver half CLOSED (forty-second round).** 33 of the 70 now
+  reject, every one helm-confirmed, with zero loosenings anywhere in the
+  root sweep. The claim was already being computed; redundancy was throwing
+  it away. Guard sets for one host are read as a DISJUNCTION, so an arm
+  refining another (`ce ∧ g1` beside `ce`) is absorbed exactly
+  (`absorb_subsumed_guard_sets`) — cilium's `cni` went from 47 arms to 3,
+  `eni` from 54 to 2 — and past the fanout cap the absent-abort CLAUSE now
+  narrows to the shortest arms instead of vanishing, since any subset of the
+  disjunction states a real (smaller) abort region. Only the clause narrows —
+  see the completeness round below for why the typing arm cannot, which is
+  not the reason first recorded here. One
+  correctness repair rode along: a `:=`-bound local is nil-SAFE for its own
+  hop — Go stores a pipeline result through
+  `reflect.ValueOf(value.Interface())`, which turns a nil interface into an
+  INVALID value that field access reads as zero — so `$preset :=
+  .Values.global.affinity` followed by `$preset.podAntiAffinity` renders
+  with `affinity` deleted (argo-cd, helm-verified), while a RANGE member
+  variable comes straight from `MapIndex` and keeps the abort.
+  The battery over every values path gives 151 flips, 145 of them justified
+  against helm plus `kubeconform -strict`; three of the six leftovers are
+  cert-manager probes the vendored copy cannot render at all. The three real
+  residuals: harbor's `persistence.persistentVolumeClaim.redis`/`.database`
+  deletions now render (the nil-safe local rule is right — `redis/statefulset.yaml`
+  binds `$redis :=` and reads `$redis.storageClass`) but emit a PVC with
+  empty `storageClass`/`storage` that strict validation rejects, which is a
+  provider-required-leaf claim and belongs to the F56/F62/F8 entry below;
+  and airflow's `global: null` is now rejected although helm drops a
+  not-a-table `global` with a warning instead of navigating it.
+  The 37 that remain: three are the TEST-TEMPLATE roots (grafana's and
+  fluent-bit's `testFramework`, kyverno's `test`) — helm RENDERS
+  `templates/tests/*` and only filters the output afterwards, so switching
+  the corpus harness to the shipped `include_tests` default closes them, but
+  kyverno's `test.nodeSelector`/`tolerations` then accept 21 values
+  `kubeconform -strict` rejects. Those values RENDER — the claim is about the
+  rendered sink, not about the guards a test template adds — so they belong
+  to the provider-required-leaf entry (F56/F62/F8) below, not here; the
+  forty-third round corrected that attribution. The other 34 are NOT this mechanism:
+  14 typed-parameter calls
+  (`wrong type for value; expected map[string]interface {}`/`bool`,
+  `invalid value; expected string` — cilium `k8s`/`k8sNetworkPolicy`/
+  `maglev`/`sctp`, nats' four `nats.defaultValues` tables, velero
+  `configMaps`, nack and external-dns `namespaced`, airflow
+  `multiNamespaceMode`, harbor `logLevel`, oauth2-proxy `httpScheme`),
+  4 strict collection calls (`len of nil pointer`, `index of untyped nil`,
+  `deepCopy` on a zero value), 5 YAML-sink text failures (the F19/F73/F76
+  entry below), 1 explicit `fail` (bitnami-redis `architecture`), 1 dotted
+  root key (grafana's literal `grafana.ini`, "can't evaluate field paths in
+  type string"), and 9 nil-pointer sites the navigated-host lane still
+  cannot reach: istiod's root rewrite and signoz' `global` have their own
+  entries, grafana `route` needs `tpl`-program evaluation, datadog `fips`
+  and dict-config `podDisruptionBudget` navigate through a helper argument
+  rather than a values path, nats `promExporter` is read only inside its own
+  truthiness gate, traefik `log` needs an `and` operand's `not` decoded
+  exactly (attempted and REVERTED in the forty-second round — the exact
+  decode turned previously-approximate captures into guarded member-host
+  arms, which emptied declared-mapping bases across airflow, argo-cd, cilium
+  and datadog; the forty-third round confirmed that emptying is CORRECT for a
+  genuinely guarded-only host, so this needs its own adjudication of the
+  111 airflow flips rather than a fix to base classification), and
+  kube-prometheus-stack's `defaultRules`/`windowsMonitoring` sit behind
+  `semverCompare` against `.Capabilities.KubeVersion` — the accepted
+  approximate-guard limitation, though a structural evaluation of
+  `semverCompare` at the configured target version would close them.
+
+- **F56/F62/F8/F80/F98 — provider contracts still lose required leaves
+  and nested/helper payloads.** The remaining losses are bounded and have
+  live/dormant controls:
+
+  - Airflow's rerooted worker merge accepts
+    `podDisruptionBudget.config.maxUnavailable={bad: 7}` and
+    `hpa.metrics=[{bogus: 7}]` when live; strict PDB/HPA schemas reject
+    them. Disabled components render, and set-only activation reproduces
+    the live failure.
+  - Bitnami Redis master/headless Services accept malformed
+    `sessionAffinityConfig`, numeric `externalIPs`, and a string
+    `master.service.ports.redis`; strict Service schemas reject them.
+    A valid session-affinity object, string `externalIPs` member, and
+    integer port pass. `master.count=0` makes the master Service payloads
+    dormant; Sentinel selection specifically makes the master port dormant
+    in the headless Service. Equivalent replica/PostgreSQL paths are
+    already constrained.
+  - Direct provider-required leaves remain optional at Sealed Secrets
+    `service.port`, `metrics.service.port`, `rbac.clusterRoleName`;
+    Surveyor `service.port`; Trivy Operator `service.metricsPort`;
+    Velero `rbac.clusterAdministratorName`; Zalando
+    `configLoggingRestApi.api_port`; Traefik `persistence.name/path`,
+    `ports.metrics.port`; Vault `injector.port`, storage
+    `mountPath`/`size`, and service `targetPort`; and SigNoz probe ports,
+    persistence size, and service ports. Deletion renders explicit
+    null/invalid provider slots.
+  - Vault helper splices still admit numeric annotation/label values
+    at injector/webhook/server service-account and data-storage payloads.
+    Metrics Server `tmpVolume` deletion is a fragment-presence analogue:
+    `toYaml nil` follows a fixed sequence marker and makes Helm's YAML parse
+    fail. Traefik's whole `livenessProbe`/`readinessProbe` deletions are the
+    provider-side version: unconditional `toYaml nil` adds an invalid
+    `Error:` member to otherwise optional probe objects.
+
+  Preserve the fixed Sealed/Tempo/Trivy/SigNoz/Zalando payload cases and
+  Airflow's empty-worker behavior while carrying provider item/field
+  identity, closure, and presence through rerooted merges and helper
+  splices.
+
+- **F30/F76/F82/F89/F100 — `tpl` needs result-aware semantics and quoted
+  placement.** Action-free input is the identity, so text placed inside
+  literal double quotes must exclude an unescaped `"`. Current schemas
+  accept `a"b` and Helm fails YAML parsing at Karpenter
+  `settings.clusterName`/endpoint/CA bundle, KEDA `clusterName`,
+  Prometheus image repository/tag, Jenkins `persistence.storageClass`,
+  kube-prometheus-stack Prometheus/Alertmanager `externalUrl`, and OAuth2
+  Proxy `image.registry`; the Jenkins ingress `tpl ... | quote` control is
+  safe and must remain open.
+
+  A closed user program is also statically decidable. Current schemas
+  accept programs that render unsafe YAML (Grafana `envFromSecret`,
+  External DNS secret `mountPath`), an empty required value (AWS LBC and
+  Karpenter cluster names), a provider-invalid argument (AWS LBC), or a
+  regex-invalid value (Datadog cluster name), while literal-output
+  controls pass. External DNS's unsafe `mountPath` program is correctly
+  dormant when `secretConfiguration.enabled=false`. Chart-authored default
+  programs also carry exact dependencies: deleting Airflow
+  `multiNamespaceMode` or Grafana `route` aborts only while the
+  corresponding default program is selected.
+  Evaluate a bounded parser-backed subset of closed programs and apply
+  requiredness, regex/provider, and caller-slot facts to the result;
+  genuinely context-dependent programs remain open by design.
+
+- **F65 — Istiod's effective-root reconstruction drops the source-root
+  presence contract.** Deleting `_internal_defaults_do_not_set` passes the
+  schema. `zzz_profile.yaml:24-56` binds and removes that source before
+  rebuilding `.Values`, after which rendering aborts on missing
+  `global.resourceScope`; the default document renders. Extend effective
+  root analysis to preserve the pre-rewrite source requirement without
+  weakening the already-fixed `pilot` overlay contracts.
+
+- **F19/F73/F76 — transformed and file-backed text loses the sink's YAML
+  language.** Sealed Secrets emits
+  `printf "%s/%s:%s" .Values.image.*` into an unquoted `image:` slot;
+  deleting `image.registry`, or setting it to a number, boolean, or list,
+  passes the schema but produces Go `%!s(...)` diagnostics and invalid
+  YAML. Normal strings pass. The root sweep found sibling manifestations:
+  Airflow's `airflowHome`/`defaultAirflowRepository` format to invalid raw
+  text, Cilium's file-backed Envoy config fails inside `tpl` when `ipv6` is
+  deleted, and Fluent Bit serializes deleted volume inputs into invalid
+  structure. Project format-argument and serialized/file-backed result
+  domains through the actual sink placement; do not copy the output kind
+  blindly back onto inputs.
 
 ## Rejected (invalid or won't fix by design)
 

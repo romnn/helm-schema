@@ -7289,6 +7289,31 @@ to be deliberate policy.
   round (F93 needs first-iteration accumulator evaluation for soundness;
   F104 is the largest remaining item); both stay In progress.
 
+### Residuals the battery measured
+
+The full probe battery over every values path gives 151 flips (137
+tightenings, 14 loosenings). Adjudicated with helm plus `kubeconform
+-strict`, 145 are justified and 6 are not — three of those six are
+cert-manager probes the vendored copy cannot render at all, so they are
+unadjudicable rather than wrong. The three real ones:
+
+- **harbor `persistence.persistentVolumeClaim.redis` and `.database`,
+  deleted (2).** `redis/statefulset.yaml` binds
+  `{{- $redis := .Values.persistence.persistentVolumeClaim.redis -}}` and
+  then reads `$redis.storageClass`/`$redis.size`, so the nil-safe local rule
+  is exactly right: helm RENDERS with the key deleted. What it renders is a
+  PVC with empty `storageClass` and `storage`, which `kubeconform -strict`
+  rejects. The old rejection was correct about the outcome and wrong about
+  the mechanism — it claimed an abort that does not happen. Catching this
+  state again needs a provider-required-leaf claim, which is the F56/F62/F8
+  lane, not this one.
+- **airflow `global: null` (1).** The absence clause deliberately counts an
+  explicit null as absent, which is right wherever the read navigates. Helm
+  does not navigate a null `global`: it drops the key with "skipped value
+  for global: Not a table" and renders from the chart's own table. One
+  probe, one chart, and the same nil-vs-not-a-table distinction that makes
+  `global` special everywhere else.
+
 ### Validation
 
 All 55 chart-corpus fixtures, 18 IR corpus fixtures, and 20 gen corpus
@@ -10386,3 +10411,300 @@ zero schema drift, then `check:local` exit 0). Production source: +74/-3
 lines in `fragment_eval/eval.rs`, +31/-7 in `fragment_eval/holes.rs`, +15 in
 `eval_effect.rs`, +6 in `fragment_eval/summary.rs`, +1 in
 `fragment_expr_eval/bound_helper_resolver.rs`.
+
+## Navigated-host round (2026-07-27, forty-second round)
+
+The forty-first round was an audit, not a fix: it reopened five families in
+the ledger and measured the broadest of them by deleting every top-level
+default the generated schema still permits. This round closes that family's
+navigated-receiver half.
+
+### The instrument
+
+`rootsweep` deletes each top-level key from a chart's composed defaults
+(Helm's map-chain null deletion, matching `chart_instances::with_override`)
+and reports whether the generated schema still accepts the result: 1,848
+probes, 1,127 schema-accepted. Adjudicating those with
+`helm template --skip-schema-validation` on the sparse override — excluding
+cert-manager and the library-only chart, plus the three charts whose bare
+defaults do not render at all (aws-load-balancer-controller, karpenter,
+loki) — leaves 1,094 probes, of which **70 across 26 charts abort Helm**.
+That reproduces the audit's number exactly, so the instrument is the same
+one the ledger entry was written from.
+
+Classified by the innermost Go error, the 70 are 45 `nil pointer evaluating
+interface {}.<field>`, 15 typed-parameter and strict-collection calls, 5 YAML
+parse failures at a text sink, 1 explicit `fail`, and the rest one-offs.
+
+### The claim was computed and then thrown away
+
+`record_member_access_captures` already records, for every `.Values.a.b`
+read, that each nonterminal prefix must exist and host members; the signal
+builder already folds those into one absent-abort terminal clause per path.
+Nothing was missing from the analysis. What was missing was that the FOLD
+gave up:
+
+    let capped = |sets| !sets.contains(&Vec::new()) && sets.len() > FANOUT;
+    if capped(&absent_abort_sets) { continue; }
+
+Charts reach one host from many nested branches, so the arm count is
+dominated by redundancy rather than by real alternatives. cilium recorded
+**47** distinct guard sets for `cni` and **54** for `eni`; the cap is 8, so
+both — and eleven more cilium hosts — silently claimed nothing while
+`helm template` aborted on every one of them.
+
+The guard sets are a DISJUNCTION of conjunctions, where `A ∨ (A ∧ B) ≡ A`.
+An arm carrying a superset of another arm's guards holds nowhere that arm
+does not, so dropping it is exact rather than an approximation
+(`absorb_subsumed_guard_sets`). With that reduction cilium's 47 arms become
+3, its 54 become 2, and every one of its hosts clears the cap.
+
+Past the cap the absent-abort CLAUSE now narrows instead of vanishing. Each
+arm is on its own a state where the access runs, so any subset of the
+disjunction states a real (smaller) abort region, while dropping them all
+states nothing. The kept subset is the SHORTEST arms — fewer conjuncts cover
+more documents — with the arm order breaking ties so the choice stays
+deterministic.
+
+Only the clause may do that. The typing ARM built from the same sets keeps
+the old abstain-past-the-cap rule, because its guards do double duty: they
+also decide, through `relax_untyped_host`/`preserve_base_schema`, whether
+the emitted base keeps its own typing. A narrowed arm set no longer
+characterizes where the host is read, so relaxing the base against it would
+open states nothing accounts for. The clause has no such second effect — it
+is a bare `then: false` at the root.
+
+### Test templates are rendered templates — but not yet pinned
+
+The corpus harness generates with `include_tests: false`, which is not the
+shipped default. Helm RENDERS `templates/tests/*` and only filters those
+documents out of the output afterwards, so a nil dereference there aborts
+the whole release: grafana's `testFramework` deletion fails inside
+`grafana/templates/tests/test.yaml`, and kyverno's `test` and fluent-bit's
+`testFramework` fail the same way. Switching the harness over closes those
+three, and it was tried — but a test template's guarded arms strip the
+declared mapping typing its base was relying on, and kyverno's
+`test.nodeSelector` and `test.tolerations` then accept 21 values whose
+rendered manifest `kubeconform -strict` rejects. That is the same
+`relax_untyped_host` interaction that sent the short-circuit decode back, so
+the switch waits for the round that fixes it. Three of the 70 stay open for
+that reason and are recorded as such.
+
+### A `:=`-bound local is nil-safe for its own hop
+
+Making the claim visible immediately found a place where it was wrong.
+argo-cd renders with `global.affinity` deleted although
+`_common.tpl` does
+
+    {{- $preset := .context.Values.global.affinity -}}
+    {{- if (eq $preset.podAntiAffinity "soft") }}
+
+Go's `evalPipeline` stores a command result through
+`reflect.ValueOf(value.Interface())`, and `reflect.ValueOf(nil)` is an
+INVALID `reflect.Value`; `evalField` returns zero for an invalid receiver
+instead of erroring. So navigating a `:=`-bound local is nil-safe for the
+variable's own hop. Verified against helm v4.2.3 on a scratch chart:
+
+| shape | verdict |
+| --- | --- |
+| `$v := .Values.host` then `$v.leaf`, `host` deleted | RENDER |
+| `.Values.host.leaf` directly, `host` deleted | ABORT |
+| `$v := .Values.host` then `$v.leaf`, `host: 7` | ABORT (`can't evaluate field leaf in type float64`) |
+| `$v := .Values.host` then `$v.a.b`, `host: {}` | ABORT (`nil pointer evaluating interface {}.b`) |
+| `range $p := .Values.providers` then `$p.name`, member `false` | ABORT |
+
+That is exactly the nil-safe grouped-receiver shape the codebase already
+models for `(.Values.x).member`, so a pipeline-bound local now routes
+through `record_grouped_member_access_captures`. A RANGE member variable is
+set straight from `MapIndex` with no pipeline unwrap, so it keeps the direct
+chain's abort — `EvalEnv::pipeline_bound_locals` carries the distinction the
+flat locals map had lost.
+
+### Flips
+
+33 of the 70 root deletions now reject. Every one is a confirmed
+`helm template` abort, and the root sweep has **zero** loosenings and zero
+tightenings outside the adjudicated 70:
+
+- cilium (14): `alibabacloud`, `cni`, `daemon`, `debug`, `egressGateway`,
+  `eni`, `etcd`, `gke`, `image`, `ipam`, `ipv4`, `ipv6`,
+  `l2announcements`, `l2podAnnouncements`
+- minio (3): `etcd`, `oidc`, `persistence`; grafana (2): `env`, `global`;
+  airflow (2): `enableBuiltInSecretEnvVars`, `ports`;
+  datadog (2): `existingClusterAgent`, `remoteConfiguration`
+- one each: bitnami-redis `useExternalDNS`, coredns `serviceAccount`,
+  external-secrets `global`, fluent-bit `hotReload`, flux2 `multitenancy`,
+  kube-prometheus-stack `kubernetesServiceMonitors`,
+  kube-state-metrics `global`, metallb `tls`, vault `ui`, velero `kubectl`
+
+### What the round deliberately did not take
+
+An attempt to decode a short-circuit operand's truthiness exactly (`not`,
+`eq`, nested `and`/`or`) instead of falling straight to an approximation
+closed traefik's `log` as well — but it also turned previously-approximate
+captures into guarded member-host arms, and those relax declared-mapping
+typing through `relax_untyped_host`/`preserve_base_schema`. The probe
+battery showed the cost immediately (airflow alone gained 111 loosenings,
+starting with `config.logging: 7`, which helm aborts on with `range can't
+iterate over 7`). The decode is right and the interaction is the thing that
+needs adjudicating, so it was reverted whole rather than landed with a
+known regression.
+
+The subsumption reduction itself is also scoped to the clause, for a reason
+the probe battery found rather than the design predicted. The typing ARM
+reads its guards a SECOND way: `relax_untyped_host` asks whether they all
+scope the read by the host's own presence, and collapsing an `AnyOf` down to
+one surviving arm silently answers yes. Datadog's
+`clusterChecksRunner.rbac` and `datadog.discovery.serviceMap` lost their
+object typing that way while `helm template` still aborts with "can't
+evaluate field dedicated in type interface {}", and argo-cd, cilium,
+airflow and bitnami-postgresql followed with a long tail of dormant-host
+relaxations. Feeding the typing arm the raw factored sets keeps every host's
+typing exactly as it was; the clause, which is the only thing the 36
+tightenings come from, keeps the full reduction.
+
+One expectation moved with the round and was re-adjudicated rather than
+updated to match: surveyor's intermediate-secret clause now anchors at
+`/config` instead of the document root, because subsumption leaves it with
+guards that share that ancestor — and every one of those guards already
+requires `config`, so the nested arm cannot pass vacuously the way a
+guard-free clause could.
+
+### Validation
+
+939 unit tests green, 275 integration tests green, `task lint` exit 0
+(the same pre-existing ast-grep warning in `serialization.rs`) and
+`cargo fmt --all --check` clean. Fixtures adopted from ONE clean dump run of
+the final build, 47 moved. The ci-values sweep is unchanged at 4 rejections
+over 116 files. The luup2 downstream gate passes: `cargo install`, then
+`schema:generate:all FORCE=1` with ZERO schema drift, then `check:local`
+exit 0.
+
+Three focused gen reproducers pin the mechanism, each verified to FAIL on
+the pre-fix behaviour: `redundant_branch_refinements_keep_one_host_claim`
+(ten refinements of one component gate collapse to that gate),
+`host_claims_past_the_arm_cap_keep_a_bounded_subset` (ten independent gates,
+live rejects and dormant accepts), and
+`assigned_locals_are_nil_safe_for_their_own_hop` (all four shapes of the
+variable-vs-direct-chain table above).
+
+## Arm-set completeness round (2026-07-27, forty-third round)
+
+A follow-up to the navigated-host round with one question: finish that fix by
+letting the TYPING arm read the same reduced guard sets the absent-abort
+clause reads. The ledger recorded a blocker for it — "`relax_untyped_host`
+strips declared typing under a guarded member-host arm" — measured three
+independent ways. This round establishes that the blocker as recorded does
+not exist, and that two of its three measurements belong to other families.
+
+### It is not `relax_untyped_host`
+
+Instrumenting `collect_conditional_schemas` for datadog's
+`clusterChecksRunner.rbac` shows `all_member_hosts_presence_scoped = false`,
+so `relax_untyped_host` never fires there and `relax_host_object_type` is
+never called. The switch is `preserve_base_schema`, and specifically the
+`!is_empty_schema(...)` conjunct inside
+`resolved_schema_admits_fail_requirement_domain`: a pure HOST — one whose
+shape is known only from its descendants — has an empty resolved schema, so
+that helper answers "does not admit", `preserve_base_schema` goes false, the
+path becomes a guarded-only conditional target, and `BaseOwner::Empty`
+replaces its base.
+
+### That conjunct is load-bearing, not a defect
+
+Removing it (so an empty schema admits everything, which is what an empty
+schema means) produces 7,025 acceptance flips across 41 charts. Spot checks
+kill it immediately: `helm template` RENDERS airflow's
+`pgbouncer.podDisruptionBudget: 7`, `otelCollector.service: 7` and
+`dags.gitSync.securityContexts: 7`. Emptying a guarded-only host's base is
+the correct behaviour — the host may legitimately be a scalar in every state
+its guards leave dormant.
+
+### What actually broke datadog was the reduction itself
+
+`absorb_subsumed_guard_sets` is exact (`A ∨ (A∧B) ≡ A`), and applied to
+`clusterChecksRunner.rbac` it folds 47 arms into 1. Exactness is not the
+issue; arm COUNT is. Crossing `MEMBER_ACCESS_GUARD_FANOUT` drops the typing
+arm entirely, and a path with no typing arm is not a conditional target at
+all, so its base keeps the structural `type: object` its descendants
+materialize. Reducing the count therefore MINTS an arm where none existed,
+and the arm's existence is what empties the base. Datadog's prior
+correctness on `rbac: 7` was an accident of the cap.
+
+The state the surviving arm fails to cover is real: `agent-clusterchecks-rbac.yaml`
+line 1 reads `.Values.clusterChecksRunner.rbac.dedicated` as the second
+operand of `or`, and the first operand is
+`eq (include "should-enable-cluster-check-workers" .) "true"`. The guard
+`¬(eq …)` does not decode, so `record_fail_conjunction` abandons the whole
+capture and that navigation contributes no arm. Short-circuit decoding
+itself is already correct — a probe over
+`or .Values.other.flag .Values.host2.flag` scopes `host2` by
+`¬Truthy(other.flag)` and leaves `other` unconditional.
+
+### The principled repair over-rejects by 9:1
+
+The sound-looking fix is a completeness bit: mark a host whenever one of its
+navigations produced no arm (undecodable conjunct, `$local` leak,
+approximation, fan-out overflow), and refuse to let an incomplete arm set
+empty the base — arms may narrow, but must not be read as an enumeration.
+Implemented across `ContractValuePathFacts`, `record_fail_conjunction`,
+`record_member_access_capture` and `preserve_base_schema`, it hits every
+target case: datadog keeps `type: object`, airflow's PDB stays untyped,
+signoz's zookeeper metrics test passes, and the root-deletion sweep shows
+zero flips in either direction.
+
+It is still wrong. The corpus battery reports 1,703 acceptance flips, all
+tightenings, and adjudicating one representative per (chart, path) gives:
+
+| verdict | rows |
+| --- | --- |
+| RENDERS-SKIPPED | 71 |
+| RENDERS-VALID | 51 |
+| HELM-ABORT | 12 |
+| STRICT-REJECT | 4 |
+
+122 of 138 are documents `helm template` renders. The abstention that
+dominates is `approx-conjunction` (164 of 262 marks), and it covers exactly
+the cases where a host IS genuinely guarded-only — argo-cd's
+`dex.metrics.serviceMonitor`, cilium's `envoy.securityContext.seLinuxOptions`.
+Preserving the base there asserts `type: object` unconditionally on the
+strength of "we lost one navigation", which is a guess dressed as a claim.
+Reverted whole.
+
+### Two of the three recorded measurements were other families
+
+- kyverno's `include_tests` failures are `test.nodeSelector`/`tolerations`
+  values that RENDER but whose manifest `kubeconform -strict` rejects. That
+  is a claim about the rendered sink, not about guards — the provider
+  required-leaf family owns it. The comment in `schema_roundtrip.rs` now
+  says so.
+- the short-circuit `not`/`eq` operand decode cost 111 airflow loosenings
+  through `config.logging: 7` ("range can't iterate over 7"), which is the
+  `Iterable` lane, not member-host.
+
+### What did land
+
+- Four `crates/helm-schema-gen/tests/fixtures/` schemas were left stale by
+  the navigated-host round's clause absorption:
+  `bitnami_redis_networkpolicy`, `bitnami_redis_prometheusrule`,
+  `cert_manager_service`, `signoz_zookeeper_statefulset`. `task
+  test:integration` failed on them. Each diff is the absorption rewriting a
+  `then: false` terminal clause into an equivalent shorter form
+  (`A ∨ (A∧B)` → `A`) or reordering the conjuncts that survive; everything
+  outside those clauses is byte-identical in three of the four. A purpose-built
+  old-vs-new prober over 12,936 probe documents (delete / scalar / string /
+  bool / null / empty-map / empty-list at every path to depth four of each
+  chart's composed defaults) reports **0 disagreements**, so the fixtures were
+  adopted as canonicalization.
+- `absorb_subsumed_guard_sets` and `bound_member_access_arms` now record the
+  real reason the reduction is clause-only — arm count moves base
+  classification — instead of the `relax_untyped_host` explanation, which was
+  wrong.
+
+### Validation
+
+939 unit tests, 497 integration tests (`task test:integration`), `task lint`
+and `cargo fmt --all --check` clean. The generator sources under
+`crates/helm-schema-gen/src` and `crates/helm-schema-core/src` carry no diff
+at all, so generation is byte-for-byte the navigated-host build already
+validated against luup2.
