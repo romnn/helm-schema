@@ -3487,16 +3487,24 @@ fn lowerable_conditional_guard_set(
     Some(guards)
 }
 
+/// The collection a wildcard merge layer iterates: everything before its
+/// first `*`. A layer spelled entirely concretely has none.
+fn wildcard_collection_path(layer: &str) -> Option<String> {
+    let segments: Vec<&str> = layer.split('.').collect();
+    let wildcard = segments.iter().position(|segment| *segment == "*")?;
+    let prefix = segments.get(..wildcard)?;
+    (!prefix.is_empty()).then(|| prefix.join("."))
+}
+
 /// Collapse per-layer spellings of one merged read out of an arm gate.
 /// A conjunction of `Truthy(layer.suffix)` guards sharing a suffix across
 /// two or more merge layers is the historic all-paths approximation of
 /// the merged member's truthiness: the merged value is truthy when ANY
 /// layer supplies it, so the conjunctive form under-fires on live
-/// renders. With every layer spelled concretely the group collapses to
-/// the exact-direction disjunction; a merge with wildcard layers
-/// (per-set members) cannot spell them at the document root, so the
-/// group drops instead — the arm then fires in some dormant states, the
-/// tolerated direction.
+/// renders. The group collapses to that disjunction, with a wildcard
+/// (per-set) layer contributing the non-emptiness of the collection it
+/// iterates — the strongest spelling the document root has for "some
+/// member could supply this".
 fn collapse_layered_truthy_gates(
     guards: Vec<ConditionalGuard>,
     layers: &[String],
@@ -3543,7 +3551,15 @@ fn collapse_layered_truthy_gates(
         .iter()
         .filter(|layer| !layer.split('.').any(|segment| segment == "*"))
         .collect();
-    let has_wildcard_layer = concrete_layers.len() != roots.len();
+    // A wildcard layer has no document-root spelling of its own, but a
+    // per-set member can only supply the merged value when the set
+    // collection HAS members, so the layer contributes that collection's
+    // non-emptiness. It is implied by every state the real layer holds in,
+    // which is what an arm gate needs.
+    let wildcard_collections: Vec<String> = roots
+        .iter()
+        .filter_map(|layer| wildcard_collection_path(layer))
+        .collect();
     let mut suffix_members: BTreeMap<&str, BTreeSet<usize>> = BTreeMap::new();
     for (index, guard) in guards.iter().enumerate() {
         let ConditionalGuard::Truthy { path } = guard else {
@@ -3568,15 +3584,18 @@ fn collapse_layered_truthy_gates(
             continue;
         }
         dropped.extend(members.iter().copied());
-        if !has_wildcard_layer {
-            let mut arms: Vec<ConditionalGuard> = members
+        let mut arms: Vec<ConditionalGuard> = members
+            .iter()
+            .filter_map(|&index| guards.get(index).cloned())
+            .collect();
+        arms.extend(
+            wildcard_collections
                 .iter()
-                .filter_map(|&index| guards.get(index).cloned())
-                .collect();
-            arms.sort();
-            arms.dedup();
-            replacements.push(ConditionalGuard::AnyOf(arms));
-        }
+                .map(|path| ConditionalGuard::Truthy { path: path.clone() }),
+        );
+        arms.sort();
+        arms.dedup();
+        replacements.push(ConditionalGuard::AnyOf(arms));
     }
     if dropped.is_empty() {
         return guards;
@@ -3893,6 +3912,15 @@ fn existential_member_guard(predicates: &[Predicate]) -> Option<ConditionalGuard
 /// The subset must never lower through a negation — `predicate_to_guard`'s
 /// `Not` arm keeps returning `None` for approximate inners.
 fn terminal_clause_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
+    // A range body runs exactly for a non-empty collection, and truthiness
+    // is that test everywhere the distinction can matter to a TERMINATING
+    // clause: the remaining truthy values (a string, a number, a bool) are
+    // the ones `range` refuses to iterate, so the render terminates at the
+    // range itself. Both readings of a truthy subject therefore terminate,
+    // which is what this clause claims.
+    if let Predicate::Guard(Guard::Range { path }) = predicate {
+        return Some(ConditionalGuard::Truthy { path: path.clone() });
+    }
     if let Predicate::Approximate { sound_subset, .. } = predicate
         && !sound_subset.is_empty()
     {

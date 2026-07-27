@@ -937,3 +937,165 @@ fn selection_chain_merge_layers_keep_the_has_key_gated_splice() {
         );
     }
 }
+
+/// A component gate spelled at every merge layer keeps the component's
+/// payload dormant. The merged `kerberosSidecar.enabled` read is truthy
+/// exactly when SOME layer supplies it, and the per-set layer has no
+/// document-root spelling — but a set can only supply it while the set
+/// collection has members, so the collection's non-emptiness stands in for
+/// that layer. Without it the whole layered group drops and the arm fires
+/// with no component gate at all, rejecting junk under a disabled
+/// component (airflow's kerberos sidecar and keda families).
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn dormant_component_gates_survive_their_wildcard_merge_layer() {
+    let helpers = indoc! {r#"
+        {{- define "test.containerSecurityContext" }}
+          {{- $ := last . }}
+          {{- $result := dict }}
+          {{- range . }}
+            {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "container") .securityContexts.container }}
+              {{- $result = .securityContexts.container }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+          {{- if $result }}
+            {{- toYaml $result | print }}
+          {{- else }}
+        runAsUser: {{ $.uid }}
+          {{- end }}
+        {{- end }}
+        {{- define "removeNilFields" -}}
+          {{- $newValues := dict -}}
+          {{- range $key, $val := . -}}
+            {{- if kindIs "map" $val -}}
+              {{- $nested := include "removeNilFields" $val | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $newValues $key $nested -}}
+              {{- end -}}
+            {{- else if not (kindIs "invalid" $val) -}}
+              {{- $_ := set $newValues $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $newValues -}}
+        {{- end -}}
+        {{- define "workersMergeValues" -}}
+          {{- $inputMap := index . 0 -}}
+          {{- $overwriteMap := index . 1 -}}
+          {{- $sectionName := index . 2 -}}
+          {{- $orBoolean := index . 3 -}}
+          {{- $outputMap := dict -}}
+          {{- $fullOverwrite := list "annotations" "securityContext" "resources" -}}
+          {{- range $key, $val := $inputMap -}}
+            {{- if and (hasKey $overwriteMap $key) (has $key $fullOverwrite) -}}
+              {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+            {{- else if and (hasKey $overwriteMap $key) (kindIs "map" $val) -}}
+              {{- $nested := include "workersMergeValues" (list $val (get $overwriteMap $key) $key $orBoolean) | fromYaml -}}
+              {{- if gt (len $nested) 0 -}}
+                {{- $_ := set $outputMap $key $nested -}}
+              {{- end -}}
+            {{- else if and (hasKey $overwriteMap $key) (not (and (kindIs "slice" (get $overwriteMap $key)) (eq (len (get $overwriteMap $key)) 0))) -}}
+              {{- if and (kindIs "bool" $val) (has $sectionName $orBoolean) -}}
+                {{- $_ := set $outputMap $key (or $val (get $overwriteMap $key)) -}}
+              {{- else -}}
+                {{- $_ := set $outputMap $key (get $overwriteMap $key) -}}
+              {{- end -}}
+            {{- else -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- range $key, $val := $overwriteMap -}}
+            {{- if not (hasKey $inputMap $key) -}}
+              {{- $_ := set $outputMap $key $val -}}
+            {{- end -}}
+          {{- end -}}
+          {{- toYaml $outputMap -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $globals := deepCopy . -}}
+        {{- $filteredCelery := include "removeNilFields" .Values.workers.celery | fromYaml -}}
+        {{- $mergedWorkers := include "workersMergeValues" (list .Values.workers $filteredCelery "" list) | fromYaml -}}
+        {{- $_ := unset $mergedWorkers "celery" -}}
+        {{- $workerSets := .Values.workers.celery.sets | default list -}}
+        {{- if .Values.workers.celery.enableDefault -}}
+          {{- $workerSets = concat (list (dict "name" "default")) $workerSets -}}
+        {{- end -}}
+        {{- range $workerSet := $workerSets -}}
+        {{- $workers := include "workersMergeValues" (list $mergedWorkers $workerSet "" list) | fromYaml -}}
+        {{- $_ := set $globals.Values "workers" $workers -}}
+        {{- with $globals -}}
+        ---
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test-{{ $workerSet.name }}
+        spec:
+          template:
+            spec:
+              containers:
+                - name: main
+        {{- if .Values.workers.kerberosSidecar.enabled }}
+                - name: kerberos
+                  securityContext: {{ include "test.containerSecurityContext" (list .Values.workers.kerberosSidecar .Values) | nindent 10 }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r"
+        uid: 50000
+        workers:
+          kerberosSidecar:
+            enabled: false
+            securityContexts:
+              container: {}
+          celery:
+            enableDefault: true
+            sets: []
+            kerberosSidecar:
+              enabled: ~
+              securityContexts:
+                container: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let junk = serde_json::json!({ "securityContexts": { "container": { "runAsUser": "oops" } } });
+    for (overrides, want, label) in [
+        (
+            serde_json::json!({ "workers": { "kerberosSidecar": junk } }),
+            true,
+            "every layer's gate is off, so the payload never renders",
+        ),
+        (
+            serde_json::json!({ "workers": {
+                "kerberosSidecar": { "enabled": true,
+                    "securityContexts": { "container": { "runAsUser": "oops" } } } } }),
+            false,
+            "the base layer's gate reaches the rendered container context",
+        ),
+        (
+            serde_json::json!({ "workers": {
+                "kerberosSidecar": junk,
+                "celery": { "kerberosSidecar": { "enabled": true } } } }),
+            false,
+            "the celery layer's gate reaches it too",
+        ),
+        (
+            serde_json::json!({ "workers": {
+                "kerberosSidecar": junk,
+                "celery": { "sets": [
+                    { "name": "heavy", "kerberosSidecar": { "enabled": true } }
+                ] } } }),
+            false,
+            "a per-set layer can only supply the gate while sets has members",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "dormant component gate ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
