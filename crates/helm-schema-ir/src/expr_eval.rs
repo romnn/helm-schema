@@ -71,6 +71,28 @@ fn direct_values_identity(value: &AbstractValue) -> Option<String> {
     }
 }
 
+/// The values identity a helper's CALL DICT binds to the first segment of a
+/// dot-relative access, with the segments navigated from it.
+///
+/// A dict has no identity of its own — reading `.ctx` says nothing about the
+/// root context — but the value it binds does: `include "x" (dict "config"
+/// .Values.pdb)` makes the body's `.config.enabled` read
+/// `.Values.pdb.enabled`, so a deleted `pdb` binds the member to nil and the
+/// navigation aborts exactly like the direct spelling. Only a member bound
+/// to a raw values path qualifies, and only where the body navigates PAST
+/// it: `.config` alone reads nil without aborting.
+fn call_dict_member_identity(path: &[String], env: &EvalEnv) -> Option<(String, Vec<String>)> {
+    let (head, tail) = path.split_first()?;
+    if tail.is_empty() {
+        return None;
+    }
+    let bound = env
+        .dot
+        .as_ref()?
+        .apply_to_path(std::slice::from_ref(head))?;
+    Some((direct_values_identity(&bound)?, tail.to_vec()))
+}
+
 /// Record that `segments` was reached by Go field access: every nonterminal
 /// prefix at or past `accessed_from` must exist and host members whenever
 /// the surrounding control flow executes the access. The captures ride the
@@ -211,10 +233,17 @@ pub(crate) fn eval_expr_with_helper_calls(
             let mut result = value
                 .map(EvalResult::from_value)
                 .unwrap_or_else(EvalResult::none);
-            if let Some(base) = dot_base {
+            // What the access navigates: the dot's own values identity when
+            // it has one, otherwise the identity a CALL DICT binds to the
+            // first segment.
+            let access = match dot_base {
+                Some(base) => Some((base, path.clone())),
+                None => call_dict_member_identity(path, env),
+            };
+            if let Some((base, navigated)) = access {
                 let mut segments = helm_schema_core::split_value_path(&base);
                 let accessed_from = segments.len();
-                segments.extend(path.iter().cloned());
+                segments.extend(navigated);
                 record_member_access_captures(&segments, accessed_from, env, &mut result.effects);
             }
             result

@@ -31,22 +31,67 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "ingress": {
-            "anyOf": [
+        "anyOf": [
+          {
+            "properties": {
+              "ingress": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
+                "properties": {
+                  "ingress": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/helm-truthy"
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
               }
             ]
           }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -64,7 +109,6 @@
   ],
   "properties": {
     "ingress": {
-      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -164,21 +208,32 @@
           }
         }
       ],
-      "properties": {
-        "className": {},
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "className": {},
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             }
-          ]
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
-      }
+      ]
     },
     "podDisruptionBudget": {}
   },

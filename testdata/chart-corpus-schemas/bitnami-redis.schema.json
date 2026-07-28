@@ -22602,6 +22602,107 @@
             "allOf": [
               {
                 "properties": {
+                  "global": {
+                    "properties": {
+                      "compatibility": {
+                        "properties": {
+                          "omitEmptySeLinuxOptions": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "omitEmptySeLinuxOptions"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "compatibility"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "containerSecurityContext": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerSecurityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema272"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
                   "metrics": {
                     "properties": {
                       "containerSecurityContext": {
@@ -34597,6 +34698,88 @@
     {
       "if": {
         "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "compatibility": {
+                        "properties": {
+                          "omitEmptySeLinuxOptions": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "omitEmptySeLinuxOptions"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "compatibility"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "replica": {
+                    "properties": {
+                      "podSecurityContext": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podSecurityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "replica"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema272"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
           {
             "allOf": [
               {

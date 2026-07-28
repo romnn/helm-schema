@@ -267,28 +267,40 @@ fn fail_branches_bind_validator_requirements() {
             true,
             "null tag takes the default",
         ),
+        // The helper's own call dict binds `image` to `.Values.image`, so
+        // its body's `.image.tag` demands the key of every coalesced
+        // document: the rows below isolate the plugin and annotation
+        // validators by keeping it.
         (
-            serde_json::json!({ "plugins": { "bad": 7 } }),
+            serde_json::json!({ "plugins": { "ok": { "moduleName": "m" } } }),
+            false,
+            "a deleted image aborts the helper's own navigation",
+        ),
+        (
+            serde_json::json!({ "image": { "tag": "v1" }, "plugins": { "bad": 7 } }),
             false,
             "scalar plugin fails",
         ),
         (
-            serde_json::json!({ "plugins": { "bad": {} } }),
+            serde_json::json!({ "image": { "tag": "v1" }, "plugins": { "bad": {} } }),
             false,
             "plugin without moduleName fails",
         ),
         (
-            serde_json::json!({ "plugins": { "ok": { "moduleName": "m" } } }),
+            serde_json::json!({
+                "image": { "tag": "v1" },
+                "plugins": { "ok": { "moduleName": "m" } }
+            }),
             true,
             "complete plugin renders",
         ),
         (
-            serde_json::json!({ "annotations": { "bad": 7 } }),
+            serde_json::json!({ "image": { "tag": "v1" }, "annotations": { "bad": 7 } }),
             false,
             "non-string annotation fails",
         ),
         (
-            serde_json::json!({ "annotations": { "ok": "v" } }),
+            serde_json::json!({ "image": { "tag": "v1" }, "annotations": { "ok": "v" } }),
             true,
             "string annotation renders",
         ),

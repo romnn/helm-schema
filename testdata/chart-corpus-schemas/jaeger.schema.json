@@ -10601,24 +10601,6 @@
           {
             "additionalProperties": {},
             "properties": {
-              "spark": {
-                "additionalProperties": {},
-                "description": "https://github.com/jaegertracing/spark-dependencies",
-                "properties": {
-                  "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
               "storage": {
                 "additionalProperties": {},
                 "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
@@ -10639,6 +10621,99 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "spark": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "spark"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "spark": {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "digest": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "digest"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "spark"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "spark": {
+            "additionalProperties": {},
+            "description": "https://github.com/jaegertracing/spark-dependencies",
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
     {

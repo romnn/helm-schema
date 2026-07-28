@@ -1234,3 +1234,62 @@ fn root_scoped_with_navigates_the_document_it_rebinds() {
         );
     }
 }
+
+/// A helper called with a CALL DICT navigates its members' identities: in
+/// `include "x" (dict "config" .Values.pdb)` the body's `.config.enabled`
+/// reads `.Values.pdb.enabled`, and a deleted `pdb` binds the member to nil,
+/// which aborts with "nil pointer evaluating interface {}.enabled" exactly
+/// like the direct spelling would.
+///
+/// The dict itself still carries no identity — reading `.ctx` says nothing
+/// about the root context — so only a member whose bound VALUE is a raw
+/// values path contributes a host claim, and only where the body navigates
+/// PAST that member.
+#[test]
+fn call_dict_members_navigate_the_paths_they_bind() {
+    let helpers = indoc! {r#"
+        {{- define "chart.pdb" -}}
+        {{- if .config.enabled }}
+        apiVersion: policy/v1
+        kind: PodDisruptionBudget
+        metadata:
+          name: pdb
+        spec:
+          minAvailable: {{ .config.minAvailable }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- include "chart.pdb" (dict "ctx" $ "config" .Values.pdb) }}
+    "#};
+    let values_yaml = indoc! {"
+        pdb:
+          enabled: false
+          minAvailable: 1
+        other: keep
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "pdb": { "enabled": false, "minAvailable": 1 }, "other": "keep" }),
+            true,
+            "the coalesced defaults render",
+        ),
+        (
+            serde_json::json!({ "other": "keep" }),
+            false,
+            "the bound member reads nil and the navigation aborts",
+        ),
+        (
+            serde_json::json!({ "pdb": "scalar", "other": "keep" }),
+            false,
+            "a scalar cannot host the member the body reads",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "call-dict member navigation ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
