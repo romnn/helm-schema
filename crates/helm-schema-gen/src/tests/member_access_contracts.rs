@@ -1293,3 +1293,66 @@ fn call_dict_members_navigate_the_paths_they_bind() {
         );
     }
 }
+
+/// A `semverCompare` conjunct over the Capabilities-defaulted Kubernetes
+/// version decodes exactly, so the member access BEHIND it keeps its host
+/// claim. kube-prometheus-stack gates every rule file on
+/// `and (semverCompare ">=1.14.0-0" $v) (semverCompare "<9.9.9-9" $v)
+/// .Values.defaultRules.create`, and Go's `and` short-circuits, so the
+/// host is dereferenced exactly when both comparisons hold: with the
+/// override unset that is the policy version's own verdict, and a
+/// too-old override makes the deletion safe.
+#[test]
+fn semver_gated_member_access_keeps_its_host_claim() {
+    let src = indoc! {r#"
+        {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+        {{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ .Values.other | quote }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        kubeTargetVersionOverride: ""
+        defaultRules:
+          create: true
+        other: cm
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_kubernetes_version(src, "1.29.0"),
+        Some(values_yaml),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "kubeTargetVersionOverride": "",
+                "defaultRules": { "create": true },
+                "other": "cm",
+            }),
+            true,
+            "the coalesced defaults render",
+        ),
+        (
+            serde_json::json!({ "kubeTargetVersionOverride": "", "other": "cm" }),
+            false,
+            "the policy version satisfies both comparisons, so the host is read",
+        ),
+        (
+            serde_json::json!({ "kubeTargetVersionOverride": "1.10.0", "other": "cm" }),
+            true,
+            "a too-old override short-circuits the and before the host",
+        ),
+        (
+            serde_json::json!({ "kubeTargetVersionOverride": "1.30.0", "other": "cm" }),
+            false,
+            "an override that satisfies both comparisons reads the host again",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "semver-gated member access ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

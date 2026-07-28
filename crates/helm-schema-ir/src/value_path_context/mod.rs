@@ -10,7 +10,10 @@ use helm_schema_core::Predicate;
 mod condition_predicate;
 mod path_resolution;
 
-pub(crate) use condition_predicate::{guard_value_is_truthy, predicate_any};
+pub(crate) use condition_predicate::{
+    capabilities_kube_version_selector, guard_value_is_truthy, predicate_any,
+    semver_constraint_predicate,
+};
 
 pub(crate) struct ValuePathContext<'a> {
     pub(crate) root_bindings: &'a HashMap<String, AbstractValue>,

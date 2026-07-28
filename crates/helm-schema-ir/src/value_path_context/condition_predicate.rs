@@ -4,6 +4,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::expr_eval::eval_expr;
+use crate::symbolic_local_state::KubeVersionSource;
 use crate::{Guard, GuardValue};
 use helm_schema_ast::type_is_schema_type;
 use helm_schema_core::Predicate;
@@ -2315,30 +2316,7 @@ impl ValuePathContext<'_> {
         };
         let source = self.kube_version_subject(subject)?;
         let policy = self.fragment_context.analysis_db.kubernetes_version()?;
-        let pattern = helm_schema_ast::semver_constraint_match_pattern(constraint)?;
-        let regex = regex::Regex::new(&pattern).ok()?;
-        let policy_matches = regex.is_match(policy);
-        Some(match source.override_path {
-            None => bool_predicate(policy_matches),
-            Some(path) => {
-                let truthy = Predicate::truthy_path(path.clone());
-                let matches = Predicate::from(Guard::MatchesPattern {
-                    path,
-                    pattern,
-                    templated: false,
-                });
-                if policy_matches {
-                    // A falsy override renders the (satisfying) policy
-                    // version; a truthy override must satisfy on its own.
-                    predicate_any(vec![
-                        truthy.negated(),
-                        Predicate::all(vec![truthy, matches]),
-                    ])
-                } else {
-                    Predicate::all(vec![truthy, matches])
-                }
-            }
-        })
+        semver_constraint_predicate(constraint, &source, policy)
     }
 
     fn kube_version_subject(
@@ -3300,6 +3278,41 @@ fn ancestor_chain_leaf(paths: &std::collections::BTreeSet<String>) -> Option<&st
     ordered.last().map(|path| path.as_str())
 }
 
+/// The condition under which `semverCompare CONSTRAINT SUBJECT` holds,
+/// where SUBJECT carries the analysis policy's Kubernetes `version` unless
+/// a truthy values-path override shadows it.
+///
+/// The comparison is a chart-level fact, not only a condition-lowering one:
+/// a short-circuit chain gates its later operands on it, so the same answer
+/// has to be available to the expression evaluator.
+pub(crate) fn semver_constraint_predicate(
+    constraint: &str,
+    source: &KubeVersionSource,
+    version: &str,
+) -> Option<Predicate> {
+    let pattern = helm_schema_ast::semver_constraint_match_pattern(constraint)?;
+    let policy_matches = regex::Regex::new(&pattern).ok()?.is_match(version);
+    let Some(path) = source.override_path.clone() else {
+        return Some(bool_predicate(policy_matches));
+    };
+    let truthy = Predicate::truthy_path(path.clone());
+    let matches = Predicate::from(Guard::MatchesPattern {
+        path,
+        pattern,
+        templated: false,
+    });
+    Some(if policy_matches {
+        // A falsy override renders the (satisfying) policy version; a
+        // truthy override must satisfy on its own.
+        predicate_any(vec![
+            truthy.negated(),
+            Predicate::all(vec![truthy, matches]),
+        ])
+    } else {
+        Predicate::all(vec![truthy, matches])
+    })
+}
+
 fn bool_predicate(value: bool) -> Predicate {
     if value {
         Predicate::True
@@ -3415,7 +3428,7 @@ pub(crate) fn guard_value_is_truthy(value: &GuardValue) -> bool {
 
 /// A `.Capabilities.KubeVersion.Version` / `.GitVersion` selector (also the
 /// `$.`-rooted spelling).
-fn capabilities_kube_version_selector(expr: &TemplateExpr) -> bool {
+pub(crate) fn capabilities_kube_version_selector(expr: &TemplateExpr) -> bool {
     let path = match expr {
         TemplateExpr::Field(path) => path.as_slice(),
         TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {

@@ -28,6 +28,14 @@ pub(crate) struct EvalEnv {
     /// identity, so short-circuit operand truthiness has no other way to
     /// decode it.
     pub(crate) local_truthy_reductions: HashMap<String, Predicate>,
+    /// The analysis policy's Kubernetes version, and the locals bound to a
+    /// Capabilities-defaulted one (`$v := default
+    /// .Capabilities.KubeVersion.GitVersion .Values.override`). A
+    /// `semverCompare` over such a subject is a decidable condition, which
+    /// short-circuit operand truthiness has no other way to see.
+    pub(crate) kubernetes_version: Option<String>,
+    pub(crate) kube_version_bindings:
+        HashMap<String, crate::symbolic_local_state::KubeVersionSource>,
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
     pub(crate) active_predicates: Vec<Predicate>,
     pub(crate) bound_values: BoundValueContext,

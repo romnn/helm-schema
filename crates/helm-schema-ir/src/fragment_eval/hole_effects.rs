@@ -335,6 +335,8 @@ impl Interpreter<'_> {
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
         env.local_truthy_reductions = self.locals.truthy_reductions.clone();
+        env.kubernetes_version = self.db.kubernetes_version().map(str::to_string);
+        env.kube_version_bindings = self.locals.kube_version_sources.clone();
         env.member_host_conversions = self.member_host_conversions.clone();
         env.active_predicates = self.active_predicates.clone();
         env.root_truthy_predicates = self.root_truthy_predicates.clone();

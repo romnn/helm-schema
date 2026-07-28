@@ -1026,34 +1026,38 @@ fn eval_short_circuit_args(
         let mut result = eval_expr_with_helper_calls(arg, &constrained_env, resolver);
         scope_execution_effects(&mut result.effects, &execution_predicates);
 
-        let condition_path =
-            direct_raw_identity_path(result.value.as_ref()).filter(|path| !path.trim().is_empty());
+        // The operand's own condition. A direct values path contributes its
+        // truthiness; a `semverCompare` over the policy Kubernetes version
+        // is decidable too, and the difference is load-bearing, because an
+        // approximate stand-in silences every capture the LATER operands
+        // make — kube-prometheus-stack reads `.Values.defaultRules.create`
+        // as the third conjunct of a semver-gated `and`.
+        let marker = if previous_truthy {
+            "and operand truthiness"
+        } else {
+            "or operand truthiness"
+        };
+        let operand_predicate = direct_raw_identity_path(result.value.as_ref())
+            .filter(|path| !path.trim().is_empty())
+            .map(Predicate::truthy_path)
+            .or_else(|| semver_operand_predicate(arg, env));
         let mut selection = execution_predicates.clone();
         if index + 1 < args.len() {
-            let predicate = condition_path.as_ref().map_or_else(
-                || {
-                    Predicate::approximate(
-                        if previous_truthy {
-                            "and operand truthiness"
-                        } else {
-                            "or operand truthiness"
-                        },
-                        result
-                            .value
-                            .as_ref()
-                            .map(AbstractValue::paths)
-                            .unwrap_or_default(),
-                    )
-                },
-                |path| {
-                    let truthy = Predicate::truthy_path(path.clone());
-                    if previous_truthy {
-                        truthy.negated()
-                    } else {
-                        truthy
-                    }
-                },
-            );
+            // The chain's VALUE is this operand's exactly when the chain
+            // stops here, which is the operand's condition inverted for
+            // `and` and held for `or`.
+            let predicate = match &operand_predicate {
+                Some(predicate) if previous_truthy => predicate.negated(),
+                Some(predicate) => predicate.clone(),
+                None => Predicate::approximate(
+                    marker,
+                    result
+                        .value
+                        .as_ref()
+                        .map(AbstractValue::paths)
+                        .unwrap_or_default(),
+                ),
+            };
             selection.insert(predicate);
         }
         conjoin_result_selection(&mut result, &selection);
@@ -1079,34 +1083,61 @@ fn eval_short_circuit_args(
         // execution guard but never for an `or`'s negated one, which would
         // widen the guard into states the operands never run in.
         let falls_through =
-            previous_truthy && condition_path.is_none() && statically_truthy_operand(arg, env);
+            previous_truthy && operand_predicate.is_none() && statically_truthy_operand(arg, env);
         if !falls_through {
-            execution_predicates.insert(condition_path.map_or_else(
-                || {
-                    Predicate::approximate(
-                        if previous_truthy {
-                            "and operand truthiness"
-                        } else {
-                            "or operand truthiness"
-                        },
-                        BTreeSet::new(),
-                    )
-                },
-                |path| {
-                    let truthy = Predicate::truthy_path(path);
-                    if previous_truthy {
-                        truthy
-                    } else {
-                        truthy.negated()
-                    }
-                },
-            ));
+            execution_predicates.insert(match &operand_predicate {
+                Some(predicate) if previous_truthy => predicate.clone(),
+                Some(predicate) => predicate.negated(),
+                None => Predicate::approximate(marker, BTreeSet::new()),
+            });
         }
         constrained_env.bound_values = constrained_env
             .bound_values
             .with_predicate_constraints(arg, previous_truthy);
     }
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+/// The condition a `semverCompare` operand states, when the subject is a
+/// Kubernetes version this run pins: a local bound to a
+/// Capabilities-defaulted version, or the Capabilities selector itself.
+///
+/// The comparison is not a values read, so the operand's own evaluation
+/// carries no identity to gate on — but it is still decidable, and an
+/// operand that decides gates the ones after it exactly.
+fn semver_operand_predicate(arg: &TemplateExpr, env: &EvalEnv) -> Option<Predicate> {
+    let TemplateExpr::Call { function, args } = arg.deparen() else {
+        return None;
+    };
+    if function != "semverCompare" {
+        return None;
+    }
+    let [constraint_expr, subject] = args.as_slice() else {
+        return None;
+    };
+    let TemplateExpr::Literal(Literal::String(constraint) | Literal::RawString(constraint)) =
+        constraint_expr.deparen()
+    else {
+        return None;
+    };
+    let subject = subject.deparen();
+    let source = match subject {
+        TemplateExpr::Variable(name) => env
+            .kube_version_bindings
+            .get(name.trim_start_matches('$'))
+            .cloned()?,
+        _ if crate::value_path_context::capabilities_kube_version_selector(subject) => {
+            crate::symbolic_local_state::KubeVersionSource {
+                override_path: None,
+            }
+        }
+        _ => return None,
+    };
+    crate::value_path_context::semver_constraint_predicate(
+        constraint,
+        &source,
+        env.kubernetes_version.as_deref()?,
+    )
 }
 
 /// Whether a short-circuit operand is truthy on EVERY render: a `true`
