@@ -1,8 +1,12 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-28 after the nil-strict call-operand round
-(forty-fourth), which closed 11 more of the audit's root deletions by
-claiming the PRESENCE of an operand whose call aborts on nil. The preceding
+Last reconciled 2026-07-28 after the root-scoped `with` round (forty-fifth),
+which closed the 5 nats deletions the preceding round could reach but not
+claim: `.Values` is truthy exactly when the document is non-empty, and the
+values root is a navigation base like any other path. The nil-strict
+call-operand round (forty-fourth) closed 11 more of the audit's root
+deletions by claiming the PRESENCE of an operand whose call aborts on nil.
+The preceding
 arm-set completeness round (forty-third) reconciled the navigated-host round
 (forty-second) against the full integration gate and disproved the blocker
 that round had recorded. The forty-second round closed the navigated-receiver half of the
@@ -2035,7 +2039,27 @@ strict Kubernetes schema while their valid controls passed.
   probe `scheme` — 40 helm-confirmed rejections lost for 2 gained. Those two
   are the residual below.
 
-  The 26 that remain: three are the TEST-TEMPLATE roots (grafana's and
+  **Root-scoped `with` CLOSED (forty-fifth round).** The five nats
+  deletions the round above reached but could not claim now reject —
+  `podDisruptionBudget`, `service`, `serviceAccount`, `statefulSet` and
+  `promExporter`. Two gaps stacked. `.Values` was listed among the root
+  fields the truthiness decoder abstains on, so `{{- with .Values }}`
+  lowered to an approximate marker with no paths and silenced every capture
+  in `nats.defaultValues`; the exact predicate is the ROOT path's own
+  truthiness, which the condition encoder already emits at the document node
+  — and that distinction is load-bearing, since null-deleting every
+  top-level key leaves `.Values` falsy and the helper renders. Separately,
+  `direct_values_identity` excluded the root, so a `.member.field` read
+  under the rebound dot recorded no member-access capture at all; it
+  navigates the document exactly as `.Values.member.field` does. The first
+  measurement then LOOSENED 58 helm-rejected probes, because
+  `implication_guards_supported` answers for a `Truthy` guard out of
+  `resolved_by_path` — the root owns no entry there, and one unsupported arm
+  drops the folded implication whole, taking nats' long-standing member-host
+  typing with it. Same lesson as the forty-third round from the other side:
+  what moves a host's base is the ARM SET, not the individual claim.
+
+  The 21 that remain: three are the TEST-TEMPLATE roots (grafana's and
   fluent-bit's `testFramework`, kyverno's `test`) — helm RENDERS
   `templates/tests/*` and only filters the output afterwards, so switching
   the corpus harness to the shipped `include_tests` default closes them, but
@@ -2043,25 +2067,17 @@ strict Kubernetes schema while their valid controls passed.
   `kubeconform -strict` rejects. Those values RENDER — the claim is about the
   rendered sink, not about the guards a test template adds — so they belong
   to the provider-required-leaf entry (F56/F62/F8) below, not here; the
-  forty-third round corrected that attribution. The other 23 are NOT this mechanism:
-  4 nats `nats.defaultValues` tables (`podDisruptionBudget`, `service`,
-  `serviceAccount`, `statefulSet`) whose `set` chain the forty-fourth round
-  reached but could not claim — the enclosing `{{- with .Values }}` lowers
-  to an approximate predicate carrying no paths at all, so every capture in
-  that helper abstains, which is also why `promExporter` stays open;
-  decoding a root-scoped `with` is its own round —
+  forty-third round corrected that attribution. The other 18 are NOT this mechanism:
   2 string-parameter calls behind the reverted `upper` catalog entry (harbor
   `logLevel`, oauth2-proxy `httpScheme`), 1 typed call through a `tpl`
   program (airflow `multiNamespaceMode`), 5 YAML-sink text failures (the
   F19/F73/F76 entry below), 1 explicit `fail` (bitnami-redis
   `architecture`), 1 dotted root key (grafana's literal `grafana.ini`,
-  "can't evaluate field paths in type string"), and 8 nil-pointer sites the
+  "can't evaluate field paths in type string"), and 7 nil-pointer sites the
   navigated-host lane still cannot reach: istiod's root rewrite and signoz'
   `global` have their own entries, grafana `route` needs `tpl`-program
   evaluation, datadog `fips` and dict-config `podDisruptionBudget` navigate
-  through a helper argument rather than a values path, nats `promExporter`
-  is read only inside its own truthiness gate (and inside the abstaining
-  `with .Values` helper above),
+  through a helper argument rather than a values path,
   traefik `log` needs an `and` operand's `not` decoded
   exactly (attempted and REVERTED in the forty-second round — the exact
   decode turned previously-approximate captures into guarded member-host

@@ -10822,3 +10822,86 @@ root-scoped `with` is its own round.
 and `cargo fmt --all --check` clean. The ci-values sweep rejects the same 4
 of 116 files as the pre-round fixtures. `task -t
 …/luup2/deployment/charts/taskfile.yaml check:local` exits 0.
+
+## Root-scoped `with` round (2026-07-28, forty-fifth round)
+
+The forty-fourth round left five root deletions open for one reason: nats
+wraps the entire body of `nats.defaultValues` in `{{- with .Values }}`, and
+nothing inside that helper produced a claim. Not the presence claim, not the
+member-host typing claim — the body was analytically silent.
+
+Two independent gaps stacked, and both had to close.
+
+### `.Values` is truthy exactly when the document is non-empty
+
+`root_field_truthy_predicate` listed `Values` among the root fields it
+abstains on, so `condition_lowering_is_faithful` fell through to the
+all-paths conjunction, found no paths (the root has none), and
+`activate_with` replaced the header with an `Approximate` marker carrying an
+empty path set. Every capture underneath then inherited an approximation and
+abstained.
+
+But `.Values` IS the values document, and a Go template mapping is falsy
+only when empty — so the exact predicate is the ROOT path's own truthiness,
+`Guard::Truthy { path: "" }`. The condition encoder already handles it:
+`build_default_aware_leaf_condition_fragment` strips the (empty) ancestor
+prefix, is left with no segments, and emits the leaf at the document node.
+A terminal clause therefore reads `helm-truthy(document) ∧ absent(P)`, which
+is the distinction `Predicate::True` would have lost: null-deleting EVERY
+top-level key leaves `.Values` falsy, the `with` never enters, and nats
+renders — so a widened leaf would reject a document helm accepts.
+
+### The values root is a navigation base
+
+`direct_values_identity` excluded the root explicitly, so a `.member.field`
+read under a root-scoped dot recorded no member-access capture at all. That
+exclusion has no semantics behind it: under `{{- with .Values }}`,
+`.podDisruptionBudget.name` navigates the document exactly as
+`.Values.podDisruptionBudget.name` does and aborts identically on a deleted
+member. Allowing the empty path makes `direct_values_identity_including_root`
+— which existed only for the grouped `(.Values).x` receiver — an exact
+duplicate, so it is gone.
+
+### One unencodable arm was fatal to the whole implication
+
+The first measurement of the two changes above closed all five deletions and
+LOOSENED 58 probes that helm rejects: `podDisruptionBudget: 7`,
+`configMap: []`, `natsBox.serviceAccount: "audit"` and so on all became
+accepted. The member-host typing implication had disappeared.
+
+`implication_guards_supported` gates each implication on every guard being
+spellable, and it answers for a `Truthy` guard by looking the path up in
+`resolved_by_path`. The values root owns no entry there, so the new arm
+`[Truthy("")]` read as unsupported — and because the check is a conjunction
+over the folded any-of, one unsupported arm dropped the implication whole,
+taking the two arms that had carried nats' typing since the beginning. The
+root is now spelled explicitly: it has no resolved entry by construction,
+and its truthiness encodes at the document node.
+
+That is the same shape as the forty-third round's finding — what moves a
+host's base is the ARM SET, not the individual claim — seen from the other
+side: there, adding arms crossed the fanout cap; here, adding one arm the
+support check could not spell deleted them all.
+
+### Result
+
+All five of the round's targets now reject — nats `podDisruptionBudget`,
+`service`, `serviceAccount`, `statefulSet` and `promExporter` — and the four
+nats roots that render (`container`, `podTemplate`, `extraResources`,
+`tlsCA`) still validate. The 1,848-probe root sweep moves exactly those five
+cells and nothing else. Of the 55 corpus charts, only nats' schema changes at
+all: no other chart writes a root-scoped `with`, and the 200 `include "…"
+.Values` call sites in the corpus bind their helper dots through other
+shapes. The full battery gives 98 flips, every one a tightening, and all 98
+adjudicate to HELM-ABORT.
+
+21 of the audit's 70 root deletions remain.
+
+### Validation
+
+943 unit tests (one new focused reproducer, verified failing pre-fix), 497
+integration tests (`task test:integration`), `task lint` and `cargo fmt
+--all --check` clean. The ci-values sweep rejects the same 4 of 116 files as
+the pre-round fixtures. `task -t …/luup2/deployment/charts/taskfile.yaml
+check:local` exits 0. One corpus fixture regenerated (nats); the gen corpus
+is unchanged.
