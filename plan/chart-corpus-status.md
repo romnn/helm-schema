@@ -1,9 +1,11 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-27 after the arm-set completeness round
-(forty-third), which reconciled the navigated-host round (forty-second)
-against the full integration gate and disproved the blocker that round had
-recorded. The forty-second round closed the navigated-receiver half of the
+Last reconciled 2026-07-28 after the nil-strict call-operand round
+(forty-fourth), which closed 11 more of the audit's root deletions by
+claiming the PRESENCE of an operand whose call aborts on nil. The preceding
+arm-set completeness round (forty-third) reconciled the navigated-host round
+(forty-second) against the full integration gate and disproved the blocker
+that round had recorded. The forty-second round closed the navigated-receiver half of the
 audit's broadest family: a host read outside its own presence gate must
 exist, and the claim had been computed all along but thrown away as
 arm-count "fanout" that was really redundancy (cilium recorded 47 guard sets
@@ -2010,7 +2012,30 @@ strict Kubernetes schema while their valid controls passed.
   provider-required-leaf claim and belongs to the F56/F62/F8 entry below;
   and airflow's `global: null` is now rejected although helm drops a
   not-a-table `global` with a warning instead of navigating it.
-  The 37 that remain: three are the TEST-TEMPLATE roots (grafana's and
+  **Typed-call half CLOSED (forty-fourth round).** 11 more of the 70 now
+  reject, every one helm-confirmed, with zero loosenings and zero new
+  rejections in the root sweep: cilium `k8s`, `k8sNetworkPolicy`, `maglev`,
+  `sctp` (a `hasKey` map parameter) and `extraConfig` (`index of untyped
+  nil`), velero `configMaps` (`hasKey`), oauth2-proxy `extraVolumes` and
+  `extraVolumeMounts` (`len of nil pointer`), airflow
+  `airflowPodAnnotations` (`deepCopy`), and nack and external-dns
+  `namespaced` (`ternary`'s `bool` selector, in both the argument and the
+  piped form). The claim is the operand's own PRESENCE, which the
+  truthy⇒kind capture beside it can never state, and
+  `strict_operand_nil_aborts` carries the measured per-function table —
+  including the split that decides one whole class: a map parameter aborts
+  on a nil ARGUMENT and takes the zero map when the same nil arrives through
+  a pipe or a `:=` binding. Only an operand that IS one raw values path
+  carries the claim; reading the layered merge identities instead fabricates
+  subjects (it grew luup2's `k8s-infra` schema 4.6x over spellings the chart
+  never has). Two measured claims were dropped: `set`, whose destination the
+  chart's own earlier `set` routinely creates (falco), and `upper`'s missing
+  catalog entry, which closes harbor `logLevel` and oauth2-proxy
+  `httpScheme` but displaces the unquoted-slot row at kube-state-metrics'
+  probe `scheme` — 40 helm-confirmed rejections lost for 2 gained. Those two
+  are the residual below.
+
+  The 26 that remain: three are the TEST-TEMPLATE roots (grafana's and
   fluent-bit's `testFramework`, kyverno's `test`) — helm RENDERS
   `templates/tests/*` and only filters the output afterwards, so switching
   the corpus harness to the shipped `include_tests` default closes them, but
@@ -2018,23 +2043,26 @@ strict Kubernetes schema while their valid controls passed.
   `kubeconform -strict` rejects. Those values RENDER — the claim is about the
   rendered sink, not about the guards a test template adds — so they belong
   to the provider-required-leaf entry (F56/F62/F8) below, not here; the
-  forty-third round corrected that attribution. The other 34 are NOT this mechanism:
-  14 typed-parameter calls
-  (`wrong type for value; expected map[string]interface {}`/`bool`,
-  `invalid value; expected string` — cilium `k8s`/`k8sNetworkPolicy`/
-  `maglev`/`sctp`, nats' four `nats.defaultValues` tables, velero
-  `configMaps`, nack and external-dns `namespaced`, airflow
-  `multiNamespaceMode`, harbor `logLevel`, oauth2-proxy `httpScheme`),
-  4 strict collection calls (`len of nil pointer`, `index of untyped nil`,
-  `deepCopy` on a zero value), 5 YAML-sink text failures (the F19/F73/F76
-  entry below), 1 explicit `fail` (bitnami-redis `architecture`), 1 dotted
-  root key (grafana's literal `grafana.ini`, "can't evaluate field paths in
-  type string"), and 9 nil-pointer sites the navigated-host lane still
-  cannot reach: istiod's root rewrite and signoz' `global` have their own
-  entries, grafana `route` needs `tpl`-program evaluation, datadog `fips`
-  and dict-config `podDisruptionBudget` navigate through a helper argument
-  rather than a values path, nats `promExporter` is read only inside its own
-  truthiness gate, traefik `log` needs an `and` operand's `not` decoded
+  forty-third round corrected that attribution. The other 23 are NOT this mechanism:
+  4 nats `nats.defaultValues` tables (`podDisruptionBudget`, `service`,
+  `serviceAccount`, `statefulSet`) whose `set` chain the forty-fourth round
+  reached but could not claim — the enclosing `{{- with .Values }}` lowers
+  to an approximate predicate carrying no paths at all, so every capture in
+  that helper abstains, which is also why `promExporter` stays open;
+  decoding a root-scoped `with` is its own round —
+  2 string-parameter calls behind the reverted `upper` catalog entry (harbor
+  `logLevel`, oauth2-proxy `httpScheme`), 1 typed call through a `tpl`
+  program (airflow `multiNamespaceMode`), 5 YAML-sink text failures (the
+  F19/F73/F76 entry below), 1 explicit `fail` (bitnami-redis
+  `architecture`), 1 dotted root key (grafana's literal `grafana.ini`,
+  "can't evaluate field paths in type string"), and 8 nil-pointer sites the
+  navigated-host lane still cannot reach: istiod's root rewrite and signoz'
+  `global` have their own entries, grafana `route` needs `tpl`-program
+  evaluation, datadog `fips` and dict-config `podDisruptionBudget` navigate
+  through a helper argument rather than a values path, nats `promExporter`
+  is read only inside its own truthiness gate (and inside the abstaining
+  `with .Values` helper above),
+  traefik `log` needs an `and` operand's `not` decoded
   exactly (attempted and REVERTED in the forty-second round — the exact
   decode turned previously-approximate captures into guarded member-host
   arms, which emptied declared-mapping bases across airflow, argo-cd, cilium
@@ -2129,6 +2157,21 @@ strict Kubernetes schema while their valid controls passed.
   structure. Project format-argument and serialized/file-backed result
   domains through the actual sink placement; do not copy the output kind
   blindly back onto inputs.
+
+- **A string CONTRACT displaces the slot's own language (forty-fourth
+  round).** Cataloguing `upper` as the string transform it is (`lower`
+  already is one) gives harbor `logLevel` and oauth2-proxy `httpScheme`
+  their nil-abort presence claim and closes both root deletions. But the
+  resulting string-contract row replaces the unquoted-slot row at
+  kube-state-metrics' `{liveness,readiness}Probe.httpGet.scheme`:
+  `scheme: {{ upper .Values….scheme }}` stops excluding `a: b`, `a #b`, a
+  line break, and `&anchor` — 40 helm-confirmed rejections across
+  kube-state-metrics, prometheus, and kube-prometheus-stack, for 2 gained.
+  Marking case mappings non-derived does NOT restore them (they are the
+  identity on every hazard the slot languages enumerate; only the reverse
+  direction leaks, since `upper "nO"` is the YAML boolean `NO`), so the
+  displacement sits elsewhere in the placement lane. The catalog entry
+  stays out until both claims can hold at once.
 
 ## Rejected (invalid or won't fix by design)
 

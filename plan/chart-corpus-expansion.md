@@ -10708,3 +10708,117 @@ and `cargo fmt --all --check` clean. The generator sources under
 `crates/helm-schema-gen/src` and `crates/helm-schema-core/src` carry no diff
 at all, so generation is byte-for-byte the navigated-host build already
 validated against luup2.
+
+## Nil-strict call-operand round (2026-07-28, forty-fourth round)
+
+The audit's second-largest lane: 18 of the 37 remaining root deletions abort
+with a message about the CALL, not about a navigation — "wrong type for
+value; expected map[string]interface {}", "invalid value; expected bool",
+"len of nil pointer", "index of untyped nil", "error calling deepCopy". Each
+one is the same missing claim: the operand's own PRESENCE. The truthy⇒kind
+capture already recorded beside it cannot state it, because absence is
+Helm-falsy and that capture's guard excuses exactly the state that aborts.
+
+### The verdicts are measured, not read off the signatures
+
+The two mechanisms that produce these aborts cross, so a probe chart (one
+isolated chart per call, since Helm renders every template before filtering
+`-s`) established the table against Helm 4.2.3:
+
+- A declared MAP parameter aborts on a nil ARGUMENT — the missing key
+  arrives as a valid `interface{}` holding nil, assignable to nothing else —
+  and silently takes the zero map when the same nil arrives INVALID, which
+  is what a pipeline stage or a `:=` binding produces. `hasKey $local "k"`
+  renders `false` where `hasKey .Values.absent "k"` aborts; `.Values.absent
+  | keys` renders `[]`.
+- A non-nilable parameter (`string`, `bool`) aborts either way, the invalid
+  spelling with "invalid value; expected bool".
+- Sprig's own reflection faults either way: its list helpers read
+  `reflect.TypeOf(list).Kind()` off the raw operand, `deepCopy` walks it
+  with `copystructure`, and Go's `index`/`len` reject an untyped nil subject
+  outright. `has` is the exception — it tests `haystack == nil` first and
+  answers false. So does `join`, which declares `[]interface{}` yet renders
+  empty text for nil.
+
+`strict_operand_nil_aborts(function, direct_access)` carries that table, and
+the strict-kind recorders ask it per argument, with `direct_values_path`
+answering the `direct_access` question: a spelling it resolves is a field
+read, everything else reaches the parameter invalid. A with-scoped dot
+member does abort at runtime but cannot resolve there, so it abstains.
+
+### Only a raw single-path operand carries the claim
+
+The first implementation walked `layered_strict_operand_identity_paths`, the
+same identities the KIND capture uses. That is wrong for a PRESENCE claim
+and the luup2 gate caught it: signoz' `k8s-infra` dependency grew from 5.2 MB
+to 23.9 MB of schema and 951 terminal clauses over fabricated spellings like
+`otelAgent.presets.hostMetrics.scrapers.service.pipelines` — a preset merge's
+layer paths with the merged value's own suffix appended. It also rejected
+luup2's own composed document.
+
+The fix is the rule the nil-strict STRING lane already documents: the claim
+binds only when the operand IS one raw `AbstractValue::ValuesPath`. A derived
+operand hands the call whatever the derivation produced, so those paths' own
+absence is not what aborts. Every corpus win survives the narrowing, the
+schema grows 3% instead of 360%, and luup2 validates again.
+
+### Two claims measured and dropped
+
+- **`set`.** It aborts on a nil destination in both spellings (it passes the
+  type check, then panics assigning into the nil map), but a chart's own
+  earlier `set` routinely CREATES that destination — falco's
+  `{{- if not .Values.falco.metrics }}{{- $_ = set .Values.falco "metrics"
+  dict -}}` precedes `set .Values.falco.metrics "enabled" …`. Nothing at the
+  call site proves the mutation did not run, so the claim rejected a document
+  helm renders. Dropped, and the catalog says why.
+- **`upper`.** It is missing from the string-transform catalog beside
+  `lower`, and adding it closes harbor `logLevel` and oauth2-proxy
+  `httpScheme`. But it costs 40 helm-confirmed rejections at
+  `{liveness,readiness}Probe.httpGet.scheme` across kube-state-metrics,
+  prometheus and kube-prometheus-stack: the string-contract row displaces the
+  unquoted-slot row, so `scheme: {{ upper .Values….scheme }}` stops excluding
+  `a: b`. Marking case mappings non-derived (they are the identity on every
+  hazard the slot languages enumerate) did not restore it — the displacement
+  is elsewhere. Reverted; the residual is filed in the status ledger.
+
+### Terminal clauses need the SUFFICIENT direction
+
+`ConditionPolarity` now threads through condition encoding. A conditional ARM
+(`if C then S`) applies a claim, so C must hold wherever the claim does and
+its leaves WIDEN; a TERMINAL clause (`if C then false`) asserts that
+rendering aborts, so C must be sufficient and its leaves NARROW, with `not`
+swapping the direction below it. Exactly one leaf differs: the coalesce
+widening that lets any object satisfy a truthy test under a non-empty mapping
+default. Velero declares `namespace: {labels: {}}`, and deleting `labels`
+coalesces the parent back to a falsy empty mapping — so its
+`if .Values.namespace` / `gt (len .Values.namespace.labels) 0` pair never
+runs, and the widened spelling terminated a document helm renders. The
+narrowing also removed one pre-existing false rejection
+(velero `configuration.repositoryMaintenanceJob.repositoryConfigData`).
+
+### Result
+
+11 of the 37 remaining root deletions now reject — cilium `k8s`,
+`k8sNetworkPolicy`, `maglev`, `sctp` and `extraConfig`, velero `configMaps`,
+oauth2-proxy `extraVolumes` and `extraVolumeMounts`, airflow
+`airflowPodAnnotations`, nack and external-dns `namespaced` — with zero
+loosenings and zero new rejections anywhere in the 1,848-probe root sweep.
+The full battery over every values path gives 253 flips against the
+pre-round fixtures: 252 tightenings, 251 of them helm-confirmed aborts, plus
+the one justified loosening above. The single leftover is velero
+`namespace.labels` under the prober's `literal-null` composition, which keeps
+an explicit null in the instance; helm's coalescence deletes it first, and
+the faithful `deleted` composition passes.
+
+The four nats `nats.defaultValues` tables did NOT close. Their `set` chain
+sits under `{{- with .Values }}`, whose marker lowers to an approximate
+predicate with no paths at all, so `record_absence_abort_clause` abstains for
+the whole helper — the same reason `promExporter` stays open. Decoding a
+root-scoped `with` is its own round.
+
+### Validation
+
+942 unit tests, 497 integration tests (`task test:integration`), `task lint`
+and `cargo fmt --all --check` clean. The ci-values sweep rejects the same 4
+of 116 files as the pre-round fixtures. `task -t
+…/luup2/deployment/charts/taskfile.yaml check:local` exits 0.
