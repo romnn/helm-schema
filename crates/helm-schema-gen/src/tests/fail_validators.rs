@@ -1132,6 +1132,10 @@ fn range_key_regex_fail_lowers_to_property_names() {
 /// membership. Each conjunct lowers through its sound subset, so the
 /// terminal clauses reject exactly the strengthened domains while coerced
 /// spellings outside the subsets stay open.
+///
+/// The `len` guard also demands its own subject: "len of nil pointer"
+/// aborts before the comparison, so a null-deleted `clusterName` never
+/// reaches the domain question at all.
 #[test]
 fn scalar_domain_fail_guards_lower_through_sound_subsets() {
     let src = indoc! {r#"
@@ -1166,39 +1170,45 @@ fn scalar_domain_fail_guards_lower_through_sound_subsets() {
             true,
         ),
         (
-            serde_json::json!({ "maxClusters": 300, "mode": "internal" }),
+            serde_json::json!({ "clusterName": "ok", "maxClusters": 300, "mode": "internal" }),
             false,
         ),
         (
-            serde_json::json!({ "maxClusters": 511, "mode": "internal" }),
+            serde_json::json!({ "clusterName": "ok", "maxClusters": 511, "mode": "internal" }),
             true,
         ),
         // A numeric string coerces exactly like the raw integer: the
         // region disjunction claims spellings certainly parsing outside
         // {255, 511} while the bound spellings stay accepted.
         (
-            serde_json::json!({ "maxClusters": "255", "mode": "internal" }),
+            serde_json::json!({ "clusterName": "ok", "maxClusters": "255", "mode": "internal" }),
             true,
         ),
         (
-            serde_json::json!({ "maxClusters": "0x1ff", "mode": "internal" }),
+            serde_json::json!({ "clusterName": "ok", "maxClusters": "0x1ff", "mode": "internal" }),
             true,
         ),
         (
-            serde_json::json!({ "maxClusters": "300", "mode": "internal" }),
+            serde_json::json!({ "clusterName": "ok", "maxClusters": "300", "mode": "internal" }),
             false,
         ),
         (
-            serde_json::json!({ "maxClusters": "bogus", "mode": "internal" }),
+            serde_json::json!({ "clusterName": "ok", "maxClusters": "bogus", "mode": "internal" }),
             false,
         ),
         (
-            serde_json::json!({ "mode": "bogus", "maxClusters": 255 }),
+            serde_json::json!({ "clusterName": "ok", "mode": "bogus", "maxClusters": 255 }),
             false,
         ),
         (
-            serde_json::json!({ "mode": "external", "maxClusters": 255 }),
+            serde_json::json!({ "clusterName": "ok", "mode": "external", "maxClusters": 255 }),
             true,
+        ),
+        // `len` reads the subject before the bound: a null-deleted name
+        // aborts rendering rather than passing the length test.
+        (
+            serde_json::json!({ "maxClusters": 255, "mode": "internal" }),
+            false,
         ),
     ] {
         assert!(

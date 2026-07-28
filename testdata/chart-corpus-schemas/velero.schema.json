@@ -10201,14 +10201,7 @@
                             "repositoryConfigData": {
                               "properties": {
                                 "global": {
-                                  "anyOf": [
-                                    {
-                                      "type": "object"
-                                    },
-                                    {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  ]
+                                  "$ref": "#/$defs/helm-truthy"
                                 }
                               },
                               "required": [
@@ -18214,14 +18207,7 @@
           {
             "properties": {
               "configuration": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -18234,14 +18220,7 @@
               "configuration": {
                 "properties": {
                   "repositoryMaintenanceJob": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -18370,6 +18349,68 @@
         "allOf": [
           {
             "properties": {
+              "namespace": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "namespace"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "namespace": {
+                      "properties": {
+                        "labels": {}
+                      },
+                      "required": [
+                        "labels"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "namespace"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "namespace": {
+                    "properties": {
+                      "labels": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "namespace"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "podDisruptionBudget": {
                 "properties": {
                   "enabled": {
@@ -18421,6 +18462,37 @@
           {
             "not": {
               "properties": {
+                "configMaps": {}
+              },
+              "required": [
+                "configMaps"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configMaps": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "configMaps"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
                 "configuration": {}
               },
               "required": [
@@ -18435,6 +18507,53 @@
                 "enum": [
                   null
                 ]
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configuration": {
+                  "properties": {
+                    "repositoryMaintenanceJob": {}
+                  },
+                  "required": [
+                    "repositoryMaintenanceJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configuration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configuration": {
+                "properties": {
+                  "repositoryMaintenanceJob": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "repositoryMaintenanceJob"
+                ],
+                "type": "object"
               }
             },
             "required": [
@@ -18588,14 +18707,7 @@
                   {
                     "properties": {
                       "namespace": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -18706,14 +18818,7 @@
                   {
                     "properties": {
                       "namespace": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [

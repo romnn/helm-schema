@@ -41676,6 +41676,68 @@
           {
             "not": {
               "properties": {
+                "extraVolumeMounts": {}
+              },
+              "required": [
+                "extraVolumeMounts"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "extraVolumeMounts": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "extraVolumeMounts"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "extraVolumes": {}
+              },
+              "required": [
+                "extraVolumes"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "extraVolumes": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "extraVolumes"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
                 "gatewayApi": {}
               },
               "required": [
@@ -44472,14 +44534,7 @@
                   {
                     "properties": {
                       "sessionStorage": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [

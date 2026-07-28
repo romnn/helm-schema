@@ -169,6 +169,10 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
             "environment",
             serde_json::json!({ "not": { "type": "number" } }),
         ),
+        // `len` answers "len of nil pointer" for a null-deleted collection,
+        // so the guard itself demands the key before the range can be
+        // dormant.
+        navigated_host_clause(&["environment"]),
     ];
     sim_assert_eq!(
         have: &schema,

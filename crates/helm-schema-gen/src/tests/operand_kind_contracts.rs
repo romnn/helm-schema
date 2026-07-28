@@ -63,6 +63,9 @@ fn string_literal_comparison_binds_operand_kind_contract() {
 /// strict collection functions bind their operand domains: `merge` subjects
 /// are maps, `concat` operands are lists, `len` needs a length-bearing value,
 /// and `has` searches a list. The call itself does not skip Helm-empty operands.
+///
+/// Nor does it skip a nil one, except at `has` — every other operand here
+/// must be present, so the accepted documents carry all of them.
 #[test]
 fn collection_function_operands_bind_kind_contracts() {
     let src = indoc! {r#"
@@ -88,12 +91,25 @@ fn collection_function_operands_bind_kind_contracts() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
+    let present = serde_json::json!({
+        "overrides": {}, "defaults": {}, "extraEnv": [], "env": [], "extraVolumes": [],
+    });
+    let with_present = |overrides: serde_json::Value| {
+        let mut instance = present.clone();
+        for (key, value) in overrides.as_object().into_iter().flatten() {
+            instance[key.as_str()] = value.clone();
+        }
+        instance
+    };
     for instance in [
-        serde_json::json!({ "overrides": { "a": 1 }, "defaults": { "b": 2 } }),
-        serde_json::json!({ "extraEnv": [1], "env": [2] }),
-        serde_json::json!({ "extraVolumes": ["v"] }),
-        serde_json::json!({ "extraVolumes": "vols" }),
-        serde_json::json!({ "collectors": ["certs"] }),
+        with_present(serde_json::json!({ "overrides": { "a": 1 }, "defaults": { "b": 2 } })),
+        with_present(serde_json::json!({ "extraEnv": [1], "env": [2] })),
+        with_present(serde_json::json!({ "extraVolumes": ["v"] })),
+        with_present(serde_json::json!({ "extraVolumes": "vols" })),
+        // `has` answers false on a nil haystack, so the collector list is
+        // the one operand this template may omit.
+        with_present(serde_json::json!({ "collectors": ["certs"] })),
+        present.clone(),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
@@ -101,18 +117,24 @@ fn collection_function_operands_bind_kind_contracts() {
         );
     }
     for instance in [
-        serde_json::json!({ "overrides": "s" }),
-        serde_json::json!({ "overrides": false }),
-        serde_json::json!({ "overrides": 0 }),
-        serde_json::json!({ "overrides": "" }),
-        serde_json::json!({ "extraEnv": "s" }),
-        serde_json::json!({ "extraEnv": false }),
-        serde_json::json!({ "extraEnv": 0 }),
-        serde_json::json!({ "extraEnv": "" }),
-        serde_json::json!({ "extraVolumes": 7 }),
-        serde_json::json!({ "collectors": 7 }),
-        serde_json::json!({ "collectors": false }),
-        serde_json::json!({ "collectors": "" }),
+        // Every operand but the `has` haystack aborts when nil.
+        serde_json::json!({ "defaults": {}, "extraEnv": [], "env": [], "extraVolumes": [] }),
+        serde_json::json!({ "overrides": {}, "extraEnv": [], "env": [], "extraVolumes": [] }),
+        serde_json::json!({ "overrides": {}, "defaults": {}, "env": [], "extraVolumes": [] }),
+        serde_json::json!({ "overrides": {}, "defaults": {}, "extraEnv": [], "extraVolumes": [] }),
+        serde_json::json!({ "overrides": {}, "defaults": {}, "extraEnv": [], "env": [] }),
+        with_present(serde_json::json!({ "overrides": "s" })),
+        with_present(serde_json::json!({ "overrides": false })),
+        with_present(serde_json::json!({ "overrides": 0 })),
+        with_present(serde_json::json!({ "overrides": "" })),
+        with_present(serde_json::json!({ "extraEnv": "s" })),
+        with_present(serde_json::json!({ "extraEnv": false })),
+        with_present(serde_json::json!({ "extraEnv": 0 })),
+        with_present(serde_json::json!({ "extraEnv": "" })),
+        with_present(serde_json::json!({ "extraVolumes": 7 })),
+        with_present(serde_json::json!({ "collectors": 7 })),
+        with_present(serde_json::json!({ "collectors": false })),
+        with_present(serde_json::json!({ "collectors": "" })),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),
@@ -293,13 +315,25 @@ fn pipeline_calls_bind_collection_and_comparison_domains() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
+    // A PIPED operand still reaches `len` and `first` through sprig's own
+    // reflection, which faults on nil, so both keys must be present in
+    // every document that renders. The comparison operands may be absent:
+    // `eq` compares nil against anything.
+    let present = serde_json::json!({ "lengthBearing": "text", "ordered": [] });
+    let with_present = |overrides: serde_json::Value| {
+        let mut instance = present.clone();
+        for (key, value) in overrides.as_object().into_iter().flatten() {
+            instance[key.as_str()] = value.clone();
+        }
+        instance
+    };
     for instance in [
-        serde_json::json!({ "lengthBearing": "text" }),
-        serde_json::json!({ "lengthBearing": { "key": "value" } }),
-        serde_json::json!({ "ordered": ["a", "b"] }),
-        serde_json::json!({ "mode": "active" }),
-        serde_json::json!({ "integerLimit": 1 }),
-        serde_json::json!({ "floatLimit": 1.5 }),
+        with_present(serde_json::json!({ "lengthBearing": "text" })),
+        with_present(serde_json::json!({ "lengthBearing": { "key": "value" } })),
+        with_present(serde_json::json!({ "ordered": ["a", "b"] })),
+        with_present(serde_json::json!({ "mode": "active" })),
+        with_present(serde_json::json!({ "integerLimit": 1 })),
+        with_present(serde_json::json!({ "floatLimit": 1.5 })),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
@@ -308,10 +342,12 @@ fn pipeline_calls_bind_collection_and_comparison_domains() {
         );
     }
     for instance in [
-        serde_json::json!({ "lengthBearing": 7 }),
-        serde_json::json!({ "ordered": { "a": 1 } }),
-        serde_json::json!({ "mode": { "active": true } }),
-        serde_json::json!({ "integerLimit": 1.5 }),
+        serde_json::json!({ "ordered": [] }),
+        serde_json::json!({ "lengthBearing": "text" }),
+        with_present(serde_json::json!({ "lengthBearing": 7 })),
+        with_present(serde_json::json!({ "ordered": { "a": 1 } })),
+        with_present(serde_json::json!({ "mode": { "active": true } })),
+        with_present(serde_json::json!({ "integerLimit": 1.5 })),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),
@@ -2282,6 +2318,152 @@ fn unrolled_traversal_binds_every_intermediate_host_kind() {
             schema_accepts_instance(&schema, &instance) == want,
             "the unrolled walk binds each intermediate host: \
              instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A typed Go parameter aborts on a NIL argument. `text/template` hands a
+/// missing key to an argument position as a valid `interface{}` holding
+/// nil, which is assignable to no declared parameter type, so the call
+/// answers "wrong type for value; expected map[string]interface {}; got
+/// interface {}" (cilium's `hasKey .Values.k8s …`, velero's
+/// `hasKey .Values.configMaps …`, the `set` chain in nats'
+/// `nats.defaultValues`). The truthy⇒kind capture beside this one can never
+/// say it: absence is Helm-falsy, so its own guard excuses exactly the
+/// state that aborts.
+///
+/// A PIPED nil is different — `evalPipeline` unwraps the interface, so the
+/// operand arrives INVALID and `validateType` substitutes the parameter's
+/// zero value whenever the type can be nil.
+#[test]
+fn map_parameter_calls_require_a_present_operand() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          probed: "{{ hasKey .Values.k8s "requireIPv4PodCIDR" }}"
+          picked: {{ pick .Values.settings "a" | toYaml | quote }}
+          piped: {{ .Values.optional | keys | toYaml | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        k8s: {}
+        settings: {}
+        optional: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want) in [
+        (
+            serde_json::json!({ "k8s": {}, "settings": {}, "optional": {} }),
+            true,
+        ),
+        // The piped operand tolerates nil: `keys` receives an empty map.
+        (serde_json::json!({ "k8s": {}, "settings": {} }), true),
+        (
+            serde_json::json!({ "k8s": {}, "settings": {}, "optional": null }),
+            true,
+        ),
+        (serde_json::json!({ "settings": {}, "optional": {} }), false),
+        (
+            serde_json::json!({ "k8s": null, "settings": {}, "optional": {} }),
+            false,
+        ),
+        (serde_json::json!({ "k8s": {}, "optional": {} }), false),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "a map parameter aborts on a nil ARGUMENT and tolerates a piped one: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Sprig's reflection-backed helpers and Go's own `index`/`len` fault on a
+/// nil operand in EITHER form: `len` answers "len of nil pointer", `index`
+/// answers "index of untyped nil", and `deepCopy` walks the operand with
+/// `copystructure`, which faults on a zero value (oauth2-proxy's
+/// `len .Values.extraVolumes`, cilium's `index .Values.extraConfig …`,
+/// airflow's `deepCopy .Values.airflowPodAnnotations`).
+#[test]
+fn reflection_backed_calls_require_a_present_operand() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          count: "{{ len .Values.extraVolumes }}"
+          flag: "{{ index .Values.extraConfig "unsafe" }}"
+          copied: {{ deepCopy .Values.podAnnotations | toYaml | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        extraVolumes: []
+        extraConfig: {}
+        podAnnotations: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    let full = serde_json::json!({
+        "extraVolumes": [], "extraConfig": {}, "podAnnotations": {},
+    });
+    assert!(
+        schema_accepts_instance(&schema, &full),
+        "the present operands render: schema={schema}"
+    );
+    for instance in [
+        serde_json::json!({ "extraConfig": {}, "podAnnotations": {} }),
+        serde_json::json!({ "extraVolumes": [], "podAnnotations": {} }),
+        serde_json::json!({ "extraVolumes": [], "extraConfig": {} }),
+        serde_json::json!({
+            "extraVolumes": [], "extraConfig": {}, "podAnnotations": null,
+        }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a reflection-backed call faults on a nil operand: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `bool` parameter cannot hold nil, so BOTH forms abort: the argument
+/// form with "wrong type for value; expected bool" (nack's
+/// `ternary "Role" "ClusterRole" .Values.namespaced`) and the piped form
+/// with "invalid value; expected bool" (external-dns' piped `ternary`).
+#[test]
+fn non_nilable_parameters_require_a_present_operand_in_either_form() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          kind: {{ ternary "Role" "ClusterRole" .Values.namespaced }}
+          binding: {{ .Values.scoped | ternary "RoleBinding" "ClusterRoleBinding" }}
+    "#};
+    let values_yaml = indoc! {"
+        namespaced: false
+        scoped: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    let full = serde_json::json!({ "namespaced": true, "scoped": false });
+    assert!(
+        schema_accepts_instance(&schema, &full),
+        "the present operands render: schema={schema}"
+    );
+    for instance in [
+        serde_json::json!({ "scoped": false }),
+        serde_json::json!({ "namespaced": true }),
+        serde_json::json!({ "namespaced": true, "scoped": null }),
+        serde_json::json!({ "namespaced": null, "scoped": false }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a non-nilable parameter aborts on a nil operand: \
+             instance={instance}; schema={schema}"
         );
     }
 }

@@ -9619,14 +9619,7 @@
               "provider": {
                 "properties": {
                   "webhook": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -9717,14 +9710,7 @@
                   "webhook": {
                     "properties": {
                       "image": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -9749,14 +9735,7 @@
               "provider": {
                 "properties": {
                   "webhook": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
@@ -9850,6 +9829,60 @@
           },
           {
             "$ref": "#/$defs/schema73"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "namespaced": {}
+                  },
+                  "required": [
+                    "namespaced"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "namespaced": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "namespaced"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },

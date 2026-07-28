@@ -9,16 +9,46 @@ use crate::schema_node::{JsonSchemaType, SchemaNode};
 use crate::split_value_path;
 use crate::values_yaml::yaml_value_at_path;
 
+/// Which way a condition fragment may err where the encoding cannot be
+/// exact.
+///
+/// A conditional ARM (`if C then S`) applies a claim, so C must hold
+/// wherever the claim does and its leaves WIDEN. A TERMINAL clause
+/// (`if C then false`) asserts that rendering aborts, so C must be
+/// SUFFICIENT: a widened leaf would terminate documents that render.
+/// `not` swaps the direction for everything below it.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ConditionPolarity {
+    Widen,
+    Narrow,
+}
+
+impl ConditionPolarity {
+    fn flipped(self) -> Self {
+        match self {
+            Self::Widen => Self::Narrow,
+            Self::Narrow => Self::Widen,
+        }
+    }
+}
+
 pub(crate) fn build_condition_clauses(
     guards: &[ConditionalGuard],
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
     absence: AbsenceDefaults<'_>,
+    polarity: ConditionPolarity,
 ) -> Vec<SchemaNode> {
     guards
         .iter()
         .filter_map(|guard| {
-            build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc, absence)
+            build_single_condition_fragment(
+                guard,
+                ancestor_segments,
+                values_yaml_doc,
+                absence,
+                polarity,
+            )
         })
         .collect()
 }
@@ -47,6 +77,7 @@ pub(crate) fn build_condition_clauses_cached(
                         ancestor_segments,
                         values_yaml_doc,
                         absence,
+                        ConditionPolarity::Widen,
                     )
                 })
                 .clone()
@@ -83,6 +114,7 @@ fn build_single_condition_fragment(
     ancestor_segments: &[String],
     values_yaml_doc: &YamlValue,
     absence: AbsenceDefaults<'_>,
+    polarity: ConditionPolarity,
 ) -> Option<SchemaNode> {
     let subchart_defaults_doc = absence.deeper_stage;
     let dependency_roots = absence.dependency_roots;
@@ -97,8 +129,13 @@ fn build_single_condition_fragment(
             // documents the chart renders fine. (Explicitly nulling out
             // every default key still merges to an empty — falsy — mapping;
             // that residue stays unmodeled, in the permissive direction.)
-            let default_is_nonempty_mapping =
-                matches!(declared, Some(YamlValue::Mapping(mapping)) if !mapping.is_empty());
+            // Only in the widening direction: the same residue the comment
+            // above leaves unmodeled is exactly what a terminal clause must
+            // not claim (velero declares `namespace: {labels: {}}`, and
+            // deleting `labels` coalesces the parent back to a falsy empty
+            // mapping, so its `len` guard never runs).
+            let default_is_nonempty_mapping = polarity == ConditionPolarity::Widen
+                && matches!(declared, Some(YamlValue::Mapping(mapping)) if !mapping.is_empty());
             let truthy = if default_is_nonempty_mapping {
                 SchemaNode::any_of(vec![SchemaNode::object(), helm_truthy_condition_schema()])
             } else {
@@ -366,6 +403,7 @@ fn build_single_condition_fragment(
                 ancestor_segments,
                 values_yaml_doc,
                 absence,
+                polarity.flipped(),
             )?);
             // A negated MEMBER-quantified guard admits a second exact arm:
             // beside "not every member satisfies it" (which is vacuously
@@ -385,13 +423,23 @@ fn build_single_condition_fragment(
             Some(negated)
         }
         ConditionalGuard::AllOf(guards) => {
-            let clauses =
-                build_condition_clauses(guards, ancestor_segments, values_yaml_doc, absence);
+            let clauses = build_condition_clauses(
+                guards,
+                ancestor_segments,
+                values_yaml_doc,
+                absence,
+                polarity,
+            );
             (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
-            let clauses =
-                build_condition_clauses(guards, ancestor_segments, values_yaml_doc, absence);
+            let clauses = build_condition_clauses(
+                guards,
+                ancestor_segments,
+                values_yaml_doc,
+                absence,
+                polarity,
+            );
             (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
         }
     }
@@ -418,10 +466,14 @@ pub(crate) fn guard_encodes_fully(
                     guard_encodes_fully(guard, ancestor_segments, values_yaml_doc, absence)
                 })
         }
-        other => {
-            build_single_condition_fragment(other, ancestor_segments, values_yaml_doc, absence)
-                .is_some()
-        }
+        other => build_single_condition_fragment(
+            other,
+            ancestor_segments,
+            values_yaml_doc,
+            absence,
+            ConditionPolarity::Widen,
+        )
+        .is_some(),
     }
 }
 

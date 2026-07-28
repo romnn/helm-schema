@@ -16052,14 +16052,7 @@
           {
             "properties": {
               "serviceMonitor": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
@@ -17094,14 +17087,7 @@
                   {
                     "properties": {
                       "serviceMonitor": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -17228,14 +17214,7 @@
                   {
                     "properties": {
                       "serviceMonitor": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
@@ -18666,6 +18645,68 @@
                   {
                     "not": {
                       "properties": {
+                        "k8sApi": {
+                          "properties": {
+                            "cidrs": {}
+                          },
+                          "required": [
+                            "cidrs"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "k8sApi"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "k8sApi": {
+                        "properties": {
+                          "cidrs": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "cidrs"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "k8sApi"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
                         "metrics": {}
                       },
                       "required": [
@@ -18680,6 +18721,68 @@
                         "enum": [
                           null
                         ]
+                      }
+                    },
+                    "required": [
+                      "metrics"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "metrics": {
+                          "properties": {
+                            "cidrs": {}
+                          },
+                          "required": [
+                            "cidrs"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "metrics"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "metrics": {
+                        "properties": {
+                          "cidrs": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "cidrs"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [

@@ -11,7 +11,7 @@ use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_wi
 use helm_schema_ast::{
     is_checksum_function, is_coercing_arithmetic_function, is_merge_function,
     is_provenance_preserving_function, is_string_predicate_function, is_string_splitting_function,
-    is_string_transform_function, is_total_numeric_cast_function,
+    is_string_transform_function, is_total_numeric_cast_function, strict_operand_nil_aborts,
 };
 
 mod collections;
@@ -40,11 +40,11 @@ use serialization::{
 };
 use strict_operands::{
     pipeline_string_operand_facts, record_collection_item_kind_result,
-    record_length_bearing_operand, record_length_bearing_result,
-    record_raw_range_key_string_consumer_paths, record_strict_kind_operands,
-    record_strict_kind_result, record_strict_parser_call, record_strict_parser_pipeline,
-    record_string_call_consumers, record_string_consumer_effects, record_string_transform_effects,
-    string_call_operand_facts,
+    record_length_bearing_operand, record_length_bearing_result, record_operand_presence_operands,
+    record_operand_presence_result, record_raw_range_key_string_consumer_paths,
+    record_strict_kind_operands, record_strict_kind_result, record_strict_parser_call,
+    record_strict_parser_pipeline, record_string_call_consumers, record_string_consumer_effects,
+    record_string_transform_effects, string_call_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
 use value_facts::{
@@ -84,16 +84,35 @@ pub(crate) fn eval_call_with_helper_calls(
             let Some(arg) = args.first() else {
                 return EvalResult::none();
             };
-            eval_expr_with_helper_calls(arg, env, resolver)
+            // `copystructure` walks the operand with reflection and faults
+            // on a zero value, but any non-nil KIND copies, so the operand
+            // carries a presence claim and no kind claim at all.
+            let mut result = eval_expr_with_helper_calls(arg, env, resolver);
+            record_operand_presence_operands(args, env, resolver, &mut result.effects);
+            result
         }
         "first" if args.len() == 1 => {
             let mut result = eval_first(args, env, resolver);
-            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            record_strict_kind_operands(
+                function,
+                args,
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
             result
         }
         "last" if args.len() == 1 => {
             let mut result = eval_last(args, env, resolver);
-            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            record_strict_kind_operands(
+                function,
+                args,
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
             result
         }
         "initial" | "rest" | "compact" if matches!(args, [_]) => {
@@ -101,7 +120,14 @@ pub(crate) fn eval_call_with_helper_calls(
                 return EvalResult::none();
             };
             let mut result = eval_expr_with_helper_calls(arg, env, resolver);
-            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            record_strict_kind_operands(
+                function,
+                args,
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
             result
         }
         "slice" | "mustSlice" if (2..=3).contains(&args.len()) => {
@@ -110,6 +136,7 @@ pub(crate) fn eval_call_with_helper_calls(
             };
             let mut result = eval_expr_with_helper_calls(subject, env, resolver);
             record_strict_kind_operands(
+                function,
                 std::slice::from_ref(subject),
                 "array",
                 env,
@@ -121,7 +148,14 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         "reverse" if args.len() == 1 => {
             let mut result = eval_reverse(args, env, resolver);
-            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            record_strict_kind_operands(
+                function,
+                args,
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
             result
         }
         "splitList" if args.len() == 2 => {
@@ -136,6 +170,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let mut result = eval_append(args, env, resolver);
             if let [subject, _] = args {
                 record_strict_kind_operands(
+                    function,
                     std::slice::from_ref(subject),
                     "array",
                     env,
@@ -149,6 +184,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let mut result = eval_omit(args, env, resolver);
             if let Some(subject) = args.first() {
                 record_strict_kind_operands(
+                    function,
                     std::slice::from_ref(subject),
                     "object",
                     env,
@@ -160,7 +196,14 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         function if is_merge_function(function) => {
             let mut result = eval_merge(function, args, EvalResult::none(), env, resolver);
-            record_strict_kind_operands(args, "object", env, resolver, &mut result.effects);
+            record_strict_kind_operands(
+                function,
+                args,
+                "object",
+                env,
+                resolver,
+                &mut result.effects,
+            );
             result
         }
         "coalesce" => eval_coalesce(args, env, resolver),
@@ -174,10 +217,20 @@ pub(crate) fn eval_call_with_helper_calls(
                 effects.merge(operand.effects.clone());
             }
             if let Some(operand) = operands.first() {
-                record_strict_kind_result(operand, "string", &mut effects);
+                record_strict_kind_result(
+                    operand,
+                    "string",
+                    strict_operand_nil_aborts(function, false),
+                    &mut effects,
+                );
             }
             for (index, operand) in operands.iter().enumerate().take(3).skip(1) {
-                record_strict_kind_result(operand, "array", &mut effects);
+                record_strict_kind_result(
+                    operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut effects,
+                );
                 record_collection_item_kind_result(
                     operand,
                     "string",
@@ -186,7 +239,12 @@ pub(crate) fn eval_call_with_helper_calls(
                 );
             }
             if let Some(operand) = operands.get(3) {
-                record_strict_kind_result(operand, "integer", &mut effects);
+                record_strict_kind_result(
+                    operand,
+                    "integer",
+                    strict_operand_nil_aborts(function, false),
+                    &mut effects,
+                );
             }
             EvalResult::with_effects(None, effects)
         }
@@ -197,7 +255,14 @@ pub(crate) fn eval_call_with_helper_calls(
         // consumers must not type the operand through them.
         "concat" => {
             let mut result = eval_concat(args, env, resolver);
-            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            record_strict_kind_operands(
+                function,
+                args,
+                "array",
+                env,
+                resolver,
+                &mut result.effects,
+            );
             result
         }
         // The checksum family consumes a typed Go string subject and emits a
@@ -280,6 +345,7 @@ pub(crate) fn eval_call_with_helper_calls(
             };
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_strict_kind_operands(
+                function,
                 std::slice::from_ref(subject_expr),
                 "array",
                 env,
@@ -297,6 +363,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let mut result = eval_prepend(args, env, resolver);
             if let Some(subject) = args.first() {
                 record_strict_kind_operands(
+                    function,
                     std::slice::from_ref(subject),
                     "array",
                     env,
@@ -312,6 +379,7 @@ pub(crate) fn eval_call_with_helper_calls(
             };
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_strict_kind_operands(
+                function,
                 std::slice::from_ref(subject_expr),
                 "object",
                 env,
@@ -329,6 +397,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let mut result = eval_pick(args, env, resolver);
             if let Some(subject) = args.first() {
                 record_strict_kind_operands(
+                    function,
                     std::slice::from_ref(subject),
                     "object",
                     env,
@@ -344,7 +413,12 @@ pub(crate) fn eval_call_with_helper_calls(
             };
             let operand = eval_expr_with_helper_calls(arg, env, resolver);
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
-            record_strict_kind_result(&operand, "object", &mut result.effects);
+            record_strict_kind_result(
+                &operand,
+                "object",
+                strict_operand_nil_aborts(function, direct_values_path(arg).is_some()),
+                &mut result.effects,
+            );
             record_total_conversion_effects(
                 identity_value_paths(operand.value.as_ref()),
                 &mut result.effects,
@@ -379,20 +453,33 @@ pub(crate) fn eval_call_with_helper_calls(
             let mut result = eval_pluck(args, env, resolver);
             if let Some((key, maps)) = args.split_first() {
                 record_strict_kind_operands(
+                    function,
                     std::slice::from_ref(key),
                     "string",
                     env,
                     resolver,
                     &mut result.effects,
                 );
-                record_strict_kind_operands(maps, "object", env, resolver, &mut result.effects);
+                record_strict_kind_operands(
+                    function,
+                    maps,
+                    "object",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
             }
             result
         }
         "uniq" | "mustUniq" if args.len() == 1 => {
             let mut result = eval_all_args(args, env, resolver);
             let operand = result.clone();
-            record_strict_kind_result(&operand, "array", &mut result.effects);
+            record_strict_kind_result(
+                &operand,
+                "array",
+                strict_operand_nil_aborts(function, false),
+                &mut result.effects,
+            );
             result
         }
         "ternary" => eval_ternary(args, None, env, resolver),
@@ -570,39 +657,76 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             function if is_merge_function(function) => {
                 let piped_operand = current.clone();
                 let mut result = eval_merge(function, args, current, env, resolver);
-                record_strict_kind_result(&piped_operand, "object", &mut result.effects);
-                record_strict_kind_operands(args, "object", env, resolver, &mut result.effects);
+                record_strict_kind_result(
+                    &piped_operand,
+                    "object",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
+                record_strict_kind_operands(
+                    function,
+                    args,
+                    "object",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
                 result
             }
             "first" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = eval_first_result(current);
-                record_strict_kind_result(&operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 result
             }
             "last" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = eval_last_result(current);
-                record_strict_kind_result(&operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 result
             }
             "initial" | "rest" | "compact" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = current;
-                record_strict_kind_result(&operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 result
             }
             "slice" | "mustSlice" if (1..=2).contains(&args.len()) => {
                 let operand = current.clone();
                 let mut result = current;
-                record_strict_kind_result(&operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 merge_arg_effects(args, env, resolver, &mut result.effects);
                 result
             }
             "reverse" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = eval_reverse_result(current);
-                record_strict_kind_result(&operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 result
             }
             "len" if args.is_empty() => {
@@ -794,14 +918,31 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "concat" => {
                 let piped_operand = current.clone();
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_strict_kind_result(&piped_operand, "array", &mut result.effects);
-                record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+                record_strict_kind_result(
+                    &piped_operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
+                record_strict_kind_operands(
+                    function,
+                    args,
+                    "array",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
                 result
             }
             "has" if args.len() == 1 => {
                 let piped_operand = current.clone();
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_strict_kind_result(&piped_operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &piped_operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 record_total_conversion_effects(
                     identity_value_paths(piped_operand.value.as_ref()),
                     &mut result.effects,
@@ -811,7 +952,12 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "keys" | "values" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = eval_unknown_call(args, current.effects, env, resolver);
-                record_strict_kind_result(&operand, "object", &mut result.effects);
+                record_strict_kind_result(
+                    &operand,
+                    "object",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
                 record_total_conversion_effects(
                     identity_value_paths(operand.value.as_ref()),
                     &mut result.effects,
@@ -837,7 +983,18 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 let mut effects = current.effects;
                 merge_arg_effects(args, env, resolver, &mut effects);
                 let mut result = EvalResult::with_effects(current.value, effects);
-                record_strict_kind_result(&piped_operand, "array", &mut result.effects);
+                record_strict_kind_result(
+                    &piped_operand,
+                    "array",
+                    strict_operand_nil_aborts(function, false),
+                    &mut result.effects,
+                );
+                result
+            }
+            "deepCopy" | "mustDeepCopy" if args.is_empty() => {
+                let operand = current.clone();
+                let mut result = current;
+                record_operand_presence_result(&operand, &mut result.effects);
                 result
             }
             function if is_provenance_preserving_function(function) => {

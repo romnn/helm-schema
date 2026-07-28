@@ -489,6 +489,7 @@ pub(super) fn record_raw_range_key_string_consumer_paths(
 /// makes a raw source conditional on truthiness; structural `if`/`with` guards join later when
 /// the effects are absorbed at the execution site.
 pub(super) fn record_strict_kind_operands(
+    function: &str,
     args: &[TemplateExpr],
     schema_type: &str,
     env: &EvalEnv,
@@ -497,19 +498,83 @@ pub(super) fn record_strict_kind_operands(
 ) {
     for arg in args {
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        record_strict_kind_result(&operand, schema_type, effects);
+        // `direct_values_path` resolves against an EMPTY environment, so it
+        // answers exactly the question the map-parameter class asks: a
+        // spelling it names is a field read that hands the parameter a nil
+        // interface, while a pipeline result, a call result, and a
+        // `:=`-bound local all reach it invalid instead. A with-scoped dot
+        // member does abort at runtime but cannot resolve here, so it
+        // abstains.
+        let nil_aborts = helm_schema_ast::strict_operand_nil_aborts(
+            function,
+            crate::expr_eval::direct_values_path(arg).is_some(),
+        );
+        record_strict_kind_result(&operand, schema_type, nil_aborts, effects);
     }
 }
 
 pub(super) fn record_strict_kind_result(
     operand: &EvalResult,
     schema_type: &str,
+    nil_aborts: bool,
     effects: &mut Effects,
 ) {
     for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
             conjunction.extend(shadow.iter().cloned());
             push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
+        }
+    }
+    if nil_aborts {
+        record_operand_presence_result(operand, effects);
+    }
+}
+
+/// Records that a NIL operand aborts the call wherever it executes: the
+/// path must be present and non-null there.
+///
+/// The truthy⇒kind capture beside this one cannot state it — absence is
+/// Helm-falsy, so that capture's own guard excuses exactly the state that
+/// aborts. [`helm_schema_ast::strict_operand_nil_aborts`] decides which
+/// positions carry the claim.
+pub(super) fn record_operand_presence_operands(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) {
+    for arg in args {
+        let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        record_operand_presence_result(&operand, effects);
+    }
+}
+
+pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut Effects) {
+    // Only an operand that IS one raw values path carries the claim, the
+    // same rule [`record_nil_strict_identity_operand`] applies to the
+    // string lane: a derived operand (a merge, a `default` chain, a
+    // helper's rendered text) hands the call whatever the derivation
+    // produced, so those paths' own absence is not what aborts. Reading
+    // the layered identities instead fabricates subjects — k8s-infra's
+    // preset merge grew 951 clauses over spellings like
+    // `otelAgent.presets.hostMetrics.scrapers.service.pipelines`, which
+    // name no key the chart ever has.
+    let Some(AbstractValue::ValuesPath(path)) = &operand.value else {
+        return;
+    };
+    // The whole values root is always present; only a member has an
+    // absence to claim (`index $.Values $key`).
+    if path.is_empty() {
+        return;
+    }
+    for conjunction in strict_operand_selection_conjunctions(operand, path) {
+        let capture = crate::eval_effect::FailCapture {
+            conjunction,
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
+        };
+        if !effects.helper_fails.contains(&capture) {
+            effects.helper_fails.push(capture);
         }
     }
 }
@@ -893,7 +958,8 @@ pub(super) fn operand_selection_conjunctions(effects: &Effects, path: &str) -> V
 }
 
 /// `len` requires a length-bearing value (string, list, or map): numeric
-/// and boolean operands abort rendering outright.
+/// and boolean operands abort rendering outright, and so does a nil one
+/// ("len of nil pointer").
 pub(super) fn record_length_bearing_operand(
     args: &[TemplateExpr],
     env: &EvalEnv,
@@ -915,4 +981,5 @@ pub(super) fn record_length_bearing_result(operand: &EvalResult, effects: &mut E
             }
         }
     }
+    record_operand_presence_result(operand, effects);
 }

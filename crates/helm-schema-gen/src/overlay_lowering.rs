@@ -1269,6 +1269,7 @@ pub(crate) fn append_terminal_clauses(
             &ancestor_segments,
             values_yaml_doc,
             absence,
+            crate::condition_encoding::ConditionPolarity::Narrow,
         ));
         root_schema.append_conditional(
             &ancestor_segments,

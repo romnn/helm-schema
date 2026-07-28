@@ -11,7 +11,8 @@ use helm_schema_core::Predicate;
 
 use super::eval_all_args;
 use super::strict_operands::{
-    layered_strict_operand_identity_paths, strict_operand_selection_conjunctions,
+    layered_strict_operand_identity_paths, record_operand_presence_result,
+    strict_operand_selection_conjunctions,
 };
 use super::value_facts::identity_value_paths;
 
@@ -197,6 +198,11 @@ pub(super) fn eval_index(
     if object_host {
         record_member_host_access(&base, &mut effects);
     }
+    // Both spellings reject a nil subject before any key lookup: Go's
+    // `index` answers "index of untyped nil" (cilium's
+    // `index .Values.extraConfig …`) and sprig's `get` type-asserts its
+    // map parameter.
+    record_operand_presence_result(&base, &mut effects);
     effects.merge(base.effects);
     let Some(value) = base.value else {
         return EvalResult::with_effects(None, effects);

@@ -21,8 +21,8 @@ pub use expr_function_catalog::{
     is_coercing_arithmetic_function, is_merge_function, is_provenance_preserving_function,
     is_string_predicate_function, is_string_splitting_function, is_string_transform_function,
     is_total_numeric_cast_function, is_total_stringification_function,
-    strict_collection_item_pattern, strict_parser_operand_pattern, string_operand_indices,
-    type_descriptor_call_subject, type_is_schema_type,
+    strict_collection_item_pattern, strict_operand_nil_aborts, strict_parser_operand_pattern,
+    string_operand_indices, type_descriptor_call_subject, type_is_schema_type,
 };
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
 pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};

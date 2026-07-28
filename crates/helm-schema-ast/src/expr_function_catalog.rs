@@ -165,6 +165,58 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
     }
 }
 
+/// Reports whether a NIL operand — an absent key, or one the user
+/// null-deleted — aborts rendering at a position the strict-kind recorders
+/// already type.
+///
+/// `direct_access` says HOW nil reaches the parameter, which decides one
+/// whole class of these functions. A missing key read as a field
+/// (`.Values.x`, or a `range` member variable, which comes straight from
+/// `MapIndex`) arrives as a valid `interface{}` holding nil. Anything that
+/// passed through a pipeline stage or a `:=` binding arrives INVALID
+/// instead — Go stores both through a step that unwraps the interface —
+/// and `validateType` then substitutes the parameter's zero value whenever
+/// the declared type can be nil.
+///
+/// So three mechanisms decide the verdict:
+///
+/// * A declared MAP parameter aborts on the interface spelling
+///   ("wrong type for value; expected map[string]interface {}; got
+///   interface {}") and silently takes an empty map on the invalid one —
+///   `hasKey $local "k"` renders false where `hasKey .Values.absent "k"`
+///   aborts. (`set` aborts in BOTH spellings — it survives the type check
+///   and then panics assigning into the nil map — but it is deliberately
+///   absent from this table: a chart's own earlier `set` routinely CREATES
+///   the destination, and nothing here proves that mutation did not run.)
+/// * A declared non-nilable parameter — `string`, `bool` — aborts either
+///   way, the invalid spelling with "invalid value; expected string".
+/// * Sprig's own reflection faults either way too: its list helpers read
+///   `reflect.TypeOf(list).Kind()` off the raw operand, `deepCopy` walks
+///   it with `copystructure`, and Go's `index`/`len` reject an untyped nil
+///   subject outright. `has` is the exception — it tests
+///   `haystack == nil` before anything else and answers false.
+///
+/// The verdicts are measured against Helm 4.2.3 rather than read off the
+/// signatures, because the mechanisms cross: `len` declares `interface{}`
+/// yet rejects nil, while `join` declares `[]interface{}` yet renders
+/// empty text for it.
+#[must_use]
+pub fn strict_operand_nil_aborts(function: &str, direct_access: bool) -> bool {
+    match function {
+        // Nil aborts either way here, by three routes: sprig's
+        // reflection-backed list helpers and `deepCopy` fault on the raw
+        // operand, Go's own `index` and `len` reject an untyped nil
+        // subject, and `ternary`'s `bool` parameter cannot hold nil.
+        "first" | "last" | "initial" | "rest" | "compact" | "uniq" | "mustUniq" | "append"
+        | "push" | "prepend" | "concat" | "slice" | "mustSlice" | "reverse" | "deepCopy"
+        | "mustDeepCopy" | "index" | "len" | "ternary" => true,
+        // The rest of the map-parameter class survives an invalid operand.
+        "hasKey" | "pick" | "omit" | "keys" | "values" | "pluck" | "get" | "merge"
+        | "mergeOverwrite" | "mustMerge" | "mustMergeOverwrite" => direct_access,
+        _ => false,
+    }
+}
+
 /// Returns the lexical language required by a strict string parser operand.
 ///
 /// The pattern is a conservative superset of every string accepted by the

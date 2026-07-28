@@ -1561,6 +1561,53 @@
           {
             "not": {
               "properties": {
+                "envs": {
+                  "properties": {
+                    "teams": {}
+                  },
+                  "required": [
+                    "teams"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "envs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "envs": {
+                "properties": {
+                  "teams": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "teams"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "envs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
                 "image": {}
               },
               "required": [

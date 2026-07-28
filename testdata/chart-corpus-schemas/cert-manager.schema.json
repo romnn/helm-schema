@@ -84,7 +84,7 @@
           "$ref": "#/$defs/schema29"
         },
         "name": {
-          "$ref": "#/$defs/schema407"
+          "$ref": "#/$defs/schema411"
         },
         "ports": {
           "$ref": "#/$defs/schema64"
@@ -120,7 +120,7 @@
           "$ref": "#/$defs/schema209"
         },
         "tty": {
-          "$ref": "#/$defs/schema423"
+          "$ref": "#/$defs/schema427"
         },
         "volumeDevices": {
           "$ref": "#/$defs/schema168"
@@ -129,7 +129,7 @@
           "$ref": "#/$defs/schema78"
         },
         "workingDir": {
-          "$ref": "#/$defs/schema354"
+          "$ref": "#/$defs/schema355"
         }
       },
       "required": [
@@ -198,7 +198,7 @@
           "$ref": "#/$defs/schema45"
         },
         "name": {
-          "$ref": "#/$defs/schema375"
+          "$ref": "#/$defs/schema377"
         },
         "nfs": {
           "$ref": "#/$defs/schema134"
@@ -328,7 +328,7 @@
                     "$ref": "#/$defs/schema45"
                   },
                   "name": {
-                    "$ref": "#/$defs/schema375"
+                    "$ref": "#/$defs/schema377"
                   },
                   "nfs": {
                     "$ref": "#/$defs/schema134"
@@ -394,7 +394,7 @@
           "$ref": "#/$defs/schema1"
         },
         {
-          "$ref": "#/$defs/schema557"
+          "$ref": "#/$defs/schema565"
         },
         {
           "not": {
@@ -6847,15 +6847,43 @@
         "null"
       ]
     },
-    "schema345": {
+    "schema342": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "podDisruptionBudget": {}
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "podDisruptionBudget": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "podDisruptionBudget"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema346": {
       "description": "EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.",
       "type": "boolean"
     },
-    "schema348": {
+    "schema349": {
       "description": "EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.",
       "type": "null"
     },
-    "schema350": {
+    "schema351": {
       "anyOf": [
         {
           "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
@@ -6869,14 +6897,14 @@
         }
       ]
     },
-    "schema354": {
+    "schema355": {
       "description": "Container's working directory. If not specified, the container runtime's default will be used, which might be configured in the container image. Cannot be updated.",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema355": {
+    "schema356": {
       "not": {
         "anyOf": [
           {
@@ -6906,7 +6934,7 @@
         ]
       }
     },
-    "schema358": {
+    "schema359": {
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "null"
     },
@@ -7026,15 +7054,43 @@
         "null"
       ]
     },
-    "schema360": {
+    "schema361": {
       "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
       "type": "boolean"
     },
-    "schema363": {
+    "schema362": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "startupapicheck": {}
+            },
+            "required": [
+              "startupapicheck"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "startupapicheck": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "startupapicheck"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema365": {
       "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
       "type": "null"
     },
-    "schema366": {
+    "schema368": {
       "anyOf": [
         {
           "not": {
@@ -7062,7 +7118,7 @@
         }
       ]
     },
-    "schema367": {
+    "schema369": {
       "not": {
         "anyOf": [
           {
@@ -7092,11 +7148,11 @@
         ]
       }
     },
-    "schema375": {
+    "schema377": {
       "description": "name of the volume. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "schema377": {
+    "schema379": {
       "description": "maxVersion defines the maximum acceptable TLS version.\n\nIt requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.",
       "enum": [
         "TLS10",
@@ -7106,7 +7162,7 @@
       ],
       "type": "string"
     },
-    "schema378": {
+    "schema380": {
       "description": "minVersion defines the minimum acceptable TLS version.\n\nIt requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.",
       "enum": [
         "TLS10",
@@ -7115,6 +7171,34 @@
         "TLS13"
       ],
       "type": "string"
+    },
+    "schema385": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "cainjector": {}
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "cainjector": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "cainjector"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "schema4": {
       "additionalProperties": false,
@@ -7605,16 +7689,44 @@
         "null"
       ]
     },
-    "schema400": {
+    "schema402": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {}
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "global": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema404": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "schema401": {
+    "schema405": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "integer"
     },
-    "schema403": {
+    "schema407": {
       "properties": {
         "config": {
           "properties": {
@@ -7635,7 +7747,7 @@
       ],
       "type": "object"
     },
-    "schema404": {
+    "schema408": {
       "anyOf": [
         {
           "not": {
@@ -7662,19 +7774,6 @@
           "type": "object"
         }
       ]
-    },
-    "schema406": {
-      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-      "format": "int32",
-      "type": "null"
-    },
-    "schema407": {
-      "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
-      "type": "string"
-    },
-    "schema409": {
-      "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
-      "type": "string"
     },
     "schema41": {
       "additionalProperties": false,
@@ -7745,38 +7844,29 @@
         "null"
       ]
     },
-    "schema423": {
+    "schema410": {
+      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+      "format": "int32",
+      "type": "null"
+    },
+    "schema411": {
+      "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
+      "type": "string"
+    },
+    "schema413": {
+      "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",
+      "type": "string"
+    },
+    "schema427": {
       "description": "Whether this container should allocate a TTY for itself, also requires 'stdin' to be true. Default is false.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema424": {
+    "schema428": {
       "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
       "type": "string"
-    },
-    "schema426": {
-      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "schema427": {
-      "properties": {
-        "config": {
-          "properties": {
-            "metricsTLSConfig": {}
-          },
-          "required": [
-            "metricsTLSConfig"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "config"
-      ],
-      "type": "object"
     },
     "schema43": {
       "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
@@ -7847,7 +7937,29 @@
       },
       "type": "array"
     },
-    "schema438": {
+    "schema430": {
+      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "schema431": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metricsTLSConfig": {}
+          },
+          "required": [
+            "metricsTLSConfig"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "schema442": {
       "additionalProperties": {
         "items": {
           "type": "string"
@@ -7958,40 +8070,17 @@
         "null"
       ]
     },
-    "schema461": {
+    "schema465": {
       "description": "honorLabels when true preserves the metric's labels when they collide\nwith the target's labels.",
       "type": "boolean"
     },
-    "schema462": {
+    "schema466": {
       "description": "honorTimestamps defines whether Prometheus preserves the timestamps\nwhen exposed by the target.",
       "type": "boolean"
     },
-    "schema467": {
+    "schema471": {
       "description": "honorLabels defines when true the metric's labels when they collide\nwith the target's labels.",
       "type": "boolean"
-    },
-    "schema478": {
-      "description": "proxyUrl defines the HTTP proxy server to use.",
-      "pattern": "^(http|https|socks5)://.+$",
-      "type": "string"
-    },
-    "schema479": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
     },
     "schema48": {
       "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
@@ -8062,19 +8151,19 @@
       },
       "type": "array"
     },
-    "schema484": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+    "schema482": {
+      "description": "proxyUrl defines the HTTP proxy server to use.",
+      "pattern": "^(http|https|socks5)://.+$",
       "type": "string"
     },
-    "schema492": {
-      "description": "followRedirects defines whether the client should follow HTTP 3xx\nredirects.",
-      "type": "boolean"
-    },
-    "schema496": {
+    "schema483": {
       "additionalProperties": {},
       "properties": {
-        "podDisruptionBudget": {
+        "annotations": {
           "anyOf": [
+            {
+              "type": "array"
+            },
             {
               "type": "object"
             },
@@ -8084,6 +8173,14 @@
           ]
         }
       }
+    },
+    "schema488": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
+    },
+    "schema496": {
+      "description": "followRedirects defines whether the client should follow HTTP 3xx\nredirects.",
+      "type": "boolean"
     },
     "schema5": {
       "additionalProperties": false,
@@ -8506,15 +8603,30 @@
       ]
     },
     "schema500": {
+      "additionalProperties": {},
+      "properties": {
+        "podDisruptionBudget": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema504": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema501": {
+    "schema505": {
       "description": "insecureSkipVerify defines how to disable target certificate validation.",
       "type": "boolean"
     },
-    "schema504": {
+    "schema508": {
       "properties": {
         "podDisruptionBudget": {
           "enum": [
@@ -8527,7 +8639,7 @@
       ],
       "type": "object"
     },
-    "schema518": {
+    "schema523": {
       "properties": {
         "metricsTLSConfig": {
           "enum": [
@@ -8540,7 +8652,7 @@
       ],
       "type": "object"
     },
-    "schema528": {
+    "schema534": {
       "properties": {
         "serviceAccount": {
           "enum": [
@@ -8553,11 +8665,7 @@
       ],
       "type": "object"
     },
-    "schema531": {
-      "description": "serverName is used to verify the hostname for the targets.",
-      "type": "string"
-    },
-    "schema532": {
+    "schema537": {
       "properties": {
         "podDisruptionBudget": {}
       },
@@ -8567,12 +8675,11 @@
       "type": "object"
     },
     "schema538": {
-      "description": "Additional volume mounts to add to the cert-manager controller container."
+      "description": "serverName is used to verify the hostname for the targets.",
+      "type": "string"
     },
-    "schema549": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
+    "schema545": {
+      "description": "Additional volume mounts to add to the cert-manager controller container."
     },
     "schema55": {
       "additionalProperties": false,
@@ -8655,36 +8762,10 @@
         "null"
       ]
     },
-    "schema552": {
-      "properties": {
-        "metricsTLSConfig": {}
-      },
-      "required": [
-        "metricsTLSConfig"
-      ],
-      "type": "object"
-    },
-    "schema554": {
-      "description": "key is the label key that the selector applies to.",
-      "type": "string"
-    },
-    "schema555": {
-      "properties": {
-        "serviceAccount": {}
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
     "schema557": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema558": {
-      "description": "Additional volumes to add to the cert-manager controller pod."
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
     },
     "schema56": {
       "allOf": [
@@ -8737,7 +8818,38 @@
       "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
       "type": "string"
     },
-    "schema561": {
+    "schema560": {
+      "properties": {
+        "metricsTLSConfig": {}
+      },
+      "required": [
+        "metricsTLSConfig"
+      ],
+      "type": "object"
+    },
+    "schema562": {
+      "description": "key is the label key that the selector applies to.",
+      "type": "string"
+    },
+    "schema563": {
+      "properties": {
+        "serviceAccount": {}
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "schema565": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema566": {
+      "description": "Additional volumes to add to the cert-manager controller pod."
+    },
+    "schema569": {
       "properties": {
         "config": {
           "enum": [
@@ -8750,7 +8862,7 @@
       ],
       "type": "object"
     },
-    "schema566": {
+    "schema575": {
       "properties": {
         "image": {
           "enum": [
@@ -8763,7 +8875,7 @@
       ],
       "type": "object"
     },
-    "schema570": {
+    "schema580": {
       "properties": {
         "config": {}
       },
@@ -8772,10 +8884,10 @@
       ],
       "type": "object"
     },
-    "schema571": {
+    "schema581": {
       "description": "Automount API credentials for a Service Account."
     },
-    "schema572": {
+    "schema583": {
       "oneOf": [
         {
           "type": [
@@ -8791,12 +8903,12 @@
         }
       ]
     },
-    "schema573": {
+    "schema584": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema574": {
+    "schema585": {
       "properties": {
         "image": {}
       },
@@ -8805,13 +8917,13 @@
       ],
       "type": "object"
     },
-    "schema579": {
+    "schema590": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema583": {
+    "schema594": {
       "anyOf": [
         {
           "type": "null"
@@ -8821,7 +8933,7 @@
         }
       ]
     },
-    "schema584": {
+    "schema595": {
       "anyOf": [
         {
           "type": "object"
@@ -8831,29 +8943,19 @@
         }
       ]
     },
-    "schema586": {
+    "schema597": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema587": {
+    "schema598": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema588": {
+    "schema599": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "schema591": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "schema592": {
-      "not": {
-        "pattern": "[\\r\\n]"
       }
     },
     "schema6": {
@@ -9343,6 +9445,16 @@
         "object",
         "null"
       ]
+    },
+    "schema602": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "schema603": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
     },
     "schema62": {
       "description": "List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.",
@@ -11347,7 +11459,7 @@
                   "not": {
                     "properties": {
                       "cainjector": {
-                        "$ref": "#/$defs/schema427"
+                        "$ref": "#/$defs/schema431"
                       }
                     },
                     "required": [
@@ -11359,7 +11471,7 @@
                 {
                   "properties": {
                     "cainjector": {
-                      "$ref": "#/$defs/schema403"
+                      "$ref": "#/$defs/schema407"
                     }
                   },
                   "required": [
@@ -11440,7 +11552,7 @@
             "additionalProperties": {},
             "properties": {
               "cainjector": {
-                "$ref": "#/$defs/schema584"
+                "$ref": "#/$defs/schema595"
               }
             }
           }
@@ -11538,7 +11650,7 @@
         "additionalProperties": {},
         "properties": {
           "cainjector": {
-            "$ref": "#/$defs/schema496"
+            "$ref": "#/$defs/schema500"
           }
         }
       }
@@ -11823,11 +11935,11 @@
               "anyOf": [
                 {
                   "not": {
-                    "$ref": "#/$defs/schema570"
+                    "$ref": "#/$defs/schema580"
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema561"
+                  "$ref": "#/$defs/schema569"
                 }
               ]
             }
@@ -11876,7 +11988,7 @@
               "type": "array"
             },
             {
-              "$ref": "#/$defs/schema579"
+              "$ref": "#/$defs/schema590"
             },
             {
               "maximum": 0,
@@ -13305,7 +13417,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema579"
+                    "$ref": "#/$defs/schema590"
                   },
                   {
                     "not": {
@@ -14910,13 +15022,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema586"
+                        "$ref": "#/$defs/schema597"
                       },
                       {
-                        "$ref": "#/$defs/schema588"
+                        "$ref": "#/$defs/schema599"
                       },
                       {
-                        "$ref": "#/$defs/schema591"
+                        "$ref": "#/$defs/schema602"
                       },
                       {
                         "not": {
@@ -14924,19 +15036,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema592"
+                        "$ref": "#/$defs/schema603"
                       },
                       {
-                        "$ref": "#/$defs/schema500"
+                        "$ref": "#/$defs/schema504"
                       },
                       {
                         "$ref": "#/$defs/schema317"
                       },
                       {
-                        "$ref": "#/$defs/schema549"
+                        "$ref": "#/$defs/schema557"
                       },
                       {
-                        "$ref": "#/$defs/schema573"
+                        "$ref": "#/$defs/schema584"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -15061,13 +15173,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema586"
+                    "$ref": "#/$defs/schema597"
                   },
                   {
-                    "$ref": "#/$defs/schema588"
+                    "$ref": "#/$defs/schema599"
                   },
                   {
-                    "$ref": "#/$defs/schema591"
+                    "$ref": "#/$defs/schema602"
                   },
                   {
                     "not": {
@@ -15075,22 +15187,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema592"
+                    "$ref": "#/$defs/schema603"
                   },
                   {
-                    "$ref": "#/$defs/schema587"
+                    "$ref": "#/$defs/schema598"
                   },
                   {
-                    "$ref": "#/$defs/schema500"
+                    "$ref": "#/$defs/schema504"
                   },
                   {
                     "$ref": "#/$defs/schema317"
                   },
                   {
-                    "$ref": "#/$defs/schema549"
+                    "$ref": "#/$defs/schema557"
                   },
                   {
-                    "$ref": "#/$defs/schema573"
+                    "$ref": "#/$defs/schema584"
                   }
                 ],
                 "description": "`namespace` is the namespace of the service. Required",
@@ -15151,7 +15263,7 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/$defs/schema496"
+        "$ref": "#/$defs/schema500"
       }
     },
     {
@@ -15970,7 +16082,7 @@
             "additionalProperties": {},
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/schema479"
+                "$ref": "#/$defs/schema483"
               }
             }
           },
@@ -16296,7 +16408,7 @@
             "additionalProperties": {},
             "properties": {
               "startupapicheck": {
-                "$ref": "#/$defs/schema584"
+                "$ref": "#/$defs/schema595"
               }
             }
           }
@@ -16764,7 +16876,7 @@
                   "not": {
                     "properties": {
                       "webhook": {
-                        "$ref": "#/$defs/schema427"
+                        "$ref": "#/$defs/schema431"
                       }
                     },
                     "required": [
@@ -16776,7 +16888,7 @@
                 {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/schema403"
+                      "$ref": "#/$defs/schema407"
                     }
                   },
                   "required": [
@@ -16960,7 +17072,7 @@
         "additionalProperties": {},
         "properties": {
           "webhook": {
-            "$ref": "#/$defs/schema496"
+            "$ref": "#/$defs/schema500"
           }
         }
       }
@@ -17035,9 +17147,67 @@
       "additionalProperties": {},
       "properties": {
         "webhook": {
-          "$ref": "#/$defs/schema584"
+          "$ref": "#/$defs/schema595"
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "cainjector": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema385"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "cainjector": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema402"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -17078,6 +17248,93 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema342"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "startupapicheck": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "startupapicheck"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema402"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "startupapicheck": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "startupapicheck"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema362"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -17109,11 +17366,19 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/schema385"
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
               "properties": {
-                "cainjector": {}
+                "cainjector": {
+                  "$ref": "#/$defs/schema580"
+                }
               },
               "required": [
                 "cainjector"
@@ -17124,9 +17389,7 @@
           {
             "properties": {
               "cainjector": {
-                "enum": [
-                  null
-                ]
+                "$ref": "#/$defs/schema569"
               }
             },
             "required": [
@@ -17145,7 +17408,7 @@
             "not": {
               "properties": {
                 "cainjector": {
-                  "$ref": "#/$defs/schema570"
+                  "$ref": "#/$defs/schema537"
                 }
               },
               "required": [
@@ -17157,38 +17420,7 @@
           {
             "properties": {
               "cainjector": {
-                "$ref": "#/$defs/schema561"
-              }
-            },
-            "required": [
-              "cainjector"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "cainjector": {
-                  "$ref": "#/$defs/schema532"
-                }
-              },
-              "required": [
-                "cainjector"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "cainjector": {
-                "$ref": "#/$defs/schema504"
+                "$ref": "#/$defs/schema508"
               }
             },
             "required": [
@@ -17233,32 +17465,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema402"
       },
       "then": false
     },
@@ -17358,22 +17565,13 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema404"
+        "$ref": "#/$defs/schema408"
       },
       "then": false
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/$defs/schema532"
-            }
-          },
-          {
-            "$ref": "#/$defs/schema504"
-          }
-        ]
+        "$ref": "#/$defs/schema342"
       },
       "then": false
     },
@@ -17410,38 +17608,13 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema366"
+        "$ref": "#/$defs/schema368"
       },
       "then": false
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "startupapicheck": {}
-              },
-              "required": [
-                "startupapicheck"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "startupapicheck": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "startupapicheck"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema362"
       },
       "then": false
     },
@@ -17638,7 +17811,7 @@
             "not": {
               "properties": {
                 "webhook": {
-                  "$ref": "#/$defs/schema574"
+                  "$ref": "#/$defs/schema585"
                 }
               },
               "required": [
@@ -17650,7 +17823,7 @@
           {
             "properties": {
               "webhook": {
-                "$ref": "#/$defs/schema566"
+                "$ref": "#/$defs/schema575"
               }
             },
             "required": [
@@ -17810,7 +17983,7 @@
             "not": {
               "properties": {
                 "webhook": {
-                  "$ref": "#/$defs/schema532"
+                  "$ref": "#/$defs/schema537"
                 }
               },
               "required": [
@@ -17822,7 +17995,7 @@
           {
             "properties": {
               "webhook": {
-                "$ref": "#/$defs/schema504"
+                "$ref": "#/$defs/schema508"
               }
             },
             "required": [
@@ -17888,7 +18061,7 @@
             "not": {
               "properties": {
                 "webhook": {
-                  "$ref": "#/$defs/schema555"
+                  "$ref": "#/$defs/schema563"
                 }
               },
               "required": [
@@ -17900,7 +18073,7 @@
           {
             "properties": {
               "webhook": {
-                "$ref": "#/$defs/schema528"
+                "$ref": "#/$defs/schema534"
               }
             },
             "required": [
@@ -18230,13 +18403,13 @@
                   "replicaCount": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema401"
+                        "$ref": "#/$defs/schema405"
                       },
                       {
-                        "$ref": "#/$defs/schema406"
+                        "$ref": "#/$defs/schema410"
                       },
                       {
-                        "$ref": "#/$defs/schema400"
+                        "$ref": "#/$defs/schema404"
                       }
                     ],
                     "description": "The number of replicas of the cert-manager cainjector to run.\nThe default is 1, but in production set this to 2 or 3 to provide high\navailability.\nIf `replicas > 1`, consider setting `cainjector.podDisruptionBudget.enabled=true`.\nNote that cert-manager uses leader election to ensure that there can\nonly be a single instance active at a time."
@@ -18297,7 +18470,7 @@
                             "$ref": "#/$defs/schema124"
                           },
                           {
-                            "$ref": "#/$defs/schema358"
+                            "$ref": "#/$defs/schema359"
                           },
                           {
                             "not": {
@@ -18651,7 +18824,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema404"
+                "$ref": "#/$defs/schema408"
               }
             ]
           },
@@ -18672,7 +18845,36 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema366"
+                "$ref": "#/$defs/schema368"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "podDisruptionBudget": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podDisruptionBudget"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema342"
               }
             ]
           },
@@ -18713,11 +18915,11 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/schema552"
+                          "$ref": "#/$defs/schema560"
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema518"
+                        "$ref": "#/$defs/schema523"
                       }
                     ]
                   }
@@ -18843,7 +19045,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema355"
+                    "$ref": "#/$defs/schema356"
                   }
                 ]
               },
@@ -18866,7 +19068,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema367"
+                    "$ref": "#/$defs/schema369"
                   }
                 ]
               },
@@ -18945,7 +19147,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/schema571"
+              "$ref": "#/$defs/schema581"
             },
             "create": {
               "anyOf": [
@@ -18979,10 +19181,10 @@
           "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core).\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
         },
         "volumeMounts": {
-          "$ref": "#/$defs/schema538"
+          "$ref": "#/$defs/schema545"
         },
         "volumes": {
-          "$ref": "#/$defs/schema558"
+          "$ref": "#/$defs/schema566"
         }
       },
       "type": "object"
@@ -19161,7 +19363,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema579"
+          "$ref": "#/$defs/schema590"
         }
       ],
       "description": "Create dynamic manifests via values.\nFor example:\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: '{{ template \"cert-manager.fullname\" . }}-extra-configmap'"
@@ -19345,7 +19547,7 @@
         "commonLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema557"
+              "$ref": "#/$defs/schema565"
             },
             {
               "$ref": "#/$defs/schema256"
@@ -19475,7 +19677,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema400"
+                    "$ref": "#/$defs/schema404"
                   }
                 ]
               }
@@ -19566,7 +19768,7 @@
     "ingressShim": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema557"
+          "$ref": "#/$defs/schema565"
         },
         {
           "additionalProperties": {},
@@ -19779,7 +19981,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema355"
+                "$ref": "#/$defs/schema356"
               }
             ]
           },
@@ -19802,7 +20004,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema367"
+                "$ref": "#/$defs/schema369"
               }
             ]
           },
@@ -19897,13 +20099,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema586"
+              "$ref": "#/$defs/schema597"
             },
             {
-              "$ref": "#/$defs/schema588"
+              "$ref": "#/$defs/schema599"
             },
             {
-              "$ref": "#/$defs/schema591"
+              "$ref": "#/$defs/schema602"
             },
             {
               "not": {
@@ -19911,19 +20113,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema592"
+              "$ref": "#/$defs/schema603"
             },
             {
-              "$ref": "#/$defs/schema500"
+              "$ref": "#/$defs/schema504"
             },
             {
               "$ref": "#/$defs/schema317"
             },
             {
-              "$ref": "#/$defs/schema549"
+              "$ref": "#/$defs/schema557"
             },
             {
-              "$ref": "#/$defs/schema573"
+              "$ref": "#/$defs/schema584"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -19943,7 +20145,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema557"
+          "$ref": "#/$defs/schema565"
         },
         {
           "$ref": "#/$defs/schema256"
@@ -20068,7 +20270,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema579"
+                            "$ref": "#/$defs/schema590"
                           },
                           {
                             "not": {
@@ -20112,13 +20314,13 @@
                                 "$ref": "#/$defs/schema280"
                               },
                               "followRedirects": {
-                                "$ref": "#/$defs/schema492"
+                                "$ref": "#/$defs/schema496"
                               },
                               "honorLabels": {
-                                "$ref": "#/$defs/schema461"
+                                "$ref": "#/$defs/schema465"
                               },
                               "honorTimestamps": {
-                                "$ref": "#/$defs/schema462"
+                                "$ref": "#/$defs/schema466"
                               },
                               "interval": {
                                 "$ref": "#/$defs/schema300"
@@ -20133,10 +20335,10 @@
                                 "$ref": "#/$defs/schema10"
                               },
                               "params": {
-                                "$ref": "#/$defs/schema438"
+                                "$ref": "#/$defs/schema442"
                               },
                               "path": {
-                                "$ref": "#/$defs/schema409"
+                                "$ref": "#/$defs/schema413"
                               },
                               "port": {
                                 "description": "port defines the `Pod` port name which exposes the endpoint.\n\nIf the pod doesn't expose a port with the same name, it will result\nin no targets being discovered.\n\nIf a `Pod` has multiple `Port`s with the same name (which is not\nrecommended), one target instance per unique port number will be\ngenerated.\n\nIt takes precedence over the `portNumber` and `targetPort` fields.",
@@ -20156,7 +20358,7 @@
                                 "$ref": "#/$defs/schema299"
                               },
                               "proxyUrl": {
-                                "$ref": "#/$defs/schema478"
+                                "$ref": "#/$defs/schema482"
                               },
                               "relabelings": {
                                 "$ref": "#/$defs/schema43"
@@ -20197,19 +20399,19 @@
                                     "$ref": "#/$defs/schema71"
                                   },
                                   "insecureSkipVerify": {
-                                    "$ref": "#/$defs/schema501"
+                                    "$ref": "#/$defs/schema505"
                                   },
                                   "keySecret": {
                                     "$ref": "#/$defs/schema143"
                                   },
                                   "maxVersion": {
-                                    "$ref": "#/$defs/schema377"
+                                    "$ref": "#/$defs/schema379"
                                   },
                                   "minVersion": {
-                                    "$ref": "#/$defs/schema378"
+                                    "$ref": "#/$defs/schema380"
                                   },
                                   "serverName": {
-                                    "$ref": "#/$defs/schema531"
+                                    "$ref": "#/$defs/schema538"
                                   }
                                 },
                                 "type": "object"
@@ -20242,10 +20444,10 @@
                       "honorLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema461"
+                            "$ref": "#/$defs/schema465"
                           },
                           {
-                            "$ref": "#/$defs/schema484"
+                            "$ref": "#/$defs/schema488"
                           }
                         ],
                         "description": "Keep labels from scraped data, overriding server-side labels."
@@ -20264,13 +20466,13 @@
                       "interval": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema586"
+                            "$ref": "#/$defs/schema597"
                           },
                           {
-                            "$ref": "#/$defs/schema588"
+                            "$ref": "#/$defs/schema599"
                           },
                           {
-                            "$ref": "#/$defs/schema591"
+                            "$ref": "#/$defs/schema602"
                           },
                           {
                             "not": {
@@ -20278,22 +20480,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema592"
+                            "$ref": "#/$defs/schema603"
                           },
                           {
-                            "$ref": "#/$defs/schema587"
+                            "$ref": "#/$defs/schema598"
                           },
                           {
-                            "$ref": "#/$defs/schema500"
+                            "$ref": "#/$defs/schema504"
                           },
                           {
                             "$ref": "#/$defs/schema317"
                           },
                           {
-                            "$ref": "#/$defs/schema549"
+                            "$ref": "#/$defs/schema557"
                           },
                           {
-                            "$ref": "#/$defs/schema573"
+                            "$ref": "#/$defs/schema584"
                           }
                         ],
                         "description": "The interval to scrape metrics.",
@@ -20314,7 +20516,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema579"
+                            "$ref": "#/$defs/schema590"
                           },
                           {
                             "not": {
@@ -20375,13 +20577,13 @@
                       "prometheusInstance": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema586"
+                            "$ref": "#/$defs/schema597"
                           },
                           {
-                            "$ref": "#/$defs/schema588"
+                            "$ref": "#/$defs/schema599"
                           },
                           {
-                            "$ref": "#/$defs/schema591"
+                            "$ref": "#/$defs/schema602"
                           },
                           {
                             "not": {
@@ -20389,22 +20591,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema592"
+                            "$ref": "#/$defs/schema603"
                           },
                           {
-                            "$ref": "#/$defs/schema587"
+                            "$ref": "#/$defs/schema598"
                           },
                           {
-                            "$ref": "#/$defs/schema500"
+                            "$ref": "#/$defs/schema504"
                           },
                           {
                             "$ref": "#/$defs/schema317"
                           },
                           {
-                            "$ref": "#/$defs/schema549"
+                            "$ref": "#/$defs/schema557"
                           },
                           {
-                            "$ref": "#/$defs/schema573"
+                            "$ref": "#/$defs/schema584"
                           }
                         ],
                         "description": "Specifies the `prometheus` label on the created PodMonitor. This is\nused when different Prometheus instances have label selectors matching\ndifferent PodMonitors.",
@@ -20424,13 +20626,13 @@
                       "scrapeTimeout": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema586"
+                            "$ref": "#/$defs/schema597"
                           },
                           {
-                            "$ref": "#/$defs/schema588"
+                            "$ref": "#/$defs/schema599"
                           },
                           {
-                            "$ref": "#/$defs/schema591"
+                            "$ref": "#/$defs/schema602"
                           },
                           {
                             "not": {
@@ -20438,22 +20640,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema592"
+                            "$ref": "#/$defs/schema603"
                           },
                           {
-                            "$ref": "#/$defs/schema587"
+                            "$ref": "#/$defs/schema598"
                           },
                           {
-                            "$ref": "#/$defs/schema500"
+                            "$ref": "#/$defs/schema504"
                           },
                           {
                             "$ref": "#/$defs/schema317"
                           },
                           {
-                            "$ref": "#/$defs/schema549"
+                            "$ref": "#/$defs/schema557"
                           },
                           {
-                            "$ref": "#/$defs/schema573"
+                            "$ref": "#/$defs/schema584"
                           }
                         ],
                         "description": "The timeout before a metrics scrape fails.",
@@ -20572,7 +20774,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema579"
+                            "$ref": "#/$defs/schema590"
                           },
                           {
                             "not": {
@@ -20619,13 +20821,13 @@
                                 "$ref": "#/$defs/schema280"
                               },
                               "followRedirects": {
-                                "$ref": "#/$defs/schema492"
+                                "$ref": "#/$defs/schema496"
                               },
                               "honorLabels": {
-                                "$ref": "#/$defs/schema467"
+                                "$ref": "#/$defs/schema471"
                               },
                               "honorTimestamps": {
-                                "$ref": "#/$defs/schema462"
+                                "$ref": "#/$defs/schema466"
                               },
                               "interval": {
                                 "$ref": "#/$defs/schema300"
@@ -20640,10 +20842,10 @@
                                 "$ref": "#/$defs/schema10"
                               },
                               "params": {
-                                "$ref": "#/$defs/schema438"
+                                "$ref": "#/$defs/schema442"
                               },
                               "path": {
-                                "$ref": "#/$defs/schema409"
+                                "$ref": "#/$defs/schema413"
                               },
                               "port": {
                                 "description": "port defines the name of the Service port which this endpoint refers to.\n\nIt takes precedence over `targetPort`.",
@@ -20656,7 +20858,7 @@
                                 "$ref": "#/$defs/schema299"
                               },
                               "proxyUrl": {
-                                "$ref": "#/$defs/schema478"
+                                "$ref": "#/$defs/schema482"
                               },
                               "relabelings": {
                                 "$ref": "#/$defs/schema43"
@@ -20705,7 +20907,7 @@
                                     "type": "string"
                                   },
                                   "insecureSkipVerify": {
-                                    "$ref": "#/$defs/schema501"
+                                    "$ref": "#/$defs/schema505"
                                   },
                                   "keyFile": {
                                     "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
@@ -20715,13 +20917,13 @@
                                     "$ref": "#/$defs/schema143"
                                   },
                                   "maxVersion": {
-                                    "$ref": "#/$defs/schema377"
+                                    "$ref": "#/$defs/schema379"
                                   },
                                   "minVersion": {
-                                    "$ref": "#/$defs/schema378"
+                                    "$ref": "#/$defs/schema380"
                                   },
                                   "serverName": {
-                                    "$ref": "#/$defs/schema531"
+                                    "$ref": "#/$defs/schema538"
                                   }
                                 },
                                 "type": "object"
@@ -20753,10 +20955,10 @@
                       "honorLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema467"
+                            "$ref": "#/$defs/schema471"
                           },
                           {
-                            "$ref": "#/$defs/schema484"
+                            "$ref": "#/$defs/schema488"
                           }
                         ],
                         "description": "Keep labels from scraped data, overriding server-side labels."
@@ -20776,13 +20978,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema586"
+                                "$ref": "#/$defs/schema597"
                               },
                               {
-                                "$ref": "#/$defs/schema588"
+                                "$ref": "#/$defs/schema599"
                               },
                               {
-                                "$ref": "#/$defs/schema591"
+                                "$ref": "#/$defs/schema602"
                               },
                               {
                                 "not": {
@@ -20790,22 +20992,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema592"
+                                "$ref": "#/$defs/schema603"
                               },
                               {
-                                "$ref": "#/$defs/schema587"
+                                "$ref": "#/$defs/schema598"
                               },
                               {
-                                "$ref": "#/$defs/schema500"
+                                "$ref": "#/$defs/schema504"
                               },
                               {
                                 "$ref": "#/$defs/schema317"
                               },
                               {
-                                "$ref": "#/$defs/schema549"
+                                "$ref": "#/$defs/schema557"
                               },
                               {
-                                "$ref": "#/$defs/schema573"
+                                "$ref": "#/$defs/schema584"
                               }
                             ],
                             "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -20833,7 +21035,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema579"
+                            "$ref": "#/$defs/schema590"
                           },
                           {
                             "not": {
@@ -20916,13 +21118,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema586"
+                                "$ref": "#/$defs/schema597"
                               },
                               {
-                                "$ref": "#/$defs/schema588"
+                                "$ref": "#/$defs/schema599"
                               },
                               {
-                                "$ref": "#/$defs/schema591"
+                                "$ref": "#/$defs/schema602"
                               },
                               {
                                 "not": {
@@ -20930,22 +21132,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema592"
+                                "$ref": "#/$defs/schema603"
                               },
                               {
-                                "$ref": "#/$defs/schema587"
+                                "$ref": "#/$defs/schema598"
                               },
                               {
-                                "$ref": "#/$defs/schema500"
+                                "$ref": "#/$defs/schema504"
                               },
                               {
                                 "$ref": "#/$defs/schema317"
                               },
                               {
-                                "$ref": "#/$defs/schema549"
+                                "$ref": "#/$defs/schema557"
                               },
                               {
-                                "$ref": "#/$defs/schema573"
+                                "$ref": "#/$defs/schema584"
                               }
                             ],
                             "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -20975,13 +21177,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema586"
+                                "$ref": "#/$defs/schema597"
                               },
                               {
-                                "$ref": "#/$defs/schema588"
+                                "$ref": "#/$defs/schema599"
                               },
                               {
-                                "$ref": "#/$defs/schema591"
+                                "$ref": "#/$defs/schema602"
                               },
                               {
                                 "not": {
@@ -20989,16 +21191,16 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema592"
+                                "$ref": "#/$defs/schema603"
                               },
                               {
-                                "$ref": "#/$defs/schema587"
+                                "$ref": "#/$defs/schema598"
                               },
                               {
-                                "$ref": "#/$defs/schema500"
+                                "$ref": "#/$defs/schema504"
                               },
                               {
-                                "$ref": "#/$defs/schema573"
+                                "$ref": "#/$defs/schema584"
                               }
                             ],
                             "type": "string"
@@ -21006,7 +21208,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema400"
+                                "$ref": "#/$defs/schema404"
                               },
                               {
                                 "type": "integer"
@@ -21073,7 +21275,7 @@
                         "$ref": "#/$defs/schema238"
                       },
                       {
-                        "$ref": "#/$defs/schema350"
+                        "$ref": "#/$defs/schema351"
                       }
                     ]
                   }
@@ -21352,13 +21554,13 @@
     "replicaCount": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema401"
+          "$ref": "#/$defs/schema405"
         },
         {
-          "$ref": "#/$defs/schema406"
+          "$ref": "#/$defs/schema410"
         },
         {
-          "$ref": "#/$defs/schema400"
+          "$ref": "#/$defs/schema404"
         }
       ],
       "description": "The number of replicas of the cert-manager controller to run.\nThe default is 1, but in production set this to 2 or 3 to provide high\navailability.\nIf `replicas > 1`, consider setting `podDisruptionBudget.enabled=true`.\nNote that cert-manager uses leader election to ensure that there can\nonly be a single instance active at a time."
@@ -21369,7 +21571,7 @@
           "$ref": "#/$defs/schema67"
         },
         {
-          "$ref": "#/$defs/schema557"
+          "$ref": "#/$defs/schema565"
         },
         {
           "not": {
@@ -21429,7 +21631,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema479"
+            "$ref": "#/$defs/schema483"
           }
         },
         {
@@ -21496,7 +21698,7 @@
       "properties": {
         "annotations": {},
         "automountServiceAccountToken": {
-          "$ref": "#/$defs/schema571"
+          "$ref": "#/$defs/schema581"
         },
         "create": {
           "anyOf": [
@@ -21518,7 +21720,7 @@
               "$ref": "#/$defs/schema124"
             },
             {
-              "$ref": "#/$defs/schema358"
+              "$ref": "#/$defs/schema359"
             },
             {
               "not": {
@@ -21574,7 +21776,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema400"
+                        "$ref": "#/$defs/schema404"
                       }
                     ],
                     "description": "Job backoffLimit"
@@ -21608,13 +21810,13 @@
                   "enableServiceLinks": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema345"
+                        "$ref": "#/$defs/schema346"
                       },
                       {
-                        "$ref": "#/$defs/schema348"
+                        "$ref": "#/$defs/schema349"
                       },
                       {
-                        "$ref": "#/$defs/schema484"
+                        "$ref": "#/$defs/schema488"
                       }
                     ],
                     "description": "enableServiceLinks indicates whether information about services should be\ninjected into pod's environment variables, matching the syntax of Docker\nlinks."
@@ -21793,7 +21995,7 @@
                             "$ref": "#/$defs/schema124"
                           },
                           {
-                            "$ref": "#/$defs/schema358"
+                            "$ref": "#/$defs/schema359"
                           },
                           {
                             "not": {
@@ -21953,13 +22155,13 @@
                       "automountServiceAccountToken": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema360"
+                            "$ref": "#/$defs/schema361"
                           },
                           {
-                            "$ref": "#/$defs/schema363"
+                            "$ref": "#/$defs/schema365"
                           },
                           {
-                            "$ref": "#/$defs/schema484"
+                            "$ref": "#/$defs/schema488"
                           }
                         ],
                         "description": "Automount API credentials for a Service Account.\n+docs:property"
@@ -22036,7 +22238,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema404"
+                "$ref": "#/$defs/schema408"
               }
             ]
           },
@@ -22057,7 +22259,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema366"
+                "$ref": "#/$defs/schema368"
               }
             ]
           },
@@ -22180,10 +22382,10 @@
           "$ref": "#/$defs/schema278"
         },
         "volumeMounts": {
-          "$ref": "#/$defs/schema538"
+          "$ref": "#/$defs/schema545"
         },
         "volumes": {
-          "$ref": "#/$defs/schema558"
+          "$ref": "#/$defs/schema566"
         }
       },
       "type": "object"
@@ -22194,7 +22396,7 @@
           "$ref": "#/$defs/schema173"
         },
         {
-          "$ref": "#/$defs/schema557"
+          "$ref": "#/$defs/schema565"
         },
         {
           "not": {
@@ -22240,10 +22442,10 @@
       "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
     },
     "volumeMounts": {
-      "$ref": "#/$defs/schema538"
+      "$ref": "#/$defs/schema545"
     },
     "volumes": {
-      "$ref": "#/$defs/schema558"
+      "$ref": "#/$defs/schema566"
     },
     "webhook": {
       "additionalProperties": {},
@@ -22276,10 +22478,10 @@
               "securePort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema426"
+                    "$ref": "#/$defs/schema430"
                   },
                   {
-                    "$ref": "#/$defs/schema400"
+                    "$ref": "#/$defs/schema404"
                   }
                 ],
                 "description": "The port that the webhook listens on for requests.\nIn GKE private clusters, by default Kubernetes apiservers are allowed to\ntalk to the cluster nodes only on 443 and 10250. Configuring\nsecurePort: 10250, therefore will work out-of-the-box without needing to add firewall\nrules or requiring NET_BIND_SERVICE capabilities to bind port numbers <1000."
@@ -22348,7 +22550,7 @@
                         "$ref": "#/$defs/schema29"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema407"
+                        "$ref": "#/$defs/schema411"
                       },
                       "ports": {
                         "$ref": "#/$defs/schema64"
@@ -22384,7 +22586,7 @@
                         "$ref": "#/$defs/schema209"
                       },
                       "tty": {
-                        "$ref": "#/$defs/schema423"
+                        "$ref": "#/$defs/schema427"
                       },
                       "volumeDevices": {
                         "$ref": "#/$defs/schema168"
@@ -22393,7 +22595,7 @@
                         "$ref": "#/$defs/schema78"
                       },
                       "workingDir": {
-                        "$ref": "#/$defs/schema354"
+                        "$ref": "#/$defs/schema355"
                       }
                     },
                     "type": "object"
@@ -22646,7 +22848,7 @@
                               "$ref": "#/$defs/schema209"
                             },
                             "tty": {
-                              "$ref": "#/$defs/schema423"
+                              "$ref": "#/$defs/schema427"
                             },
                             "volumeDevices": {
                               "$ref": "#/$defs/schema168"
@@ -22664,7 +22866,7 @@
                               "x-kubernetes-patch-strategy": "merge"
                             },
                             "workingDir": {
-                              "$ref": "#/$defs/schema354"
+                              "$ref": "#/$defs/schema355"
                             }
                           },
                           "required": [
@@ -22798,7 +23000,7 @@
                       },
                       "overhead": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema572"
+                          "$ref": "#/$defs/schema583"
                         },
                         "description": "Overhead represents the resource overhead associated with running a pod for a given RuntimeClass. This field will be autopopulated at admission time by the RuntimeClass admission controller. If the RuntimeClass admission controller is enabled, overhead must not be set in Pod create requests. The RuntimeClass admission controller will reject Pod create requests which have the overhead already set. If RuntimeClass is configured and selected in the PodSpec, Overhead will be set to the value defined in the corresponding RuntimeClass, otherwise it will remain unset and treated as zero. More info: https://git.k8s.io/enhancements/keps/sig-node/688-pod-overhead/README.md",
                         "type": [
@@ -23252,7 +23454,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/schema355"
+                        "$ref": "#/$defs/schema356"
                       }
                     ]
                   },
@@ -23284,7 +23486,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/schema367"
+                        "$ref": "#/$defs/schema369"
                       }
                     ]
                   },
@@ -23426,6 +23628,35 @@
               ]
             }
           }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "podDisruptionBudget": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podDisruptionBudget"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema342"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {
@@ -23471,7 +23702,7 @@
                 "healthzPort": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema426"
+                      "$ref": "#/$defs/schema430"
                     },
                     {
                       "not": {
@@ -23479,7 +23710,7 @@
                       }
                     },
                     {
-                      "$ref": "#/$defs/schema400"
+                      "$ref": "#/$defs/schema404"
                     }
                   ]
                 },
@@ -23512,7 +23743,7 @@
                 "securePort": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema426"
+                      "$ref": "#/$defs/schema430"
                     },
                     {
                       "not": {
@@ -23520,7 +23751,7 @@
                       }
                     },
                     {
-                      "$ref": "#/$defs/schema400"
+                      "$ref": "#/$defs/schema404"
                     }
                   ]
                 },
@@ -23666,13 +23897,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema586"
+                  "$ref": "#/$defs/schema597"
                 },
                 {
-                  "$ref": "#/$defs/schema588"
+                  "$ref": "#/$defs/schema599"
                 },
                 {
-                  "$ref": "#/$defs/schema591"
+                  "$ref": "#/$defs/schema602"
                 },
                 {
                   "not": {
@@ -23680,19 +23911,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema592"
+                  "$ref": "#/$defs/schema603"
                 },
                 {
-                  "$ref": "#/$defs/schema500"
+                  "$ref": "#/$defs/schema504"
                 },
                 {
                   "$ref": "#/$defs/schema317"
                 },
                 {
-                  "$ref": "#/$defs/schema549"
+                  "$ref": "#/$defs/schema557"
                 },
                 {
-                  "$ref": "#/$defs/schema573"
+                  "$ref": "#/$defs/schema584"
                 }
               ],
               "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
@@ -23729,7 +23960,7 @@
                   "x-kubernetes-map-type": "atomic"
                 },
                 {
-                  "$ref": "#/$defs/schema557"
+                  "$ref": "#/$defs/schema565"
                 },
                 {
                   "not": {
@@ -23839,7 +24070,7 @@
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema557"
+              "$ref": "#/$defs/schema565"
             },
             {
               "$ref": "#/$defs/schema256"
@@ -23880,13 +24111,13 @@
         "replicaCount": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema401"
+              "$ref": "#/$defs/schema405"
             },
             {
-              "$ref": "#/$defs/schema406"
+              "$ref": "#/$defs/schema410"
             },
             {
-              "$ref": "#/$defs/schema400"
+              "$ref": "#/$defs/schema404"
             }
           ],
           "description": "Number of replicas of the cert-manager webhook to run.\nThe default is 1, but in production set this to 2 or 3 to provide high\navailability.\nIf `replicas > 1`, consider setting `webhook.podDisruptionBudget.enabled=true`."
@@ -23897,7 +24128,7 @@
               "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema557"
+              "$ref": "#/$defs/schema565"
             },
             {
               "not": {
@@ -23934,7 +24165,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/schema571"
+              "$ref": "#/$defs/schema581"
             },
             "create": {
               "anyOf": [
@@ -23956,7 +24187,7 @@
                   "$ref": "#/$defs/schema124"
                 },
                 {
-                  "$ref": "#/$defs/schema358"
+                  "$ref": "#/$defs/schema359"
                 },
                 {
                   "not": {
@@ -24018,7 +24249,7 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema557"
+              "$ref": "#/$defs/schema565"
             },
             {
               "$ref": "#/$defs/schema256"
@@ -24039,13 +24270,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema586"
+                  "$ref": "#/$defs/schema597"
                 },
                 {
-                  "$ref": "#/$defs/schema588"
+                  "$ref": "#/$defs/schema599"
                 },
                 {
-                  "$ref": "#/$defs/schema591"
+                  "$ref": "#/$defs/schema602"
                 },
                 {
                   "not": {
@@ -24053,19 +24284,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema592"
+                  "$ref": "#/$defs/schema603"
                 },
                 {
-                  "$ref": "#/$defs/schema500"
+                  "$ref": "#/$defs/schema504"
                 },
                 {
                   "$ref": "#/$defs/schema317"
                 },
                 {
-                  "$ref": "#/$defs/schema549"
+                  "$ref": "#/$defs/schema557"
                 },
                 {
-                  "$ref": "#/$defs/schema573"
+                  "$ref": "#/$defs/schema584"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -24084,7 +24315,7 @@
               "$ref": "#/$defs/schema173"
             },
             {
-              "$ref": "#/$defs/schema557"
+              "$ref": "#/$defs/schema565"
             },
             {
               "not": {
@@ -24110,7 +24341,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema400"
+              "$ref": "#/$defs/schema404"
             }
           ],
           "description": "The number of seconds the API server should wait for the webhook to respond before treating the call as a failure.\nThe value must be between 1 and 30 seconds. For more information, see\n[Validating webhook configuration v1](https://kubernetes.io/docs/reference/kubernetes-api/extend-resources/validating-webhook-configuration-v1/).\nThe default is set to the maximum value of 30 seconds as\nusers sometimes report that the connection between the K8S API server and\nthe cert-manager webhook server times out.\nIf *this* timeout is reached, the error message will be \"context deadline exceeded\",\nwhich doesn't help the user diagnose what phase of the HTTPS connection timed out.\nFor example, it could be during DNS resolution, TCP connection, TLS\nnegotiation, HTTP negotiation, or slow HTTP response from the webhook\nserver.\nBy setting this timeout to its maximum value the underlying timeout error\nmessage has more chance of being returned to the end user."
@@ -24175,17 +24406,17 @@
                                 "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
                                 "properties": {
                                   "key": {
-                                    "$ref": "#/$defs/schema554"
+                                    "$ref": "#/$defs/schema562"
                                   },
                                   "operator": {
-                                    "$ref": "#/$defs/schema424"
+                                    "$ref": "#/$defs/schema428"
                                   },
                                   "values": {
                                     "anyOf": [
                                       {
                                         "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                                         "items": {
-                                          "$ref": "#/$defs/schema583"
+                                          "$ref": "#/$defs/schema594"
                                         },
                                         "type": "array"
                                       },
@@ -24250,10 +24481,10 @@
           ]
         },
         "volumeMounts": {
-          "$ref": "#/$defs/schema538"
+          "$ref": "#/$defs/schema545"
         },
         "volumes": {
-          "$ref": "#/$defs/schema558"
+          "$ref": "#/$defs/schema566"
         }
       },
       "type": "object"

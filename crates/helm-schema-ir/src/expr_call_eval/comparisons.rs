@@ -7,7 +7,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use helm_schema_ast::type_is_schema_type;
+use helm_schema_ast::{strict_operand_nil_aborts, type_is_schema_type};
 
 use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
 use super::value_facts::identity_value_paths;
@@ -27,13 +27,23 @@ pub(super) fn eval_ternary(
     if let Some((condition, _is_direct_values_path)) = piped_condition {
         // Derived Boolean values carry no raw identity, so this records a
         // contract only for direct selectors and aliases of direct selectors.
-        record_strict_kind_result(&condition, "boolean", &mut effects);
+        record_strict_kind_result(
+            &condition,
+            "boolean",
+            strict_operand_nil_aborts("ternary", false),
+            &mut effects,
+        );
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
         condition_identity = identity_value_paths(condition.value.as_ref());
         effects.merge(condition.effects);
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
-        record_strict_kind_result(&condition, "boolean", &mut effects);
+        record_strict_kind_result(
+            &condition,
+            "boolean",
+            strict_operand_nil_aborts("ternary", false),
+            &mut effects,
+        );
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
         condition_identity = identity_value_paths(condition.value.as_ref());
         effects.merge(condition.effects);

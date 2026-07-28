@@ -15234,6 +15234,92 @@
             "type": "object"
           },
           {
+            "properties": {
+              "isClusterService": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "isClusterService"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "customLabels": {}
+                  },
+                  "required": [
+                    "customLabels"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "customLabels": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "customLabels"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "hpa": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "hpa"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaler": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaler"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "not": {
