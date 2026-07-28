@@ -1,7 +1,10 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-28 after the root-scoped `with` round (forty-fifth),
-which closed the 5 nats deletions the preceding round could reach but not
+Last reconciled 2026-07-28 after the call-dict navigation round
+(forty-sixth), which extended the navigation base one level over: a helper's
+call dict binds `.config` to `.Values.pdb`, so the body's `.config.enabled`
+navigates that path. The root-scoped `with` round (forty-fifth)
+closed the 5 nats deletions the preceding round could reach but not
 claim: `.Values` is truthy exactly when the document is non-empty, and the
 values root is a navigation base like any other path. The nil-strict
 call-operand round (forty-fourth) closed 11 more of the audit's root
@@ -2059,7 +2062,19 @@ strict Kubernetes schema while their valid controls passed.
   typing with it. Same lesson as the forty-third round from the other side:
   what moves a host's base is the ARM SET, not the individual claim.
 
-  The 21 that remain: three are the TEST-TEMPLATE roots (grafana's and
+  **Call-dict navigation CLOSED (forty-sixth round).** dict-config
+  `podDisruptionBudget` rejects. A helper's CALL DICT binds `.config` to
+  `.Values.podDisruptionBudget`, so the body's `.config.enabled` navigates
+  that path and a deleted key binds the member to nil; the evaluator
+  resolved the VALUE all along but recorded no member-access capture,
+  because a dict carries no values identity of its own. That stays true —
+  reading `.ctx` says nothing about the root context — so the rule qualifies
+  a member only when the dot binds it to a RAW values path, and only where
+  the body navigates past it. Eleven corpus schemas change and the full
+  battery finds exactly one acceptance flip: the other ten already claimed
+  those hosts through their own direct reads.
+
+  The 20 that remain: three are the TEST-TEMPLATE roots (grafana's and
   fluent-bit's `testFramework`, kyverno's `test`) — helm RENDERS
   `templates/tests/*` and only filters the output afterwards, so switching
   the corpus harness to the shipped `include_tests` default closes them, but
@@ -2067,17 +2082,22 @@ strict Kubernetes schema while their valid controls passed.
   `kubeconform -strict` rejects. Those values RENDER — the claim is about the
   rendered sink, not about the guards a test template adds — so they belong
   to the provider-required-leaf entry (F56/F62/F8) below, not here; the
-  forty-third round corrected that attribution. The other 18 are NOT this mechanism:
+  forty-third round corrected that attribution. The other 17 are NOT this mechanism:
   2 string-parameter calls behind the reverted `upper` catalog entry (harbor
   `logLevel`, oauth2-proxy `httpScheme`), 1 typed call through a `tpl`
   program (airflow `multiNamespaceMode`), 5 YAML-sink text failures (the
   F19/F73/F76 entry below), 1 explicit `fail` (bitnami-redis
-  `architecture`), 1 dotted root key (grafana's literal `grafana.ini`,
-  "can't evaluate field paths in type string"), and 7 nil-pointer sites the
+  `architecture` — the `redis.validateValues` aggregator: `architecture:
+  "bogus"` is not rejected either, so the whole `join`-over-`without`
+  reduction from the four `include` results to `$message`'s truthiness is
+  what is missing, not the absence case alone), 1 dotted root key (grafana's
+  literal `grafana.ini`,
+  "can't evaluate field paths in type string"), and 6 nil-pointer sites the
   navigated-host lane still cannot reach: istiod's root rewrite and signoz'
   `global` have their own entries, grafana `route` needs `tpl`-program
-  evaluation, datadog `fips` and dict-config `podDisruptionBudget` navigate
-  through a helper argument rather than a values path,
+  evaluation, datadog `fips` reads `.Values.fips.enabled` directly as the
+  third conjunct of an `and` whose earlier operands do not decode — the
+  capture exists and the guard chain is what blocks it,
   traefik `log` needs an `and` operand's `not` decoded
   exactly (attempted and REVERTED in the forty-second round — the exact
   decode turned previously-approximate captures into guarded member-host

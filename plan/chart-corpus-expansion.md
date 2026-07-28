@@ -10905,3 +10905,58 @@ integration tests (`task test:integration`), `task lint` and `cargo fmt
 the pre-round fixtures. `task -t …/luup2/deployment/charts/taskfile.yaml
 check:local` exits 0. One corpus fixture regenerated (nats); the gen corpus
 is unchanged.
+
+## Call-dict navigation round (2026-07-28, forty-sixth round)
+
+The root-scoped `with` round made the values ROOT a navigation base. The
+same question one level over: a helper invoked with a CALL DICT
+(`include "dict-config.pdb" (dict "ctx" $ "config" .Values.podDisruptionBudget)`)
+reads `.config.enabled` in its body, and deleting `podDisruptionBudget`
+binds that member to nil, so helm aborts with "nil pointer evaluating
+interface {}.enabled" exactly as the direct spelling would. The evaluator
+resolved the VALUE fine — `podDisruptionBudget.enabled` was attributed all
+along — but recorded no member-access capture, because the dot was a `Dict`
+and a dict has no values identity of its own.
+
+That last part stays true and is why the rule is narrow. Reading `.ctx`
+says nothing about the root context, and a member bound to a derived value
+(`dict "config" (default (dict) .Values.pdb)`) hands the body whatever the
+derivation produced. So `call_dict_member_identity` qualifies a member only
+when the dot binds it to a raw values path, and only where the body
+navigates PAST it — `.config` on its own reads nil without aborting.
+
+### Result
+
+dict-config `podDisruptionBudget` rejects; the 1,848-probe root sweep moves
+that one cell and nothing else. Eleven corpus schemas change, but the full
+battery over every values path finds exactly ONE acceptance flip — the
+intended one, adjudicated HELM-ABORT. The other ten charts already claimed
+those hosts through their own direct `.Values.x` reads, so the new capture
+only adds an arm to an implication that was already there; sizes move ~1%
+(datadog +3.7% is the largest), and airflow and signoz actually SHRINK,
+because an added unconditional arm collapses a fanned-out any-of to no
+guards at all.
+
+datadog `fips` did NOT close, and this round shows why it is a different
+lane: `should-enable-fips-proxy` reads `.Values.fips.enabled` directly, as
+the third conjunct of an `and` whose earlier operands include
+`include "use-fips-images" .Values`. The capture exists; what blocks it is
+the guard chain's decode, not the dot.
+
+The gen `fail_validators` reproducer needed one expectation corrected. Its
+own helper takes `dict "image" .Values.image "defaultTag" .Chart.AppVersion`
+and reads `.image.tag`, so a coalesced document without `image` aborts —
+verified against Helm on the reproducer built as a real chart. The rows that
+exercise the plugin and annotation validators now carry `image` so each one
+isolates its own claim, and a new row pins the navigation itself.
+
+20 of the audit's 70 root deletions remain.
+
+### Validation
+
+944 unit tests (one new focused reproducer, verified failing pre-fix), 497
+integration tests (`task test:integration`), `task lint` and `cargo fmt
+--all --check` clean. The ci-values sweep rejects the same 4 of 116 files as
+the pre-round fixtures. `task -t …/luup2/deployment/charts/taskfile.yaml
+check:local` exits 0. Eleven corpus fixtures and three gen fixtures
+regenerated.
