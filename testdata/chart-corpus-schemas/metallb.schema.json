@@ -277,7 +277,7 @@
       }
     },
     "providerSource_crd_catalog_0a07947e4ada": {
-      "$ref": "#/$defs/schema306"
+      "$ref": "#/$defs/schema304"
     },
     "schema1": {
       "description": "List of containers belonging to the pod. Containers cannot currently be added or removed. There must be at least one container in a Pod. Cannot be updated.",
@@ -3773,27 +3773,15 @@
       },
       "type": "object"
     },
-    "schema242": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {},
-        "initialDelaySeconds": {},
-        "periodSeconds": {},
-        "port": {},
-        "successThreshold": {},
-        "timeoutSeconds": {}
-      },
-      "type": "object"
-    },
-    "schema244": {
+    "schema243": {
       "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
       "type": "null"
     },
-    "schema246": {
+    "schema245": {
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "null"
     },
-    "schema248": {
+    "schema247": {
       "properties": {
         "prometheus": {
           "properties": {
@@ -3813,6 +3801,10 @@
         "prometheus"
       ],
       "type": "object"
+    },
+    "schema249": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
     },
     "schema25": {
       "additionalProperties": false,
@@ -3870,10 +3862,6 @@
       "type": "object"
     },
     "schema250": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "schema251": {
       "anyOf": [
         {
           "not": {
@@ -3897,24 +3885,6 @@
           "required": [
             "image"
           ],
-          "type": "object"
-        }
-      ]
-    },
-    "schema259": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {}
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {},
-            "tag": {}
-          },
           "type": "object"
         }
       ]
@@ -3969,18 +3939,18 @@
       },
       "type": "array"
     },
-    "schema263": {
+    "schema261": {
       "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
     },
-    "schema264": {
+    "schema262": {
       "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
       "format": "int32",
       "type": "integer"
     },
-    "schema284": {
+    "schema282": {
       "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
     },
-    "schema286": {
+    "schema284": {
       "properties": {
         "frr": {
           "properties": {
@@ -4001,17 +3971,20 @@
       ],
       "type": "object"
     },
-    "schema291": {
+    "schema289": {
       "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
       "type": "string"
     },
-    "schema293": {
+    "schema291": {
       "description": "keyFile defines the path to the client key file in the Prometheus container for the targets.",
       "type": "string"
     },
-    "schema295": {
+    "schema293": {
       "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
       "type": "string"
+    },
+    "schema299": {
+      "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
     },
     "schema3": {
       "additionalProperties": false,
@@ -4258,21 +4231,18 @@
       ]
     },
     "schema301": {
-      "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
-    },
-    "schema303": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema306": {
+    "schema304": {
       "additionalProperties": {
         "type": "string"
       },
       "description": "Labels to add or overwrite.",
       "type": "object"
     },
-    "schema311": {
+    "schema309": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -4286,12 +4256,12 @@
       "properties": {},
       "type": "object"
     },
-    "schema317": {
+    "schema315": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
     },
-    "schema322": {
+    "schema320": {
       "properties": {
         "serviceAccount": {
           "enum": [
@@ -4304,7 +4274,7 @@
       ],
       "type": "object"
     },
-    "schema323": {
+    "schema321": {
       "properties": {
         "readinessProbe": {
           "enum": [
@@ -4317,14 +4287,27 @@
       ],
       "type": "object"
     },
-    "schema325": {
+    "schema323": {
       "description": "Minimum TLS version (VersionTLS12 or VersionTLS13). Defaults to VersionTLS13."
     },
-    "schema328": {
+    "schema326": {
       "description": "Scrape interval. If not set, the Prometheus default scrape interval is used."
     },
-    "schema329": {
+    "schema327": {
       "description": "Exclude the pools matching the regular expression from triggering the alert."
+    },
+    "schema329": {
+      "properties": {
+        "livenessProbe": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "livenessProbe"
+      ],
+      "type": "object"
     },
     "schema33": {
       "allOf": [
@@ -4377,24 +4360,11 @@
       "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
       "type": "string"
     },
-    "schema331": {
-      "properties": {
-        "livenessProbe": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
-    },
-    "schema332": {
+    "schema330": {
       "description": "serverName is used to verify the hostname for the targets.",
       "type": "string"
     },
-    "schema336": {
+    "schema334": {
       "properties": {
         "startupProbe": {
           "enum": [
@@ -4407,7 +4377,7 @@
       ],
       "type": "object"
     },
-    "schema338": {
+    "schema336": {
       "description": "Minimum consecutive successes for the probe to be considered successful."
     },
     "schema34": {
@@ -4461,7 +4431,7 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema344": {
+    "schema342": {
       "additionalProperties": {},
       "properties": {
         "severity": {
@@ -4470,7 +4440,7 @@
       },
       "type": "object"
     },
-    "schema346": {
+    "schema344": {
       "properties": {
         "frrMetrics": {
           "enum": [
@@ -4483,7 +4453,7 @@
       ],
       "type": "object"
     },
-    "schema347": {
+    "schema345": {
       "properties": {
         "prometheus": {
           "enum": [
@@ -4496,12 +4466,12 @@
       ],
       "type": "object"
     },
-    "schema348": {
+    "schema346": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema351": {
+    "schema349": {
       "properties": {
         "namespace": {
           "enum": [
@@ -4514,7 +4484,15 @@
       ],
       "type": "object"
     },
-    "schema352": {
+    "schema350": {
+      "additionalProperties": {},
+      "properties": {
+        "pullPolicy": {},
+        "repository": {},
+        "tag": {}
+      }
+    },
+    "schema351": {
       "properties": {
         "serviceAccount": {}
       },
@@ -4523,7 +4501,7 @@
       ],
       "type": "object"
     },
-    "schema355": {
+    "schema354": {
       "additionalProperties": {},
       "properties": {
         "repository": {
@@ -4533,7 +4511,7 @@
         }
       }
     },
-    "schema358": {
+    "schema357": {
       "properties": {
         "image": {
           "enum": [
@@ -4546,10 +4524,10 @@
       ],
       "type": "object"
     },
-    "schema360": {
+    "schema359": {
       "description": "Number of failures before the probe is considered failed."
     },
-    "schema361": {
+    "schema360": {
       "additionalProperties": {},
       "properties": {
         "port": {
@@ -4560,13 +4538,6 @@
       }
     },
     "schema363": {
-      "additionalProperties": {},
-      "properties": {
-        "labels": {}
-      },
-      "type": "object"
-    },
-    "schema365": {
       "oneOf": [
         {
           "type": [
@@ -4582,18 +4553,27 @@
         }
       ]
     },
-    "schema368": {
+    "schema366": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema369": {
+    "schema367": {
       "properties": {
         "image": {}
       },
       "required": [
         "image"
       ],
+      "type": "object"
+    },
+    "schema368": {
+      "description": "How often (in seconds) to perform the probe."
+    },
+    "schema369": {
+      "additionalProperties": {
+        "type": "string"
+      },
       "type": "object"
     },
     "schema37": {
@@ -4639,25 +4619,22 @@
       ]
     },
     "schema370": {
-      "description": "How often (in seconds) to perform the probe."
+      "additionalProperties": {},
+      "properties": {
+        "resources": {}
+      }
     },
-    "schema371": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema376": {
+    "schema375": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema377": {
+    "schema376": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema378": {
+    "schema377": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -4704,12 +4681,12 @@
         "null"
       ]
     },
-    "schema381": {
+    "schema380": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema382": {
+    "schema381": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -6119,7 +6096,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/schema355"
+                    "$ref": "#/$defs/schema354"
                   }
                 }
               }
@@ -6175,7 +6152,7 @@
                         "$ref": "#/$defs/schema50"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
                         "not": {
@@ -6346,7 +6323,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/schema361"
+                    "$ref": "#/$defs/schema360"
                   }
                 }
               }
@@ -6616,7 +6593,7 @@
                 "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/schema361"
+                    "$ref": "#/$defs/schema360"
                   }
                 }
               }
@@ -6954,7 +6931,7 @@
                             "$ref": "#/$defs/schema48"
                           },
                           {
-                            "$ref": "#/$defs/schema244"
+                            "$ref": "#/$defs/schema243"
                           }
                         ],
                         "description": "Validation failure policy for CRDs. Can be Fail or Ignore."
@@ -7137,10 +7114,10 @@
                           "secureMetricsPort": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema264"
+                                "$ref": "#/$defs/schema262"
                               },
                               {
-                                "$ref": "#/$defs/schema250"
+                                "$ref": "#/$defs/schema249"
                               }
                             ],
                             "description": "Secure metrics port for FRR."
@@ -7333,7 +7310,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema371"
+                            "$ref": "#/$defs/schema369"
                           },
                           {
                             "not": {
@@ -7677,10 +7654,10 @@
                       "webhookPort": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema264"
+                            "$ref": "#/$defs/schema262"
                           },
                           {
-                            "$ref": "#/$defs/schema250"
+                            "$ref": "#/$defs/schema249"
                           }
                         ],
                         "description": "Port for the webhook server."
@@ -7806,10 +7783,10 @@
                       "secureMetricsPort": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema264"
+                            "$ref": "#/$defs/schema262"
                           },
                           {
-                            "$ref": "#/$defs/schema250"
+                            "$ref": "#/$defs/schema249"
                           }
                         ],
                         "description": "Port frr-k8s will listen on for secure metrics."
@@ -7854,7 +7831,7 @@
                             "$ref": "#/$defs/schema50"
                           },
                           {
-                            "$ref": "#/$defs/schema246"
+                            "$ref": "#/$defs/schema245"
                           },
                           {
                             "not": {
@@ -8133,13 +8110,13 @@
                           "secureMetricsPort": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema317"
+                                "$ref": "#/$defs/schema315"
                               },
                               {
                                 "$ref": "#/$defs/schema86"
                               },
                               {
-                                "$ref": "#/$defs/schema250"
+                                "$ref": "#/$defs/schema249"
                               }
                             ],
                             "description": "Secure metrics port for FRR."
@@ -8193,13 +8170,13 @@
                       "secureMetricsPort": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema317"
+                            "$ref": "#/$defs/schema315"
                           },
                           {
                             "$ref": "#/$defs/schema86"
                           },
                           {
-                            "$ref": "#/$defs/schema250"
+                            "$ref": "#/$defs/schema249"
                           }
                         ],
                         "description": "Port frr-k8s will listen on for secure metrics."
@@ -8251,7 +8228,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema371"
+                                "$ref": "#/$defs/schema369"
                               },
                               {
                                 "not": {
@@ -8287,7 +8264,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema311"
+                                "$ref": "#/$defs/schema309"
                               },
                               {
                                 "not": {
@@ -9859,7 +9836,7 @@
                                 "$ref": "#/$defs/schema195"
                               },
                               {
-                                "$ref": "#/$defs/schema250"
+                                "$ref": "#/$defs/schema249"
                               }
                             ],
                             "description": "Number of seconds after the container has started before liveness probes are initiated."
@@ -10227,7 +10204,7 @@
                                 "$ref": "#/$defs/schema195"
                               },
                               {
-                                "$ref": "#/$defs/schema250"
+                                "$ref": "#/$defs/schema249"
                               }
                             ],
                             "description": "Number of seconds after the container has started before readiness probes are initiated."
@@ -12883,20 +12860,20 @@
                                 "$ref": "#/$defs/schema25"
                               },
                               "caFile": {
-                                "$ref": "#/$defs/schema295"
+                                "$ref": "#/$defs/schema293"
                               },
                               "cert": {
                                 "$ref": "#/$defs/schema24"
                               },
                               "certFile": {
-                                "$ref": "#/$defs/schema291"
+                                "$ref": "#/$defs/schema289"
                               },
                               "insecureSkipVerify": {
                                 "description": "Disables SSL certificate verification",
                                 "type": "boolean"
                               },
                               "keyFile": {
-                                "$ref": "#/$defs/schema293"
+                                "$ref": "#/$defs/schema291"
                               },
                               "keySecret": {
                                 "$ref": "#/$defs/schema63"
@@ -12908,7 +12885,7 @@
                                 "$ref": "#/$defs/schema234"
                               },
                               "serverName": {
-                                "$ref": "#/$defs/schema332"
+                                "$ref": "#/$defs/schema330"
                               }
                             },
                             "type": "object"
@@ -14073,10 +14050,10 @@
                   "metricsPort": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema264"
+                        "$ref": "#/$defs/schema262"
                       },
                       {
-                        "$ref": "#/$defs/schema250"
+                        "$ref": "#/$defs/schema249"
                       }
                     ],
                     "description": "port both controller and speaker will listen on for metrics (always HTTPS).\nMatches the port kube-rbac-proxy previously served on."
@@ -14440,13 +14417,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema376"
+                    "$ref": "#/$defs/schema375"
                   },
                   {
-                    "$ref": "#/$defs/schema378"
+                    "$ref": "#/$defs/schema377"
                   },
                   {
-                    "$ref": "#/$defs/schema381"
+                    "$ref": "#/$defs/schema380"
                   },
                   {
                     "not": {
@@ -14454,22 +14431,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema382"
+                    "$ref": "#/$defs/schema381"
                   },
                   {
-                    "$ref": "#/$defs/schema377"
+                    "$ref": "#/$defs/schema376"
                   },
                   {
-                    "$ref": "#/$defs/schema303"
+                    "$ref": "#/$defs/schema301"
                   },
                   {
                     "$ref": "#/$defs/schema188"
                   },
                   {
-                    "$ref": "#/$defs/schema348"
+                    "$ref": "#/$defs/schema346"
                   },
                   {
-                    "$ref": "#/$defs/schema368"
+                    "$ref": "#/$defs/schema366"
                   }
                 ],
                 "type": "string"
@@ -15210,7 +15187,7 @@
                                     "labels": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/schema344"
+                                          "$ref": "#/$defs/schema342"
                                         },
                                         {
                                           "not": {
@@ -15232,7 +15209,7 @@
                                     "labels": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/schema344"
+                                          "$ref": "#/$defs/schema342"
                                         },
                                         {
                                           "not": {
@@ -16270,7 +16247,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema371"
+                                "$ref": "#/$defs/schema369"
                               },
                               {
                                 "not": {
@@ -16304,7 +16281,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema311"
+                                "$ref": "#/$defs/schema309"
                               },
                               {
                                 "not": {
@@ -17306,7 +17283,7 @@
                     "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/schema355"
+                        "$ref": "#/$defs/schema354"
                       }
                     }
                   }
@@ -17697,13 +17674,13 @@
                   "metricsPort": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema317"
+                        "$ref": "#/$defs/schema315"
                       },
                       {
                         "$ref": "#/$defs/schema86"
                       },
                       {
-                        "$ref": "#/$defs/schema250"
+                        "$ref": "#/$defs/schema249"
                       }
                     ]
                   }
@@ -18022,7 +17999,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/schema355"
+                    "$ref": "#/$defs/schema354"
                   }
                 }
               }
@@ -18078,7 +18055,7 @@
                         "$ref": "#/$defs/schema50"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
                         "not": {
@@ -18299,7 +18276,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "livenessProbe": {
-                    "$ref": "#/$defs/schema361"
+                    "$ref": "#/$defs/schema360"
                   }
                 }
               }
@@ -18810,13 +18787,13 @@
                       "mlSecretKeyPath": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema376"
+                            "$ref": "#/$defs/schema375"
                           },
                           {
-                            "$ref": "#/$defs/schema378"
+                            "$ref": "#/$defs/schema377"
                           },
                           {
-                            "$ref": "#/$defs/schema381"
+                            "$ref": "#/$defs/schema380"
                           },
                           {
                             "not": {
@@ -18824,22 +18801,22 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema382"
+                            "$ref": "#/$defs/schema381"
                           },
                           {
-                            "$ref": "#/$defs/schema377"
+                            "$ref": "#/$defs/schema376"
                           },
                           {
-                            "$ref": "#/$defs/schema303"
+                            "$ref": "#/$defs/schema301"
                           },
                           {
                             "$ref": "#/$defs/schema188"
                           },
                           {
-                            "$ref": "#/$defs/schema348"
+                            "$ref": "#/$defs/schema346"
                           },
                           {
-                            "$ref": "#/$defs/schema368"
+                            "$ref": "#/$defs/schema366"
                           }
                         ],
                         "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
@@ -19043,7 +19020,7 @@
                 "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
                 "properties": {
                   "readinessProbe": {
-                    "$ref": "#/$defs/schema361"
+                    "$ref": "#/$defs/schema360"
                   }
                 }
               }
@@ -19241,13 +19218,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema376"
+                        "$ref": "#/$defs/schema375"
                       },
                       {
-                        "$ref": "#/$defs/schema378"
+                        "$ref": "#/$defs/schema377"
                       },
                       {
-                        "$ref": "#/$defs/schema381"
+                        "$ref": "#/$defs/schema380"
                       },
                       {
                         "not": {
@@ -19255,19 +19232,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema382"
+                        "$ref": "#/$defs/schema381"
                       },
                       {
-                        "$ref": "#/$defs/schema303"
+                        "$ref": "#/$defs/schema301"
                       },
                       {
                         "$ref": "#/$defs/schema188"
                       },
                       {
-                        "$ref": "#/$defs/schema348"
+                        "$ref": "#/$defs/schema346"
                       },
                       {
-                        "$ref": "#/$defs/schema368"
+                        "$ref": "#/$defs/schema366"
                       }
                     ],
                     "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -20403,7 +20380,7 @@
               {
                 "properties": {
                   "frrk8s": {
-                    "$ref": "#/$defs/schema351"
+                    "$ref": "#/$defs/schema349"
                   }
                 },
                 "required": [
@@ -20625,7 +20602,7 @@
             "not": {
               "properties": {
                 "controller": {
-                  "$ref": "#/$defs/schema352"
+                  "$ref": "#/$defs/schema351"
                 }
               },
               "required": [
@@ -20637,7 +20614,7 @@
           {
             "properties": {
               "controller": {
-                "$ref": "#/$defs/schema322"
+                "$ref": "#/$defs/schema320"
               }
             },
             "required": [
@@ -20853,7 +20830,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema286"
+                        "$ref": "#/$defs/schema284"
                       }
                     },
                     "required": [
@@ -20912,7 +20889,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema346"
+                        "$ref": "#/$defs/schema344"
                       }
                     },
                     "required": [
@@ -21040,7 +21017,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema358"
+                        "$ref": "#/$defs/schema357"
                       }
                     },
                     "required": [
@@ -21099,7 +21076,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema331"
+                        "$ref": "#/$defs/schema329"
                       }
                     },
                     "required": [
@@ -21158,7 +21135,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema323"
+                        "$ref": "#/$defs/schema321"
                       }
                     },
                     "required": [
@@ -21286,7 +21263,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema322"
+                        "$ref": "#/$defs/schema320"
                       }
                     },
                     "required": [
@@ -21345,7 +21322,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema336"
+                        "$ref": "#/$defs/schema334"
                       }
                     },
                     "required": [
@@ -21402,7 +21379,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema347"
+                    "$ref": "#/$defs/schema345"
                   }
                 ]
               }
@@ -21453,7 +21430,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema247"
                   }
                 ]
               }
@@ -21692,7 +21669,7 @@
             }
           },
           {
-            "$ref": "#/$defs/schema347"
+            "$ref": "#/$defs/schema345"
           }
         ]
       },
@@ -21815,7 +21792,7 @@
             }
           },
           {
-            "$ref": "#/$defs/schema248"
+            "$ref": "#/$defs/schema247"
           }
         ]
       },
@@ -22139,7 +22116,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema371"
+                        "$ref": "#/$defs/schema369"
                       },
                       {
                         "not": {
@@ -22296,10 +22273,10 @@
                             "description": "Spec to control the desired behavior of rolling update.",
                             "properties": {
                               "maxSurge": {
-                                "$ref": "#/$defs/schema365"
+                                "$ref": "#/$defs/schema363"
                               },
                               "maxUnavailable": {
-                                "$ref": "#/$defs/schema365"
+                                "$ref": "#/$defs/schema363"
                               }
                             },
                             "type": [
@@ -22513,7 +22490,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema251"
+                "$ref": "#/$defs/schema250"
               }
             ]
           },
@@ -22580,32 +22557,31 @@
         },
         "extraContainers": {},
         "image": {
-          "$ref": "#/$defs/schema259"
+          "$ref": "#/$defs/schema350"
         },
         "labels": {},
         "livenessProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ]
             },
-            {
-              "$ref": "#/$defs/schema242"
-            }
-          ]
+            "failureThreshold": {},
+            "initialDelaySeconds": {},
+            "periodSeconds": {},
+            "port": {},
+            "successThreshold": {},
+            "timeoutSeconds": {}
+          }
         },
         "logLevel": {
           "description": "Controller log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
@@ -22616,28 +22592,27 @@
         "podAnnotations": {},
         "priorityClassName": {},
         "readinessProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ]
             },
-            {
-              "$ref": "#/$defs/schema242"
-            }
-          ]
+            "failureThreshold": {},
+            "initialDelaySeconds": {},
+            "periodSeconds": {},
+            "port": {},
+            "successThreshold": {},
+            "timeoutSeconds": {}
+          }
         },
         "resources": {},
         "runtimeClassName": {},
@@ -22660,7 +22635,7 @@
               "description": "Specifies whether a ServiceAccount should be created"
             },
             "name": {
-              "$ref": "#/$defs/schema284"
+              "$ref": "#/$defs/schema282"
             }
           },
           "type": "object"
@@ -22687,7 +22662,7 @@
               "$ref": "#/$defs/schema48"
             },
             {
-              "$ref": "#/$defs/schema244"
+              "$ref": "#/$defs/schema243"
             }
           ]
         }
@@ -22810,16 +22785,16 @@
                   "description": "Enable liveness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema360"
+                  "$ref": "#/$defs/schema359"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before liveness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema370"
+                  "$ref": "#/$defs/schema368"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/schema338"
+                  "$ref": "#/$defs/schema336"
                 },
                 "timeoutSeconds": {
                   "description": "Number of seconds after which the probe times out."
@@ -22857,16 +22832,16 @@
                   "description": "Enable readiness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema360"
+                  "$ref": "#/$defs/schema359"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before readiness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema370"
+                  "$ref": "#/$defs/schema368"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/schema338"
+                  "$ref": "#/$defs/schema336"
                 },
                 "timeoutSeconds": {
                   "description": "Number of seconds after which the probe times out."
@@ -22932,10 +22907,10 @@
                   "description": "Enable startup probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema360"
+                  "$ref": "#/$defs/schema359"
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema370"
+                  "$ref": "#/$defs/schema368"
                 }
               }
             },
@@ -23029,7 +23004,7 @@
                   "description": "Enable Prometheus ServiceMonitor for frr-k8s metrics.\nThe FRR-K8s BGP/BFD metrics are exposed with the \"frrk8s_\" prefix\n(e.g. frrk8s_bgp_session_up, frrk8s_bfd_session_up).\nTo rename them to the legacy \"metallb_\" prefix for backward compatibility\nwith existing dashboards or alerts, enable and configure metric relabelings:\nmetricRelabelings:\n- sourceLabels: [__name__]\nregex: \"frrk8s_bgp_(.*)\"\ntargetLabel: \"__name__\"\nreplacement: \"metallb_bgp_$1\"\n- sourceLabels: [__name__]\nregex: \"frrk8s_bfd_(.*)\"\ntargetLabel: \"__name__\"\nreplacement: \"metallb_bfd_$1\""
                 },
                 "interval": {
-                  "$ref": "#/$defs/schema328"
+                  "$ref": "#/$defs/schema326"
                 },
                 "jobLabel": {
                   "description": "Job label for scrape target."
@@ -23071,16 +23046,16 @@
           "additionalProperties": {},
           "properties": {
             "cipherSuites": {
-              "$ref": "#/$defs/schema301"
+              "$ref": "#/$defs/schema299"
             },
             "curvePreferences": {
-              "$ref": "#/$defs/schema263"
+              "$ref": "#/$defs/schema261"
             },
             "metricsTLSSecret": {
               "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
             },
             "minVersion": {
-              "$ref": "#/$defs/schema325"
+              "$ref": "#/$defs/schema323"
             }
           }
         }
@@ -23259,13 +23234,13 @@
               "metricsPort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema317"
+                    "$ref": "#/$defs/schema315"
                   },
                   {
                     "$ref": "#/$defs/schema86"
                   },
                   {
-                    "$ref": "#/$defs/schema250"
+                    "$ref": "#/$defs/schema249"
                   }
                 ],
                 "description": "port both controller and speaker will listen on for metrics (always HTTPS).\nMatches the port kube-rbac-proxy previously served on."
@@ -23408,7 +23383,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema371"
+                                "$ref": "#/$defs/schema369"
                               },
                               {
                                 "not": {
@@ -23426,7 +23401,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema371"
+                                "$ref": "#/$defs/schema369"
                               },
                               {
                                 "not": {
@@ -23525,7 +23500,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema371"
+                                "$ref": "#/$defs/schema369"
                               },
                               {
                                 "not": {
@@ -23543,7 +23518,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema371"
+                                "$ref": "#/$defs/schema369"
                               },
                               {
                                 "not": {
@@ -23601,7 +23576,7 @@
                                       "type": "string"
                                     },
                                     "labels": {
-                                      "$ref": "#/$defs/schema306"
+                                      "$ref": "#/$defs/schema304"
                                     },
                                     "record": {
                                       "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
@@ -23682,7 +23657,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema306"
+                                "$ref": "#/$defs/schema304"
                               },
                               {
                                 "not": {
@@ -23756,7 +23731,7 @@
                                     "labels": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/schema306"
+                                          "$ref": "#/$defs/schema304"
                                         },
                                         {
                                           "not": {
@@ -23773,7 +23748,7 @@
                                     "labels": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/schema306"
+                                          "$ref": "#/$defs/schema304"
                                         },
                                         {
                                           "not": {
@@ -23865,7 +23840,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema306"
+                                "$ref": "#/$defs/schema304"
                               },
                               {
                                 "not": {
@@ -23934,7 +23909,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema306"
+                                "$ref": "#/$defs/schema304"
                               },
                               {
                                 "not": {
@@ -24003,7 +23978,7 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema306"
+                                "$ref": "#/$defs/schema304"
                               },
                               {
                                 "not": {
@@ -24050,7 +24025,7 @@
                               "additionalLabels": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/schema371"
+                                    "$ref": "#/$defs/schema369"
                                   },
                                   {
                                     "not": {
@@ -24073,7 +24048,7 @@
                               "annotations": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/schema311"
+                                    "$ref": "#/$defs/schema309"
                                   },
                                   {
                                     "not": {
@@ -24723,7 +24698,7 @@
               "description": "enable support for Prometheus Operator"
             },
             "interval": {
-              "$ref": "#/$defs/schema328"
+              "$ref": "#/$defs/schema326"
             },
             "jobLabel": {
               "description": "Job label for scrape target"
@@ -24745,120 +24720,88 @@
               "description": "optional additional labels for prometheusRules"
             },
             "addressPoolExhausted": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "excludePools": {
-                      "$ref": "#/$defs/schema329"
+              "additionalProperties": {},
+              "description": "MetalLBAddressPoolExhausted",
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
                     },
-                    "labels": {}
-                  },
-                  "type": "object"
-                }
-              ],
-              "description": "MetalLBAddressPoolExhausted"
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "excludePools": {
+                  "$ref": "#/$defs/schema327"
+                },
+                "labels": {}
+              }
             },
             "addressPoolUsage": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "excludePools": {
-                      "$ref": "#/$defs/schema329"
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
                     },
-                    "thresholds": {}
-                  },
-                  "type": "object"
-                }
-              ]
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "excludePools": {
+                  "$ref": "#/$defs/schema327"
+                },
+                "thresholds": {}
+              }
             },
             "annotations": {
               "description": "optional annotations for prometheusRules"
             },
             "bgpSessionDown": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
+              "additionalProperties": {},
+              "description": "MetalLBBGPSessionDown",
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
                     }
-                  }
+                  ]
                 },
-                {
-                  "$ref": "#/$defs/schema363"
-                }
-              ],
-              "description": "MetalLBBGPSessionDown"
+                "labels": {}
+              }
             },
             "configNotLoaded": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
+              "additionalProperties": {},
+              "description": "MetalLBConfigNotLoaded",
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
                     }
-                  }
+                  ]
                 },
-                {
-                  "$ref": "#/$defs/schema363"
-                }
-              ],
-              "description": "MetalLBConfigNotLoaded"
+                "labels": {}
+              }
             },
             "enabled": {
               "anyOf": [
@@ -24875,29 +24818,23 @@
             },
             "extraAlerts": {},
             "staleConfig": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
+              "additionalProperties": {},
+              "description": "MetalLBStaleConfig",
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
                     }
-                  }
+                  ]
                 },
-                {
-                  "$ref": "#/$defs/schema363"
-                }
-              ],
-              "description": "MetalLBStaleConfig"
+                "labels": {}
+              }
             }
           },
           "type": "object"
@@ -24936,28 +24873,18 @@
           "description": "Prometheus Operator ServiceMonitors. To be used as an alternative\nto podMonitor, supports secure metrics.",
           "properties": {
             "controller": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "optional additional labels for the controller serviceMonitor"
-                    }
-                  }
+              "additionalProperties": {},
+              "properties": {
+                "additionalLabels": {
+                  "description": "optional additional labels for the controller serviceMonitor"
                 },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {
-                      "description": "optional additional annotations for the controller serviceMonitor"
-                    },
-                    "tlsConfig": {
-                      "description": "optional tls configuration for the controller serviceMonitor, in case\nsecure metrics are enabled."
-                    }
-                  },
-                  "type": "object"
+                "annotations": {
+                  "description": "optional additional annotations for the controller serviceMonitor"
+                },
+                "tlsConfig": {
+                  "description": "optional tls configuration for the controller serviceMonitor, in case\nsecure metrics are enabled."
                 }
-              ]
+              }
             },
             "enabled": {
               "anyOf": [
@@ -24973,7 +24900,7 @@
               "description": "enable support for Prometheus Operator"
             },
             "interval": {
-              "$ref": "#/$defs/schema328"
+              "$ref": "#/$defs/schema326"
             },
             "jobLabel": {
               "description": "Job label for scrape target"
@@ -24985,28 +24912,18 @@
               "$ref": "#/$defs/schema218"
             },
             "speaker": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "optional additional labels for the speaker serviceMonitor"
-                    }
-                  }
+              "additionalProperties": {},
+              "properties": {
+                "additionalLabels": {
+                  "description": "optional additional labels for the speaker serviceMonitor"
                 },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {
-                      "description": "optional additional annotations for the speaker serviceMonitor"
-                    },
-                    "tlsConfig": {
-                      "description": "optional tls configuration for the speaker serviceMonitor, in case\nsecure metrics are enabled."
-                    }
-                  },
-                  "type": "object"
+                "annotations": {
+                  "description": "optional additional annotations for the speaker serviceMonitor"
+                },
+                "tlsConfig": {
+                  "description": "optional tls configuration for the speaker serviceMonitor, in case\nsecure metrics are enabled."
                 }
-              ]
+              }
             }
           },
           "type": "object"
@@ -25115,7 +25032,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema371"
+                        "$ref": "#/$defs/schema369"
                       },
                       {
                         "not": {
@@ -25793,7 +25710,7 @@
                         "$ref": "#/$defs/schema50"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
                         "not": {
@@ -26114,7 +26031,7 @@
                     "not": {
                       "properties": {
                         "frr": {
-                          "$ref": "#/$defs/schema369"
+                          "$ref": "#/$defs/schema367"
                         }
                       },
                       "required": [
@@ -26124,7 +26041,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema286"
+                    "$ref": "#/$defs/schema284"
                   }
                 ]
               }
@@ -26179,7 +26096,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema346"
+                    "$ref": "#/$defs/schema344"
                   }
                 ]
               }
@@ -26607,7 +26524,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema336"
+                    "$ref": "#/$defs/schema334"
                   }
                 ]
               }
@@ -26676,7 +26593,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema251"
+                "$ref": "#/$defs/schema250"
               }
             ]
           },
@@ -26824,140 +26741,89 @@
         },
         "extraContainers": {},
         "frr": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "image": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "pullPolicy": {},
-                    "repository": {},
-                    "tag": {}
-                  },
-                  "type": "object"
-                },
-                "metricsPort": {},
-                "resources": {}
-              },
-              "type": "object"
-            }
-          ],
+          "additionalProperties": {},
           "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
+          "properties": {
+            "enabled": {},
+            "image": {
+              "$ref": "#/$defs/schema350"
+            },
+            "metricsPort": {},
+            "resources": {}
+          },
           "type": "object"
         },
         "frrMetrics": {
-          "additionalProperties": {},
-          "properties": {
-            "resources": {}
-          }
+          "$ref": "#/$defs/schema370"
         },
         "ignoreExcludeLB": {
           "description": "ignore the exclude-from-external-loadbalancer label",
           "type": "boolean"
         },
         "image": {
-          "$ref": "#/$defs/schema259"
+          "$ref": "#/$defs/schema350"
         },
         "initContainers": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "cpFrrFiles": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "resources": {}
-                  }
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "cpFrrFiles": {
+              "$ref": "#/$defs/schema370"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "cpMetrics": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "resources": {}
-                  },
-                  "type": "object"
-                },
-                "cpReloader": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "resources": {}
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
+            "cpMetrics": {
+              "$ref": "#/$defs/schema370"
+            },
+            "cpReloader": {
+              "$ref": "#/$defs/schema370"
             }
-          ]
+          }
         },
         "labels": {},
         "livenessProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ]
             },
-            {
-              "$ref": "#/$defs/schema242"
-            }
-          ]
+            "failureThreshold": {},
+            "initialDelaySeconds": {},
+            "periodSeconds": {},
+            "port": {},
+            "successThreshold": {},
+            "timeoutSeconds": {}
+          }
         },
         "logLevel": {
           "description": "Speaker log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
         },
         "memberlist": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "When enabled: false, the speaker pods must run on all nodes"
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ],
+              "description": "When enabled: false, the speaker pods must run on all nodes"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "mlBindAddrOverride": {},
-                "mlBindPort": {},
-                "mlSecretKeyPath": {}
-              },
-              "type": "object"
-            }
-          ],
+            "mlBindAddrOverride": {},
+            "mlBindPort": {},
+            "mlSecretKeyPath": {}
+          },
           "type": "object"
         },
         "nodeSelector": {
@@ -26966,34 +26832,30 @@
         "podAnnotations": {},
         "priorityClassName": {},
         "readinessProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "$ref": "#/$defs/schema242"
-            }
-          ]
-        },
-        "reloader": {
           "additionalProperties": {},
           "properties": {
-            "resources": {}
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "failureThreshold": {},
+            "initialDelaySeconds": {},
+            "periodSeconds": {},
+            "port": {},
+            "successThreshold": {},
+            "timeoutSeconds": {}
           }
+        },
+        "reloader": {
+          "$ref": "#/$defs/schema370"
         },
         "resources": {
           "description": "Defines a secret name for the controller to generate a memberlist encryption secret\nBy default secretName: {{ \"metallb.fullname\" }}-memberlist\nsecretName:"
@@ -27004,65 +26866,45 @@
         "secretName": {},
         "securityContext": {},
         "serviceAccount": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "create": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "Specifies whether a ServiceAccount should be created"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "create": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "name": {
-                  "$ref": "#/$defs/schema284"
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ],
+              "description": "Specifies whether a ServiceAccount should be created"
+            },
+            "name": {
+              "$ref": "#/$defs/schema282"
             }
-          ]
+          }
         },
         "startupProbe": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ]
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "failureThreshold": {},
-                "periodSeconds": {}
-              },
-              "type": "object"
-            }
-          ]
+            "failureThreshold": {},
+            "periodSeconds": {}
+          }
         },
         "tolerateMaster": {
           "anyOf": [
@@ -27088,16 +26930,16 @@
       "additionalProperties": {},
       "properties": {
         "cipherSuites": {
-          "$ref": "#/$defs/schema301"
+          "$ref": "#/$defs/schema299"
         },
         "controllerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
         },
         "curvePreferences": {
-          "$ref": "#/$defs/schema263"
+          "$ref": "#/$defs/schema261"
         },
         "minVersion": {
-          "$ref": "#/$defs/schema325"
+          "$ref": "#/$defs/schema323"
         },
         "speakerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."

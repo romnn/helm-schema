@@ -45509,22 +45509,12 @@
           "description": "targetMemoryUtilizationPercentage: 80"
         },
         "behavior": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "scaleDown": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "scaleUp": {}
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Configure HPA behavior policies for scaling if needed\nRef: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configuring-scaling-behavior\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\nselectPolicy: Min\nscaleUp:\nstabilizationWindowSeconds: 0\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\n- type: Pods\nvalue: 4\nperiodSeconds: 15\nselectPolicy: Max"
+          "additionalProperties": {},
+          "description": "Configure HPA behavior policies for scaling if needed\nRef: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#configuring-scaling-behavior\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\nselectPolicy: Min\nscaleUp:\nstabilizationWindowSeconds: 0\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\n- type: Pods\nvalue: 4\nperiodSeconds: 15\nselectPolicy: Max",
+          "properties": {
+            "scaleDown": {},
+            "scaleUp": {}
+          }
         },
         "enabled": {
           "anyOf": [
@@ -47115,81 +47105,70 @@
       "additionalProperties": {},
       "properties": {
         "waitForRedis": {
-          "anyOf": [
-            {
+          "additionalProperties": {},
+          "description": "if the redis sub-chart is enabled, wait for it to be ready\nbefore starting the proxy\ncreates a role binding to get, list, watch, the redis master pod\nif service account is enabled",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "image": {
               "additionalProperties": {},
               "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                }
+                "pullPolicy": {},
+                "repository": {},
+                "tag": {}
               }
             },
-            {
+            "resources": {
+              "description": "limits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi"
+            },
+            "securityContext": {
               "additionalProperties": {},
               "properties": {
-                "image": {
+                "allowPrivilegeEscalation": {
+                  "type": "boolean"
+                },
+                "capabilities": {
+                  "$ref": "#/$defs/schema516"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "readOnlyRootFilesystem": {
+                  "type": "boolean"
+                },
+                "runAsGroup": {
+                  "type": "integer"
+                },
+                "runAsNonRoot": {
+                  "type": "boolean"
+                },
+                "runAsUser": {
+                  "type": "integer"
+                },
+                "seccompProfile": {
                   "additionalProperties": {},
                   "properties": {
-                    "pullPolicy": {},
-                    "repository": {},
-                    "tag": {}
-                  },
-                  "type": "object"
-                },
-                "resources": {
-                  "description": "limits:\ncpu: 100m\nmemory: 300Mi\nrequests:\ncpu: 100m\nmemory: 300Mi"
-                },
-                "securityContext": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "allowPrivilegeEscalation": {
-                      "type": "boolean"
-                    },
-                    "capabilities": {
-                      "$ref": "#/$defs/schema516"
-                    },
-                    "enabled": {
-                      "type": "boolean"
-                    },
-                    "readOnlyRootFilesystem": {
-                      "type": "boolean"
-                    },
-                    "runAsGroup": {
-                      "type": "integer"
-                    },
-                    "runAsNonRoot": {
-                      "type": "boolean"
-                    },
-                    "runAsUser": {
-                      "type": "integer"
-                    },
-                    "seccompProfile": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "type": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
+                    "type": {
+                      "type": "string"
                     }
                   },
                   "type": "object"
-                },
-                "timeout": {}
+                }
               },
               "type": "object"
-            }
-          ],
-          "description": "if the redis sub-chart is enabled, wait for it to be ready\nbefore starting the proxy\ncreates a role binding to get, list, watch, the redis master pod\nif service account is enabled"
+            },
+            "timeout": {}
+          }
         }
       },
       "type": "object"
@@ -47924,65 +47903,55 @@
           }
         },
         "serviceMonitor": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "bearerTokenFile": {
-                  "description": "bearerTokenFile: Path to bearer token file."
+            "bearerTokenFile": {
+              "description": "bearerTokenFile: Path to bearer token file."
+            },
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "Enable Prometheus Operator ServiceMonitor"
-                },
-                "interval": {
-                  "description": "Prometheus scrape interval"
-                },
-                "labels": {
-                  "description": "Add custom labels to the ServiceMonitor resource"
-                },
-                "metricRelabelings": {
-                  "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
-                },
-                "namespace": {
-                  "description": "Define the namespace where to deploy the ServiceMonitor resource"
-                },
-                "prometheusInstance": {
-                  "description": "Prometheus Instance definition"
-                },
-                "relabelings": {
-                  "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
-                },
-                "scheme": {
-                  "description": "scheme: HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS."
-                },
-                "scrapeTimeout": {
-                  "description": "Prometheus scrape timeout"
-                },
-                "tlsConfig": {
-                  "description": "tlsConfig: TLS configuration to use when scraping the endpoint. For example if using istio mTLS.\nOf type: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig"
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ],
+              "description": "Enable Prometheus Operator ServiceMonitor"
+            },
+            "interval": {
+              "description": "Prometheus scrape interval"
+            },
+            "labels": {
+              "description": "Add custom labels to the ServiceMonitor resource"
+            },
+            "metricRelabelings": {
+              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+            },
+            "namespace": {
+              "description": "Define the namespace where to deploy the ServiceMonitor resource"
+            },
+            "prometheusInstance": {
+              "description": "Prometheus Instance definition"
+            },
+            "relabelings": {
+              "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
+            },
+            "scheme": {
+              "description": "scheme: HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS."
+            },
+            "scrapeTimeout": {
+              "description": "Prometheus scrape timeout"
+            },
+            "tlsConfig": {
+              "description": "tlsConfig: TLS configuration to use when scraping the endpoint. For example if using istio mTLS.\nOf type: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig"
             }
-          ]
+          }
         }
       },
       "type": "object"
@@ -62827,35 +62796,25 @@
                   "description": "Key of the Kubernetes secret data containing the redis password value. If you use the redis sub chart, make sure\nthis password matches the one used in redis-ha.redisPassword (see below)."
                 },
                 "sentinel": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "connectionUrls": {
-                          "description": "List of Redis cluster connection URLs. Array or single string allowed.\n- \"redis://127.0.0.1:8000\"\n- \"redis://127.0.0.1:8001\""
-                        }
-                      }
+                  "additionalProperties": {},
+                  "description": "- \"redis://127.0.0.1:8000\"\n- \"redis://127.0.0.1:8001\"",
+                  "properties": {
+                    "connectionUrls": {
+                      "description": "List of Redis cluster connection URLs. Array or single string allowed.\n- \"redis://127.0.0.1:8000\"\n- \"redis://127.0.0.1:8001\""
                     },
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "existingSecret": {
-                          "description": "Name of the Kubernetes secret containing the redis sentinel password value (see also `sessionStorage.redis.sentinel.passwordKey`). Default: `sessionStorage.redis.existingSecret`"
-                        },
-                        "masterName": {
-                          "description": "Redis sentinel master name"
-                        },
-                        "password": {
-                          "description": "Redis sentinel password. Used only for sentinel connection; any redis node passwords need to use `sessionStorage.redis.password`"
-                        },
-                        "passwordKey": {
-                          "description": "Key of the Kubernetes secret data containing the redis sentinel password value"
-                        }
-                      },
-                      "type": "object"
+                    "existingSecret": {
+                      "description": "Name of the Kubernetes secret containing the redis sentinel password value (see also `sessionStorage.redis.sentinel.passwordKey`). Default: `sessionStorage.redis.existingSecret`"
+                    },
+                    "masterName": {
+                      "description": "Redis sentinel master name"
+                    },
+                    "password": {
+                      "description": "Redis sentinel password. Used only for sentinel connection; any redis node passwords need to use `sessionStorage.redis.password`"
+                    },
+                    "passwordKey": {
+                      "description": "Key of the Kubernetes secret data containing the redis sentinel password value"
                     }
-                  ],
-                  "description": "- \"redis://127.0.0.1:8000\"\n- \"redis://127.0.0.1:8001\""
+                  }
                 },
                 "standalone": {
                   "additionalProperties": {},

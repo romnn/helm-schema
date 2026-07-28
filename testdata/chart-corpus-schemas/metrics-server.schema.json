@@ -6258,51 +6258,31 @@
           ]
         },
         "image": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "repository": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "tag": {}
-              },
-              "type": "object"
-            }
-          ]
+          "additionalProperties": {},
+          "properties": {
+            "repository": {},
+            "tag": {}
+          }
         },
         "nanny": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "cpu": {
-                  "type": "string"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "cpu": {
+              "type": "string"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "extraCpu": {
-                  "type": "string"
-                },
-                "extraMemory": {
-                  "type": "string"
-                },
-                "memory": {
-                  "type": "string"
-                },
-                "minClusterSize": {},
-                "pollPeriod": {},
-                "threshold": {}
-              },
-              "type": "object"
-            }
-          ]
+            "extraCpu": {
+              "type": "string"
+            },
+            "extraMemory": {
+              "type": "string"
+            },
+            "memory": {
+              "type": "string"
+            },
+            "minClusterSize": {},
+            "pollPeriod": {},
+            "threshold": {}
+          }
         },
         "resources": {},
         "securityContext": {}
@@ -8509,11 +8489,28 @@
       ],
       "properties": {
         "certManager": {
-          "anyOf": [
-            {
+          "additionalProperties": {},
+          "properties": {
+            "addInjectorAnnotations": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "description": "Automatically add the cert-manager.io/inject-ca-from annotation to the APIService resource.\nSee https://cert-manager.io/docs/concepts/ca-injector"
+            },
+            "duration": {
+              "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+            },
+            "existingIssuer": {
               "additionalProperties": {},
               "properties": {
-                "addInjectorAnnotations": {
+                "enabled": {
                   "anyOf": [
                     {
                       "not": {
@@ -8524,73 +8521,35 @@
                       "type": "boolean"
                     }
                   ],
-                  "description": "Automatically add the cert-manager.io/inject-ca-from annotation to the APIService resource.\nSee https://cert-manager.io/docs/concepts/ca-injector"
+                  "description": "Use an existing cert-manager issuer"
+                },
+                "kind": {
+                  "description": "Kind of the existing cert-manager issuer"
+                },
+                "name": {
+                  "description": "Name of the existing cert-manager issuer"
                 }
               }
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "duration": {
-                  "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
-                },
-                "existingIssuer": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ],
-                      "description": "Use an existing cert-manager issuer"
-                    },
-                    "kind": {
-                      "description": "Kind of the existing cert-manager issuer"
-                    },
-                    "name": {
-                      "description": "Name of the existing cert-manager issuer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "renewBefore": {
-                  "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
-                }
-              },
-              "type": "object"
+            "renewBefore": {
+              "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
             }
-          ]
+          }
         },
         "clusterDomain": {
           "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
         },
         "existingSecret": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "lookup": {
-                  "description": "Use helm lookup function to provision `apiService.caBundle`",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "lookup": {
+              "description": "Use helm lookup function to provision `apiService.caBundle`",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "name": {
-                  "description": "Name of the existing Secret to use for TLS"
-                }
-              },
-              "type": "object"
+            "name": {
+              "description": "Name of the existing Secret to use for TLS"
             }
-          ]
+          }
         },
         "helm": {
           "additionalProperties": {},

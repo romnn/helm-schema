@@ -4375,28 +4375,18 @@
           "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi"
         },
         "securityContext": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "appArmorProfile": {
-                  "description": "AppArmor profile for the controller container."
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "appArmorProfile": {
+              "description": "AppArmor profile for the controller container."
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "seLinuxOptions": {
-                  "description": "SELinux options for the controller container."
-                },
-                "seccompProfile": {
-                  "description": "Seccomp profile for the controller container."
-                }
-              },
-              "type": "object"
+            "seLinuxOptions": {
+              "description": "SELinux options for the controller container."
+            },
+            "seccompProfile": {
+              "description": "Seccomp profile for the controller container."
             }
-          ]
+          }
         },
         "sidecarContainer": {
           "description": "Additional sidecarContainer config"

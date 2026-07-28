@@ -62776,31 +62776,21 @@
       "additionalProperties": {},
       "properties": {
         "compatibility": {
-          "anyOf": [
-            {
+          "additionalProperties": {},
+          "description": "Compatibility adaptations for Kubernetes platforms",
+          "properties": {
+            "omitEmptySeLinuxOptions": {},
+            "openshift": {
               "additionalProperties": {},
+              "description": "Compatibility adaptations for Openshift",
               "properties": {
-                "omitEmptySeLinuxOptions": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "description": "Compatibility adaptations for Openshift",
-                  "properties": {
-                    "adaptSecurityContext": {
-                      "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
-                    }
-                  },
-                  "type": "object"
+                "adaptSecurityContext": {
+                  "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
                 }
               },
               "type": "object"
             }
-          ],
-          "description": "Compatibility adaptations for Kubernetes platforms"
+          }
         },
         "defaultStorageClass": {
           "description": "Global default StorageClass for Persistent Volume(s)"
@@ -65748,38 +65738,28 @@
           "description": "Pod labels to match to allow traffic from other namespaces"
         },
         "metrics": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "allowExternal": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "Don't require client label for connections for metrics endpoint\nWhen set to false, only pods with the correct client label will have network access to the metrics port"
-                }
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "ingressNSMatchLabels": {
-                  "description": "Labels to match to allow traffic from other namespaces to metrics endpoint"
+          "additionalProperties": {},
+          "properties": {
+            "allowExternal": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "ingressNSPodMatchLabels": {
-                  "description": "Pod labels to match to allow traffic from other namespaces to metrics endpoint"
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ],
+              "description": "Don't require client label for connections for metrics endpoint\nWhen set to false, only pods with the correct client label will have network access to the metrics port"
+            },
+            "ingressNSMatchLabels": {
+              "description": "Labels to match to allow traffic from other namespaces to metrics endpoint"
+            },
+            "ingressNSPodMatchLabels": {
+              "description": "Pod labels to match to allow traffic from other namespaces to metrics endpoint"
             }
-          ]
+          }
         }
       },
       "type": "object"

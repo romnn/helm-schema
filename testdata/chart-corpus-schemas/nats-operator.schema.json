@@ -3143,69 +3143,49 @@
           "description": "Optional custom annotations to add to Pods in the cluster"
         },
         "auth": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "defaultPermissions": {
-                  "description": "publish: [\"SANDBOX.*\"]\nsubscribe: [\"PUBLIC.>\"]"
-                }
-              }
+          "additionalProperties": {},
+          "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+          "properties": {
+            "defaultPermissions": {
+              "description": "publish: [\"SANDBOX.*\"]\nsubscribe: [\"PUBLIC.>\"]"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enableServiceAccounts": {
-                  "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled."
+            "enableServiceAccounts": {
+              "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled."
+            },
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "password": {},
-                "username": {
-                  "description": "This is where you enter a username/password for 1 user"
-                },
-                "users": {
-                  "additionalProperties": {},
-                  "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ]
+            },
+            "password": {},
+            "username": {
+              "description": "This is where you enter a username/password for 1 user"
+            },
+            "users": {
+              "additionalProperties": {},
+              "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
             }
-          ],
-          "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version"
+          }
         },
         "configReload": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {}
-              }
+          "additionalProperties": {},
+          "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+          "properties": {
+            "enabled": {},
+            "pullPolicy": {},
+            "repository": {},
+            "resources": {
+              "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {},
-                "repository": {},
-                "resources": {
-                  "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
-                },
-                "tag": {}
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+."
+            "tag": {}
+          }
         },
         "create": {
           "anyOf": [
@@ -3221,44 +3201,33 @@
           "description": "Create a NATS Cluster when installing the operator"
         },
         "metrics": {
-          "anyOf": [
-            {
+          "additionalProperties": {},
+          "description": "Prometheus Metrics Exporter",
+          "properties": {
+            "enabled": {},
+            "pullPolicy": {},
+            "repository": {},
+            "servicemonitor": {
               "additionalProperties": {},
+              "description": "Prometheus Operator ServiceMonitor config",
               "properties": {
-                "enabled": {}
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "prometheusInstance": {}
               }
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {},
-                "repository": {},
-                "servicemonitor": {
-                  "additionalProperties": {},
-                  "description": "Prometheus Operator ServiceMonitor config",
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    },
-                    "prometheusInstance": {}
-                  },
-                  "type": "object"
-                },
-                "tag": {}
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Prometheus Metrics Exporter"
+            "tag": {}
+          }
         },
         "name": {},
         "namespace": {
@@ -3271,34 +3240,24 @@
           "description": "Cluster Size"
         },
         "tls": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "serverSecret:\nroutesSecret:"
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ],
+              "description": "serverSecret:\nroutesSecret:"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "routesSecret": {},
-                "serverSecret": {}
-              },
-              "type": "object"
-            }
-          ]
+            "routesSecret": {},
+            "serverSecret": {}
+          }
         },
         "version": {
           "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags"

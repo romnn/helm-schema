@@ -10719,24 +10719,14 @@
           "description": "key: value\narray of namespace selectors for the service mutator webhook"
         },
         "objectSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "matchExpressions": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "matchLabels": {
-                  "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>"
-                }
-              },
-              "type": "object"
+          "additionalProperties": {},
+          "description": "limit webhook to only mutate services matching the objectSelector",
+          "properties": {
+            "matchExpressions": {},
+            "matchLabels": {
+              "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>"
             }
-          ],
-          "description": "limit webhook to only mutate services matching the objectSelector"
+          }
         },
         "operations": {
           "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nwhich operations trigger the webhook"

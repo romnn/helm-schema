@@ -12103,25 +12103,15 @@
               "additionalProperties": {},
               "properties": {
                 "defaultSetting": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "systemManagedComponentsNodeSelector": {
-                          "description": "Node selector for system-managed Longhorn components."
-                        }
-                      }
+                  "additionalProperties": {},
+                  "properties": {
+                    "systemManagedComponentsNodeSelector": {
+                      "description": "Node selector for system-managed Longhorn components."
                     },
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "taintToleration": {
-                          "description": "Toleration for system-managed Longhorn components."
-                        }
-                      },
-                      "type": "object"
+                    "taintToleration": {
+                      "description": "Toleration for system-managed Longhorn components."
                     }
-                  ]
+                  }
                 },
                 "enabled": {
                   "anyOf": [
@@ -12857,28 +12847,18 @@
           "additionalProperties": {},
           "properties": {
             "oauthProxy": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "registry": {
-                      "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
-                    }
-                  }
+              "additionalProperties": {},
+              "properties": {
+                "registry": {
+                  "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
                 },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "repository": {
-                      "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
-                    },
-                    "tag": {
-                      "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users."
-                    }
-                  },
-                  "type": "object"
+                "repository": {
+                  "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
+                },
+                "tag": {
+                  "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users."
                 }
-              ]
+              }
             }
           }
         },
@@ -14645,28 +14625,18 @@
           "description": "Setting that allows Longhorn to integrate with OpenShift."
         },
         "ui": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "port": {
-                  "description": "Port for accessing the OpenShift web console."
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "port": {
+              "description": "Port for accessing the OpenShift web console."
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "proxy": {
-                  "description": "Port for proxy that provides access to the OpenShift web console."
-                },
-                "route": {
-                  "description": "Route for connections between Longhorn and the OpenShift web console."
-                }
-              },
-              "type": "object"
+            "proxy": {
+              "description": "Port for proxy that provides access to the OpenShift web console."
+            },
+            "route": {
+              "description": "Route for connections between Longhorn and the OpenShift web console."
             }
-          ]
+          }
         }
       },
       "type": "object"
@@ -14972,35 +14942,25 @@
           "description": "Setting that allows to set the annotations of the default Longhorn StorageClass."
         },
         "backingImage": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "dataSourceParameters": {
-                  "description": "Data source parameters of a backing image used in a Longhorn StorageClass.\nYou can specify a JSON string of a map. (Example: `'{\\\"url\\\":\\\"https://backing-image-example.s3-region.amazonaws.com/test-backing-image\\\"}'`)"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "dataSourceParameters": {
+              "description": "Data source parameters of a backing image used in a Longhorn StorageClass.\nYou can specify a JSON string of a map. (Example: `'{\\\"url\\\":\\\"https://backing-image-example.s3-region.amazonaws.com/test-backing-image\\\"}'`)"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "dataSourceType": {
-                  "description": "Data source type of a backing image used in a Longhorn StorageClass.\nIf the backing image exists in the cluster, Longhorn uses this setting to verify the image.\nIf the backing image does not exist, Longhorn creates one using the specified data source type."
-                },
-                "enable": {
-                  "description": "Setting that allows you to use a backing image in a Longhorn StorageClass.",
-                  "type": "boolean"
-                },
-                "expectedChecksum": {
-                  "description": "Expected SHA-512 checksum of a backing image used in a Longhorn StorageClass."
-                },
-                "name": {
-                  "description": "Backing image to be used for creating and restoring volumes in a Longhorn StorageClass. When no backing images are available, specify the data source type and parameters that Longhorn can use to create a backing image."
-                }
-              },
-              "type": "object"
+            "dataSourceType": {
+              "description": "Data source type of a backing image used in a Longhorn StorageClass.\nIf the backing image exists in the cluster, Longhorn uses this setting to verify the image.\nIf the backing image does not exist, Longhorn creates one using the specified data source type."
+            },
+            "enable": {
+              "description": "Setting that allows you to use a backing image in a Longhorn StorageClass.",
+              "type": "boolean"
+            },
+            "expectedChecksum": {
+              "description": "Expected SHA-512 checksum of a backing image used in a Longhorn StorageClass."
+            },
+            "name": {
+              "description": "Backing image to be used for creating and restoring volumes in a Longhorn StorageClass. When no backing images are available, specify the data source type and parameters that Longhorn can use to create a backing image."
             }
-          ]
+          }
         },
         "backupTargetName": {
           "description": "Setting that allows you to specify the backup target for the default Longhorn StorageClass.",
@@ -15025,27 +14985,17 @@
           "description": "Data locality of the default Longhorn StorageClass. (Options: \"disabled\", \"best-effort\")"
         },
         "defaultDiskSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Setting that allows you to enable the disk selector for the default Longhorn StorageClass.",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enable": {
+              "description": "Setting that allows you to enable the disk selector for the default Longhorn StorageClass.",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "selector": {
-                  "description": "Disk selector for the default Longhorn StorageClass. Longhorn uses only disks with the specified tags for storing volume data. (Examples: \"nvme,sata\")",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+            "selector": {
+              "description": "Disk selector for the default Longhorn StorageClass. Longhorn uses only disks with the specified tags for storing volume data. (Examples: \"nvme,sata\")",
+              "type": "string"
             }
-          ]
+          }
         },
         "defaultFsType": {
           "description": "Filesystem type of the default Longhorn StorageClass.",
@@ -15056,27 +15006,17 @@
           "type": "string"
         },
         "defaultNodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Setting that allows you to enable the node selector for the default Longhorn StorageClass.",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enable": {
+              "description": "Setting that allows you to enable the node selector for the default Longhorn StorageClass.",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "selector": {
-                  "description": "Node selector for the default Longhorn StorageClass. Longhorn uses only nodes with the specified tags for storing volume data. (Examples: \"storage,fast\")",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+            "selector": {
+              "description": "Node selector for the default Longhorn StorageClass. Longhorn uses only nodes with the specified tags for storing volume data. (Examples: \"storage,fast\")",
+              "type": "string"
             }
-          ]
+          }
         },
         "disableRevisionCounter": {
           "description": "Setting that disables the revision counter and thereby prevents Longhorn from tracking all write operations to a volume. When salvaging a volume, Longhorn uses properties of the volume-head-xxx.img file (the last file size and the last time the file was modified) to select the replica to be used for volume recovery.",
@@ -15095,74 +15035,44 @@
           "type": "string"
         },
         "recurringJobSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Setting that allows you to enable the recurring job selector for a Longhorn StorageClass.",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enable": {
+              "description": "Setting that allows you to enable the recurring job selector for a Longhorn StorageClass.",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "jobList": {
-                  "description": "Recurring job selector for a Longhorn StorageClass. Ensure that quotes are used correctly when specifying job parameters. (Example: `[{\"name\":\"backup\", \"isGroup\":true}]`)",
-                  "items": {},
-                  "type": "array"
-                }
-              },
-              "type": "object"
+            "jobList": {
+              "description": "Recurring job selector for a Longhorn StorageClass. Ensure that quotes are used correctly when specifying job parameters. (Example: `[{\"name\":\"backup\", \"isGroup\":true}]`)",
+              "items": {},
+              "type": "array"
             }
-          ]
+          }
         },
         "shareManagerNodeSelector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Setting that allows you to enable the share manager node selector for the default Longhorn StorageClass.",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enable": {
+              "description": "Setting that allows you to enable the share manager node selector for the default Longhorn StorageClass.",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "selector": {
-                  "description": "Node selector for the share manager pods of the default Longhorn StorageClass. Longhorn schedules share manager pods only on nodes with the specified tags. (Examples: \"storage,fast\")",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+            "selector": {
+              "description": "Node selector for the share manager pods of the default Longhorn StorageClass. Longhorn schedules share manager pods only on nodes with the specified tags. (Examples: \"storage,fast\")",
+              "type": "string"
             }
-          ]
+          }
         },
         "shareManagerTolerations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enable": {
-                  "description": "Setting that allows you to enable the share manager tolerations for the default Longhorn StorageClass.",
-                  "type": "boolean"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enable": {
+              "description": "Setting that allows you to enable the share manager tolerations for the default Longhorn StorageClass.",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "tolerations": {
-                  "description": "Tolerations for the share manager pods of the default Longhorn StorageClass. Specify values using a semicolon-separated list in `kubectl taint` syntax. (Example: \"key1=value1:effect; key2=value2:effect\")",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+            "tolerations": {
+              "description": "Tolerations for the share manager pods of the default Longhorn StorageClass. Specify values using a semicolon-separated list in `kubectl taint` syntax. (Example: \"key1=value1:effect; key2=value2:effect\")",
+              "type": "string"
             }
-          ]
+          }
         },
         "unmapMarkSnapChainRemoved": {
           "description": "Setting that allows you to enable automatic snapshot removal during filesystem trim for a Longhorn StorageClass. (Options: \"ignored\", \"enabled\", \"disabled\")",

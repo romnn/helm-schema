@@ -35,6 +35,7 @@ mod int_cast_preimages;
 mod iterable_lanes;
 mod kind_partition_matrix;
 mod member_access_contracts;
+mod member_carriers;
 mod member_serialized_shapes;
 mod merge_shadowing;
 mod nullability_defaults;

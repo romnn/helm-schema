@@ -21678,100 +21678,80 @@
           ]
         },
         "nodeAgentPodMonitor": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "autodetect": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "description": "metrics.serviceMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.serviceMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nServiceMonitor namespace. Default to Velero namespace.\nnamespace:\nServiceMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nServiceMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}",
+          "properties": {
+            "autodetect": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ]
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ]
             }
-          ],
-          "description": "metrics.serviceMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\nmetricRelabelings: []\nmetrics.serviceMonitor.relabelings [array] Prometheus relabeling rules\nrelabelings: []\nServiceMonitor namespace. Default to Velero namespace.\nnamespace:\nServiceMonitor connection scheme. Defaults to HTTP.\nscheme: \"\"\nServiceMonitor connection tlsConfig. Defaults to {}.\ntlsConfig: {}"
+          }
         },
         "podAnnotations": {
           "description": "Pod annotations for Prometheus"
         },
         "prometheusRule": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "autodetect": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "properties": {
+            "autodetect": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                "spec": {
-                  "anyOf": [
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    }
-                  ],
-                  "description": "PrometheusRule namespace. Defaults to Velero namespace.\nnamespace: \"\"\nRules to be deployed\n- alert: VeleroBackupFailed\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has failed\nexpr: |-\nvelero_backup_last_status{schedule!=\"\"} != 1\nfor: 15m\nlabels:\nseverity: warning\n- alert: VeleroBackupFailing\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has been failing for the last 12h\nexpr: |-\nvelero_backup_last_status{schedule!=\"\"} != 1\nfor: 12h\nlabels:\nseverity: critical\n- alert: VeleroNoNewBackup\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has not run successfully in the last 25h\nexpr: |-\n(\n(time() - velero_backup_last_successful_timestamp{schedule!=\"\"}) >bool (25 * 3600)\nor\nabsent(velero_backup_last_successful_timestamp{schedule!=\"\"})\n) == 1\nfor: 1h\nlabels:\nseverity: critical\n- alert: VeleroBackupPartialFailures\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has {{ $value | humanizePercentage }} partialy failed backups\nexpr: |-\nrate(velero_backup_partial_failure_total{schedule!=\"\"}[25m])\n/ rate(velero_backup_attempt_total{schedule!=\"\"}[25m]) > 0.5\nfor: 15m\nlabels:\nseverity: warning"
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ]
+            },
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "spec": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                }
+              ],
+              "description": "PrometheusRule namespace. Defaults to Velero namespace.\nnamespace: \"\"\nRules to be deployed\n- alert: VeleroBackupFailed\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has failed\nexpr: |-\nvelero_backup_last_status{schedule!=\"\"} != 1\nfor: 15m\nlabels:\nseverity: warning\n- alert: VeleroBackupFailing\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has been failing for the last 12h\nexpr: |-\nvelero_backup_last_status{schedule!=\"\"} != 1\nfor: 12h\nlabels:\nseverity: critical\n- alert: VeleroNoNewBackup\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has not run successfully in the last 25h\nexpr: |-\n(\n(time() - velero_backup_last_successful_timestamp{schedule!=\"\"}) >bool (25 * 3600)\nor\nabsent(velero_backup_last_successful_timestamp{schedule!=\"\"})\n) == 1\nfor: 1h\nlabels:\nseverity: critical\n- alert: VeleroBackupPartialFailures\nannotations:\nmessage: Velero backup {{ $labels.schedule }} has {{ $value | humanizePercentage }} partialy failed backups\nexpr: |-\nrate(velero_backup_partial_failure_total{schedule!=\"\"}[25m])\n/ rate(velero_backup_attempt_total{schedule!=\"\"}[25m]) > 0.5\nfor: 15m\nlabels:\nseverity: warning"
             }
-          ]
+          }
         },
         "scrapeInterval": {
           "type": "string"
@@ -21780,84 +21760,64 @@
           "type": "string"
         },
         "service": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {}
-              }
+          "additionalProperties": {},
+          "description": "service metdata if metrics are enabled",
+          "properties": {
+            "annotations": {},
+            "externalTrafficPolicy": {
+              "description": "External/Internal traffic policy setting (Cluster, Local)\nhttps://kubernetes.io/docs/reference/networking/virtual-ips/#traffic-policies"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "externalTrafficPolicy": {
-                  "description": "External/Internal traffic policy setting (Cluster, Local)\nhttps://kubernetes.io/docs/reference/networking/virtual-ips/#traffic-policies"
-                },
-                "internalTrafficPolicy": {},
-                "ipFamilies": {
-                  "description": "a list of IP families for the metrics Service that should be supported, in the order in which they should be applied to ClusterIP. Can be \"IPv4\" and/or \"IPv6\"."
-                },
-                "ipFamilyPolicy": {
-                  "description": "the IP family policy for the metrics Service to be able to configure dual-stack; see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)."
-                },
-                "labels": {},
-                "nodePort": {},
-                "type": {
-                  "anyOf": [
-                    {
-                      "enum": [
-                        "NodePort"
-                      ]
-                    },
-                    {
-                      "type": "string"
-                    }
+            "internalTrafficPolicy": {},
+            "ipFamilies": {
+              "description": "a list of IP families for the metrics Service that should be supported, in the order in which they should be applied to ClusterIP. Can be \"IPv4\" and/or \"IPv6\"."
+            },
+            "ipFamilyPolicy": {
+              "description": "the IP family policy for the metrics Service to be able to configure dual-stack; see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)."
+            },
+            "labels": {},
+            "nodePort": {},
+            "type": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "NodePort"
                   ]
+                },
+                {
+                  "type": "string"
                 }
-              },
-              "type": "object"
+              ]
             }
-          ],
-          "description": "service metdata if metrics are enabled"
+          }
         },
         "serviceMonitor": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "autodetect": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+          "additionalProperties": {},
+          "properties": {
+            "autodetect": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              }
+              ]
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
                 }
-              },
-              "type": "object"
+              ]
             }
-          ]
+          }
         }
       },
       "type": "object"
@@ -22909,27 +22869,17 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {}
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "disabled": {},
-                  "labels": {},
-                  "paused": {},
-                  "schedule": {},
-                  "skipImmediately": {},
-                  "template": {},
-                  "useOwnerReferencesInBackup": {}
-                },
-                "type": "object"
-              }
-            ]
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {},
+              "disabled": {},
+              "labels": {},
+              "paused": {},
+              "schedule": {},
+              "skipImmediately": {},
+              "template": {},
+              "useOwnerReferencesInBackup": {}
+            }
           },
           "type": "object"
         },

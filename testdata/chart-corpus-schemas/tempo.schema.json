@@ -853,14 +853,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "schema161": {
-      "additionalProperties": {},
-      "properties": {
-        "endpoint": {}
-      },
-      "type": "object"
-    },
-    "schema163": {
+    "schema162": {
       "oneOf": [
         {
           "type": [
@@ -876,16 +869,22 @@
         }
       ]
     },
-    "schema164": {
+    "schema163": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema167": {
+    "schema166": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
+    },
+    "schema168": {
+      "additionalProperties": {},
+      "properties": {
+        "endpoint": {}
+      }
     },
     "schema169": {
       "pattern": "^([\\s\\S]*:)?[+-]?[0-9]+$",
@@ -2845,7 +2844,7 @@
                         "$ref": "#/$defs/schema153"
                       },
                       {
-                        "$ref": "#/$defs/schema164"
+                        "$ref": "#/$defs/schema163"
                       }
                     ],
                     "type": "string"
@@ -5515,7 +5514,7 @@
                             "type": "array"
                           },
                           {
-                            "$ref": "#/$defs/schema167"
+                            "$ref": "#/$defs/schema166"
                           },
                           {
                             "type": "null"
@@ -5700,7 +5699,7 @@
                             "type": "array"
                           },
                           {
-                            "$ref": "#/$defs/schema167"
+                            "$ref": "#/$defs/schema166"
                           },
                           {
                             "maximum": 0,
@@ -7778,7 +7777,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema163"
+                    "$ref": "#/$defs/schema162"
                   }
                 },
                 "type": [
@@ -9473,42 +9472,32 @@
           "description": "Don't require client label for connections\nan ingress network policy"
         },
         "egress": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "blockDNSResolution": {
-                  "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace.",
+          "additionalProperties": {},
+          "properties": {
+            "blockDNSResolution": {
+              "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace.",
+              "type": "boolean"
+            },
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
                   "type": "boolean"
                 }
-              }
+              ],
+              "description": "When enabled, an egress network policy will be\ncreated allowing tempo to connect to external data sources from kubernetes cluster."
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "When enabled, an egress network policy will be\ncreated allowing tempo to connect to external data sources from kubernetes cluster."
-                },
-                "ports": {
-                  "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443"
-                },
-                "to": {
-                  "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
-                }
-              },
-              "type": "object"
+            "ports": {
+              "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443"
+            },
+            "to": {
+              "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
             }
-          ]
+          }
         },
         "enabled": {
           "anyOf": [
@@ -9675,7 +9664,7 @@
                             "$ref": "#/$defs/schema153"
                           },
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           }
                         ],
                         "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
@@ -9791,7 +9780,7 @@
               "$ref": "#/$defs/schema153"
             },
             {
-              "$ref": "#/$defs/schema164"
+              "$ref": "#/$defs/schema163"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -10038,7 +10027,7 @@
                         "$ref": "#/$defs/schema153"
                       },
                       {
-                        "$ref": "#/$defs/schema164"
+                        "$ref": "#/$defs/schema163"
                       }
                     ],
                     "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
@@ -10186,7 +10175,7 @@
                             "$ref": "#/$defs/schema153"
                           },
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           }
                         ],
                         "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
@@ -10482,7 +10471,7 @@
                             "$ref": "#/$defs/schema153"
                           },
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -10577,7 +10566,7 @@
                   "$ref": "#/$defs/schema153"
                 },
                 {
-                  "$ref": "#/$defs/schema164"
+                  "$ref": "#/$defs/schema163"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -10624,7 +10613,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema167"
+                        "$ref": "#/$defs/schema166"
                       },
                       {
                         "not": {
@@ -10641,7 +10630,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema167"
+                        "$ref": "#/$defs/schema166"
                       },
                       {
                         "not": {
@@ -10694,7 +10683,7 @@
                             "$ref": "#/$defs/schema153"
                           },
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           }
                         ],
                         "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -10751,7 +10740,7 @@
                             "$ref": "#/$defs/schema153"
                           },
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           }
                         ],
                         "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -10962,28 +10951,18 @@
               "type": "string"
             },
             "storage": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "path": {
-                      "description": "Path for storing metrics blocks. Defaults to /tmp/tempo for backward compatibility, but /var/tempo/metrics is recommended for production with persistent storage"
-                    }
-                  }
+              "additionalProperties": {},
+              "description": "Storage configuration for metrics generator\nThis section configures the storage path and remote write endpoints",
+              "properties": {
+                "path": {
+                  "description": "Path for storing metrics blocks. Defaults to /tmp/tempo for backward compatibility, but /var/tempo/metrics is recommended for production with persistent storage"
                 },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "remote_write": {
-                      "description": "Optional remote write configuration (will use remoteWriteUrl if not specified)\nSupports full Prometheus remote_write config: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write",
-                      "items": {},
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
+                "remote_write": {
+                  "description": "Optional remote write configuration (will use remoteWriteUrl if not specified)\nSupports full Prometheus remote_write config: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#remote_write",
+                  "items": {},
+                  "type": "array"
                 }
-              ],
-              "description": "Storage configuration for metrics generator\nThis section configures the storage path and remote write endpoints"
+              }
             },
             "traces_storage": {
               "additionalProperties": {},
@@ -11052,73 +11031,48 @@
           ]
         },
         "receivers": {
-          "anyOf": [
-            {
+          "additionalProperties": {},
+          "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+          "properties": {
+            "jaeger": {
               "additionalProperties": {},
               "properties": {
-                "jaeger": {
+                "protocols": {
                   "additionalProperties": {},
                   "properties": {
-                    "protocols": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "grpc": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "endpoint": {}
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "thrift_binary": {
-                              "$ref": "#/$defs/schema161"
-                            },
-                            "thrift_compact": {
-                              "$ref": "#/$defs/schema161"
-                            },
-                            "thrift_http": {
-                              "$ref": "#/$defs/schema161"
-                            }
-                          },
-                          "type": "object"
-                        }
-                      ]
+                    "grpc": {
+                      "$ref": "#/$defs/schema168"
+                    },
+                    "thrift_binary": {
+                      "$ref": "#/$defs/schema168"
+                    },
+                    "thrift_compact": {
+                      "$ref": "#/$defs/schema168"
+                    },
+                    "thrift_http": {
+                      "$ref": "#/$defs/schema168"
                     }
                   }
                 }
               }
             },
-            {
+            "otlp": {
               "additionalProperties": {},
               "properties": {
-                "otlp": {
+                "protocols": {
                   "additionalProperties": {},
                   "properties": {
-                    "protocols": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "grpc": {
-                          "$ref": "#/$defs/schema161"
-                        },
-                        "http": {
-                          "$ref": "#/$defs/schema161"
-                        }
-                      },
-                      "type": "object"
+                    "grpc": {
+                      "$ref": "#/$defs/schema168"
+                    },
+                    "http": {
+                      "$ref": "#/$defs/schema168"
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             }
-          ],
-          "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver"
+          }
         },
         "registry": {},
         "reportingEnabled": {
@@ -11421,7 +11375,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema167"
+                                "$ref": "#/$defs/schema166"
                               },
                               {
                                 "not": {
@@ -11648,7 +11602,7 @@
                                 "$ref": "#/$defs/schema153"
                               },
                               {
-                                "$ref": "#/$defs/schema164"
+                                "$ref": "#/$defs/schema163"
                               }
                             ],
                             "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",

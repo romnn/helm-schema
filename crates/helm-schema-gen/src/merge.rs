@@ -182,6 +182,9 @@ fn is_exact_empty_object_schema(v: &Value) -> bool {
 }
 
 fn try_merge_compatible(a: &Value, b: &Value) -> Option<Value> {
+    if let (None, Some("object")) | (Some("object"), None) = (schema_type(a), schema_type(b)) {
+        return merge_untyped_member_carrier(a, b);
+    }
     let ta = schema_type(a)?;
     let tb = schema_type(b)?;
     if ta != tb {
@@ -194,6 +197,41 @@ fn try_merge_compatible(a: &Value, b: &Value) -> Option<Value> {
         "array" => merge_array_schemas(a, b),
         _ => merge_scalar_like_schemas(a, b),
     }
+}
+
+/// Merge two member carriers for the same path when one of them declines to
+/// type the host itself (`{properties: …}` with no `type`, which is what a
+/// host whose object-ness is only claimed under a guard leaves behind).
+///
+/// They describe the SAME value, so their members conjoin; unioning them
+/// instead lets a document satisfy one carrier and ignore every member the
+/// other one types — one guarded leaf under a declared mapping would then
+/// drop the declared typing of all its siblings. The merged carrier keeps
+/// the WEAKER domain by staying untyped: re-stamping `type: object` would
+/// reinstate exactly the unconditional claim the untyped side dropped.
+fn merge_untyped_member_carrier(a: &Value, b: &Value) -> Option<Value> {
+    fn as_object_carrier(value: &Value) -> Option<Value> {
+        let object = value.as_object()?;
+        if !object.keys().all(|key| {
+            matches!(
+                key.as_str(),
+                "type" | "properties" | "additionalProperties" | "patternProperties" | "required"
+            )
+        }) {
+            return None;
+        }
+        if !object.contains_key("properties") && !object.contains_key("additionalProperties") {
+            return None;
+        }
+        let mut object = object.clone();
+        object.insert("type".to_string(), Value::String("object".to_string()));
+        Some(Value::Object(object))
+    }
+
+    let merged = merge_object_schemas(&as_object_carrier(a)?, &as_object_carrier(b)?)?;
+    let mut merged = merged.as_object()?.clone();
+    merged.remove("type");
+    Some(Value::Object(merged))
 }
 
 fn merge_array_schemas(a: &Value, b: &Value) -> Option<Value> {

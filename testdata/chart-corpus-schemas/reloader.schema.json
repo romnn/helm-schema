@@ -12436,108 +12436,88 @@
           "description": "Comma separated list of k8s label selectors for configmap/secret selection"
         },
         "service": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "labels": {},
-                "port": {}
-              },
-              "type": "object"
-            }
-          ]
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "labels": {},
+            "port": {}
+          }
         },
         "serviceAccount": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "automountServiceAccountToken": {},
-                "create": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "Specifies whether a ServiceAccount should be created"
-                },
-                "labels": {},
-                "name": {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/$defs/schema131"
-                        },
-                        {
-                          "$ref": "#/$defs/schema134"
-                        },
-                        {
-                          "$ref": "#/$defs/schema136"
-                        },
-                        {
-                          "not": {
-                            "pattern": "[ \\t]#"
-                          }
-                        },
-                        {
-                          "not": {
-                            "pattern": "[\\r\\n]"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema102"
-                        },
-                        {
-                          "$ref": "#/$defs/schema57"
-                        },
-                        {
-                          "$ref": "#/$defs/schema117"
-                        },
-                        {
-                          "$ref": "#/$defs/schema125"
-                        }
-                      ],
-                      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                      "type": "string"
-                    },
-                    {
-                      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                      "type": "null"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-                }
-              },
-              "type": "object"
-            }
-          ],
+          "additionalProperties": {},
           "description": "Service account config for the agent pods",
+          "properties": {
+            "annotations": {},
+            "automountServiceAccountToken": {},
+            "create": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "description": "Specifies whether a ServiceAccount should be created"
+            },
+            "labels": {},
+            "name": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/schema131"
+                    },
+                    {
+                      "$ref": "#/$defs/schema134"
+                    },
+                    {
+                      "$ref": "#/$defs/schema136"
+                    },
+                    {
+                      "not": {
+                        "pattern": "[ \\t]#"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "[\\r\\n]"
+                      }
+                    },
+                    {
+                      "$ref": "#/$defs/schema102"
+                    },
+                    {
+                      "$ref": "#/$defs/schema57"
+                    },
+                    {
+                      "$ref": "#/$defs/schema117"
+                    },
+                    {
+                      "$ref": "#/$defs/schema125"
+                    }
+                  ],
+                  "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                  "type": "string"
+                },
+                {
+                  "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                  "type": "null"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+            }
+          },
           "type": "object"
         },
         "serviceMonitor": {

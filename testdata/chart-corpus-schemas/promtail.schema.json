@@ -2967,23 +2967,6 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema193": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          ]
-        }
-      }
-    },
     "schema2": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
@@ -3428,6 +3411,18 @@
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
+    "schema246": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
+    },
     "schema247": {
       "additionalProperties": {},
       "properties": {
@@ -3480,27 +3475,21 @@
       },
       "type": "object"
     },
-    "schema261": {
-      "additionalProperties": {},
-      "properties": {
-        "clusterIP": {}
-      }
-    },
-    "schema266": {
+    "schema265": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema267": {
+    "schema266": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema268": {
+    "schema267": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema269": {
+    "schema268": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -3512,12 +3501,12 @@
         "null"
       ]
     },
-    "schema271": {
+    "schema270": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema272": {
+    "schema271": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -6872,32 +6861,27 @@
                           }
                         },
                         "ingress": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/$defs/schema193"
+                          "additionalProperties": {},
+                          "properties": {
+                            "hosts": {
+                              "$ref": "#/$defs/schema246"
                             },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "path": {
-                                  "anyOf": [
-                                    {
-                                      "not": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
+                            "path": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
                                 },
-                                "tls": {
-                                  "$ref": "#/$defs/schema109"
+                                {
+                                  "type": "string"
                                 }
-                              },
-                              "type": "object"
+                              ]
+                            },
+                            "tls": {
+                              "$ref": "#/$defs/schema109"
                             }
-                          ]
+                          }
                         },
                         "labels": {
                           "anyOf": [
@@ -6936,33 +6920,26 @@
                           "$ref": "#/$defs/schema37"
                         },
                         "service": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/$defs/schema261"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "externalIPs": {},
-                                "externalTrafficPolicy": {},
-                                "loadBalancerIP": {},
-                                "loadBalancerSourceRanges": {},
-                                "type": {
-                                  "anyOf": [
-                                    {
-                                      "not": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
+                          "additionalProperties": {},
+                          "properties": {
+                            "clusterIP": {},
+                            "externalIPs": {},
+                            "externalTrafficPolicy": {},
+                            "loadBalancerIP": {},
+                            "loadBalancerSourceRanges": {},
+                            "type": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "string"
                                 }
-                              },
-                              "type": "object"
+                              ]
                             }
-                          ]
+                          }
                         }
                       },
                       "required": [
@@ -6997,32 +6974,27 @@
                           }
                         },
                         "ingress": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/$defs/schema193"
+                          "additionalProperties": {},
+                          "properties": {
+                            "hosts": {
+                              "$ref": "#/$defs/schema246"
                             },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "path": {
-                                  "anyOf": [
-                                    {
-                                      "not": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
+                            "path": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
                                 },
-                                "tls": {
-                                  "$ref": "#/$defs/schema109"
+                                {
+                                  "type": "string"
                                 }
-                              },
-                              "type": "object"
+                              ]
+                            },
+                            "tls": {
+                              "$ref": "#/$defs/schema109"
                             }
-                          ]
+                          }
                         },
                         "labels": {
                           "anyOf": [
@@ -7061,33 +7033,26 @@
                           "$ref": "#/$defs/schema37"
                         },
                         "service": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/$defs/schema261"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "properties": {
-                                "externalIPs": {},
-                                "externalTrafficPolicy": {},
-                                "loadBalancerIP": {},
-                                "loadBalancerSourceRanges": {},
-                                "type": {
-                                  "anyOf": [
-                                    {
-                                      "not": {
-                                        "$ref": "#/$defs/helm-truthy"
-                                      }
-                                    },
-                                    {
-                                      "type": "string"
-                                    }
-                                  ]
+                          "additionalProperties": {},
+                          "properties": {
+                            "clusterIP": {},
+                            "externalIPs": {},
+                            "externalTrafficPolicy": {},
+                            "loadBalancerIP": {},
+                            "loadBalancerSourceRanges": {},
+                            "type": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "string"
                                 }
-                              },
-                              "type": "object"
+                              ]
                             }
-                          ]
+                          }
                         }
                       },
                       "required": [
@@ -7597,13 +7562,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema266"
+                        "$ref": "#/$defs/schema265"
                       },
                       {
-                        "$ref": "#/$defs/schema269"
+                        "$ref": "#/$defs/schema268"
                       },
                       {
-                        "$ref": "#/$defs/schema271"
+                        "$ref": "#/$defs/schema270"
                       },
                       {
                         "not": {
@@ -7611,7 +7576,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema271"
                       },
                       {
                         "$ref": "#/$defs/schema209"
@@ -7696,13 +7661,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema266"
+                            "$ref": "#/$defs/schema265"
                           },
                           {
-                            "$ref": "#/$defs/schema269"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema271"
+                            "$ref": "#/$defs/schema270"
                           },
                           {
                             "not": {
@@ -7710,7 +7675,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema271"
                           },
                           {
                             "$ref": "#/$defs/schema209"
@@ -10616,7 +10581,7 @@
           "extraPorts": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema267"
+                "$ref": "#/$defs/schema266"
               },
               {
                 "type": "array"
@@ -10675,32 +10640,27 @@
                   },
                   "containerPort": {},
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema193"
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "$ref": "#/$defs/schema246"
                       },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "path": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                      "path": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
-                          "tls": {
-                            "$ref": "#/$defs/schema109"
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
+                      },
+                      "tls": {
+                        "$ref": "#/$defs/schema109"
                       }
-                    ]
+                    }
                   },
                   "labels": {
                     "anyOf": [
@@ -10739,33 +10699,26 @@
                     "$ref": "#/$defs/schema37"
                   },
                   "service": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema261"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "externalIPs": {},
-                          "externalTrafficPolicy": {},
-                          "loadBalancerIP": {},
-                          "loadBalancerSourceRanges": {},
-                          "type": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                    "additionalProperties": {},
+                    "properties": {
+                      "clusterIP": {},
+                      "externalIPs": {},
+                      "externalTrafficPolicy": {},
+                      "loadBalancerIP": {},
+                      "loadBalancerSourceRanges": {},
+                      "type": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
                       }
-                    ]
+                    }
                   }
                 },
                 "type": "object"
@@ -10809,32 +10762,27 @@
                   },
                   "containerPort": {},
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema193"
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "$ref": "#/$defs/schema246"
                       },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "path": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                      "path": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
-                          "tls": {
-                            "$ref": "#/$defs/schema109"
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
+                      },
+                      "tls": {
+                        "$ref": "#/$defs/schema109"
                       }
-                    ]
+                    }
                   },
                   "labels": {
                     "anyOf": [
@@ -10873,33 +10821,26 @@
                     "$ref": "#/$defs/schema37"
                   },
                   "service": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema261"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "externalIPs": {},
-                          "externalTrafficPolicy": {},
-                          "loadBalancerIP": {},
-                          "loadBalancerSourceRanges": {},
-                          "type": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                    "additionalProperties": {},
+                    "properties": {
+                      "clusterIP": {},
+                      "externalIPs": {},
+                      "externalTrafficPolicy": {},
+                      "loadBalancerIP": {},
+                      "loadBalancerSourceRanges": {},
+                      "type": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
                       }
-                    ]
+                    }
                   }
                 },
                 "type": "object"
@@ -10944,32 +10885,27 @@
                   },
                   "containerPort": {},
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema193"
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "$ref": "#/$defs/schema246"
                       },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "path": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                      "path": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
-                          "tls": {
-                            "$ref": "#/$defs/schema109"
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
+                      },
+                      "tls": {
+                        "$ref": "#/$defs/schema109"
                       }
-                    ]
+                    }
                   },
                   "labels": {
                     "anyOf": [
@@ -11008,33 +10944,26 @@
                     "$ref": "#/$defs/schema37"
                   },
                   "service": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema261"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "externalIPs": {},
-                          "externalTrafficPolicy": {},
-                          "loadBalancerIP": {},
-                          "loadBalancerSourceRanges": {},
-                          "type": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                    "additionalProperties": {},
+                    "properties": {
+                      "clusterIP": {},
+                      "externalIPs": {},
+                      "externalTrafficPolicy": {},
+                      "loadBalancerIP": {},
+                      "loadBalancerSourceRanges": {},
+                      "type": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
                       }
-                    ]
+                    }
                   }
                 },
                 "type": "object"
@@ -11062,32 +10991,27 @@
                   },
                   "containerPort": {},
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema193"
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "$ref": "#/$defs/schema246"
                       },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "path": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                      "path": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           },
-                          "tls": {
-                            "$ref": "#/$defs/schema109"
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
+                      },
+                      "tls": {
+                        "$ref": "#/$defs/schema109"
                       }
-                    ]
+                    }
                   },
                   "labels": {
                     "anyOf": [
@@ -11126,33 +11050,26 @@
                     "$ref": "#/$defs/schema37"
                   },
                   "service": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema261"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "externalIPs": {},
-                          "externalTrafficPolicy": {},
-                          "loadBalancerIP": {},
-                          "loadBalancerSourceRanges": {},
-                          "type": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
+                    "additionalProperties": {},
+                    "properties": {
+                      "clusterIP": {},
+                      "externalIPs": {},
+                      "externalTrafficPolicy": {},
+                      "loadBalancerIP": {},
+                      "loadBalancerSourceRanges": {},
+                      "type": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
                           }
-                        },
-                        "type": "object"
+                        ]
                       }
-                    ]
+                    }
                   }
                 },
                 "type": "object"
@@ -13726,13 +13643,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema266"
+                    "$ref": "#/$defs/schema265"
                   },
                   {
-                    "$ref": "#/$defs/schema269"
+                    "$ref": "#/$defs/schema268"
                   },
                   {
-                    "$ref": "#/$defs/schema271"
+                    "$ref": "#/$defs/schema270"
                   },
                   {
                     "not": {
@@ -13740,7 +13657,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema272"
+                    "$ref": "#/$defs/schema271"
                   },
                   {
                     "$ref": "#/$defs/schema209"
@@ -13803,13 +13720,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema266"
+                        "$ref": "#/$defs/schema265"
                       },
                       {
-                        "$ref": "#/$defs/schema269"
+                        "$ref": "#/$defs/schema268"
                       },
                       {
-                        "$ref": "#/$defs/schema271"
+                        "$ref": "#/$defs/schema270"
                       },
                       {
                         "not": {
@@ -13817,7 +13734,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema271"
                       },
                       {
                         "$ref": "#/$defs/schema209"
@@ -13860,13 +13777,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema266"
+                            "$ref": "#/$defs/schema265"
                           },
                           {
-                            "$ref": "#/$defs/schema269"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema271"
+                            "$ref": "#/$defs/schema270"
                           },
                           {
                             "not": {
@@ -13874,10 +13791,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema271"
                           },
                           {
-                            "$ref": "#/$defs/schema268"
+                            "$ref": "#/$defs/schema267"
                           },
                           {
                             "$ref": "#/$defs/schema209"
@@ -17717,7 +17634,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "cri": {
-                    "$ref": "#/$defs/schema267"
+                    "$ref": "#/$defs/schema266"
                   }
                 },
                 "type": "object"
@@ -18157,7 +18074,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema267"
+          "$ref": "#/$defs/schema266"
         }
       ],
       "description": "Extra K8s manifests to deploy\n- apiVersion: \"kubernetes-client.io/v1\"\nkind: ExternalSecret\nmetadata:\nname: promtail-secrets\nspec:\nbackendType: gcpSecretsManager\ndata:\n- key: promtail-oauth2-creds\nname: client_secret"
@@ -18214,13 +18131,13 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/$defs/schema266"
+                                  "$ref": "#/$defs/schema265"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema269"
+                                  "$ref": "#/$defs/schema268"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema271"
+                                  "$ref": "#/$defs/schema270"
                                 },
                                 {
                                   "not": {
@@ -18228,7 +18145,7 @@
                                   }
                                 },
                                 {
-                                  "$ref": "#/$defs/schema272"
+                                  "$ref": "#/$defs/schema271"
                                 },
                                 {
                                   "$ref": "#/$defs/schema209"
@@ -18294,13 +18211,13 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/$defs/schema266"
+                                  "$ref": "#/$defs/schema265"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema269"
+                                  "$ref": "#/$defs/schema268"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema271"
+                                  "$ref": "#/$defs/schema270"
                                 },
                                 {
                                   "not": {
@@ -18308,7 +18225,7 @@
                                   }
                                 },
                                 {
-                                  "$ref": "#/$defs/schema272"
+                                  "$ref": "#/$defs/schema271"
                                 },
                                 {
                                   "$ref": "#/$defs/schema209"
@@ -18347,13 +18264,13 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/$defs/schema266"
+                                  "$ref": "#/$defs/schema265"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema269"
+                                  "$ref": "#/$defs/schema268"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema271"
+                                  "$ref": "#/$defs/schema270"
                                 },
                                 {
                                   "not": {
@@ -18361,7 +18278,7 @@
                                   }
                                 },
                                 {
-                                  "$ref": "#/$defs/schema272"
+                                  "$ref": "#/$defs/schema271"
                                 },
                                 {
                                   "$ref": "#/$defs/schema209"
@@ -18427,13 +18344,13 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/$defs/schema266"
+                                  "$ref": "#/$defs/schema265"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema269"
+                                  "$ref": "#/$defs/schema268"
                                 },
                                 {
-                                  "$ref": "#/$defs/schema271"
+                                  "$ref": "#/$defs/schema270"
                                 },
                                 {
                                   "not": {
@@ -18441,7 +18358,7 @@
                                   }
                                 },
                                 {
-                                  "$ref": "#/$defs/schema272"
+                                  "$ref": "#/$defs/schema271"
                                 },
                                 {
                                   "$ref": "#/$defs/schema209"
@@ -18812,73 +18729,53 @@
           "description": "Specifies whether Network Policies should be created"
         },
         "k8sApi": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "cidrs": {
-                  "description": "Specifies specific network CIDRs you want to limit access to"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "cidrs": {
+              "description": "Specifies specific network CIDRs you want to limit access to"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "port": {
-                  "description": "Specify the k8s API endpoint port"
-                }
-              },
-              "type": "object"
+            "port": {
+              "description": "Specify the k8s API endpoint port"
             }
-          ]
+          }
         },
         "metrics": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "cidrs": {
-                  "anyOf": [
-                    {
-                      "items": {},
-                      "type": "array"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    }
-                  ],
-                  "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes."
+          "additionalProperties": {},
+          "properties": {
+            "cidrs": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 }
-              }
+              ],
+              "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes."
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "namespaceSelector": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": false,
-                      "maxProperties": 0,
-                      "properties": {},
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/$defs/schema267"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    }
-                  ],
-                  "description": "Specifies the namespaces which are allowed to access the metrics port"
+            "namespaceSelector": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "maxProperties": 0,
+                  "properties": {},
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/schema266"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 }
-              },
-              "type": "object"
+              ],
+              "description": "Specifies the namespaces which are allowed to access the metrics port"
             }
-          ]
+          }
         }
       },
       "type": "object"
@@ -19114,13 +19011,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema266"
+                            "$ref": "#/$defs/schema265"
                           },
                           {
-                            "$ref": "#/$defs/schema269"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema271"
+                            "$ref": "#/$defs/schema270"
                           },
                           {
                             "not": {
@@ -19128,7 +19025,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema271"
                           },
                           {
                             "$ref": "#/$defs/schema209"
@@ -19249,13 +19146,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema266"
+                            "$ref": "#/$defs/schema265"
                           },
                           {
-                            "$ref": "#/$defs/schema269"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema271"
+                            "$ref": "#/$defs/schema270"
                           },
                           {
                             "not": {
@@ -19263,10 +19160,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema271"
                           },
                           {
-                            "$ref": "#/$defs/schema268"
+                            "$ref": "#/$defs/schema267"
                           },
                           {
                             "$ref": "#/$defs/schema209"
@@ -19416,13 +19313,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema266"
+                            "$ref": "#/$defs/schema265"
                           },
                           {
-                            "$ref": "#/$defs/schema269"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema271"
+                            "$ref": "#/$defs/schema270"
                           },
                           {
                             "not": {
@@ -19430,10 +19327,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema271"
                           },
                           {
-                            "$ref": "#/$defs/schema268"
+                            "$ref": "#/$defs/schema267"
                           },
                           {
                             "$ref": "#/$defs/schema209"
@@ -19475,13 +19372,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema266"
+                            "$ref": "#/$defs/schema265"
                           },
                           {
-                            "$ref": "#/$defs/schema269"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema271"
+                            "$ref": "#/$defs/schema270"
                           },
                           {
                             "not": {
@@ -19489,10 +19386,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema271"
                           },
                           {
-                            "$ref": "#/$defs/schema268"
+                            "$ref": "#/$defs/schema267"
                           },
                           {
                             "$ref": "#/$defs/schema209"
@@ -19880,37 +19777,27 @@
               "description": "Namespace selector for ServiceMonitor resources"
             },
             "prometheusRule": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "additionalLabels": {}
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
+              "additionalProperties": {},
+              "description": "Prometheus rules will be deployed for alerting purposes",
+              "properties": {
+                "additionalLabels": {},
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
                     },
-                    "namespace": {},
-                    "rules": {
-                      "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}"
+                    {
+                      "type": "boolean"
                     }
-                  },
-                  "type": "object"
+                  ]
+                },
+                "namespace": {},
+                "rules": {
+                  "description": "namespace:\n- alert: PromtailRequestErrors\nexpr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~\"5..|failed\"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10\nfor: 5m\nlabels:\nseverity: critical\nannotations:\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }} errors.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}\nsummary: Promtail request errors (instance {{ $labels.instance }})\n- alert: PromtailRequestLatency\nexpr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1\nfor: 5m\nlabels:\nseverity: critical\nannotations:\nsummary: Promtail request latency (instance {{ $labels.instance }})\ndescription: |\nThe {{ $labels.job }} {{ $labels.route }} is experiencing\n{{ printf \\\"%.2f\\\" $value }}s 99th percentile latency.\nVALUE = {{ $value }}\nLABELS = {{ $labels }}"
                 }
-              ],
-              "description": "Prometheus rules will be deployed for alerting purposes"
+              }
             },
             "relabelings": {
               "description": "ServiceMonitor relabel configs to apply to samples before scraping\nhttps://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#relabelconfig\n(defines `relabel_configs`)"
@@ -19943,88 +19830,76 @@
       "additionalProperties": {},
       "properties": {
         "configReloader": {
-          "anyOf": [
-            {
+          "additionalProperties": {},
+          "properties": {
+            "config": {
               "additionalProperties": {},
+              "description": "limits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
               "properties": {
-                "config": {
-                  "additionalProperties": {},
-                  "description": "limits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
-                  "properties": {
-                    "serverPort": {
-                      "description": "The port of the config-reloader server"
-                    }
-                  }
+                "serverPort": {
+                  "description": "The port of the config-reloader server"
                 }
               }
             },
-            {
+            "containerSecurityContext": {
+              "description": "The security context for containers for sidecar config-reloader"
+            },
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "extraArgs": {
+              "description": "Extra args for the config-reloader container."
+            },
+            "extraEnv": {
+              "description": "Extra environment variables for sidecar config-reloader"
+            },
+            "extraEnvFrom": {
+              "description": "Extra environment variables from secrets or configmaps for sidecar config-reloader"
+            },
+            "image": {
               "additionalProperties": {},
               "properties": {
-                "containerSecurityContext": {
-                  "description": "The security context for containers for sidecar config-reloader"
+                "pullPolicy": {
+                  "description": "Docker image pull policy for sidecar config-reloader"
                 },
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
+                "registry": {
+                  "description": "The Docker registry for sidecar config-reloader"
                 },
-                "extraArgs": {
-                  "description": "Extra args for the config-reloader container."
+                "repository": {
+                  "description": "Docker image repository for sidecar config-reloader"
                 },
-                "extraEnv": {
-                  "description": "Extra environment variables for sidecar config-reloader"
-                },
-                "extraEnvFrom": {
-                  "description": "Extra environment variables from secrets or configmaps for sidecar config-reloader"
-                },
-                "image": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "pullPolicy": {
-                      "description": "Docker image pull policy for sidecar config-reloader"
-                    },
-                    "registry": {
-                      "description": "The Docker registry for sidecar config-reloader"
-                    },
-                    "repository": {
-                      "description": "Docker image repository for sidecar config-reloader"
-                    },
-                    "tag": {
-                      "description": "Docker image tag for sidecar config-reloader"
-                    }
-                  },
-                  "type": "object"
-                },
-                "livenessProbe": {
-                  "description": "Liveness probe for sidecar config-reloader"
-                },
-                "readinessProbe": {
-                  "description": "Readiness probe for sidecar config-reloader"
-                },
-                "resources": {
-                  "description": "Resource requests and limits for sidecar config-reloader"
-                },
-                "serviceMonitor": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                "tag": {
+                  "description": "Docker image tag for sidecar config-reloader"
                 }
-              },
-              "type": "object"
+              }
+            },
+            "livenessProbe": {
+              "description": "Liveness probe for sidecar config-reloader"
+            },
+            "readinessProbe": {
+              "description": "Readiness probe for sidecar config-reloader"
+            },
+            "resources": {
+              "description": "Resource requests and limits for sidecar config-reloader"
+            },
+            "serviceMonitor": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
             }
-          ]
+          }
         }
       },
       "type": "object"
