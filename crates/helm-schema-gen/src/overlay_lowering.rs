@@ -1141,8 +1141,16 @@ fn implication_guards_supported(
 ) -> bool {
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
+            // The values ROOT owns no resolved path entry, but its
+            // truthiness encodes at the document node itself. Rejecting it
+            // here would drop the WHOLE implication — every sibling arm
+            // with it — because an unsupported guard is fatal to the
+            // any-of, which is how a root-scoped `with` cost nats the
+            // member-host typing of the five hosts it navigates.
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
-                path == target_value_path || resolved_by_path.contains_key(path.as_str())
+                path.is_empty()
+                    || path == target_value_path
+                    || resolved_by_path.contains_key(path.as_str())
             }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }

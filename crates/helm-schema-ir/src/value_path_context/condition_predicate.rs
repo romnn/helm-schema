@@ -1558,18 +1558,23 @@ impl ValuePathContext<'_> {
         if let Some(predicate) = self.root_truthy_predicates.get(field) {
             return Some(predicate.clone());
         }
-        if self.root_bindings.contains_key(field)
-            || matches!(
-                field.as_str(),
-                "Capabilities"
-                    | "Chart"
-                    | "Files"
-                    | "Release"
-                    | "Subcharts"
-                    | "Template"
-                    | "Values"
-            )
-        {
+        if self.root_bindings.contains_key(field) {
+            return None;
+        }
+        // `.Values` IS the values document, so its truthiness is the
+        // document's own: a mapping is Helm-falsy only when empty. Naming
+        // the root path says that exactly, which keeps a root-scoped
+        // `with` faithful — nats wraps the whole body of
+        // `nats.defaultValues` in `{{- with .Values }}`, and an
+        // approximate marker there makes every claim its reads carry
+        // abstain.
+        if field == "Values" {
+            return Some(Predicate::truthy_path(""));
+        }
+        if matches!(
+            field.as_str(),
+            "Capabilities" | "Chart" | "Files" | "Release" | "Subcharts" | "Template"
+        ) {
             return None;
         }
 

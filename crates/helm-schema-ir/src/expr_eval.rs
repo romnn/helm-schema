@@ -56,21 +56,12 @@ pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
 /// The base of a member access: the value's OWN values identity. Influence
 /// through structures (a `dict "value" .Values.x` context) is not identity —
 /// accessing the dict's keys says nothing about `x`'s shape.
+///
+/// The values ROOT is such an identity too: under `{{- with .Values }}`, a
+/// `.member.field` read navigates the document exactly as
+/// `.Values.member.field` does, and nats' `nats.defaultValues` wraps its
+/// whole body in one.
 fn direct_values_identity(value: &AbstractValue) -> Option<String> {
-    match value {
-        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)
-            if !path.is_empty() =>
-        {
-            Some(path.clone())
-        }
-        AbstractValue::OutputPath(path, meta) if meta.json_decoded && !path.is_empty() => {
-            Some(path.clone())
-        }
-        _ => None,
-    }
-}
-
-fn direct_values_identity_including_root(value: &AbstractValue) -> Option<String> {
     match value {
         AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
             Some(path.clone())
@@ -309,11 +300,7 @@ pub(crate) fn eval_expr_with_helper_calls(
             }
             let base = eval_expr_with_helper_calls(operand, env, resolver);
             let grouped_receiver = matches!(operand.as_ref(), TemplateExpr::Parenthesized(_))
-                .then(|| {
-                    base.value
-                        .as_ref()
-                        .and_then(direct_values_identity_including_root)
-                })
+                .then(|| base.value.as_ref().and_then(direct_values_identity))
                 .flatten();
             let value = base
                 .value

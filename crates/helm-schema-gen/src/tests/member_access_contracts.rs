@@ -1178,3 +1178,59 @@ fn deleted_dependency_roots_refill_from_their_subchart() {
         );
     }
 }
+
+/// A root-scoped `{{- with .Values }}` rebinds the dot to the values
+/// DOCUMENT, so a `.member.field` read inside navigates exactly as
+/// `.Values.member.field` does and aborts the same way on a deleted
+/// member. nats wraps the whole body of `nats.defaultValues` in one, and
+/// while the root did not count as a navigation base its five hosts stayed
+/// optional against helm's "nil pointer evaluating interface {}.name".
+///
+/// The gate is the document's OWN truthiness rather than `true`: a mapping
+/// is Helm-falsy only when empty, so a document whose every key was
+/// null-deleted never enters the `with` and renders.
+#[test]
+fn root_scoped_with_navigates_the_document_it_rebinds() {
+    let helpers = indoc! {r#"
+        {{- define "chart.defaults" }}
+        {{- with .Values }}
+        {{- $name := .service.name | default "svc" }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let src = indoc! {r#"
+        {{- include "chart.defaults" . }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ .Values.other | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        service:
+          port: 80
+        other: cm
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "service": { "port": 80 }, "other": "cm" }),
+            true,
+            "the coalesced defaults render",
+        ),
+        (
+            serde_json::json!({ "other": "cm" }),
+            false,
+            "a host deleted under the rebound dot aborts the navigation",
+        ),
+        (
+            serde_json::json!({}),
+            true,
+            "an empty document is falsy, so the `with` body never runs",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "root-scoped with ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
