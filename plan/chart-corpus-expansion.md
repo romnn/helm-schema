@@ -11041,3 +11041,255 @@ clean. The ci-values sweep rejects the same 4 of 116 files as the pre-round
 fixtures. `task -t …/luup2/deployment/charts/taskfile.yaml check:local`
 exits 0 over 234 resources. 45 corpus fixtures and 2 gen fixtures
 regenerated.
+
+## Operand conditions and the member-access arm cap (2026-07-28, forty-eighth round)
+
+**Outcome: the analysis fix is correct and measured, and it does not ship.
+It is blocked by a downstream defect it merely reaches, and the round's
+value is the diagnosis of that defect.** The patch and its measurements are
+kept verbatim at
+`<session scratchpad>/r48/round48-operand-condition.patch` plus
+`operand_condition-final.rs`.
+
+### What the chain actually loses
+
+The forty-seventh round taught `eval_short_circuit_args` to answer one
+operand shape exactly — `semverCompare` over a pinned Kubernetes version —
+and the ledger recorded datadog `fips` as wanting "the same treatment
+extended to an `include` equality and a `not (or …)`". Measuring the shapes
+first showed that framing was far too narrow. On the pre-round build, a
+two-operand `and` loses its second operand's capture whenever the FIRST
+operand is anything but a raw values read:
+
+| leading operand | `.Values.fips.enabled` capture |
+| --- | --- |
+| (none — bare read) | recorded |
+| `eq .Values.targetSystem "linux"` | silenced |
+| `or .Values.providers.gke.autopilot .Values.providers.gke.gdc` | silenced |
+| `not (or …)` | silenced |
+| `eq (include "use-fips-images" .Values) "true"` | silenced |
+
+So the gap was never about `semverCompare`, or about `include`: `eq` over a
+plain selector, which the condition decoder has answered forever, silences
+the rest of the chain just as thoroughly.
+
+### The fix, and why it is not a second condition model
+
+`crates/helm-schema-ir/src/expr_call_eval/operand_condition.rs` decodes an
+operand's condition recursively: a direct selector's truthiness, `not`,
+nested `and`/`or`, scalar equality against a direct selector, and the
+existing `semverCompare` case. Everything else abstains, which leaves that
+operand exactly as approximate as before.
+
+The exactness requirement is two-sided and worth restating: the execution
+guard needs the operand's condition NARROW enough to stay inside the states
+the operand runs in, while the chain's value guard needs its NEGATION, so a
+merely-sound approximation in either direction is wrong. That is why the
+subject is restricted to `Field`/`Selector` — `int .Values.x` compares as a
+number while the raw path holds a string, and a local may be bound to a
+derived value that still carries its input's identity.
+
+`ValuePathContext::condition_predicate_expr` remains the one model for this
+question; the evaluator cannot call it because it reads the fragment
+interpreter's borrowed state, and the two structures are already parallel
+projections of that state (`EvalEnv` clones nearly all of it per hole).
+Rather than assert agreement, the round pinned it:
+`operand_condition_agrees_with_the_condition_model` runs eleven shapes
+through both and compares normalized guard forms. It found a real decoder
+defect on the way — `not (not X)` fell through to the path fallback, which
+minted ONE truthiness and negated it once, reading the doubled negation as
+a single one. Fixing that is a three-line arm beside the existing `and`
+one.
+
+### What it closes, and what it does not
+
+traefik `log` rejects — the ledger's own entry for it ("needs an `and`
+operand's `not` decoded exactly", attempted and REVERTED in the
+forty-second round) is exactly this. `requirements.yaml` gates
+`or (.Values.log.otlp.enabled) (.Values.accessLog.otlp.enabled)` behind
+`not .Values.experimental.otlpLogs`, and deleting `log` aborts.
+The 1,848-probe root sweep moves that ONE cell and nothing else.
+
+datadog `fips` does NOT close, and the ledger's attribution for it was
+wrong. Its blocking conjunct is
+`eq (include "use-fips-images" .Values) "true"`, and the CONDITION DECODER
+cannot answer that either: `helper_root_call` requires the callee's context
+argument to be `.` or `$`, and this call passes `.Values`, so the helper's
+`.useFIPSAgent` is never recognized as `.Values.useFIPSAgent`. That is a
+separate, structural gap — a helper invoked with the values root as its dot
+— and it belongs to the helper-dispatch lane, not the guard-chain one.
+
+### The blocker: an arm set that grows past the cap loses the whole host
+
+The full battery reports 167 tightenings against 26 loosenings over 28
+distinct paths. The loosenings fall on three paths, and kyverno
+`reportsController.sanityChecks: null` is a correct relaxation (helm
+renders it). The other two are helm-confirmed FALSE ACCEPTS: airflow
+`config.logging` and bitnami-redis `master.persistence` stop rejecting a
+scalar that `helm template --skip-schema-validation` aborts on (`range`
+over a string at `configmaps/configmap.yaml:56`;
+`.Values.master.persistence.path` at `configmap.yaml:28`). Neither is an
+unsoundness in the decode. Both are the same downstream mechanism seen from
+two sides:
+
+- **bitnami-redis is the cap.** `MEMBER_ACCESS_GUARD_FANOUT` is 8, and
+  `record_member_access_implications` DROPS a host's whole typing
+  implication once its arm set crosses it. Precise operand conditions add
+  arms — the pvc chain's header operand contributes
+  `AllOf([Eq{architecture, "standalone"}, Eq{master.kind, "Deployment"}])`
+  where before it contributed nothing — so `master.persistence` goes from 7
+  arms to 9 and loses the arm that actually rejects the probe, the
+  configmap read's one-conjunct `Not(Truthy{existingConfigmap})`. Across
+  the corpus 438 paths are already over that cap; raising it to 12 would
+  turn 169 of them into conditional targets with emptied bases, which is
+  the risk `absorb_subsumed_guard_sets` documents at length (122 of 138
+  adjudicated flips became rejections of documents helm renders).
+- **airflow is the base classification.** `config.logging` is navigated
+  only under `not .Values.logs.persistence.enabled` in NOTES.txt, so
+  decoding that operand makes the host a conditional target and empties its
+  base — which the forty-third round confirmed is CORRECT for a genuinely
+  guarded-only host. The declared `type: object` it removes had been
+  accidentally covering a claim the analyzer never emits: the configmap
+  ranges `$config`'s MEMBERS (`range $key, $val := $settings` over
+  `deepCopy .Values.config | merge …`), so what should reject the probe is
+  an iterable-members requirement on `config.*`.
+
+Both say the same thing. **Making the analysis more precise makes arm sets
+more complete, and the emission layer is tuned for incomplete ones.** The
+cap, the absorb rule, and the guarded-only base classification each assume
+that a host's arms under-cover the states it aborts in; each becomes wrong
+in a different way as coverage improves. That knot has now surfaced three
+times — the forty-second round's traefik revert, the forty-fifth round's
+nats implication drop, and here — and it has to be untied before any
+further precision in condition decoding can land.
+
+### Measurements (on the reverted-in patch, for the record)
+
+949 unit tests including the two new ones (the gen reproducer verified
+FAILING pre-fix on exactly the row that matters), 497 integration tests
+with 24 corpus charts and the gen corpus moving, `task lint` clean but for
+the pre-existing ast-grep warning, `cargo fmt --all --check` clean. Root
+sweep: 1 of 1,848 cells, traefik `log`, in the right direction. ci-values:
+the same 4 of 116 files rejected. luup2 `check:local`: exit 0 over 234
+resources. Battery: 167 TIGHTEN against 26 LOOSEN over 28 distinct paths;
+of the three loosened paths one renders and two are false accepts, which is
+what stopped the round.
+
+Still 18 of the audit's 70 root deletions open.
+
+
+## Range members and the arm cap (2026-07-29, forty-ninth round — REVIEWED AND REJECTED)
+
+**Outcome: nothing lands. The fix was wrong, the measurement that cleared it
+was misread, and review found the emission design underneath it is a local
+maximum.** Recorded in full because both the counterexamples and the
+architecture direction are reusable.
+
+### The measurement error, stated plainly
+
+The round's battery reported 503 acceptance flips, every one labelled
+TIGHTEN, and that was read as "safe". **A TIGHTEN is a direction, not a
+verdict.** `helm template --skip-schema-validation` renders all three of
+
+```
+config.traces: []
+config.traces.otel_on: []
+config.traces.otel_on: {probe-member: {}}
+```
+
+and the round's schema rejected them ("is not of type 'object'" / "'string'").
+They are FALSE REJECTIONS. The standing gate has always been to adjudicate
+flips against helm; a tightening only escapes that when it is argued as
+declared-shape policy, the way the forty-seventh round argued its 2,575.
+These were never adjudicated at all.
+
+The 0-of-1,848 root sweep did not catch it and could not: the sweep deletes
+top-level keys, so it says nothing about which runtime KINDS a surviving
+key may hold.
+
+### The fix itself was also wrong
+
+`inline_regions.rs` resolved only literal range subjects, so a nested range
+inside a block scalar — whose subject is necessarily the outer range's
+member variable — bound no member dot and claimed nothing. Routing both
+range lanes through one resolver is the right shape, but the resolver
+lowered was the PERMISSIVE one:
+`single_member_identity_range_path_expr` documents itself as excluding
+derived values while implementing "exactly one influence path".
+`AbstractValue::paths()` is the influence set, so
+`$ns := splitList "," .Values.x` exposes exactly one path and passes,
+marking a STRING source as an iterable range subject. `control.rs` already
+distinguishes this permissive form from the strict `identity_variable_path`
+(match on `ValuesPath`/`JsonDecodedPath`/`OutputPath`); the shared accessor
+must be the strict one, or must take the distinction as a parameter.
+
+The focused reproducer passed while all of this was true because it tested
+only mappings against scalars — no arrays, no null — and did not reproduce
+airflow's actual sink, `tpl ($val | toString)`, whose total conversion
+accepts every kind.
+
+### The blocker underneath: base ownership is decided by an emission budget
+
+`record_member_access_implications` drops a host's whole typing implication
+once its arm set passes `MEMBER_ACCESS_GUARD_FANOUT` (8), and
+`base_schema.rs` then keeps or empties that host's base according to whether
+the implication exists. So an exact Boolean simplification, one extra
+decoded arm, or an arbitrary size threshold all change base OWNERSHIP.
+That is a serialized-size budget deciding semantics, and it is why every
+local repair trades one chart for another:
+
+- narrowing instead of dropping fixes bitnami-redis `master.persistence`
+  and regresses datadog `clusterChecksRunner.rbac` (measured);
+- `absorb_subsumed_guard_sets` on the typing lane does the same (measured);
+- raising the cap converts 169 more of the 438 already-capped corpus paths
+  into conditional targets with emptied bases.
+
+One correction to the previous round's diagnosis: later operands ARE
+already scoped by the accumulated execution predicates in
+`eval_short_circuit_args`. Datadog loses the `.dedicated` arm because the
+preceding helper equality lowers to `Approximate`, not because a header
+read bypasses short-circuit scoping.
+
+### The architecture this points to
+
+Review's direction, in landing order:
+
+1. **One truth condition per evaluation.** Expression evaluation should
+   return an exact-or-unknown condition alongside value and effects, and
+   `and`/`or`, branch activation and helper dispatch should all consume that
+   one result. The staged `operand_condition.rs` is a second condition model
+   beside `ValuePathContext`; an eleven-shape agreement test documents drift,
+   it does not prevent it. Delete the parallel model rather than pin it.
+2. **Evaluate literal-dispatch helpers under their real abstract call
+   context.** `include "use-fips-images" .Values` must bind the callee dot
+   to `ValuesPath("")` so `.useFIPSAgent` structurally resolves to
+   `useFIPSAgent`. The staged resolver seam cannot do this — its signature
+   discards the call argument and builds a bare root context — so the
+   datadog `fips` closure attributed to it is not established.
+3. **Keep member-access conditions as the `Predicate` tree** instead of
+   lowering early into `BTreeSet<Vec<ConditionalGuard>>` DNF arms. OR the
+   access predicates, then dedupe/absorb/factor before encoding;
+   `ConditionalGuard` already carries nested `AnyOf`/`AllOf`.
+4. **Make base ownership an explicit semantic output.** A fanout or size
+   budget may weaken an emitted condition; it must never decide whether a
+   resolved base survives. Shared `$defs` bound repeated-condition size
+   without an eight-arm cliff.
+5. **Share one typed range-subject analysis** between the document and
+   inline-region lanes, distinguishing identity from influence, propagating
+   wildcard member contracts to declared members, and preserving
+   `toString`'s total conversion through `tpl`.
+
+Then repair airflow with array/null, `splitList` and real `tpl(toString)`
+controls, re-adjudicate the battery against helm, and pin the exact traefik,
+datadog `fips`, datadog `rbac` and redis expressions before rerunning.
+
+### Artifact status
+
+The staged patches under `<scratchpad>/r49` are NOT landable and should not
+be treated as a starting point: `operand-decode.patch` carries a leaked
+`panic!("scratch")`, and the saved `operand_condition.rs` predates the
+dispatch wiring, so it cannot have produced the datadog `fips` result the
+previous handoff quoted. The `cargo-fc` tooling changes in `Cargo.toml` and
+`taskfile.yaml` are sound and independent of all of this.
+
+Still 18 of the audit's 70 root deletions open; this round moves none.

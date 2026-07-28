@@ -1,7 +1,17 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-28 after the semver guard-chain round
-(forty-seventh), which taught a short-circuit chain's operands to carry
+Last reconciled 2026-07-29 after the forty-ninth round, REVIEWED AND
+REJECTED. Nothing from rounds 48–49 lands. The nested block-scalar range
+fix produced FALSE REJECTIONS (`config.traces: []` and two more render
+under helm and were rejected), which its battery hid because 503 flips
+labelled TIGHTEN were read as safe — **a TIGHTEN is a direction, not a
+verdict, and flips must still be adjudicated against helm.** Review also
+found the emission design underneath is a local maximum: an emission-size
+budget (`MEMBER_ACCESS_GUARD_FANOUT`) decides base OWNERSHIP, so no local
+repair can stop trading one chart for another. The F53 lane is now an
+architecture task, not a patch — see the work log's forty-ninth round for
+the five-step direction. The semver guard-chain round
+(forty-seventh) taught a short-circuit chain's operands to carry
 their own decoded condition instead of an approximate marker, and repaired
 the member-carrier union that decode exposed. The call-dict navigation
 round (forty-sixth) extended the navigation base one level over: a helper's
@@ -2132,21 +2142,77 @@ strict Kubernetes schema while their valid controls passed.
   "can't evaluate field paths in type string"), and 4 nil-pointer sites the
   navigated-host lane still cannot reach: istiod's root rewrite and signoz'
   `global` have their own entries, grafana `route` needs `tpl`-program
-  evaluation, and datadog `fips` reads `.Values.fips.enabled` directly as
-  the third conjunct of an `and` whose earlier operands do not decode — the
-  capture exists and the guard chain is what blocks it, so it wants the
-  same operand-predicate treatment the forty-seventh round gave
-  `semverCompare`, extended to an `include` equality and a `not (or …)`.
-  traefik `log` needs an `and` operand's `not` decoded
-  exactly (attempted and REVERTED in the forty-second round — the exact
-  decode turned previously-approximate captures into guarded member-host
-  arms, which emptied declared-mapping bases across airflow, argo-cd, cilium
-  and datadog; the forty-third round confirmed that emptying is CORRECT for a
-  genuinely guarded-only host, so this needs its own adjudication of the
-  111 airflow flips rather than a fix to base classification) — and the
-  forty-seventh round's carrier repair changes that lane's arithmetic,
-  since part of what those flips measured was the union fallback dropping
-  sibling typings rather than the base classification itself.
+  evaluation, and datadog `fips` reads `.Values.fips.enabled` as the third
+  conjunct of an `and` whose earlier operands do not decode. traefik `log`
+  is the same shape one operand simpler.
+
+  **Operand conditions decode; the emission layer cannot absorb them yet
+  (forty-eighth round, MEASURED AND REVERTED — see the work log for the
+  saved patch).** The guard chain is decodable and the decode is exact:
+  `operand_condition` answers a direct selector's truthiness, `not`, nested
+  `and`/`or`, and scalar equality against a direct selector, pinned against
+  `ValuePathContext::condition_predicate_expr` by an agreement test over
+  eleven shapes (which also found that the model reads `not (not X)` as
+  `not X`). That closes traefik `log`, and the 1,848-probe root sweep moves
+  that ONE cell.
+
+  Two corrections to what this entry used to say. First, the gap is not
+  about `semverCompare` or `include`: a leading `eq .Values.x "lit"` — a
+  shape the condition decoder has always answered — silences the rest of
+  the chain just as thoroughly, so this was never a narrow extension.
+  Second, datadog `fips` is NOT a guard-chain problem at all. Its blocker
+  is `eq (include "use-fips-images" .Values) "true"`, and the condition
+  decoder cannot answer that either, because `helper_root_call` requires
+  the callee's context argument to be `.` or `$` and this call passes
+  `.Values` — the helper's `.useFIPSAgent` is therefore never recognized as
+  `.Values.useFIPSAgent`. A helper invoked with the values root as its dot
+  is a helper-dispatch gap; move `fips` to that lane.
+
+  The decode also reached two hosts that stopped rejecting a scalar helm
+  aborts on, and the forty-ninth round's attempt to clear them was REVIEWED
+  AND REJECTED. Two corrections to what this entry used to claim:
+
+  - airflow `config.logging` is a genuinely missing claim (the configmap
+    RANGES `.Values.config`'s sections inside a block scalar, and the
+    inline-region lane resolves only literal range subjects), but the fix
+    attempted for it produced FALSE REJECTIONS — helm renders
+    `config.traces: []`, `config.traces.otel_on: []` and
+    `config.traces.otel_on: {probe-member: {}}`, all of which the round's
+    schema rejected. The shared resolver it introduced also lowered the
+    PERMISSIVE identity form (`AbstractValue::paths()`, an INFLUENCE set),
+    so `$ns := splitList "," .Values.x` would mark a string source
+    iterable. Any retry needs array/null and `splitList` controls plus
+    airflow's real `tpl ($val | toString)` sink, whose total conversion
+    accepts every kind.
+  - The `.dedicated` arm is NOT missing because header reads bypass
+    short-circuit scoping — `eval_short_circuit_args` already scopes later
+    operands by the accumulated execution predicates. It is missing because
+    the preceding `eq (include "should-enable-cluster-check-workers" .)
+    "true"` lowers to `Approximate`.
+
+  **The blocker is that an emission budget decides base ownership.**
+  `record_member_access_implications` drops a host's whole typing
+  implication past `MEMBER_ACCESS_GUARD_FANOUT` (8), and `base_schema.rs`
+  keeps or empties that host's base according to whether the implication
+  exists. So exact Boolean simplification, one extra decoded arm, or an
+  arbitrary threshold all change SEMANTICS. Every local repair was measured
+  and every one trades one chart for another: narrowing instead of dropping
+  fixes bitnami-redis `master.persistence` and regresses datadog
+  `clusterChecksRunner.rbac`; absorption on the typing lane does the same;
+  raising the cap converts 169 more of the 438 already-capped paths into
+  conditional targets with emptied bases.
+
+  This lane is an architecture task now. The direction, in landing order:
+  one exact-or-unknown truth condition returned by expression evaluation
+  and consumed by `and`/`or`, branch activation and helper dispatch alike
+  (deleting the parallel `operand_condition` model rather than pinning it);
+  literal-dispatch helpers evaluated under their REAL abstract call context
+  so `include "…" .Values` binds the callee dot to `ValuesPath("")`; member
+  access kept as a `Predicate` tree and simplified before encoding instead
+  of lowered early into DNF arms; base ownership made an explicit semantic
+  output that no size budget may override; and one typed range-subject
+  analysis shared by both range lanes. See the work log's forty-ninth
+  round.
 
 - **F56/F62/F8/F80/F98 — provider contracts still lose required leaves
   and nested/helper payloads.** The remaining losses are bounded and have
