@@ -10960,3 +10960,84 @@ integration tests (`task test:integration`), `task lint` and `cargo fmt
 the pre-round fixtures. `task -t …/luup2/deployment/charts/taskfile.yaml
 check:local` exits 0. Eleven corpus fixtures and three gen fixtures
 regenerated.
+
+## Semver guard chain and member carriers (2026-07-28, forty-seventh round)
+
+kube-prometheus-stack gates all 41 rule files on
+`and (semverCompare ">=1.14.0-0" $kubeTargetVersion)
+(semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create
+… .Values.defaultRules.rules.X`, where `$kubeTargetVersion :=
+default .Capabilities.KubeVersion.GitVersion
+.Values.kubeTargetVersionOverride`. Go's `and` short-circuits, so deleting
+`defaultRules` or `windowsMonitoring` aborts on the dereference that
+follows — unless an override too old for the constraint stops the chain
+first, which is a real, renderable state.
+
+The condition decoder has answered `semverCompare` exactly since the
+capabilities lanes landed. What it could not do was answer for an OPERAND
+of a short-circuit chain: `eval_short_circuit_args` derives each operand's
+execution guard from `direct_raw_identity_path`, so anything that is not a
+raw values path contributes `Approximate { "and operand truthiness" }` —
+and one approximate conjunct silences every capture the LATER operands
+make. Both the policy version and the locals bound to a
+Capabilities-defaulted version now reach the evaluator through `EvalEnv`
+(the same channel `local_truthy_reductions` already uses for a reduced
+boolean flag), and `semver_constraint_predicate` is the one model both the
+decoder and the evaluator call. The predicate stays exact: with the
+override falsy it is the policy version's own verdict, with the override
+truthy it is that string's own match against the constraint pattern.
+
+### The carrier split this exposed
+
+The first measurement closed the two deletions and LOOSENED 408 probes:
+every one of `defaultRules.rules`' 38 declared boolean leaves stopped being
+typed. The host's base had become
+`anyOf[{properties: {alertmanager: …}}, {type: object, properties: {…37}}]`,
+so a document with a junk `alertmanager` simply satisfied the second arm
+and a junk `configReloaders` satisfied the first.
+
+That union is a pre-existing defect the new guard merely reached. A host
+whose object-ness is claimed only under a guard leaves an UNTYPED member
+carrier (`{properties: …}` with no `type`), and `try_merge_compatible`
+opens with `schema_type(a)?` — an untyped carrier fails that test, so two
+carriers for the SAME path fell through to the union fallback. Both
+describe one value and their members conjoin;
+`merge_untyped_member_carrier` merges them member-wise and keeps the weaker
+domain by staying untyped, because re-stamping `type: object` would
+reinstate exactly the unconditional host claim the untyped side dropped.
+The rule is narrow — only fragments whose keys are member keywords
+(`properties`/`additionalProperties`/`patternProperties`/`required`) and
+that actually carry members — so a scalar alternative beside an object arm
+still unions.
+
+### Result
+
+kube-prometheus-stack `defaultRules` and `windowsMonitoring` reject, both
+helm-confirmed ("nil pointer evaluating interface {}.create" /
+".enabled" at `windows.pod.rules.yaml:7`). The 1,848-probe root sweep moves
+those two cells and nothing else, with and without the carrier fix.
+
+The carrier fix is the larger change: 45 of 55 corpus schemas move and the
+full battery reports 2,575 flips over 214 distinct paths, **every one a
+TIGHTEN, zero loosenings anywhere**. They are one class — a declared
+mapping's leaves (`*.enabled`, `*.create`, `service.type`, `pathType`)
+regaining the type their values.yaml default declares, which the union had
+been dropping wherever the host had a single guarded member. They are NOT
+helm-abort-justified: `argo-cd controller.startupProbe.enabled: "audit"`
+renders, because a truthy string works as a gate. They are the
+declared-shape typing this ledger already keeps as policy (see the F80
+kyverno scalar-shadow entry), restored to paths that had silently lost it.
+The strongest evidence that the restoration is safe is the ci-values sweep:
+116 real values files, the same 4 rejected as before.
+
+18 of the audit's 70 root deletions remain.
+
+### Validation
+
+947 unit tests (two new focused reproducers, each verified failing pre-fix:
+the semver-gated host claim and the untyped-carrier merge), 497 integration
+tests (`task test:integration`), `task lint` and `cargo fmt --all --check`
+clean. The ci-values sweep rejects the same 4 of 116 files as the pre-round
+fixtures. `task -t …/luup2/deployment/charts/taskfile.yaml check:local`
+exits 0 over 234 resources. 45 corpus fixtures and 2 gen fixtures
+regenerated.

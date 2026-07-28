@@ -1,7 +1,10 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-28 after the call-dict navigation round
-(forty-sixth), which extended the navigation base one level over: a helper's
+Last reconciled 2026-07-28 after the semver guard-chain round
+(forty-seventh), which taught a short-circuit chain's operands to carry
+their own decoded condition instead of an approximate marker, and repaired
+the member-carrier union that decode exposed. The call-dict navigation
+round (forty-sixth) extended the navigation base one level over: a helper's
 call dict binds `.config` to `.Values.pdb`, so the body's `.config.enabled`
 navigates that path. The root-scoped `with` round (forty-fifth)
 closed the 5 nats deletions the preceding round could reach but not
@@ -2074,7 +2077,41 @@ strict Kubernetes schema while their valid controls passed.
   battery finds exactly one acceptance flip: the other ten already claimed
   those hosts through their own direct reads.
 
-  The 20 that remain: three are the TEST-TEMPLATE roots (grafana's and
+  **Semver guard chain CLOSED (forty-seventh round).**
+  kube-prometheus-stack's `defaultRules` and `windowsMonitoring` reject.
+  Every rule file gates on `and (semverCompare ">=1.14.0-0" $v)
+  (semverCompare "<9.9.9-9" $v) .Values.defaultRules.create …`, and the
+  condition decoder has answered `semverCompare` exactly for a long time —
+  but an OPERAND of a short-circuit chain took its execution guard from
+  `direct_raw_identity_path` alone, so anything that is not a raw values
+  path stood in as `Approximate`, and one approximate conjunct silences
+  every capture the later operands make. The policy version and the locals
+  bound to a Capabilities-defaulted version now reach the evaluator through
+  `EvalEnv`, and `semver_constraint_predicate` is the single model both the
+  decoder and the evaluator call, so the claim keeps the override's own
+  semantics: a too-old `kubeTargetVersionOverride` short-circuits the chain
+  and the deletion stays accepted. This is the general repair the datadog
+  `fips` lane needs too — its blocking conjuncts are an `include` equality
+  and a `not (or …)`, not a semver comparison.
+
+  The first measurement LOOSENED 408 probes, which uncovered a
+  pre-existing defect the new guard merely reached: a host whose
+  object-ness is claimed only under a guard leaves an UNTYPED member
+  carrier, `try_merge_compatible` opens with `schema_type(a)?`, and two
+  carriers for the SAME path therefore fell through to the union fallback —
+  `anyOf[{properties: {alertmanager}}, {type: object, properties: {…37}}]`,
+  where a junk value in either half satisfies the other arm.
+  `merge_untyped_member_carrier` conjoins them member-wise and keeps the
+  weaker (untyped) domain. That repair moves 45 of 55 corpus schemas and
+  2,575 battery probes, EVERY one a tightening: declared mapping leaves
+  (`*.enabled`, `*.create`, `service.type`) regaining the type their
+  values.yaml default declares. They are not helm-abort-justified — a
+  truthy string works as a gate — they are the declared-shape typing this
+  ledger keeps as policy (see the F80 kyverno scalar-shadow entry),
+  restored where the union had silently dropped it. The ci-values sweep
+  still rejects the same 4 of 116 real values files.
+
+  The 18 that remain: three are the TEST-TEMPLATE roots (grafana's and
   fluent-bit's `testFramework`, kyverno's `test`) — helm RENDERS
   `templates/tests/*` and only filters the output afterwards, so switching
   the corpus harness to the shipped `include_tests` default closes them, but
@@ -2082,7 +2119,7 @@ strict Kubernetes schema while their valid controls passed.
   `kubeconform -strict` rejects. Those values RENDER — the claim is about the
   rendered sink, not about the guards a test template adds — so they belong
   to the provider-required-leaf entry (F56/F62/F8) below, not here; the
-  forty-third round corrected that attribution. The other 17 are NOT this mechanism:
+  forty-third round corrected that attribution. The other 15 are NOT this mechanism:
   2 string-parameter calls behind the reverted `upper` catalog entry (harbor
   `logLevel`, oauth2-proxy `httpScheme`), 1 typed call through a `tpl`
   program (airflow `multiNamespaceMode`), 5 YAML-sink text failures (the
@@ -2092,23 +2129,24 @@ strict Kubernetes schema while their valid controls passed.
   reduction from the four `include` results to `$message`'s truthiness is
   what is missing, not the absence case alone), 1 dotted root key (grafana's
   literal `grafana.ini`,
-  "can't evaluate field paths in type string"), and 6 nil-pointer sites the
+  "can't evaluate field paths in type string"), and 4 nil-pointer sites the
   navigated-host lane still cannot reach: istiod's root rewrite and signoz'
   `global` have their own entries, grafana `route` needs `tpl`-program
-  evaluation, datadog `fips` reads `.Values.fips.enabled` directly as the
-  third conjunct of an `and` whose earlier operands do not decode — the
-  capture exists and the guard chain is what blocks it,
+  evaluation, and datadog `fips` reads `.Values.fips.enabled` directly as
+  the third conjunct of an `and` whose earlier operands do not decode — the
+  capture exists and the guard chain is what blocks it, so it wants the
+  same operand-predicate treatment the forty-seventh round gave
+  `semverCompare`, extended to an `include` equality and a `not (or …)`.
   traefik `log` needs an `and` operand's `not` decoded
   exactly (attempted and REVERTED in the forty-second round — the exact
   decode turned previously-approximate captures into guarded member-host
   arms, which emptied declared-mapping bases across airflow, argo-cd, cilium
   and datadog; the forty-third round confirmed that emptying is CORRECT for a
   genuinely guarded-only host, so this needs its own adjudication of the
-  111 airflow flips rather than a fix to base classification), and
-  kube-prometheus-stack's `defaultRules`/`windowsMonitoring` sit behind
-  `semverCompare` against `.Capabilities.KubeVersion` — the accepted
-  approximate-guard limitation, though a structural evaluation of
-  `semverCompare` at the configured target version would close them.
+  111 airflow flips rather than a fix to base classification) — and the
+  forty-seventh round's carrier repair changes that lane's arithmetic,
+  since part of what those flips measured was the union fallback dropping
+  sibling typings rather than the base classification itself.
 
 - **F56/F62/F8/F80/F98 — provider contracts still lose required leaves
   and nested/helper payloads.** The remaining losses are bounded and have
