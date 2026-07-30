@@ -7,31 +7,33 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
-use super::{FragmentEvalContext, helper_result_from_expr_with_fragment_locals};
+use super::{FragmentEvalContext, document_result_from_expr};
 
 pub(super) fn eval_expr_result_with_bound_helpers(
     expr: &TemplateExpr,
     env: &EvalEnv,
     params: BoundHelperValueResolverParams<'_, '_, '_>,
 ) -> EvalResult {
-    let mut resolver = BoundHelperValueResolver { params };
+    let mut resolver = BoundHelperValueResolver {
+        caller_env: env,
+        params,
+    };
     eval_expr_with_helper_calls(expr, env, &mut resolver)
 }
 
 pub(super) struct BoundHelperValueResolverParams<'a, 'context, 'seen> {
-    pub(super) fragment_locals: &'a HashMap<String, AbstractValue>,
     pub(super) outer: Option<&'a HashMap<String, AbstractValue>>,
-    pub(super) outer_root_facts: crate::analysis_db::OuterRootFacts<'a>,
     pub(super) current_dot: Option<&'a AbstractValue>,
     pub(super) context: FragmentEvalContext<'context>,
     pub(super) seen: &'seen mut HashSet<String>,
 }
 
-struct BoundHelperValueResolver<'a, 'context, 'seen> {
+struct BoundHelperValueResolver<'env, 'a, 'context, 'seen> {
+    caller_env: &'env EvalEnv,
     params: BoundHelperValueResolverParams<'a, 'context, 'seen>,
 }
 
-impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
+impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
     fn resolve_helper_call(
         &mut self,
         name: &str,
@@ -53,9 +55,8 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             name,
             arg,
             self.params.outer,
-            self.params.outer_root_facts,
             self.params.current_dot,
-            self.params.fragment_locals,
+            self.caller_env,
             self.params.context,
             self.params.seen,
         );
@@ -83,7 +84,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
                 .map(|row| row.path.clone())
                 .collect(),
             encoded_paths: summary.encoded_paths(),
-            shape_erased_paths: summary.shape_erased_paths.clone(),
+            helper_observed_shape_erased_paths: summary.shape_erased_paths.clone(),
             string_contract_paths: summary.string_contract_paths.clone(),
             range_modes: summary.range_modes.clone(),
             // An include renders its body to text, so every path the value
@@ -119,7 +120,11 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         effects
             .root_set_value_dispatches
             .extend(summary.root_set_value_dispatches.clone());
-        Some(EvalResult::with_effects(summary.value.clone(), effects))
+        let result = EvalResult::with_effects(summary.value.clone(), effects);
+        Some(match &summary.scalar_dispatch {
+            Some(dispatch) => result.with_scalar_dispatch(dispatch.clone()),
+            None => result,
+        })
     }
 
     fn resolve_implicit_template_call(
@@ -137,7 +142,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
     }
 }
 
-impl BoundHelperValueResolver<'_, '_, '_> {
+impl BoundHelperValueResolver<'_, '_, '_, '_> {
     /// A call to a recognized custom merge helper resolves to the layered
     /// merge of its `(list INPUT OVERWRITE …)` operands instead of the
     /// recursive body summary.
@@ -159,9 +164,9 @@ impl BoundHelperValueResolver<'_, '_, '_> {
         }
         let eval_operand = |expr: &TemplateExpr| {
             let mut seen = self.params.seen.clone();
-            helper_result_from_expr_with_fragment_locals(
+            document_result_from_expr(
                 expr,
-                self.params.fragment_locals,
+                self.caller_env,
                 self.params.outer,
                 self.params.current_dot,
                 self.params.context,
@@ -234,9 +239,9 @@ impl BoundHelperValueResolver<'_, '_, '_> {
         self.params.context.analysis_db.nil_scrub_helper(name)?;
         let arg = arg?;
         let mut seen = self.params.seen.clone();
-        let operand = helper_result_from_expr_with_fragment_locals(
+        let operand = document_result_from_expr(
             arg,
-            self.params.fragment_locals,
+            self.caller_env,
             self.params.outer,
             self.params.current_dot,
             self.params.context,

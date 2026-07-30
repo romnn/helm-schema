@@ -6,13 +6,15 @@ use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
+use crate::eval_env::EvalEnv;
 use crate::expr_eval::bindings_for_helper_arg_with;
 use crate::fragment_eval::BodyEvalFacts;
 use crate::fragment_eval::summary::{FragmentSummary, eval_bound_helper_fragment};
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, context_value_from_outer_expr,
-    helper_result_from_expr_with_fragment_locals,
+    FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
+use crate::scalar_value::ScalarValueDispatch;
+use crate::symbolic::SymbolicPolicy;
 use helm_schema_ast::parse_go_template;
 
 pub(crate) struct ParsedHelperBody<'a> {
@@ -36,16 +38,74 @@ pub(crate) struct IrAnalysisDb {
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
     custom_merge_helpers: RefCell<HashMap<String, bool>>,
     nil_scrub_helpers: RefCell<HashMap<String, bool>>,
-    /// The analysis-policy Kubernetes version (normalized core, e.g.
-    /// `1.29.0`): the value `.Capabilities.KubeVersion` renders under this
-    /// run's provider policy. `None` abstains every capabilities-version
-    /// condition instead of guessing a cluster.
-    kubernetes_version: Option<String>,
+    /// Exact immutable Helm root fields, represented separately from values.
+    static_root_fields: HashMap<String, AbstractValue>,
 }
 
 pub(crate) struct BoundHelperCallSummary {
     pub(crate) summary: Rc<FragmentSummary>,
     pub(crate) argument_effects: Effects,
+}
+
+fn static_root_fields(strings: BTreeMap<Vec<String>, String>) -> HashMap<String, AbstractValue> {
+    let mut roots = BTreeMap::new();
+    for (path, value) in strings {
+        insert_static_root_string(&mut roots, &path, value);
+    }
+    roots.into_iter().collect()
+}
+
+fn insert_kubernetes_version_fields(strings: &mut BTreeMap<Vec<String>, String>, version: &str) {
+    let version = version.trim_start_matches('v');
+    let helm_version = format!("v{version}");
+    for field in ["Version", "GitVersion"] {
+        strings.insert(
+            vec![
+                "Capabilities".to_string(),
+                "KubeVersion".to_string(),
+                field.to_string(),
+            ],
+            helm_version.clone(),
+        );
+    }
+
+    let mut components = version.split('.');
+    for field in ["Major", "Minor"] {
+        let Some(component) = components.next() else {
+            break;
+        };
+        strings.insert(
+            vec![
+                "Capabilities".to_string(),
+                "KubeVersion".to_string(),
+                field.to_string(),
+            ],
+            component.to_string(),
+        );
+    }
+}
+
+fn insert_static_root_string(
+    fields: &mut BTreeMap<String, AbstractValue>,
+    path: &[String],
+    value: String,
+) {
+    let Some((head, tail)) = path.split_first() else {
+        return;
+    };
+    if tail.is_empty() {
+        fields.insert(
+            head.clone(),
+            AbstractValue::StringSet(BTreeSet::from([value])),
+        );
+        return;
+    }
+    let entry = fields
+        .entry(head.clone())
+        .or_insert_with(|| AbstractValue::Dict(BTreeMap::new()));
+    if let AbstractValue::Dict(nested) = entry {
+        insert_static_root_string(nested, tail, value);
+    }
 }
 
 fn allowed_custom_merge_set_value(
@@ -68,14 +128,18 @@ fn allowed_custom_merge_set_value(
 impl IrAnalysisDb {
     #[tracing::instrument(skip_all)]
     pub(crate) fn new(defines: &DefineIndex) -> Self {
-        Self::with_policy(defines, BTreeMap::new(), None)
+        Self::with_policy(defines, SymbolicPolicy::default())
     }
 
-    pub(crate) fn with_policy(
-        defines: &DefineIndex,
-        chart_default_strings: BTreeMap<String, String>,
-        kubernetes_version: Option<String>,
-    ) -> Self {
+    pub(crate) fn with_policy(defines: &DefineIndex, policy: SymbolicPolicy) -> Self {
+        let SymbolicPolicy {
+            chart_default_strings,
+            kubernetes_version,
+            mut static_root_strings,
+        } = policy;
+        if let Some(version) = kubernetes_version.as_deref() {
+            insert_kubernetes_version_fields(&mut static_root_strings, version);
+        }
         let mut define_bodies = HashMap::new();
         let mut implicit_template_names = BTreeMap::new();
         let mut file_sources = HashMap::new();
@@ -114,12 +178,12 @@ impl IrAnalysisDb {
             bound_helper_calls: RefCell::new(BTreeMap::new()),
             custom_merge_helpers: RefCell::new(HashMap::new()),
             nil_scrub_helpers: RefCell::new(HashMap::new()),
-            kubernetes_version,
+            static_root_fields: static_root_fields(static_root_strings),
         }
     }
 
-    pub(crate) fn kubernetes_version(&self) -> Option<&str> {
-        self.kubernetes_version.as_deref()
+    pub(crate) fn static_root_fields(&self) -> &HashMap<String, AbstractValue> {
+        &self.static_root_fields
     }
 
     pub(crate) fn has_helper(&self, name: &str) -> bool {
@@ -141,8 +205,37 @@ impl IrAnalysisDb {
         self.file_sources.get(path).map(String::as_str)
     }
 
-    pub(crate) fn chart_default_string(&self, path: &str) -> Option<&str> {
-        self.chart_default_strings.get(path).map(String::as_str)
+    /// Chart-authored defaults that one exact or wildcard values provenance
+    /// can select at a `tpl` boundary.
+    ///
+    /// A wildcard names one mapping member at that depth. Enumerating its
+    /// finite matching defaults recovers the exact programs Helm executes
+    /// through ranged configuration maps while retaining each concrete
+    /// source path for selection guards.
+    pub(crate) fn chart_default_programs_matching<'a>(
+        &'a self,
+        path_pattern: &str,
+    ) -> Vec<(&'a str, &'a str)> {
+        let pattern = helm_schema_core::split_value_path(path_pattern);
+        let has_wildcard = pattern.iter().any(|segment| segment == "*");
+        self.chart_default_strings
+            .iter()
+            .filter_map(|(path, value)| {
+                let segments = helm_schema_core::split_value_path(path);
+                let matches = segments.len() == pattern.len()
+                    && segments
+                        .iter()
+                        .zip(&pattern)
+                        .all(|(segment, expected)| expected == "*" || segment == expected);
+                if !matches
+                    || (has_wildcard
+                        && !matches!(helm_schema_ast::contains_template_action(value), Ok(true)))
+                {
+                    return None;
+                }
+                Some((path.as_str(), value.as_str()))
+            })
+            .collect()
     }
 
     /// Indexed chart file paths (templates plus `.Files.Get` sources),
@@ -705,9 +798,8 @@ impl IrAnalysisDb {
         name: &str,
         arg: Option<&TemplateExpr>,
         outer_bindings: Option<&HashMap<String, AbstractValue>>,
-        outer_root_facts: OuterRootFacts<'_>,
         current_dot: Option<&AbstractValue>,
-        fragment_locals: &HashMap<String, AbstractValue>,
+        eval_env: &EvalEnv,
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
     ) -> BoundHelperCallSummary {
@@ -722,9 +814,8 @@ impl IrAnalysisDb {
             helper_name: name,
             arg,
             outer_bindings,
-            outer_root_facts,
             current_dot,
-            fragment_locals,
+            eval_env,
             context,
             seen,
         });
@@ -776,13 +867,11 @@ pub(crate) struct DotFrame {
 pub(crate) struct BoundHelperCallResolution {
     pub(crate) bindings: HashMap<String, AbstractValue>,
     pub(crate) dot: DotFrame,
-    /// The caller's root-field truth predicates and value dispatches,
-    /// threaded only when the helper dot IS the caller's root context: a
-    /// helper body reading `.mode` then decodes the caller's `set`-key
-    /// facts (vault's `ne .mode "dev"` volume-claim gates). A dict-bound
-    /// call keeps them empty — its "root" fields are the argument's.
+    /// Scalar facts visible through the helper's dot-relative root fields:
+    /// caller root facts for a root-passthrough call, or evaluated field
+    /// dispatches for a statically constructed argument mapping.
     pub(crate) root_truthy_predicates: HashMap<String, helm_schema_core::Predicate>,
-    pub(crate) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
+    pub(crate) root_value_dispatches: HashMap<String, ScalarValueDispatch>,
 }
 
 struct ResolvedBoundHelperCall {
@@ -795,42 +884,37 @@ struct ResolveBoundHelperCallParams<'a, 'context> {
     helper_name: &'a str,
     arg: Option<&'a TemplateExpr>,
     outer_bindings: Option<&'a HashMap<String, AbstractValue>>,
-    outer_root_facts: OuterRootFacts<'a>,
     current_dot: Option<&'a AbstractValue>,
-    fragment_locals: &'a HashMap<String, AbstractValue>,
+    eval_env: &'a EvalEnv,
     context: FragmentEvalContext<'context>,
     seen: &'a HashSet<String>,
-}
-
-/// The caller's root-field condition facts (truth predicates and value
-/// dispatches), passed alongside the plain bindings.
-#[derive(Clone, Copy, Default)]
-pub(crate) struct OuterRootFacts<'a> {
-    pub(crate) truthy_predicates: Option<&'a HashMap<String, helm_schema_core::Predicate>>,
-    pub(crate) value_dispatches: Option<&'a HashMap<String, crate::eval_effect::RootValueDispatch>>,
 }
 
 fn resolve_bound_helper_call(
     params: &ResolveBoundHelperCallParams<'_, '_>,
 ) -> ResolvedBoundHelperCall {
     let mut argument_effects = Effects::default();
-    let mut eval_arg_value = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
-        let result = helper_result_from_expr_with_fragment_locals(
+    let mut eval_arg = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
+        let result = document_result_from_expr(
             expr,
-            params.fragment_locals,
+            params.eval_env,
             params.outer_bindings,
             params.current_dot,
             params.context,
             seen,
         );
-        argument_effects.merge(result.effects.execution_only());
-        result.value
+        argument_effects.merge(result.effects.clone().execution_only());
+        result
     };
     let mut binding_seen = params.seen.clone();
     let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
-        eval_arg_value(expr, &mut binding_seen)
+        eval_arg(expr, &mut binding_seen)
     });
     let mut bindings = arg_resolution.bindings;
+    let argument_scalar_dispatches = arg_resolution
+        .scalar_dispatches
+        .into_iter()
+        .collect::<HashMap<_, _>>();
 
     // The binding resolution already evaluated the whole arg unless the arg
     // was a dot/root or merge call; only those shapes still need their own
@@ -841,14 +925,14 @@ fn resolve_bound_helper_call(
             let mut dot_seen = params.seen.clone();
             params
                 .arg
-                .and_then(|expr| eval_arg_value(expr, &mut dot_seen))
+                .and_then(|expr| eval_arg(expr, &mut dot_seen).value)
         })
         .or_else(|| params.current_dot.cloned());
 
     let mut helper_fragment_dot = params.arg.and_then(|expr| {
         context_value_from_outer_expr(
             expr,
-            Some(params.fragment_locals),
+            Some(&params.eval_env.locals),
             params.outer_bindings,
             params.current_dot,
         )
@@ -866,21 +950,20 @@ fn resolve_bound_helper_call(
     // root context: only then does a body-level `.field` read resolve
     // against the caller's root `set` state.
     let root_passthrough = matches!(helper_body_dot, Some(AbstractValue::RootContext));
+    if root_passthrough {
+        for (field, value) in params.context.analysis_db.static_root_fields() {
+            bindings
+                .entry(field.clone())
+                .or_insert_with(|| value.clone());
+        }
+    }
     let (root_truthy_predicates, root_value_dispatches) = if root_passthrough {
         (
-            params
-                .outer_root_facts
-                .truthy_predicates
-                .cloned()
-                .unwrap_or_default(),
-            params
-                .outer_root_facts
-                .value_dispatches
-                .cloned()
-                .unwrap_or_default(),
+            params.eval_env.root_truthy_predicates.clone(),
+            params.eval_env.root_value_dispatches.clone(),
         )
     } else {
-        (HashMap::new(), HashMap::new())
+        (HashMap::new(), argument_scalar_dispatches)
     };
     ResolvedBoundHelperCall {
         resolution: BoundHelperCallResolution {
@@ -930,7 +1013,7 @@ struct BoundHelperCallCacheKey {
     bindings: BTreeMap<String, AbstractValue>,
     dot: DotFrame,
     root_truthy_predicates: BTreeMap<String, helm_schema_core::Predicate>,
-    root_value_dispatches: BTreeMap<String, crate::eval_effect::RootValueDispatch>,
+    root_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
     seen: BTreeSet<String>,
 }
 

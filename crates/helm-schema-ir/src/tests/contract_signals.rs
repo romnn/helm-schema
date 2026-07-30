@@ -1,3 +1,4 @@
+use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use std::collections::BTreeSet;
 
@@ -27,6 +28,23 @@ fn signals_for_template(source: &str) -> ContractSchemaSignals {
         .generate_contract_ir(source)
         .finalize()
         .into_schema_signals()
+}
+
+fn signals_for_template_at_kubernetes_version(
+    source: &str,
+    kubernetes_version: &str,
+) -> ContractSchemaSignals {
+    let defines = DefineIndex::new();
+    SymbolicIrContext::with_policy(
+        &defines,
+        crate::SymbolicPolicy {
+            kubernetes_version: Some(kubernetes_version.to_string()),
+            ..crate::SymbolicPolicy::default()
+        },
+    )
+    .generate_contract_ir(source)
+    .finalize()
+    .into_schema_signals()
 }
 
 fn nullable_paths_for(signals: &ContractSchemaSignals) -> BTreeSet<String> {
@@ -1249,14 +1267,14 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
 
 #[test]
 fn unsupported_conditional_row_does_not_promote_sink_evidence() {
-    let signals = signals_for_template(indoc! {r#"
-        {{- if semverCompare ">=1.0.0" .Values.version }}
+    let signals = signals_for_template(indoc! {r"
+        {{- if mystery .Values.version }}
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: {{ .Values.name }}
         {{- end }}
-    "#});
+    "});
     assert!(
         signals
             .evidence_for("name")
@@ -1315,8 +1333,8 @@ fn foreign_range_does_not_globalize_strict_consumer() {
 
 #[test]
 fn nested_member_range_abstains_under_unlowerable_outer_guard() {
-    let signals = signals_for_template(indoc! {r#"
-        {{- if semverCompare ">=1.0.0" .Values.version }}
+    let signals = signals_for_template(indoc! {r"
+        {{- if mystery .Values.version }}
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1329,7 +1347,7 @@ fn nested_member_range_abstains_under_unlowerable_outer_guard() {
             {{- end }}
             {{- end }}
         {{- end }}
-    "#});
+    "});
     assert!(
         signals.evidence_for("groups").is_none_or(|evidence| {
             !evidence.fail_implications.iter().any(|implication| {
@@ -1368,6 +1386,67 @@ fn unlowerable_mixed_guard_retains_its_values_path_reference() {
         evidence.provider_schema_uses.is_empty(),
         "the opaque semver arm must still block provider typing: {evidence:#?}"
     );
+}
+
+#[test]
+fn statically_false_capability_branch_contributes_no_body_evidence() {
+    let signals = signals_for_template_at_kubernetes_version(
+        indoc! {r#"
+            {{- if semverCompare "<1.6-0" .Capabilities.KubeVersion.GitVersion }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              dead: {{ toJson .Values.dead }}
+            {{- end }}
+        "#},
+        "1.35.0",
+    );
+
+    assert!(
+        signals.evidence_for("dead").is_none(),
+        "a branch excluded by the configured Kubernetes version must not contribute render evidence: {signals:#?}"
+    );
+}
+
+#[test]
+fn statically_true_short_circuit_arm_keeps_its_values_execution_guard() -> eyre::Result<()> {
+    let source = indoc! {r#"
+            {{- if and .Values.tolerations (semverCompare "^1.6-0" .Capabilities.KubeVersion.GitVersion) }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              live: {{ toYaml .Values.tolerations | quote }}
+            {{- end }}
+        "#};
+    let defines = DefineIndex::new();
+    let finalized = SymbolicIrContext::with_policy(
+        &defines,
+        crate::SymbolicPolicy {
+            kubernetes_version: Some("1.35.0".to_string()),
+            ..crate::SymbolicPolicy::default()
+        },
+    )
+    .generate_contract_ir(source)
+    .finalize();
+    let uses = finalized.uses().to_vec();
+    let signals = finalized.into_schema_signals();
+
+    let evidence = signals
+        .evidence_for("tolerations")
+        .ok_or_eyre("live branch lost its values evidence")?;
+    assert!(
+        evidence.facts.has_self_guarded_render_use
+            && evidence.facts.all_render_uses_self_guarded
+            && !evidence.facts.has_unconditional_render_use,
+        "the constant capability operand must not erase the preceding values execution guard: \
+         evidence={evidence:#?}; uses={uses:#?}"
+    );
+
+    Ok(())
 }
 
 #[test]
@@ -1438,4 +1517,38 @@ fn get_on_destructured_range_value_requires_object_members() {
                 "object".to_string(),
             )]
     }));
+}
+
+#[test]
+fn unknown_member_access_site_makes_the_exact_domain_incomplete() -> eyre::Result<()> {
+    let signals = signals_for_template(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.exact }}
+          exact: {{ .Values.host.first | quote }}
+          {{- end }}
+          {{- if (lookup "v1" "ConfigMap" "" "dynamic") }}
+          dynamic: {{ .Values.host.second | quote }}
+          {{- end }}
+    "#});
+    let evidence = signals
+        .evidence_for("host")
+        .ok_or_eyre("expected member-host evidence")?;
+    let completeness = evidence
+        .fail_implications
+        .iter()
+        .flat_map(|implication| &implication.requirements)
+        .filter_map(|requirement| match requirement {
+            helm_schema_core::FailValueRequirement::MemberHost {
+                complete_domain, ..
+            } => Some(*complete_domain),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: completeness, want: vec![false]);
+    Ok(())
 }

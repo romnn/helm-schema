@@ -114,6 +114,7 @@ fn fmt_splice(splice: &Splice) -> String {
         ValueKind::Fragment => "fragment",
         ValueKind::Serialized => "serialized",
         ValueKind::YamlSerialized => "yaml-serialized",
+        ValueKind::TemplatedYamlSerialized => "templated-yaml-serialized",
     };
     let mut rendered = format!("splice {} {kind}", splice.values_path);
     if splice.meta.defaulted {
@@ -176,6 +177,14 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::MinMembers { path, bound } => format!("minMembers({path} >= {bound})"),
         Guard::HasKey { path, key } => format!("hasKey({path}: {key})"),
         Guard::ContainsEquals { path, value } => format!("containsEquals({path} ∋ {value})"),
+        Guard::ContainsMemberEquals {
+            path,
+            member,
+            value,
+        } => format!("containsMemberEquals({path}.*.{member} == {value})"),
+        Guard::ContainsTruthyMember { path, member } => {
+            format!("containsTruthyMember({path}.*.{member})")
+        }
         Guard::Or { paths } => format!("or({})", paths.join(", ")),
         Guard::AnyOf { alternatives } => {
             let rendered: Vec<String> = alternatives

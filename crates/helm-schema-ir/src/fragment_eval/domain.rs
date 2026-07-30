@@ -308,6 +308,10 @@ pub struct SpliceMeta {
     /// `toString`, `join`): any input type renders, so the sink neither
     /// constrains nor reveals the input shape.
     pub shape_erased: bool,
+    /// The rendered text is specifically Go's `%v` spelling of this path,
+    /// so scalar equality and pattern tests can project through its exact
+    /// stringification preimage.
+    pub stringified: bool,
     /// The stringification is Sprig `quote`/`squote`, which SKIP nil
     /// operands: a missing or null source renders an explicit YAML null
     /// into the sink, so provider-required slots still reject absence.
@@ -315,6 +319,10 @@ pub struct SpliceMeta {
     /// The rendered fragment is the result of `toYaml`: every input kind can
     /// be serialized, but its placement can still require sequence shape.
     pub yaml_serialized: bool,
+    /// The serialized YAML was evaluated by `tpl`: its structure remains,
+    /// but template-bearing string leaves no longer carry raw sink
+    /// constraints.
+    pub templated_yaml: bool,
     /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
     /// format) shaped the rendered text: rendering fails for non-string
     /// values, so this splice's row binds a string contract under its own

@@ -19,15 +19,18 @@ pub(crate) fn context_value_from_outer_expr(
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
 ) -> Option<AbstractValue> {
-    if matches!(expr, TemplateExpr::Variable(var) if var.is_empty())
-        && let Some(bindings) = outer
-    {
-        return Some(AbstractValue::Dict(
-            bindings
-                .iter()
-                .map(|(key, binding)| (key.clone(), binding.to_context_value()))
-                .collect(),
-        ));
+    if matches!(expr, TemplateExpr::Variable(var) if var.is_empty()) {
+        if let Some(binding) = outer_locals.and_then(|locals| locals.get("")) {
+            return Some(binding.clone());
+        }
+        if let Some(bindings) = outer {
+            return Some(AbstractValue::Dict(
+                bindings
+                    .iter()
+                    .map(|(key, binding)| (key.clone(), binding.to_context_value()))
+                    .collect(),
+            ));
+        }
     }
 
     // An active with/range dot is the current context. Outside a nested
@@ -108,16 +111,10 @@ pub(crate) fn locals_with_roots(
 /// the fully-populated environment (locals, bound values, local default/meta
 /// facts) and this resolves bound helper calls through the memoized
 /// in-domain summaries.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "expression evaluation requires the complete lexical and fragment context"
-)]
 pub(crate) fn document_result_from_expr(
     expr: &TemplateExpr,
     env: &EvalEnv,
-    fragment_locals: &HashMap<String, AbstractValue>,
     outer: Option<&HashMap<String, AbstractValue>>,
-    outer_root_facts: crate::analysis_db::OuterRootFacts<'_>,
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
@@ -126,38 +123,10 @@ pub(crate) fn document_result_from_expr(
         expr,
         env,
         BoundHelperValueResolverParams {
-            fragment_locals,
             outer,
-            outer_root_facts,
             current_dot,
             context,
             seen,
         },
     )
-}
-
-pub(crate) fn helper_result_from_expr_with_fragment_locals(
-    expr: &TemplateExpr,
-    fragment_locals: &HashMap<String, AbstractValue>,
-    outer: Option<&HashMap<String, AbstractValue>>,
-    current_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
-    seen: &mut HashSet<String>,
-) -> EvalResult {
-    let mut env = EvalEnv::from_helper_context(outer, current_dot);
-    env.locals = fragment_locals.clone();
-    let mut result = eval_expr_result_with_bound_helpers(
-        expr,
-        &env,
-        BoundHelperValueResolverParams {
-            fragment_locals,
-            outer,
-            outer_root_facts: crate::analysis_db::OuterRootFacts::default(),
-            current_dot,
-            context,
-            seen,
-        },
-    );
-    result.value = result.value.map(|value| value.to_context_value());
-    result
 }

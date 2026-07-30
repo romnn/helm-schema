@@ -47,13 +47,15 @@ impl Interpreter<'_> {
     ) -> (Guarded<AbstractFragment>, Option<AbstractValue>) {
         let mut out = Guarded::empty();
         let mut values = Vec::new();
+        let mut template_bindings = self.locals.range_member_values.clone();
+        template_bindings.extend(self.locals.fragment_values.clone());
         let direct_requests = {
             let context = FragmentEvalContext::new(self.db);
             let current_dot = self.current_dot_fragment();
             collect_template_requests_from_exprs(
                 exprs,
                 current_dot.as_ref(),
-                &self.locals.fragment_values,
+                &template_bindings,
                 &self.locals.output_meta,
                 context,
             )
@@ -71,7 +73,7 @@ impl Interpreter<'_> {
                 let helper_dot = helper_call.arg.as_ref().and_then(|arg| {
                     context.fragment_value_from_expr(
                         arg,
-                        &self.locals.fragment_values,
+                        &template_bindings,
                         current_dot.as_ref(),
                         &mut seen,
                     )
@@ -110,6 +112,7 @@ impl Interpreter<'_> {
         let source_path: &str;
         let source: &str;
         let selection_predicate: Option<Predicate>;
+        let values_default_path: Option<&str>;
         let textual_program: bool;
         match &request.source {
             StaticTemplateSource::File { path } => {
@@ -120,6 +123,7 @@ impl Interpreter<'_> {
                 source_path = path;
                 source = file_source;
                 selection_predicate = None;
+                values_default_path = None;
                 textual_program = false;
             }
             StaticTemplateSource::ValuesDefault { path, program } => {
@@ -130,6 +134,7 @@ impl Interpreter<'_> {
                     path: path.clone(),
                     value: GuardValue::string(program),
                 }));
+                values_default_path = Some(path);
                 textual_program = true;
             }
             StaticTemplateSource::Constructed { program } => {
@@ -137,6 +142,7 @@ impl Interpreter<'_> {
                 source_path = "@tpl";
                 source = program;
                 selection_predicate = None;
+                values_default_path = None;
                 textual_program = true;
             }
         }
@@ -156,7 +162,16 @@ impl Interpreter<'_> {
             .locals
             .set_chart_value_defaults(self.locals.chart_value_defaults.clone());
         nested.dot_stack.push(request.dot.clone());
-        nested.active_predicates = self.active_predicates.clone();
+        nested.active_predicates = self
+            .active_predicates
+            .iter()
+            .filter(|predicate| {
+                !values_default_path.is_some_and(|path| {
+                    ancestor_range_is_implied_by_selected_default(predicate, path)
+                })
+            })
+            .cloned()
+            .collect();
         if let Some(predicate) = selection_predicate {
             nested.active_predicates.push(predicate);
         }
@@ -226,4 +241,17 @@ impl Interpreter<'_> {
             (fragment, None)
         }
     }
+}
+
+fn ancestor_range_is_implied_by_selected_default(predicate: &Predicate, path: &str) -> bool {
+    let Predicate::Guard(Guard::Range { path: ranged_path }) = predicate else {
+        return false;
+    };
+    let ranged = helm_schema_core::split_value_path(ranged_path);
+    let selected = helm_schema_core::split_value_path(path);
+    ranged.len() < selected.len()
+        && ranged
+            .iter()
+            .zip(&selected)
+            .all(|(expected, actual)| expected == "*" || expected == actual)
 }

@@ -368,6 +368,9 @@ pub(super) fn eval_tpl(
         // instead of degrading to opaque text (cloudnative-pg's
         // `tpl (.Values.additionalEnv | toYaml) .` env fragment and
         // airflow's `tpl (toYaml .Values.scheduler.command) .`).
+        effects
+            .templated_yaml_paths
+            .extend(serialization_payload_paths(template.value.as_ref()));
         template.value
     } else {
         // `tpl` type-asserts its template to a Go string: a raw values
@@ -767,6 +770,7 @@ pub(super) fn eval_trim_affix(
     };
     let affix = eval_expr_with_helper_calls(affix, env, resolver);
     let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
+    let subject_dispatch = subject.scalar_dispatch.clone();
     let subject_effects = subject.effects.clone();
     subject.effects.merge(affix.effects);
     let mut effects = subject.effects;
@@ -775,7 +779,12 @@ pub(super) fn eval_trim_affix(
     // A single nonempty literal affix keeps a raw-identity subject's path
     // qualified by it as a lexical escape: trimming is the identity on
     // strings that do not contain the affix.
-    if let Some(token) = single_replace_token(&value_strings(affix.value.as_ref()))
+    let affix_values = value_strings(affix.value.as_ref());
+    let token = single_replace_token(&affix_values);
+    let scalar_dispatch = token
+        .zip(subject_dispatch.as_ref())
+        .map(|(token, dispatch)| dispatch.trimmed(token, function == "trimPrefix"));
+    if let Some(token) = token
         && let Some(value) = subject.value.as_ref().and_then(|value| {
             super::value_facts::trim_affix_transformed_value(
                 value,
@@ -790,7 +799,11 @@ pub(super) fn eval_trim_affix(
             &raw_range_key_paths,
             &mut effects,
         );
-        return EvalResult::with_effects(Some(value), effects);
+        let result = EvalResult::with_effects(Some(value), effects);
+        return match scalar_dispatch {
+            Some(dispatch) => result.with_scalar_dispatch(dispatch),
+            None => result,
+        };
     }
     let value = super::value_facts::derive_value_text(subject.value);
     super::strict_operands::record_string_transform_effects(
@@ -800,7 +813,11 @@ pub(super) fn eval_trim_affix(
         &raw_range_key_paths,
         &mut effects,
     );
-    EvalResult::with_effects(value, effects)
+    let result = EvalResult::with_effects(value, effects);
+    match scalar_dispatch {
+        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+        None => result,
+    }
 }
 
 pub(super) fn eval_trim_affix_pipeline(
@@ -816,6 +833,7 @@ pub(super) fn eval_trim_affix_pipeline(
         return current;
     };
     let piped_value = current.value;
+    let piped_dispatch = current.scalar_dispatch.clone();
     let piped_effects = current.effects.clone();
     let affix = eval_expr_with_helper_calls(affix, env, resolver);
     let mut effects = current.effects;
@@ -828,7 +846,12 @@ pub(super) fn eval_trim_affix_pipeline(
         env,
         resolver,
     );
-    if let Some(token) = single_replace_token(&value_strings(affix.value.as_ref()))
+    let affix_values = value_strings(affix.value.as_ref());
+    let token = single_replace_token(&affix_values);
+    let scalar_dispatch = token
+        .zip(piped_dispatch.as_ref())
+        .map(|(token, dispatch)| dispatch.trimmed(token, function == "trimPrefix"));
+    if let Some(token) = token
         && let Some(value) = piped_value.as_ref().and_then(|value| {
             super::value_facts::trim_affix_transformed_value(
                 value,
@@ -843,7 +866,11 @@ pub(super) fn eval_trim_affix_pipeline(
             &raw_range_key_paths,
             &mut effects,
         );
-        return EvalResult::with_effects(Some(value), effects);
+        let result = EvalResult::with_effects(Some(value), effects);
+        return match scalar_dispatch {
+            Some(dispatch) => result.with_scalar_dispatch(dispatch),
+            None => result,
+        };
     }
     let value = super::value_facts::derive_value_text(piped_value);
     super::strict_operands::record_string_transform_effects(
@@ -853,7 +880,11 @@ pub(super) fn eval_trim_affix_pipeline(
         &raw_range_key_paths,
         &mut effects,
     );
-    EvalResult::with_effects(value, effects)
+    let result = EvalResult::with_effects(value, effects);
+    match scalar_dispatch {
+        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+        None => result,
+    }
 }
 
 /// `regexReplaceAll REGEX SUBJECT REPLACEMENT` (and its literal/must

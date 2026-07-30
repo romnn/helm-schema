@@ -7,6 +7,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 
 use helm_schema_ast::{
     is_checksum_function, is_coercing_arithmetic_function, is_merge_function,
@@ -23,11 +24,10 @@ mod traversal;
 mod value_facts;
 
 use collections::{
-    direct_raw_identity_path, eval_append, eval_coalesce, eval_concat, eval_default, eval_dict,
-    eval_first, eval_first_result, eval_last, eval_last_result, eval_list, eval_merge,
-    eval_nonempty_split, eval_nonempty_split_pipeline, eval_omit, eval_pick, eval_pluck,
-    eval_prepend, eval_regex_split, eval_reverse, eval_reverse_result, eval_split_list,
-    is_nonempty_string_literal,
+    eval_append, eval_coalesce, eval_concat, eval_default, eval_dict, eval_first,
+    eval_first_result, eval_last, eval_last_result, eval_list, eval_merge, eval_nonempty_split,
+    eval_nonempty_split_pipeline, eval_omit, eval_pick, eval_pluck, eval_prepend, eval_regex_split,
+    eval_reverse, eval_reverse_result, eval_split_list, is_nonempty_string_literal,
 };
 use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
@@ -78,8 +78,28 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         "and" => eval_short_circuit_args(args, true, env, resolver),
         "or" => eval_short_circuit_args(args, false, env, resolver),
-        "dict" => eval_dict(args, env, resolver),
-        "list" | "tuple" => eval_list(args, env, resolver),
+        "not" | "empty" if matches!(args, [_]) => {
+            let Some(arg) = args.first() else {
+                return EvalResult::none();
+            };
+            let operand = eval_expr_with_helper_calls(arg, env, resolver);
+            let truth = operand.truth.negated();
+            let effects = operand.effects;
+            let value = Some(AbstractValue::DerivedBoolean(effects.output_paths.clone()));
+            let mut result = EvalResult::with_effects(value, effects);
+            result.truth = truth;
+            result
+        }
+        "dict" => eval_dict(args, env, resolver).with_truth(if args.is_empty() {
+            Predicate::False
+        } else {
+            Predicate::True
+        }),
+        "list" | "tuple" => eval_list(args, env, resolver).with_truth(if args.is_empty() {
+            Predicate::False
+        } else {
+            Predicate::True
+        }),
         "deepCopy" | "mustDeepCopy" if matches!(args, [_]) => {
             let Some(arg) = args.first() else {
                 return EvalResult::none();
@@ -248,7 +268,7 @@ pub(crate) fn eval_call_with_helper_calls(
             }
             EvalResult::with_effects(None, effects)
         }
-        "eq" | "ne" if args.len() >= 2 => eval_comparison(args, env, resolver),
+        "eq" | "ne" if args.len() >= 2 => eval_comparison(function, args, env, resolver),
         // These stay on eval_unknown_call's widened-value semantics: their
         // results (a count, a membership bool, a rebuilt list) are dataflow
         // through the call, not the operand's identity, so downstream string
@@ -289,6 +309,9 @@ pub(crate) fn eval_call_with_helper_calls(
         // membership bool reaches the sink, never the operand itself, so a
         // scalar sink position must not text-type the operand.
         "len" if args.len() == 1 => {
+            let scalar_dispatch = args
+                .first()
+                .and_then(|subject| split_length_dispatch(subject, env, resolver));
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
             record_length_bearing_operand(args, env, resolver, &mut result.effects);
             let Some(subject_expr) = args.first() else {
@@ -306,7 +329,10 @@ pub(crate) fn eval_call_with_helper_calls(
                     [length.to_string()].into_iter().collect(),
                 ));
             }
-            result
+            match scalar_dispatch {
+                Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                None => result,
+            }
         }
         // Coercing Sprig arithmetic (`mulf`, `add`, `floor`, …): every
         // values-backed operand passes through `cast.ToInt64`/`ToFloat64`
@@ -374,23 +400,44 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         "hasKey" if matches!(args, [_, _]) => {
-            let [subject_expr, _] = args else {
+            let [subject_expr, key_expr] = args else {
                 return EvalResult::none();
             };
-            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
-            record_strict_kind_operands(
-                function,
-                std::slice::from_ref(subject_expr),
+            let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
+            let key = eval_expr_with_helper_calls(key_expr, env, resolver);
+            let mut effects = subject.effects.clone();
+            effects.merge(key.effects);
+            let mut result = EvalResult::with_effects(
+                AbstractValue::widened(effects.output_paths.clone()),
+                effects,
+            );
+            record_strict_kind_result(
+                &subject,
                 "object",
-                env,
-                resolver,
+                strict_operand_nil_aborts(function, direct_values_path(subject_expr).is_some()),
                 &mut result.effects,
             );
-            let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
             record_total_conversion_effects(
                 identity_value_paths(subject.value.as_ref()),
                 &mut result.effects,
             );
+            let key = key.value.as_ref().and_then(|value| {
+                let AbstractValue::StringSet(strings) = value else {
+                    return None;
+                };
+                let mut strings = strings.iter();
+                match (strings.next(), strings.next()) {
+                    (Some(key), None) => Some(key.as_str()),
+                    _ => None,
+                }
+            });
+            if let Some(predicate) =
+                subject.value.as_ref().zip(key).and_then(|(subject, key)| {
+                    crate::value_path_context::value_has_key(subject, key)
+                })
+            {
+                result.truth = TruthCondition::exact(predicate);
+            }
             result
         }
         "pick" if !args.is_empty() => {
@@ -544,6 +591,14 @@ pub(crate) fn eval_call_with_helper_calls(
         }
         function if is_string_transform_function(function) => {
             let result = eval_all_args(args, env, resolver);
+            let scalar_dispatch = if function == "toString" {
+                result
+                    .scalar_dispatch
+                    .as_ref()
+                    .map(ScalarValueDispatch::stringified)
+            } else {
+                None
+            };
             let mut effects = result.effects;
             let (string_paths, raw_range_key_paths) =
                 string_call_operand_facts(function, args, env, resolver);
@@ -559,7 +614,11 @@ pub(crate) fn eval_call_with_helper_calls(
             } else {
                 result.value
             };
-            EvalResult::with_effects(derive_value_text(value), effects)
+            let result = EvalResult::with_effects(derive_value_text(value), effects);
+            match scalar_dispatch {
+                Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                None => result,
+            }
         }
         // Subject-last string consumers with non-string output (`splitList`,
         // `semverCompare`): the LAST argument must be a Go string; the
@@ -569,6 +628,10 @@ pub(crate) fn eval_call_with_helper_calls(
                 || is_string_predicate_function(function))
                 && !args.is_empty() =>
         {
+            let scalar_truth = args.last().and_then(|subject| {
+                let subject = eval_expr_with_helper_calls(subject, env, resolver);
+                scalar_pattern_condition(function, args, subject.scalar_dispatch.as_ref())
+            });
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
             record_string_call_consumers(function, args, env, resolver, &mut effects);
@@ -580,7 +643,12 @@ pub(crate) fn eval_call_with_helper_calls(
                     .map(AbstractValue::paths)
                     .unwrap_or_default(),
             );
-            EvalResult::with_effects(widened, effects)
+            let result = EvalResult::with_effects(widened, effects);
+            let mut result = result;
+            if let Some(truth) = scalar_truth {
+                result.truth = truth;
+            }
+            result
         }
         function if is_provenance_preserving_function(function) => {
             eval_all_args(args, env, resolver)
@@ -744,9 +812,14 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 }
                 result
             }
-            "eq" | "ne" if !args.is_empty() => {
-                eval_pipeline_comparison(current, args, env, resolver)
-            }
+            "eq" | "ne" if !args.is_empty() => eval_pipeline_comparison(
+                function,
+                current,
+                piped_is_direct_values_path,
+                args,
+                env,
+                resolver,
+            ),
             // The piped ternary operand is the condition: its strict Boolean
             // contract and effects flow, but its value is not a result arm.
             "ternary" => eval_ternary(
@@ -785,6 +858,14 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 result
             }
             function if is_string_transform_function(function) => {
+                let scalar_dispatch = if function == "toString" {
+                    current
+                        .scalar_dispatch
+                        .as_ref()
+                        .map(ScalarValueDispatch::stringified)
+                } else {
+                    None
+                };
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
                     args,
@@ -813,7 +894,11 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 } else {
                     current.value
                 };
-                EvalResult::with_effects(derive_value_text(value), effects)
+                let result = EvalResult::with_effects(derive_value_text(value), effects);
+                match scalar_dispatch {
+                    Some(dispatch) => result.with_scalar_dispatch(dispatch),
+                    None => result,
+                }
             }
             "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
             "fromJson" => eval_from_json_pipeline(current, args, env, resolver),
@@ -874,6 +959,8 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 if is_string_splitting_function(function)
                     || is_string_predicate_function(function) =>
             {
+                let scalar_truth =
+                    scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref());
                 let piped = current.clone();
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
@@ -903,7 +990,11 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                         .map(AbstractValue::paths)
                         .unwrap_or_default(),
                 );
-                EvalResult::with_effects(widened, effects)
+                let mut result = EvalResult::with_effects(widened, effects);
+                if let Some(truth) = scalar_truth {
+                    result.truth = truth;
+                }
+                result
             }
             "toYaml" => {
                 let mut result = eval_to_yaml_result(current);
@@ -1021,44 +1112,31 @@ fn eval_short_circuit_args(
     let mut effects = Effects::default();
     let mut values = Vec::new();
     let mut execution_predicates = BTreeSet::new();
+    let mut operand_conditions = Vec::with_capacity(args.len());
     let mut constrained_env = env.clone();
     for (index, arg) in args.iter().enumerate() {
         let mut result = eval_expr_with_helper_calls(arg, &constrained_env, resolver);
         scope_execution_effects(&mut result.effects, &execution_predicates);
 
-        // The operand's own condition. A direct values path contributes its
-        // truthiness; a `semverCompare` over the policy Kubernetes version
-        // is decidable too, and the difference is load-bearing, because an
-        // approximate stand-in silences every capture the LATER operands
-        // make — kube-prometheus-stack reads `.Values.defaultRules.create`
-        // as the third conjunct of a semver-gated `and`.
-        let marker = if previous_truthy {
-            "and operand truthiness"
-        } else {
-            "or operand truthiness"
-        };
-        let operand_predicate = direct_raw_identity_path(result.value.as_ref())
-            .filter(|path| !path.trim().is_empty())
-            .map(Predicate::truthy_path)
-            .or_else(|| semver_operand_predicate(arg, env));
+        // Each polarity is a sound subset of the operand's real domain.
+        // Partial conditions keep an approximation marker around that
+        // subset: positive-only consumers may use it, while member-domain
+        // ownership and other complement-sensitive consumers abstain.
+        let operand_truth = result.truth.clone();
+        operand_conditions.push(operand_truth.clone());
         let mut selection = execution_predicates.clone();
         if index + 1 < args.len() {
             // The chain's VALUE is this operand's exactly when the chain
             // stops here, which is the operand's condition inverted for
             // `and` and held for `or`.
-            let predicate = match &operand_predicate {
-                Some(predicate) if previous_truthy => predicate.negated(),
-                Some(predicate) => predicate.clone(),
-                None => Predicate::approximate(
-                    marker,
-                    result
-                        .value
-                        .as_ref()
-                        .map(AbstractValue::paths)
-                        .unwrap_or_default(),
-                ),
+            let predicate = if previous_truthy {
+                short_circuit_polarity(&operand_truth, false, "and operand selection")
+            } else {
+                short_circuit_polarity(&operand_truth, true, "or operand selection")
             };
-            selection.insert(predicate);
+            if predicate != Predicate::True {
+                selection.insert(predicate);
+            }
         }
         conjoin_result_selection(&mut result, &selection);
         if let Some(value) = result.value {
@@ -1069,92 +1147,97 @@ fn eval_short_circuit_args(
         if index + 1 == args.len() {
             break;
         }
-        // A statically TRUE operand lets an `and` fall through with no guard
-        // at all: the later operands execute exactly where the ambient
-        // predicates already say. Without this, a boolean flag local
-        // (`$shouldContinue := true`, and the joined state an unrolled
-        // traversal's kill switch leaves behind) contributes an approximate
-        // stand-in that poisons every capture the operand guards — grafana's
-        // `and $shouldContinue (hasKey $currentMap $elem)` lost the walk's
-        // object-kind claim on each intermediate host that way.
-        //
-        // Only this polarity is sound: a reduction is a SUFFICIENT condition
-        // for truthiness, so it may stand in for an `and`'s positive
-        // execution guard but never for an `or`'s negated one, which would
-        // widen the guard into states the operands never run in.
-        let falls_through =
-            previous_truthy && operand_predicate.is_none() && statically_truthy_operand(arg, env);
-        if !falls_through {
-            execution_predicates.insert(match &operand_predicate {
-                Some(predicate) if previous_truthy => predicate.clone(),
-                Some(predicate) => predicate.negated(),
-                None => Predicate::approximate(marker, BTreeSet::new()),
-            });
+        let next_condition = if previous_truthy {
+            short_circuit_polarity(&operand_truth, true, "and operand execution")
+        } else {
+            short_circuit_polarity(&operand_truth, false, "or operand execution")
+        };
+        if next_condition != Predicate::True {
+            execution_predicates.insert(next_condition);
         }
         constrained_env.bound_values = constrained_env
             .bound_values
             .with_predicate_constraints(arg, previous_truthy);
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+    let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    result.truth = combined_short_circuit_truth(&operand_conditions, previous_truthy);
+    result
 }
 
-/// The condition a `semverCompare` operand states, when the subject is a
-/// Kubernetes version this run pins: a local bound to a
-/// Capabilities-defaulted version, or the Capabilities selector itself.
-///
-/// The comparison is not a values read, so the operand's own evaluation
-/// carries no identity to gate on — but it is still decidable, and an
-/// operand that decides gates the ones after it exactly.
-fn semver_operand_predicate(arg: &TemplateExpr, env: &EvalEnv) -> Option<Predicate> {
-    let TemplateExpr::Call { function, args } = arg.deparen() else {
+fn short_circuit_polarity(truth: &TruthCondition, truthy: bool, marker: &str) -> Predicate {
+    let subset = if truthy {
+        truth.when_true()
+    } else {
+        truth.when_false()
+    };
+    if truth.predicate().is_some() {
+        return subset;
+    }
+    let paths = subset.value_paths();
+    Predicate::approximate_with_sound_predicate(marker, paths, subset)
+}
+
+fn split_length_dispatch(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> Option<ScalarValueDispatch> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
         return None;
     };
-    if function != "semverCompare" {
+    let [separator, subject] = args.as_slice() else {
+        return None;
+    };
+    if function != "split" {
         return None;
     }
-    let [constraint_expr, subject] = args.as_slice() else {
-        return None;
-    };
-    let TemplateExpr::Literal(Literal::String(constraint) | Literal::RawString(constraint)) =
-        constraint_expr.deparen()
+    let TemplateExpr::Literal(Literal::String(separator) | Literal::RawString(separator)) =
+        separator.deparen()
     else {
         return None;
     };
-    let subject = subject.deparen();
-    let source = match subject {
-        TemplateExpr::Variable(name) => env
-            .kube_version_bindings
-            .get(name.trim_start_matches('$'))
-            .cloned()?,
-        _ if crate::value_path_context::capabilities_kube_version_selector(subject) => {
-            crate::symbolic_local_state::KubeVersionSource {
-                override_path: None,
-            }
-        }
-        _ => return None,
-    };
-    crate::value_path_context::semver_constraint_predicate(
-        constraint,
-        &source,
-        env.kubernetes_version.as_deref()?,
-    )
+    if separator.is_empty() {
+        return None;
+    }
+    let subject = eval_expr_with_helper_calls(subject, env, resolver);
+    Some(subject.scalar_dispatch?.split_length(separator))
 }
 
-/// Whether a short-circuit operand is truthy on EVERY render: a `true`
-/// literal, or a local the fragment interpreter reduced to unconditional
-/// truthiness. Neither carries a values-path identity, so the operand's own
-/// evaluation cannot witness this.
-fn statically_truthy_operand(arg: &TemplateExpr, env: &EvalEnv) -> bool {
-    let reductions = &env.local_truthy_reductions;
-    match arg.deparen() {
-        TemplateExpr::Literal(Literal::Bool(value)) => *value,
-        TemplateExpr::Variable(name) => {
-            let reduction = reductions
-                .get(name)
-                .or_else(|| reductions.get(name.trim_start_matches('$')));
-            matches!(reduction, Some(Predicate::True))
+fn scalar_pattern_condition(
+    function: &str,
+    args: &[TemplateExpr],
+    dispatch: Option<&ScalarValueDispatch>,
+) -> Option<TruthCondition> {
+    let dispatch = dispatch?;
+    match function {
+        "regexMatch" | "mustRegexMatch" => {
+            let pattern = literal_string(args.first()?)?;
+            Some(dispatch.condition_matches_pattern(pattern))
         }
-        _ => false,
+        "semverCompare" => {
+            let constraint = literal_string(args.first()?)?;
+            Some(dispatch.condition_matches_semver(constraint))
+        }
+        _ => None,
+    }
+}
+
+fn literal_string(expr: &TemplateExpr) -> Option<&str> {
+    let TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) = expr.deparen()
+    else {
+        return None;
+    };
+    Some(value)
+}
+
+fn combined_short_circuit_truth(operands: &[TruthCondition], conjunction: bool) -> TruthCondition {
+    if operands.is_empty() {
+        return TruthCondition::Unknown;
+    }
+    if conjunction {
+        TruthCondition::all(operands.iter().cloned())
+    } else {
+        TruthCondition::any(operands.iter().cloned())
     }
 }
 
@@ -1249,6 +1332,19 @@ fn eval_helper_call(
         && let Some(result) = resolver.resolve_implicit_template_call(&template_name, args.get(1))
     {
         return result;
+    }
+    if let Some(callee_expr) = args.first()
+        && !matches!(callee_expr.deparen(), TemplateExpr::Literal(_))
+    {
+        let callee = eval_expr_with_helper_calls(callee_expr, env, resolver);
+        if let Some(AbstractValue::StringSet(names)) = &callee.value
+            && names.len() == 1
+            && let Some(name) = names.first()
+            && let Some(mut result) = resolver.resolve_helper_call(name, args.get(1))
+        {
+            result.effects.merge(callee.effects.execution_only());
+            return result;
+        }
     }
 
     if env.skip_helper_call_args {

@@ -363,6 +363,8 @@ fn splice_row(
         } else {
             ValueKind::PartialScalar
         }
+    } else if splice.meta.templated_yaml {
+        ValueKind::TemplatedYamlSerialized
     } else if splice.meta.yaml_serialized {
         ValueKind::YamlSerialized
     } else {

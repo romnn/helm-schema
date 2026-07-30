@@ -7,9 +7,14 @@ use std::collections::BTreeMap;
 /// to distinguish "no entry" from "entry with no flags".
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct RangeMode {
-    /// Iterated DIRECTLY (`range .Values.x`): only such paths have member
-    /// identities and an iterable input domain.
-    pub(crate) direct: bool,
+    /// The iterable itself is this values path (`range .Values.x`).
+    pub(crate) input_identity: bool,
+    /// Members visited by the iterable originate from this values path.
+    ///
+    /// A derived collection can retain member identity without using the
+    /// path itself as the range input, for example a merged map whose
+    /// values-backed layer supplies some of the visited members.
+    pub(crate) member_identity: bool,
     /// The iterated values came through JSON decoding.
     pub(crate) json_decoded: bool,
     /// Iterated with key and value variables (`range $k, $v := …`):
@@ -33,8 +38,12 @@ impl RangeModes {
         self.modes.get(path).copied().unwrap_or_default()
     }
 
-    pub(crate) fn mark_direct(&mut self, path: &str) {
-        self.entry(path, |mode| mode.direct = true);
+    pub(crate) fn mark_input_identity(&mut self, path: &str) {
+        self.entry(path, |mode| mode.input_identity = true);
+    }
+
+    pub(crate) fn mark_member_identity(&mut self, path: &str) {
+        self.entry(path, |mode| mode.member_identity = true);
     }
 
     pub(crate) fn mark_json_decoded(&mut self, path: &str) {
@@ -49,7 +58,8 @@ impl RangeModes {
     pub(crate) fn merge(&mut self, other: &RangeModes) {
         for (path, mode) in &other.modes {
             let merged = self.modes.entry(path.clone()).or_default();
-            merged.direct |= mode.direct;
+            merged.input_identity |= mode.input_identity;
+            merged.member_identity |= mode.member_identity;
             merged.json_decoded |= mode.json_decoded;
             merged.destructured |= mode.destructured;
         }
@@ -68,7 +78,8 @@ impl RangeModes {
         for (path, mode) in &self.modes {
             let target = map(path);
             let merged = mapped.modes.entry(target).or_default();
-            merged.direct |= mode.direct;
+            merged.input_identity |= mode.input_identity;
+            merged.member_identity |= mode.member_identity;
             merged.json_decoded |= mode.json_decoded;
             merged.destructured |= mode.destructured;
         }

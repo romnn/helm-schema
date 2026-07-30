@@ -458,6 +458,7 @@ impl Interpreter<'_> {
             };
             let output_effects = self.value_path_context().expression_output_effects(rhs);
             let hole = self.eval_hole_exprs(rhs);
+            let scalar_dispatch = hole.scalar_dispatch.clone();
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).
@@ -468,6 +469,10 @@ impl Interpreter<'_> {
                 .truthy_reductions
                 .get(&assignment.variable)
                 .cloned();
+            // Snapshot before the value binding below: its rebind clears
+            // every per-variable fact, but a write-through's monotonicity
+            // poison must stay sticky across later writes.
+            let previously_cleared = self.locals.truthiness_clears.contains(&assignment.variable);
             let truthy_reduction = match assignment.kind {
                 crate::fragment_assignment::AssignmentKind::Declaration => rhs_truthy_reduction
                     .or_else(|| {
@@ -541,12 +546,17 @@ impl Interpreter<'_> {
             // resolves to nothing (the summary lane's rule): an unresolvable
             // re-assignment in one branch must not erase the other branches'
             // value at the join.
-            if fragment_value.is_some() || !self.helper_scope {
+            if fragment_value.is_some() || scalar_dispatch.is_some() || !self.helper_scope {
                 self.locals.bind_fragment_value(
                     assignment.kind,
                     assignment.variable.clone(),
                     fragment_value.clone(),
                 );
+                if let Some(dispatch) = scalar_dispatch {
+                    self.locals
+                        .scalar_dispatches
+                        .insert(assignment.variable.clone(), dispatch);
+                }
             }
             // A guarded self-advance (`$x = index $x $k` reassigning `$x`
             // one member deeper while this step's `hasKey` presence guard
@@ -579,6 +589,28 @@ impl Interpreter<'_> {
             } else {
                 self.locals.truthy_reductions.remove(&assignment.variable);
             }
+            // A write-through that does not imply truthiness can leave the
+            // local falsy after an earlier truthy write, so an enclosing
+            // range join must not read the accumulator existentially. A
+            // declaration seeds a fresh accumulator; the self-preserving
+            // accumulation stays monotone by construction.
+            match assignment.kind {
+                crate::fragment_assignment::AssignmentKind::Declaration => {
+                    self.locals.truthiness_clears.remove(&assignment.variable);
+                }
+                crate::fragment_assignment::AssignmentKind::Assignment => {
+                    let may_clear = !self_preserving_nonempty_accumulation(
+                        &assignment.rhs_expr,
+                        &assignment.variable,
+                    ) && self.locals.truthy_reductions.get(&assignment.variable)
+                        != Some(&Predicate::True);
+                    if previously_cleared || may_clear {
+                        self.locals
+                            .truthiness_clears
+                            .insert(assignment.variable.clone());
+                    }
+                }
+            }
             // `$tp := typeOf .Values.x` binds a TYPE DESCRIPTOR of the path:
             // later `eq $tp "string"` comparisons are type tests, never value
             // equalities, so remember the described path. Recorded after the
@@ -602,18 +634,6 @@ impl Interpreter<'_> {
                     .int_cast_sources
                     .insert(assignment.variable.clone(), source);
             }
-            // A Capabilities-defaulted version local keeps its subject
-            // identity so `semverCompare` conditions on it evaluate the
-            // policy version / override split (kube-prometheus-stack's
-            // `$kubeTargetVersion` document gates).
-            let kube_version_source = self
-                .value_path_context()
-                .kube_version_operand(&assignment.rhs_expr);
-            if let Some(source) = kube_version_source {
-                self.locals
-                    .kube_version_sources
-                    .insert(assignment.variable.clone(), source);
-            }
             let mut output_meta = output_effects.local_output_meta.clone();
             merge_rendered_row_meta(&mut output_meta, &hole.effects.helper_rendered);
             if let Some(binding) = &fragment_value {
@@ -631,6 +651,9 @@ impl Interpreter<'_> {
             }
             for path in &hole.effects.yaml_serialized_paths {
                 output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+            }
+            for path in &hole.effects.templated_yaml_paths {
+                output_meta.entry(path.clone()).or_default().templated_yaml = true;
             }
             // Likewise a derived-text RHS (`$port := include … .`): a later
             // consuming transform on the local operates on rendered text and

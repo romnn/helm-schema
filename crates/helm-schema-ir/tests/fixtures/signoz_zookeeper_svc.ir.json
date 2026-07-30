@@ -8,13 +8,6 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          },
-          {
             "path": "commonAnnotations",
             "schema_type": "string",
             "type": "type_is"
@@ -42,6 +35,12 @@
       "condition": [
         [
           {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
             "paths": [
               "commonAnnotations",
               "service.annotations"
@@ -64,13 +63,6 @@
           {
             "path": "commonAnnotations",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
           },
           {
             "path": "commonAnnotations",
@@ -111,20 +103,13 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          },
-          {
             "path": "commonAnnotations",
             "schema_type": "string",
             "type": "not_type_is"
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "metadata",
         "annotations"
@@ -254,7 +239,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "metadata",
         "labels"
@@ -569,13 +554,6 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          },
-          {
             "path": "service.annotations",
             "schema_type": "string",
             "type": "type_is"
@@ -603,6 +581,12 @@
       "condition": [
         [
           {
+            "path": "service.annotations",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
             "paths": [
               "commonAnnotations",
               "service.annotations"
@@ -625,13 +609,6 @@
           {
             "path": "service.annotations",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
           },
           {
             "path": "service.annotations",
@@ -672,20 +649,13 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          },
-          {
             "path": "service.annotations",
             "schema_type": "string",
             "type": "not_type_is"
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "metadata",
         "annotations"
@@ -903,7 +873,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "ports"
@@ -932,11 +902,6 @@
           {
             "path": "service.loadBalancerIP",
             "type": "truthy"
-          },
-          {
-            "path": "service.type",
-            "type": "eq",
-            "value": "LoadBalancer"
           }
         ]
       ],
@@ -979,11 +944,6 @@
           {
             "path": "service.loadBalancerSourceRanges",
             "type": "truthy"
-          },
-          {
-            "path": "service.type",
-            "type": "eq",
-            "value": "LoadBalancer"
           }
         ]
       ],
@@ -1030,25 +990,6 @@
           {
             "path": "service.disableBaseClientPort",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "LoadBalancer"
-                }
-              ],
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "NodePort"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -1114,25 +1055,6 @@
           {
             "path": "tls.client.enabled",
             "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "LoadBalancer"
-                }
-              ],
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "NodePort"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -1399,7 +1321,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "sessionAffinityConfig"
@@ -1433,6 +1355,28 @@
             "path": "service.type",
             "type": "eq",
             "value": "ClusterIP"
+          }
+        ],
+        [
+          {
+            "path": "service.loadBalancerIP",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
+          }
+        ],
+        [
+          {
+            "path": "service.loadBalancerSourceRanges",
+            "type": "truthy"
+          },
+          {
+            "path": "service.type",
+            "type": "eq",
+            "value": "LoadBalancer"
           }
         ],
         [
@@ -1501,13 +1445,6 @@
               ]
             ],
             "type": "any_of"
-          }
-        ],
-        [
-          {
-            "path": "service.type",
-            "type": "eq",
-            "value": "LoadBalancer"
           }
         ],
         [

@@ -5,7 +5,7 @@
         [
           {
             "path": "acmesolver.image",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -21,12 +21,12 @@
       "condition": [
         [
           {
-            "path": "acmesolver.image.digest",
+            "path": "acmesolver.image",
             "type": "truthy"
           },
           {
-            "path": "acmesolver.image",
-            "type": "with"
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
           }
         ]
       ],
@@ -42,12 +42,12 @@
       "condition": [
         [
           {
-            "path": "acmesolver.image.digest",
+            "path": "acmesolver.image",
             "type": "truthy"
           },
           {
-            "path": "acmesolver.image",
-            "type": "with"
+            "path": "acmesolver.image.digest",
+            "type": "truthy"
           }
         ]
       ],
@@ -69,12 +69,12 @@
       "condition": [
         [
           {
-            "path": "acmesolver.image.registry",
+            "path": "acmesolver.image",
             "type": "truthy"
           },
           {
-            "path": "acmesolver.image",
-            "type": "with"
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
           }
         ]
       ],
@@ -90,12 +90,12 @@
       "condition": [
         [
           {
-            "path": "acmesolver.image.registry",
+            "path": "acmesolver.image",
             "type": "truthy"
           },
           {
-            "path": "acmesolver.image",
-            "type": "with"
+            "path": "acmesolver.image.registry",
+            "type": "truthy"
           }
         ]
       ],
@@ -118,7 +118,7 @@
         [
           {
             "path": "acmesolver.image",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -140,16 +140,16 @@
       "condition": [
         [
           {
+            "path": "acmesolver.image",
+            "type": "truthy"
+          },
+          {
             "path": "acmesolver.image.tag",
             "type": "truthy"
           },
           {
             "path": "acmesolver.image.digest",
             "type": "not"
-          },
-          {
-            "path": "acmesolver.image",
-            "type": "with"
           },
           {
             "path": "acmesolver.image.tag",
@@ -176,7 +176,7 @@
         [
           {
             "path": "affinity",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -193,7 +193,7 @@
         [
           {
             "path": "affinity",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -296,7 +296,7 @@
         [
           {
             "path": "containerSecurityContext",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -313,7 +313,7 @@
         [
           {
             "path": "containerSecurityContext",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -363,7 +363,7 @@
         [
           {
             "path": "deploymentAnnotations",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -380,7 +380,7 @@
         [
           {
             "path": "deploymentAnnotations",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -417,7 +417,7 @@
         [
           {
             "path": "dns01RecursiveNameservers",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -434,7 +434,7 @@
         [
           {
             "path": "dns01RecursiveNameservers",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -508,7 +508,7 @@
         [
           {
             "path": "extraArgs",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -525,7 +525,7 @@
         [
           {
             "path": "extraArgs",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -548,7 +548,7 @@
         [
           {
             "path": "extraEnv",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -565,7 +565,7 @@
         [
           {
             "path": "extraEnv",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -696,68 +696,12 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.create",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "has_string_contract": true,
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 497,
-            "start": 437
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1007,
-            "start": 930
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
             "path": "config",
             "type": "truthy"
           },
           {
             "path": "fullnameOverride",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "config",
-              "volumes"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -932,12 +876,12 @@
       "condition": [
         [
           {
-            "path": "serviceAccount.create",
-            "type": "not"
+            "path": "global.imagePullSecrets",
+            "type": "truthy"
           },
           {
-            "path": "global.imagePullSecrets",
-            "type": "with"
+            "path": "serviceAccount.create",
+            "type": "not"
           }
         ]
       ],
@@ -953,12 +897,12 @@
       "condition": [
         [
           {
-            "path": "serviceAccount.create",
-            "type": "not"
+            "path": "global.imagePullSecrets",
+            "type": "truthy"
           },
           {
-            "path": "global.imagePullSecrets",
-            "type": "with"
+            "path": "serviceAccount.create",
+            "type": "not"
           }
         ]
       ],
@@ -980,7 +924,7 @@
         [
           {
             "path": "global.leaderElection",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -996,12 +940,12 @@
       "condition": [
         [
           {
-            "path": "global.leaderElection.leaseDuration",
+            "path": "global.leaderElection",
             "type": "truthy"
           },
           {
-            "path": "global.leaderElection",
-            "type": "with"
+            "path": "global.leaderElection.leaseDuration",
+            "type": "truthy"
           }
         ]
       ],
@@ -1017,12 +961,12 @@
       "condition": [
         [
           {
-            "path": "global.leaderElection.leaseDuration",
+            "path": "global.leaderElection",
             "type": "truthy"
           },
           {
-            "path": "global.leaderElection",
-            "type": "with"
+            "path": "global.leaderElection.leaseDuration",
+            "type": "truthy"
           }
         ]
       ],
@@ -1045,7 +989,7 @@
         [
           {
             "path": "global.leaderElection",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1067,12 +1011,12 @@
       "condition": [
         [
           {
-            "path": "global.leaderElection.renewDeadline",
+            "path": "global.leaderElection",
             "type": "truthy"
           },
           {
-            "path": "global.leaderElection",
-            "type": "with"
+            "path": "global.leaderElection.renewDeadline",
+            "type": "truthy"
           }
         ]
       ],
@@ -1088,12 +1032,12 @@
       "condition": [
         [
           {
-            "path": "global.leaderElection.renewDeadline",
+            "path": "global.leaderElection",
             "type": "truthy"
           },
           {
-            "path": "global.leaderElection",
-            "type": "with"
+            "path": "global.leaderElection.renewDeadline",
+            "type": "truthy"
           }
         ]
       ],
@@ -1115,12 +1059,12 @@
       "condition": [
         [
           {
-            "path": "global.leaderElection.retryPeriod",
+            "path": "global.leaderElection",
             "type": "truthy"
           },
           {
-            "path": "global.leaderElection",
-            "type": "with"
+            "path": "global.leaderElection.retryPeriod",
+            "type": "truthy"
           }
         ]
       ],
@@ -1136,12 +1080,12 @@
       "condition": [
         [
           {
-            "path": "global.leaderElection.retryPeriod",
+            "path": "global.leaderElection",
             "type": "truthy"
           },
           {
-            "path": "global.leaderElection",
-            "type": "with"
+            "path": "global.leaderElection.retryPeriod",
+            "type": "truthy"
           }
         ]
       ],
@@ -1223,14 +1167,6 @@
           {
             "path": "nodeSelector",
             "type": "range"
-          },
-          {
-            "path": "global.nodeSelector",
-            "type": "with"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "with"
           }
         ]
       ],
@@ -1264,14 +1200,6 @@
           {
             "path": "nodeSelector",
             "type": "range"
-          },
-          {
-            "path": "global.nodeSelector",
-            "type": "with"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "with"
           }
         ]
       ],
@@ -1295,7 +1223,7 @@
         [
           {
             "path": "global.priorityClassName",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1312,7 +1240,7 @@
         [
           {
             "path": "global.priorityClassName",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1362,7 +1290,7 @@
         [
           {
             "path": "hostAliases",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1379,7 +1307,7 @@
         [
           {
             "path": "hostAliases",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1401,7 +1329,7 @@
         [
           {
             "path": "http_proxy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1418,7 +1346,7 @@
         [
           {
             "path": "http_proxy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1442,7 +1370,7 @@
         [
           {
             "path": "https_proxy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1459,7 +1387,7 @@
         [
           {
             "path": "https_proxy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1481,6 +1409,36 @@
     {
       "condition": [
         [
+          {
+            "path": "image",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "image"
+          ],
+          "span": {
+            "end": 6110,
+            "start": 5859
+          },
+          "template_path": "charts/cert-manager/templates/_helpers.tpl"
+        }
+      ],
+      "resource": null,
+      "source_expr": "image"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
           {
             "path": "image.digest",
             "type": "truthy"
@@ -1507,6 +1465,10 @@
     {
       "condition": [
         [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
           {
             "path": "image.digest",
             "type": "truthy"
@@ -1561,6 +1523,10 @@
       "condition": [
         [
           {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
             "path": "image.registry",
             "type": "truthy"
           }
@@ -1586,6 +1552,10 @@
     {
       "condition": [
         [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
           {
             "path": "image.registry",
             "type": "truthy"
@@ -1620,9 +1590,18 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "not"
+          }
+        ]
       ],
-      "kind": "Serialized",
+      "kind": "PartialScalar",
       "path": [
         "spec",
         "template",
@@ -1631,16 +1610,6 @@
         "image"
       ],
       "provenance": [
-        {
-          "helper_chain": [
-            "image"
-          ],
-          "span": {
-            "end": 5944,
-            "start": 5902
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
         {
           "helper_chain": [
             "image"
@@ -1661,6 +1630,49 @@
     {
       "condition": [
         [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
+          {
+            "path": "image.registry",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "image"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "image"
+          ],
+          "span": {
+            "end": 5944,
+            "start": 5902
+          },
+          "template_path": "charts/cert-manager/templates/_helpers.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "image.repository"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "image",
+            "type": "truthy"
+          },
           {
             "path": "image.tag",
             "type": "truthy"
@@ -1706,7 +1718,7 @@
         [
           {
             "path": "ingressShim",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1722,12 +1734,12 @@
       "condition": [
         [
           {
-            "path": "ingressShim.defaultIssuerGroup",
+            "path": "ingressShim",
             "type": "truthy"
           },
           {
-            "path": "ingressShim",
-            "type": "with"
+            "path": "ingressShim.defaultIssuerGroup",
+            "type": "truthy"
           }
         ]
       ],
@@ -1743,12 +1755,12 @@
       "condition": [
         [
           {
-            "path": "ingressShim.defaultIssuerGroup",
+            "path": "ingressShim",
             "type": "truthy"
           },
           {
-            "path": "ingressShim",
-            "type": "with"
+            "path": "ingressShim.defaultIssuerGroup",
+            "type": "truthy"
           }
         ]
       ],
@@ -1770,12 +1782,12 @@
       "condition": [
         [
           {
-            "path": "ingressShim.defaultIssuerKind",
+            "path": "ingressShim",
             "type": "truthy"
           },
           {
-            "path": "ingressShim",
-            "type": "with"
+            "path": "ingressShim.defaultIssuerKind",
+            "type": "truthy"
           }
         ]
       ],
@@ -1791,12 +1803,12 @@
       "condition": [
         [
           {
-            "path": "ingressShim.defaultIssuerKind",
+            "path": "ingressShim",
             "type": "truthy"
           },
           {
-            "path": "ingressShim",
-            "type": "with"
+            "path": "ingressShim.defaultIssuerKind",
+            "type": "truthy"
           }
         ]
       ],
@@ -1817,13 +1829,13 @@
     {
       "condition": [
         [
+          {
+            "path": "ingressShim",
+            "type": "truthy"
+          },
           {
             "path": "ingressShim.defaultIssuerName",
             "type": "truthy"
-          },
-          {
-            "path": "ingressShim",
-            "type": "with"
           }
         ]
       ],
@@ -1839,12 +1851,12 @@
       "condition": [
         [
           {
-            "path": "ingressShim.defaultIssuerName",
+            "path": "ingressShim",
             "type": "truthy"
           },
           {
-            "path": "ingressShim",
-            "type": "with"
+            "path": "ingressShim.defaultIssuerName",
+            "type": "truthy"
           }
         ]
       ],
@@ -1867,7 +1879,7 @@
         [
           {
             "path": "livenessProbe",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -1883,12 +1895,12 @@
       "condition": [
         [
           {
-            "path": "livenessProbe.enabled",
+            "path": "livenessProbe",
             "type": "truthy"
           },
           {
-            "path": "livenessProbe",
-            "type": "with"
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
           }
         ]
       ],
@@ -1904,12 +1916,12 @@
       "condition": [
         [
           {
-            "path": "livenessProbe.enabled",
+            "path": "livenessProbe",
             "type": "truthy"
           },
           {
-            "path": "livenessProbe",
-            "type": "with"
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
           }
         ]
       ],
@@ -1932,12 +1944,12 @@
       "condition": [
         [
           {
-            "path": "livenessProbe.enabled",
+            "path": "livenessProbe",
             "type": "truthy"
           },
           {
-            "path": "livenessProbe",
-            "type": "with"
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
           }
         ]
       ],
@@ -1960,12 +1972,12 @@
       "condition": [
         [
           {
-            "path": "livenessProbe.enabled",
+            "path": "livenessProbe",
             "type": "truthy"
           },
           {
-            "path": "livenessProbe",
-            "type": "with"
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
           }
         ]
       ],
@@ -1988,12 +2000,12 @@
       "condition": [
         [
           {
-            "path": "livenessProbe.enabled",
+            "path": "livenessProbe",
             "type": "truthy"
           },
           {
-            "path": "livenessProbe",
-            "type": "with"
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
           }
         ]
       ],
@@ -2016,12 +2028,12 @@
       "condition": [
         [
           {
-            "path": "livenessProbe.enabled",
+            "path": "livenessProbe",
             "type": "truthy"
           },
           {
-            "path": "livenessProbe",
-            "type": "with"
+            "path": "livenessProbe.enabled",
+            "type": "truthy"
           }
         ]
       ],
@@ -2350,62 +2362,6 @@
       "condition": [
         [
           {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.create",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "cert-manager.fullname"
-          ],
-          "span": {
-            "end": 742,
-            "start": 672
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "cert-manager.serviceAccountName"
-          ],
-          "span": {
-            "end": 1007,
-            "start": 930
-          },
-          "template_path": "charts/cert-manager/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
             "path": "config",
             "type": "truthy"
           },
@@ -2416,13 +2372,6 @@
           {
             "path": "fullnameOverride",
             "type": "not"
-          },
-          {
-            "paths": [
-              "config",
-              "volumes"
-            ],
-            "type": "or"
           },
           {
             "path": "nameOverride",
@@ -2498,7 +2447,7 @@
         [
           {
             "path": "no_proxy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2515,7 +2464,7 @@
         [
           {
             "path": "no_proxy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2568,14 +2517,6 @@
           {
             "path": "nodeSelector",
             "type": "range"
-          },
-          {
-            "path": "global.nodeSelector",
-            "type": "with"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "with"
           }
         ]
       ],
@@ -2609,14 +2550,6 @@
           {
             "path": "nodeSelector",
             "type": "range"
-          },
-          {
-            "path": "global.nodeSelector",
-            "type": "with"
-          },
-          {
-            "path": "nodeSelector",
-            "type": "with"
           }
         ]
       ],
@@ -2639,6 +2572,12 @@
       "condition": [
         [
           {
+            "path": "podAnnotations",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
             "path": "prometheus.enabled",
             "type": "truthy"
           },
@@ -2653,12 +2592,6 @@
           {
             "path": "prometheus.servicemonitor.enabled",
             "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "podAnnotations",
-            "type": "with"
           }
         ]
       ],
@@ -2675,7 +2608,7 @@
         [
           {
             "path": "podAnnotations",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2702,7 +2635,7 @@
         [
           {
             "path": "podDnsConfig",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2719,7 +2652,7 @@
         [
           {
             "path": "podDnsConfig",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2741,7 +2674,7 @@
         [
           {
             "path": "podDnsPolicy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2758,7 +2691,7 @@
         [
           {
             "path": "podDnsPolicy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2780,7 +2713,7 @@
         [
           {
             "path": "podLabels",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2797,7 +2730,7 @@
         [
           {
             "path": "podLabels",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2850,10 +2783,6 @@
           {
             "path": "prometheus.podmonitor.enabled",
             "type": "not"
-          },
-          {
-            "path": "prometheus.servicemonitor.enabled",
-            "type": "not"
           }
         ]
       ],
@@ -2871,6 +2800,10 @@
           {
             "path": "prometheus.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "prometheus.podmonitor.enabled",
+            "type": "not"
           },
           {
             "path": "prometheus.servicemonitor.enabled",
@@ -2906,7 +2839,7 @@
         [
           {
             "path": "resources",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2923,7 +2856,7 @@
         [
           {
             "path": "resources",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2946,7 +2879,7 @@
         [
           {
             "path": "securityContext",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -2963,7 +2896,7 @@
         [
           {
             "path": "securityContext",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3076,7 +3009,7 @@
         [
           {
             "path": "strategy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3093,7 +3026,7 @@
         [
           {
             "path": "strategy",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3113,7 +3046,7 @@
         [
           {
             "path": "tolerations",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3130,7 +3063,7 @@
         [
           {
             "path": "tolerations",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3152,7 +3085,7 @@
         [
           {
             "path": "topologySpreadConstraints",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3169,7 +3102,7 @@
         [
           {
             "path": "topologySpreadConstraints",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3190,6 +3123,12 @@
       "condition": [
         [
           {
+            "path": "volumeMounts",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
             "paths": [
               "config",
               "volumeMounts"
@@ -3210,15 +3149,8 @@
       "condition": [
         [
           {
-            "paths": [
-              "config",
-              "volumeMounts"
-            ],
-            "type": "or"
-          },
-          {
             "path": "volumeMounts",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],
@@ -3238,6 +3170,12 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "volumes",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "paths": [
@@ -3260,15 +3198,8 @@
       "condition": [
         [
           {
-            "paths": [
-              "config",
-              "volumes"
-            ],
-            "type": "or"
-          },
-          {
             "path": "volumes",
-            "type": "with"
+            "type": "truthy"
           }
         ]
       ],

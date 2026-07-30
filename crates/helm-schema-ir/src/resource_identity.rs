@@ -95,7 +95,19 @@ fn collect_window_spans(
     }
     let kind = parts.kind.take();
     let kind_candidates = std::mem::take(&mut parts.kind_candidates);
-    let kind_branch_sources = std::mem::take(&mut parts.kind_branch_sources);
+    let mut kind_branch_sources = std::mem::take(&mut parts.kind_branch_sources);
+    let resource_kinds = kind
+        .iter()
+        .chain(&kind_candidates)
+        .map(String::as_str)
+        .collect::<HashSet<_>>();
+    let branch_kinds = kind_branch_sources
+        .iter()
+        .map(|branch| branch.kind.as_str())
+        .collect::<HashSet<_>>();
+    if branch_kinds != resource_kinds {
+        kind_branch_sources.clear();
+    }
     let Some(resource) = resource_from_parts(kind, kind_candidates, parts.into_api_version_body())
     else {
         return;
@@ -298,9 +310,11 @@ fn collect_if_region(
         let mut sub = HeaderParts::default();
         let children = sorted_nodes(&branch.body);
         collect_header_parts(&children, window, top_indent, source, analysis_db, &mut sub);
+        let sub_kind_branch_sources = std::mem::take(&mut sub.kind_branch_sources);
         if let Some(kind) = sub.kind.take() {
             if parts.kind.is_none() {
                 parts.kind = Some(kind);
+                parts.kind_branch_sources = sub_kind_branch_sources;
             } else if parts.kind.as_ref() != Some(&kind) && !parts.kind_candidates.contains(&kind) {
                 parts.kind_candidates.push(kind);
             }

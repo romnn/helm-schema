@@ -307,11 +307,7 @@
       },
       "source_expr": "commonLabels",
       "template_supplied_member_keys": [
-        "app.kubernetes.io/instance",
-        "app.kubernetes.io/managed-by",
-        "app.kubernetes.io/name",
-        "app.kubernetes.io/version",
-        "helm.sh/chart"
+        "app.kubernetes.io/name"
       ]
     },
     {
@@ -1693,6 +1689,20 @@
             "type": "truthy"
           },
           {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
             "path": "networkPolicy.allowExternal",
             "type": "not"
           },
@@ -1727,13 +1737,6 @@
           {
             "path": "networkPolicy.allowExternal",
             "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.ingressNSMatchLabels",
-              "networkPolicy.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
           },
           {
             "path": "networkPolicy.ingressNSMatchLabels",
@@ -1771,13 +1774,6 @@
             "type": "not"
           },
           {
-            "paths": [
-              "networkPolicy.ingressNSMatchLabels",
-              "networkPolicy.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
-          },
-          {
             "path": "networkPolicy.ingressNSMatchLabels",
             "type": "range"
           }
@@ -1801,6 +1797,20 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ],
         [
           {
             "path": "networkPolicy.enabled",
@@ -1841,13 +1851,6 @@
           {
             "path": "networkPolicy.allowExternal",
             "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.ingressNSMatchLabels",
-              "networkPolicy.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
           },
           {
             "path": "networkPolicy.ingressNSPodMatchLabels",
@@ -1883,13 +1886,6 @@
           {
             "path": "networkPolicy.allowExternal",
             "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.ingressNSMatchLabels",
-              "networkPolicy.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
           },
           {
             "path": "networkPolicy.ingressNSPodMatchLabels",
@@ -1950,6 +1946,24 @@
             "type": "truthy"
           },
           {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
             "path": "networkPolicy.metrics.allowExternal",
             "type": "not"
           },
@@ -1988,13 +2002,6 @@
           {
             "path": "networkPolicy.metrics.allowExternal",
             "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.metrics.ingressNSMatchLabels",
-              "networkPolicy.metrics.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
           },
           {
             "path": "networkPolicy.metrics.ingressNSMatchLabels",
@@ -2036,13 +2043,6 @@
             "type": "not"
           },
           {
-            "paths": [
-              "networkPolicy.metrics.ingressNSMatchLabels",
-              "networkPolicy.metrics.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
-          },
-          {
             "path": "networkPolicy.metrics.ingressNSMatchLabels",
             "type": "range"
           }
@@ -2066,6 +2066,24 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          }
+        ],
         [
           {
             "path": "metrics.enabled",
@@ -2114,13 +2132,6 @@
           {
             "path": "networkPolicy.metrics.allowExternal",
             "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.metrics.ingressNSMatchLabels",
-              "networkPolicy.metrics.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
           },
           {
             "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
@@ -2160,13 +2171,6 @@
           {
             "path": "networkPolicy.metrics.allowExternal",
             "type": "not"
-          },
-          {
-            "paths": [
-              "networkPolicy.metrics.ingressNSMatchLabels",
-              "networkPolicy.metrics.ingressNSPodMatchLabels"
-            ],
-            "type": "or"
           },
           {
             "path": "networkPolicy.metrics.ingressNSPodMatchLabels",

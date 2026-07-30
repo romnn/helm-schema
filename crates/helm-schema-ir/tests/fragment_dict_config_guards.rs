@@ -41,7 +41,7 @@ fn call_site_guards_wrap_spliced_dict_config_helper() {
         {{- end }}
     "#};
     let expected = indoc! {r#"
-        when (with(ingress) && truthy(ingress.enabled)):
+        when (truthy(ingress) && truthy(ingress.enabled)):
           mapping:
             key "apiVersion":
               when always:
@@ -54,11 +54,11 @@ fn call_site_guards_wrap_spliced_dict_config_helper() {
                 mapping:
                   key "ingressClassName":
                     when truthy(ingress.className):
-                      splice ingress.className scalar
+                      scalar [splice ingress.className scalar]
         reads:
-          ingress [with(ingress)]
-          ingress.enabled [truthy(ingress.enabled), with(ingress)]
-          ingress.className [truthy(ingress.className), truthy(ingress.enabled), with(ingress)]
+          ingress [truthy(ingress)]
+          ingress.enabled [truthy(ingress), truthy(ingress.enabled)]
+          ingress.className [truthy(ingress), truthy(ingress.className), truthy(ingress.enabled)]
     "#};
     assert_fragment_dump(source, helpers, expected);
 }
@@ -97,10 +97,10 @@ fn helper_internal_nested_with_keeps_outer_if_condition() {
                 mapping:
                   key "minAvailable":
                     when always:
-                      splice podDisruptionBudget.minAvailable scalar
+                      scalar [splice podDisruptionBudget.minAvailable scalar]
                   key "maxUnavailable":
                     when truthy(podDisruptionBudget.maxUnavailable):
-                      splice podDisruptionBudget.maxUnavailable scalar
+                      scalar [splice podDisruptionBudget.maxUnavailable scalar]
         reads:
           podDisruptionBudget.enabled [truthy(podDisruptionBudget.enabled)]
           podDisruptionBudget.maxUnavailable [truthy(podDisruptionBudget.enabled), truthy(podDisruptionBudget.maxUnavailable)]
@@ -148,17 +148,17 @@ fn with_bound_nindented_dynamic_entries_attach_below_literal_key() {
         when always:
           mapping:
             key "spec":
-              when (with(cfg) && range(cfg)):
+              when (truthy(cfg) && range(cfg)):
                 splice cfg fragment
               when always:
                 mapping:
                   key "config":
                   key dynamic [splice cfg fragment range-key]:
-                    when (with(cfg) && range(cfg)):
+                    when (truthy(cfg) && range(cfg)):
                       splice cfg.* scalar
         reads:
-          cfg [with(cfg)]
-          cfg [range(cfg), with(cfg)]
+          cfg [truthy(cfg)]
+          cfg [truthy(cfg), range(cfg)]
     "#};
     assert_fragment_dump(source, "", expected);
 

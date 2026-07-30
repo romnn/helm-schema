@@ -110,17 +110,19 @@ pub(crate) fn collect_template_requests_from_exprs(
                     });
                 }
                 if let Some(value) = resolve_fragment_value(template_arg) {
-                    for path in value.fragment_source_paths() {
-                        let Some(program) = context.analysis_db.chart_default_string(&path) else {
-                            continue;
-                        };
-                        requests.insert(StaticTemplateProgram {
-                            source: StaticTemplateSource::ValuesDefault {
-                                path,
-                                program: program.to_string(),
-                            },
-                            dot: dot.clone(),
-                        });
+                    for path_pattern in value.fragment_source_paths() {
+                        for (path, program) in context
+                            .analysis_db
+                            .chart_default_programs_matching(&path_pattern)
+                        {
+                            requests.insert(StaticTemplateProgram {
+                                source: StaticTemplateSource::ValuesDefault {
+                                    path: path.to_string(),
+                                    program: program.to_string(),
+                                },
+                                dot: dot.clone(),
+                            });
+                        }
                     }
                     for program in value.strings() {
                         if !matches!(

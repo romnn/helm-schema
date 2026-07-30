@@ -90,6 +90,20 @@ impl AbstractValue {
         Self::ValuesPath(String::new())
     }
 
+    /// Returns the path whose runtime value this value is structurally
+    /// identical to.
+    ///
+    /// Helper output is an identity only after a matching JSON decode has
+    /// recovered the source value. Other output metadata records influence
+    /// or transformed text, neither of which permits structural projection.
+    pub(crate) fn direct_values_identity(&self) -> Option<String> {
+        match self {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
+            Self::OutputPath(path, meta) if meta.json_decoded => Some(path.clone()),
+            _ => None,
+        }
+    }
+
     pub(crate) fn paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_paths(&mut paths, true, false);
@@ -811,35 +825,6 @@ impl AbstractValue {
             | Self::SplitSegment { .. }
             | Self::Widened(_) => None,
         }
-    }
-
-    pub(crate) fn unique_json_decoded_path(&self) -> Option<String> {
-        let path = match self {
-            Self::JsonDecodedPath(path) => path,
-            Self::OutputPath(path, meta) if meta.json_decoded => path,
-            Self::Choice(choices)
-                if !choices.is_empty()
-                    && choices
-                        .iter()
-                        .all(|choice| choice.unique_json_decoded_path().is_some()) =>
-            {
-                let mut paths = choices.iter().filter_map(Self::unique_json_decoded_path);
-                let first = paths.next()?;
-                return paths.all(|path| path == first).then_some(first);
-            }
-            Self::FirstTruthy(candidates)
-                if !candidates.is_empty()
-                    && candidates
-                        .iter()
-                        .all(|candidate| candidate.unique_json_decoded_path().is_some()) =>
-            {
-                let mut paths = candidates.iter().filter_map(Self::unique_json_decoded_path);
-                let first = paths.next()?;
-                return paths.all(|path| path == first).then_some(first);
-            }
-            _ => return None,
-        };
-        Some(path.clone())
     }
 
     pub(crate) fn is_definitely_json_serialized(&self) -> bool {

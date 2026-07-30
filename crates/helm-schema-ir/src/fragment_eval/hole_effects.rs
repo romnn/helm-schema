@@ -15,6 +15,7 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
 
@@ -81,6 +82,12 @@ fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
             path: guard_path, ..
         }
         | Guard::ContainsEquals {
+            path: guard_path, ..
+        }
+        | Guard::ContainsMemberEquals {
+            path: guard_path, ..
+        }
+        | Guard::ContainsTruthyMember {
             path: guard_path, ..
         } => !guard_path.trim().is_empty() && foreign(guard_path),
         // A type test PARTITIONS its subject: hints observed under
@@ -228,8 +235,9 @@ impl Interpreter<'_> {
     pub(super) fn absorb_header_execution_effects(
         &mut self,
         expr: &TemplateExpr,
-    ) -> std::collections::BTreeSet<String> {
+    ) -> (std::collections::BTreeSet<String>, TruthCondition) {
         let hole = self.eval_hole_exprs_for_condition(expr);
+        let truth = hole.truth;
         let mut effects = hole.effects;
         effects.bound_output_paths.clear();
         let strict_paths: std::collections::BTreeSet<String> = effects
@@ -269,11 +277,14 @@ impl Interpreter<'_> {
         }
         self.absorb_hole_effects(&effects, RenderedDemotion::None);
 
-        claims
-            .iter()
-            .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
-            .cloned()
-            .collect()
+        (
+            claims
+                .iter()
+                .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
+                .cloned()
+                .collect(),
+            truth,
+        )
     }
 
     /// Record every `required(message, subject)` guardrail in the
@@ -315,7 +326,39 @@ impl Interpreter<'_> {
     /// lattice, resolving bound helper calls via the memoized summaries.
     pub(super) fn eval_hole_exprs(&mut self, exprs: &[TemplateExpr]) -> HoleEval {
         let current_dot = self.current_value_dot();
-        let mut env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref())
+        let env = self.hole_eval_env(current_dot.as_ref());
+        let context = FragmentEvalContext::new(self.db);
+        let mut seen = self.helper_seen.clone();
+        let mut values = Vec::new();
+        let mut effects = Effects::default();
+        let mut truth = TruthCondition::Unknown;
+        let mut scalar_dispatch = None;
+        for expr in exprs {
+            let result = document_result_from_expr(
+                expr,
+                &env,
+                Some(&self.root_bindings),
+                current_dot.as_ref(),
+                context,
+                &mut seen,
+            );
+            if exprs.len() == 1 {
+                truth = result.truth.clone();
+                scalar_dispatch = result.scalar_dispatch.clone();
+            }
+            values.extend(result.value);
+            effects.merge(result.effects);
+        }
+        HoleEval {
+            value: AbstractValue::choice(values).map(|value| value.to_context_value()),
+            effects,
+            truth,
+            scalar_dispatch,
+        }
+    }
+
+    pub(super) fn hole_eval_env(&self, current_dot: Option<&AbstractValue>) -> EvalEnv {
+        let mut env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot)
             .without_helper_call_args();
         // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
         // roots stay in `root_fields` so a helper-arg key never shadows a
@@ -334,39 +377,17 @@ impl Interpreter<'_> {
         env.pipeline_bound_locals = self.locals.fragment_values.keys().cloned().collect();
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
+        env.local_scalar_dispatches = self.locals.scalar_dispatches.clone();
         env.local_truthy_reductions = self.locals.truthy_reductions.clone();
-        env.kubernetes_version = self.db.kubernetes_version().map(str::to_string);
-        env.kube_version_bindings = self.locals.kube_version_sources.clone();
         env.member_host_conversions = self.member_host_conversions.clone();
         env.active_predicates = self.active_predicates.clone();
         env.root_truthy_predicates = self.root_truthy_predicates.clone();
+        env.root_value_dispatches = self.root_value_dispatches.clone();
+        env.root_field_semantics_on_current_dot =
+            self.root_value_dot.is_some() && self.dot_stack.len() <= 1;
         env.bound_values =
             BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
-        let context = FragmentEvalContext::new(self.db);
-        let mut seen = self.helper_seen.clone();
-        let mut values = Vec::new();
-        let mut effects = Effects::default();
-        for expr in exprs {
-            let result = document_result_from_expr(
-                expr,
-                &env,
-                &env.locals,
-                Some(&self.root_bindings),
-                crate::analysis_db::OuterRootFacts {
-                    truthy_predicates: Some(&self.root_truthy_predicates),
-                    value_dispatches: Some(&self.root_value_dispatches),
-                },
-                current_dot.as_ref(),
-                context,
-                &mut seen,
-            );
-            values.extend(result.value);
-            effects.merge(result.effects);
-        }
-        HoleEval {
-            value: AbstractValue::choice(values).map(|value| value.to_context_value()),
-            effects,
-        }
+        env
     }
 
     /// Absorb a hole's effect stream into interpreter state and the read
@@ -472,6 +493,8 @@ impl Interpreter<'_> {
             .extend(effects.yaml_serialized_paths.iter().cloned());
         self.shape_erased_paths
             .extend(effects.shape_erased_paths.iter().cloned());
+        self.shape_erased_paths
+            .extend(effects.helper_observed_shape_erased_paths.iter().cloned());
         self.range_modes.merge(&effects.range_modes);
         // Only an unconditional consumer contributes a path-wide contract.
         // Conditional consumers travel through their placed rows and fail
@@ -568,7 +591,7 @@ impl Interpreter<'_> {
         &mut self,
         mutations: &std::collections::BTreeMap<String, AbstractValue>,
         predicates: &std::collections::BTreeMap<String, Predicate>,
-        dispatches: &std::collections::BTreeMap<String, crate::eval_effect::RootValueDispatch>,
+        dispatches: &std::collections::BTreeMap<String, ScalarValueDispatch>,
     ) {
         for (key, value) in mutations {
             self.root_truthy_predicates.remove(key);
@@ -647,6 +670,7 @@ fn runtime_requirement_paths(
         | CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
         CaptureKind::IndexAccess { path, .. }
         | CaptureKind::ValueType { path, .. }
+        | CaptureKind::RangeInput { path, .. }
         | CaptureKind::DigSubject { path }
         | CaptureKind::RequiredPresence { path }
         | CaptureKind::AbsenceAborts { path }

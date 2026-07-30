@@ -11,8 +11,7 @@ use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
-use crate::eval_effect::RootValueDispatch;
-use crate::fragment_expr_eval::FragmentEvalContext;
+use crate::scalar_value::{ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates};
 use crate::value_path_context::{guard_value_is_truthy, predicate_any};
 use crate::{Guard, ValueKind};
 use helm_schema_core::{GuardValue, Predicate};
@@ -63,7 +62,7 @@ impl Interpreter<'_> {
         let entry_locals = self.locals.clone();
         let entry_predicates = self.active_predicates.len();
         let entry_dots = self.dot_stack.len();
-        let entry_ranged = self.active_direct_ranged_paths.len();
+        let entry_ranged = self.active_range_modes.len();
         // Root-context `set` state joins across if/else arms like locals:
         // each arm evaluates from the entry state (arms are mutually
         // exclusive at runtime, so one arm's mutation must not leak into a
@@ -73,11 +72,16 @@ impl Interpreter<'_> {
         // sequential accumulation.
         let entry_root = (region.kind == ControlKind::If).then(|| self.capture_root_set_state());
         let mut root_arm_states: Vec<(Predicate, bool, RootSetState)> = Vec::new();
+        let mut local_arm_states: Vec<(
+            TruthCondition,
+            crate::symbolic_local_state::SymbolicLocalState,
+        )> = Vec::new();
 
         let mut out = Contributions::default();
         let mut outcomes = Vec::new();
         let mut arm_header_exprs: Vec<Option<TemplateExpr>> = Vec::new();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
+        let mut prior_truth_conditions: Vec<TruthCondition> = Vec::new();
         let mut has_unconditional_else = false;
         let mut promote_body_outcome = false;
 
@@ -85,7 +89,7 @@ impl Interpreter<'_> {
             self.locals = entry_locals.clone();
             self.active_predicates.truncate(entry_predicates);
             self.dot_stack.truncate(entry_dots);
-            self.active_direct_ranged_paths.truncate(entry_ranged);
+            self.active_range_modes.truncate(entry_ranged);
             if let Some(entry_root) = &entry_root {
                 self.restore_root_set_state(entry_root);
             }
@@ -113,7 +117,7 @@ impl Interpreter<'_> {
             // region intersects (none when it spans several documents).
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
-            let (own_condition, extra, iterations) =
+            let (own_condition, extra, iterations, own_truth) =
                 self.activate_arm(&arm, nodes, region.span.start, index);
             self.current_site = previous_site;
             // The value-dispatch join needs mutually exclusive, total arm
@@ -131,6 +135,21 @@ impl Interpreter<'_> {
                     prior_conditions.push(own);
                 }
             }
+            let semantic_arm_truth = if region.kind == ControlKind::If {
+                let own_truth = own_truth.unwrap_or_else(|| TruthCondition::exact(Predicate::True));
+                let truth = TruthCondition::all(
+                    prior_truth_conditions
+                        .iter()
+                        .map(TruthCondition::negated)
+                        .chain(std::iter::once(own_truth.clone())),
+                );
+                if matches!(arm, ArmSpec::If(_)) {
+                    prior_truth_conditions.push(own_truth);
+                }
+                Some(truth)
+            } else {
+                None
+            };
             if index == 0 && iterations.as_ref().is_some_and(|plan| plan.nonempty) {
                 promote_body_outcome = true;
             }
@@ -139,93 +158,124 @@ impl Interpreter<'_> {
             if matches!(arm, ArmSpec::Range { .. }) {
                 self.loop_depth += 1;
             }
-            let mut contributions = match &iterations {
-                Some(plan) => {
-                    // Items within one alternative run sequentially. Distinct
-                    // list alternatives start from the same state so a split
-                    // path such as `a.b | c.d` cannot cross-pair its segments.
-                    let alternative_entry = self.locals.clone();
-                    let mut all = Contributions::default();
-                    let mut alternative_outcomes = Vec::new();
-                    // Items beyond the alternatives' SHARED PREFIX execute
-                    // only under the (undecoded) alternative selection: an
-                    // approximate conjunct on their CAPTURE conjunctions
-                    // keeps strict captures from binding unconditionally
-                    // (nats' jsonpatch appends "from" to `$opPathKeys` only
-                    // for copy/move patches — demanding `from` of every
-                    // patch member falsely rejects valid adds). Rows and
-                    // type hints keep the ordinary join semantics, so
-                    // per-alternative RENDER facts still lower exactly
-                    // (kyverno's label-merge lists differ across callers).
-                    let shared_items = if plan.alternatives.len() > 1 {
-                        let (first, rest) = plan
-                            .alternatives
-                            .split_first()
-                            .map_or((&[][..], &[][..]), |(first, rest)| (first.as_slice(), rest));
-                        (0..first.len())
-                            .take_while(|&index| {
-                                rest.iter()
-                                    .all(|alternative| alternative.get(index) == first.get(index))
-                            })
-                            .count()
-                    } else {
-                        usize::MAX
-                    };
-                    for alternative in &plan.alternatives {
-                        self.locals = alternative_entry.clone();
-                        let mut remaining = Predicate::True;
-                        for (item_index, item) in alternative.iter().enumerate() {
-                            if remaining == Predicate::False {
-                                break;
-                            }
-                            if let Some((variable, binding)) = &item.variable {
-                                self.locals
-                                    .fragment_values
-                                    .insert(variable.clone(), binding.clone());
-                            }
-                            if let Some((variable, ordinal)) = &item.key {
-                                self.locals
-                                    .fragment_values
-                                    .insert(variable.clone(), ordinal.clone());
-                            }
-                            let entry_predicates = self.active_predicates.len();
-                            let entry_capture_approximates =
-                                self.alternative_capture_approximates.len();
-                            if item_index >= shared_items {
-                                self.alternative_capture_approximates
-                                    .push(Predicate::approximate(
-                                        format!(
-                                            "{}:{}:range alternative",
-                                            self.source_offset, region.span.start
+            let mut contributions = if arm_condition == Predicate::False {
+                Contributions::default()
+            } else {
+                match &iterations {
+                    Some(plan) => {
+                        // Items within one alternative run sequentially. Distinct
+                        // list alternatives start from the same state so a split
+                        // path such as `a.b | c.d` cannot cross-pair its segments.
+                        let alternative_entry = self.locals.clone();
+                        let mut all = Contributions::default();
+                        let mut alternative_outcomes = Vec::new();
+                        // Items beyond the alternatives' SHARED PREFIX execute
+                        // only under the (undecoded) alternative selection: an
+                        // approximate conjunct on their CAPTURE conjunctions
+                        // keeps strict captures from binding unconditionally
+                        // (nats' jsonpatch appends "from" to `$opPathKeys` only
+                        // for copy/move patches — demanding `from` of every
+                        // patch member falsely rejects valid adds). Rows and
+                        // type hints keep the ordinary join semantics, so
+                        // per-alternative RENDER facts still lower exactly
+                        // (kyverno's label-merge lists differ across callers).
+                        let shared_items = if plan.alternatives.len() > 1 {
+                            let (first, rest) = plan
+                                .alternatives
+                                .split_first()
+                                .map_or((&[][..], &[][..]), |(first, rest)| {
+                                    (first.as_slice(), rest)
+                                });
+                            (0..first.len())
+                                .take_while(|&index| {
+                                    rest.iter().all(|alternative| {
+                                        alternative.get(index) == first.get(index)
+                                    })
+                                })
+                                .count()
+                        } else {
+                            usize::MAX
+                        };
+                        for alternative in &plan.alternatives {
+                            self.locals = alternative_entry.clone();
+                            let mut remaining = Predicate::True;
+                            let mut scalar_exit_states = Vec::new();
+                            for (item_index, item) in alternative.iter().enumerate() {
+                                if remaining == Predicate::False {
+                                    break;
+                                }
+                                if let Some((variable, binding)) = &item.variable {
+                                    self.locals
+                                        .fragment_values
+                                        .insert(variable.clone(), binding.clone());
+                                }
+                                if let Some((variable, ordinal)) = &item.key {
+                                    self.locals
+                                        .fragment_values
+                                        .insert(variable.clone(), ordinal.clone());
+                                }
+                                let entry_predicates = self.active_predicates.len();
+                                let entry_capture_approximates =
+                                    self.alternative_capture_approximates.len();
+                                if item_index >= shared_items {
+                                    self.alternative_capture_approximates.push(
+                                        Predicate::approximate(
+                                            format!(
+                                                "{}:{}:range alternative",
+                                                self.source_offset, region.span.start
+                                            ),
+                                            std::collections::BTreeSet::new(),
                                         ),
-                                        std::collections::BTreeSet::new(),
+                                    );
+                                }
+                                self.push_predicate(remaining.clone());
+                                self.dot_stack.push(Some(item.dot.clone()));
+                                let mut iteration = self.eval_node_list(nodes);
+                                self.dot_stack.pop();
+                                self.active_predicates.truncate(entry_predicates);
+                                self.alternative_capture_approximates
+                                    .truncate(entry_capture_approximates);
+                                let break_condition = iteration.loop_control.break_condition();
+                                iteration.take_loop_control();
+                                iteration.guard_all(&remaining);
+                                all.extend(iteration);
+                                if break_condition != Predicate::False {
+                                    scalar_exit_states.push((
+                                        TruthCondition::exact(and_conditions(
+                                            remaining.clone(),
+                                            break_condition.clone(),
+                                        )),
+                                        self.locals.clone(),
                                     ));
+                                }
+                                remaining = match break_condition {
+                                    Predicate::False => remaining,
+                                    Predicate::True => Predicate::False,
+                                    condition => and_conditions(remaining, condition.negated()),
+                                };
                             }
-                            self.push_predicate(remaining.clone());
-                            self.dot_stack.push(Some(item.dot.clone()));
-                            let mut iteration = self.eval_node_list(nodes);
-                            self.dot_stack.pop();
-                            self.active_predicates.truncate(entry_predicates);
-                            self.alternative_capture_approximates
-                                .truncate(entry_capture_approximates);
-                            let break_condition = iteration.loop_control.break_condition();
-                            iteration.take_loop_control();
-                            iteration.guard_all(&remaining);
-                            all.extend(iteration);
-                            remaining = match break_condition {
-                                Predicate::False => remaining,
-                                Predicate::True => Predicate::False,
-                                condition => and_conditions(remaining, condition.negated()),
-                            };
+                            if remaining != Predicate::False {
+                                scalar_exit_states
+                                    .push((TruthCondition::exact(remaining), self.locals.clone()));
+                            }
+                            if !scalar_exit_states.is_empty() {
+                                let mut scalar_join = self.locals.clone();
+                                scalar_join.join_scalar_dispatch_arms(
+                                    &alternative_entry,
+                                    &scalar_exit_states,
+                                    true,
+                                );
+                                self.locals.scalar_dispatches = scalar_join.scalar_dispatches;
+                            }
+                            alternative_outcomes.push(self.locals.clone());
                         }
-                        alternative_outcomes.push(self.locals.clone());
+                        self.locals = alternative_entry.clone();
+                        self.locals
+                            .join_branch_outcomes(&alternative_entry, &alternative_outcomes);
+                        all
                     }
-                    self.locals = alternative_entry.clone();
-                    self.locals
-                        .join_branch_outcomes(&alternative_entry, &alternative_outcomes);
-                    all
+                    None => self.eval_node_list(nodes),
                 }
-                None => self.eval_node_list(nodes),
             };
             // Escaped descendants of earlier siblings whose spans fall in
             // this branch's window evaluate here, re-attached under their
@@ -260,6 +310,9 @@ impl Interpreter<'_> {
             self.locals
                 .conjoin_changed_truthy_reductions(&entry_locals, &stamped_condition);
             outcomes.push(self.locals.clone());
+            if let Some(semantic_arm_truth) = semantic_arm_truth {
+                local_arm_states.push((semantic_arm_truth, self.locals.clone()));
+            }
             if entry_root.is_some() {
                 root_arm_states.push((
                     arm_condition.clone(),
@@ -276,7 +329,7 @@ impl Interpreter<'_> {
         self.locals = entry_locals.clone();
         self.active_predicates.truncate(entry_predicates);
         self.dot_stack.truncate(entry_dots);
-        self.active_direct_ranged_paths.truncate(entry_ranged);
+        self.active_range_modes.truncate(entry_ranged);
         if let Some(entry_root) = &entry_root {
             self.restore_root_set_state(entry_root);
             self.join_root_set_arms(entry_root, &root_arm_states, has_unconditional_else);
@@ -298,6 +351,13 @@ impl Interpreter<'_> {
             self.apply_omission_exclusions(&entry_locals, &mut outcomes, &arm_header_exprs);
         }
         self.locals.join_branch_outcomes(&entry_locals, &outcomes);
+        if region.kind == ControlKind::If {
+            self.locals.join_scalar_dispatch_arms(
+                &entry_locals,
+                &local_arm_states,
+                has_unconditional_else,
+            );
+        }
 
         // Descendants of adopted or escaped nodes that start after the
         // region end evaluate here, outside the branch scope, re-attached
@@ -440,17 +500,24 @@ impl Interpreter<'_> {
         Option<PathCondition>,
         Contributions,
         Option<RangeIterations>,
+        Option<TruthCondition>,
     ) {
         match arm {
-            ArmSpec::Else => (None, Contributions::default(), None),
-            ArmSpec::If(header) => (
-                self.activate_if(header.as_ref(), region_start, branch_index),
+            ArmSpec::Else => (
+                None,
                 Contributions::default(),
                 None,
+                Some(TruthCondition::exact(Predicate::True)),
             ),
+            ArmSpec::If(header) => {
+                let (condition, truth) =
+                    self.activate_if(header.as_ref(), region_start, branch_index);
+                (condition, Contributions::default(), None, Some(truth))
+            }
             ArmSpec::With(header) => (
                 self.activate_with(header.as_ref(), region_start, branch_index),
                 Contributions::default(),
+                None,
                 None,
             ),
             ArmSpec::Range {
@@ -458,14 +525,17 @@ impl Interpreter<'_> {
                 destructured,
                 value_variable,
                 key_variable,
-            } => self.activate_range(
-                header.as_ref(),
-                *destructured,
-                value_variable.as_deref(),
-                key_variable.as_deref(),
-                nodes,
-                region_start,
-            ),
+            } => {
+                let (condition, contributions, iterations) = self.activate_range(
+                    header.as_ref(),
+                    *destructured,
+                    value_variable.as_deref(),
+                    key_variable.as_deref(),
+                    nodes,
+                    region_start,
+                );
+                (condition, contributions, iterations, None)
+            }
         }
     }
 
@@ -476,10 +546,17 @@ impl Interpreter<'_> {
     /// "the condition holds for some iteration" — usable only where firing
     /// less often is safe (fail terminals, positive-polarity captures).
     fn definite_member_condition_sound_subset(&mut self, expr: &TemplateExpr) -> Vec<Guard> {
+        let mut referenced_variables = BTreeSet::new();
+        expr.walk(|candidate| {
+            if let TemplateExpr::Variable(variable) = candidate {
+                referenced_variables.insert(variable.trim_start_matches('$').to_string());
+            }
+        });
         let definite: Vec<(String, AbstractValue)> = self
             .locals
             .definite_range_member_values
             .iter()
+            .filter(|(variable, _)| referenced_variables.contains(variable.trim_start_matches('$')))
             .map(|(variable, value)| (variable.clone(), value.clone()))
             .collect();
         if definite.is_empty() {
@@ -577,9 +654,11 @@ impl Interpreter<'_> {
         header: Option<&TemplateHeader>,
         region_start: usize,
         branch_index: usize,
-    ) -> Option<PathCondition> {
-        let header = header?;
-        let (mut predicate, faithful, bound_values) = {
+    ) -> (Option<PathCondition>, TruthCondition) {
+        let Some(header) = header else {
+            return (None, TruthCondition::Unknown);
+        };
+        let (mut predicate, mut faithful, bound_values) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
@@ -587,7 +666,12 @@ impl Interpreter<'_> {
                 context.bound_output_paths_expr(header.expr()),
             )
         };
-        let helper_paths = self.absorb_header_execution_effects(header.expr());
+        let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let evaluated_truth_is_unknown = evaluated_truth.predicate().is_none();
+        if let Some(exact) = evaluated_truth.predicate() {
+            predicate = exact.clone();
+            faithful = true;
+        }
         // A member condition over a local-dict OVERLAY's ranged member is
         // not faithfully decoded by the overlaid path's wildcard members
         // alone: the overlay's own literal entries iterate too (traefik's
@@ -608,25 +692,19 @@ impl Interpreter<'_> {
         } else {
             None
         };
-        let faithful = faithful && overlay_entry_subset.is_none();
+        let overlay_entry_is_partial = overlay_entry_subset.is_some();
+        let faithful = faithful && !overlay_entry_is_partial;
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            let mut sound_subset = overlay_entry_subset.unwrap_or_default();
-            if sound_subset.is_empty() {
-                sound_subset = self.first_iteration_dedup_sound_subset(header.expr());
-            }
-            if sound_subset.is_empty() {
-                sound_subset = self.definite_member_condition_sound_subset(header.expr());
-            }
-            predicate = if sound_subset.is_empty() {
-                self.value_path_context()
-                    .approximate_condition_predicate_expr(header.expr(), &marker)
-            } else {
-                let paths = self
-                    .value_path_context()
-                    .resolved_values_paths_from_expr(header.expr());
-                Predicate::approximate_with_sound_subset(marker, paths, sound_subset)
-            };
+            let evaluated_subset = (!overlay_entry_is_partial)
+                .then(|| evaluated_truth.when_true())
+                .filter(|subset| *subset != Predicate::False);
+            predicate = self.approximate_arm_predicate(
+                header.expr(),
+                marker,
+                overlay_entry_subset.unwrap_or_default(),
+                evaluated_subset,
+            );
         }
         for path in &bound_values {
             self.push_read(path, &[]);
@@ -638,7 +716,10 @@ impl Interpreter<'_> {
         for path in &helper_paths {
             self.push_read(path, &[]);
         }
-        if predicate.is_trivial() && !helper_paths.is_empty() {
+        if evaluated_truth_is_unknown
+            && matches!(predicate, Predicate::True)
+            && !helper_paths.is_empty()
+        {
             predicate = Predicate::all(
                 helper_paths
                     .iter()
@@ -672,7 +753,50 @@ impl Interpreter<'_> {
                 self.push_predicate(conjunct);
             }
         }
-        Some(predicate)
+        let semantic_truth = if evaluated_truth.predicate().is_none() && faithful {
+            TruthCondition::exact(predicate.clone())
+        } else {
+            evaluated_truth
+        };
+        (Some(predicate), semantic_truth)
+    }
+
+    /// The approximate stand-in for an arm condition that could not be
+    /// lowered exactly: its sound subset unions the evaluator's partial
+    /// when-true condition with the bounded structural subsets, and an
+    /// empty union degrades to a bare approximate marker.
+    fn approximate_arm_predicate(
+        &mut self,
+        expr: &TemplateExpr,
+        marker: String,
+        overlay_entry_subset: Vec<Guard>,
+        evaluated_subset: Option<Predicate>,
+    ) -> Predicate {
+        let mut sound_subset = overlay_entry_subset;
+        if sound_subset.is_empty() {
+            sound_subset = self.first_iteration_dedup_sound_subset(expr);
+        }
+        if sound_subset.is_empty() {
+            sound_subset = self.definite_member_condition_sound_subset(expr);
+        }
+        let heuristic_subset = (!sound_subset.is_empty())
+            .then(|| Predicate::all(sound_subset.into_iter().map(Predicate::from).collect()));
+        let positive_subset = any_predicates(
+            evaluated_subset
+                .into_iter()
+                .chain(heuristic_subset)
+                .collect(),
+        );
+        if positive_subset == Predicate::False {
+            self.value_path_context()
+                .approximate_condition_predicate_expr(expr, &marker)
+        } else {
+            let mut paths = self
+                .value_path_context()
+                .resolved_values_paths_from_expr(expr);
+            paths.extend(positive_subset.value_paths());
+            Predicate::approximate_with_sound_predicate(marker, paths, positive_subset)
+        }
     }
 
     /// A range-body dedup test — `not (hasKey $acc …)` over an accumulator
@@ -747,7 +871,7 @@ impl Interpreter<'_> {
             self.dot_stack.push(None);
             return None;
         };
-        let (mut predicate, faithful, bound_values, dot) = {
+        let (mut predicate, mut faithful, bound_values, dot) = {
             let context = self.value_path_context();
             // Helper bodies decode `with` like `if` (truthy conditions), the
             // shape the summary lane always produced: a helper row's
@@ -766,8 +890,16 @@ impl Interpreter<'_> {
                 context.with_body_fragment_value_expr(header.expr()),
             )
         };
-        let helper_paths = self.absorb_header_execution_effects(header.expr());
-        if predicate.is_trivial() && !helper_paths.is_empty() {
+        let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let evaluated_truth_is_unknown = evaluated_truth.predicate().is_none();
+        if let Some(exact) = evaluated_truth.predicate() {
+            predicate = exact.clone();
+            faithful = true;
+        }
+        if evaluated_truth_is_unknown
+            && matches!(predicate, Predicate::True)
+            && !helper_paths.is_empty()
+        {
             predicate = Predicate::all(
                 helper_paths
                     .iter()
@@ -848,149 +980,93 @@ impl Interpreter<'_> {
             // to the finite member set.
             self.locals.insert_range_domain(variable.to_string(), keys);
         }
-        self.absorb_header_execution_effects(header.expr());
-        let iterable_value = self.range_iterable_fragment_value(header);
+        let _ = self.absorb_header_execution_effects(header.expr());
+        let range_source = header_range_source(header.expr());
+        let range_subject = self.value_path_context().range_subject_expr(range_source);
+        let iterable_value = range_subject.value.clone();
         let range_is_statically_nonempty = iterable_value
             .as_ref()
             .is_some_and(AbstractValue::definitely_nonempty_iterable);
-        let range_source = header_range_source(header.expr());
-        let derived_range_condition = match range_source.deparen() {
-            TemplateExpr::Variable(name)
-                if self
-                    .locals
-                    .fragment_values
-                    .get(name.trim_start_matches('$'))
-                    .is_some_and(|value| {
-                        !matches!(
-                            value,
-                            AbstractValue::ValuesPath(_)
-                                | AbstractValue::JsonDecodedPath(_)
-                                | AbstractValue::OutputPath(_, _)
-                        )
-                    }) =>
-            {
-                self.locals
-                    .truthy_reductions
-                    .get(name.trim_start_matches('$'))
-                    .cloned()
-            }
-            _ => None,
-        };
-        let (
-            source_paths,
-            direct_path,
-            direct_variable_path,
-            identity_variable_path,
-            json_decoded_path,
-        ) = {
-            let context = self.value_path_context();
-            let direct_path = context.single_direct_iterable_range_path_expr(range_source);
-            let json_decoded_direct_path =
-                context.single_direct_json_decoded_range_path_expr(range_source);
-            // A range over a VARIABLE holding a single member identity
-            // (`range $values` where `$values` is one member of an outer
-            // ranged map) iterates that member directly; the fn above
-            // only sees literal selectors. The binding must be the path's
-            // IDENTITY: a variable holding derived data (`$namespaces :=
-            // splitList "," .Values.x`) iterates the derivation, and
-            // stamping the iterable domain on the influencing path would
-            // reject the string the split actually consumes.
-            let direct_variable_path = match (&direct_path, range_source) {
-                (None, TemplateExpr::Variable(name)) => context
-                    .template_bindings
-                    .get(name)
-                    .cloned()
-                    .and_then(AbstractValue::without_widened)
-                    .map(|value| value.paths())
-                    .filter(|paths| paths.len() == 1)
-                    .and_then(|paths| paths.into_iter().next()),
-                _ => None,
-            };
-            // The read-guard lane below needs the strictly-IDENTITY form: a
-            // fallback-selected binding (`$crs := .Values.x | default
-            // list`) also exposes exactly one path, but the range iterates
-            // the FALLBACK on every Helm-falsy input, so the path itself
-            // owes no iterable shape (datadog's orchestrator
-            // custom-resources list). Member-identity marking above stays
-            // on the permissive form — fail captures keyed on the ranged
-            // member must survive the fallback wrapper (nats' jsonpatch).
-            let identity_variable_path = match (&direct_path, range_source) {
-                (None, TemplateExpr::Variable(name)) => context
-                    .template_bindings
-                    .get(name)
-                    .cloned()
-                    .and_then(AbstractValue::without_widened)
-                    .and_then(|value| match value {
-                        AbstractValue::ValuesPath(path)
-                        | AbstractValue::JsonDecodedPath(path)
-                        | AbstractValue::OutputPath(path, _) => Some(path),
-                        _ => None,
-                    }),
-                _ => None,
-            };
-            let json_decoded_variable_path = match (&direct_path, range_source) {
-                (None, TemplateExpr::Variable(name)) => context
-                    .template_bindings
-                    .get(name)
-                    .and_then(AbstractValue::unique_json_decoded_path),
-                _ => None,
-            };
-            (
-                context
-                    .resolved_values_paths_from_expr(header.expr())
-                    .into_iter()
-                    .collect::<Vec<_>>(),
-                direct_path,
-                direct_variable_path,
-                identity_variable_path,
-                json_decoded_direct_path.or(json_decoded_variable_path),
-            )
-        };
-        // A bare-dot range (`range .`) resolves through the dot VALUE,
-        // which may be a derived collection merely INFLUENCED by one path
-        // (kyverno's labels-merge list of rendered fragments): only an
-        // identity dot ranges the path itself, so only that form may carry
-        // the read guard below.
-        let bare_dot_range =
-            matches!(range_source.deparen(), TemplateExpr::Field(fields) if fields.is_empty());
-        let dot_is_identity_of = |path: &str| {
-            matches!(
-                &iterable_value,
-                Some(
-                    AbstractValue::ValuesPath(value_path)
-                        | AbstractValue::JsonDecodedPath(value_path)
-                        | AbstractValue::OutputPath(value_path, _)
-                ) if value_path == path
-            )
-        };
+        let derived_range_condition = matches!(range_source.deparen(), TemplateExpr::Variable(_))
+            .then(|| {
+                range_subject
+                    .input_identity
+                    .is_none()
+                    .then(|| range_subject.truth.predicate().cloned())
+                    .flatten()
+            })
+            .flatten();
+        let source_paths = range_subject
+            .influence_paths
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        let member_identity = range_subject.member_identity.clone();
+        let direct_path = member_identity
+            .as_ref()
+            .map(|identity| identity.path.clone());
+        let input_identity = range_subject.input_identity.clone();
+        let input_identity_path = input_identity
+            .as_ref()
+            .map(|identity| identity.path.clone());
         let shape = self.range_body_shape(nodes);
-        let renders_scalar_items =
-            shape.emits_sequence_items && shape.items_all_scalar && direct_path.is_some();
+        let renders_scalar_items = shape.emits_sequence_items
+            && shape.items_all_scalar
+            && matches!(
+                range_source.deparen(),
+                TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+            )
+            && input_identity_path.is_some();
         let emit_header_read = destructured || !shape.emits_sequence_items || renders_scalar_items;
         let renders_mapping_entries =
             destructured && !shape.emits_sequence_items && shape.has_dynamic_entries;
-        // Structural claims about the ranged path hold only when the range
-        // iterates the path ITSELF: `range until (int .Values.n)` iterates a
-        // DERIVED list, so it says nothing about the path's own shape. The
-        // same discipline gates the bare dot — `range .` over a derived
-        // collection merely influenced by one path (kyverno's labels-merge
-        // list of rendered fragments) must not mark that path ranged.
-        if let Some(path) = &direct_path
-            && (!bare_dot_range || dot_is_identity_of(path))
-        {
-            self.range_modes.mark_direct(path);
+        // Member identity is independent of whole-value identity: a merged
+        // map can still visit members from one values-backed layer, while a
+        // split list carries its source only as influence and has no such
+        // member path.
+        if let Some(identity) = &member_identity {
+            self.range_modes.mark_member_identity(&identity.path);
             if destructured {
-                self.range_modes.mark_destructured(path);
+                self.range_modes.mark_destructured(&identity.path);
+            }
+            if identity.json_decoded {
+                self.range_modes.mark_json_decoded(&identity.path);
             }
         }
-        if let Some(path) = &direct_variable_path {
-            self.range_modes.mark_direct(path);
+        if let Some(identity) = &input_identity {
+            self.range_modes.mark_input_identity(&identity.path);
             if destructured {
-                self.range_modes.mark_destructured(path);
+                self.range_modes.mark_destructured(&identity.path);
+            }
+            if identity.json_decoded {
+                self.range_modes.mark_json_decoded(&identity.path);
             }
         }
-        if let Some(path) = &json_decoded_path {
-            self.range_modes.mark_json_decoded(path);
+        let input_contract_identity = input_identity.as_ref().or_else(|| {
+            member_identity.as_ref().filter(|identity| {
+                helm_schema_core::split_value_path(&identity.path)
+                    .iter()
+                    .any(|segment| segment == "*")
+            })
+        });
+        if let Some(identity) = input_contract_identity {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: self.fail_capture_conjunction(Vec::new()),
+                ranged: self.capture_ranged_modes(),
+                kind: crate::eval_effect::CaptureKind::RangeInput {
+                    path: identity.path.clone(),
+                    destructured,
+                    json_decoded: identity.json_decoded,
+                },
+            };
+            if !capture
+                .conjunction
+                .iter()
+                .any(|predicate| matches!(predicate, Predicate::False))
+                && !self.fail_conditions.contains(&capture)
+            {
+                self.fail_conditions.push(capture);
+            }
         }
         // A range over a first-truthy selection chain (`with A | default B`
         // dots, `range (A | default B)`) iterates the SELECTED candidate,
@@ -1049,11 +1125,8 @@ impl Interpreter<'_> {
                 // iterable's influencing paths keep the bare read: guarding
                 // them would recondition strict captures riding the same
                 // read identity on rangeability the source never has.
-                let identity_range_of_path = direct_path.as_deref() == Some(path.as_str())
-                    && (!bare_dot_range || dot_is_identity_of(path));
-                let direct_range_of_path = destructured
-                    || identity_range_of_path
-                    || identity_variable_path.as_deref() == Some(path.as_str());
+                let direct_range_of_path =
+                    destructured || input_identity_path.as_deref() == Some(path.as_str());
                 if !self.helper_scope || direct_range_of_path {
                     let guard = Guard::Range { path: path.clone() };
                     self.push_read(path, std::slice::from_ref(&guard));
@@ -1111,72 +1184,44 @@ impl Interpreter<'_> {
         // Helper bodies iterate statically known list iterables exactly
         // (per-item dots and item-variable bindings); other iterables run
         // the one symbolic iteration with the resolved item dot.
-        let iterations = self.exact_range_iterations(header, value_variable, key_variable);
+        let iterations = iterable_value.as_ref().and_then(|iterable| {
+            Self::exact_range_iterations(iterable, header, value_variable, key_variable)
+        });
         if let Some(iterations) = iterations {
             return (Some(Predicate::all(own)), extra, Some(iterations));
         }
-        if let Some(path) = direct_path.as_ref().or(direct_variable_path.as_ref()) {
-            self.active_direct_ranged_paths.push(path.clone());
+        if let Some(identity) = &member_identity {
+            self.active_range_modes.push((
+                identity.path.clone(),
+                crate::range_modes::RangeMode {
+                    member_identity: true,
+                    json_decoded: identity.json_decoded,
+                    destructured,
+                    ..crate::range_modes::RangeMode::default()
+                },
+            ));
         }
-        let range_binding_path = direct_path
-            .as_ref()
-            .or(direct_variable_path.as_ref())
-            .cloned();
-        let mut dot = direct_path
-            .as_ref()
-            .or(direct_variable_path.as_ref())
-            .map(|path| {
-                let member_path = helm_schema_core::append_value_path(path, "*");
-                if json_decoded_path.as_ref() == Some(path) {
-                    AbstractValue::JsonDecodedPath(member_path)
-                } else {
-                    AbstractValue::ValuesPath(member_path)
-                }
-            });
-        if self.helper_scope {
-            let item_dot = iterable_value
-                .as_ref()
-                .and_then(AbstractValue::fragment_range_item)
-                .map(|binding| binding.to_context_value());
-            if item_dot.is_some() {
-                dot = item_dot;
-            }
-            if let Some((variable, binding)) =
+        if let Some(identity) = &input_identity {
+            self.active_range_modes.push((
+                identity.path.clone(),
+                crate::range_modes::RangeMode {
+                    input_identity: true,
+                    json_decoded: identity.json_decoded,
+                    destructured,
+                    ..crate::range_modes::RangeMode::default()
+                },
+            ));
+        }
+        let range_binding_path = direct_path.clone();
+        let dot = range_subject
+            .member_value
+            .clone()
+            .map(|value| value.to_context_value());
+        if self.helper_scope
+            && let Some((variable, binding)) =
                 helm_schema_ast::range_variable_name_expr(header.expr()).zip(dot.clone())
-            {
-                self.locals.fragment_values.insert(variable, binding);
-            }
-        }
-        // Ranging a structured iterable outside helper scope binds the item
-        // dot to the iterable's member domain: a derived keys list yields
-        // its collection key (`range keys m` at a template site keeps a
-        // same-map `pluck` member read exact), and a constructed or joined
-        // list yields the union of its item alternatives (airflow's
-        // `range $workerSet := $workerSets` over a conditional
-        // default-set concat). An item that still carries the ITERABLE's
-        // own identity (`fragment_range_item` keeps a non-decoded
-        // OutputPath whole for influence) projects to its member here, so
-        // the binding never claims the collection renders where its
-        // members do.
-        if dot.is_none() {
-            fn item_member_identity(item: AbstractValue) -> AbstractValue {
-                match item {
-                    AbstractValue::OutputPath(path, meta) if !meta.json_decoded => {
-                        AbstractValue::OutputPath(
-                            helm_schema_core::append_value_path(&path, "*"),
-                            meta,
-                        )
-                    }
-                    AbstractValue::Choice(choices) => AbstractValue::Choice(
-                        choices.into_iter().map(item_member_identity).collect(),
-                    ),
-                    other => other,
-                }
-            }
-            dot = iterable_value
-                .as_ref()
-                .and_then(AbstractValue::fragment_range_item)
-                .map(|item| item_member_identity(item).to_context_value());
+        {
+            self.locals.fragment_values.insert(variable, binding);
         }
         // The value binding carries the member identity (`x.*`), while the
         // key binding retains its distinct collection-key provenance. This
@@ -1215,33 +1260,13 @@ impl Interpreter<'_> {
         (Some(Predicate::all(own)), extra, None)
     }
 
-    // (header_range_source lives at module scope below.)
-
-    /// The iterable's fragment value, for the helper-scope range model.
-    fn range_iterable_fragment_value(&mut self, header: &TemplateHeader) -> Option<AbstractValue> {
-        let value_expr = match header.expr().deparen() {
-            helm_schema_ast::TemplateExpr::VariableDefinition { value, .. }
-            | helm_schema_ast::TemplateExpr::Assignment { value, .. } => value.as_ref(),
-            expr => expr,
-        };
-        let mut seen = self.helper_seen.clone();
-        let current_dot = self.current_dot_fragment();
-        FragmentEvalContext::new(self.db).fragment_value_from_expr(
-            value_expr,
-            &self.locals.fragment_values,
-            current_dot.as_ref(),
-            &mut seen,
-        )
-    }
-
     fn exact_range_iterations(
-        &mut self,
+        iterable: &AbstractValue,
         header: &TemplateHeader,
         value_variable: Option<&str>,
         key_variable: Option<&str>,
     ) -> Option<RangeIterations> {
-        let iterable = self.range_iterable_fragment_value(header)?;
-        let alternatives = match &iterable {
+        let alternatives = match iterable {
             AbstractValue::List(items) => vec![
                 items
                     .iter()
@@ -2068,10 +2093,10 @@ fn attach_reassignment_exclusion(
 pub(super) struct RootSetState {
     bindings: HashMap<String, AbstractValue>,
     truthy: HashMap<String, Predicate>,
-    dispatches: HashMap<String, RootValueDispatch>,
+    dispatches: HashMap<String, ScalarValueDispatch>,
     mutations_observed: BTreeMap<String, AbstractValue>,
     predicates_observed: BTreeMap<String, Predicate>,
-    dispatches_observed: BTreeMap<String, RootValueDispatch>,
+    dispatches_observed: BTreeMap<String, ScalarValueDispatch>,
 }
 
 impl Interpreter<'_> {
@@ -2101,11 +2126,11 @@ impl Interpreter<'_> {
     /// the last-write-wins accumulation the pipeline had before the per-arm
     /// entry restore. When the chain is COMPLETE — an unconditional else and
     /// every arm condition decoded without approximation — and every arm
-    /// leaves a key holding one scalar literal, the key additionally joins
-    /// into an exact [`RootValueDispatch`]: root-field equalities decode as
-    /// the disjunction of the arms assigning the compared literal, and the
-    /// key's truthiness becomes the disjunction of the arms assigning a
-    /// truthy literal.
+    /// leaves a key holding one scalar string literal, the key additionally
+    /// joins into an exact [`ScalarValueDispatch`]: root-field equalities
+    /// decode as the disjunction of the arms assigning the compared literal,
+    /// and the key's truthiness becomes the disjunction of the arms assigning
+    /// a truthy literal.
     fn join_root_set_arms(
         &mut self,
         entry: &RootSetState,
@@ -2177,7 +2202,7 @@ impl Interpreter<'_> {
                 if guard_value_is_truthy(&literal) {
                     truthy_conditions.push(condition.clone());
                 }
-                dispatch_arms.push((condition.clone(), literal));
+                dispatch_arms.push((condition.clone(), ScalarValue::Literal(literal)));
                 joined_values.insert(value.clone());
             }
             let truthy = predicate_any(truthy_conditions);
@@ -2196,8 +2221,9 @@ impl Interpreter<'_> {
                 .insert(key.clone(), truthy.clone());
             self.root_set_predicates_observed
                 .insert(key.clone(), truthy);
-            let dispatch = RootValueDispatch {
+            let dispatch = ScalarValueDispatch {
                 arms: dispatch_arms,
+                complete: true,
             };
             self.root_value_dispatches
                 .insert(key.clone(), dispatch.clone());

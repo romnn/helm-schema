@@ -6,6 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::scalar_value::ScalarValueDispatch;
 use helm_schema_ast::expression_schema_type;
 use helm_schema_core::{GuardValue, Predicate};
 
@@ -26,6 +27,7 @@ pub(super) fn eval_default(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let primary_dispatch = primary.scalar_dispatch.clone();
     let mut effects = primary.effects;
     let primary_paths = identity_value_paths(primary.value.as_ref());
     let primary_identity = direct_raw_identity_path(primary.value.as_ref());
@@ -48,8 +50,10 @@ pub(super) fn eval_default(
     }
     let mut values = primary.value.into_iter().collect::<Vec<_>>();
     let mut fallback_paths = BTreeSet::new();
+    let mut fallback_dispatch = None;
     for fallback in fallback_args {
         let result = eval_expr_with_helper_calls(fallback, env, resolver);
+        fallback_dispatch = result.scalar_dispatch.clone();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
         if let Some(value) = result.value {
@@ -94,7 +98,14 @@ pub(super) fn eval_default(
     // both resolved, which is the ordered first-truthy selection; a missing
     // arm leaves only the other value, where the chain collapses to it (the
     // same result the unordered choice produced).
-    EvalResult::with_effects(AbstractValue::first_truthy(values), effects)
+    let result = EvalResult::with_effects(AbstractValue::first_truthy(values), effects);
+    if let (Some(primary), Some(fallback), [_]) =
+        (primary_dispatch, fallback_dispatch, fallback_args)
+        && let Some(dispatch) = ScalarValueDispatch::select_default(&primary, &fallback)
+    {
+        return result.with_scalar_dispatch(dispatch);
+    }
+    result
 }
 
 pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {
@@ -239,6 +250,7 @@ pub(super) fn eval_dict(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut map = BTreeMap::new();
+    let mut field_scalar_dispatches = BTreeMap::new();
     let mut effects = Effects::default();
     for pair in args.chunks_exact(2) {
         let [key, value] = pair else {
@@ -248,10 +260,15 @@ pub(super) fn eval_dict(
             continue;
         };
         let value = eval_expr_with_helper_calls(value, env, resolver);
+        if let Some(dispatch) = &value.scalar_dispatch {
+            field_scalar_dispatches.insert(key.clone(), dispatch.clone());
+        }
         effects.merge(value.effects);
         map.insert(key.clone(), value.value.unwrap_or(AbstractValue::Unknown));
     }
-    EvalResult::with_effects(Some(AbstractValue::Dict(map)), effects)
+    let mut result = EvalResult::with_effects(Some(AbstractValue::Dict(map)), effects);
+    result.field_scalar_dispatches = field_scalar_dispatches;
+    result
 }
 
 pub(super) fn eval_pick(
@@ -712,7 +729,7 @@ pub(super) fn eval_append(
             effects.merge(result.effects);
             match result.value {
                 Some(AbstractValue::List(items)) => items,
-                Some(value) => vec![value],
+                Some(value) => value.fragment_range_item().into_iter().collect(),
                 None => Vec::new(),
             }
         }

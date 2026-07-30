@@ -14,6 +14,7 @@ use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_core::Predicate;
 
 use super::domain::{
@@ -23,13 +24,16 @@ use super::domain::{
 use super::eval::Interpreter;
 use super::hole_effects::RenderedDemotion;
 use super::lower::{
-    LowerScope, MAX_SCALAR_ARM_FANOUT, MAX_SCALAR_ARMS, lower_value, lower_value_scalar_arms,
+    LowerScope, MAX_SCALAR_ARM_FANOUT, MAX_SCALAR_ARMS, lower_scalar_dispatch,
+    lower_scalar_dispatch_arms, lower_value, lower_value_scalar_arms,
 };
 use super::summary::splice_summary;
 
 pub(super) struct HoleEval {
     pub(super) value: Option<AbstractValue>,
     pub(super) effects: Effects,
+    pub(super) truth: TruthCondition,
+    pub(super) scalar_dispatch: Option<ScalarValueDispatch>,
 }
 
 /// Whether an expression invokes `fail` anywhere: evaluating it terminates
@@ -320,11 +324,11 @@ impl Interpreter<'_> {
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
         if document_root
             && kind == ValueKind::Fragment
-            && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
-                &value
+            && let Some(path) = value
+                .as_ref()
+                .and_then(AbstractValue::direct_values_identity)
             && path.ends_with(".*")
         {
-            let path = path.clone();
             self.record_document_root_mapping(&path, Vec::new());
         }
         // The hole IS the whole scalar of a VALUE slot here (a partial scalar
@@ -363,7 +367,9 @@ impl Interpreter<'_> {
             derived_text_paths: &hole.effects.derived_text_paths,
             merge_operand_paths: &hole.effects.merge_operand_paths,
             yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
+            templated_yaml_paths: &hole.effects.templated_yaml_paths,
             shape_erased_paths: &hole.effects.shape_erased_paths,
+            stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             string_contract_paths: row_string_contract_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
@@ -371,10 +377,18 @@ impl Interpreter<'_> {
             local_source_paths: &hole.effects.local_source_paths,
             local_output_meta: &hole_meta,
         };
-        let mut out = match &value {
-            Some(value) => lower_value(value, kind, &scope),
-            None => Guarded::empty(),
-        };
+        let mut out =
+            if kind == ValueKind::Scalar && (self.scalar_output_projection || self.helper_scope) {
+                hole.scalar_dispatch
+                    .as_ref()
+                    .and_then(|dispatch| lower_scalar_dispatch(dispatch, kind, &scope))
+            } else {
+                None
+            }
+            .unwrap_or_else(|| match &value {
+                Some(value) => lower_value(value, kind, &scope),
+                None => Guarded::empty(),
+            });
         for path in extra_paths {
             for (condition, splice) in scope.path_splice_arms(&path, kind) {
                 out.arms.push((condition, AbstractFragment::Splice(splice)));
@@ -489,10 +503,6 @@ impl Interpreter<'_> {
     /// onto the call site, and its reads/hints absorb here. Other shapes
     /// (encodings, transfer functions, dynamic names, unresolved helpers)
     /// keep evaluating through the value lattice.
-    #[expect(
-        clippy::too_many_lines,
-        reason = "keeping this semantic operation together makes its state transitions easier to audit"
-    )]
     fn splice_helper_call_hole(
         &mut self,
         exprs: &[TemplateExpr],
@@ -503,24 +513,14 @@ impl Interpreter<'_> {
         }
         let name = name.to_string();
         let current_dot = self.current_value_dot();
-        let mut helper_locals = self.locals.range_member_values.clone();
-        helper_locals.extend(
-            self.locals
-                .fragment_values
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone())),
-        );
         let mut seen = self.helper_seen.clone();
+        let env = self.hole_eval_env(current_dot.as_ref());
         let call = self.db.summarize_bound_helper_call(
             &name,
             arg,
             Some(&self.root_bindings),
-            crate::analysis_db::OuterRootFacts {
-                truthy_predicates: Some(&self.root_truthy_predicates),
-                value_dispatches: Some(&self.root_value_dispatches),
-            },
             current_dot.as_ref(),
-            &helper_locals,
+            &env,
             FragmentEvalContext::new(self.db),
             &mut seen,
         );
@@ -686,7 +686,9 @@ impl Interpreter<'_> {
             derived_text_paths: &hole.effects.derived_text_paths,
             merge_operand_paths: &hole.effects.merge_operand_paths,
             yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
+            templated_yaml_paths: &hole.effects.templated_yaml_paths,
             shape_erased_paths: &hole.effects.shape_erased_paths,
+            stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             string_contract_paths: row_string_contract_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
@@ -694,10 +696,14 @@ impl Interpreter<'_> {
             local_source_paths: &hole.effects.local_source_paths,
             local_output_meta: &hole_meta,
         };
-        let mut arms = match &value {
-            Some(value) => lower_value_scalar_arms(value, kind, &scope),
-            None => Vec::new(),
-        };
+        let mut arms = (self.scalar_output_projection || self.helper_scope)
+            .then_some(hole.scalar_dispatch.as_ref())
+            .flatten()
+            .and_then(|dispatch| lower_scalar_dispatch_arms(dispatch, kind, &scope))
+            .unwrap_or_else(|| match &value {
+                Some(value) => lower_value_scalar_arms(value, kind, &scope),
+                None => Vec::new(),
+            });
         let mut plain_parts: Vec<StringPart> = Vec::new();
         for path in extra_paths {
             for (condition, splice) in scope.path_splice_arms(&path, kind) {

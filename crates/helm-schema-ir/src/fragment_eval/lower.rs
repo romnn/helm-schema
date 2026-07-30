@@ -40,6 +40,7 @@ use std::collections::BTreeSet;
 use crate::ValueKind;
 use crate::abstract_value::{AbstractValue, path_is_encoded};
 use crate::helper_meta::HelperOutputMeta;
+use crate::scalar_value::{ScalarRenderPart, ScalarValueDispatch};
 use helm_schema_core::Predicate;
 
 use super::domain::{
@@ -68,7 +69,9 @@ pub(crate) struct LowerScope<'a> {
     pub(crate) derived_text_paths: &'a BTreeSet<String>,
     pub(crate) merge_operand_paths: &'a BTreeSet<String>,
     pub(crate) yaml_serialized_paths: &'a BTreeSet<String>,
+    pub(crate) templated_yaml_paths: &'a BTreeSet<String>,
     pub(crate) shape_erased_paths: &'a BTreeSet<String>,
+    pub(crate) stringified_paths: &'a BTreeSet<String>,
     pub(crate) nil_omitting_paths: &'a BTreeSet<String>,
     pub(crate) string_contract_paths: &'a BTreeSet<String>,
     pub(crate) json_serialized_paths: &'a BTreeSet<String>,
@@ -95,10 +98,14 @@ impl LowerScope<'_> {
                 encoded: path_is_encoded(path, self.encoded_paths),
                 shape_erased: helper_meta.is_some_and(|meta| meta.shape_erased)
                     || path_is_encoded(path, self.shape_erased_paths),
+                stringified: helper_meta.is_some_and(|meta| meta.stringified)
+                    || path_is_encoded(path, self.stringified_paths),
                 nil_omitted: helper_meta.is_some_and(|meta| meta.nil_omitted)
                     || path_is_encoded(path, self.nil_omitting_paths),
                 yaml_serialized: helper_meta.is_some_and(|meta| meta.yaml_serialized)
                     || path_is_encoded(path, self.yaml_serialized_paths),
+                templated_yaml: helper_meta.is_some_and(|meta| meta.templated_yaml)
+                    || path_is_encoded(path, self.templated_yaml_paths),
                 string_contract: helper_meta.is_some_and(|meta| meta.string_contract)
                     || path_is_encoded(path, self.string_contract_paths),
                 json_serialized: helper_meta.is_some_and(|meta| meta.json_serialized)
@@ -650,6 +657,75 @@ pub(crate) fn lower_value_scalar_arms(
             arms
         }
     }
+}
+
+pub(crate) fn lower_scalar_dispatch_arms(
+    dispatch: &ScalarValueDispatch,
+    kind: ValueKind,
+    scope: &LowerScope<'_>,
+) -> Option<Vec<(PathCondition, Vec<StringPart>)>> {
+    let mut arms = Vec::with_capacity(dispatch.arms.len());
+    for (condition, value) in &dispatch.arms {
+        if *condition == Predicate::False {
+            continue;
+        }
+        let rendered = value.rendered_parts()?;
+        let parts = lower_rendered_parts(&rendered, kind, scope);
+        arms.push((condition.clone(), parts));
+    }
+    Some(arms)
+}
+
+pub(crate) fn lower_scalar_dispatch(
+    dispatch: &ScalarValueDispatch,
+    kind: ValueKind,
+    scope: &LowerScope<'_>,
+) -> Option<Guarded<AbstractFragment>> {
+    let mut out = Guarded::empty();
+    for (condition, value) in &dispatch.arms {
+        if *condition == Predicate::False {
+            continue;
+        }
+        let rendered = value.rendered_parts()?;
+        out.arms.push((
+            condition.clone(),
+            AbstractFragment::Scalar(AbstractString {
+                parts: lower_rendered_parts(&rendered, kind, scope),
+                suppressed: false,
+            }),
+        ));
+    }
+    Some(out)
+}
+
+fn lower_rendered_parts(
+    rendered: &[ScalarRenderPart],
+    kind: ValueKind,
+    scope: &LowerScope<'_>,
+) -> Vec<StringPart> {
+    let mut parts = rendered
+        .iter()
+        .map(|part| match part {
+            ScalarRenderPart::Text(text) => StringPart::Text(BTreeSet::from([text.clone()])),
+            ScalarRenderPart::Identity {
+                path,
+                stringified,
+                lexical_escapes,
+            } => {
+                let mut splice = scope.splice(path, kind, scope.local_output_meta.get(path));
+                splice.meta.stringified |= *stringified;
+                splice
+                    .meta
+                    .lexical_escapes
+                    .extend(lexical_escapes.iter().cloned());
+                StringPart::Splice(splice)
+            }
+        })
+        .collect::<Vec<_>>();
+    if parts.is_empty() {
+        parts.push(StringPart::Text(BTreeSet::from([String::new()])));
+    }
+    parts
 }
 
 /// The shared scalar-arm lowering of unordered choices and first-truthy

@@ -56,6 +56,7 @@ use crate::eval_effect::{CaptureKind, FailCapture};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::control_header;
+use crate::scalar_value::ScalarValueDispatch;
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
@@ -608,6 +609,11 @@ pub(super) struct Interpreter<'a> {
     pub(super) inline_files: Vec<String>,
     /// Whether this interpreter evaluates a helper body (a summary run).
     pub(super) helper_scope: bool,
+    /// Whether scalar output dispatches refine rendered holes. This is set
+    /// only by the scalar-output summary pass; the document pass keeps its
+    /// ordinary fragment projection so comparison facts cannot perturb
+    /// unrelated sink inference.
+    pub(super) scalar_output_projection: bool,
     /// The active helper call chain, threaded into expression evaluation so
     /// nested bound calls cut cycles.
     pub(super) helper_seen: HashSet<String>,
@@ -620,14 +626,13 @@ pub(super) struct Interpreter<'a> {
     pub(super) root_bindings: HashMap<String, AbstractValue>,
     pub(super) root_truthy_predicates: HashMap<String, Predicate>,
     /// Exhaustive per-arm value alternatives for root-context fields set
-    /// across complete if/else chains (see [`RootValueDispatch`]); condition
+    /// across complete if/else chains (see [`ScalarValueDispatch`]); condition
     /// decoding resolves root-field equalities through them.
-    pub(super) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
+    pub(super) root_value_dispatches: HashMap<String, ScalarValueDispatch>,
     /// Root-context replacements observed in source order and exported by helper summaries.
     pub(super) root_set_mutations_observed: BTreeMap<String, AbstractValue>,
     pub(super) root_set_predicates_observed: BTreeMap<String, Predicate>,
-    pub(super) root_value_dispatches_observed:
-        BTreeMap<String, crate::eval_effect::RootValueDispatch>,
+    pub(super) root_value_dispatches_observed: BTreeMap<String, ScalarValueDispatch>,
     pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
     pub(super) values_root_overlay_prefixes_observed: BTreeSet<String>,
     pub(super) values_root_helper_includes_observed: BTreeSet<String>,
@@ -696,10 +701,10 @@ pub(super) struct Interpreter<'a> {
     pub(super) block_text_is_yaml: bool,
     /// Object-producing mutations observed before subsequent member reads.
     pub(super) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
-    /// Directly ranged paths active on the walk. Helper-scope ranges mark
-    /// membership with truthy predicates (the summary lane's flavor), so
-    /// fail capture re-adds the range facts from here.
-    pub(super) active_direct_ranged_paths: Vec<String>,
+    /// Range identities active on the walk. Input and member identity remain
+    /// separate because a derived iterable may visit values-backed members
+    /// without iterating that values path itself.
+    pub(super) active_range_modes: Vec<(String, crate::range_modes::RangeMode)>,
     /// Approximate conjuncts for exact-range items that not every iterable
     /// alternative executes (nats' jsonpatch conditionally appends "from"
     /// to `$opPathKeys`). They condition CAPTURE conjunctions only — rows
@@ -757,11 +762,12 @@ impl<'a> Interpreter<'a> {
             inline_regions,
             inline_files: Vec::new(),
             helper_scope: false,
+            scalar_output_projection: false,
             helper_seen: HashSet::new(),
             locals: SymbolicLocalState::default(),
             dot_stack: Vec::new(),
             root_value_dot: None,
-            root_bindings: HashMap::new(),
+            root_bindings: db.static_root_fields().clone(),
             root_truthy_predicates: HashMap::new(),
             root_value_dispatches: HashMap::new(),
             root_set_mutations_observed: BTreeMap::new(),
@@ -790,7 +796,7 @@ impl<'a> Interpreter<'a> {
             in_value_slot: false,
             block_text_is_yaml: false,
             member_host_conversions: BTreeSet::new(),
-            active_direct_ranged_paths: Vec::new(),
+            active_range_modes: Vec::new(),
             alternative_capture_approximates: Vec::new(),
             suppress_predicate_paths: BTreeSet::new(),
             chart_defaults_observed: BTreeSet::new(),
@@ -877,8 +883,8 @@ impl<'a> Interpreter<'a> {
                 if !context.condition_lowering_is_faithful(expr) {
                     return Vec::new();
                 }
-                let predicate = context.condition_predicate_expr(expr);
-                prior_negations.push(predicate.negated());
+                let predicate = context.condition_predicate_expr(expr).normalize_boolean();
+                prior_negations.push(predicate.negated().normalize_boolean());
                 conjuncts.push(predicate);
             }
             branches.push(helm_schema_core::KindBranch {
@@ -979,8 +985,11 @@ impl<'a> Interpreter<'a> {
             root_bindings: &self.root_bindings,
             root_truthy_predicates: &self.root_truthy_predicates,
             root_value_dispatches: &self.root_value_dispatches,
+            root_field_semantics_on_current_dot: self.root_value_dot.is_some()
+                && self.dot_stack.len() <= 1,
             pipeline_bound_bindings: self.locals.fragment_values.keys().cloned().collect(),
             template_bindings,
+            template_scalar_dispatches: &self.locals.scalar_dispatches,
             range_domains: &self.locals.range_domains,
             get_bindings: &self.locals.get_bindings,
             template_default_paths: &self.locals.default_paths,
@@ -988,7 +997,6 @@ impl<'a> Interpreter<'a> {
             template_truthy_reductions: &self.locals.truthy_reductions,
             typeof_bindings: &self.locals.typeof_sources,
             int_cast_bindings: &self.locals.int_cast_sources,
-            kube_version_bindings: &self.locals.kube_version_sources,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment: self.current_dot_fragment(),
             current_dot_binding: self.current_value_dot(),
@@ -1052,16 +1060,9 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    /// The ambient predicates plus `tail`, with active direct range facts
-    /// present even when a caller constructed the capture indirectly.
+    /// The ambient predicates plus `tail`.
     pub(super) fn fail_capture_conjunction(&self, tail: Vec<Predicate>) -> Vec<Predicate> {
         let mut conjunction = self.active_predicates.clone();
-        for path in &self.active_direct_ranged_paths {
-            let range = Predicate::from(Guard::Range { path: path.clone() });
-            if !conjunction.contains(&range) {
-                conjunction.push(range);
-            }
-        }
         for approximate in &self.alternative_capture_approximates {
             if !conjunction.contains(approximate) {
                 conjunction.push(approximate.clone());
@@ -1071,16 +1072,16 @@ impl<'a> Interpreter<'a> {
         conjunction
     }
 
-    /// The range facts a fail capture rides: paths actively ranged at the
-    /// capture site are `direct` (only these have member identities), while
-    /// the JSON-decoded and destructured flavors carry every occurrence
-    /// observed in this source.
+    /// The exact range facts active at a fail capture site.
     pub(super) fn capture_ranged_modes(&self) -> crate::range_modes::RangeModes {
         let mut ranged = crate::range_modes::RangeModes::default();
-        for path in &self.active_direct_ranged_paths {
-            ranged.mark_direct(path);
-        }
-        for (path, mode) in self.range_modes.iter() {
+        for (path, mode) in &self.active_range_modes {
+            if mode.input_identity {
+                ranged.mark_input_identity(path);
+            }
+            if mode.member_identity {
+                ranged.mark_member_identity(path);
+            }
             if mode.json_decoded {
                 ranged.mark_json_decoded(path);
             }

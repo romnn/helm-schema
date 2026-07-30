@@ -1,14 +1,16 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
-use helm_schema_core::Predicate;
+use helm_schema_core::{Guard, GuardValue, Predicate};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_ast::{strict_operand_nil_aborts, type_is_schema_type};
 
+use super::collections::direct_raw_identity_path;
 use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
 use super::value_facts::identity_value_paths;
 
@@ -24,6 +26,7 @@ pub(super) fn eval_ternary(
     let has_piped_condition = piped_condition.is_some();
     let mut condition_path = None;
     let mut condition_identity = BTreeSet::new();
+    let condition_truth;
     if let Some((condition, _is_direct_values_path)) = piped_condition {
         // Derived Boolean values carry no raw identity, so this records a
         // contract only for direct selectors and aliases of direct selectors.
@@ -35,6 +38,7 @@ pub(super) fn eval_ternary(
         );
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
         condition_identity = identity_value_paths(condition.value.as_ref());
+        condition_truth = condition.truth.clone();
         effects.merge(condition.effects);
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
@@ -46,7 +50,10 @@ pub(super) fn eval_ternary(
         );
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
         condition_identity = identity_value_paths(condition.value.as_ref());
+        condition_truth = condition.truth.clone();
         effects.merge(condition.effects);
+    } else {
+        condition_truth = TruthCondition::Unknown;
     }
     // The condition only SELECTS an arm — its value never renders into the
     // output slot, so its identity must not become a placed row there (a
@@ -58,6 +65,7 @@ pub(super) fn eval_ternary(
         effects.output_paths.remove(path);
     }
     let mut values = Vec::new();
+    let mut scalar_dispatches = Vec::new();
     for (index, arg) in args.iter().enumerate() {
         if !has_piped_condition && index == 2 {
             continue;
@@ -74,14 +82,22 @@ pub(super) fn eval_ternary(
             conjoin_result_selection(&mut result, predicate);
         }
         effects.merge(result.effects);
-        if index < 2
-            && let Some(value) = result.value
-        {
-            values.push(value);
+        if index < 2 {
+            scalar_dispatches.push(result.scalar_dispatch);
+            if let Some(value) = result.value {
+                values.push(value);
+            }
         }
     }
     effects.promote_tested_type_hints();
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+    let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    if let [Some(when_true), Some(when_false)] = scalar_dispatches.as_slice()
+        && let Some(dispatch) =
+            ScalarValueDispatch::select_ternary(&condition_truth, when_true, when_false)
+    {
+        return result.with_scalar_dispatch(dispatch);
+    }
+    result
 }
 
 fn raw_condition_path(value: &AbstractValue) -> Option<String> {
@@ -134,20 +150,124 @@ pub(super) fn eval_type_is(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = Effects::default();
-    let mut values = Vec::new();
-    for arg in args {
+    let schema_type = type_is_schema_type(args.first());
+    let mut truth = TruthCondition::Unknown;
+    let mut subject_paths = BTreeSet::new();
+    for (index, arg) in args.iter().enumerate() {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
+        if index == 1 {
+            subject_paths = identity_value_paths(result.value.as_ref());
+            if let Some(schema_type) = &schema_type {
+                truth = type_is_truth(&result, schema_type);
+            }
+        }
         effects.merge(result.effects);
-        values.push(result.value);
     }
-    if let Some(schema_type) = type_is_schema_type(args.first()) {
-        let paths = values
-            .get(1)
-            .map(|value| identity_value_paths(value.as_ref()))
-            .unwrap_or_default();
-        effects.add_tested_type_hints(paths, &schema_type);
+    if let Some(schema_type) = schema_type {
+        effects.add_tested_type_hints(subject_paths, &schema_type);
     }
-    EvalResult::with_effects(None, effects)
+    let mut result = EvalResult::with_effects(None, effects);
+    result.truth = truth;
+    result
+}
+
+fn type_is_truth(result: &EvalResult, schema_type: &str) -> TruthCondition {
+    if let Some(value) = result
+        .scalar_dispatch
+        .as_ref()
+        .and_then(ScalarValueDispatch::constant_value)
+    {
+        return TruthCondition::exact(bool_predicate(
+            guard_value_schema_type(&value) == schema_type,
+        ));
+    }
+    result
+        .value
+        .as_ref()
+        .map_or(TruthCondition::Unknown, |value| {
+            abstract_value_type_is(value, schema_type)
+        })
+}
+
+fn abstract_value_type_is(value: &AbstractValue, schema_type: &str) -> TruthCondition {
+    match value {
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            if path.is_empty() {
+                TruthCondition::exact(bool_predicate(schema_type == "object"))
+            } else {
+                TruthCondition::exact(Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: schema_type.to_string(),
+                }))
+            }
+        }
+        AbstractValue::OutputPath(path, meta) if meta.json_decoded => {
+            TruthCondition::exact(Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.to_string(),
+            }))
+        }
+        AbstractValue::Dict(_)
+        | AbstractValue::Overlay { .. }
+        | AbstractValue::MergedLayers(_)
+        | AbstractValue::RootContext => {
+            TruthCondition::exact(bool_predicate(schema_type == "object"))
+        }
+        AbstractValue::List(_) | AbstractValue::KeysList(_) | AbstractValue::SplitList { .. } => {
+            TruthCondition::exact(bool_predicate(schema_type == "array"))
+        }
+        AbstractValue::StringSet(_) | AbstractValue::SplitSegment { .. } => {
+            TruthCondition::exact(bool_predicate(schema_type == "string"))
+        }
+        AbstractValue::DerivedBoolean(_) => {
+            TruthCondition::exact(bool_predicate(schema_type == "boolean"))
+        }
+        AbstractValue::Choice(choices) => type_is_for_alternatives(choices.iter(), schema_type),
+        AbstractValue::FirstTruthy(candidates) => {
+            type_is_for_alternatives(candidates.iter(), schema_type)
+        }
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::OutputPath(_, _)
+        | AbstractValue::Widened(_) => TruthCondition::Unknown,
+    }
+}
+
+fn type_is_for_alternatives<'a>(
+    alternatives: impl IntoIterator<Item = &'a AbstractValue>,
+    schema_type: &str,
+) -> TruthCondition {
+    let conditions = alternatives
+        .into_iter()
+        .map(|value| abstract_value_type_is(value, schema_type))
+        .collect::<Vec<_>>();
+    if conditions.is_empty() {
+        return TruthCondition::Unknown;
+    }
+    TruthCondition::from_subsets(
+        Predicate::all(conditions.iter().map(TruthCondition::when_true).collect()),
+        Predicate::all(conditions.iter().map(TruthCondition::when_false).collect()),
+        false,
+    )
+}
+
+fn guard_value_schema_type(value: &GuardValue) -> &'static str {
+    match value {
+        GuardValue::String(_) => "string",
+        GuardValue::Bool(_) => "boolean",
+        GuardValue::Int(_) => "integer",
+        GuardValue::Float(_) => "number",
+        GuardValue::Null => "null",
+    }
+}
+
+fn bool_predicate(value: bool) -> Predicate {
+    if value {
+        Predicate::True
+    } else {
+        Predicate::False
+    }
 }
 
 /// Go template `eq`/`ne` terminate on incomparable operand kinds: any
@@ -156,6 +276,7 @@ pub(super) fn eval_type_is(
 /// what a literal proves — nil/missing operands stay unmodeled (Helm
 /// charts routinely compare optional values).
 pub(super) fn eval_comparison(
+    function: &str,
     args: &[TemplateExpr],
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
@@ -165,11 +286,14 @@ pub(super) fn eval_comparison(
         .iter()
         .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
         .collect();
-    eval_comparison_operands(operands, literal_kind)
+    let raw_identity_operands: Vec<bool> = args.iter().map(direct_comparison_identity).collect();
+    eval_comparison_operands(function, operands, &raw_identity_operands, literal_kind)
 }
 
 pub(super) fn eval_pipeline_comparison(
+    function: &str,
     current: EvalResult,
+    current_is_direct_identity: bool,
     args: &[TemplateExpr],
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
@@ -181,7 +305,17 @@ pub(super) fn eval_pipeline_comparison(
         args.iter()
             .map(|arg| eval_expr_with_helper_calls(arg, env, resolver)),
     );
-    eval_comparison_operands(operands, literal_kind)
+    let mut raw_identity_operands = Vec::with_capacity(args.len() + 1);
+    raw_identity_operands.push(current_is_direct_identity);
+    raw_identity_operands.extend(args.iter().map(direct_comparison_identity));
+    eval_comparison_operands(function, operands, &raw_identity_operands, literal_kind)
+}
+
+fn direct_comparison_identity(expr: &TemplateExpr) -> bool {
+    matches!(
+        expr.deparen(),
+        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+    )
 }
 
 pub(super) fn comparison_literal_kind(args: &[TemplateExpr]) -> Option<&'static str> {
@@ -195,12 +329,22 @@ pub(super) fn comparison_literal_kind(args: &[TemplateExpr]) -> Option<&'static 
 }
 
 pub(super) fn eval_comparison_operands(
+    function: &str,
     operands: Vec<EvalResult>,
+    raw_identity_operands: &[bool],
     literal_kind: Option<&str>,
 ) -> EvalResult {
     let mut comparison_effects = Effects::default();
+    let equality = equality_condition(&operands, raw_identity_operands);
+    let truth = if function == "ne" {
+        equality.negated()
+    } else {
+        equality
+    };
     let Some(literal_kind) = literal_kind else {
-        return merge_operand_results(operands, comparison_effects);
+        let mut result = merge_operand_results(operands, comparison_effects);
+        result.truth = truth;
+        return result;
     };
     for operand in &operands {
         // Go templates compare only values of the same basic kind, with
@@ -210,7 +354,57 @@ pub(super) fn eval_comparison_operands(
         // a valid float such as `1.0`.
         record_comparable_kind_result(operand, literal_kind, &mut comparison_effects);
     }
-    merge_operand_results(operands, comparison_effects)
+    let mut result = merge_operand_results(operands, comparison_effects);
+    result.truth = truth;
+    result
+}
+
+fn equality_condition(operands: &[EvalResult], raw_identity_operands: &[bool]) -> TruthCondition {
+    let [left, right] = operands else {
+        return TruthCondition::Unknown;
+    };
+    let [left_is_raw, right_is_raw] = raw_identity_operands else {
+        return TruthCondition::Unknown;
+    };
+    match (
+        left.scalar_dispatch.as_ref(),
+        right.scalar_dispatch.as_ref(),
+    ) {
+        (Some(left), Some(right)) => match (left.constant_value(), right.constant_value()) {
+            (Some(left), Some(right)) => {
+                return TruthCondition::exact(if left == right {
+                    Predicate::True
+                } else {
+                    Predicate::False
+                });
+            }
+            (Some(target), None) => {
+                return right.condition_equals(&target);
+            }
+            (None, Some(target)) => {
+                return left.condition_equals(&target);
+            }
+            (None, None) => {}
+        },
+        (Some(dispatch), None) => {
+            if *right_is_raw
+                && let Some(path) = direct_raw_identity_path(right.value.as_ref())
+                && let Some(value) = dispatch.constant_value()
+            {
+                return TruthCondition::exact(Predicate::from(Guard::Eq { path, value }));
+            }
+        }
+        (None, Some(dispatch)) => {
+            if *left_is_raw
+                && let Some(path) = direct_raw_identity_path(left.value.as_ref())
+                && let Some(value) = dispatch.constant_value()
+            {
+                return TruthCondition::exact(Predicate::from(Guard::Eq { path, value }));
+            }
+        }
+        (None, None) => {}
+    }
+    TruthCondition::Unknown
 }
 
 pub(super) fn merge_operand_results(operands: Vec<EvalResult>, mut effects: Effects) -> EvalResult {

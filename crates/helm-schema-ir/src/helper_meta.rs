@@ -67,6 +67,9 @@ pub(crate) struct HelperOutputMeta {
     /// The binding's value is YAML serialization of this path. Serialization
     /// accepts any input kind, while a sequence placement remains structural.
     pub(crate) yaml_serialized: bool,
+    /// The YAML serialization was evaluated by `tpl`: structure survives,
+    /// while template-bearing string leaves are transformed before the sink.
+    pub(crate) templated_yaml: bool,
     /// The binding's value is derived text of this path (an `include`'s
     /// rendered output, a `printf` result): a consuming transform applied to
     /// the local operates on that text and claims nothing about the path.
@@ -152,6 +155,7 @@ impl HelperOutputMeta {
         self.nil_omitted |= other.nil_omitted;
         self.stringified |= other.stringified;
         self.yaml_serialized |= other.yaml_serialized;
+        self.templated_yaml |= other.templated_yaml;
         self.derived_text |= other.derived_text;
         self.partial_text |= other.partial_text;
         self.string_contract |= other.string_contract;

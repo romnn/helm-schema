@@ -18,6 +18,7 @@ mod helper_meta;
 mod node_eval;
 mod range_modes;
 mod resource_identity;
+mod scalar_value;
 mod static_file_template;
 mod symbolic;
 mod symbolic_local_state;
@@ -31,7 +32,7 @@ pub use helm_schema_core::{
     HelperBranch, HelperBranchBody, MetadataFieldKind, ProviderSchemaUse, ResourceRef, SourceSpan,
     ValueKind, ValuesDefaultSource, YamlPath,
 };
-pub use symbolic::SymbolicIrContext;
+pub use symbolic::{SymbolicIrContext, SymbolicPolicy};
 
 #[cfg(test)]
 #[path = "tests/mod.rs"]

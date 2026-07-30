@@ -6,6 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::scalar_value::ScalarValue;
 use helm_schema_core::Predicate;
 
 use super::serialization::record_total_conversion_effects;
@@ -587,6 +588,32 @@ pub(super) fn record_comparable_kind_result(
     schema_type: &str,
     effects: &mut Effects,
 ) {
+    if let Some(dispatch) = &operand.scalar_dispatch {
+        // Only identity arms consume the raw path. Literal and rendered arms
+        // compare their produced value and therefore cannot type the source.
+        for (condition, value) in &dispatch.arms {
+            let ScalarValue::Identity(path) = value else {
+                continue;
+            };
+            for mut conjunction in strict_operand_selection_conjunctions(operand, path) {
+                if condition != &Predicate::True {
+                    conjunction.push(condition.clone());
+                }
+                let capture = crate::eval_effect::FailCapture {
+                    conjunction,
+                    ranged: crate::range_modes::RangeModes::default(),
+                    kind: crate::eval_effect::CaptureKind::ComparableKind {
+                        path: path.clone(),
+                        schema_type: schema_type.to_string(),
+                    },
+                };
+                if !effects.helper_fails.contains(&capture) {
+                    effects.helper_fails.push(capture);
+                }
+            }
+        }
+        return;
+    }
     for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
             conjunction.extend(shadow.iter().cloned());

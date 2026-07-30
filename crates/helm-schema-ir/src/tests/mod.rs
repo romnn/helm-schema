@@ -95,6 +95,57 @@ fn direct_tpl_files_get_executes_json_template_source() {
 }
 
 #[test]
+fn ranged_tpl_executes_matching_values_default_programs() {
+    let helpers = indoc! {r#"
+        {{- define "bundle-config" -}}
+        {{- range .Values.dagProcessor.dagBundleConfigList -}}
+        {{- .name -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = indoc! {r"
+        {{- $root := . -}}
+        {{- range $section, $settings := .Values.config -}}
+        {{- range $key, $value := $settings -}}
+        {{- tpl ($value | toString) $root -}}
+        {{- end -}}
+        {{- end -}}
+    "};
+    let mut index = DefineIndex::new();
+    index.add_file_source("<inline:0>", helpers);
+    let context = SymbolicIrContext::with_chart_default_strings(
+        &index,
+        std::collections::BTreeMap::from([(
+            "config.dag_processor.dag_bundle_config_list".to_string(),
+            r#"{{ include "bundle-config" . }}"#.to_string(),
+        )]),
+    );
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+
+    assert!(
+        signals
+            .evidence_for("dagProcessor.dagBundleConfigList")
+            .is_some_and(|evidence| evidence
+                .conditional_overlays
+                .iter()
+                .any(|overlay| overlay.evidence.facts.is_ranged_source)
+                && evidence.fail_implications.iter().any(|implication| {
+                    implication.requirements.iter().any(|requirement| {
+                        matches!(
+                            requirement,
+                            helm_schema_core::FailValueRequirement::Iterable { .. }
+                        )
+                    })
+                })),
+        "the exact default program selected through config.*.* must contribute its range input: \
+         {signals:#?}"
+    );
+}
+
+#[test]
 fn base_path_include_executes_implicit_template_source() {
     let src = indoc! {r#"
         apiVersion: v1

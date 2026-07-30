@@ -6,6 +6,21 @@ use helm_schema_ast::DefineIndex;
 use crate::analysis_db::IrAnalysisDb;
 use crate::contract::ContractIr;
 
+/// Immutable non-values inputs supplied by the Helm render environment.
+///
+/// These inputs may decide control flow, but never become `.Values` schema
+/// evidence themselves. Static root strings use path segments rather than a
+/// dotted spelling so literal map keys containing dots remain unambiguous.
+#[derive(Clone, Debug, Default)]
+pub struct SymbolicPolicy {
+    /// Chart-authored string defaults executed through `tpl`.
+    pub chart_default_strings: BTreeMap<String, String>,
+    /// Normalized Kubernetes version used by `.Capabilities.KubeVersion`.
+    pub kubernetes_version: Option<String>,
+    /// Exact scalar strings beneath immutable roots such as `.Chart`.
+    pub static_root_strings: BTreeMap<Vec<String>, String>,
+}
+
 /// Reusable state for generating symbolic IR across many templates that
 /// share one [`DefineIndex`].
 ///
@@ -40,26 +55,21 @@ impl SymbolicIrContext {
         defines: &DefineIndex,
         chart_default_strings: BTreeMap<String, String>,
     ) -> Self {
-        Self::with_policy(defines, chart_default_strings, None)
+        Self::with_policy(
+            defines,
+            SymbolicPolicy {
+                chart_default_strings,
+                ..SymbolicPolicy::default()
+            },
+        )
     }
 
-    /// Build a context carrying analysis policy inputs: the chart-authored
-    /// string defaults plus the normalized Kubernetes version
-    /// (`.Capabilities.KubeVersion` conditions evaluate against it; `None`
-    /// abstains them).
+    /// Build a context carrying immutable render-policy inputs.
     #[must_use]
-    pub fn with_policy(
-        defines: &DefineIndex,
-        chart_default_strings: BTreeMap<String, String>,
-        kubernetes_version: Option<String>,
-    ) -> Self {
+    pub fn with_policy(defines: &DefineIndex, policy: SymbolicPolicy) -> Self {
         Self {
             inner: Rc::new(SymbolicIrContextInner {
-                analysis_db: IrAnalysisDb::with_policy(
-                    defines,
-                    chart_default_strings,
-                    kubernetes_version,
-                ),
+                analysis_db: IrAnalysisDb::with_policy(defines, policy),
             }),
         }
     }

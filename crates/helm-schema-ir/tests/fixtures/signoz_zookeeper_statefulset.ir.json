@@ -159,7 +159,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -386,7 +386,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -495,6 +495,23 @@
           {
             "path": "auth.client.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "auth.quorum.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "auth.quorum.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -562,7 +579,7 @@
           },
           {
             "path": "auth.client.existingSecret",
-            "type": "not"
+            "type": "truthy"
           }
         ],
         [
@@ -572,7 +589,24 @@
           },
           {
             "path": "auth.client.existingSecret",
-            "type": "truthy"
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "auth.quorum.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "auth.quorum.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -1459,7 +1493,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -1663,7 +1697,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "metadata",
         "annotations"
@@ -1872,7 +1906,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "metadata",
         "labels"
@@ -3083,7 +3117,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -3312,7 +3346,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -3541,7 +3575,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -3905,7 +3939,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -4069,7 +4103,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -4211,25 +4245,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "existingConfigmap",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "configuration",
-              "existingConfigmap"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "existingConfigmap",
-            "type": "not"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -4302,13 +4318,6 @@
           {
             "path": "existingConfigmap",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "configuration",
-              "existingConfigmap"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -4521,7 +4530,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -4581,13 +4590,6 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
-          },
-          {
             "path": "extraEnvVarsCM",
             "schema_type": "string",
             "type": "type_is"
@@ -4613,6 +4615,12 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "extraEnvVarsCM",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "paths": [
@@ -4663,13 +4671,6 @@
           {
             "path": "extraEnvVarsCM",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
           },
           {
             "path": "extraEnvVarsCM",
@@ -4741,20 +4742,13 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
-          },
-          {
             "path": "extraEnvVarsCM",
             "schema_type": "string",
             "type": "not_type_is"
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -4816,13 +4810,6 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
-          },
-          {
             "path": "extraEnvVarsSecret",
             "schema_type": "string",
             "type": "type_is"
@@ -4848,6 +4835,12 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "extraEnvVarsSecret",
+            "type": "truthy"
+          }
+        ],
         [
           {
             "paths": [
@@ -4898,13 +4891,6 @@
           {
             "path": "extraEnvVarsSecret",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
           },
           {
             "path": "extraEnvVarsSecret",
@@ -4976,20 +4962,13 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
-          },
-          {
             "path": "extraEnvVarsSecret",
             "schema_type": "string",
             "type": "not_type_is"
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -5198,7 +5177,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -5404,7 +5383,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -6136,30 +6115,16 @@
           {
             "paths": [
               "tls.client.enabled",
-              "tls.quorum.enabled"
+              "tls.client.passwordsSecretName"
             ],
             "type": "or"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
             ],
-            "type": "any_of"
+            "type": "or"
           }
         ],
         [
@@ -6179,25 +6144,11 @@
             "type": "or"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "tls.quorum.enabled",
+              "tls.quorum.passwordsSecretName"
             ],
-            "type": "any_of"
+            "type": "or"
           }
         ]
       ],
@@ -6241,81 +6192,6 @@
           "span": {
             "end": 7931,
             "start": 7860
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.create",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "has_string_contract": true,
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 778,
-            "start": 718
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.serviceAccountName"
-          ],
-          "span": {
-            "end": 1446,
-            "start": 1369
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
@@ -6532,228 +6408,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "dataLogDir",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.dataLogDir.existingClaim",
-            "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.storageClass",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "path": "global",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "volumePermissions.image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.existingClaim",
-            "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.storageClass",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -6901,34 +6556,38 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
+                }
+              ],
+              [
+                {
+                  "path": "image.pullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.pullSecrets",
+                  "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
                 {
                   "path": "global.imagePullSecrets",
                   "type": "range"
                 }
               ],
               [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -6991,34 +6650,38 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
+                }
+              ],
+              [
+                {
+                  "path": "image.pullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.pullSecrets",
+                  "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
                 {
                   "path": "global.imagePullSecrets",
                   "type": "range"
                 }
               ],
               [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -7113,133 +6776,6 @@
       "condition": [
         [
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "global.imagePullSecrets.*",
-            "type": "range"
-          },
-          {
-            "path": "image.pullSecrets.*",
-            "type": "range"
-          },
-          {
-            "path": "volumePermissions.image.pullSecrets.*",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "imagePullSecrets[*]",
-        "name[*]"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.images.pullSecrets"
-          ],
-          "span": {
-            "end": 1598,
-            "start": 1591
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_images.tpl"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.imagePullSecrets"
-          ],
-          "span": {
-            "end": 734,
-            "start": 598
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "global.imagePullSecrets.*"
-    },
-    {
-      "condition": [
-        [
-          {
             "path": "global",
             "type": "truthy"
           },
@@ -7258,24 +6794,30 @@
             "type": "truthy"
           },
           {
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          },
+          {
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.imageRegistry",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "volumePermissions.image.registry"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "volumePermissions.image.registry",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
                 }
               ]
             ],
@@ -7284,24 +6826,30 @@
         ],
         [
           {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.imageRegistry",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "image.registry",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
                 }
               ]
             ],
@@ -7366,30 +6914,6 @@
           {
             "path": "global.imageRegistry",
             "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -7473,30 +6997,6 @@
           {
             "path": "volumePermissions.enabled",
             "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "volumePermissions.image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ],
         [
@@ -7514,30 +7014,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -7666,23 +7142,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ],
         [
@@ -7699,18 +7158,18 @@
             "type": "not"
           },
           {
+            "paths": [
+              "global",
+              "persistence.storageClass"
+            ],
+            "type": "or"
+          },
+          {
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.storageClass",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
                 }
               ],
               [
@@ -7718,21 +7177,10 @@
                   "path": "persistence.storageClass",
                   "type": "truthy"
                 }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
               ],
               [
                 {
-                  "path": "persistence.existingClaim",
+                  "path": "global",
                   "type": "not"
                 }
               ]
@@ -7756,23 +7204,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ],
         [
@@ -7785,18 +7216,18 @@
             "type": "not"
           },
           {
+            "paths": [
+              "global",
+              "persistence.storageClass"
+            ],
+            "type": "or"
+          },
+          {
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.storageClass",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
                 }
               ],
               [
@@ -7804,21 +7235,10 @@
                   "path": "persistence.storageClass",
                   "type": "truthy"
                 }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
               ],
               [
                 {
-                  "path": "persistence.existingClaim",
+                  "path": "global",
                   "type": "not"
                 }
               ]
@@ -7888,29 +7308,42 @@
             "type": "not"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "not_eq",
-            "value": "-"
-          },
-          {
             "alternatives": [
               [
                 {
                   "path": "global",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.storageClass",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ]
             ],
@@ -7976,29 +7409,42 @@
             "type": "not"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "not_eq",
-            "value": "-"
-          },
-          {
             "alternatives": [
               [
                 {
                   "path": "global",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.storageClass",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ]
             ],
@@ -8298,7 +7744,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -8472,6 +7918,71 @@
           {
             "path": "image.digest",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "image.digest",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -8560,6 +8071,78 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "image.digest",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -8748,34 +8331,9 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
                 }
               ],
               [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -8838,34 +8396,38 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
+                }
+              ],
+              [
+                {
+                  "path": "image.pullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.pullSecrets",
+                  "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
                 {
                   "path": "global.imagePullSecrets",
                   "type": "range"
                 }
               ],
               [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -8960,155 +8522,11 @@
       "condition": [
         [
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
+            "paths": [
+              "global",
+              "image.registry"
             ],
-            "type": "any_of"
-          },
-          {
-            "path": "global.imagePullSecrets.*",
-            "type": "range"
-          },
-          {
-            "path": "image.pullSecrets.*",
-            "type": "range"
-          },
-          {
-            "path": "volumePermissions.image.pullSecrets.*",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "imagePullSecrets[*]",
-        "name[*]"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.images.pullSecrets"
-          ],
-          "span": {
-            "end": 1598,
-            "start": 1591
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_images.tpl"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.imagePullSecrets"
-          ],
-          "span": {
-            "end": 734,
-            "start": 598
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "image.pullSecrets.*"
-    },
-    {
-      "condition": [
-        [
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "image.registry",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "type": "or"
           }
         ]
       ],
@@ -9143,24 +8561,30 @@
       "condition": [
         [
           {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.imageRegistry",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "image.registry",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
                 }
               ]
             ],
@@ -9235,6 +8659,13 @@
         [
           {
             "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
             ],
@@ -9244,21 +8675,20 @@
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.imageRegistry",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "image.registry"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "image.registry",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
                 }
               ]
             ],
@@ -9330,7 +8760,69 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Serialized",
       "path": [
@@ -9413,6 +8905,74 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -9490,7 +9050,69 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ]
       ],
       "kind": "Serialized",
       "path": [
@@ -9573,6 +9195,74 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global",
+              "image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -9732,10 +9422,11 @@
           {
             "path": "initContainers",
             "schema_type": "string",
-            "type": "not_type_is"
+            "type": "type_is"
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "YamlSerialized",
       "path": [
         "spec",
@@ -9749,8 +9440,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 363,
-            "start": 326
+            "end": 301,
+            "start": 275
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_tplvalues.tpl"
         }
@@ -9797,12 +9488,11 @@
           {
             "path": "initContainers",
             "schema_type": "string",
-            "type": "type_is"
+            "type": "not_type_is"
           }
         ]
       ],
-      "has_string_contract": true,
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -9815,8 +9505,8 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 301,
-            "start": 275
+            "end": 363,
+            "start": 326
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_tplvalues.tpl"
         }
@@ -10169,7 +9859,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -10360,7 +10050,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -12119,30 +11809,16 @@
           {
             "paths": [
               "tls.client.enabled",
-              "tls.quorum.enabled"
+              "tls.client.passwordsSecretName"
             ],
             "type": "or"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
             ],
-            "type": "any_of"
+            "type": "or"
           },
           {
             "path": "nameOverride",
@@ -12170,25 +11846,11 @@
             "type": "or"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "tls.quorum.enabled",
+              "tls.quorum.passwordsSecretName"
             ],
-            "type": "any_of"
+            "type": "or"
           },
           {
             "path": "nameOverride",
@@ -12235,88 +11897,6 @@
           "span": {
             "end": 7931,
             "start": 7860
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "serviceAccount.create",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "serviceAccountName"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.names.fullname"
-          ],
-          "span": {
-            "end": 1023,
-            "start": 953
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_names.tpl"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.serviceAccountName"
-          ],
-          "span": {
-            "end": 1446,
-            "start": 1369
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
@@ -13427,7 +13007,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -13715,23 +13295,6 @@
             "type": "not"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
             "path": "persistence.annotations",
             "schema_type": "string",
             "type": "type_is"
@@ -13749,23 +13312,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           },
           {
             "path": "persistence.annotations",
@@ -13809,23 +13355,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ],
         [
@@ -13840,23 +13369,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -14104,7 +13616,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14159,11 +13671,21 @@
       "condition": [
         [
           {
-            "path": "persistence.dataLogDir.existingClaim",
+            "path": "dataLogDir",
             "type": "truthy"
           },
           {
             "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.dataLogDir.existingClaim",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "persistence.dataLogDir.existingClaim",
             "type": "truthy"
           }
         ],
@@ -14300,23 +13822,6 @@
             "type": "not"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
             "path": "persistence.dataLogDir.selector",
             "schema_type": "string",
             "type": "type_is"
@@ -14358,23 +13863,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -14550,7 +14038,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -14681,11 +14169,9 @@
       "condition": [
         [
           {
-            "path": "persistence.enabled",
+            "path": "dataLogDir",
             "type": "truthy"
-          }
-        ],
-        [
+          },
           {
             "path": "persistence.enabled",
             "type": "not"
@@ -14706,6 +14192,12 @@
               ]
             ],
             "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
           }
         ],
         [
@@ -14772,33 +14264,6 @@
           {
             "path": "persistence.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "persistence.existingClaim",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -14911,23 +14376,6 @@
             "type": "not"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
             "path": "persistence.labels",
             "schema_type": "string",
             "type": "type_is"
@@ -14945,23 +14393,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           },
           {
             "path": "persistence.labels",
@@ -15005,23 +14436,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ],
         [
@@ -15036,23 +14450,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -15300,7 +14697,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15367,23 +14764,6 @@
             "type": "not"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
             "path": "persistence.selector",
             "schema_type": "string",
             "type": "type_is"
@@ -15421,23 +14801,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -15605,7 +14968,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "volumeClaimTemplates[*]",
@@ -15744,45 +15107,11 @@
             "type": "not"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.storageClass",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "global",
+              "persistence.storageClass"
             ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "type": "or"
           }
         ],
         [
@@ -15795,45 +15124,11 @@
             "type": "not"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.storageClass",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "global",
+              "persistence.storageClass"
             ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "persistence.dataLogDir.existingClaim",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.existingClaim",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "type": "or"
           }
         ]
       ],
@@ -15880,9 +15175,11 @@
             "type": "not"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "not_eq",
-            "value": "-"
+            "paths": [
+              "global",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           },
           {
             "alternatives": [
@@ -15890,19 +15187,60 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
+                }
+              ],
+              [
                 {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
+                  "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
                 }
               ],
               [
                 {
                   "path": "persistence.storageClass",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ]
             ],
@@ -15960,9 +15298,11 @@
             "type": "not"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "not_eq",
-            "value": "-"
+            "paths": [
+              "global",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           },
           {
             "alternatives": [
@@ -15970,19 +15310,60 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
+                }
+              ],
+              [
                 {
-                  "paths": [
-                    "global.storageClass",
-                    "persistence.storageClass"
-                  ],
-                  "type": "or"
+                  "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
                 }
               ],
               [
                 {
                   "path": "persistence.storageClass",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ]
             ],
@@ -16288,7 +15669,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -16552,7 +15933,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -17068,7 +16449,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -18110,7 +17491,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -18346,7 +17727,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -18601,10 +17982,6 @@
           {
             "path": "tls.client.autoGenerated",
             "type": "truthy"
-          },
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
           }
         ]
       ],
@@ -18667,6 +18044,10 @@
       "condition": [
         [
           {
+            "path": "tls.client.autoGenerated",
+            "type": "truthy"
+          },
+          {
             "path": "tls.client.enabled",
             "type": "truthy"
           }
@@ -18679,169 +18060,41 @@
           {
             "path": "tls.client.passwordsSecretName",
             "type": "not"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "zookeeper.client.createTlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7559,
-            "start": 7445
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "tls.client.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "livenessProbe.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.disableBaseClientPort",
-            "type": "truthy"
-          },
-          {
-            "path": "customLivenessProbe",
-            "type": "not"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          },
-          {
-            "path": "tls.client.enabled",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "readinessProbe.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.disableBaseClientPort",
-            "type": "truthy"
-          },
-          {
-            "path": "customReadinessProbe",
-            "type": "not"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          },
-          {
-            "path": "tls.client.enabled",
-            "type": "not"
           }
         ],
         [
           {
             "path": "tls.client.enabled",
             "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ],
-        [
+          },
           {
             "alternatives": [
               [
                 {
-                  "path": "auth.client.enabled",
-                  "type": "truthy"
-                },
-                {
                   "path": "auth.client.existingSecret",
-                  "type": "not"
+                  "type": "truthy"
                 }
               ],
               [
                 {
-                  "path": "auth.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "auth.quorum.existingSecret",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
+                  "path": "auth.client.enabled",
                   "type": "not"
                 }
               ]
             ],
             "type": "any_of"
-          }
-        ],
-        [
+          },
           {
             "alternatives": [
               [
                 {
-                  "path": "tls.client.autoGenerated",
+                  "path": "auth.quorum.existingSecret",
                   "type": "truthy"
-                },
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.existingSecret",
-                  "type": "not"
                 }
               ],
               [
                 {
-                  "path": "tls.quorum.autoGenerated",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.existingSecret",
+                  "path": "auth.quorum.enabled",
                   "type": "not"
                 }
               ]
@@ -18862,8 +18115,27 @@
             "start": 5215
           },
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
+        },
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7559,
+            "start": 7445
+          },
+          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
       ],
+      "resource": null,
+      "source_expr": "tls.client.enabled"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -19220,10 +18492,6 @@
             "type": "truthy"
           },
           {
-            "path": "tls.client.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
             "paths": [
               "tls.client.autoGenerated",
               "tls.client.keystorePassword",
@@ -19238,8 +18506,11 @@
             "type": "truthy"
           },
           {
-            "path": "tls.client.passwordsSecretName",
-            "type": "truthy"
+            "paths": [
+              "tls.client.enabled",
+              "tls.client.passwordsSecretName"
+            ],
+            "type": "or"
           },
           {
             "paths": [
@@ -19247,27 +18518,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -19302,14 +18552,6 @@
           {
             "path": "tls.client.passwordsSecretName",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.keystorePassword",
-              "tls.client.passwordsSecretName"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -19385,27 +18627,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -19470,63 +18691,6 @@
           {
             "path": "tls.client.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.keystorePassword",
-              "tls.client.passwordsSecretName"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.passwordsSecretName",
-              "tls.client.truststorePassword"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
           }
         ],
         [
@@ -19540,27 +18704,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -19659,32 +18802,6 @@
           {
             "path": "tls.client.passwordsSecretName",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.keystorePassword",
-              "tls.client.passwordsSecretName"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.passwordsSecretName",
-              "tls.client.truststorePassword"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -19757,27 +18874,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -19851,14 +18947,6 @@
           {
             "path": "tls.client.passwordsSecretTruststoreKey",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.passwordsSecretName",
-              "tls.client.truststorePassword"
-            ],
-            "type": "or"
           }
         ],
         [
@@ -19876,27 +18964,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -19931,14 +18998,6 @@
           {
             "path": "tls.client.passwordsSecretTruststoreKey",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.autoGenerated",
-              "tls.client.passwordsSecretName",
-              "tls.client.truststorePassword"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -20014,27 +19073,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -20254,8 +19292,27 @@
             "type": "truthy"
           },
           {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.autoGenerated",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -20318,8 +19375,35 @@
       "condition": [
         [
           {
+            "path": "tls.quorum.autoGenerated",
+            "type": "truthy"
+          },
+          {
             "path": "tls.quorum.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.autoGenerated",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
@@ -20330,13 +19414,63 @@
           {
             "path": "tls.quorum.passwordsSecretName",
             "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
           },
           {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
+            "alternatives": [
+              [
+                {
+                  "path": "auth.client.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "auth.client.enabled",
+                  "type": "not"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "auth.quorum.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "auth.quorum.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -20470,6 +19604,29 @@
           {
             "path": "tls.quorum.existingSecret",
             "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.existingSecret",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.autoGenerated",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
@@ -20729,10 +19886,6 @@
             "type": "truthy"
           },
           {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
             "paths": [
               "tls.quorum.autoGenerated",
               "tls.quorum.keystorePassword",
@@ -20747,10 +19900,6 @@
             "type": "truthy"
           },
           {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
             "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
@@ -20758,25 +19907,11 @@
             "type": "or"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "tls.quorum.enabled",
+              "tls.quorum.passwordsSecretName"
             ],
-            "type": "any_of"
+            "type": "or"
           }
         ]
       ],
@@ -20811,14 +19946,6 @@
           {
             "path": "tls.quorum.passwordsSecretName",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.keystorePassword",
-              "tls.quorum.passwordsSecretName"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -20894,27 +20021,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -20979,63 +20085,6 @@
           {
             "path": "tls.quorum.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.keystorePassword",
-              "tls.quorum.passwordsSecretName"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.passwordsSecretName",
-              "tls.quorum.truststorePassword"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
           }
         ],
         [
@@ -21049,27 +20098,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -21168,32 +20196,6 @@
           {
             "path": "tls.quorum.passwordsSecretName",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.keystorePassword",
-              "tls.quorum.passwordsSecretName"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.passwordsSecretName",
-              "tls.quorum.truststorePassword"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -21266,27 +20268,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -21360,14 +20341,6 @@
           {
             "path": "tls.quorum.passwordsSecretTruststoreKey",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.passwordsSecretName",
-              "tls.quorum.truststorePassword"
-            ],
-            "type": "or"
           }
         ],
         [
@@ -21385,27 +20358,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -21440,14 +20392,6 @@
           {
             "path": "tls.quorum.passwordsSecretTruststoreKey",
             "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.quorum.autoGenerated",
-              "tls.quorum.passwordsSecretName",
-              "tls.quorum.truststorePassword"
-            ],
-            "type": "or"
           }
         ]
       ],
@@ -21523,27 +20467,6 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ]
       ],
@@ -21964,7 +20887,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -22169,7 +21092,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "TemplatedYamlSerialized",
       "path": [
         "spec",
         "template",
@@ -22424,6 +21347,10 @@
       "condition": [
         [
           {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
             "path": "volumePermissions.enabled",
             "type": "truthy"
           }
@@ -22552,6 +21479,79 @@
           {
             "path": "volumePermissions.image.digest",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.image.digest",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -22704,34 +21704,9 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
                 }
               ],
               [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -22794,34 +21769,38 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                },
+                }
+              ],
+              [
+                {
+                  "path": "image.pullSecrets",
+                  "type": "range"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.pullSecrets",
+                  "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ],
+              [
                 {
                   "path": "global.imagePullSecrets",
                   "type": "range"
                 }
               ],
               [
-                {
-                  "alternatives": [
-                    [
-                      {
-                        "path": "global",
-                        "type": "truthy"
-                      },
-                      {
-                        "path": "global.imagePullSecrets",
-                        "type": "range"
-                      }
-                    ],
-                    [
-                      {
-                        "path": "image.pullSecrets",
-                        "type": "range"
-                      }
-                    ]
-                  ],
-                  "type": "any_of"
-                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -22924,28 +21903,11 @@
             "type": "truthy"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "volumePermissions.image.registry"
-                  ],
-                  "type": "or"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.registry",
-                  "type": "truthy"
-                }
-              ]
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
             ],
-            "type": "any_of"
+            "type": "or"
           }
         ]
       ],
@@ -22988,24 +21950,30 @@
             "type": "truthy"
           },
           {
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          },
+          {
             "alternatives": [
               [
                 {
-                  "path": "global",
+                  "path": "global.imageRegistry",
                   "type": "truthy"
-                },
-                {
-                  "paths": [
-                    "global.imageRegistry",
-                    "volumePermissions.image.registry"
-                  ],
-                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "volumePermissions.image.registry",
                   "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
                 }
               ]
             ],
@@ -23085,6 +22053,75 @@
           {
             "path": "volumePermissions.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -23170,6 +22207,75 @@
           {
             "path": "volumePermissions.enabled",
             "type": "truthy"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.imageRegistry",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                },
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global.imageRegistry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ],
+              [
+                {
+                  "path": "global",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],

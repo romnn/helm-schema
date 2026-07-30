@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
@@ -6,6 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::{eval_call_with_helper_calls, eval_pipeline_with_helper_calls};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_ast::is_merge_function;
 use helm_schema_core::Predicate;
 
@@ -53,24 +54,6 @@ pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
         .and_then(AbstractValue::unique_path)
 }
 
-/// The base of a member access: the value's OWN values identity. Influence
-/// through structures (a `dict "value" .Values.x` context) is not identity —
-/// accessing the dict's keys says nothing about `x`'s shape.
-///
-/// The values ROOT is such an identity too: under `{{- with .Values }}`, a
-/// `.member.field` read navigates the document exactly as
-/// `.Values.member.field` does, and nats' `nats.defaultValues` wraps its
-/// whole body in one.
-fn direct_values_identity(value: &AbstractValue) -> Option<String> {
-    match value {
-        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
-            Some(path.clone())
-        }
-        AbstractValue::OutputPath(path, meta) if meta.json_decoded => Some(path.clone()),
-        _ => None,
-    }
-}
-
 /// The values identity a helper's CALL DICT binds to the first segment of a
 /// dot-relative access, with the segments navigated from it.
 ///
@@ -90,7 +73,7 @@ fn call_dict_member_identity(path: &[String], env: &EvalEnv) -> Option<(String, 
         .dot
         .as_ref()?
         .apply_to_path(std::slice::from_ref(head))?;
-    Some((direct_values_identity(&bound)?, tail.to_vec()))
+    Some((bound.direct_values_identity()?, tail.to_vec()))
 }
 
 /// Record that `segments` was reached by Go field access: every nonterminal
@@ -219,7 +202,10 @@ pub(crate) fn eval_expr_with_helper_calls(
             EvalResult::from_value(env.dot.clone().unwrap_or(AbstractValue::RootContext))
         }
         TemplateExpr::Field(path) => {
-            let dot_base = env.dot.as_ref().and_then(direct_values_identity);
+            let dot_base = env
+                .dot
+                .as_ref()
+                .and_then(AbstractValue::direct_values_identity);
             let value = env.dot.as_ref().and_then(|value| value.apply_to_path(path));
             let value = value.or_else(|| {
                 if !env.allow_field_root_lookup {
@@ -246,10 +232,12 @@ pub(crate) fn eval_expr_with_helper_calls(
                 segments.extend(navigated);
                 record_member_access_captures(&segments, accessed_from, env, &mut result.effects);
             }
+            attach_root_field_semantics(&mut result, path, env);
             result
         }
         TemplateExpr::Selector { operand, path }
             if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
+                && !env.locals.contains_key("")
                 && path.first().is_some_and(|segment| segment == "Values") =>
         {
             let Some((_, tail)) = path.split_first() else {
@@ -257,24 +245,36 @@ pub(crate) fn eval_expr_with_helper_calls(
             };
             root_values_selector_result(tail, env)
         }
-        TemplateExpr::Variable(var) if var.is_empty() => {
-            EvalResult::from_value(AbstractValue::RootContext)
+        TemplateExpr::Variable(var) if var.is_empty() => env.locals.get(var).cloned().map_or_else(
+            || EvalResult::from_value(AbstractValue::RootContext),
+            |value| local_value_result(var, value, None, env),
+        ),
+        TemplateExpr::Variable(var) if !var.is_empty() => {
+            if let Some(value) = env.locals.get(var).cloned() {
+                local_value_result(var, value, None, env)
+            } else if let Some(dispatch) = local_scalar_dispatch(var, env) {
+                EvalResult::none().with_scalar_dispatch(dispatch.clone())
+            } else if let Some(predicate) = env
+                .local_truthy_reductions
+                .get(var)
+                .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
+            {
+                EvalResult::none().with_truth(predicate.clone())
+            } else {
+                EvalResult::none()
+            }
         }
-        TemplateExpr::Variable(var) if !var.is_empty() => env
-            .locals
-            .get(var)
-            .cloned()
-            .map(|value| local_value_result(var, value, None, env))
-            .unwrap_or_else(EvalResult::none),
         TemplateExpr::Selector { operand, path } => {
             if let TemplateExpr::Variable(var) = operand.as_ref()
-                && !var.is_empty()
                 && let Some(value) = env
                     .locals
                     .get(var)
                     .and_then(|binding| binding.apply_to_path(path))
             {
-                let local_base = env.locals.get(var).and_then(direct_values_identity);
+                let local_base = env
+                    .locals
+                    .get(var)
+                    .and_then(AbstractValue::direct_values_identity);
                 let selected_paths = value.fragment_source_paths();
                 let mut result = local_value_result(var, value, Some(&selected_paths), env);
                 if let Some(base) = local_base {
@@ -319,17 +319,26 @@ pub(crate) fn eval_expr_with_helper_calls(
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && var.is_empty()
+                && !env.locals.contains_key(var)
                 && let Some((head, tail)) = path.split_first()
                 && let Some(value) = env
                     .root_fields
                     .get(head)
                     .and_then(|value| value.apply_to_path(tail))
             {
-                return with_bound_selector_paths(EvalResult::from_value(value), expr, env);
+                let mut result = EvalResult::from_value(value);
+                if tail.is_empty() {
+                    attach_named_root_field_semantics(&mut result, head, env);
+                }
+                return with_bound_selector_paths(result, expr, env);
             }
             let base = eval_expr_with_helper_calls(operand, env, resolver);
             let grouped_receiver = matches!(operand.as_ref(), TemplateExpr::Parenthesized(_))
-                .then(|| base.value.as_ref().and_then(direct_values_identity))
+                .then(|| {
+                    base.value
+                        .as_ref()
+                        .and_then(AbstractValue::direct_values_identity)
+                })
                 .flatten();
             let value = base
                 .value
@@ -343,26 +352,27 @@ pub(crate) fn eval_expr_with_helper_calls(
             effects
                 .bound_output_paths
                 .extend(env.bound_values.selector_paths(expr));
-            EvalResult::with_effects(value, effects)
+            match value {
+                Some(value) => {
+                    let mut result = EvalResult::from_value(value);
+                    result.effects.merge(effects);
+                    result
+                }
+                None => EvalResult::with_effects(None, effects),
+            }
         }
         TemplateExpr::Call { function, args } => {
             eval_call_with_helper_calls(function, args, env, resolver)
         }
         TemplateExpr::Pipeline(stages) => eval_pipeline_with_helper_calls(stages, env, resolver),
-        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            EvalResult::from_value(AbstractValue::StringSet(
-                [value.clone()].into_iter().collect(),
-            ))
-        }
+        TemplateExpr::Literal(literal) => literal_result(literal),
         TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
             EvalResult::with_effects(
                 None,
                 eval_expr_with_helper_calls(value, env, resolver).effects,
             )
         }
-        TemplateExpr::Literal(_) | TemplateExpr::Variable(_) | TemplateExpr::Unknown(_) => {
-            EvalResult::none()
-        }
+        TemplateExpr::Variable(_) | TemplateExpr::Unknown(_) => EvalResult::none(),
     }
 }
 
@@ -410,6 +420,7 @@ pub(crate) fn eval_helper_exprs_direct_effects(
 
 pub(crate) struct HelperArgBindings {
     pub(crate) bindings: HashMap<String, AbstractValue>,
+    pub(crate) scalar_dispatches: BTreeMap<String, ScalarValueDispatch>,
     /// Whole-arg evaluated value when `bindings` derived from one evaluation
     /// (the non-dot, non-merge arm). Callers reuse it as the helper body dot
     /// instead of evaluating the same expression a second time.
@@ -419,35 +430,43 @@ pub(crate) struct HelperArgBindings {
 pub(crate) fn bindings_for_helper_arg_with(
     arg: Option<&TemplateExpr>,
     outer: Option<&HashMap<String, AbstractValue>>,
-    mut eval_binding: impl FnMut(&TemplateExpr) -> Option<AbstractValue>,
+    mut eval_binding: impl FnMut(&TemplateExpr) -> EvalResult,
 ) -> HelperArgBindings {
     let Some(arg) = arg else {
         return HelperArgBindings {
             bindings: HashMap::new(),
+            scalar_dispatches: BTreeMap::new(),
             value: None,
         };
     };
 
-    let bindings = match arg.deparen() {
-        TemplateExpr::Field(path) if path.is_empty() => outer.cloned().unwrap_or_default(),
-        TemplateExpr::Variable(var) if var.is_empty() => outer.cloned().unwrap_or_default(),
+    let (bindings, scalar_dispatches) = match arg.deparen() {
+        TemplateExpr::Field(path) if path.is_empty() => {
+            (outer.cloned().unwrap_or_default(), BTreeMap::new())
+        }
         TemplateExpr::Call { function, args } if is_merge_function(function) => {
             let mut merged = HashMap::new();
+            let mut scalar_dispatches = BTreeMap::new();
             for arg in args {
-                merged.extend(bindings_from_helper_arg_value(eval_binding(arg), outer));
+                let result = eval_binding(arg);
+                merged.extend(bindings_from_helper_arg_value(result.value, outer));
+                scalar_dispatches.extend(result.field_scalar_dispatches);
             }
-            merged
+            (merged, scalar_dispatches)
         }
         _ => {
-            let value = eval_binding(arg);
+            let result = eval_binding(arg);
+            let value = result.value;
             return HelperArgBindings {
                 bindings: bindings_from_helper_arg_value(value.clone(), outer),
+                scalar_dispatches: result.field_scalar_dispatches,
                 value,
             };
         }
     };
     HelperArgBindings {
         bindings,
+        scalar_dispatches,
         value: None,
     }
 }
@@ -493,6 +512,15 @@ fn local_value_result(
 ) -> EvalResult {
     let source_paths = value.fragment_source_paths();
     let mut result = EvalResult::from_value(value);
+    if env.pipeline_bound_locals.contains(var) {
+        // A pipeline-bound local's fragment value records provenance, not
+        // necessarily its runtime scalar (`default`, transforms, and helper
+        // output can all retain a source path while changing the value).
+        // Only the separately tracked semantic domains below may recover
+        // truthiness or scalar dispatch for such a binding.
+        result.truth = TruthCondition::Unknown;
+        result.scalar_dispatch = None;
+    }
     result.effects.local_source_paths = source_paths;
     if let Some(default_paths) = env.local_default_paths.get(var) {
         result
@@ -511,7 +539,81 @@ fn local_value_result(
             None => result.effects.merge_local_output_meta(meta_by_path.iter()),
         }
     }
+    if selected_paths.is_none() {
+        if let Some(dispatch) = local_scalar_dispatch(var, env) {
+            result.truth = dispatch.truth_condition();
+            result.scalar_dispatch = Some(dispatch.clone());
+        } else if let Some(predicate) = env
+            .local_truthy_reductions
+            .get(var)
+            .or_else(|| env.local_truthy_reductions.get(var.trim_start_matches('$')))
+        {
+            result.truth = TruthCondition::exact(predicate.clone());
+        }
+    }
     result
+}
+
+fn local_scalar_dispatch<'a>(var: &str, env: &'a EvalEnv) -> Option<&'a ScalarValueDispatch> {
+    env.local_scalar_dispatches
+        .get(var)
+        .or_else(|| env.local_scalar_dispatches.get(var.trim_start_matches('$')))
+}
+
+fn literal_result(literal: &Literal) -> EvalResult {
+    let truthy = match literal {
+        Literal::Bool(value) => *value,
+        Literal::Int(value) => *value != 0,
+        Literal::Float(value) => *value != 0.0,
+        Literal::String(value) | Literal::RawString(value) => !value.is_empty(),
+        Literal::Nil => false,
+    };
+    let value = match literal {
+        Literal::String(value) | Literal::RawString(value) => Some(AbstractValue::StringSet(
+            [value.clone()].into_iter().collect(),
+        )),
+        _ => None,
+    };
+    let result = EvalResult::with_effects(value, Effects::default()).with_truth(if truthy {
+        Predicate::True
+    } else {
+        Predicate::False
+    });
+    let scalar = match literal {
+        Literal::String(value) | Literal::RawString(value) => {
+            Some(helm_schema_core::GuardValue::string(value.clone()))
+        }
+        Literal::Bool(value) => Some(helm_schema_core::GuardValue::Bool(*value)),
+        Literal::Int(value) => Some(helm_schema_core::GuardValue::Int(*value)),
+        Literal::Nil => Some(helm_schema_core::GuardValue::Null),
+        Literal::Float(_) => None,
+    };
+    match scalar {
+        Some(scalar) => result.with_scalar_dispatch(ScalarValueDispatch::constant(scalar)),
+        None => result,
+    }
+}
+
+fn attach_root_field_semantics(result: &mut EvalResult, path: &[String], env: &EvalEnv) {
+    let [field] = path else {
+        return;
+    };
+    let root_dot = env
+        .dot
+        .as_ref()
+        .is_none_or(|dot| matches!(dot, AbstractValue::RootContext));
+    if root_dot || env.root_field_semantics_on_current_dot {
+        attach_named_root_field_semantics(result, field, env);
+    }
+}
+
+fn attach_named_root_field_semantics(result: &mut EvalResult, field: &str, env: &EvalEnv) {
+    if let Some(dispatch) = env.root_value_dispatches.get(field) {
+        result.truth = dispatch.truth_condition();
+        result.scalar_dispatch = Some(dispatch.clone());
+    } else if let Some(predicate) = env.root_truthy_predicates.get(field) {
+        result.truth = TruthCondition::exact(predicate.clone());
+    }
 }
 
 fn with_bound_selector_paths(

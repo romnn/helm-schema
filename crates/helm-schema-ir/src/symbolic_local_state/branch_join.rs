@@ -2,9 +2,12 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::helper_meta::HelperOutputMeta;
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates};
 use helm_schema_core::Predicate;
 
 use super::SymbolicLocalState;
+
+const MAX_JOINED_SCALAR_ARMS: usize = 128;
 
 pub(super) fn joined_branch_outcomes(
     entry: &SymbolicLocalState,
@@ -38,11 +41,22 @@ pub(super) fn joined_branch_outcomes(
             |state| &state.output_meta,
             |values| Some(join_meta_by_path(values)),
         ),
+        scalar_dispatches: join_map(
+            outcomes,
+            |state| &state.scalar_dispatches,
+            |values| join_if_equal(&values),
+        ),
         truthy_reductions: join_map(
             outcomes,
             |state| &state.truthy_reductions,
             |values| Some(join_predicate_union(values)),
         ),
+        // Any branch's falsy-capable reassignment poisons the accumulator's
+        // monotonicity, so the marks union.
+        truthiness_clears: outcomes
+            .iter()
+            .flat_map(|state| state.truthiness_clears.iter().cloned())
+            .collect(),
         typeof_sources: join_map(
             outcomes,
             |state| &state.typeof_sources,
@@ -51,11 +65,6 @@ pub(super) fn joined_branch_outcomes(
         int_cast_sources: join_map(
             outcomes,
             |state| &state.int_cast_sources,
-            |values| join_if_equal(&values),
-        ),
-        kube_version_sources: join_map(
-            outcomes,
-            |state| &state.kube_version_sources,
             |values| join_if_equal(&values),
         ),
         range_member_values: join_map(
@@ -74,6 +83,62 @@ pub(super) fn joined_branch_outcomes(
         chart_value_defaults: intersect_chart_defaults(outcomes),
         local_scopes: entry.local_scopes.clone(),
     }
+}
+
+pub(super) fn joined_scalar_dispatch_arms(
+    entry: &SymbolicLocalState,
+    arms: &[(TruthCondition, SymbolicLocalState)],
+    has_unconditional_else: bool,
+) -> HashMap<String, ScalarValueDispatch> {
+    let mut outcomes = arms.to_vec();
+    if !has_unconditional_else {
+        outcomes.push((
+            TruthCondition::any(arms.iter().map(|(condition, _)| condition.clone())).negated(),
+            entry.clone(),
+        ));
+    }
+
+    let variables: BTreeSet<&String> = arms
+        .iter()
+        .flat_map(|(_, state)| state.scalar_dispatches.keys())
+        .chain(entry.scalar_dispatches.keys())
+        .collect();
+    let mut joined = HashMap::new();
+    for variable in variables {
+        let mut dispatch_arms = Vec::new();
+        let mut complete = outcomes
+            .iter()
+            .all(|(condition, _)| condition.predicate().is_some());
+        for (condition, state) in &outcomes {
+            let outer_condition = condition.when_true();
+            if outer_condition == Predicate::False {
+                continue;
+            }
+            let Some(dispatch) = state.scalar_dispatches.get(variable) else {
+                complete = false;
+                continue;
+            };
+            complete &= dispatch.complete;
+            for (inner_condition, value) in &dispatch.arms {
+                if let Some(condition) =
+                    conjoin_predicates(outer_condition.clone(), inner_condition.clone())
+                {
+                    dispatch_arms.push((condition, value.clone()));
+                }
+            }
+        }
+        if dispatch_arms.is_empty() || dispatch_arms.len() > MAX_JOINED_SCALAR_ARMS {
+            continue;
+        }
+        joined.insert(
+            variable.clone(),
+            ScalarValueDispatch {
+                arms: dispatch_arms,
+                complete,
+            },
+        );
+    }
+    joined
 }
 
 /// Join fragment values, keeping a guarded traversal's ADVANCED value when

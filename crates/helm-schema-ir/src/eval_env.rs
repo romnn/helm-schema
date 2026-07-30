@@ -4,6 +4,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::MemberHostConversion;
 use crate::helper_meta::HelperOutputMeta;
+use crate::scalar_value::ScalarValueDispatch;
 use helm_schema_core::Predicate;
 
 /// Abstract interpreter environment for Helm expression evaluation.
@@ -12,8 +13,17 @@ pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) root_fields: HashMap<String, AbstractValue>,
     pub(crate) root_truthy_predicates: HashMap<String, Predicate>,
-    pub(crate) root_value_dispatches: HashMap<String, crate::eval_effect::RootValueDispatch>,
+    pub(crate) root_value_dispatches: HashMap<String, ScalarValueDispatch>,
+    /// The root-field semantic maps describe the current dot rather than
+    /// only the global root. Bound helpers set this for their call argument
+    /// frame; nested `with`/`range` frames clear it.
+    pub(crate) root_field_semantics_on_current_dot: bool,
     pub(crate) locals: HashMap<String, AbstractValue>,
+    /// Exact scalar values carried by locals, including branch-dependent
+    /// reassignments. This is separate from `locals`: an abstract fragment
+    /// identifies where a value came from, while a scalar dispatch identifies
+    /// the runtime value that equality and truthiness consume.
+    pub(crate) local_scalar_dispatches: HashMap<String, ScalarValueDispatch>,
     /// Locals bound by `:=`/`=` rather than by `range`. Go stores a pipeline
     /// result through `reflect.ValueOf(value.Interface())`, which turns a nil
     /// interface into an INVALID value, and field access on an invalid
@@ -28,14 +38,6 @@ pub(crate) struct EvalEnv {
     /// identity, so short-circuit operand truthiness has no other way to
     /// decode it.
     pub(crate) local_truthy_reductions: HashMap<String, Predicate>,
-    /// The analysis policy's Kubernetes version, and the locals bound to a
-    /// Capabilities-defaulted one (`$v := default
-    /// .Capabilities.KubeVersion.GitVersion .Values.override`). A
-    /// `semverCompare` over such a subject is a decidable condition, which
-    /// short-circuit operand truthiness has no other way to see.
-    pub(crate) kubernetes_version: Option<String>,
-    pub(crate) kube_version_bindings:
-        HashMap<String, crate::symbolic_local_state::KubeVersionSource>,
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
     pub(crate) active_predicates: Vec<Predicate>,
     pub(crate) bound_values: BoundValueContext,

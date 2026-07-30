@@ -1,9 +1,11 @@
 use crate::abstract_value::AbstractValue;
+use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{
     apply_local_set_mutations_expr, bindings_for_helper_arg_with, direct_values_path, eval_expr,
     eval_exprs_effects,
 };
+use crate::scalar_value::ScalarValueDispatch;
 use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
@@ -79,9 +81,9 @@ fn helper_argument_projection_uses_shared_expression_eval() {
         Some(&expr(r#"dict "ctx" $ "config" .Values.serviceAccount"#)),
         None,
         |expr| {
-            eval_expr(expr, &env)
-                .value
-                .map(|value| value.to_context_value())
+            let mut result = eval_expr(expr, &env);
+            result.value = result.value.map(|value| value.to_context_value());
+            result
         },
     )
     .bindings;
@@ -95,6 +97,21 @@ fn helper_argument_projection_uses_shared_expression_eval() {
                 AbstractValue::ValuesPath("serviceAccount".to_string()),
             ),
         ]),
+    );
+}
+
+#[test]
+fn grouped_selector_preserves_scalar_identity() {
+    let result = eval_expr(
+        &expr("(.Values.feature).mode"),
+        &EvalEnv::from_helper_context(None, None),
+    );
+
+    sim_assert_eq!(
+        have: result.scalar_dispatch,
+        want: Some(ScalarValueDispatch::identity(
+            "feature.mode"
+        )),
     );
 }
 
@@ -517,6 +534,59 @@ fn pipeline_ternary_returns_value_branches_not_condition() {
 }
 
 #[test]
+fn type_test_uses_the_structural_value_instead_of_its_influences() {
+    let env = EvalEnv {
+        locals: HashMap::from([(
+            "obj".to_string(),
+            AbstractValue::Dict(BTreeMap::from([
+                (
+                    "merge".to_string(),
+                    AbstractValue::ValuesPath("service.merge".to_string()),
+                ),
+                (
+                    "patch".to_string(),
+                    AbstractValue::ValuesPath("service.patch".to_string()),
+                ),
+            ])),
+        )]),
+        ..EvalEnv::default()
+    };
+
+    let result = eval_expr(&expr(r#"kindIs "map" $obj"#), &env);
+
+    sim_assert_eq!(
+        have: result.truth.predicate(),
+        want: Some(&Predicate::True),
+        "the dict is a map regardless of the runtime kinds of its member values"
+    );
+}
+
+#[test]
+fn ternary_preserves_scalar_branch_dispatch() {
+    let expr = single_expr(r#"ternary true false (semverCompare ">=3.0.0" .Values.version)"#);
+    let result = eval_expr(&expr, &EvalEnv::default());
+
+    assert!(
+        result.scalar_dispatch.as_ref().is_some_and(|dispatch| {
+            dispatch.complete
+                && dispatch.arms.len() == 2
+                && dispatch
+                    .arms
+                    .iter()
+                    .all(|(condition, _)| !condition.contains_approximation())
+        }),
+        "the selected Boolean literals must remain an exact scalar dispatch: {result:#?}"
+    );
+    assert!(
+        result
+            .truth
+            .predicate()
+            .is_some_and(|predicate| predicate.value_paths().contains("version")),
+        "the ternary result must retain its selector condition: {result:#?}"
+    );
+}
+
+#[test]
 fn base64_pipeline_preserves_source_path() {
     let expr = single_expr(r".Values.auth.password | toString | b64enc");
     let result = eval_expr(&expr, &EvalEnv::default());
@@ -579,6 +649,22 @@ fn split_list_preserves_mixed_length_path_alternatives() {
                 AbstractValue::StringSet(BTreeSet::from(["password".to_string()])),
             ]),
         ])))
+    );
+}
+
+#[test]
+fn append_projects_the_source_collection_to_its_member_domain() {
+    let result = eval_expr(
+        &single_expr(r#"append (default (list) .Values.items) "synthetic""#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::List(vec![
+            AbstractValue::ValuesPath("items.*".to_string()),
+            AbstractValue::StringSet(BTreeSet::from(["synthetic".to_string()])),
+        ])),
     );
 }
 
@@ -905,6 +991,96 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
     );
 }
 
+#[test]
+fn truth_only_locals_drive_short_circuit_execution() {
+    let mut env = EvalEnv::default();
+    env.local_truthy_reductions
+        .insert("shouldContinue".to_string(), Predicate::True);
+
+    let result = eval_expr(
+        &single_expr(r#"and $shouldContinue (hasKey .Values.cfg "a")"#),
+        &env,
+    );
+    let failure_captures = result
+        .effects
+        .helper_fails
+        .into_iter()
+        .map(|capture| {
+            (
+                capture.kind,
+                capture.conjunction.into_iter().collect::<BTreeSet<_>>(),
+            )
+        })
+        .collect::<BTreeSet<_>>();
+
+    sim_assert_eq!(
+        have: failure_captures,
+        want: BTreeSet::from([
+            (
+                crate::eval_effect::CaptureKind::ValueType {
+                    path: "cfg".to_string(),
+                    schema_type: "object".to_string(),
+                },
+                BTreeSet::new(),
+            ),
+            (
+                crate::eval_effect::CaptureKind::AbsenceAborts {
+                    path: "cfg".to_string(),
+                },
+                BTreeSet::new(),
+            ),
+        ]),
+    );
+}
+
+#[test]
+fn local_selector_truth_comes_from_the_selected_value() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "plugin".to_string(),
+        AbstractValue::ValuesPath("plugins.*".to_string()),
+    );
+    env.local_truthy_reductions
+        .insert("plugin".to_string(), Predicate::truthy_path("plugins.*"));
+
+    let result = eval_expr(&single_expr("$plugin.hostPath"), &env);
+
+    sim_assert_eq!(
+        have: result.truth.predicate(),
+        want: Some(&Predicate::truthy_path("plugins.*.hostPath")),
+    );
+}
+
+#[test]
+fn stringified_trimmed_equality_uses_the_transformed_scalar_value() {
+    let result = eval_expr(
+        &single_expr(r#"eq (.Values.image.tag | toString | trimSuffix "-jmx") "7""#),
+        &EvalEnv::default(),
+    );
+    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
+        "^7$",
+        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimSuffix(
+            "-jmx".to_string(),
+        )]),
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: "image.tag".to_string(),
+                value: GuardValue::Int(7),
+            }),
+            Predicate::from(Guard::MatchesPattern {
+                path: "image.tag".to_string(),
+                pattern,
+                templated: false,
+            }),
+        ])),
+        "the comparison must consume the post-transform scalar dispatch: {result:#?}"
+    );
+}
+
 fn project_helper_arg(
     action: &str,
     outer: Option<&HashMap<String, AbstractValue>>,
@@ -919,18 +1095,18 @@ fn project_helper_arg_expr(
 ) -> HashMap<String, AbstractValue> {
     bindings_for_helper_arg_with(Some(expr), outer, |expr| match expr {
         TemplateExpr::Call { function, .. } if function == "fallback" => {
-            Some(AbstractValue::Dict(BTreeMap::from([(
+            EvalResult::from_value(AbstractValue::Dict(BTreeMap::from([(
                 "fallback".to_string(),
                 AbstractValue::ValuesPath("fallback.value".to_string()),
             )])))
         }
         TemplateExpr::Call { function, .. } if function == "overrideMap" => {
-            Some(AbstractValue::Dict(BTreeMap::from([(
+            EvalResult::from_value(AbstractValue::Dict(BTreeMap::from([(
                 "fallback".to_string(),
                 AbstractValue::ValuesPath("override".to_string()),
             )])))
         }
-        _ => eval_expr(expr, &EvalEnv::default()).value,
+        _ => eval_expr(expr, &EvalEnv::default()),
     })
     .bindings
 }

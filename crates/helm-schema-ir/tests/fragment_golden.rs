@@ -174,7 +174,7 @@ fn helper_splice_lowers_summary_branches_into_arms() {
                       mapping:
                         key "app":
                           when always:
-                            splice appName scalar
+                            scalar [splice appName scalar]
         reads:
           fullnameOverride [truthy(fullnameOverride)]
     "#};

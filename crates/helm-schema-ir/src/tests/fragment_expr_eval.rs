@@ -2,16 +2,33 @@ use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
-use helm_schema_core::Predicate;
+use helm_schema_core::{ConditionalGuard, Guard, GuardValue, Predicate};
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
+use crate::eval_effect::{CaptureKind, EvalResult};
+use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::{
-    FragmentEvalContext, context_value_from_outer_expr,
-    helper_result_from_expr_with_fragment_locals,
+    FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
 use crate::helper_meta::HelperOutputMeta;
+use crate::scalar_value::{ScalarRenderPart, ScalarValue, ScalarValueDispatch};
 use test_util::prelude::sim_assert_eq;
+
+fn helper_result_from_expr_with_fragment_locals(
+    expr: &TemplateExpr,
+    fragment_locals: &HashMap<String, AbstractValue>,
+    outer: Option<&HashMap<String, AbstractValue>>,
+    current_dot: Option<&AbstractValue>,
+    context: FragmentEvalContext<'_>,
+    seen: &mut HashSet<String>,
+) -> EvalResult {
+    let mut env = EvalEnv::from_helper_context(outer, current_dot);
+    env.locals = fragment_locals.clone();
+    let mut result = document_result_from_expr(expr, &env, outer, current_dot, context, seen);
+    result.value = result.value.map(|value| value.to_context_value());
+    result
+}
 
 #[test]
 fn wrapped_with_program_keeps_exact_else_requirements() {
@@ -260,6 +277,995 @@ fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
 }
 
 #[test]
+fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "use-fips-images" -}}
+            {{- if .useFIPSAgent -}}
+            true
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let include = single_expr(r#"include "use-fips-images" .Values"#);
+    let TemplateExpr::Call { args, .. } = &include else {
+        panic!("include expression");
+    };
+    let mut summary_seen = HashSet::new();
+    let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let call = analysis_db.summarize_bound_helper_call(
+        "use-fips-images",
+        args.get(1),
+        Some(&root_bindings),
+        None,
+        &summary_env,
+        context,
+        &mut summary_seen,
+    );
+    assert!(
+        call.summary.scalar_dispatch.is_some(),
+        "the bound summary must retain a complete literal dispatch: {:#?}",
+        call.summary
+    );
+    let expr = single_expr(r#"eq (include "use-fips-images" .Values) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::truthy_path("useFIPSAgent")),
+        "the callee's dot-relative selector must resolve through `.Values`: {result:#?}"
+    );
+}
+
+#[test]
+fn nested_helper_scalar_output_reuses_the_inner_dispatch() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.enabled" -}}
+            {{- if .Values.feature.enabled -}}
+            true
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+            {{- define "feature.enabled.forwarded" -}}
+            {{- include "feature.enabled" . -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.enabled.forwarded" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::truthy_path("feature.enabled")),
+        "the outer helper must preserve the inner helper's guarded scalar output: {result:#?}"
+    );
+}
+
+#[test]
+fn negated_include_uses_the_rendered_scalar_dispatch_truthiness() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "container-runtime-support-enabled" -}}
+              {{- if and .Values.runtime.enabled (not .Values.provider.gdc) -}}
+                true
+              {{- else -}}
+                false
+              {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"not (include "container-runtime-support-enabled" .)"#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::False),
+        "both helper arms render nonempty text, so the include is always truthy: {result:#?}"
+    );
+}
+
+#[test]
+fn helper_fail_header_uses_nested_include_rendered_truthiness() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "container-runtime-support-enabled" -}}
+              {{- if and .Values.runtime.enabled (not .Values.provider.gdc) -}}
+                true
+              {{- else -}}
+                false
+              {{- end -}}
+            {{- end -}}
+            {{- define "validate-runtime" -}}
+              {{- if and (not (include "container-runtime-support-enabled" .)) .Values.images.enabled -}}
+                {{- fail "runtime support is required" -}}
+              {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let fragment_context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let header = single_expr(
+        r#"and (not (include "container-runtime-support-enabled" .)) .Values.images.enabled"#,
+    );
+    let mut seen = HashSet::from(["validate-runtime".to_string()]);
+    let header_result = helper_result_from_expr_with_fragment_locals(
+        &header,
+        &HashMap::new(),
+        Some(&root_bindings),
+        Some(&AbstractValue::RootContext),
+        fragment_context,
+        &mut seen,
+    );
+    sim_assert_eq!(
+        have: header_result.truth.predicate().cloned(),
+        want: Some(Predicate::False),
+        "the complete nested helper dispatch must decide the enclosing header: {header_result:#?}"
+    );
+    let call_argument = TemplateExpr::Field(Vec::new());
+    let mut summary_seen = HashSet::new();
+    let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let call = analysis_db.summarize_bound_helper_call(
+        "validate-runtime",
+        Some(&call_argument),
+        Some(&root_bindings),
+        None,
+        &summary_env,
+        fragment_context,
+        &mut summary_seen,
+    );
+    assert!(
+        !call
+            .summary
+            .fail_conditions
+            .iter()
+            .any(|capture| matches!(capture.kind, CaptureKind::Fail)),
+        "the helper summary must prune the unreachable fail: {:#?}",
+        call.summary
+    );
+    let context = crate::SymbolicIrContext::new(&defines);
+
+    let signals = context
+        .generate_contract_ir(r#"{{ include "validate-runtime" . }}"#)
+        .finalize()
+        .into_schema_signals();
+
+    let impossible_fail = [
+        ConditionalGuard::Truthy {
+            path: "provider.gdc".to_string(),
+        },
+        ConditionalGuard::Truthy {
+            path: "runtime.enabled".to_string(),
+        },
+    ];
+    assert!(
+        !signals
+            .terminal_clauses()
+            .iter()
+            .any(|clause| clause.as_slice() == impossible_fail),
+        "the nested include always renders nonempty text, so its negation cannot reach fail: {signals:#?}"
+    );
+}
+
+#[test]
+fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.mode" -}}
+            {{- if .Values.feature.enabled -}}
+            {{- print "enabled" -}}
+            {{- else -}}
+            {{- print "disabled" -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.mode" .Values) "enabled""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::truthy_path("feature.enabled")),
+        "print literals must remain visible to the helper's scalar summary: {result:#?}"
+    );
+}
+
+#[test]
+fn semver_selected_print_helper_keeps_policy_default_dispatch() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "capabilities.ingress.apiVersion" -}}
+            {{- if semverCompare "<1.14-0" (.Values.kubeVersion | default .Capabilities.KubeVersion.Version) -}}
+            {{- print "extensions/v1beta1" -}}
+            {{- else if semverCompare "<1.19-0" (.Values.kubeVersion | default .Capabilities.KubeVersion.Version) -}}
+            {{- print "networking.k8s.io/v1beta1" -}}
+            {{- else -}}
+            {{- print "networking.k8s.io/v1" -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::with_policy(
+        &defines,
+        crate::SymbolicPolicy {
+            kubernetes_version: Some("1.29.0".to_string()),
+            ..crate::SymbolicPolicy::default()
+        },
+    );
+    let context = helper_context(&analysis_db);
+    let mut root_bindings = analysis_db.static_root_fields().clone();
+    root_bindings.insert(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    );
+    let expr =
+        single_expr(r#"eq (include "capabilities.ingress.apiVersion" .) "networking.k8s.io/v1""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+    let below = |constraint| {
+        helm_schema_ast::semver_constraint_match_pattern(constraint).map(|pattern| {
+            Predicate::all(vec![
+                Predicate::truthy_path("kubeVersion"),
+                Predicate::from(Guard::MatchesPattern {
+                    path: "kubeVersion".to_string(),
+                    pattern,
+                    templated: false,
+                }),
+            ])
+        })
+    };
+    let want = below("<1.14-0")
+        .zip(below("<1.19-0"))
+        .map(|(below_114, below_119)| {
+            Predicate::And(vec![below_114.negated(), below_119.negated()])
+        });
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: want,
+        "the policy fallback and truthy override must select the exact helper arm: {result:#?}"
+    );
+}
+
+#[test]
+fn root_context_forwarding_keeps_static_capability_scalars() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "capabilities.select" -}}
+            {{- if semverCompare "^1.6-0" .Capabilities.KubeVersion.GitVersion -}}
+            {{- print "modern" -}}
+            {{- else -}}
+            {{- print "legacy" -}}
+            {{- end -}}
+            {{- end -}}
+            {{- define "capabilities.forward" -}}
+            {{- include "capabilities.select" .context -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::with_policy(
+        &defines,
+        crate::SymbolicPolicy {
+            kubernetes_version: Some("1.35.0".to_string()),
+            ..crate::SymbolicPolicy::default()
+        },
+    );
+    let context = helper_context(&analysis_db);
+    let mut root_bindings = analysis_db.static_root_fields().clone();
+    root_bindings.insert(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    );
+    let expr = single_expr(r#"eq (include "capabilities.forward" (dict "context" .)) "modern""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::True),
+        "forwarding the root through a helper dictionary must retain immutable policy fields: {result:#?}"
+    );
+}
+
+#[test]
+fn helper_local_reassignments_join_into_one_scalar_dispatch() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.local" -}}
+            {{- $enabled := "false" -}}
+            {{- if .Values.feature.enabled -}}
+            {{- $enabled = "true" -}}
+            {{- end -}}
+            {{- $enabled -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.local" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::truthy_path("feature.enabled")),
+        "the local's branch-selected value must survive the helper boundary: {result:#?}"
+    );
+}
+
+#[test]
+fn helper_range_fallback_retains_the_root_provider_candidate() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "select.container-context" -}}
+            {{- $ := last . -}}
+            {{- $result := dict -}}
+            {{- range . -}}
+              {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "container") .securityContexts.container -}}
+                {{- $result = .securityContexts.container -}}
+                {{- break -}}
+              {{- end -}}
+            {{- end -}}
+            {{- if $result -}}
+              {{- toYaml $result -}}
+            {{- else if and (hasKey $ "securityContexts") (hasKey $.securityContexts "containers") $.securityContexts.containers -}}
+              {{- toYaml $.securityContexts.containers -}}
+            {{- else -}}
+            allowPrivilegeEscalation: false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"include "select.container-context" (list .Values.worker .Values)"#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    let rendered_paths = result
+        .effects
+        .helper_rendered
+        .iter()
+        .map(|row| row.path.clone())
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: rendered_paths,
+        want: BTreeSet::from([
+            "securityContexts.container".to_string(),
+            "securityContexts.containers".to_string(),
+            "worker.securityContexts.container".to_string(),
+        ]),
+        "every reachable provider candidate must survive the helper boundary: {result:#?}"
+    );
+}
+
+#[test]
+fn local_nil_fallback_reassignment_preserves_truthy_union() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = indoc::indoc! {r#"
+        {{- $enabled := .Values.feature.enabled -}}
+        {{- if eq $enabled nil -}}
+          {{- $enabled = ternary true false (semverCompare ">=3.0.0" .Values.version) -}}
+        {{- end -}}
+        {{- if $enabled -}}
+        apiVersion: apps/v1
+        kind: Deployment
+        spec:
+          replicas: {{ .Values.feature.replicas }}
+        {{- end -}}
+    "#};
+    let ir = context.generate_contract_ir(source).finalize();
+    let replicas = ir
+        .uses()
+        .iter()
+        .find(|use_| use_.source_expr == "feature.replicas");
+
+    assert!(
+        replicas.is_some_and(|use_| {
+            use_.condition.disjuncts().iter().any(|conjunction| {
+                conjunction.iter().any(|predicate| {
+                    let Predicate::Or(arms) = predicate else {
+                        return false;
+                    };
+                    let has_direct_arm = arms.iter().any(|arm| {
+                        arm.value_paths().contains("feature.enabled")
+                            && !arm.value_paths().contains("version")
+                    });
+                    let has_fallback_arm = arms.iter().any(|arm| {
+                        arm.value_paths().contains("feature.enabled")
+                            && arm.value_paths().contains("version")
+                    });
+                    has_direct_arm && has_fallback_arm
+                })
+            }) && !use_
+                .condition
+                .disjuncts()
+                .iter()
+                .flatten()
+                .any(Predicate::contains_approximation)
+        }),
+        "the post-assignment truth condition must retain both live arms: {ir:#?}"
+    );
+}
+
+#[test]
+fn helper_local_false_to_string_conversion_scopes_comparison_contract() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.map" -}}
+            {{- ternary "yes" "no" (eq .value "restricted") -}}
+            {{- end -}}
+            {{- define "feature.normalize" -}}
+            {{- $mode := get .Values.feature "mode" -}}
+            {{- if and (eq (kindOf $mode) "bool") (not $mode) -}}
+            {{- $mode = "off" -}}
+            {{- end -}}
+            {{- $method := printf "feature.%s" "map" -}}
+            {{- include $method (dict "value" $mode) | trim | print -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"include "feature.normalize" ."#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    let conditions = result
+        .effects
+        .helper_fails
+        .iter()
+        .filter_map(|capture| match &capture.kind {
+            crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
+                if path == "feature.mode" && schema_type == "string" =>
+            {
+                Some(capture.conjunction.clone())
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    sim_assert_eq!(
+        have: conditions,
+        want: vec![vec![Predicate::Or(vec![
+            Predicate::truthy_path("feature.mode"),
+            Predicate::from(Guard::TypeIs {
+                path: "feature.mode".to_string(),
+                schema_type: "boolean".to_string(),
+            })
+            .negated(),
+        ])]],
+        "the helper call must retain the raw-identity dispatch arm's comparison contract: {result:#?}"
+    );
+}
+
+#[test]
+fn chart_annotation_policy_decides_helper_output() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "common.fips.enabled" -}}
+            {{- $fips := .Chart.Annotations.fips -}}
+            {{- if eq "true" $fips -}}
+            {{- true -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::with_policy(
+        &defines,
+        crate::SymbolicPolicy {
+            static_root_strings: BTreeMap::from([(
+                vec![
+                    "Chart".to_string(),
+                    "Annotations".to_string(),
+                    "fips".to_string(),
+                ],
+                "true".to_string(),
+            )]),
+            ..crate::SymbolicPolicy::default()
+        },
+    );
+    let context = helper_context(&analysis_db);
+    let mut root_bindings = analysis_db.static_root_fields().clone();
+    root_bindings.insert(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    );
+    let expr = single_expr(r#"include "common.fips.enabled" ."#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::True),
+        "the immutable Chart annotation should decide the helper branch: {result:#?}"
+    );
+}
+
+#[test]
+fn nonrendering_control_regions_do_not_multiply_scalar_dispatch_states() {
+    let mut defines = DefineIndex::new();
+    let controls = (0..32).fold(String::new(), |mut controls, index| {
+        use std::fmt::Write as _;
+        let _ = write!(
+            controls,
+            "{{{{ with mystery .Values.feature.value{index} }}}}{{{{ end }}}}"
+        );
+        controls
+    });
+    defines.add_file_source(
+        "<inline:0>",
+        &format!("{{{{ define \"feature.constant\" }}}}{controls}true{{{{ end }}}}"),
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.constant" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::True)
+    );
+}
+
+#[test]
+fn statically_false_inline_branch_contributes_no_helper_effects() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.constant" -}}
+            {{- if false -}}
+            {{ .Values.dead | toJson }}
+            {{- end -}}
+            true
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.constant" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    assert!(
+        !result.effects.output_paths.contains("dead")
+            && !result.effects.json_serialized_paths.contains("dead"),
+        "the unreachable helper body must contribute no effects: {result:#?}"
+    );
+}
+
+#[test]
+fn helper_conditions_preserve_stringified_trimmed_local_values() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "version.is-seven" -}}
+            {{- $version := .Values.image.tag | toString | trimSuffix "-jmx" -}}
+            {{- if eq $version "7" -}}
+            true
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "version.is-seven" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+    let pattern = crate::helper_meta::pattern_with_lexical_escapes(
+        "^7$",
+        &BTreeSet::from([crate::helper_meta::LexicalEscape::TrimSuffix(
+            "-jmx".to_string(),
+        )]),
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: "image.tag".to_string(),
+                value: GuardValue::Int(7),
+            }),
+            Predicate::from(Guard::MatchesPattern {
+                path: "image.tag".to_string(),
+                pattern,
+                templated: false,
+            }),
+        ])),
+        "the helper branch must compare the transformed runtime value: {result:#?}"
+    );
+}
+
+#[test]
+fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.partial" -}}
+            {{- if .Values.feature.explicit -}}
+            true
+            {{- else if mystery .Values.feature.dynamic -}}
+            true
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.partial" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+    sim_assert_eq!(
+        have: result.truth.when_true(),
+        want: Predicate::truthy_path("feature.explicit"),
+        "the exact arm remains a sound subset without making the unknown branch exhaustive"
+    );
+}
+
+#[test]
+fn helper_scalar_output_combines_structural_and_projected_known_arms() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.mixed" -}}
+            {{- if not (eq .Values.feature.explicit nil) -}}
+            {{- .Values.feature.explicit -}}
+            {{- else if .Values.feature.static -}}
+            true
+            {{- else if mystery .Values.feature.dynamic -}}
+            true
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "feature.mixed" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+    let explicit_is_null = Predicate::from(Guard::Eq {
+        path: "feature.explicit".to_string(),
+        value: GuardValue::Null,
+    });
+    let explicit_is_true = Predicate::Or(vec![
+        Predicate::from(Guard::Eq {
+            path: "feature.explicit".to_string(),
+            value: GuardValue::Bool(true),
+        }),
+        Predicate::from(Guard::MatchesPattern {
+            path: "feature.explicit".to_string(),
+            pattern: "^true$".to_string(),
+            templated: false,
+        }),
+    ]);
+    let want = Predicate::Or(vec![
+        Predicate::all(vec![explicit_is_null.negated(), explicit_is_true]),
+        Predicate::all(vec![
+            explicit_is_null,
+            Predicate::truthy_path("feature.static"),
+        ]),
+    ])
+    .normalize_boolean();
+
+    sim_assert_eq!(
+        have: result.truth.when_true(),
+        want: want,
+        "the scalar summary must keep disjoint known arms from both semantic projections"
+    );
+}
+
+#[test]
+fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.partial" -}}
+            {{- if .Values.feature.explicit -}}
+            true
+            {{- else if mystery .Values.feature.dynamic -}}
+            true
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let context = crate::SymbolicIrContext::new(&defines);
+    let sources = [
+        (
+            "structuralHost",
+            indoc! {r#"
+                {{- if eq (include "feature.partial" .) "true" }}
+                value: {{ .Values.structuralHost.member }}
+                {{- end }}
+            "#},
+        ),
+        (
+            "inlineHost",
+            indoc! {r#"
+                program: |-
+                  {{- if eq (include "feature.partial" .) "true" }}
+                  {{ .Values.inlineHost.member }}
+                  {{- end }}
+            "#},
+        ),
+    ];
+
+    let have = sources
+        .into_iter()
+        .map(|(path, source)| {
+            let signals = context
+                .generate_contract_ir(source)
+                .finalize()
+                .into_schema_signals();
+            signals
+                .schema_evidence_by_value_path()
+                .get(path)
+                .and_then(|evidence| {
+                    evidence.fail_implications.iter().find(|implication| {
+                        matches!(
+                            implication.requirements.as_slice(),
+                            [helm_schema_core::FailValueRequirement::MemberHost {
+                                complete_domain: false,
+                                ..
+                            }]
+                        )
+                    })
+                })
+                .cloned()
+                .map(|implication| (path, implication))
+        })
+        .collect::<Vec<_>>();
+    let want = ["structuralHost", "inlineHost"]
+        .into_iter()
+        .map(|path| {
+            Some((
+                path,
+                helm_schema_core::ContractFailImplication {
+                    outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                        path: "feature.explicit".to_string(),
+                    }],
+                    target: helm_schema_core::ContractRequirementTarget::Value,
+                    requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
+                        handled_kinds: Vec::new(),
+                        complete_domain: false,
+                    }],
+                },
+            ))
+        })
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: have,
+        want: want,
+        "a partial helper condition may scope a non-owning member-host arm in either control lane"
+    );
+}
+
+#[test]
 fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
     let expr = single_expr("$");
     let root_bindings = HashMap::from([(
@@ -448,6 +1454,29 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
             .all(|predicate| *predicate != Predicate::False),
         "structural hasKey predicates must resolve against the active range dot: {result:#?}"
     );
+    let exact_host_capture = BTreeSet::from([Predicate::from(Guard::Absent {
+        path: "worker.securityContexts".to_string(),
+    })
+    .negated()]);
+    let host_captures = result
+        .effects
+        .helper_fails
+        .iter()
+        .filter(|capture| {
+            matches!(
+                &capture.kind,
+                crate::eval_effect::CaptureKind::ValueType { path, schema_type }
+                    if path == "worker.securityContexts" && schema_type == "object"
+            )
+        })
+        .collect::<Vec<_>>();
+    assert!(
+        host_captures.iter().any(|capture| {
+            capture.conjunction.iter().cloned().collect::<BTreeSet<_>>() == exact_host_capture
+        }),
+        "the helper must retain the exact selected candidate's member-host obligation: \
+         {host_captures:#?}"
+    );
 }
 
 #[test]
@@ -496,6 +1525,76 @@ fn bound_helper_continue_suppresses_the_rest_of_only_that_iteration() {
 }
 
 #[test]
+fn bound_helper_range_break_retains_scalar_candidate_selection() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "revision.limit" -}}
+            {{- $result := "" -}}
+            {{- range . -}}
+              {{- if not (kindIs "invalid" .) -}}
+                {{- $result = . -}}
+                {{- break -}}
+              {{- end -}}
+            {{- end -}}
+            {{- $result -}}
+            {{- end -}}"#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let expr = single_expr(r#"include "revision.limit" (list .Values.primary .Values.fallback)"#);
+    let context = helper_context(&analysis_db);
+    let mut seen = HashSet::new();
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
+    );
+
+    let invalid = |path: &str| {
+        Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: path.to_string(),
+                value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Absent {
+                path: path.to_string(),
+            }),
+        ])
+        .normalize_boolean()
+    };
+    let present = |path: &str| Predicate::Not(Box::new(invalid(path))).normalize_boolean();
+    let rendered_identity = |path: &str| {
+        ScalarValue::Rendered(vec![ScalarRenderPart::Identity {
+            path: path.to_string(),
+            stringified: true,
+            lexical_escapes: BTreeSet::new(),
+        }])
+    };
+    let expected = ScalarValueDispatch {
+        arms: vec![
+            (
+                Predicate::And(vec![invalid("fallback"), invalid("primary")]).normalize_boolean(),
+                ScalarValue::Rendered(vec![ScalarRenderPart::Text(String::new())]),
+            ),
+            (
+                Predicate::And(vec![present("fallback"), invalid("primary")]).normalize_boolean(),
+                rendered_identity("fallback"),
+            ),
+            (present("primary"), rendered_identity("primary")),
+        ],
+        complete: true,
+    };
+    sim_assert_eq!(
+        have: result.scalar_dispatch,
+        want: Some(expected)
+    );
+}
+
+#[test]
 fn inner_range_break_does_not_exit_the_outer_range() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
@@ -530,7 +1629,7 @@ fn inner_range_break_does_not_exit_the_outer_range() {
 }
 
 #[test]
-fn bound_helper_keeps_join_shape_erasure_from_range_header() {
+fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -564,9 +1663,16 @@ fn bound_helper_keeps_join_shape_erasure_from_range_header() {
     assert!(
         result
             .effects
-            .shape_erased_paths
+            .helper_observed_shape_erased_paths
             .contains("server.namespaces"),
         "join's total conversion must survive the helper summary: {result:#?}",
+    );
+    assert!(
+        !result
+            .effects
+            .shape_erased_paths
+            .contains("server.namespaces"),
+        "a body-wide observation must not transform every returned occurrence: {result:#?}",
     );
 }
 
@@ -634,13 +1740,14 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
         panic!("include expression");
     };
     let mut summary_seen = HashSet::new();
+    let mut summary_env = EvalEnv::from_helper_context(None, None);
+    summary_env.locals = locals.clone();
     let call = analysis_db.summarize_bound_helper_call(
         "json.roundtrip",
         args.get(1),
         None,
-        crate::analysis_db::OuterRootFacts::default(),
         None,
-        &locals,
+        &summary_env,
         context,
         &mut summary_seen,
     );
@@ -660,8 +1767,13 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
             panic!("decoded helper output should retain its doc member: {value:#?}")
         });
 
-    sim_assert_eq!(have: doc.unique_path(), want: Some(String::new()));
-    sim_assert_eq!(have: doc.unique_json_decoded_path(), want: Some(String::new()));
+    let (path, json_decoded) = match doc {
+        AbstractValue::JsonDecodedPath(path) => (path, true),
+        AbstractValue::OutputPath(path, meta) => (path, meta.json_decoded),
+        other => panic!("decoded helper output lost its path identity: {other:#?}"),
+    };
+    sim_assert_eq!(have: path, want: String::new());
+    assert!(json_decoded, "helper output path must remain JSON-decoded");
 }
 
 #[test]

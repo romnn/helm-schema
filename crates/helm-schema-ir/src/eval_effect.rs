@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::abstract_value::AbstractValue;
 use crate::fragment_eval::ValueRead;
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, insert_type_hint};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Effects {
@@ -26,9 +27,17 @@ pub(crate) struct Effects {
     pub(crate) tested_type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     pub(crate) yaml_serialized_paths: BTreeSet<String>,
+    /// Paths serialized to YAML and then evaluated by `tpl`. Their
+    /// collection shape survives, but template-bearing string leaves are
+    /// programs whose rendered values reach the sink.
+    pub(crate) templated_yaml_paths: BTreeSet<String>,
     pub(crate) json_serialized_paths: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) shape_erased_paths: BTreeSet<String>,
+    /// Total stringifications observed somewhere inside called helper
+    /// bodies. They are execution facts for the caller's aggregate contract,
+    /// not transformations of every returned occurrence of the same path.
+    pub(crate) helper_observed_shape_erased_paths: BTreeSet<String>,
     /// Paths rendered through Sprig `quote`/`squote` in this expression:
     /// unlike every other total stringification, those SKIP nil operands
     /// entirely, so a missing or null source renders an explicit YAML
@@ -103,7 +112,7 @@ pub(crate) struct Effects {
     /// Root-field truth predicates already decoded inside called helpers.
     pub(crate) root_set_predicates: BTreeMap<String, helm_schema_core::Predicate>,
     /// Root-field value dispatches already joined inside called helpers.
-    pub(crate) root_set_value_dispatches: BTreeMap<String, RootValueDispatch>,
+    pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
     /// Chart value subtrees that supply defaults to a replaced effective `.Values` tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// Values subtrees merged IN PLACE over the values root
@@ -142,17 +151,6 @@ pub(crate) struct Effects {
     pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
 }
 
-/// The exhaustive value alternatives of one root-context field assigned
-/// across the arms of an if/else chain (`$_ := set . "mode" "…"` in every
-/// arm). The arm conditions are mutually exclusive and total by
-/// construction — each carries the negations of every earlier arm — so an
-/// equality on the field decodes as the exact disjunction of the arms
-/// assigning the compared literal (vault's `ne .mode "external"` gates).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct RootValueDispatch {
-    pub(crate) arms: Vec<(helm_schema_core::Predicate, helm_schema_core::GuardValue)>,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct MemberHostConversion {
     pub(crate) path: String,
@@ -171,11 +169,9 @@ pub(crate) struct MemberHostConversion {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct FailCapture {
     pub(crate) conjunction: Vec<helm_schema_core::Predicate>,
-    /// The range facts the capture rides: `direct` marks paths the capture
-    /// site was actively ranging (only these have member identities, and
-    /// helper-scope ranges never reach the document-lane directness
-    /// channel); JSON-decoded and destructured flavors carry every observed
-    /// occurrence.
+    /// The range facts active at the capture site. Input identity says which
+    /// path the header actually iterates; member identity says which path
+    /// supplies the values-backed members of a possibly derived iterable.
     pub(crate) ranged: crate::range_modes::RangeModes,
     pub(crate) kind: CaptureKind,
 }
@@ -211,6 +207,15 @@ pub(crate) enum CaptureKind {
     /// A scalar path must have the named JSON Schema type whenever the
     /// capture's execution predicates hold.
     ValueType { path: String, schema_type: String },
+    /// A range header iterates this values path itself, or a wildcard path
+    /// identifies the values-backed member alternative supplied to a
+    /// derived iterable. The header establishes that input's iterable
+    /// domain independently of whether its body renders any rows.
+    RangeInput {
+        path: String,
+        destructured: bool,
+        json_decoded: bool,
+    },
     /// A range header iterates the first-truthy selection of the ordered
     /// identity candidates in `chain`, and `path` is the candidate this
     /// capture claims: it must be iterable exactly where the conjunction's
@@ -312,6 +317,7 @@ impl CaptureKind {
             }
             Self::IndexAccess { path, .. }
             | Self::ValueType { path, .. }
+            | Self::RangeInput { path, .. }
             | Self::DigSubject { path }
             | Self::RequiredPresence { path }
             | Self::AbsenceAborts { path }
@@ -355,9 +361,11 @@ impl Effects {
             tested_type_hints,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
+            templated_yaml_paths,
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            helper_observed_shape_erased_paths,
             nil_omitting_paths,
             stringified_paths,
             derived_text_paths,
@@ -394,9 +402,12 @@ impl Effects {
         self.defaults.extend(defaults);
         self.parsed_yaml_input_paths.extend(parsed_yaml_input_paths);
         self.yaml_serialized_paths.extend(yaml_serialized_paths);
+        self.templated_yaml_paths.extend(templated_yaml_paths);
         self.json_serialized_paths.extend(json_serialized_paths);
         self.encoded_paths.extend(encoded_paths);
         self.shape_erased_paths.extend(shape_erased_paths);
+        self.helper_observed_shape_erased_paths
+            .extend(helper_observed_shape_erased_paths);
         self.nil_omitting_paths.extend(nil_omitting_paths);
         self.stringified_paths.extend(stringified_paths);
         self.derived_text_paths.extend(derived_text_paths);
@@ -510,9 +521,13 @@ impl Effects {
             tested_type_hints: _,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
+            // Describes the returned YAML text after `tpl`, not evaluation
+            // of an argument whose value the callee ignores.
+            templated_yaml_paths: _,
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            helper_observed_shape_erased_paths,
             nil_omitting_paths,
             // Describes the value returned by the expression, not its
             // evaluation: the argument value does not render at the call
@@ -568,9 +583,11 @@ impl Effects {
             tested_type_hints: BTreeMap::new(),
             parsed_yaml_input_paths,
             yaml_serialized_paths,
+            templated_yaml_paths: BTreeSet::new(),
             json_serialized_paths,
             encoded_paths,
             shape_erased_paths,
+            helper_observed_shape_erased_paths,
             nil_omitting_paths,
             stringified_paths: BTreeSet::new(),
             derived_text_paths,
@@ -702,6 +719,14 @@ impl Effects {
 pub(crate) struct EvalResult {
     pub(crate) value: Option<AbstractValue>,
     pub(crate) effects: Effects,
+    pub(crate) truth: TruthCondition,
+    pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
+    /// Exact scalar values of fields in a statically constructed mapping.
+    ///
+    /// The mapping's fragment value carries provenance and shape; these
+    /// dispatches carry the runtime values that a helper receiving the
+    /// mapping observes through its dot-relative fields.
+    pub(crate) field_scalar_dispatches: BTreeMap<String, ScalarValueDispatch>,
 }
 
 impl EvalResult {
@@ -710,9 +735,25 @@ impl EvalResult {
     }
 
     pub(crate) fn from_value(value: AbstractValue) -> Self {
+        let scalar_dispatch = match &value {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                Some(ScalarValueDispatch::identity(path.clone()))
+            }
+            AbstractValue::StringSet(values) if values.len() == 1 => values.first().map(|value| {
+                ScalarValueDispatch::constant(helm_schema_core::GuardValue::string(value))
+            }),
+            _ => None,
+        };
+        let truth = scalar_dispatch
+            .as_ref()
+            .map(ScalarValueDispatch::truth_condition)
+            .unwrap_or_else(|| truth_for_value(Some(&value)));
         Self {
             effects: Effects::from_value(&value),
             value: Some(value),
+            truth,
+            scalar_dispatch,
+            field_scalar_dispatches: BTreeMap::new(),
         }
     }
 
@@ -720,6 +761,32 @@ impl EvalResult {
         if let Some(value) = &value {
             effects.output_paths.extend(value.paths());
         }
-        Self { value, effects }
+        Self {
+            value,
+            effects,
+            truth: TruthCondition::Unknown,
+            scalar_dispatch: None,
+            field_scalar_dispatches: BTreeMap::new(),
+        }
+    }
+
+    pub(crate) fn with_truth(mut self, predicate: helm_schema_core::Predicate) -> Self {
+        self.truth = TruthCondition::exact(predicate);
+        self
+    }
+
+    pub(crate) fn with_scalar_dispatch(mut self, dispatch: ScalarValueDispatch) -> Self {
+        self.truth = dispatch.truth_condition();
+        self.scalar_dispatch = Some(dispatch);
+        self
+    }
+}
+
+fn truth_for_value(value: Option<&AbstractValue>) -> TruthCondition {
+    match value {
+        Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) => {
+            TruthCondition::exact(helm_schema_core::Predicate::truthy_path(path.clone()))
+        }
+        _ => TruthCondition::Unknown,
     }
 }

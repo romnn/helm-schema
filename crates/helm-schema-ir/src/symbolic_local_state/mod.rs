@@ -4,11 +4,12 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
-use helm_schema_core::Predicate;
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use helm_schema_core::{Guard, Predicate};
 
 mod branch_join;
 
-use branch_join::joined_branch_outcomes;
+use branch_join::{joined_branch_outcomes, joined_scalar_dispatch_arms};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SymbolicLocalState {
@@ -17,10 +18,22 @@ pub(crate) struct SymbolicLocalState {
     pub(crate) fragment_values: HashMap<String, AbstractValue>,
     pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    /// Runtime scalar values retained independently of fragment provenance.
+    /// Branch joins guard each alternative by the branch that assigned it,
+    /// so later helper conditions consume the same value semantics Helm does.
+    pub(crate) scalar_dispatches: HashMap<String, ScalarValueDispatch>,
     /// Sufficient conditions under which a monotone local accumulator is
     /// nonempty. An explicit [`Predicate::False`] is the empty seed; a
     /// missing entry means the local's truthiness is not structurally known.
     pub(crate) truthy_reductions: HashMap<String, Predicate>,
+    /// Locals that received a reassignment which does not imply truthiness
+    /// (an explicit falsy write, or a condition-valued write). Such a write
+    /// makes the accumulator last-write-wins instead of monotone, so a
+    /// range exit must drop the local's reduction rather than read it
+    /// existentially. Straight-line `if`/`else` joins stay exact and keep
+    /// consuming the reduction. A declaration seeds a fresh accumulator and
+    /// resets the mark.
+    pub(crate) truthiness_clears: BTreeSet<String>,
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
     /// helper mutations that have already run in source order.
     pub(crate) chart_value_defaults: BTreeSet<String>,
@@ -32,12 +45,6 @@ pub(crate) struct SymbolicLocalState {
     /// comparisons on the local may strengthen through the raw-integer
     /// sound subsets exactly as the inline cast expression would.
     pub(crate) int_cast_sources: HashMap<String, IntCastSource>,
-    /// Locals bound to a Capabilities-defaulted Kubernetes version
-    /// (`$v := default .Capabilities.KubeVersion.GitVersion
-    /// .Values.kubeTargetVersionOverride`): `semverCompare` conditions on
-    /// the local evaluate the policy version when the override is unset and
-    /// the override's own text when it is.
-    pub(crate) kube_version_sources: HashMap<String, KubeVersionSource>,
     /// Range variables bound to the MEMBER identity of a directly ranged
     /// path (`$v` in `range $k, $v := .Values.x` holds each `x.*` value).
     /// Conditions and assignments resolve through these; hole rendering
@@ -69,14 +76,6 @@ pub(crate) struct IntCastSource {
     pub(crate) default_int: Option<i64>,
 }
 
-/// A Kubernetes-version subject: the policy version, optionally shadowed by
-/// a truthy values-path override (`default .Capabilities.KubeVersion.X
-/// OVERRIDE`; a bare Capabilities selector has no override).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct KubeVersionSource {
-    pub(crate) override_path: Option<String>,
-}
-
 #[derive(Clone, Debug, Default)]
 struct LocalScopeFrame {
     previous_values: HashMap<String, VariableLocalState>,
@@ -90,10 +89,11 @@ struct VariableLocalState {
     traversal_advanced: bool,
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
+    scalar_dispatch: Option<ScalarValueDispatch>,
     truthy_reduction: Option<Predicate>,
+    truthiness_cleared: bool,
     typeof_source: Option<BTreeMap<String, HelperOutputMeta>>,
     int_cast_source: Option<IntCastSource>,
-    kube_version_source: Option<KubeVersionSource>,
     range_member_value: Option<AbstractValue>,
     definite_range_member_value: Option<AbstractValue>,
 }
@@ -101,6 +101,18 @@ struct VariableLocalState {
 impl SymbolicLocalState {
     pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: &[Self]) {
         *self = joined_branch_outcomes(entry, outcomes);
+    }
+
+    /// Rebuild scalar locals from the mutually exclusive arms of one exact
+    /// `if` chain. Ordinary local facts join by equality or value choice;
+    /// scalar values retain the condition that selected each reassignment.
+    pub(crate) fn join_scalar_dispatch_arms(
+        &mut self,
+        entry: &Self,
+        arms: &[(TruthCondition, Self)],
+        has_unconditional_else: bool,
+    ) {
+        self.scalar_dispatches = joined_scalar_dispatch_arms(entry, arms, has_unconditional_else);
     }
 
     /// Conjoin `condition` onto every truthiness reduction this branch
@@ -121,6 +133,20 @@ impl SymbolicLocalState {
         if matches!(condition, Predicate::True) || condition.contains_approximation() {
             return;
         }
+        // A range exit reads each reduction existentially ("some iteration
+        // made the accumulator truthy"), which is exact only for monotone
+        // accumulators. A falsy-capable reassignment inside the body makes
+        // the final value last-write-wins, so the reduction abstains
+        // instead of quantifying: `[{enabled: true}, {enabled: false}]`
+        // ends the sentinel falsy while a member still satisfies ∃.
+        if matches!(
+            single_term(condition),
+            Some(Predicate::Guard(Guard::Range { .. }))
+        ) {
+            let clears = &self.truthiness_clears;
+            self.truthy_reductions
+                .retain(|variable, _| !clears.contains(variable));
+        }
         let condition_guards = predicate_guard_count(condition);
         for (variable, reduction) in &mut self.truthy_reductions {
             if entry.truthy_reductions.get(variable) == Some(reduction)
@@ -132,7 +158,9 @@ impl SymbolicLocalState {
             if condition_guards + predicate_guard_count(reduction) > MAX_STAMPED_GUARDS {
                 continue;
             }
-            *reduction = Predicate::all(vec![condition.clone(), reduction.clone()]);
+            *reduction = quantify_range_member_reduction(condition, reduction)
+                .map(Predicate::from)
+                .unwrap_or_else(|| Predicate::all(vec![condition.clone(), reduction.clone()]));
         }
     }
 
@@ -213,10 +241,11 @@ impl SymbolicLocalState {
             traversal_advanced: self.traversal_advances.contains(variable),
             default_paths: self.default_paths.get(variable).cloned(),
             output_meta: self.output_meta.get(variable).cloned(),
+            scalar_dispatch: self.scalar_dispatches.get(variable).cloned(),
             truthy_reduction: self.truthy_reductions.get(variable).cloned(),
+            truthiness_cleared: self.truthiness_clears.contains(variable),
             typeof_source: self.typeof_sources.get(variable).cloned(),
             int_cast_source: self.int_cast_sources.get(variable).cloned(),
-            kube_version_source: self.kube_version_sources.get(variable).cloned(),
             range_member_value: self.range_member_values.get(variable).cloned(),
             definite_range_member_value: self.definite_range_member_values.get(variable).cloned(),
         }
@@ -228,10 +257,10 @@ impl SymbolicLocalState {
             || self.fragment_values.contains_key(variable)
             || self.default_paths.contains_key(variable)
             || self.output_meta.contains_key(variable)
+            || self.scalar_dispatches.contains_key(variable)
             || self.truthy_reductions.contains_key(variable)
             || self.typeof_sources.contains_key(variable)
             || self.int_cast_sources.contains_key(variable)
-            || self.kube_version_sources.contains_key(variable)
             || self.range_member_values.contains_key(variable)
     }
 
@@ -252,20 +281,25 @@ impl SymbolicLocalState {
         restore_map_entry(&mut self.default_paths, variable, previous.default_paths);
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
         restore_map_entry(
+            &mut self.scalar_dispatches,
+            variable,
+            previous.scalar_dispatch,
+        );
+        restore_map_entry(
             &mut self.truthy_reductions,
             variable,
             previous.truthy_reduction,
         );
+        if previous.truthiness_cleared {
+            self.truthiness_clears.insert(variable.to_string());
+        } else {
+            self.truthiness_clears.remove(variable);
+        }
         restore_map_entry(&mut self.typeof_sources, variable, previous.typeof_source);
         restore_map_entry(
             &mut self.int_cast_sources,
             variable,
             previous.int_cast_source,
-        );
-        restore_map_entry(
-            &mut self.kube_version_sources,
-            variable,
-            previous.kube_version_source,
         );
         restore_map_entry(
             &mut self.range_member_values,
@@ -295,10 +329,11 @@ impl SymbolicLocalState {
         self.traversal_advances.remove(variable);
         self.default_paths.remove(variable);
         self.output_meta.remove(variable);
+        self.scalar_dispatches.remove(variable);
         self.truthy_reductions.remove(variable);
+        self.truthiness_clears.remove(variable);
         self.typeof_sources.remove(variable);
         self.int_cast_sources.remove(variable);
-        self.kube_version_sources.remove(variable);
         self.range_member_values.remove(variable);
         self.definite_range_member_values.remove(variable);
     }
@@ -309,6 +344,70 @@ fn restore_map_entry<T>(map: &mut HashMap<String, T>, variable: &str, value: Opt
         map.insert(variable.to_string(), value);
     } else {
         map.remove(variable);
+    }
+}
+
+/// The lone non-trivial conjunct of a flat `And` formula, when there is
+/// exactly one; a `False` conjunct or a second term abstains.
+fn single_term(predicate: &Predicate) -> Option<&Predicate> {
+    fn collect<'a>(predicate: &'a Predicate, term: &mut Option<&'a Predicate>) -> Option<()> {
+        match predicate {
+            Predicate::True => Some(()),
+            Predicate::And(items) => {
+                for item in items {
+                    collect(item, term)?;
+                }
+                Some(())
+            }
+            Predicate::False => None,
+            predicate => {
+                if term.replace(predicate).is_some() {
+                    return None;
+                }
+                Some(())
+            }
+        }
+    }
+
+    let mut term = None;
+    collect(predicate, &mut term)?;
+    term
+}
+
+fn quantify_range_member_reduction(condition: &Predicate, reduction: &Predicate) -> Option<Guard> {
+    let Predicate::Guard(Guard::Range { path: range_path }) = single_term(condition)? else {
+        return None;
+    };
+    let member_predicate = single_term(reduction)?;
+    let Predicate::Guard(
+        Guard::Eq {
+            path: member_path, ..
+        }
+        | Guard::Truthy { path: member_path },
+    ) = member_predicate
+    else {
+        return None;
+    };
+    let range_segments = helm_schema_core::split_value_path(range_path);
+    let member_segments = helm_schema_core::split_value_path(member_path);
+    let [wildcard, member] = member_segments.get(range_segments.len()..)? else {
+        return None;
+    };
+    if wildcard != "*" || member_segments.get(..range_segments.len())? != range_segments {
+        return None;
+    }
+
+    match member_predicate {
+        Predicate::Guard(Guard::Eq { value, .. }) => Some(Guard::ContainsMemberEquals {
+            path: range_path.clone(),
+            member: member.clone(),
+            value: value.clone(),
+        }),
+        Predicate::Guard(Guard::Truthy { .. }) => Some(Guard::ContainsTruthyMember {
+            path: range_path.clone(),
+            member: member.clone(),
+        }),
+        _ => None,
     }
 }
 

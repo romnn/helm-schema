@@ -4,7 +4,6 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::expr_eval::eval_expr;
-use crate::symbolic_local_state::KubeVersionSource;
 use crate::{Guard, GuardValue};
 use helm_schema_ast::type_is_schema_type;
 use helm_schema_core::Predicate;
@@ -63,6 +62,23 @@ fn literal_guard_value(expr: &TemplateExpr) -> Option<GuardValue> {
     }
 }
 
+/// Whether the expression pipes its value through a total stringification
+/// (`toString`, `quote`, …), whose output is text for EVERY raw kind.
+fn subject_is_total_stringification(subject: &TemplateExpr) -> bool {
+    let stage = match subject.deparen() {
+        TemplateExpr::Pipeline(stages) => match stages.last() {
+            Some(stage) => stage.deparen(),
+            None => return false,
+        },
+        expr => expr,
+    };
+    matches!(
+        stage,
+        TemplateExpr::Call { function, .. }
+            if helm_schema_ast::is_total_stringification_function(function)
+    )
+}
+
 fn literal_membership_string(expr: &TemplateExpr) -> Option<String> {
     if let Some(value) = literal_string(expr) {
         return Some(value.to_string());
@@ -91,11 +107,21 @@ fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
 }
 
 impl ValuePathContext<'_> {
+    fn exact_evaluated_truth_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        eval_expr(expr, &self.expression_eval_env())
+            .truth
+            .predicate()
+            .cloned()
+    }
+
     /// Whether `condition_predicate_expr` represents this expression
     /// EXACTLY, with no truthy fallback and no silently dropped conjunct.
     /// Rows tolerate approximate (wider) conditions; fail-branch NEGATION
     /// does not, so it consults this before trusting a captured stack.
     pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
+        if self.exact_evaluated_truth_predicate(expr).is_some() {
+            return true;
+        }
         match expr.deparen() {
             TemplateExpr::VariableDefinition { value, .. }
             | TemplateExpr::Assignment { value, .. } => self.condition_lowering_is_faithful(value),
@@ -155,7 +181,7 @@ impl ValuePathContext<'_> {
                 }
                 "eq" => self.value_comparison_predicate(args, false).is_some(),
                 "ne" => self.value_comparison_predicate(args, true).is_some(),
-                "semverCompare" => self.semver_capabilities_predicate(args).is_some(),
+                "semverCompare" => false,
                 "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args).is_some(),
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
@@ -196,6 +222,9 @@ impl ValuePathContext<'_> {
         | TemplateExpr::Assignment { value, .. } = expr.deparen()
         {
             return self.condition_predicate_expr(value);
+        }
+        if let Some(predicate) = self.exact_evaluated_truth_predicate(expr) {
+            return predicate;
         }
         if let Some(predicate) = self.condition_predicate(expr) {
             return predicate;
@@ -424,7 +453,7 @@ impl ValuePathContext<'_> {
             "or" => self.or_predicate(args),
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
-            "semverCompare" => self.semver_capabilities_predicate(args),
+            "semverCompare" => None,
             "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args),
             "typeIs" | "kindIs" => self.type_is_predicate(args),
             "coalesce" => self.coalesce_truthy_predicate(args),
@@ -904,6 +933,14 @@ impl ValuePathContext<'_> {
                 self.tostring_pipeline_truthy_predicate(stages)
                     .map(|predicate| predicate.negated())
             }
+            // `include` returns rendered text. Its literal dispatch is exact
+            // only when every helper arm is known, and then a printed
+            // `"false"` is still a nonempty, truthy string. Negating the
+            // helper's internal values paths would instead confuse the
+            // control value that selected the text with the text itself.
+            TemplateExpr::Call { function, .. } if function == "include" => self
+                .include_truthy_predicate(arg)
+                .map(|predicate| predicate.negated()),
             // A local's negation lowers through its stored truthy
             // reduction — the same trust the positive Variable lowering
             // extends (`not $stateful` selecting airflow's Deployment
@@ -994,6 +1031,14 @@ impl ValuePathContext<'_> {
         let pattern = literal_string(pattern)?;
         if let Some(predicate) = self.type_descriptor_regex_predicate(pattern, subject) {
             return Some(predicate);
+        }
+        // A totally stringified subject (`regexMatch p (toString .Values.x)`)
+        // tests the RENDERING of every raw kind, while the raw-level guard
+        // also asserts string-ness: `toString 3` matches `^[0-9]+$` but the
+        // guard rejects the integer. The scalar dispatch lane carries the
+        // partial condition; this exact lane abstains.
+        if subject_is_total_stringification(subject) {
+            return None;
         }
         let path = match self.with_body_fragment_value_expr(subject)? {
             AbstractValue::ValuesPath(path) if !path.is_empty() => path,
@@ -1138,7 +1183,9 @@ impl ValuePathContext<'_> {
         let predicates = args
             .iter()
             .skip(1)
-            .flat_map(|arg| self.paths_for_expr(arg))
+            .map(|arg| self.single_resolved_values_path_expr(arg))
+            .collect::<Option<Vec<_>>>()?
+            .into_iter()
             .map(|path| match &schema_type {
                 Some(schema_type) => Predicate::from(Guard::TypeIs {
                     path,
@@ -1229,7 +1276,7 @@ impl ValuePathContext<'_> {
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
         let predicate = self.literal_dispatch_arms_predicate(&arms, &|arm| !arm.literal.is_empty());
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
-        predicate
+        predicate.map(Predicate::normalize_boolean)
     }
 
     /// The piped membership spelling `list L1 L2 … | has X`: the pipeline
@@ -1462,6 +1509,9 @@ impl ValuePathContext<'_> {
     }
 
     fn truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        if let Some(predicate) = self.exact_evaluated_truth_predicate(expr) {
+            return Some(predicate);
+        }
         if let TemplateExpr::Literal(literal) = expr.deparen() {
             return Some(bool_predicate(literal_is_truthy(literal)));
         }
@@ -1599,14 +1649,7 @@ impl ValuePathContext<'_> {
             },
         };
         let dispatch = self.root_value_dispatches.get(field)?;
-        let selected = predicate_any(
-            dispatch
-                .arms
-                .iter()
-                .filter(|(_, literal)| *literal == value)
-                .map(|(condition, _)| condition.clone())
-                .collect(),
-        );
+        let selected = dispatch.condition_equals(&value).predicate()?.clone();
         Some(if negated {
             selected.negated()
         } else {
@@ -1697,110 +1740,7 @@ impl ValuePathContext<'_> {
         if !subset.is_empty() {
             return subset;
         }
-        let subset = self.include_dispatch_semver_sound_subset(expr);
-        if !subset.is_empty() {
-            return subset;
-        }
         self.negated_membership_sound_subset(expr)
-    }
-
-    /// `eq (include "helper" .) "LIT"` over a pure literal dispatch whose
-    /// non-else arms are `semverCompare "<C" (PATH | default
-    /// .Capabilities.KubeVersion.Version)` upper bounds: selecting the
-    /// ELSE arm's literal requires every bound to fail, and a PATH
-    /// matching every flipped `>=C` constraint certainly fails them all —
-    /// a sound subset usable in fail position (oauth2-proxy's
-    /// `capabilities.ingress.apiVersion` gate on the legacy extraPaths
-    /// abort). The capability-default lane stays out of the subset: with
-    /// PATH unset the selection is cluster-dependent.
-    fn include_dispatch_semver_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
-        let TemplateExpr::Call { function, args } = expr.deparen() else {
-            return Vec::new();
-        };
-        if function != "eq" {
-            return Vec::new();
-        }
-        let [left, right] = args.as_slice() else {
-            return Vec::new();
-        };
-        let (name, target) = match (helper_root_call(left), helper_root_call(right)) {
-            (Some(name), None) => (name, literal_string(right)),
-            (None, Some(name)) => (name, literal_string(left)),
-            _ => return Vec::new(),
-        };
-        let Some(target) = target else {
-            return Vec::new();
-        };
-        if !self
-            .current_dot_binding
-            .as_ref()
-            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
-        {
-            return Vec::new();
-        }
-        if HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH {
-            return Vec::new();
-        }
-        let Some(arms) = crate::helper_literal_dispatch::helper_literal_dispatch(
-            self.fragment_context.analysis_db,
-            name,
-        ) else {
-            return Vec::new();
-        };
-        let Some((else_arm, bounded_arms)) = arms.split_last() else {
-            return Vec::new();
-        };
-        if else_arm.header.is_some()
-            || else_arm.literal != target
-            || bounded_arms.iter().any(|arm| arm.literal == target)
-        {
-            return Vec::new();
-        }
-        let mut subject_path: Option<String> = None;
-        let mut guards = Vec::new();
-        for arm in bounded_arms {
-            let Some(header) = &arm.header else {
-                return Vec::new();
-            };
-            let TemplateExpr::Call { function, args } = header.expr().deparen() else {
-                return Vec::new();
-            };
-            let [constraint, subject] = args.as_slice() else {
-                return Vec::new();
-            };
-            if function != "semverCompare" {
-                return Vec::new();
-            }
-            let TemplateExpr::Literal(Literal::String(constraint)) = constraint.deparen() else {
-                return Vec::new();
-            };
-            // `<X-0` opts prereleases into Masterminds' matching; the
-            // flipped subset pattern only ever matches RELEASE versions,
-            // and a release ≥ X certainly fails `<X-0` too, so the
-            // prerelease marker drops out of the flipped bound.
-            let Some(flipped) = constraint
-                .strip_prefix('<')
-                .filter(|rest| !rest.starts_with('='))
-                .map(|rest| format!(">={}", rest.strip_suffix("-0").unwrap_or(rest)))
-            else {
-                return Vec::new();
-            };
-            let Some(path) = self.single_resolved_values_path_expr(subject) else {
-                return Vec::new();
-            };
-            if subject_path.get_or_insert_with(|| path.clone()) != &path {
-                return Vec::new();
-            }
-            let Some(pattern) = helm_schema_ast::semver_constraint_match_pattern(&flipped) else {
-                return Vec::new();
-            };
-            guards.push(Guard::MatchesPattern {
-                path,
-                pattern,
-                templated: false,
-            });
-        }
-        guards
     }
 
     /// `gt (len .Values.x) N` admits a bounded string strengthening: a
@@ -2297,79 +2237,6 @@ impl ValuePathContext<'_> {
     /// or a local bound to exactly that shape. Any other subject transform
     /// breaks the "a raw JSON integer at the path reaches the comparison
     /// unchanged" argument the raw-integer subsets rely on.
-    /// `semverCompare "<constraint>" SUBJECT` where SUBJECT is the policy
-    /// Kubernetes version, optionally shadowed by a values-path override
-    /// (`default .Capabilities.KubeVersion.X .Values.kubeTargetVersionOverride`,
-    /// directly or through a bound local). The constraint's exact version
-    /// language comes from the semver pattern encoder; the policy arm
-    /// evaluates it against the configured version, and the override arm
-    /// tests the raw override text — both exact, so the negated form stays
-    /// faithful.
-    fn semver_capabilities_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
-        let [constraint_expr, subject] = args else {
-            return None;
-        };
-        let TemplateExpr::Literal(Literal::String(constraint) | Literal::RawString(constraint)) =
-            constraint_expr.deparen()
-        else {
-            return None;
-        };
-        let source = self.kube_version_subject(subject)?;
-        let policy = self.fragment_context.analysis_db.kubernetes_version()?;
-        semver_constraint_predicate(constraint, &source, policy)
-    }
-
-    fn kube_version_subject(
-        &self,
-        expr: &TemplateExpr,
-    ) -> Option<crate::symbolic_local_state::KubeVersionSource> {
-        if let TemplateExpr::Variable(name) = expr.deparen() {
-            return self
-                .kube_version_bindings
-                .get(name.trim_start_matches('$'))
-                .cloned();
-        }
-        self.kube_version_operand(expr)
-    }
-
-    /// The Kubernetes-version identity of an expression: a bare
-    /// `.Capabilities.KubeVersion.Version|GitVersion` selector, or a
-    /// `default` of that fallback with a DIRECT values-path override (a
-    /// transformed override no longer carries the path's raw text).
-    pub(crate) fn kube_version_operand(
-        &self,
-        expr: &TemplateExpr,
-    ) -> Option<crate::symbolic_local_state::KubeVersionSource> {
-        let expr = expr.deparen();
-        if capabilities_kube_version_selector(expr) {
-            return Some(crate::symbolic_local_state::KubeVersionSource {
-                override_path: None,
-            });
-        }
-        let TemplateExpr::Call { function, args } = expr else {
-            return None;
-        };
-        if function != "default" {
-            return None;
-        }
-        let [fallback, subject] = args.as_slice() else {
-            return None;
-        };
-        if !capabilities_kube_version_selector(fallback.deparen()) {
-            return None;
-        }
-        if !matches!(
-            subject.deparen(),
-            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-        ) {
-            return None;
-        }
-        let path = self.single_resolved_values_path_expr(subject)?;
-        Some(crate::symbolic_local_state::KubeVersionSource {
-            override_path: Some(path),
-        })
-    }
-
     pub(crate) fn int_cast_operand(
         &self,
         expr: &TemplateExpr,
@@ -2413,6 +2280,9 @@ impl ValuePathContext<'_> {
     }
 
     fn single_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        if let Some(predicate) = self.exact_evaluated_truth_predicate(expr) {
+            return Some(predicate);
+        }
         if let TemplateExpr::Variable(name) = expr.deparen()
             && let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
                 self.template_truthy_reductions
@@ -2967,7 +2837,7 @@ fn invalid_kind_predicate(path: String) -> Predicate {
 /// `enum` integer already accepts the numerically equal float). Larger or
 /// non-canonical spellings keep the string alone rather than claim a
 /// preimage that splits the int and float channels.
-fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
+pub(crate) fn stringified_equality_preimage(text: &str) -> Vec<GuardValue> {
     let mut values = vec![GuardValue::string(text)];
     match text {
         "true" => values.push(GuardValue::Bool(true)),
@@ -3092,7 +2962,7 @@ fn first_truthy_truthy_predicate(candidates: &[AbstractValue]) -> Option<Predica
     clippy::too_many_lines,
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
-fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
+pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
     match value {
         AbstractValue::Dict(entries) => Some(bool_predicate(entries.contains_key(key))),
         AbstractValue::Overlay { entries, fallback } => entries
@@ -3278,41 +3148,6 @@ fn ancestor_chain_leaf(paths: &std::collections::BTreeSet<String>) -> Option<&st
     ordered.last().map(|path| path.as_str())
 }
 
-/// The condition under which `semverCompare CONSTRAINT SUBJECT` holds,
-/// where SUBJECT carries the analysis policy's Kubernetes `version` unless
-/// a truthy values-path override shadows it.
-///
-/// The comparison is a chart-level fact, not only a condition-lowering one:
-/// a short-circuit chain gates its later operands on it, so the same answer
-/// has to be available to the expression evaluator.
-pub(crate) fn semver_constraint_predicate(
-    constraint: &str,
-    source: &KubeVersionSource,
-    version: &str,
-) -> Option<Predicate> {
-    let pattern = helm_schema_ast::semver_constraint_match_pattern(constraint)?;
-    let policy_matches = regex::Regex::new(&pattern).ok()?.is_match(version);
-    let Some(path) = source.override_path.clone() else {
-        return Some(bool_predicate(policy_matches));
-    };
-    let truthy = Predicate::truthy_path(path.clone());
-    let matches = Predicate::from(Guard::MatchesPattern {
-        path,
-        pattern,
-        templated: false,
-    });
-    Some(if policy_matches {
-        // A falsy override renders the (satisfying) policy version; a
-        // truthy override must satisfy on its own.
-        predicate_any(vec![
-            truthy.negated(),
-            Predicate::all(vec![truthy, matches]),
-        ])
-    } else {
-        Predicate::all(vec![truthy, matches])
-    })
-}
-
 fn bool_predicate(value: bool) -> Predicate {
     if value {
         Predicate::True
@@ -3424,25 +3259,6 @@ pub(crate) fn guard_value_is_truthy(value: &GuardValue) -> bool {
         GuardValue::Float(text) => text.parse::<f64>().is_ok_and(|value| value != 0.0),
         GuardValue::Null => false,
     }
-}
-
-/// A `.Capabilities.KubeVersion.Version` / `.GitVersion` selector (also the
-/// `$.`-rooted spelling).
-pub(crate) fn capabilities_kube_version_selector(expr: &TemplateExpr) -> bool {
-    let path = match expr {
-        TemplateExpr::Field(path) => path.as_slice(),
-        TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
-            path.as_slice()
-        }
-        _ => return false,
-    };
-    matches!(
-        path,
-        [first, second, third]
-            if first == "Capabilities"
-                && second == "KubeVersion"
-                && (third == "Version" || third == "GitVersion")
-    )
 }
 
 fn guard_value_literal(expr: &TemplateExpr) -> Option<GuardValue> {

@@ -83,14 +83,23 @@ fn condition_context_with_output_meta(
     template_bindings: HashMap<String, AbstractValue>,
     template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
 ) -> ValuePathContext<'static> {
+    condition_context_with_defines(template_bindings, template_output_meta, DefineIndex::new())
+}
+
+fn condition_context_with_defines(
+    template_bindings: HashMap<String, AbstractValue>,
+    template_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    defines: DefineIndex,
+) -> ValuePathContext<'static> {
     let root_bindings = Box::leak(Box::new(HashMap::new()));
     let range_domains = Box::leak(Box::new(HashMap::new()));
     let get_bindings = Box::leak(Box::new(HashMap::new()));
     let template_default_paths = Box::leak(Box::new(HashMap::new()));
     let template_output_meta: &'static HashMap<String, BTreeMap<String, HelperOutputMeta>> =
         Box::leak(Box::new(template_output_meta));
+    let template_scalar_dispatches = Box::leak(Box::new(HashMap::new()));
     let template_truthy_reductions = Box::leak(Box::new(HashMap::new()));
-    let defines = Box::leak(Box::new(DefineIndex::new()));
+    let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
 
     let typeof_bindings = Box::leak(Box::new(HashMap::new()));
@@ -99,8 +108,10 @@ fn condition_context_with_output_meta(
         root_bindings,
         root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
         root_value_dispatches: Box::leak(Box::new(HashMap::new())),
+        root_field_semantics_on_current_dot: false,
         pipeline_bound_bindings: template_bindings.keys().cloned().collect(),
         template_bindings,
+        template_scalar_dispatches,
         range_domains,
         get_bindings,
         template_default_paths,
@@ -108,11 +119,37 @@ fn condition_context_with_output_meta(
         template_truthy_reductions,
         typeof_bindings,
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
-        kube_version_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,
     }
+}
+
+#[test]
+fn negated_include_uses_rendered_text_truthiness() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:rendered-false>",
+        indoc::indoc! {r#"
+            {{- define "rendered.false" -}}
+            {{- if .Values.flag -}}
+            false
+            {{- else -}}
+            false
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let expr = parse_action_expressions(r#"{{ not (include "rendered.false" .) }}"#)
+        .into_iter()
+        .next()
+        .expect("condition expression");
+
+    sim_assert_eq!(
+        have: condition_context_with_defines(HashMap::new(), HashMap::new(), defines)
+            .condition_predicate_expr(&expr),
+        want: Predicate::False,
+    );
 }
 
 #[test]
@@ -421,10 +458,10 @@ fn not_or_paths_uses_demorgan_negated_guards() {
         have: parse_condition("not (or .Values.serviceMonitor.enabled .Values.podMonitor.enabled)"),
         want: vec![
             Guard::Not {
-                path: "serviceMonitor.enabled".into()
+                path: "podMonitor.enabled".into()
             },
             Guard::Not {
-                path: "podMonitor.enabled".into()
+                path: "serviceMonitor.enabled".into()
             },
         ],
     );
@@ -716,8 +753,10 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
         root_bindings: Box::leak(Box::new(HashMap::new())),
         root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
         root_value_dispatches: Box::leak(Box::new(HashMap::new())),
+        root_field_semantics_on_current_dot: false,
         pipeline_bound_bindings: std::collections::HashSet::new(),
         template_bindings: HashMap::new(),
+        template_scalar_dispatches: Box::leak(Box::new(HashMap::new())),
         range_domains: Box::leak(Box::new(HashMap::new())),
         get_bindings: Box::leak(Box::new(HashMap::new())),
         template_default_paths: Box::leak(Box::new(HashMap::new())),
@@ -725,7 +764,6 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
         template_truthy_reductions: Box::leak(Box::new(HashMap::new())),
         typeof_bindings: Box::leak(Box::new(HashMap::new())),
         int_cast_bindings: Box::leak(Box::new(HashMap::new())),
-        kube_version_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
         current_dot_binding: None,

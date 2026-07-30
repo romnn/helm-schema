@@ -313,7 +313,14 @@ pub(super) fn eval_index(
     }
 
     let value = AbstractValue::choice(values);
-    EvalResult::with_effects(value, effects)
+    match value {
+        Some(value) => {
+            let mut result = EvalResult::from_value(value);
+            result.effects.merge(effects);
+            result
+        }
+        None => EvalResult::with_effects(None, effects),
+    }
 }
 
 pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effects) {

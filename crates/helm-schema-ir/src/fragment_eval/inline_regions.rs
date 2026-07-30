@@ -15,6 +15,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::node_eval::{NodeAction, control_header, else_if_pairs, node_action};
+use crate::scalar_value::{TruthCondition, any_predicates, conjoin_predicates};
 use crate::{Guard, ValueKind};
 use helm_schema_ast::children_with_field;
 use helm_schema_core::Predicate;
@@ -23,7 +24,9 @@ use super::domain::{PathCondition, StringPart, TaintPart, and_conditions, stamp_
 use super::eval::Interpreter;
 use super::hole_effects::RenderedDemotion;
 use super::holes::expr_contains_fail_call;
-use super::lower::{LowerScope, MAX_SCALAR_ARM_FANOUT, lower_value_scalar_arms};
+use super::lower::{
+    LowerScope, MAX_SCALAR_ARM_FANOUT, lower_scalar_dispatch_arms, lower_value_scalar_arms,
+};
 
 impl Interpreter<'_> {
     /// Evaluate an inline `{{ if }}`, `{{ with }}`, or `{{ range }}`
@@ -84,9 +87,13 @@ impl Interpreter<'_> {
         arm_specs.push((None, children_with_field(action, "alternative")));
 
         let entry_predicates = self.active_predicates.len();
+        let entry_locals = self.locals.clone();
         let mut prior: Vec<PathCondition> = Vec::new();
+        let mut prior_truths = Vec::new();
         let mut arms = Vec::new();
+        let mut local_arm_states = Vec::new();
         for (branch_index, (header, children)) in arm_specs.into_iter().enumerate() {
+            self.locals = entry_locals.clone();
             self.active_predicates.truncate(entry_predicates);
             let mut arm_condition = Predicate::True;
             for predicate in &prior {
@@ -94,17 +101,56 @@ impl Interpreter<'_> {
                 self.push_predicate(negated.clone());
                 arm_condition = and_conditions(arm_condition, negated);
             }
-            if let Some(own) =
-                self.activate_inline_if(header.as_ref(), action.start_byte(), branch_index)
-            {
+            let activated =
+                self.activate_inline_if(header.as_ref(), action.start_byte(), branch_index);
+            let (own, own_truth) = activated.map_or_else(
+                || (None, TruthCondition::exact(Predicate::True)),
+                |(condition, truth)| (Some(condition), truth),
+            );
+            if let Some(own) = own {
                 arm_condition = and_conditions(arm_condition, own.clone());
                 prior.push(own);
             }
-            for (sub_condition, parts) in self.inline_body_arms(&children, text) {
+            let semantic_arm_truth = TruthCondition::all(
+                prior_truths
+                    .iter()
+                    .map(TruthCondition::negated)
+                    .chain(std::iter::once(own_truth.clone())),
+            );
+            if header.is_some() {
+                prior_truths.push(own_truth);
+            }
+            if self.scalar_output_projection {
+                self.active_predicates.truncate(entry_predicates);
+                arm_condition = semantic_arm_truth.when_true();
+                if arm_condition != Predicate::True {
+                    self.push_predicate(arm_condition.clone());
+                }
+            }
+            self.locals.enter_local_scope();
+            let body_arms = if arm_condition == Predicate::False {
+                Vec::new()
+            } else if self.scalar_output_projection {
+                self.scalar_body_arms(&children, text)
+                    .unwrap_or_else(unknown_scalar_arms)
+            } else {
+                self.inline_body_arms(&children, text)
+            };
+            for (sub_condition, parts) in body_arms {
                 arms.push((and_conditions(arm_condition.clone(), sub_condition), parts));
             }
+            self.locals.exit_local_scope();
+            local_arm_states.push((semantic_arm_truth, self.locals.clone()));
         }
         self.active_predicates.truncate(entry_predicates);
+        self.locals = entry_locals.clone();
+        let outcomes = local_arm_states
+            .iter()
+            .map(|(_, state)| state.clone())
+            .collect::<Vec<_>>();
+        self.locals.join_branch_outcomes(&entry_locals, &outcomes);
+        self.locals
+            .join_scalar_dispatch_arms(&entry_locals, &local_arm_states, true);
         if arms.len() > MAX_SCALAR_ARM_FANOUT {
             let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
             return vec![(Predicate::True, parts)];
@@ -126,8 +172,16 @@ impl Interpreter<'_> {
             0,
         );
         let body_condition = own.clone().unwrap_or(Predicate::True);
-        let mut arms = self
-            .inline_body_arms(&children_with_field(action, "consequence"), text)
+        let consequence = children_with_field(action, "consequence");
+        let body_arms = if body_condition == Predicate::False {
+            Vec::new()
+        } else if self.scalar_output_projection {
+            self.scalar_body_arms(&consequence, text)
+                .unwrap_or_else(unknown_scalar_arms)
+        } else {
+            self.inline_body_arms(&consequence, text)
+        };
+        let mut arms = body_arms
             .into_iter()
             .map(|(condition, parts)| (and_conditions(body_condition.clone(), condition), parts))
             .collect::<Vec<_>>();
@@ -139,9 +193,16 @@ impl Interpreter<'_> {
         if alternative_condition != Predicate::True {
             self.push_predicate(alternative_condition.clone());
         }
-        for (condition, parts) in
-            self.inline_body_arms(&children_with_field(action, "alternative"), text)
-        {
+        let alternative = children_with_field(action, "alternative");
+        let alternative_arms = if alternative_condition == Predicate::False {
+            Vec::new()
+        } else if self.scalar_output_projection {
+            self.scalar_body_arms(&alternative, text)
+                .unwrap_or_else(unknown_scalar_arms)
+        } else {
+            self.inline_body_arms(&alternative, text)
+        };
+        for (condition, parts) in alternative_arms {
             arms.push((
                 and_conditions(alternative_condition.clone(), condition),
                 parts,
@@ -156,7 +217,7 @@ impl Interpreter<'_> {
 
     /// Evaluate an inline `{{ range }}…{{ end }}` region inside a scalar
     /// with the structural range activation: literal-list domains, the
-    /// direct-path item dot, and the header read under `Guard::Range`; body
+    /// typed member value, and the header read under `Guard::Range`; body
     /// contributions carry the range condition. Body-local bindings stay
     /// region-local (entry locals are restored, the same boundary as a
     /// structural branch scope).
@@ -170,29 +231,34 @@ impl Interpreter<'_> {
         };
         let entry_predicates = self.active_predicates.len();
         let entry_dots = self.dot_stack.len();
-        let entry_ranged = self.active_direct_ranged_paths.len();
+        let entry_ranged = self.active_range_modes.len();
         let entry_locals = self.locals.clone();
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
         }
-        self.absorb_header_execution_effects(header.expr());
+        let _ = self.absorb_header_execution_effects(header.expr());
         let range_source = match header.expr().deparen() {
             TemplateExpr::VariableDefinition { value, .. }
             | TemplateExpr::Assignment { value, .. } => value.as_ref(),
             expr => expr,
         };
-        let (source_paths, direct_path, json_decoded_path) = {
-            let context = self.value_path_context();
-            (
-                context
-                    .resolved_values_paths_from_expr(header.expr())
-                    .into_iter()
-                    .collect::<Vec<_>>(),
-                context.single_direct_iterable_range_path_expr(range_source),
-                context.single_direct_json_decoded_range_path_expr(range_source),
-            )
-        };
+        let range_subject = self.value_path_context().range_subject_expr(range_source);
+        let source_paths = range_subject
+            .influence_paths
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        let member_identity = range_subject.member_identity.clone();
+        let direct_path = member_identity
+            .as_ref()
+            .map(|identity| identity.path.clone());
+        let input_identity = range_subject.input_identity.clone();
         let destructured = helm_schema_ast::range_has_destructured_variable_definition(node);
+        self.record_range_identities(
+            member_identity.as_ref(),
+            input_identity.as_ref(),
+            destructured,
+        );
         let mut own = Vec::new();
         for path in &source_paths {
             let guard = Guard::Range { path: path.clone() };
@@ -201,24 +267,15 @@ impl Interpreter<'_> {
             self.push_predicate(Predicate::from(guard));
         }
         let condition = Predicate::all(own);
-        if let Some(path) = &direct_path {
-            self.range_modes.mark_direct(path);
-            if destructured {
-                self.range_modes.mark_destructured(path);
-            }
-            self.active_direct_ranged_paths.push(path.clone());
-        }
-        if let Some(path) = &json_decoded_path {
-            self.range_modes.mark_json_decoded(path);
-        }
-        let dot = direct_path.as_ref().map(|path| {
-            let member_path = helm_schema_core::append_value_path(path, "*");
-            if json_decoded_path.as_ref() == Some(path) {
-                AbstractValue::JsonDecodedPath(member_path)
-            } else {
-                AbstractValue::ValuesPath(member_path)
-            }
-        });
+        self.push_active_range_identity_modes(
+            member_identity.as_ref(),
+            input_identity.as_ref(),
+            destructured,
+        );
+        let dot = range_subject
+            .member_value
+            .clone()
+            .map(|value| value.to_context_value());
         let value_variable = if destructured {
             helm_schema_ast::range_destructured_value_variable(node, text)
         } else {
@@ -238,25 +295,121 @@ impl Interpreter<'_> {
         self.dot_stack.push(dot);
         self.loop_depth += 1;
         let mut arms = Vec::new();
-        for (sub_condition, parts) in
-            self.inline_body_arms(&children_with_field(node, "body"), text)
-        {
+        let body = children_with_field(node, "body");
+        let body_arms = if self.scalar_output_projection {
+            self.scalar_body_arms(&body, text)
+                .unwrap_or_else(unknown_scalar_arms)
+        } else {
+            self.inline_body_arms(&body, text)
+        };
+        for (sub_condition, parts) in body_arms {
             arms.push((and_conditions(condition.clone(), sub_condition), parts));
         }
         self.loop_depth -= 1;
         self.dot_stack.truncate(entry_dots);
         self.active_predicates.truncate(entry_predicates);
-        self.active_direct_ranged_paths.truncate(entry_ranged);
+        self.active_range_modes.truncate(entry_ranged);
         self.locals = entry_locals;
         // A `{{ range }}…{{ else }}…{{ end }}` alternative renders when the
         // iterable is empty; like the structural range arms it decodes no
         // negated condition.
-        for (sub_condition, parts) in
-            self.inline_body_arms(&children_with_field(node, "alternative"), text)
-        {
+        let alternative = children_with_field(node, "alternative");
+        let alternative_arms = if self.scalar_output_projection {
+            self.scalar_body_arms(&alternative, text)
+                .unwrap_or_else(unknown_scalar_arms)
+        } else {
+            self.inline_body_arms(&alternative, text)
+        };
+        for (sub_condition, parts) in alternative_arms {
             arms.push((sub_condition, parts));
         }
         arms
+    }
+
+    /// Mark the resolved range identities on the shared range-mode registry
+    /// and record the range-input contract capture for the iterable path.
+    fn record_range_identities(
+        &mut self,
+        member_identity: Option<&crate::value_path_context::RangeSubjectIdentity>,
+        input_identity: Option<&crate::value_path_context::RangeSubjectIdentity>,
+        destructured: bool,
+    ) {
+        if let Some(identity) = member_identity {
+            self.range_modes.mark_member_identity(&identity.path);
+            if destructured {
+                self.range_modes.mark_destructured(&identity.path);
+            }
+            if identity.json_decoded {
+                self.range_modes.mark_json_decoded(&identity.path);
+            }
+        }
+        if let Some(identity) = input_identity {
+            self.range_modes.mark_input_identity(&identity.path);
+            if destructured {
+                self.range_modes.mark_destructured(&identity.path);
+            }
+            if identity.json_decoded {
+                self.range_modes.mark_json_decoded(&identity.path);
+            }
+        }
+        let input_contract_identity = input_identity.or_else(|| {
+            member_identity.filter(|identity| {
+                helm_schema_core::split_value_path(&identity.path)
+                    .iter()
+                    .any(|segment| segment == "*")
+            })
+        });
+        if let Some(identity) = input_contract_identity {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: self.fail_capture_conjunction(Vec::new()),
+                ranged: self.capture_ranged_modes(),
+                kind: crate::eval_effect::CaptureKind::RangeInput {
+                    path: identity.path.clone(),
+                    destructured,
+                    json_decoded: identity.json_decoded,
+                },
+            };
+            if !capture
+                .conjunction
+                .iter()
+                .any(|predicate| matches!(predicate, Predicate::False))
+                && !self.fail_conditions.contains(&capture)
+            {
+                self.fail_conditions.push(capture);
+            }
+        }
+    }
+
+    /// Activate the resolved identities for the body evaluation; the caller
+    /// truncates `active_range_modes` back to its entry length on exit.
+    fn push_active_range_identity_modes(
+        &mut self,
+        member_identity: Option<&crate::value_path_context::RangeSubjectIdentity>,
+        input_identity: Option<&crate::value_path_context::RangeSubjectIdentity>,
+        destructured: bool,
+    ) {
+        if let Some(identity) = member_identity {
+            self.active_range_modes.push((
+                identity.path.clone(),
+                crate::range_modes::RangeMode {
+                    member_identity: true,
+                    json_decoded: identity.json_decoded,
+                    destructured,
+                    ..crate::range_modes::RangeMode::default()
+                },
+            ));
+        }
+        if let Some(identity) = input_identity {
+            self.active_range_modes.push((
+                identity.path.clone(),
+                crate::range_modes::RangeMode {
+                    input_identity: true,
+                    json_decoded: identity.json_decoded,
+                    destructured,
+                    ..crate::range_modes::RangeMode::default()
+                },
+            ));
+        }
     }
 
     /// Fold one inline branch body into guarded part arms. Conditions
@@ -288,22 +441,81 @@ impl Interpreter<'_> {
         arms
     }
 
+    /// Compose the mutually exclusive alternatives of each scalar-producing
+    /// child in source order. Keeping each child as one choice prevents a
+    /// branch-selected local from being reinterpreted as several independent
+    /// optional text fragments.
+    pub(super) fn scalar_body_arms(
+        &mut self,
+        children: &[tree_sitter::Node<'_>],
+        text: &str,
+    ) -> Option<Vec<(PathCondition, Vec<StringPart>)>> {
+        let mut states = vec![(Predicate::True, Vec::new())];
+        for child in children {
+            let action = node_action(text, *child);
+            let alternatives = self.inline_child_arms(*child, text);
+            if alternatives.is_empty() {
+                if matches!(action, NodeAction::Output(Some(_))) {
+                    return None;
+                }
+                continue;
+            }
+            // An exhaustive control whose every arm renders nothing has one
+            // unconditional empty contribution. Retaining the arm predicates
+            // would multiply opaque conditions even though they cannot
+            // affect this body's rendered scalar; branch-local state changes
+            // have already joined while evaluating the child.
+            if alternatives.iter().all(|(_, parts)| parts.is_empty()) {
+                continue;
+            }
+            let mut next = Vec::new();
+            for (state_condition, state_parts) in &states {
+                for (alternative_condition, alternative_parts) in &alternatives {
+                    let Some(condition) =
+                        conjoin_predicates(state_condition.clone(), alternative_condition.clone())
+                    else {
+                        continue;
+                    };
+                    let mut parts = state_parts.clone();
+                    parts.extend(alternative_parts.iter().cloned());
+                    next.push((condition, parts));
+                    if next.len() > MAX_SCALAR_ARM_FANOUT {
+                        return None;
+                    }
+                }
+            }
+            states = merge_scalar_part_arms(next);
+            if states.is_empty() {
+                return None;
+            }
+        }
+        Some(states)
+    }
+
     pub(super) fn activate_inline_if(
         &mut self,
         header: Option<&helm_schema_ast::TemplateHeader>,
         region_start: usize,
         branch_index: usize,
-    ) -> Option<PathCondition> {
+    ) -> Option<(PathCondition, TruthCondition)> {
         let header = header?;
-        let (mut predicate, faithful) = {
+        let (mut predicate, mut faithful) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
                 context.condition_lowering_is_faithful(header.expr()),
             )
         };
-        let helper_paths = self.absorb_header_execution_effects(header.expr());
-        if predicate.is_trivial() && !helper_paths.is_empty() {
+        let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let evaluated_truth_is_unknown = evaluated_truth.predicate().is_none();
+        if let Some(exact) = evaluated_truth.predicate() {
+            predicate = exact.clone();
+            faithful = true;
+        }
+        if evaluated_truth_is_unknown
+            && matches!(predicate, Predicate::True)
+            && !helper_paths.is_empty()
+        {
             predicate = Predicate::all(
                 helper_paths
                     .iter()
@@ -313,14 +525,24 @@ impl Interpreter<'_> {
             );
         }
         if !faithful {
-            let paths = self
+            let mut paths = self
                 .value_path_context()
                 .resolved_values_paths_from_expr(header.expr());
-            predicate = Predicate::approximate_with_sound_subset(
-                format!("{}:{region_start}:{branch_index}", self.source_offset),
-                paths,
-                self.first_iteration_dedup_sound_subset(header.expr()),
-            );
+            let evaluated_subset = evaluated_truth.when_true();
+            let evaluated_subset =
+                (evaluated_subset != Predicate::False).then_some(evaluated_subset);
+            let dedup_subset = self.first_iteration_dedup_sound_subset(header.expr());
+            let dedup_subset = (!dedup_subset.is_empty())
+                .then(|| Predicate::all(dedup_subset.into_iter().map(Predicate::from).collect()));
+            let positive_subset =
+                any_predicates(evaluated_subset.into_iter().chain(dedup_subset).collect());
+            paths.extend(positive_subset.value_paths());
+            let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
+            predicate = if positive_subset == Predicate::False {
+                Predicate::approximate(marker, paths)
+            } else {
+                Predicate::approximate_with_sound_predicate(marker, paths, positive_subset)
+            };
         }
         let guards = predicate.contract_guards();
         for guard in &guards {
@@ -332,7 +554,12 @@ impl Interpreter<'_> {
         if guards.is_empty() {
             self.push_predicate(predicate.clone());
         }
-        Some(predicate)
+        let semantic_truth = if evaluated_truth.predicate().is_none() && faithful {
+            TruthCondition::exact(predicate.clone())
+        } else {
+            evaluated_truth
+        };
+        Some((predicate, semantic_truth))
     }
 
     /// One inline body child as guarded part arms. An empty vec means "no
@@ -345,15 +572,13 @@ impl Interpreter<'_> {
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         match node_action(text, node) {
             NodeAction::Text => {
-                let content = node.utf8_text(text.as_bytes()).unwrap_or("");
+                let content = trimmed_template_text(node, text);
                 if content.is_empty() {
                     Vec::new()
                 } else {
                     vec![(
                         Predicate::True,
-                        vec![StringPart::Text(
-                            [content.to_string()].into_iter().collect(),
-                        )],
+                        vec![StringPart::Text([content].into_iter().collect())],
                     )]
                 }
             }
@@ -397,7 +622,9 @@ impl Interpreter<'_> {
                     derived_text_paths: &hole.effects.derived_text_paths,
                     merge_operand_paths: &hole.effects.merge_operand_paths,
                     yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
+                    templated_yaml_paths: &hole.effects.templated_yaml_paths,
                     shape_erased_paths: &hole.effects.shape_erased_paths,
+                    stringified_paths: &hole.effects.stringified_paths,
                     nil_omitting_paths: &hole.effects.nil_omitting_paths,
                     string_contract_paths: row_string_contract_paths,
                     json_serialized_paths: &hole.effects.json_serialized_paths,
@@ -405,10 +632,14 @@ impl Interpreter<'_> {
                     local_source_paths: &hole.effects.local_source_paths,
                     local_output_meta: &hole_meta,
                 };
-                match &hole.value {
-                    Some(value) => lower_value_scalar_arms(value, kind, &scope),
-                    None => Vec::new(),
-                }
+                self.scalar_output_projection
+                    .then_some(hole.scalar_dispatch.as_ref())
+                    .flatten()
+                    .and_then(|dispatch| lower_scalar_dispatch_arms(dispatch, kind, &scope))
+                    .unwrap_or_else(|| match &hole.value {
+                        Some(value) => lower_value_scalar_arms(value, kind, &scope),
+                        None => Vec::new(),
+                    })
             }
             NodeAction::Assignment(Some(exprs)) => {
                 self.eval_assignment_exprs(&exprs);
@@ -423,7 +654,12 @@ impl Interpreter<'_> {
             NodeAction::Descend => {
                 let mut cursor = node.walk();
                 let children: Vec<_> = node.children(&mut cursor).collect();
-                self.inline_body_arms(&children, text)
+                if self.scalar_output_projection {
+                    self.scalar_body_arms(&children, text)
+                        .unwrap_or_else(unknown_scalar_arms)
+                } else {
+                    self.inline_body_arms(&children, text)
+                }
             }
         }
     }
@@ -455,4 +691,51 @@ impl Interpreter<'_> {
         }
         paths
     }
+}
+
+fn unknown_scalar_arms() -> Vec<(PathCondition, Vec<StringPart>)> {
+    vec![(
+        Predicate::True,
+        vec![StringPart::Taint(TaintPart::new(
+            std::collections::BTreeSet::new(),
+        ))],
+    )]
+}
+
+fn merge_scalar_part_arms(
+    arms: Vec<(PathCondition, Vec<StringPart>)>,
+) -> Vec<(PathCondition, Vec<StringPart>)> {
+    let mut merged: Vec<(PathCondition, Vec<StringPart>)> = Vec::new();
+    for (condition, parts) in arms {
+        if let Some((existing, _)) = merged
+            .iter_mut()
+            .find(|(_, existing_parts)| *existing_parts == parts)
+        {
+            *existing = any_predicates(vec![existing.clone(), condition]);
+        } else {
+            merged.push((condition, parts));
+        }
+    }
+    merged
+}
+
+fn trimmed_template_text(node: tree_sitter::Node<'_>, source: &str) -> String {
+    let mut content = node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
+    if source
+        .get(..node.start_byte())
+        .is_some_and(|prefix| prefix.ends_with("-}}"))
+    {
+        content = content
+            .trim_start_matches([' ', '\t', '\r', '\n'])
+            .to_string();
+    }
+    if source
+        .get(node.end_byte()..)
+        .is_some_and(|suffix| suffix.starts_with("{{-"))
+    {
+        content = content
+            .trim_end_matches([' ', '\t', '\r', '\n'])
+            .to_string();
+    }
+    content
 }

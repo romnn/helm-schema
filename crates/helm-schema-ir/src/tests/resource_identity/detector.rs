@@ -3,6 +3,7 @@ use indoc::indoc;
 
 use crate::analysis_db::IrAnalysisDb;
 use crate::{CapabilityGuard, HelperBranchBody};
+use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 fn collect_spans(src: &str, analysis_db: &IrAnalysisDb) -> Vec<helm_schema_ast::ResourceSpan> {
@@ -84,6 +85,43 @@ fn records_inline_conditional_kind_branch_sources() {
             },
         ]
     );
+}
+
+#[test]
+fn preserves_inline_kind_branch_sources_through_outer_control() -> eyre::Result<()> {
+    let defines = DefineIndex::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let spans = collect_spans(
+        indoc! {r"
+            {{- if .Values.enabled }}
+            {{- $stateful := and .Values.local .Values.persistence }}
+            apiVersion: apps/v1
+            kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}
+            metadata:
+              name: example
+            {{- end }}
+        "},
+        &analysis_db,
+    );
+
+    let sources = &spans
+        .first()
+        .ok_or_eyre("expected one resource span")?
+        .kind_branch_sources;
+    sim_assert_eq!(
+        have: sources,
+        want: &vec![
+            helm_schema_ast::KindBranchSource {
+                condition: Some("$stateful".to_string()),
+                kind: "StatefulSet".to_string(),
+            },
+            helm_schema_ast::KindBranchSource {
+                condition: None,
+                kind: "Deployment".to_string(),
+            },
+        ]
+    );
+    Ok(())
 }
 
 /// A chain WITHOUT a trailing `else` leaves render states with no kind at

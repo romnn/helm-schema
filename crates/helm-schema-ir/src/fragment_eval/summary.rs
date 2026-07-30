@@ -31,6 +31,10 @@ use helm_schema_syntax::TemplatedDocument;
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::{BoundHelperCallResolution, IrAnalysisDb};
 use crate::helper_meta::{HelperOutputMeta, RenderedRow, merge_provenance_sites};
+use crate::scalar_value::{
+    ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates,
+    conjoin_predicates,
+};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::{ContractProvenance, ValueKind};
 use helm_schema_core::{GuardDnf, Predicate};
@@ -85,7 +89,7 @@ pub(crate) struct FragmentSummary {
     pub(crate) root_set_predicates: BTreeMap<String, Predicate>,
     /// Joined per-arm value alternatives for root-context fields the helper
     /// set across complete if/else chains.
-    pub(crate) root_set_value_dispatches: BTreeMap<String, crate::eval_effect::RootValueDispatch>,
+    pub(crate) root_set_value_dispatches: BTreeMap<String, ScalarValueDispatch>,
     /// Chart value subtrees supplying defaults to a replaced effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     pub(crate) values_root_overlay_prefixes: BTreeSet<String>,
@@ -96,6 +100,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
     /// The value projection (see module docs), computed once.
     pub(crate) value: Option<AbstractValue>,
+    /// Known scalar output alternatives evaluated under this summary's
+    /// bound call context.
+    pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
     /// Rendered splice/taint rows flattened from the tree: per-path branch
     /// conditions, defaultedness, encoding, and provenance. Value-position
     /// call sites use these for no-render demotion and for restoring
@@ -118,26 +125,52 @@ pub(crate) fn eval_bound_helper_fragment(
     let body_facts = db.helper_body_eval_facts(name, || {
         super::eval::BodyEvalFacts::collect(body.source, db, &body.tree, &document)
     });
-    let mut interpreter = Interpreter::with_body_facts(
-        body.source,
-        Some(body.source_path),
-        db,
-        &document,
-        body_facts,
-    );
-    interpreter.source_offset = body.body_offset;
-    interpreter.inline_files = vec![format!("define:{name}")];
-    interpreter.helper_scope = true;
-    interpreter.helper_seen = seen.clone();
-    interpreter.root_bindings = resolution.bindings.clone();
-    interpreter.root_truthy_predicates = resolution.root_truthy_predicates.clone();
-    interpreter.root_value_dispatches = resolution.root_value_dispatches.clone();
-    interpreter.root_value_dot = resolution.dot.helper.clone();
-    interpreter.dot_stack.push(resolution.dot.fragment.clone());
-    interpreter.locals = SymbolicLocalState::default();
+    let make_interpreter = || {
+        let mut interpreter = Interpreter::with_body_facts(
+            body.source,
+            Some(body.source_path),
+            db,
+            &document,
+            Rc::clone(&body_facts),
+        );
+        interpreter.source_offset = body.body_offset;
+        interpreter.inline_files = vec![format!("define:{name}")];
+        interpreter.helper_scope = true;
+        interpreter.helper_seen = seen.clone();
+        interpreter.root_bindings = resolution.bindings.clone();
+        interpreter.root_truthy_predicates = resolution.root_truthy_predicates.clone();
+        interpreter.root_value_dispatches = resolution.root_value_dispatches.clone();
+        interpreter.root_value_dot = resolution.dot.helper.clone();
+        interpreter.dot_stack.push(resolution.dot.fragment.clone());
+        interpreter.locals = SymbolicLocalState::default();
+        interpreter
+    };
+    let mut interpreter = make_interpreter();
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
     let contributions = interpreter.eval_node_list(&roots);
     let root = contributions.assemble();
+    let structural_scalar_dispatch = scalar_dispatch_from_fragment(&root);
+    let projected_scalar_dispatch = (!structural_scalar_dispatch
+        .as_ref()
+        .is_some_and(|dispatch| dispatch.complete))
+    .then(|| {
+        // Scalar composition is a narrower projection than the structural
+        // fragment domain. Consult it when the structural result cannot
+        // prove an exhaustive set of scalar arms.
+        let mut scalar_interpreter = make_interpreter();
+        scalar_interpreter.scalar_output_projection = true;
+        let scalar_root = body.tree.root_node();
+        let mut scalar_cursor = scalar_root.walk();
+        let scalar_children = scalar_root
+            .named_children(&mut scalar_cursor)
+            .collect::<Vec<_>>();
+        scalar_interpreter
+            .scalar_body_arms(&scalar_children, body.source)
+            .and_then(scalar_dispatch_from_alternatives)
+    })
+    .flatten();
+    let scalar_dispatch =
+        merge_scalar_dispatch_candidates(structural_scalar_dispatch, projected_scalar_dispatch);
     // Guard reads that are strict ancestors of an index-narrowed path are
     // traversal steps, not conditions on the ancestor (the narrowing severed
     // them); dependency rows and the narrowed paths themselves stay.
@@ -157,6 +190,7 @@ pub(crate) fn eval_bound_helper_fragment(
     prune_sibling_conditions(&mut reads, &rendered);
     let mut summary = FragmentSummary {
         value: projected_value(&root),
+        scalar_dispatch,
         rendered,
         root,
         reads,
@@ -187,6 +221,198 @@ pub(crate) fn eval_bound_helper_fragment(
     // applied at suppressing slots.
     append_suppressed_reads(&summary.root, &mut Vec::new(), &mut summary.reads);
     summary
+}
+
+const MAX_SCALAR_DISPATCH_STATES: usize = 128;
+
+fn merge_scalar_dispatch_candidates(
+    structural: Option<ScalarValueDispatch>,
+    projected: Option<ScalarValueDispatch>,
+) -> Option<ScalarValueDispatch> {
+    let (structural, projected) = match (structural, projected) {
+        (Some(structural), Some(projected)) => (structural, projected),
+        (Some(dispatch), None) | (None, Some(dispatch)) => return Some(dispatch),
+        (None, None) => return None,
+    };
+    if structural.complete {
+        return Some(structural);
+    }
+    if projected.complete {
+        return Some(projected);
+    }
+
+    let fallback = structural.clone();
+    let mut conditions_by_value: BTreeMap<ScalarValue, Vec<Predicate>> = BTreeMap::new();
+    for (condition, value) in structural.arms.into_iter().chain(projected.arms) {
+        let condition = TruthCondition::from_predicate(condition).when_true();
+        if condition != Predicate::False {
+            conditions_by_value
+                .entry(value)
+                .or_default()
+                .push(condition);
+        }
+    }
+    if conditions_by_value.len() > MAX_SCALAR_DISPATCH_STATES {
+        return Some(fallback);
+    }
+    let arms = conditions_by_value
+        .into_iter()
+        .map(|(value, conditions)| (any_predicates(conditions), value))
+        .collect::<Vec<_>>();
+    for (index, (left, _)) in arms.iter().enumerate() {
+        if arms
+            .iter()
+            .skip(index + 1)
+            .any(|(right, _)| conjoin_predicates(left.clone(), right.clone()).is_some())
+        {
+            return Some(fallback);
+        }
+    }
+    let complete = TruthCondition::any(
+        arms.iter()
+            .map(|(condition, _)| TruthCondition::exact(condition.clone())),
+    )
+    .predicate()
+        == Some(&Predicate::True);
+    Some(ScalarValueDispatch { arms, complete })
+}
+
+fn scalar_dispatch_from_fragment(
+    fragment: &Guarded<AbstractFragment>,
+) -> Option<ScalarValueDispatch> {
+    let mut states = Vec::new();
+    for (condition, node) in &fragment.arms {
+        let rendered = match node {
+            AbstractFragment::Scalar(scalar) if !scalar.suppressed => {
+                scalar_render_contribution(&scalar.parts)?
+            }
+            AbstractFragment::Splice(splice) => {
+                scalar_render_contribution(&[StringPart::Splice(splice.clone())])?
+            }
+            AbstractFragment::Mapping(_)
+            | AbstractFragment::Sequence(_)
+            | AbstractFragment::Scalar(_)
+            | AbstractFragment::Opaque(_) => return None,
+        };
+        states.push((condition.clone(), rendered));
+    }
+    if states.is_empty() || states.len() > MAX_SCALAR_DISPATCH_STATES {
+        return None;
+    }
+    for (index, (left, _)) in states.iter().enumerate() {
+        if states
+            .iter()
+            .skip(index + 1)
+            .any(|(right, _)| conjoin_predicates(left.clone(), right.clone()).is_some())
+        {
+            return None;
+        }
+    }
+    let complete = TruthCondition::any(
+        states
+            .iter()
+            .map(|(condition, _)| TruthCondition::from_predicate(condition.clone())),
+    )
+    .predicate()
+        == Some(&Predicate::True);
+    Some(ScalarValueDispatch {
+        arms: merge_scalar_dispatch_states(states)
+            .into_iter()
+            .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
+            .collect(),
+        complete,
+    })
+}
+
+fn scalar_dispatch_from_alternatives(
+    contributions: Vec<(Predicate, Vec<StringPart>)>,
+) -> Option<ScalarValueDispatch> {
+    let mut states = Vec::new();
+    let conditions = contributions
+        .iter()
+        .map(|(condition, _)| TruthCondition::from_predicate(condition.clone()))
+        .collect::<Vec<_>>();
+    let mut complete =
+        TruthCondition::any(conditions.clone()).predicate() == Some(&Predicate::True);
+    for ((_, parts), condition_truth) in contributions.into_iter().zip(conditions) {
+        let selected_condition = condition_truth.when_true();
+        let contribution = scalar_render_contribution(&parts);
+        if contribution.is_none() && selected_condition != Predicate::False {
+            complete = false;
+            continue;
+        }
+        if selected_condition == Predicate::False {
+            continue;
+        }
+        states.push((selected_condition, contribution.unwrap_or_default()));
+        if states.len() > MAX_SCALAR_DISPATCH_STATES {
+            return None;
+        }
+    }
+    let states = merge_scalar_dispatch_states(states);
+    if states.is_empty() {
+        return None;
+    }
+    Some(ScalarValueDispatch {
+        arms: states
+            .into_iter()
+            .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))
+            .collect(),
+        complete,
+    })
+}
+
+fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPart>> {
+    let mut rendered = Vec::new();
+    for part in parts {
+        match part {
+            StringPart::Text(alternatives) => {
+                if alternatives.len() != 1 {
+                    return None;
+                }
+                rendered.push(ScalarRenderPart::Text(alternatives.first()?.clone()));
+            }
+            StringPart::Splice(splice) => {
+                if splice.meta.encoded
+                    || splice.meta.yaml_serialized
+                    || splice.meta.json_serialized
+                    || splice.meta.digest
+                    || splice.meta.range_key
+                    || splice.meta.split_segment.is_some()
+                    || splice.meta.merge_layers.is_some()
+                    || splice.meta.merge_operand
+                {
+                    return None;
+                }
+                if splice.meta.string_contract
+                    && !splice.meta.stringified
+                    && splice.meta.lexical_escapes.is_empty()
+                {
+                    return None;
+                }
+                rendered.push(ScalarRenderPart::Identity {
+                    path: splice.values_path.clone(),
+                    stringified: splice.meta.stringified || !splice.meta.string_contract,
+                    lexical_escapes: splice.meta.lexical_escapes.clone(),
+                });
+            }
+            StringPart::Taint(_) => return None,
+        }
+    }
+    Some(rendered)
+}
+
+fn merge_scalar_dispatch_states(
+    states: Vec<(Predicate, Vec<ScalarRenderPart>)>,
+) -> Vec<(Predicate, Vec<ScalarRenderPart>)> {
+    let mut by_value: BTreeMap<Vec<ScalarRenderPart>, Vec<Predicate>> = BTreeMap::new();
+    for (condition, rendered) in states {
+        by_value.entry(rendered).or_default().push(condition);
+    }
+    by_value
+        .into_iter()
+        .map(|(rendered, conditions)| (any_predicates(conditions), rendered))
+        .collect()
 }
 
 impl FragmentSummary {
@@ -310,14 +536,11 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
         defaulted: splice.meta.defaulted,
         shape_erased: splice.meta.shape_erased,
         nil_omitted: splice.meta.nil_omitted,
+        templated_yaml: splice.meta.templated_yaml,
         string_contract: splice.meta.string_contract,
         json_serialized: splice.meta.json_serialized,
         json_decoded: splice.meta.json_decoded,
         lexical_escapes: splice.meta.lexical_escapes.clone(),
-        // Crossing the helper-summary boundary makes the layer facts
-        // binding-carried: the caller renders the helper's OUTPUT, whose
-        // sibling dispatch arms may rely on the base typing the direct
-        // render-site lane moves onto synthesized arms.
         // Crossing the helper-summary boundary makes the layer facts
         // binding-carried: the caller renders the helper's OUTPUT, whose
         // sibling dispatch arms may rely on the base typing the direct
