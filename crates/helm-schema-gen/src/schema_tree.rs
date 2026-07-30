@@ -65,6 +65,38 @@ impl SchemaDocument {
         relax_host_object_type(&mut self.root, path_segments);
     }
 
+    /// Applies a wildcard member schema to keys that `values.yaml` already
+    /// materialized as named properties.
+    ///
+    /// JSON Schema excludes named `properties` from
+    /// `additionalProperties`. A direct range over a member identity owns
+    /// both sets, so leaving the declared slots untouched would let their
+    /// example shapes override the runtime member domain.
+    pub(crate) fn materialize_declared_member_schema(
+        &mut self,
+        path_segments: &[String],
+        declared: &YamlValue,
+        member_schema: &Value,
+    ) {
+        let YamlValue::Mapping(declared) = declared else {
+            return;
+        };
+        let keys = declared
+            .keys()
+            .filter_map(YamlValue::as_str)
+            .collect::<Vec<_>>();
+        if keys.is_empty() {
+            return;
+        }
+
+        let root = std::mem::replace(&mut self.root, SchemaNode::empty());
+        let mut root = root.into_value();
+        visit_schema_values_at_path_mut(&mut root, path_segments, &mut |schema| {
+            materialize_declared_properties(schema, &keys, member_schema);
+        });
+        self.root = SchemaNode::foreign(root);
+    }
+
     #[tracing::instrument(skip_all)]
     pub(crate) fn merge_missing_values_yaml_defaults_under_roots(
         &mut self,
@@ -218,6 +250,134 @@ pub(crate) fn insert_path_schema_value(
     let mut root = SchemaNode::foreign(root_schema);
     insert_schema_at_parts(&mut root, path_segments, SchemaNode::foreign(schema));
     root.into_value()
+}
+
+/// Conjoins one member schema with every array-item and map-value lane.
+///
+/// This is deliberately distinct from [`insert_path_schema_value`], whose
+/// merge operation combines alternative inference evidence. A schema that
+/// enriches a fail requirement is a logical conjunction; union-merging it
+/// into the requirement can collapse separate `anyOf` arms.
+pub(crate) fn conjoin_collection_member_schema_value(
+    mut collection_schema: Value,
+    member_schema: &Value,
+) -> Value {
+    conjoin_collection_member_schema(&mut collection_schema, member_schema);
+    collection_schema
+}
+
+fn conjoin_collection_member_schema(collection_schema: &mut Value, member_schema: &Value) -> bool {
+    let Some(object) = collection_schema.as_object_mut() else {
+        return false;
+    };
+
+    let mut conjoined = false;
+    for keyword in ["anyOf", "oneOf"] {
+        if let Some(arms) = object.get_mut(keyword).and_then(Value::as_array_mut) {
+            for arm in arms {
+                conjoined |= conjoin_collection_member_schema(arm, member_schema);
+            }
+        }
+    }
+
+    match object.get("type").and_then(Value::as_str) {
+        Some("array") => {
+            let existing = object
+                .remove("items")
+                .unwrap_or_else(|| Value::Object(Map::new()));
+            object.insert(
+                "items".to_string(),
+                conjoin_schema_values(existing, member_schema.clone()),
+            );
+            true
+        }
+        Some("object") if object.get("additionalProperties") != Some(&Value::Bool(false)) => {
+            let existing = object
+                .remove("additionalProperties")
+                .unwrap_or_else(|| Value::Object(Map::new()));
+            object.insert(
+                "additionalProperties".to_string(),
+                conjoin_schema_values(existing, member_schema.clone()),
+            );
+            true
+        }
+        _ => conjoined,
+    }
+}
+
+fn conjoin_schema_values(existing: Value, incoming: Value) -> Value {
+    if existing == incoming || crate::schema_model::is_empty_schema(&incoming) {
+        return existing;
+    }
+    if schemas_equal_ignoring_noop_collection_keywords(&existing, &incoming) {
+        return incoming;
+    }
+    if crate::schema_model::is_empty_schema(&existing) {
+        return incoming;
+    }
+    if let Some(merged) = conjoin_type_only_object_with_carrier(&existing, &incoming)
+        .or_else(|| conjoin_type_only_object_with_carrier(&incoming, &existing))
+    {
+        return merged;
+    }
+    SchemaNode::all_of(vec![
+        SchemaNode::foreign(existing),
+        SchemaNode::foreign(incoming),
+    ])
+    .into_value()
+}
+
+fn conjoin_type_only_object_with_carrier(typed: &Value, carrier: &Value) -> Option<Value> {
+    let typed = typed.as_object()?;
+    if typed.len() != 1 || typed.get("type").and_then(Value::as_str) != Some("object") {
+        return None;
+    }
+    let carrier = carrier.as_object()?;
+    if carrier.contains_key("type")
+        || !carrier.keys().all(|key| {
+            matches!(
+                key.as_str(),
+                "additionalProperties" | "allOf" | "patternProperties" | "properties" | "required"
+            )
+        })
+    {
+        return None;
+    }
+    let mut merged = carrier.clone();
+    merged.insert("type".to_string(), Value::String("object".to_string()));
+    Some(Value::Object(merged))
+}
+
+fn schemas_equal_ignoring_noop_collection_keywords(left: &Value, right: &Value) -> bool {
+    fn strip_noop_collection_keywords(schema: &mut Value) {
+        match schema {
+            Value::Array(items) => {
+                for item in items {
+                    strip_noop_collection_keywords(item);
+                }
+            }
+            Value::Object(object) => {
+                for value in object.values_mut() {
+                    strip_noop_collection_keywords(value);
+                }
+                for keyword in ["additionalProperties", "items"] {
+                    if object
+                        .get(keyword)
+                        .is_some_and(crate::schema_model::is_empty_schema)
+                    {
+                        object.remove(keyword);
+                    }
+                }
+            }
+            Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+        }
+    }
+
+    let mut left = left.clone();
+    let mut right = right.clone();
+    strip_noop_collection_keywords(&mut left);
+    strip_noop_collection_keywords(&mut right);
+    left == right
 }
 
 fn conditional_entry(condition: Value, then_schema: SchemaNode) -> SchemaNode {
@@ -537,6 +697,35 @@ fn set_schema_description(node: &mut Value, description: &str) {
             "description".to_string(),
             Value::String(description.to_string()),
         );
+    }
+}
+
+fn materialize_declared_properties(schema: &mut Value, keys: &[&str], member_schema: &Value) {
+    let Some(object) = schema.as_object_mut() else {
+        return;
+    };
+    for keyword in ["anyOf", "allOf", "oneOf"] {
+        if let Some(arms) = object.get_mut(keyword).and_then(Value::as_array_mut) {
+            for arm in arms {
+                materialize_declared_properties(arm, keys, member_schema);
+            }
+        }
+    }
+
+    let object_lane = object.get("type").and_then(Value::as_str) == Some("object")
+        || object.contains_key("properties")
+        || object.contains_key("additionalProperties");
+    if !object_lane {
+        return;
+    }
+    let properties = object
+        .entry("properties")
+        .or_insert_with(|| Value::Object(Map::new()));
+    let Some(properties) = properties.as_object_mut() else {
+        return;
+    };
+    for key in keys {
+        properties.insert((*key).to_string(), member_schema.clone());
     }
 }
 

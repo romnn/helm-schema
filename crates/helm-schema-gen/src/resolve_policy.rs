@@ -183,6 +183,15 @@ impl ResolvePolicy {
         use_: &ProviderSchemaUse,
     ) -> Option<Value> {
         match use_.kind {
+            ValueKind::TemplatedYamlSerialized => {
+                Some(templated_yaml_provider_preimage(subtract_omitted_members(
+                    relax_template_supplied_required(
+                        schema.clone(),
+                        &use_.template_supplied_member_keys,
+                    ),
+                    &use_.omitted_members,
+                )))
+            }
             // `toYaml` accepts every input kind but preserves that kind in
             // the rendered YAML value, so a typed provider sink projects
             // directly back to the input. Opaque fragment output does not
@@ -256,6 +265,7 @@ impl ResolvePolicy {
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsTruthyMember { .. }
             | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
@@ -315,25 +325,43 @@ impl ResolvePolicy {
         // uses (provider sinks on their own rows, string-transform hints,
         // guard schemas) still apply below: one stringified occurrence must
         // not erase an independent stricter consumer.
-        let values_yaml_schema = if facts.contract.used_as_serialized {
-            empty_schema()
-        } else if facts.contract.is_partial_scalar_value_path
-            && is_scalar_schema(&values_yaml_schema)
-        {
-            // A scalar spliced into a partial string slot (`-v={{ x }}`)
-            // prints ANY scalar; the declared default's type is intent,
-            // not a constraint, so it widens to the scalar union. Real
-            // contracts from other uses still apply below.
-            scalar_union_schema()
-        } else {
-            values_yaml_schema
-        };
+        let control_only_without_contract = !facts.contract.has_non_control_use
+            && !facts.contract.has_referenced_descendants
+            && !facts.contract.has_item_descendants
+            && !facts.contract.has_structured_item_descendants
+            && is_empty_schema(&provider_schema)
+            && is_empty_schema(&type_hint_schema)
+            && is_empty_schema(&guarded_type_hint_schema);
+        let values_yaml_schema =
+            if control_only_without_contract || facts.contract.used_as_serialized {
+                empty_schema()
+            } else if facts.contract.is_partial_scalar_value_path
+                && is_scalar_schema(&values_yaml_schema)
+            {
+                // A scalar spliced into a partial string slot (`-v={{ x }}`)
+                // prints ANY scalar; the declared default's type is intent,
+                // not a constraint, so it widens to the scalar union. Real
+                // contracts from other uses still apply below.
+                scalar_union_schema()
+            } else {
+                values_yaml_schema
+            };
         // The same argument defers guard-derived typing on serialized
         // paths: a `typeIs "string"` guard partitions branches, and a
         // serialized sibling branch proves the complement renders too, so
         // the guard's type may only WIDEN an otherwise-typed base below —
         // never stand alone as its typing.
-        let mut guard_predicate_schema = guard_predicate_schema;
+        // A guard records a domain the chart knows how to dispatch, not an
+        // escape from another consumer. When any occurrence renders
+        // unconditionally, that occurrence's contract applies to every
+        // input and the guarded alternative cannot widen it. Paths whose
+        // uses are all conditional still use the guard domain to replace a
+        // declared fallback shape in the selected arm.
+        let mut guard_predicate_schema = if facts.contract.has_unconditional_render_use {
+            empty_schema()
+        } else {
+            guard_predicate_schema
+        };
         let deferred_guard_schema = if facts.contract.used_as_serialized {
             std::mem::replace(&mut guard_predicate_schema, empty_schema())
         } else {
@@ -1149,6 +1177,7 @@ fn collect_positive_self_types(
         | helm_schema_core::ConditionalGuard::IntLt { .. }
         | helm_schema_core::ConditionalGuard::HasKey { .. }
         | helm_schema_core::ConditionalGuard::ContainsMemberEquals { .. }
+        | helm_schema_core::ConditionalGuard::ContainsTruthyMember { .. }
         | helm_schema_core::ConditionalGuard::ContainsEquals { .. }
         | helm_schema_core::ConditionalGuard::Eq { .. }
         | helm_schema_core::ConditionalGuard::NotEq { .. }
@@ -1430,4 +1459,25 @@ fn schema_type_for_guard_value(value: &Value) -> Option<&'static str> {
         Value::Null => Some("null"),
         _ => None,
     }
+}
+
+/// Projects provider constraints through `tpl (toYaml …)`.
+///
+/// YAML serialization preserves mappings, sequences, and scalar kinds.
+/// `tpl` then changes only strings containing template actions, so those
+/// program strings bypass constraints on the rendered string while every
+/// structural and action-free constraint remains intact.
+fn templated_yaml_provider_preimage(mut schema: Value) -> Value {
+    fn admit_template_programs(schema: &mut Value) {
+        helm_schema_json_schema_walk::visit_subschemas_mut(schema, &mut admit_template_programs);
+        if schema_allows_type(schema, "string") {
+            *schema = union_schema_list(vec![
+                std::mem::take(schema),
+                serde_json::json!({ "type": "string", "pattern": "\\{\\{" }),
+            ]);
+        }
+    }
+
+    admit_template_programs(&mut schema);
+    schema
 }

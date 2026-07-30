@@ -106,12 +106,7 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
                 "then": false,
             }],
             "properties": {
-                "enabled": {
-                    "anyOf": [
-                        { "not": { "$ref": "#/$defs/helm-truthy" } },
-                        { "type": "boolean" },
-                    ],
-                },
+                "enabled": {},
                 "receiver": {
                     "additionalProperties": {},
                     "properties": { "leaf": {} },
@@ -273,25 +268,24 @@ fn synthetic_member_parent_does_not_seed_unreferenced_values_siblings() {
     );
 }
 
-/// A member-local predicate cannot be represented as a root Draft 7 guard,
-/// so it must never become an unconditional item/value constraint. It is
-/// still exact INSIDE the member: the item slot states the gate beside the
-/// body's own contract, so `template` binds for the members the chart's
+/// A member-local predicate cannot be represented at the document root, but
+/// the shared ranged-member identity lets the conditional live inside each
+/// item/value slot. `template` therefore binds for the members the chart's
 /// `if $item.enabled` routes to `tpl` and stays open for the rest.
 #[test]
 fn member_local_guard_does_not_leak_its_string_contract() {
     let schema = member_local_guard_schema();
-    // The member-local predicate cannot lower as a document guard, but its
-    // `enabled` lookup still proves the structural member host in every
-    // array/map lane. The host stays untyped in the broad default lane so
-    // the unconditional range implication below remains the strict owner.
+    // The guarded target is represented without typing it in the broad
+    // default lane. The `enabled` lookup still proves the structural member
+    // host in every array/map lane, while the conditional below owns the
+    // actual `template` contract.
     let open_member = serde_json::json!({
         "additionalProperties": {},
-        "properties": { "enabled": {} },
+        "properties": { "enabled": {}, "template": {} },
     });
     let object_member = serde_json::json!({
         "additionalProperties": {},
-        "properties": { "enabled": {} },
+        "properties": { "enabled": {}, "template": {} },
         "type": "object",
     });
     let mut properties = serde_json::Map::new();
@@ -636,6 +630,10 @@ fn nil_safe_grouped_receiver_with_declared_default_admits_null() {
 /// presence relaxation would otherwise drop. Nil-safe grouped receivers and
 /// `with`-scoped hosts keep every absent state open.
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn navigated_hosts_must_exist_in_the_coalesced_document() {
     let src = indoc! {r"
         {{- if .Values.apiService.create }}
@@ -726,6 +724,18 @@ fn navigated_hosts_must_exist_in_the_coalesced_document() {
             "a `with`-scoped host renders when deleted",
         ),
         (
+            serde_json::json!({ "apiService": 7, "rbac": { "serviceAccount": { "create": true } },
+                "nilSafe": {}, "gated": {} }),
+            false,
+            "a scalar receiver aborts an ordinary member read",
+        ),
+        (
+            serde_json::json!({ "apiService": {}, "rbac": { "serviceAccount": 7 },
+                "nilSafe": {}, "gated": {} }),
+            false,
+            "a nested scalar receiver aborts an ordinary member read",
+        ),
+        (
             serde_json::json!({ "apiService": {}, "rbac": { "serviceAccount": { "create": true } },
                 "nilSafe": {}, "gated": {} }),
             true,
@@ -739,7 +749,7 @@ fn navigated_hosts_must_exist_in_the_coalesced_document() {
     }
 }
 
-/// Ten independently gated reads of one host, more than the arm cap admits.
+/// Ten independently gated reads of one host.
 fn gated_host_reads() -> String {
     (1..=10)
         .map(|index| {
@@ -752,13 +762,11 @@ fn gated_host_reads() -> String {
         .join("\n")
 }
 
-/// One host reached from many nested branches states ONE abort condition,
-/// not one per branch. The guard sets are read as a disjunction, so an arm
-/// refining another (`ce ∧ g1` beside `ce`) holds nowhere the weaker arm
-/// does not and drops out exactly. Without that reduction the redundancy
-/// alone crossed the fanout cap and the whole claim disappeared — which is
-/// how cilium's `cni`, `eni`, `image` and eleven more hosts stayed optional
-/// while `helm template` aborted on every one of them.
+/// One host reached from many nested branches states one normalized abort
+/// condition, not one claim per branch. The guard sets are read as a
+/// disjunction, so an arm refining another (`ce ∧ g1` beside `ce`) holds
+/// nowhere the weaker arm does not and drops out exactly. This keeps the
+/// result independent of how many redundant access paths a chart contains.
 #[test]
 fn redundant_branch_refinements_keep_one_host_claim() {
     let src = formatdoc! {r"
@@ -805,11 +813,11 @@ fn redundant_branch_refinements_keep_one_host_claim() {
     }
 }
 
-/// Past the arm cap the claim NARROWS rather than vanishing: every arm is on
-/// its own a state where the access runs, so keeping a bounded subset states
-/// a real (smaller) abort region while dropping them all states nothing.
+/// Adding exact execution arms cannot erase an existing host claim or
+/// change who owns the host's base schema. Dormant states stay open while
+/// every newly-live arm still enforces object shape.
 #[test]
-fn host_claims_past_the_arm_cap_keep_a_bounded_subset() {
+fn member_access_host_claims_are_monotonic_as_guard_arms_grow() {
     let src = formatdoc! {"
         apiVersion: v1
         kind: ConfigMap
@@ -834,6 +842,10 @@ fn host_claims_past_the_arm_cap_keep_a_bounded_subset() {
     let mut live = all_gates(true);
     let mut dormant = all_gates(false);
     let mut declared = all_gates(true);
+    let mut dormant_scalar = all_gates(false);
+    dormant_scalar.insert("host".to_string(), serde_json::json!(7));
+    let mut live_scalar = dormant_scalar.clone();
+    live_scalar.insert("g10".to_string(), serde_json::json!(true));
     declared.insert("host".to_string(), serde_json::json!({ "leaf": "v" }));
     for (instance, want, label) in [
         (
@@ -851,10 +863,20 @@ fn host_claims_past_the_arm_cap_keep_a_bounded_subset() {
             true,
             "no gate reaches the host",
         ),
+        (
+            serde_json::Value::Object(dormant_scalar),
+            true,
+            "a dormant guarded-only host keeps an open base",
+        ),
+        (
+            serde_json::Value::Object(live_scalar),
+            false,
+            "the ninth live arm still types the host",
+        ),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
-            "capped host arms ({label}): instance={instance}; want={want}; schema={schema}"
+            "guarded host arms ({label}): instance={instance}; want={want}; schema={schema}"
         );
     }
 }
@@ -922,9 +944,13 @@ fn assigned_locals_are_nil_safe_for_their_own_hop() {
 /// would (traefik's `$services := .Values.service.additionalServices` plus a
 /// synthetic "default" entry).
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn overlaid_range_members_keep_their_member_contracts() {
     let src = indoc! {r#"
-        {{- $services := .Values.additionalServices }}
+        {{- $services := .Values.service.additionalServices }}
         {{- $services = set $services "default" (omit .Values.service "additionalServices") }}
         apiVersion: v1
         kind: ConfigMap
@@ -933,38 +959,101 @@ fn overlaid_range_members_keep_their_member_contracts() {
         data:
           {{- range $name, $service := $services }}
           {{- if ne $service.enabled false }}
+          {{- $exposed := false }}
+          {{- range $portName, $port := $.Values.ports }}
+          {{- if $port.enabled }}
+          {{- $exposed = true }}
+          {{- end }}
+          {{- end }}
           {{ $name }}: live
+          {{- if $exposed }}
+          {{- with (merge dict (default dict $service.annotationsTCP) (default dict $service.annotations)) }}
+          {{ $name }}-annotations: live
+          {{- end }}
+          {{- end }}
           {{- end }}
           {{- end }}
     "#};
     let values_yaml = indoc! {"
-        additionalServices: {}
         service:
+          additionalServices: {}
+          annotations: {}
+          annotationsTCP: {}
           enabled: true
+        ports:
+          web:
+            enabled: true
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for (overrides, want) in [
         (
-            serde_json::json!({ "additionalServices": { "audit": { "enabled": true } } }),
+            serde_json::json!({
+                "service": {
+                    "additionalServices": {
+                        "audit": { "enabled": true },
+                    },
+                },
+            }),
             true,
         ),
-        (serde_json::json!({ "additionalServices": {} }), true),
+        (
+            serde_json::json!({ "service": { "additionalServices": {} } }),
+            true,
+        ),
         // A present non-mapping member aborts the member navigation.
         (
-            serde_json::json!({ "additionalServices": { "audit": false } }),
+            serde_json::json!({
+                "service": {
+                    "additionalServices": { "audit": false },
+                },
+            }),
             false,
         ),
         (
-            serde_json::json!({ "additionalServices": { "audit": "x" } }),
+            serde_json::json!({
+                "service": {
+                    "additionalServices": { "audit": "x" },
+                },
+            }),
             false,
         ),
         (
-            serde_json::json!({ "additionalServices": { "audit": 7 } }),
+            serde_json::json!({
+                "service": {
+                    "additionalServices": { "audit": 7 },
+                },
+            }),
             false,
         ),
         (
-            serde_json::json!({ "additionalServices": { "audit": [] } }),
+            serde_json::json!({
+                "service": {
+                    "additionalServices": { "audit": [] },
+                },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "service": {
+                    "additionalServices": {
+                        "audit": {
+                            "annotations": "not a mapping",
+                            "enabled": true,
+                        },
+                    },
+                },
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "service": {
+                    "annotations": "not a mapping",
+                    "enabled": true,
+                },
+            }),
             false,
         ),
     ] {
@@ -1355,4 +1444,570 @@ fn semver_gated_member_access_keeps_its_host_claim() {
              instance={instance}; want={want}; schema={schema}"
         );
     }
+}
+
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn tilde_semver_guard_scopes_member_host_shape_exactly() {
+    let src = indoc! {r#"
+        {{- if .Values.component.host }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: host-present
+        ---
+        {{- end }}
+        {{- if and .Values.component.enabled (semverCompare "~3.0.0" .Values.version) .Values.component.host.member }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        version: 3.0.0
+        component:
+          enabled: true
+          host:
+            member: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "version": "3.0.0",
+                "component": {
+                    "enabled": true,
+                    "host": 7,
+                },
+            }),
+        ),
+        "an in-range version reaches the member access: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "version": "3.1.0",
+                "component": {
+                    "enabled": true,
+                    "host": 7,
+                },
+            }),
+        ),
+        "an out-of-range version short-circuits before the member access: {schema}"
+    );
+
+    let mut properties = serde_json::Map::new();
+    properties.insert(
+        "component".to_string(),
+        serde_json::json!({
+            "additionalProperties": {},
+            "properties": {
+                "enabled": {},
+                "host": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "member": { "type": "boolean" },
+                    },
+                },
+            },
+            "type": "object",
+        }),
+    );
+    properties.insert("version".to_string(), serde_json::json!({}));
+    let enabled = serde_json::json!({
+        "properties": {
+            "component": {
+                "properties": {
+                    "enabled": {
+                        "$ref": "#/$defs/helm-truthy",
+                    },
+                },
+                "required": ["enabled"],
+                "type": "object",
+            },
+        },
+        "required": ["component"],
+        "type": "object",
+    });
+    let version_pattern = r"^v?(?:0*3\.0*0\.(?:0*0|0*(?:[1-9][0-9]{1,}|[1-9]))|0*3\.0*0|0*3)(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$";
+    let matching_version = serde_json::json!({
+        "properties": {
+            "version": {
+                "pattern": version_pattern,
+                "type": "string",
+            },
+        },
+        "required": ["version"],
+        "type": "object",
+    });
+    let missing_host = serde_json::json!({
+        "anyOf": [
+            {
+                "not": {
+                    "properties": {
+                        "component": {
+                            "properties": { "host": {} },
+                            "required": ["host"],
+                            "type": "object",
+                        },
+                    },
+                    "required": ["component"],
+                    "type": "object",
+                },
+            },
+            {
+                "properties": {
+                    "component": {
+                        "properties": { "host": { "enum": [null] } },
+                        "required": ["host"],
+                        "type": "object",
+                    },
+                },
+                "required": ["component"],
+                "type": "object",
+            },
+        ],
+    });
+    let expected = expected_values_schema(
+        properties,
+        vec![
+            serde_json::json!({
+                "if": {
+                    "allOf": [
+                        enabled.clone(),
+                        matching_version.clone(),
+                    ],
+                },
+                "then": root_property_schema(
+                    "component",
+                    serde_json::json!({
+                        "additionalProperties": {},
+                        "properties": {
+                            "host": {
+                                "anyOf": [{ "type": "object" }],
+                            },
+                        },
+                    }),
+                ),
+            }),
+            serde_json::json!({
+                "if": enabled.clone(),
+                "then": {
+                    "allOf": [
+                        root_property_schema(
+                            "version",
+                            serde_json::json!({
+                                "anyOf": [
+                                    { "type": "string" },
+                                    { "type": "null" },
+                                ],
+                            }),
+                        ),
+                        root_property_schema(
+                            "version",
+                            serde_json::json!({
+                                "pattern": r"^v?(0*[0-9]{1,20})(\.0*[0-9]{1,20})?(\.0*[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+                                "type": "string",
+                            }),
+                        ),
+                    ],
+                },
+            }),
+            serde_json::json!({
+                "if": {
+                    "allOf": [
+                        enabled,
+                        missing_host,
+                        matching_version,
+                    ],
+                },
+                "then": false,
+            }),
+            navigated_host_clause(&["component"]),
+        ],
+        true,
+    );
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+/// A pure-literal helper is evaluated under the call's actual dot before
+/// its output equality gates later operands. Passing `.Values` makes the
+/// helper body's `.useFIPSAgent` selector the root `useFIPSAgent` value,
+/// matching datadog's FIPS gate.
+#[test]
+fn helper_literal_equality_scopes_later_member_access_under_values_dot() {
+    let helpers = indoc! {r#"
+        {{- define "use-fips-images" -}}
+        {{- if .useFIPSAgent -}}
+        true
+        {{- else -}}
+        false
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if and (not (eq (include "use-fips-images" .Values) "true")) (eq .Values.targetSystem "linux") .Values.fips.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        useFIPSAgent: false
+        targetSystem: linux
+        fips:
+          enabled: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "useFIPSAgent": false,
+                "targetSystem": "linux",
+                "fips": { "enabled": false },
+            }),
+            true,
+            "the declared values render",
+        ),
+        (
+            serde_json::json!({
+                "useFIPSAgent": false,
+                "targetSystem": "linux",
+                "fips": "scalar",
+            }),
+            false,
+            "the live helper arm reaches the member access",
+        ),
+        (
+            serde_json::json!({
+                "useFIPSAgent": true,
+                "targetSystem": "linux",
+                "fips": "scalar",
+            }),
+            true,
+            "the helper equality short-circuits before the member access",
+        ),
+        (
+            serde_json::json!({
+                "useFIPSAgent": false,
+                "targetSystem": "windows",
+                "fips": "scalar",
+            }),
+            true,
+            "the direct equality also short-circuits before the member access",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "helper-gated member access ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// Nested Boolean operands use their evaluated truth condition when
+/// deciding whether a later member access executes. This is traefik's
+/// `and (not (or …)) .Values.log.otlp.enabled` shape.
+#[test]
+fn nested_not_or_operand_scopes_later_member_access() {
+    let src = indoc! {r"
+        {{- if and (not (or .Values.skipPrimary .Values.skipSecondary)) .Values.log.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        skipPrimary: false
+        skipSecondary: false
+        log:
+          enabled: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "skipPrimary": false,
+                "skipSecondary": false,
+                "log": "scalar",
+            }),
+            false,
+            "both false leading operands reach the member access",
+        ),
+        (
+            serde_json::json!({
+                "skipPrimary": true,
+                "skipSecondary": false,
+                "log": "scalar",
+            }),
+            true,
+            "the first skip flag short-circuits before the member access",
+        ),
+        (
+            serde_json::json!({
+                "skipPrimary": false,
+                "skipSecondary": true,
+                "log": "scalar",
+            }),
+            true,
+            "the second skip flag short-circuits before the member access",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "nested operand member access ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A helper's member reads keep the caller's execution guard. Jaeger's
+/// Spark image helpers are called only while `spark.enabled` is truthy, so
+/// the declared image mapping must not type the disabled state.
+#[test]
+fn helper_member_access_keeps_the_callers_outer_guard() {
+    let helpers = indoc! {r#"
+        {{- define "common.images.image" -}}
+        {{- printf "%s:%s" .imageRoot.repository (.imageRoot.tag | toString) -}}
+        {{- end -}}
+        {{- define "common.images.renderPullSecrets" -}}
+        {{- range .images -}}
+        {{- range .pullSecrets -}}
+        imagePullSecrets:
+          - name: {{ . | quote }}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+        {{- define "spark.image" -}}
+        {{- include "common.images.image" (dict "imageRoot" .Values.spark.image) -}}
+        {{- end -}}
+        {{- define "spark.imagePullSecrets" -}}
+        {{- include "common.images.renderPullSecrets" (dict "images" (list .Values.spark.image)) -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if .Values.spark.enabled }}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          {{- include "spark.imagePullSecrets" . | nindent 2 }}
+          containers:
+            - name: test
+              image: {{ include "spark.image" . }}
+              imagePullPolicy: {{ .Values.spark.image.pullPolicy }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        spark:
+          enabled: false
+          image:
+            repository: example
+            tag: latest
+            pullPolicy: IfNotPresent
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "spark": {
+                    "enabled": false,
+                    "image": "unused while Spark is disabled",
+                },
+            }),
+            true,
+            "the disabled branch does not navigate the image",
+        ),
+        (
+            serde_json::json!({
+                "spark": {
+                    "enabled": true,
+                    "image": "navigated while Spark is enabled",
+                },
+            }),
+            false,
+            "the enabled branch navigates the image",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "caller-guarded helper member access ({label}): \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// A whole-path reference makes the shipped mapping available to ordinary
+/// inference, but it is not an unconditional runtime shape claim. Only the
+/// structural evidence lane may decide whether that declared shape survives
+/// beside a guarded member-host requirement.
+#[test]
+fn declared_shape_does_not_own_a_guarded_member_host_base() {
+    let image_path = helm_schema_core::ContractPathSchemaEvidence {
+        value_path: "spark.image".to_string(),
+        is_referenced_value_path: true,
+        facts: ContractValuePathFacts {
+            has_referenced_descendants: true,
+            ..ContractValuePathFacts::default()
+        },
+        fail_implications: vec![helm_schema_core::ContractFailImplication {
+            outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                path: "spark.enabled".to_string(),
+            }],
+            target: helm_schema_core::ContractRequirementTarget::Value,
+            requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
+                handled_kinds: Vec::new(),
+                complete_domain: true,
+            }],
+        }],
+        ..helm_schema_core::ContractPathSchemaEvidence::default()
+    };
+    let enabled_path = helm_schema_core::ContractPathSchemaEvidence {
+        value_path: "spark.enabled".to_string(),
+        is_referenced_value_path: true,
+        ..helm_schema_core::ContractPathSchemaEvidence::default()
+    };
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::from([
+            ("spark.enabled".to_string(), enabled_path),
+            ("spark.image".to_string(), image_path),
+        ]),
+        Vec::new(),
+    );
+    let schema = schema_for_values_yaml(
+        signals,
+        Some(indoc! {"
+            spark:
+              enabled: false
+              image:
+                repository: example
+        "}),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "spark": {
+                    "enabled": false,
+                    "image": "unused while Spark is disabled",
+                },
+            }),
+        ),
+        "the declared mapping cannot type a dormant state: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "spark": {
+                    "enabled": true,
+                    "image": "navigated while Spark is enabled",
+                },
+            }),
+        ),
+        "the structural member-host arm must still type the live state: {schema}"
+    );
+}
+
+/// A complete arm owns the base only when every access site belongs to the
+/// exact domain. A second partial site means the unresolved states still
+/// need the declared fallback shape even though the exact arm remains useful.
+#[test]
+fn partial_member_host_domain_preserves_the_declared_base() {
+    let host_path = helm_schema_core::ContractPathSchemaEvidence {
+        value_path: "host".to_string(),
+        is_referenced_value_path: true,
+        facts: ContractValuePathFacts {
+            has_referenced_descendants: true,
+            ..ContractValuePathFacts::default()
+        },
+        fail_implications: vec![
+            helm_schema_core::ContractFailImplication {
+                outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                    path: "exact".to_string(),
+                }],
+                target: helm_schema_core::ContractRequirementTarget::Value,
+                requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
+                    handled_kinds: Vec::new(),
+                    complete_domain: true,
+                }],
+            },
+            helm_schema_core::ContractFailImplication {
+                outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                    path: "partial".to_string(),
+                }],
+                target: helm_schema_core::ContractRequirementTarget::Value,
+                requirements: vec![helm_schema_core::FailValueRequirement::MemberHost {
+                    handled_kinds: Vec::new(),
+                    complete_domain: false,
+                }],
+            },
+        ],
+        ..helm_schema_core::ContractPathSchemaEvidence::default()
+    };
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::from([
+            (
+                "exact".to_string(),
+                helm_schema_core::ContractPathSchemaEvidence {
+                    value_path: "exact".to_string(),
+                    is_referenced_value_path: true,
+                    ..helm_schema_core::ContractPathSchemaEvidence::default()
+                },
+            ),
+            ("host".to_string(), host_path),
+            (
+                "partial".to_string(),
+                helm_schema_core::ContractPathSchemaEvidence {
+                    value_path: "partial".to_string(),
+                    is_referenced_value_path: true,
+                    ..helm_schema_core::ContractPathSchemaEvidence::default()
+                },
+            ),
+        ]),
+        Vec::new(),
+    );
+    let schema = schema_for_values_yaml(
+        signals,
+        Some(indoc! {"
+            exact: false
+            partial: false
+            host:
+              leaf: value
+        "}),
+    );
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "exact": false,
+                "partial": false,
+                "host": "outside the known arms",
+            }),
+        ),
+        "an incomplete access domain must retain the declared host shape: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "exact": false,
+                "partial": false,
+                "host": { "leaf": "value" },
+            }),
+        ),
+        "the declared host remains valid outside both known arms: {schema}"
+    );
 }

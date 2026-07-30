@@ -270,6 +270,52 @@ fn merge_union_with_contained_variant_is_idempotent() {
 }
 
 #[test]
+fn merge_union_with_declared_scalar_type_preserves_constrained_variants() {
+    let literal_or_template = json!({
+        "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "string", "pattern": "\\{\\{" }
+        ]
+    });
+
+    sim_assert_eq!(
+        have: merge_two_schemas(
+            literal_or_template.clone(),
+            json!({ "type": "string" })
+        ),
+        want: literal_or_template
+    );
+}
+
+#[test]
+fn declared_type_is_not_redundant_for_a_wider_union() {
+    let inferred = json!({
+        "oneOf": [
+            { "type": ["string", "null"] },
+            { "type": ["integer", "null"] },
+        ]
+    });
+    let declared = json!({ "type": "string" });
+
+    let merged = merge_two_schemas(inferred, declared);
+
+    sim_assert_eq!(
+        have: merged,
+        want: json!({
+            "anyOf": [
+                {
+                    "oneOf": [
+                        { "type": ["string", "null"] },
+                        { "type": ["integer", "null"] },
+                    ]
+                },
+                { "type": "string" },
+            ]
+        })
+    );
+}
+
+#[test]
 fn merge_scalar_schema_with_null_keeps_nullable_scalar_schema_compact() {
     let merged = merge_two_schemas(
         json!({

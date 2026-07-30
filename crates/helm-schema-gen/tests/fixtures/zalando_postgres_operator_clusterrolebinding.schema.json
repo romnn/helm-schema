@@ -31,6 +31,57 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "rbac": {
             "properties": {
@@ -51,26 +102,6 @@
       },
       "then": {
         "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "fullnameOverride": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          },
           {
             "additionalProperties": {},
             "properties": {
@@ -228,57 +259,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
       }
     },
     {
@@ -451,18 +431,7 @@
     "rbac": {
       "additionalProperties": {},
       "properties": {
-        "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        }
+        "create": {}
       },
       "type": "object"
     },

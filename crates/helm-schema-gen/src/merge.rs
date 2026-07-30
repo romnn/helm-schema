@@ -40,6 +40,13 @@ pub(crate) fn merge_two_schemas(a: Value, b: Value) -> Value {
         return a;
     }
 
+    if declared_type_is_redundant(&a, &b) {
+        return a;
+    }
+    if declared_type_is_redundant(&b, &a) {
+        return b;
+    }
+
     if union_contains_schema(&a, &b) {
         return a;
     }
@@ -59,6 +66,37 @@ pub(crate) fn merge_two_schemas(a: Value, b: Value) -> Value {
     out.extend(flatten_union_variants(a));
     out.extend(flatten_union_variants(b));
     deduped_sorted_any_of(collapse_compatible_variants(out))
+}
+
+fn declared_type_is_redundant(schema: &Value, declared: &Value) -> bool {
+    let Some(declared) = declared.as_object() else {
+        return false;
+    };
+    if declared.len() != 1 {
+        return false;
+    }
+    let Some(declared_type) = declared.get("type").and_then(Value::as_str) else {
+        return false;
+    };
+    union_variants(schema).is_some() && schema_only_allows_type(schema, declared_type)
+}
+
+fn schema_only_allows_type(schema: &Value, expected_type: &str) -> bool {
+    if let Some(schema_type) = schema_type(schema) {
+        return schema_type == expected_type;
+    }
+    if let Some(types) = schema.get("type").and_then(Value::as_array) {
+        return !types.is_empty()
+            && types
+                .iter()
+                .all(|schema_type| schema_type.as_str() == Some(expected_type));
+    }
+    union_variants(schema).is_some_and(|variants| {
+        !variants.is_empty()
+            && variants
+                .iter()
+                .all(|variant| schema_only_allows_type(variant, expected_type))
+    })
 }
 
 fn deduped_sorted_any_of(variants: Vec<Value>) -> Value {

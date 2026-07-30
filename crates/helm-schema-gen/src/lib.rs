@@ -2,6 +2,7 @@
 
 mod base_schema;
 mod condition_encoding;
+mod emission_policy;
 mod foreign_schema;
 mod merge;
 mod overlay_lowering;
@@ -38,6 +39,8 @@ use provider_definitions::{
 };
 use schema_tree::{SchemaDocument, draft07_root_document};
 
+pub use emission_policy::SchemaProfile;
+
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
 /// The generated schema is derived from the contract-layer signal bundle plus
@@ -68,6 +71,8 @@ pub struct ValuesSchemaInput<'a> {
     pub dependency_refill_values_yaml: Option<&'a str>,
     /// Documentation strings keyed by canonical values path.
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
+    /// Amount of analyzed contract evidence emitted into the schema.
+    pub profile: SchemaProfile,
 }
 
 impl<'a> ValuesSchemaInput<'a> {
@@ -83,6 +88,7 @@ impl<'a> ValuesSchemaInput<'a> {
             dependency_values_yaml: None,
             dependency_refill_values_yaml: None,
             values_descriptions: None,
+            profile: SchemaProfile::Full,
         }
     }
 
@@ -117,6 +123,13 @@ impl<'a> ValuesSchemaInput<'a> {
         values_descriptions: &'a BTreeMap<String, String>,
     ) -> Self {
         self.values_descriptions = Some(values_descriptions);
+        self
+    }
+
+    /// Selects the schema emission profile.
+    #[must_use]
+    pub fn with_profile(mut self, profile: SchemaProfile) -> Self {
+        self.profile = profile;
         self
     }
 }
@@ -178,6 +191,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         &dependency_refill_doc,
         values_descriptions,
         input.provider,
+        input.profile,
     );
 
     draft07_root_document(root_schema)
@@ -213,6 +227,7 @@ fn build_root_schema(
     dependency_refill_doc: &YamlValue,
     values_descriptions: &BTreeMap<String, String>,
     provider: &dyn ResourceSchemaOracle,
+    profile: SchemaProfile,
 ) -> Value {
     let mut root_schema = SchemaDocument::new_root_object();
     let path_resolver = PathSchemaResolver::new(contract_schema_signals, values_yaml_doc, provider);
@@ -223,12 +238,18 @@ fn build_root_schema(
         values_yaml_doc,
         provider,
     );
+    // Keep conditional targets in base classification even when their arms
+    // are omitted. This makes the reduced document the full document minus
+    // constraints instead of reclassifying guarded evidence as unconditional.
+    let conditional_targets = ConditionalTargetIndex::from_conditionals(&conditional_schemas);
+    if profile == SchemaProfile::Lean {
+        conditional_schemas.clear();
+    }
     let provider_definitions = extract_provider_definitions(
         &mut resolved_paths,
         &mut conditional_schemas,
         values_descriptions,
     );
-    let conditional_targets = ConditionalTargetIndex::from_conditionals(&conditional_schemas);
     let accepted_values_root_paths = contract_schema_signals
         .schema_evidence_by_value_path()
         .values()
@@ -242,25 +263,72 @@ fn build_root_schema(
         .map(|evidence| split_value_path(&evidence.value_path))
         .collect::<BTreeSet<_>>();
     let no_owning_ancestors = BTreeSet::new();
+    let no_preserving_ancestors = BTreeSet::new();
     let base_span = tracing::info_span!("base_path_insertion").entered();
     let owning_paths = resolved_paths
         .iter()
         .filter(|resolved_path| {
-            classify_base(resolved_path, &conditional_targets, &no_owning_ancestors)
-                .owns_descendants()
+            classify_base(
+                resolved_path,
+                &conditional_targets,
+                &no_owning_ancestors,
+                &no_preserving_ancestors,
+            )
+            .owns_descendants()
+        })
+        .map(|resolved_path| resolved_path.path_segments.clone())
+        .collect::<BTreeSet<_>>();
+    let preserving_paths = resolved_paths
+        .iter()
+        .filter(|resolved_path| {
+            classify_base(
+                resolved_path,
+                &conditional_targets,
+                &no_owning_ancestors,
+                &no_preserving_ancestors,
+            )
+            .preserves_descendants()
         })
         .map(|resolved_path| resolved_path.path_segments.clone())
         .collect::<BTreeSet<_>>();
     for resolved_path in &resolved_paths {
-        let owner = classify_base(resolved_path, &conditional_targets, &owning_paths);
+        let owner = classify_base(
+            resolved_path,
+            &conditional_targets,
+            &owning_paths,
+            &preserving_paths,
+        );
         let Some(schema) = owner.schema(resolved_path) else {
             continue;
         };
+        let materialized_member_schema = schema.clone().into_value();
         if owner.replaces() {
             root_schema.replace_path_schema(&resolved_path.path_segments, schema);
         } else {
             root_schema.insert_path_schema(&resolved_path.path_segments, schema);
         }
+        let Some((last, parent_segments)) = resolved_path.path_segments.split_last() else {
+            continue;
+        };
+        if last != "*" {
+            continue;
+        }
+        if parent_segments.iter().any(|segment| segment == "*")
+            || !contract_schema_signals
+                .evidence_for(&resolved_path.value_path)
+                .is_some_and(|evidence| evidence.facts.is_direct_ranged_source)
+        {
+            continue;
+        }
+        let Some(declared) = values_yaml::yaml_value_at_segments(values_yaml_doc, parent_segments)
+        else {
+            continue;
+        };
+        root_schema.materialize_declared_member_schema(
+            parent_segments,
+            declared,
+            &materialized_member_schema,
+        );
     }
     drop(base_span);
     let absence = condition_encoding::AbsenceDefaults {
@@ -274,16 +342,18 @@ fn build_root_schema(
         values_yaml_doc,
         absence,
     );
-    append_terminal_clauses(
-        &mut root_schema,
-        contract_schema_signals.terminal_clauses(),
-        values_yaml_doc,
-        absence,
-    );
+    if profile == SchemaProfile::Full {
+        append_terminal_clauses(
+            &mut root_schema,
+            contract_schema_signals.terminal_clauses(),
+            values_yaml_doc,
+            absence,
+        );
+    }
     // A serialized path's schema is deliberately unconstrained; the
     // declared-default filler must keep the slot present without re-typing
     // it, exactly like a conditional target.
-    let mut default_fill_skip_paths = conditional_targets.target_paths.clone();
+    let mut default_fill_skip_paths = conditional_targets.guarded_only_paths.clone();
     for resolved_path in &resolved_paths {
         if resolved_path.used_as_serialized {
             default_fill_skip_paths.insert(resolved_path.path_segments.clone());

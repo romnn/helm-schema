@@ -434,7 +434,8 @@ fn values_selected_kind_partitions_provider_contracts() {
         workloadKind: Deployment
         updateStrategy: {}
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let signals = parse_ir(src).finalize().into_schema_signals();
+    let schema = schema_for_values_yaml(signals, Some(values_yaml));
     let stateful_only = serde_json::json!({
         "rollingUpdate": { "partition": "not-an-integer" }
     });
@@ -617,6 +618,103 @@ fn helper_literal_or_override_return_applies_integer_preimage_to_the_override() 
                 &serde_json::json!({ "service": { "port": port.clone() } })
             ),
             "a provider-valid override or the literal-default arm must validate: port={port}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn guarded_named_port_sink_does_not_widen_unconditional_numeric_sink() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          selector:
+            app: test
+          ports:
+            - name: http
+              port: {{ .Values.port }}
+        ---
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: test
+        spec:
+          rules:
+            - http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: test
+                        port:
+                          {{- if typeIs "string" .Values.port }}
+                          name: {{ .Values.port }}
+                          {{- else }}
+                          number: {{ .Values.port }}
+                          {{- end }}
+    "#};
+    let signals = parse_ir(source).finalize().into_schema_signals();
+    let evidence = signals
+        .evidence_for("port")
+        .ok_or_eyre("port evidence should be present")?;
+    assert!(
+        !evidence.provider_schema_uses.is_empty()
+            && evidence
+                .conditional_overlays
+                .iter()
+                .any(|overlay| !overlay.evidence.provider_schema_uses.is_empty()),
+        "the test must exercise both unconditional and guarded provider sinks: {evidence:#?}"
+    );
+    let schema = schema_for_values_yaml(signals, Some("port: 80\n"));
+
+    for (port, want, label) in [
+        (serde_json::json!(80), true, "integer"),
+        (serde_json::json!("80"), true, "numeric string"),
+        (serde_json::json!("http"), false, "arbitrary string"),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &serde_json::json!({ "port": port })) == want,
+            "the unconditional Service numeric contract must dominate the guarded Ingress \
+             named-port arm for {label}: {schema}"
+        );
+    }
+
+    Ok(())
+}
+
+#[test]
+fn self_guarded_numeric_sink_keeps_helm_falsy_values_dormant() {
+    let source = indoc! {r"
+        {{- if .Values.port }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          selector:
+            app: test
+          ports:
+            - name: http
+              port: {{ .Values.port }}
+        {{- end }}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(source), Some("port: 0\n"));
+
+    for (port, want, label) in [
+        (serde_json::json!(80), true, "integer"),
+        (serde_json::json!("80"), true, "numeric string"),
+        (serde_json::json!("http"), false, "truthy arbitrary string"),
+        (serde_json::json!(false), true, "false"),
+        (serde_json::json!(0), true, "zero"),
+        (serde_json::json!(""), true, "empty string"),
+        (serde_json::Value::Null, true, "null"),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &serde_json::json!({ "port": port })) == want,
+            "only truthy values reach the numeric provider sink for {label}: {schema}"
         );
     }
 }
@@ -1479,6 +1577,182 @@ fn tpl_serialized_fragment_projects_the_provider_slot() {
             schema_accepts_instance(&schema, &instance) == want,
             "the tpl-serialized command keeps the PodSpec string-array slot: \
              instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[derive(Debug)]
+struct HostnamesProvider;
+
+impl ResourceSchemaOracle for HostnamesProvider {
+    fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        (use_.path.0 == ["spec", "hostnames"]).then(|| {
+            ProviderSchemaFragment::new(serde_json::json!({
+                "items": {
+                    "minLength": 1,
+                    "pattern": "^(\\*\\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+                    "type": "string"
+                },
+                "maxItems": 16,
+                "type": "array"
+            }))
+        })
+    }
+}
+
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn tpl_serialized_fragment_preserves_structure_without_typing_program_strings_as_output() {
+    let src = indoc! {r"
+        {{- range $name, $route := .Values.route }}
+        {{- if $route.enabled }}
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        metadata:
+          name: {{ $name }}
+        spec:
+          {{- with $route.hostnames }}
+          hostnames:
+            {{- tpl (toYaml .) $ | nindent 4 }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+    "};
+    let signals = schema_signals_for(parse_ir(src));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &HostnamesProvider).with_values_yaml(Some(indoc! {"
+            route:
+              main:
+                enabled: false
+                hostnames:
+                  - '*.example.com'
+        "})),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "route": {
+                    "main": {
+                        "enabled": true,
+                        "hostnames": ["{{ .Values.global.environment }}.example.com"]
+                    }
+                }
+            }),
+            true,
+            "template program",
+        ),
+        (
+            serde_json::json!({
+                "route": {
+                    "main": {
+                        "enabled": true,
+                        "hostnames": ["*.example.com"]
+                    }
+                }
+            }),
+            true,
+            "valid literal",
+        ),
+        (
+            serde_json::json!({
+                "route": {
+                    "main": {
+                        "enabled": true,
+                        "hostnames": ["bad_host"]
+                    }
+                }
+            }),
+            false,
+            "invalid action-free literal",
+        ),
+        (
+            serde_json::json!({
+                "route": {
+                    "main": {
+                        "enabled": true,
+                        "hostnames": {"bad": true}
+                    }
+                }
+            }),
+            false,
+            "wrong collection kind",
+        ),
+        (
+            serde_json::json!({
+                "route": {
+                    "main": {
+                        "enabled": true,
+                        "hostnames": [7]
+                    }
+                }
+            }),
+            false,
+            "wrong item kind",
+        ),
+        (
+            serde_json::json!({
+                "route": {
+                    "main": {
+                        "enabled": false,
+                        "hostnames": ["bad_host"]
+                    }
+                }
+            }),
+            true,
+            "disabled route",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "tpl-serialized hostnames {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn helper_preserves_tpl_serialized_provider_preimage() {
+    let helpers = indoc! {r#"
+        {{- define "sample.hostnames" -}}
+        {{- tpl (toYaml .Values.hostnames) . }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: HTTPRoute
+        metadata:
+          name: test
+        spec:
+          hostnames:
+            {{- include "sample.hostnames" . | nindent 4 }}
+    "#};
+    let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &HostnamesProvider)
+            .with_values_yaml(Some("hostnames: []\n")),
+    );
+
+    for (hostnames, want, label) in [
+        (
+            serde_json::json!(["{{ .Values.global.environment }}.example.com"]),
+            true,
+            "template program",
+        ),
+        (serde_json::json!(["*.example.com"]), true, "valid literal"),
+        (
+            serde_json::json!(["bad_host"]),
+            false,
+            "invalid action-free literal",
+        ),
+        (serde_json::json!([7]), false, "wrong item kind"),
+    ] {
+        let instance = serde_json::json!({ "hostnames": hostnames });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "helper tpl-serialized hostnames {label}: instance={instance}; schema={schema}"
         );
     }
 }

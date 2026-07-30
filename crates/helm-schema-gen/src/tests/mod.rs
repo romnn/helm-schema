@@ -15,7 +15,7 @@ use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ProviderSchemaFragment, ResourceSchemaOracle};
 use helm_schema_ir::{
     ContractIr, ContractSchemaSignals, ContractUse, ContractValuePathFacts, Guard, GuardValue,
-    ProviderSchemaUse, ResourceRef, SymbolicIrContext, ValueKind, YamlPath,
+    ProviderSchemaUse, ResourceRef, SymbolicIrContext, SymbolicPolicy, ValueKind, YamlPath,
 };
 use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 
@@ -24,6 +24,7 @@ mod bound_helpers;
 mod chart_local_crd_contracts;
 mod completed_token_contracts;
 mod default_hint_extraction;
+mod emission_profiles;
 mod empty_collections;
 mod fail_validators;
 mod fallback_selection;
@@ -40,6 +41,7 @@ mod member_serialized_shapes;
 mod merge_shadowing;
 mod nullability_defaults;
 mod operand_kind_contracts;
+mod pattern_dialect;
 mod program_wrappers;
 mod provider_evidence;
 mod range_collections;
@@ -78,23 +80,32 @@ fn parse_ir(src: &str) -> ContractIr {
 }
 
 fn parse_ir_with_helpers(src: &str, helpers: &str) -> ContractIr {
+    parse_ir_with_helpers_and_kubernetes_version(src, helpers, None)
+}
+
+fn parse_ir_with_helpers_and_kubernetes_version(
+    src: &str,
+    helpers: &str,
+    kubernetes_version: Option<&str>,
+) -> ContractIr {
     let mut idx = DefineIndex::new();
     if !helpers.trim().is_empty() {
         idx.add_file_source("helpers.tpl", helpers);
     }
-    SymbolicIrContext::new(&idx).generate_contract_ir(src)
+    SymbolicIrContext::with_policy(
+        &idx,
+        SymbolicPolicy {
+            kubernetes_version: kubernetes_version.map(str::to_string),
+            ..SymbolicPolicy::default()
+        },
+    )
+    .generate_contract_ir(src)
 }
 
 /// Like [`parse_ir_with_helpers`], with an analysis-policy Kubernetes
 /// version so `.Capabilities.KubeVersion` conditions evaluate.
 fn parse_ir_with_kubernetes_version(src: &str, kubernetes_version: &str) -> ContractIr {
-    let idx = DefineIndex::new();
-    SymbolicIrContext::with_policy(
-        &idx,
-        std::collections::BTreeMap::new(),
-        Some(kubernetes_version.to_string()),
-    )
-    .generate_contract_ir(src)
+    parse_ir_with_helpers_and_kubernetes_version(src, "", Some(kubernetes_version))
 }
 
 fn with_type_hints(mut contract: ContractIr, hints: &[(&str, &str)]) -> ContractIr {
@@ -135,6 +146,12 @@ impl SchemaSignalSource for &ContractIr {
 impl SchemaSignalSource for ContractIr {
     fn into_schema_signals(self) -> ContractSchemaSignals {
         self.finalize().into_schema_signals()
+    }
+}
+
+impl SchemaSignalSource for ContractSchemaSignals {
+    fn into_schema_signals(self) -> ContractSchemaSignals {
+        self
     }
 }
 
@@ -279,6 +296,13 @@ fn expected_range_key_string_schema(path: &str) -> Value {
 /// claim emits: Go template member access aborts on a nil receiver, and a
 /// parent-owned key is absent exactly when the user null-deleted it.
 fn navigated_host_clause(segments: &[&str]) -> Value {
+    serde_json::json!({
+        "if": navigated_host_condition(segments),
+        "then": false,
+    })
+}
+
+fn navigated_host_condition(segments: &[&str]) -> Value {
     let chain = |leaf: Value| {
         let mut node = leaf;
         for segment in segments.iter().rev() {
@@ -290,10 +314,23 @@ fn navigated_host_clause(segments: &[&str]) -> Value {
         }
         node
     };
+    serde_json::json!({ "anyOf": [
+        { "not": chain(serde_json::json!({})) },
+        chain(serde_json::json!({ "enum": [null] })),
+    ] })
+}
+
+/// Root companion for a presence failure localized beneath its nearest
+/// ancestor. It preserves the same failure while that ancestor is absent,
+/// where a `properties`-anchored clause cannot run.
+fn navigated_host_missing_ancestor_clause(segments: &[&str]) -> Value {
+    let ancestor = segments
+        .get(..segments.len().saturating_sub(1))
+        .unwrap_or_default();
     serde_json::json!({
-        "if": { "anyOf": [
-            { "not": chain(serde_json::json!({})) },
-            chain(serde_json::json!({ "enum": [null] })),
+        "if": { "allOf": [
+            navigated_host_condition(segments),
+            navigated_host_condition(ancestor),
         ] },
         "then": false,
     })
@@ -665,17 +702,33 @@ fn any_of_variant_matching<'a, F: Fn(&'a Value) -> bool>(
         .and_then(|variants| variants.iter().find(|variant| predicate(variant)))
 }
 
-/// The union arm of a directly ranged node with the given `type`. Ranged
-/// paths accept the runtime iterable domain, so their declared shape lives
-/// in one arm beside the runtime alternatives (or stands alone when no
-/// range widened the node).
+/// The emitted arm of a ranged node with the given `type`.
+///
+/// A conditional range keeps its runtime domain in an `allOf`/`then` arm;
+/// an unconditional range carries the same alternatives directly.
 fn ranged_arm_of_type<'a>(schema: &'a Value, ty: &str) -> Option<&'a Value> {
     if schema.get("type").and_then(Value::as_str) == Some(ty) {
         return Some(schema);
     }
-    any_of_variant_matching(schema, |variant| {
-        variant.get("type").and_then(Value::as_str) == Some(ty)
-    })
+    for keyword in ["anyOf", "oneOf"] {
+        if let Some(arm) = schema
+            .get(keyword)
+            .and_then(Value::as_array)
+            .and_then(|arms| arms.iter().find_map(|arm| ranged_arm_of_type(arm, ty)))
+        {
+            return Some(arm);
+        }
+    }
+    if let Some(arm) = schema
+        .get("then")
+        .and_then(|then| ranged_arm_of_type(then, ty))
+    {
+        return Some(arm);
+    }
+    schema
+        .get("allOf")
+        .and_then(Value::as_array)
+        .and_then(|arms| arms.iter().find_map(|arm| ranged_arm_of_type(arm, ty)))
 }
 
 fn object_variant_with_property<'a>(schema: &'a Value, property: &str) -> Option<&'a Value> {

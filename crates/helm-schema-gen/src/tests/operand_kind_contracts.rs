@@ -1490,7 +1490,7 @@ fn nested_range_has_key_binds_inner_members() {
           {{- range $provider, $dashboards := .Values.dashboards }}
           {{- range $name, $dashboard := $dashboards }}
           {{- if hasKey $dashboard "json" }}
-          {{ $name }}: {{ $dashboard.json | quote }}
+          {{ $name }}: present
           {{- end }}
           {{- end }}
           {{- end }}
@@ -2424,6 +2424,79 @@ fn reflection_backed_calls_require_a_present_operand() {
             !schema_accepts_instance(&schema, &instance),
             "a reflection-backed call faults on a nil operand: \
              instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A derived range can retain one values-backed member domain while a
+/// literal item makes the range live independently of that source. Runtime
+/// effects in the body follow the range's exact execution condition, not the
+/// raw source path's truthiness (Airflow's synthesized default worker set).
+#[test]
+fn reflection_call_in_synthesized_range_uses_range_execution_condition() {
+    let src = indoc! {r#"
+        {{- $workerSets := .Values.workers.celery.sets | default list -}}
+        {{- if .Values.workers.celery.enableDefault -}}
+          {{- $workerSets = concat (list (dict "name" "default")) $workerSets -}}
+        {{- end -}}
+        {{- range $workerSet := $workerSets -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ $workerSet.name }}
+        data:
+          copied: {{ deepCopy $.Values.podAnnotations | toYaml | quote }}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        podAnnotations: {}
+        workers:
+          celery:
+            enableDefault: true
+            sets: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "podAnnotations": {},
+                "workers": { "celery": { "enableDefault": true, "sets": [] } },
+            }),
+            true,
+            "the present operand renders in the synthesized iteration",
+        ),
+        (
+            serde_json::json!({
+                "workers": { "celery": { "enableDefault": true, "sets": [] } },
+            }),
+            false,
+            "the synthesized item executes deepCopy even when sets is empty",
+        ),
+        (
+            serde_json::json!({
+                "workers": { "celery": { "enableDefault": false, "sets": [] } },
+            }),
+            true,
+            "an empty derived range never evaluates deepCopy",
+        ),
+        (
+            serde_json::json!({
+                "workers": {
+                    "celery": {
+                        "enableDefault": false,
+                        "sets": [{ "name": "custom" }],
+                    },
+                },
+            }),
+            false,
+            "a values-backed item also evaluates deepCopy",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "derived-range reflection presence ({label}): \
+             instance={instance}; want={want}; schema={schema}"
         );
     }
 }

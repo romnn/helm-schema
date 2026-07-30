@@ -1,13 +1,16 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
-use helm_schema_core::{ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath};
+use helm_schema_core::{
+    ProviderSchemaFragment, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind,
+    YamlPath,
+};
 use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
-use crate::merge::merge_schema_list;
+use crate::merge::{merge_schema_list, union_schema_list};
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
 use crate::schema_model::{empty_schema, guard_value_to_json, is_empty_schema, type_schema};
@@ -17,6 +20,13 @@ pub(crate) struct ResolvedPathSchema {
     pub(crate) value_path: String,
     pub(crate) path_segments: Vec<String>,
     pub(crate) schema: Value,
+    /// Runtime evidence resolved without the chart's declared default shape.
+    ///
+    /// Conditional-base ownership must consult this form: a whole-path
+    /// reference makes `values.yaml` shape available to ordinary inference,
+    /// but does not prove that shape is required while every consumer is
+    /// dormant.
+    pub(crate) structural_schema: Value,
     pub(crate) values_yaml_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
     pub(crate) used_as_serialized: bool,
@@ -124,6 +134,9 @@ fn resolve_path_evidence(
         evidence.facts.accepted_dependency_values_root_fragment;
     let (policy_inputs, provider_schema_candidate) =
         build_path_schema_inputs(evidence, values_yaml_info, provider, provider_schema_cache);
+    let (structural_policy_inputs, _) =
+        build_path_schema_inputs(evidence, None, provider, provider_schema_cache);
+    let structural_schema = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
     let mut schema = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
     if let Some(values_yaml_info) = values_yaml_info {
         for declared_default in &values_yaml_info.declared_defaults {
@@ -140,6 +153,7 @@ fn resolve_path_evidence(
         value_path,
         path_segments,
         schema,
+        structural_schema,
         values_yaml_schema: values_yaml_info
             .map(|path_info| path_info.schema.clone())
             .unwrap_or_else(empty_schema),
@@ -245,15 +259,58 @@ fn lookup_provider_schema(
     provider: &dyn ResourceSchemaOracle,
     provider_use: &ProviderSchemaUse,
 ) -> Option<Arc<ProviderSchemaCandidate>> {
-    provider
-        .schema_fragment_for_use(provider_use)
-        .and_then(|fragment| {
-            fragment.try_map_schema(|schema| {
-                ResolvePolicy::provider_schema_for_value_use(schema, provider_use)
-            })
-        })
-        .map(ProviderSchemaCandidate::from_provider_fragment)
-        .map(Arc::new)
+    let mut kinds = vec![provider_use.resource.kind.clone()];
+    for kind in &provider_use.resource.kind_candidates {
+        if !kind.is_empty() && !kinds.contains(kind) {
+            kinds.push(kind.clone());
+        }
+    }
+
+    let fragment = if kinds.len() == 1 {
+        provider
+            .schema_fragment_for_use(provider_use)
+            .and_then(|fragment| {
+                fragment.try_map_schema(|schema| {
+                    ResolvePolicy::provider_schema_for_value_use(schema, provider_use)
+                })
+            })?
+    } else {
+        let mut schemas = Vec::with_capacity(kinds.len());
+        let mut required_in_parent = true;
+        for kind in kinds {
+            let mut concrete_use = provider_use.clone();
+            concrete_use.resource.kind = kind;
+            concrete_use.resource.kind_candidates.clear();
+            let fragment = provider
+                .schema_fragment_for_use(&concrete_use)?
+                .try_map_schema(|schema| {
+                    ResolvePolicy::provider_schema_for_value_use(schema, &concrete_use)
+                })?;
+            required_in_parent &= fragment.required_in_parent();
+            schemas.push(fragment.into_schema());
+        }
+        // Every kind here is a statically reachable lookup alternative. A
+        // missing lookup abstains above; retaining only the first resolved
+        // kind would silently discard a downstream provider contract.
+        //
+        // The `kind:` slot itself is different: candidate discovery is not
+        // an exhaustiveness proof for a values-selected discriminator. Its
+        // provider contract is the open string domain accepted by the slot,
+        // while known candidates still select exact schemas for other paths.
+        let schema = if matches!(
+            provider_use.path.0.as_slice(),
+            [segment] if segment == "kind"
+        ) {
+            ResolvePolicy::provider_schema_for_value_use(&type_schema("string"), provider_use)?
+        } else {
+            union_schema_list(schemas)
+        };
+        ProviderSchemaFragment::new(schema).with_required_in_parent(required_in_parent)
+    };
+
+    Some(Arc::new(ProviderSchemaCandidate::from_provider_fragment(
+        fragment,
+    )))
 }
 
 fn provider_schema_for_path(
@@ -558,6 +615,11 @@ fn optional_leaf_object_path_schema(path: &[String], leaf: Value) -> Value {
     let Some((last, parents)) = path.split_last() else {
         return leaf;
     };
+    if last == "*" {
+        // A ranged member exists by construction; only named fields can be
+        // absent and therefore receive the nil-tolerant optional-leaf rule.
+        return required_object_path_schema(path, leaf);
+    }
     let leaf_host = serde_json::json!({
         "type": "object",
         "properties": { (last.clone()): leaf },
@@ -567,20 +629,43 @@ fn optional_leaf_object_path_schema(path: &[String], leaf: Value) -> Value {
 
 fn required_object_path_schema(path: &[String], leaf: Value) -> Value {
     path.iter().rev().fold(leaf, |schema, segment| {
-        serde_json::json!({
-            "type": "object",
-            "properties": { (segment.clone()): schema },
-            "required": [segment],
-        })
+        if segment == "*" {
+            serde_json::json!({
+                "anyOf": [
+                    { "type": "array", "items": schema },
+                    { "type": "object", "additionalProperties": schema },
+                    { "type": "null" },
+                ],
+            })
+        } else {
+            serde_json::json!({
+                "type": "object",
+                "properties": { (segment.clone()): schema },
+                "required": [segment],
+            })
+        }
     })
 }
 
 /// Translate a Go/RE2 pattern into an ECMA 262 equivalent for the JSON
 /// Schema `pattern` keyword: bare `{`/`}` braces that do not form a
 /// quantifier are literal in RE2 but invalid in strict ECMA parsers, so
-/// they get escaped. Constructs with no ECMA spelling (inline flags,
-/// `\A`/`\z` anchors, POSIX classes) abstain.
+/// they get escaped. A leading global multiline flag is exact when the only
+/// affected anchor is the pattern's initial `^`; it lowers to an explicit
+/// start-of-input-or-line prefix. Constructs with no bounded ECMA spelling
+/// (other inline flags, later multiline anchors, `\A`/`\z` anchors, POSIX
+/// classes) abstain.
 pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
+    let (pattern, multiline_start_anchor, multiline) =
+        if let Some(pattern) = pattern.strip_prefix("(?m)") {
+            if let Some(pattern) = pattern.strip_prefix('^') {
+                (pattern, true, true)
+            } else {
+                (pattern, false, true)
+            }
+        } else {
+            (pattern, false, false)
+        };
     if pattern.contains("(?i") && !pattern.contains("(?i:")
         || pattern.contains("(?m")
         || pattern.contains("(?s")
@@ -594,6 +679,9 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
     }
     let characters: Vec<char> = pattern.chars().collect();
     let mut out = String::with_capacity(pattern.len());
+    if multiline_start_anchor {
+        out.push_str("(?:^|\\n)");
+    }
     let mut in_class = false;
     let mut previous_was_class_escape = false;
     let is_class_escape = |index: usize| {
@@ -633,6 +721,7 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
                 in_class = false;
                 out.push(character);
             }
+            '^' | '$' if multiline && !in_class => return None,
             '{' if !in_class => {
                 // A valid quantifier ({n}, {n,}, {n,m}) passes through.
                 let mut end = index + 1;
@@ -709,7 +798,7 @@ fn requirements_allow_runtime_kind(
         // Presence of a (truthy or non-null) field needs an object host.
         | FailValueRequirement::FieldPresentNotNull { .. }
         | FailValueRequirement::FieldHelmTruthy { .. } => schema_type == "object",
-        FailValueRequirement::MemberHost { handled_kinds } => {
+        FailValueRequirement::MemberHost { handled_kinds, .. } => {
             schema_type == "object" || handled_kinds.iter().any(|kind| kind == schema_type)
         }
         FailValueRequirement::IndexableAt(_) => matches!(schema_type, "array" | "string"),
@@ -864,7 +953,7 @@ fn fail_value_requirement_schema(
                 }
                 parts.push(Value::Object(bounds));
             }
-            FailValueRequirement::MemberHost { handled_kinds } => {
+            FailValueRequirement::MemberHost { handled_kinds, .. } => {
                 let mut arms = vec![type_schema("object")];
                 arms.extend(
                     handled_kinds

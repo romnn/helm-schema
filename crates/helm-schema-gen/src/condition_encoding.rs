@@ -299,6 +299,7 @@ fn build_single_condition_fragment(
             )
         }
         ConditionalGuard::MatchesPattern { path, pattern } => {
+            let ecma_pattern = crate::path_resolver::ecma_compatible_pattern(pattern)?;
             let absent_matches = yaml_value_at_path(subchart_defaults_doc, path)
                 .and_then(YamlValue::as_str)
                 .is_some_and(|value| {
@@ -308,7 +309,7 @@ fn build_single_condition_fragment(
                 path,
                 ancestor_segments,
                 SchemaNode::foreign(serde_json::json!({
-                    "pattern": pattern,
+                    "pattern": ecma_pattern,
                     "type": "string",
                 })),
                 absent_matches,
@@ -341,6 +342,28 @@ fn build_single_condition_fragment(
                     yaml_value_at_path(subchart_defaults_doc, path),
                     member,
                     value,
+                ),
+            )
+        }
+        ConditionalGuard::ContainsTruthyMember { path, member } => {
+            let item = SchemaNode::foreign(serde_json::json!({
+                "type": "object",
+                "properties": { member: helm_truthy_condition_schema().into_value() },
+                "required": [member],
+            }))
+            .into_value();
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(serde_json::json!({
+                    "anyOf": [
+                        { "type": "array", "contains": item },
+                        { "type": "object", "not": { "additionalProperties": { "not": item } } },
+                    ]
+                })),
+                declared_collection_contains_truthy_member(
+                    yaml_value_at_path(subchart_defaults_doc, path),
+                    member,
                 ),
             )
         }
@@ -1011,6 +1034,12 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             member,
             value,
         )),
+        ConditionalGuard::ContainsTruthyMember { path, member } => {
+            Some(declared_collection_contains_truthy_member(
+                yaml_value_at_path(values_yaml_doc, path),
+                member,
+            ))
+        }
         ConditionalGuard::ContainsEquals { path, value } => Some(declared_list_contains_value(
             yaml_value_at_path(values_yaml_doc, path),
             value,
@@ -1067,6 +1096,20 @@ fn declared_collection_contains_member_equals(
             value,
             mapping.get(YamlValue::String(member.to_string())),
         ))
+    })
+}
+
+fn declared_collection_contains_truthy_member(yaml: Option<&YamlValue>, member: &str) -> bool {
+    let items: Vec<&YamlValue> = match yaml {
+        Some(YamlValue::Sequence(items)) => items.iter().collect(),
+        Some(YamlValue::Mapping(mapping)) => mapping.values().collect(),
+        _ => return false,
+    };
+    items.iter().any(|item| {
+        matches!(item, YamlValue::Mapping(mapping)
+            if mapping
+                .get(YamlValue::String(member.to_string()))
+                .is_some_and(yaml_value_is_truthy))
     })
 }
 

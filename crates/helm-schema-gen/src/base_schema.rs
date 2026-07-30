@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 
-use crate::overlay_lowering::ConditionalResolvedSchema;
+use crate::overlay_lowering::{ConditionalBaseEffect, ConditionalResolvedSchema};
 use crate::path_resolver::ResolvedPathSchema;
 use crate::schema_model::is_fixed_object_schema;
 use crate::schema_node::SchemaNode;
@@ -49,7 +49,11 @@ impl BaseOwner {
     }
 
     pub(crate) const fn owns_descendants(self) -> bool {
-        matches!(self, Self::Serialized | Self::ResolvedUnclosed)
+        matches!(self, Self::Serialized)
+    }
+
+    pub(crate) const fn preserves_descendants(self) -> bool {
+        matches!(self, Self::ResolvedUnclosed)
     }
 }
 
@@ -57,6 +61,7 @@ pub(crate) fn classify_base(
     resolved_path: &ResolvedPathSchema,
     conditional_targets: &ConditionalTargetIndex,
     owning_ancestors: &BTreeSet<Vec<String>>,
+    preserving_ancestors: &BTreeSet<Vec<String>>,
 ) -> BaseOwner {
     let has_owning_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
         resolved_path
@@ -75,26 +80,45 @@ pub(crate) fn classify_base(
         return BaseOwner::OwnedByAncestor;
     }
 
-    if resolved_path.used_as_serialized {
-        return BaseOwner::Serialized;
-    }
+    let has_preserving_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
+        resolved_path
+            .path_segments
+            .get(..length)
+            .is_some_and(|path| preserving_ancestors.contains(path))
+    });
 
     if is_pathless_dependency_root_with_guarded_descendant(resolved_path, conditional_targets) {
         return BaseOwner::UnknownObject;
     }
 
-    let Some(target) = conditional_targets
+    let target = conditional_targets
         .targets
-        .get(resolved_path.value_path.as_str())
-    else {
-        return BaseOwner::Resolved;
-    };
-
-    if target.preserve_base_schema {
-        BaseOwner::ResolvedUnclosed
-    } else {
-        BaseOwner::Empty
+        .get(resolved_path.value_path.as_str());
+    if has_preserving_ancestor {
+        if let Some(target) = target {
+            return if target.preserve_base_schema {
+                BaseOwner::ResolvedUnclosed
+            } else {
+                BaseOwner::Empty
+            };
+        }
+    } else if resolved_path.used_as_serialized {
+        return BaseOwner::Serialized;
     }
+
+    if let Some(target) = target {
+        return if target.preserve_base_schema {
+            BaseOwner::ResolvedUnclosed
+        } else {
+            BaseOwner::Empty
+        };
+    }
+
+    if resolved_path.used_as_serialized {
+        return BaseOwner::Serialized;
+    }
+
+    BaseOwner::Resolved
 }
 
 /// Unclose fixed objects (top level or union arms) in a conditional target's
@@ -150,39 +174,45 @@ struct ConditionalTargetSummary {
 
 pub(crate) struct ConditionalTargetIndex {
     targets: BTreeMap<String, ConditionalTargetSummary>,
-    guarded_only_paths: BTreeSet<Vec<String>>,
-    /// Every conditional target path, preserved or not: the values-defaults
-    /// merge must not reshape these subtrees (their shape is overlay-owned,
-    /// and inserting into a non-object base would coerce it to a closed map).
-    pub(crate) target_paths: BTreeSet<Vec<String>>,
+    /// Targets whose base is wholly owned by guarded overlays. Declared
+    /// defaults must not rebuild these paths or anything beneath them.
+    pub(crate) guarded_only_paths: BTreeSet<Vec<String>>,
 }
 
 impl ConditionalTargetIndex {
     pub(crate) fn from_conditionals(conditionals: &[ConditionalResolvedSchema]) -> Self {
         let mut targets = BTreeMap::new();
+        let mut required_bases = BTreeSet::new();
         for conditional in conditionals {
-            if conditional.arm_only && conditional.preserve_base_schema {
-                continue;
-            }
+            let preserve_base_schema = match conditional.base_effect {
+                ConditionalBaseEffect::None => continue,
+                ConditionalBaseEffect::Own => false,
+                ConditionalBaseEffect::Preserve => true,
+                ConditionalBaseEffect::Require => {
+                    required_bases.insert(conditional.target_value_path.clone());
+                    continue;
+                }
+            };
             let entry = targets
                 .entry(conditional.target_value_path.clone())
                 .or_insert(ConditionalTargetSummary {
                     preserve_base_schema: false,
                 });
-            entry.preserve_base_schema |= conditional.preserve_base_schema;
+            entry.preserve_base_schema |= preserve_base_schema;
         }
-
+        for path in required_bases {
+            if let Some(target) = targets.get_mut(&path) {
+                target.preserve_base_schema = true;
+            }
+        }
         let guarded_only_paths = targets
             .iter()
-            .filter(|(_, target)| !target.preserve_base_schema)
+            .filter(|(path, target)| !path.is_empty() && !target.preserve_base_schema)
             .map(|(path, _)| split_value_path(path))
             .collect();
-        let target_paths = targets.keys().map(|path| split_value_path(path)).collect();
-
         Self {
             targets,
             guarded_only_paths,
-            target_paths,
         }
     }
 

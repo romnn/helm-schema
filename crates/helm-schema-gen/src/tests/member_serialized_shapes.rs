@@ -257,6 +257,55 @@ fn serialized_truthy_guarded_leaf_admits_arrays() {
     );
 }
 
+/// An incomplete member-host domain on an ancestor must not make its declared
+/// descendants unconditional. The descendant's own guarded `join` use is the
+/// exact shape contract and accepts both the declared list and the chart's
+/// documented comma-separated string form (oauth2-proxy session storage).
+#[test]
+fn guarded_join_owns_descendant_beneath_preserved_member_host() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if eq (default "cookie" .Values.sessionStorage.type) "redis" }}
+          {{- if eq (default "" .Values.sessionStorage.redis.clientType) "sentinel" }}
+          urls: {{ join "," .Values.sessionStorage.redis.sentinel.connectionUrls | quote }}
+          {{- end }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        sessionStorage:
+          type: cookie
+          redis:
+            clientType: standalone
+            sentinel:
+              connectionUrls: []
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for connection_urls in [
+        serde_json::json!(["redis://one:26379", "redis://two:26379"]),
+        serde_json::json!("redis://one:26379,redis://two:26379"),
+    ] {
+        let instance = serde_json::json!({
+            "sessionStorage": {
+                "type": "redis",
+                "redis": {
+                    "clientType": "sentinel",
+                    "sentinel": { "connectionUrls": connection_urls }
+                }
+            }
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "`join` owns the active descendant shape beneath its preserved \
+             ancestor: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A value spliced into a CLI-flag string slot is formatted as text. The
 /// empty-string declared default is intent, not an input-kind constraint.
 #[test]

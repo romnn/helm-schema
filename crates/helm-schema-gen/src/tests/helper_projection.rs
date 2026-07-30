@@ -3,6 +3,10 @@ use test_util::prelude::sim_assert_eq;
 use super::*;
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn helper_range_break_scopes_later_provider_candidates() {
     let helpers = indoc! {r#"
         {{- define "select.context" -}}
@@ -41,7 +45,29 @@ fn helper_range_break_scopes_later_provider_candidates() {
           securityContexts:
             pod: {}
     "};
-    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
+    let security_contexts = signals
+        .schema_evidence_by_value_path()
+        .get("worker.securityContexts");
+    assert!(
+        security_contexts.is_some_and(|evidence| {
+            evidence.fail_implications.iter().any(|implication| {
+                implication.outer_guards
+                    == [helm_schema_core::ConditionalGuard::Not(Box::new(
+                        helm_schema_core::ConditionalGuard::Absent {
+                            path: "worker.securityContexts".to_string(),
+                        },
+                    ))]
+                    && matches!(
+                        implication.requirements.as_slice(),
+                        [helm_schema_core::FailValueRequirement::SchemaType(schema_type)]
+                            if schema_type == "object"
+                    )
+            })
+        }),
+        "the exact helper iteration must own its member-host domain: {security_contexts:#?}"
+    );
+    let schema = schema_for_values_yaml(signals, Some(values_yaml));
 
     assert!(
         schema_accepts_instance(
@@ -78,6 +104,201 @@ fn helper_range_break_scopes_later_provider_candidates() {
             })
         ),
         "a valid fallback object remains accepted: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "worker": { "securityContexts": "invalid" } })
+        ),
+        "the helper navigates a present securityContexts candidate before selecting its payload: \
+         host={:#?}",
+        schema.pointer("/properties/worker/properties/securityContexts")
+    );
+}
+
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn helper_range_break_projects_provider_type_to_the_selected_scalar() {
+    let helpers = indoc! {r#"
+        {{- define "revision.limit" -}}
+        {{- $result := "" -}}
+        {{- range . -}}
+          {{- if not (kindIs "invalid" .) -}}
+            {{- $result = . -}}
+            {{- break -}}
+          {{- end -}}
+        {{- end -}}
+        {{- $result -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $revisionHistoryLimit := include "revision.limit" (list .Values.scheduler.revisionHistoryLimit .Values.revisionHistoryLimit) }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          {{- if ne $revisionHistoryLimit "" }}
+          revisionHistoryLimit: {{ $revisionHistoryLimit }}
+          {{- end }}
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+              - name: test
+                image: busybox
+    "#};
+    let values_yaml = indoc! {"
+        revisionHistoryLimit: null
+        scheduler:
+          revisionHistoryLimit: 10
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (overrides, want, label) in [
+        (serde_json::json!({}), true, "declared primary"),
+        (
+            serde_json::json!({ "scheduler": { "revisionHistoryLimit": 5 } }),
+            true,
+            "integer primary",
+        ),
+        (
+            serde_json::json!({ "scheduler": { "revisionHistoryLimit": "" } }),
+            true,
+            "empty primary suppresses the field",
+        ),
+        (
+            serde_json::json!({
+                "scheduler": { "revisionHistoryLimit": null },
+                "revisionHistoryLimit": 5
+            }),
+            true,
+            "integer fallback",
+        ),
+        (
+            serde_json::json!({
+                "scheduler": { "revisionHistoryLimit": null },
+                "revisionHistoryLimit": ""
+            }),
+            true,
+            "empty fallback suppresses the field",
+        ),
+        (
+            serde_json::json!({
+                "scheduler": { "revisionHistoryLimit": 5 },
+                "revisionHistoryLimit": { "dormant": true }
+            }),
+            true,
+            "invalid fallback is dormant behind a present primary",
+        ),
+        (
+            serde_json::json!({ "scheduler": { "revisionHistoryLimit": true } }),
+            false,
+            "boolean primary reaches the integer field",
+        ),
+        (
+            serde_json::json!({ "scheduler": { "revisionHistoryLimit": {} } }),
+            false,
+            "mapping primary reaches the integer field",
+        ),
+        (
+            serde_json::json!({
+                "scheduler": { "revisionHistoryLimit": null },
+                "revisionHistoryLimit": []
+            }),
+            false,
+            "sequence fallback reaches the integer field",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "selected scalar provider projection ({label}): instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn helper_range_fallback_projects_provider_type_to_the_root_candidate() {
+    let helpers = indoc! {r#"
+        {{- define "select.container-context" -}}
+        {{- $ := last . -}}
+        {{- $result := dict -}}
+        {{- range . -}}
+          {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "container") .securityContexts.container -}}
+            {{- $result = .securityContexts.container -}}
+            {{- break -}}
+          {{- end -}}
+        {{- end -}}
+        {{- if $result -}}
+          {{- toYaml $result -}}
+        {{- else if and (hasKey $ "securityContexts") (hasKey $.securityContexts "containers") $.securityContexts.containers -}}
+          {{- toYaml $.securityContexts.containers -}}
+        {{- else -}}
+        allowPrivilegeEscalation: false
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $securityContext := include "select.container-context" (list .Values.worker .Values) -}}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: test
+            image: busybox
+            securityContext: {{ $securityContext | nindent 14 }}
+    "#};
+    let values_yaml = indoc! {"
+        securityContexts:
+          containers: {}
+        worker:
+          securityContexts:
+            container: null
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "securityContexts": { "containers": { "runAsUser": 50000 } },
+                "worker": { "securityContexts": { "container": null } }
+            })
+        ),
+        "the root fallback accepts a valid container security context"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "securityContexts": { "containers": 7 },
+                "worker": { "securityContexts": { "container": null } }
+            })
+        ),
+        "a live root fallback reaches the object-typed container security context"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "securityContexts": { "containers": 7 },
+                "worker": {
+                    "securityContexts": { "container": { "runAsUser": 50000 } }
+                }
+            })
+        ),
+        "the invalid root fallback is dormant behind a selected worker candidate"
     );
 }
 

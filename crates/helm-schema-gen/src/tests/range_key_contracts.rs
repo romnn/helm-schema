@@ -7,10 +7,6 @@ use super::*;
 /// Dead branches accept unrelated shapes; live branches constrain every
 /// iterable lane after broad fragment/default alternatives are assembled.
 #[test]
-#[expect(
-    clippy::too_many_lines,
-    reason = "one full-schema pin: splitting it would hide which lanes belong to the same emission"
-)]
 fn guarded_range_member_string_contract_stays_branch_scoped() {
     let src = indoc! {r"
         {{- if .Values.enabled }}
@@ -34,7 +30,7 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
     let live_guard = serde_json::json!({
-        "allOf": [helm_truthy_guard("enabled"), helm_truthy_guard("config")]
+        "allOf": [helm_truthy_guard("config"), helm_truthy_guard("enabled")]
     });
     let mut properties = serde_json::Map::new();
     properties.insert(
@@ -52,15 +48,7 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
             ]
         }),
     );
-    properties.insert(
-        "enabled".to_string(),
-        serde_json::json!({
-            "anyOf": [
-                { "not": { "$ref": "#/$defs/helm-truthy" } },
-                { "type": "boolean" },
-            ]
-        }),
-    );
+    properties.insert("enabled".to_string(), serde_json::json!({}));
     properties.insert("templates".to_string(), serde_json::json!({}));
     let all_of = vec![serde_json::json!({
         "if": live_guard.clone(),
@@ -398,10 +386,7 @@ fn guarded_ranged_member_access_constrains_collection_lanes() {
     );
     let mut properties = serde_json::Map::new();
     properties.insert("accounts".to_string(), serde_json::json!({}));
-    properties.insert(
-        "enabled".to_string(),
-        serde_json::json!({ "type": "boolean" }),
-    );
+    properties.insert("enabled".to_string(), serde_json::json!({}));
     let guard = helm_truthy_guard("enabled");
     // The member-host implication already contains the complete iterable
     // domain, so a second broad range-domain conditional would be redundant.
@@ -762,9 +747,9 @@ fn guard_scoped_omit_scopes_removed_member_typing() {
 /// `eq (include "capabilities.ingress.apiVersion" .) "networking.k8s.io/v1"`,
 /// a literal dispatch whose non-else arms are capability-defaulted
 /// `semverCompare "<C"` bounds — lowers to a per-member field-falsy
-/// requirement scoped by the flipped `>=C` kubeVersion patterns
-/// (oauth2-proxy's legacy extraPaths gate). Without a pinned kubeVersion
-/// the selection is cluster-dependent and the arm soundly abstains.
+/// requirement scoped by the exact helper-output dispatch (oauth2-proxy's
+/// legacy extraPaths gate). The analysis policy supplies the capability
+/// fallback when the chart override is unset.
 #[test]
 fn capability_dispatch_scoped_member_field_fail_lowers() {
     let helpers = indoc! {r#"
@@ -790,7 +775,7 @@ fn capability_dispatch_scoped_member_field_fail_lowers() {
         {{- end }}
     "#};
     let schema = schema_for_values_yaml(
-        parse_ir_with_helpers(src, helpers),
+        parse_ir_with_helpers_and_kubernetes_version(src, helpers, Some("1.29.0")),
         Some(indoc! {"
             checkDeprecation: true
             ingress:
@@ -817,13 +802,13 @@ fn capability_dispatch_scoped_member_field_fail_lowers() {
             ] } }),
             true,
         ),
-        // Without a pinned kubeVersion the capability default decides:
-        // cluster-dependent, so the arm abstains.
+        // Without a chart override the analysis-policy capability version
+        // selects the stable API.
         (
-            serde_json::json!({ "ingress": { "extraPaths": [
+            serde_json::json!({ "checkDeprecation": true, "ingress": { "extraPaths": [
                 { "path": "/*", "backend": { "serviceName": "x" } }
             ] } }),
-            true,
+            false,
         ),
         (
             serde_json::json!({ "kubeVersion": "1.30.0", "ingress": { "extraPaths": [

@@ -442,9 +442,49 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
         "omitted probe fragment should retain rendered Kubernetes Probe fields, got {probe}; ir={ir:#?}"
     );
     assert!(
-        schema_property_contains_type(probe, "probeCommandTimeout", "integer"),
-        "explicit command interpolation should keep probeCommandTimeout, got {probe}"
+        probe
+            .pointer("/anyOf/0/properties/probeCommandTimeout")
+            .is_some(),
+        "explicit command interpolation should keep probeCommandTimeout represented, got {probe}"
     );
+    for (overrides, want, label) in [
+        (
+            serde_json::json!({
+                "livenessProbe": {
+                    "enabled": true,
+                    "probeCommandTimeout": "audit",
+                },
+            }),
+            true,
+            "partial scalar interpolation observes rendered text, not the declared integer shape",
+        ),
+        (
+            serde_json::json!({
+                "livenessProbe": {
+                    "enabled": true,
+                    "probeCommandTimeout": "can't",
+                },
+            }),
+            false,
+            "a live single-quoted interpolation rejects an unescaped apostrophe",
+        ),
+        (
+            serde_json::json!({
+                "livenessProbe": {
+                    "enabled": false,
+                    "probeCommandTimeout": "can't",
+                },
+            }),
+            true,
+            "the interpolation contract is dormant with the probe disabled",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "probe command interpolation ({label}): instance={instance}; schema={schema}"
+        );
+    }
     // The whole render is gated on `if .Values.livenessProbe.enabled`, so the
     // Probe typing must live under that condition, not at the base.
     assert!(
@@ -1150,6 +1190,46 @@ fn document_root_member_splices_require_object_items() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "document-root member splice: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Rebinding `.Values` to a JSON-decoded tree preserves the ranged member's
+/// source identity and its document-root sink. The decode changes range
+/// semantics, but it does not make scalar documents valid Kubernetes
+/// manifests.
+#[test]
+fn decoded_document_root_member_splices_require_object_items() {
+    let helpers = indoc! {r#"
+        {{- define "normalize" -}}
+        {{- $values := get (dict "doc" .Values | toJson | fromJson) "doc" -}}
+        {{- $_ := set . "Values" $values -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- include "normalize" . }}
+        {{- range .Values.extraResources }}
+        ---
+        {{ . | toYaml }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("extraResources: []\n"),
+    );
+
+    for (instance, want) in [
+        (serde_json::json!({ "extraResources": [true] }), false),
+        (serde_json::json!({ "extraResources": [["audit"]] }), false),
+        (
+            serde_json::json!({ "extraResources": [{ "kind": "ConfigMap" }] }),
+            true,
+        ),
+        (serde_json::json!({ "extraResources": [null] }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "decoded document-root member splice: instance={instance}; schema={schema}"
         );
     }
 }

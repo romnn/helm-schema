@@ -1,5 +1,6 @@
 use super::*;
 use indoc::indoc;
+use test_util::prelude::sim_assert_eq;
 
 /// an outer range binds each item to a local that an INNER range
 /// iterates — the nested iterable requirement must reach the outer item
@@ -64,6 +65,538 @@ fn nested_range_over_ranged_local_requires_iterable_items() {
             "ConfigMap.data rejects numeric inner values on every outer lane: {schema}"
         );
     }
+}
+
+#[test]
+fn direct_nested_range_keeps_the_map_lane_beside_a_declared_list_default() {
+    let src = indoc! {r"
+        ports:
+        {{- range .Values.ports }}
+          -
+            {{- range $key, $value := . }}
+            {{ $key }}: {{ $value }}
+            {{- end }}
+        {{- end }}
+    "};
+    let values_yaml = indoc! {"
+        ports:
+          - name: http
+            port: 80
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let rendered_scalar = serde_json::json!({
+        "anyOf": [
+            { "type": "integer" },
+            { "type": "string" },
+        ],
+    });
+    let member_shape = serde_json::json!({
+        "anyOf": [
+            {
+                "additionalProperties": rendered_scalar,
+                "properties": {
+                    "name": { "type": "string" },
+                    "port": { "type": "integer" },
+                },
+                "type": "object",
+            },
+            { "items": {}, "type": "array" },
+            { "type": "null" },
+            { "additionalProperties": {}, "type": "object" },
+        ],
+    });
+    // The live inner range owns its member domain. The declared sample fields
+    // remain ordinary base evidence and cannot narrow this runtime arm.
+    let iterable_member = serde_json::json!({
+        "anyOf": [
+            { "items": {}, "type": "array" },
+            { "additionalProperties": {}, "type": "object" },
+            { "type": "null" },
+        ],
+    });
+    let expected = expected_values_schema(
+        serde_json::Map::from_iter([(
+            "ports".to_string(),
+            serde_json::json!({
+                "anyOf": [
+                    { "items": member_shape.clone(), "type": "array" },
+                    { "items": member_shape.clone(), "type": "array" },
+                    { "type": "integer" },
+                    { "type": "null" },
+                    {
+                        "additionalProperties": member_shape,
+                        "type": "object",
+                    },
+                ],
+            }),
+        )]),
+        vec![root_property_schema(
+            "ports",
+            serde_json::json!({
+                "anyOf": [
+                    { "items": iterable_member.clone(), "type": "array" },
+                    {
+                        "additionalProperties": iterable_member,
+                        "type": "object",
+                    },
+                    { "maximum": 0, "type": "integer" },
+                    { "type": "null" },
+                ],
+            }),
+        )],
+        false,
+    );
+
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+/// A default-selected field on each ranged member binds the provider
+/// contract to whichever candidate supplies the rendered value. Named
+/// members declared in `values.yaml` obey the same wildcard relation:
+/// Traefik's `ports.metrics.port` is numeric when `containerPort` is falsy,
+/// but becomes dormant when a valid `containerPort` wins.
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn named_member_keeps_the_ranged_default_selection_contract() {
+    let helpers = indoc! {r#"
+        {{- define "test.pod-template" }}
+        metadata:
+          labels:
+            app: test
+        spec:
+          containers:
+            - name: test
+              image: example
+              args:
+                {{- range $name, $config := .Values.ports }}
+                - {{ $config.port | quote }}
+                {{- end }}
+              ports:
+                {{- range $name, $config := .Values.ports }}
+                {{- if $config }}
+                - name: {{ $name }}
+                  containerPort: {{ default $config.port $config.containerPort }}
+                  protocol: {{ default "TCP" $config.protocol }}
+                  {{- if ($config.http3).enabled }}
+                - name: {{ printf "%s-http3" $name }}
+                  containerPort: {{ $config.port }}
+                  protocol: UDP
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- if and .Values.deployment.enabled (eq .Values.deployment.kind "Deployment") }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template: {{ include "test.pod-template" . | fromYaml | toYaml | nindent 4 }}
+        {{- end }}
+        ---
+        {{- if and .Values.deployment.enabled (eq .Values.deployment.kind "DaemonSet") }}
+        apiVersion: apps/v1
+        kind: DaemonSet
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template: {{ include "test.pod-template" . | fromYaml | toYaml | nindent 4 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        deployment:
+          enabled: true
+          kind: Deployment
+        ports:
+          metrics:
+            port: 9100
+    "};
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "deployment": { "enabled": true, "kind": "Deployment" },
+                "ports": { "metrics": { "port": 9100 } },
+            }),
+        ),
+        "the declared integer satisfies the wildcard member contract: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "deployment": { "enabled": true, "kind": "Deployment" },
+                "ports": { "metrics": { "port": "audit" } },
+            }),
+        ),
+        "the selected port must satisfy the wildcard provider contract: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "deployment": { "enabled": true, "kind": "Deployment" },
+                "ports": { "metrics": { "port": "dormant", "containerPort": 9200 } },
+            }),
+        ),
+        "a valid containerPort makes the fallback port dormant: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "deployment": { "enabled": false, "kind": "Deployment" },
+                "ports": { "metrics": { "port": "dormant" } },
+            }),
+        ),
+        "the member contract stays dormant with its outer branch: {schema}"
+    );
+}
+
+fn expected_block_scalar_nested_range_schema() -> Value {
+    let nested_range_member = serde_json::json!({
+        "anyOf": [
+            { "items": {}, "type": "array" },
+            { "additionalProperties": {}, "type": "object" },
+            { "type": "null" },
+        ],
+    });
+    let declared_range_member = serde_json::json!({
+        "anyOf": [
+            { "type": "array" },
+            { "type": "object" },
+            { "type": "null" },
+        ],
+    });
+    let mut properties = serde_json::Map::new();
+    properties.insert(
+        "config".to_string(),
+        serde_json::json!({
+            "additionalProperties": nested_range_member.clone(),
+            "properties": {
+                "logging": declared_range_member.clone(),
+                "traces": declared_range_member,
+            },
+            "type": "object",
+        }),
+    );
+    expected_values_schema(
+        properties,
+        vec![
+            root_property_schema(
+                "config",
+                serde_json::json!({
+                    "anyOf": [
+                        {
+                            "items": nested_range_member.clone(),
+                            "type": "array",
+                        },
+                        {
+                            "additionalProperties": nested_range_member,
+                            "type": "object",
+                        },
+                        { "type": "null" },
+                    ],
+                }),
+            ),
+            root_property_schema(
+                "config",
+                serde_json::json!({
+                    "anyOf": [
+                        { "type": "object" },
+                        { "type": "null" },
+                    ],
+                }),
+            ),
+            navigated_host_clause(&["config"]),
+        ],
+        false,
+    )
+}
+
+/// Airflow ranges a merged config map inside a block scalar, then ranges
+/// each section's members and renders every leaf through
+/// `tpl(toString(...))`. The outer values path influences the merge, while
+/// `config.*` is the member identity that the inner range actually
+/// iterates. Arrays, objects, and null sections therefore render; only a
+/// non-iterable scalar section aborts.
+#[test]
+fn block_scalar_nested_range_uses_member_identity_not_influence() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          config: |-
+            {{- $root := . }}
+            {{- $config := deepCopy .Values.config | merge (dict "core" dict) }}
+            {{- range $section, $settings := $config }}
+            [{{ $section }}]
+            {{- range $key, $value := $settings }}
+            {{ $key }} = {{ tpl ($value | toString) $root }}
+            {{- end }}
+            {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        config:
+          logging:
+            remote_logging: \"True\"
+          traces:
+            otel_on: false
+    "};
+    let ir = parse_ir(src);
+    let schema = schema_for_values_yaml(ir, Some(values_yaml));
+    let expected = expected_block_scalar_nested_range_schema();
+
+    for (config, want, label) in [
+        (
+            serde_json::json!({
+                "logging": { "remote_logging": "True" },
+                "traces": { "otel_on": false },
+            }),
+            true,
+            "the declared defaults render",
+        ),
+        (
+            serde_json::json!({ "logging": 7 }),
+            false,
+            "a scalar section aborts the inner range",
+        ),
+        (
+            serde_json::json!({ "traces": [] }),
+            true,
+            "an empty array section renders",
+        ),
+        (
+            serde_json::json!({ "traces": null }),
+            true,
+            "a null section skips the inner range",
+        ),
+        (
+            serde_json::json!({ "traces": { "otel_on": [] } }),
+            true,
+            "toString accepts an array leaf",
+        ),
+        (
+            serde_json::json!({ "traces": { "otel_on": { "probe-member": {} } } }),
+            true,
+            "toString accepts an object leaf",
+        ),
+    ] {
+        let instance = serde_json::json!({ "config": config });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "block-scalar nested range ({label}): \
+            instance={instance}; want={want}; schema={schema}"
+        );
+    }
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+fn conditional_duplicate_config_schema(nested_range_member: &Value) -> Value {
+    let declared_section = serde_json::json!({
+        "anyOf": [
+            { "type": "array" },
+            { "type": "object" },
+            { "type": "null" },
+        ],
+    });
+    serde_json::json!({
+        "additionalProperties": nested_range_member,
+        "properties": {
+            "traces": declared_section,
+        },
+        "type": "object",
+    })
+}
+
+fn expected_conditional_duplicate_nested_range_schema() -> Value {
+    let nested_range_member = serde_json::json!({
+        "anyOf": [
+            { "items": {}, "type": "array" },
+            { "additionalProperties": {}, "type": "object" },
+            { "type": "null" },
+        ],
+    });
+    let mut properties = serde_json::Map::new();
+    properties.insert(
+        "config".to_string(),
+        conditional_duplicate_config_schema(&nested_range_member),
+    );
+    properties.insert("enabled".to_string(), serde_json::json!({}));
+    let missing_config = serde_json::json!({
+        "anyOf": [
+            {
+                "not": {
+                    "properties": { "config": {} },
+                    "required": ["config"],
+                    "type": "object",
+                },
+            },
+            {
+                "properties": {
+                    "config": { "enum": [null] },
+                },
+                "required": ["config"],
+                "type": "object",
+            },
+        ],
+    });
+    let mut expected = expected_values_schema(
+        properties,
+        vec![
+            root_property_schema(
+                "config",
+                serde_json::json!({
+                    "anyOf": [
+                        {
+                            "items": nested_range_member.clone(),
+                            "type": "array",
+                        },
+                        {
+                            "additionalProperties": nested_range_member,
+                            "type": "object",
+                        },
+                        { "type": "null" },
+                    ],
+                }),
+            ),
+            root_property_schema(
+                "config",
+                serde_json::json!({
+                    "anyOf": [
+                        { "type": "object" },
+                        { "type": "null" },
+                    ],
+                }),
+            ),
+            serde_json::json!({
+                "if": {
+                    "allOf": [
+                        helm_truthy_guard("enabled"),
+                        missing_config,
+                    ],
+                },
+                "then": false,
+            }),
+            navigated_host_clause(&["config"]),
+        ],
+        true,
+    );
+    expected["additionalProperties"] = serde_json::json!({});
+    expected
+}
+
+#[test]
+fn conditional_duplicate_of_nested_range_does_not_restore_declared_leaf_types() {
+    let helpers = indoc! {r#"
+        {{- define "render-config" -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          config: |-
+            {{- $root := . }}
+            {{- $config := deepCopy .Values.config | merge (dict "core" dict) }}
+            {{- range $section, $settings := $config }}
+            [{{ $section }}]
+            {{- range $key, $value := $settings }}
+            {{ $key }} = {{ tpl ($value | toString) $root }}
+            {{- end }}
+            {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{ include "render-config" . }}
+        {{- if .Values.enabled }}
+        {{ include "render-config" . }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: true
+        config:
+          traces:
+            otel_on: \"False\"
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for leaf in [
+        serde_json::json!([]),
+        serde_json::json!({ "probe-member": {} }),
+    ] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({
+                    "enabled": true,
+                    "config": { "traces": { "otel_on": leaf } },
+                }),
+            ),
+            "a conditional duplicate cannot restore the declared leaf type: {schema}"
+        );
+    }
+
+    let expected = expected_conditional_duplicate_nested_range_schema();
+    sim_assert_eq!(have: schema, want: expected);
+}
+
+/// A split list carries its input path as influence only. Ranging a local
+/// bound to that derived list must not impose an iterable input domain on
+/// the raw string that `splitList` consumes.
+#[test]
+fn derived_split_range_does_not_reclassify_its_string_source() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          namespaces: |-
+            {{- $namespaces := splitList "," .Values.namespaces }}
+            {{- range $namespace := $namespaces }}
+            {{ tpl ($namespace | toString) $ }}
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("namespaces: a,b\n"));
+    let mut properties = serde_json::Map::new();
+    properties.insert(
+        "namespaces".to_string(),
+        serde_json::json!({ "type": "string" }),
+    );
+    let expected = expected_values_schema(
+        properties,
+        vec![navigated_host_clause(&["namespaces"])],
+        false,
+    );
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "namespaces": "one,two" }),),
+        "a string is the strict splitList operand and must remain accepted: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "namespaces": ["one", "two"] }),
+        ),
+        "splitList rejects a list operand even though its result is ranged: {schema}"
+    );
+    sim_assert_eq!(have: schema, want: expected);
 }
 
 /// a string consumer behind `default` constrains the raw subject only

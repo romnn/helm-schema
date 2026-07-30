@@ -3,7 +3,7 @@ use test_util::prelude::sim_assert_eq;
 use super::*;
 
 #[test]
-fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
+fn guard_only_path_does_not_treat_the_declared_default_as_input_typing() {
     let src = indoc! {r"
         apiVersion: v1
         kind: Secret
@@ -19,21 +19,25 @@ fn guard_only_scalar_path_keeps_values_yaml_scalar_type() {
     "};
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    let existing_secret = schema
-        .pointer("/properties/existingSecret")
-        .expect("existingSecret present");
 
-    assert!(
-        !permits_null(existing_secret),
-        "plain guard-only scalar values should not be widened without a null-tolerant render use, got {existing_secret}"
-    );
-    assert!(
-        schema_contains_type(existing_secret, "string"),
-        "values.yaml string evidence should still be preserved, got {existing_secret}"
+    sim_assert_eq!(
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "existingSecret": {},
+            },
+            "type": "object",
+        })
     );
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
     let helpers = indoc! {r#"
         {{- define "collector.config" -}}
@@ -64,6 +68,41 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
 
     let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
 
+    for (instance, want, label) in [
+        (
+            serde_json::json!({}),
+            false,
+            "the outer navigated host is missing",
+        ),
+        (
+            serde_json::json!({ "presets": {} }),
+            false,
+            "the inner navigated host is missing",
+        ),
+        (
+            serde_json::json!({ "presets": { "clusterMetrics": null } }),
+            false,
+            "the inner navigated host is null",
+        ),
+        (
+            serde_json::json!({
+                "presets": {
+                    "clusterMetrics": {
+                        "collectionInterval": "30s",
+                        "allocatableTypesToReport": ["cpu"]
+                    }
+                }
+            }),
+            true,
+            "both navigated hosts are present",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
@@ -72,12 +111,15 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
         // folded into the base below.
         "allOf": [
             navigated_host_clause(&["presets"]),
-            navigated_host_clause(&["presets", "clusterMetrics"]),
+            navigated_host_missing_ancestor_clause(&["presets", "clusterMetrics"]),
         ],
         "properties": {
             "presets": {
                 "type": "object",
                 "additionalProperties": {},
+                "allOf": [
+                    navigated_host_clause(&["clusterMetrics"]),
+                ],
                 "properties": {
                     "clusterMetrics": {
                         "type": "object",
@@ -172,12 +214,15 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
         "additionalProperties": false,
         "allOf": [
             navigated_host_clause(&["presets"]),
-            navigated_host_clause(&["presets", "clusterMetrics"]),
+            navigated_host_missing_ancestor_clause(&["presets", "clusterMetrics"]),
         ],
         "properties": {
             "presets": {
                 "type": "object",
                 "additionalProperties": {},
+                "allOf": [
+                    navigated_host_clause(&["clusterMetrics"]),
+                ],
                 "properties": {
                     "clusterMetrics": {
                         "type": "object",
@@ -192,9 +237,7 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
                             "collectionInterval": {
                                 "type": "string"
                             },
-                            "enabled": {
-                                "type": "boolean"
-                            }
+                            "enabled": {}
                         }
                     }
                 }

@@ -1,6 +1,60 @@
 use super::*;
 
 #[test]
+fn pathless_conditional_target_does_not_own_descendant_defaults() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse {
+        source_expr: String::new(),
+        path: YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        kind: ValueKind::Scalar,
+        condition: helm_schema_core::GuardDnf::from_guards(vec![Guard::Truthy {
+            path: "enabled".to_string(),
+        }]),
+        resource: Some(ResourceRef::concrete(
+            "v1".to_string(),
+            "ConfigMap".to_string(),
+        )),
+        provenance: Vec::new(),
+        has_string_contract: false,
+        template_supplied_member_keys: BTreeSet::new(),
+        split_segment: None,
+        merge_layers: None,
+        range_key: false,
+        nil_omitting: false,
+        omitted_members: BTreeMap::new(),
+        digest: false,
+        merge_operand: false,
+    }]);
+    contract.push_pathless_dependency_fragment("dependency");
+    let values_yaml = indoc! {"
+        enabled: false
+        dependency:
+          nested: 7
+    "};
+    let schema = schema_for_values_yaml(contract, Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": false,
+                "dependency": { "nested": 7 }
+            })
+        ),
+        "dependency descendants remain valid in the conditional target's off state: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": false,
+                "dependency": { "nested": "not the declared integer" }
+            })
+        ),
+        "an empty root target must not suppress dependency descendant typing: {schema}"
+    );
+}
+
+#[test]
 fn declared_scalar_default_survives_active_conjunctive_branch() {
     let unsafe_plain_scalar = serde_json::json!({
         "allOf": [

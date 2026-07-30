@@ -25,9 +25,17 @@
         }
       ]
     },
-    "providerSource_k8s_b9d0b61f90db": {
+    "providerSchema1": {
       "additionalProperties": {
-        "type": "string"
+        "anyOf": [
+          {
+            "pattern": "\\{\\{",
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ]
       },
       "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
       "type": "object"
@@ -36,152 +44,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "properties": {
-                "commonAnnotations": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "commonAnnotations"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "commonAnnotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "commonAnnotations"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "commonAnnotations": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "commonAnnotations"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "commonAnnotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "commonAnnotations"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      }
-    },
     {
       "if": {
         "allOf": [
@@ -354,178 +216,6 @@
                 "type": "null"
               }
             ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "annotations": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "annotations"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "commonAnnotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "commonAnnotations"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "service": {
-                "properties": {
-                  "annotations": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "commonAnnotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "commonAnnotations"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
           }
         }
       }
@@ -811,51 +501,30 @@
             "allOf": [
               {
                 "properties": {
-                  "service": {
+                  "tls": {
                     "properties": {
-                      "nodePorts": {
+                      "client": {
                         "properties": {
-                          "client": {
+                          "enabled": {
                             "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "client"
+                          "enabled"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "nodePorts"
+                      "client"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "service"
+                  "tls"
                 ],
                 "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "disableBaseClientPort": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "disableBaseClientPort"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
               },
               {
                 "anyOf": [
@@ -908,58 +577,25 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "nodePorts": {
-                        "properties": {
-                          "tls": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "nodePorts"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "client": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "client"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "disableBaseClientPort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableBaseClientPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
               },
               {
                 "anyOf": [
@@ -1388,131 +1024,6 @@
                 "allOf": [
                   {
                     "properties": {
-                      "service": {
-                        "properties": {
-                          "nodePorts": {
-                            "properties": {
-                              "client": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "client"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "nodePorts"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "service": {
-                          "properties": {
-                            "disableBaseClientPort": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "disableBaseClientPort"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "type": {
-                                "enum": [
-                                  "LoadBalancer"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "service": {
-                            "properties": {
-                              "type": {
-                                "enum": [
-                                  "NodePort"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "service"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "service": {
-                        "properties": {
-                          "nodePorts": {
-                            "properties": {
-                              "tls": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tls"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "nodePorts"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
                       "tls": {
                         "properties": {
                           "client": {
@@ -1585,6 +1096,77 @@
                     ]
                   }
                 ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "disableBaseClientPort": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableBaseClientPort"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "LoadBalancer"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "NodePort"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -1594,46 +1176,78 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "service": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "ports": {}
+                    "service": {
+                      "properties": {
+                        "ports": {}
+                      },
+                      "required": [
+                        "ports"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "ports"
+                    "service"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "ports": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ports"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "service": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "ports": {
+                  "service": {
                     "enum": [
                       null
                     ]
                   }
                 },
                 "required": [
-                  "ports"
+                  "service"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
+            ]
           }
         ]
       },
@@ -1672,46 +1286,78 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "tls": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "client": {}
+                    "tls": {
+                      "properties": {
+                        "client": {}
+                      },
+                      "required": [
+                        "client"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "client"
+                    "tls"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "tls"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "tls": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tls": {}
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "client": {
+                  "tls": {
                     "enum": [
                       null
                     ]
                   }
                 },
                 "required": [
-                  "client"
+                  "tls"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            ]
           }
         ]
       },
@@ -1725,7 +1371,62 @@
     "autopurge": {},
     "clusterDomain": {},
     "command": {},
-    "commonAnnotations": {},
+    "commonAnnotations": {
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "type": "string"
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "pattern": "\\{\\{",
+                      "type": "string"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "string"
+          },
+          "then": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "commonLabels": {
       "allOf": [
         {
@@ -1738,7 +1439,15 @@
             "anyOf": [
               {
                 "additionalProperties": {
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "pattern": "\\{\\{",
+                      "type": "string"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 },
                 "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
                 "type": "object"
@@ -2266,10 +1975,96 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ports": {}
+                  },
+                  "required": [
+                    "ports"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ports": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "ports"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {
-        "annotations": {},
+        "annotations": {
+          "allOf": [
+            {
+              "if": {
+                "not": {
+                  "type": "string"
+                }
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "pattern": "\\{\\{",
+                          "type": "string"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "type": "string"
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "clusterIP": {},
         "disableBaseClientPort": {
           "anyOf": [
@@ -2300,12 +2095,28 @@
                       "description": "ServicePort contains information on service's port.",
                       "properties": {
                         "appProtocol": {
-                          "description": "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "description": "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
+                              "type": "string"
+                            },
+                            {
+                              "pattern": "\\{\\{",
+                              "type": "string"
+                            }
+                          ]
                         },
                         "name": {
-                          "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
-                          "type": "string"
+                          "anyOf": [
+                            {
+                              "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
+                              "type": "string"
+                            },
+                            {
+                              "pattern": "\\{\\{",
+                              "type": "string"
+                            }
+                          ]
                         },
                         "nodePort": {
                           "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
@@ -2318,16 +2129,40 @@
                           "type": "integer"
                         },
                         "protocol": {
-                          "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
-                          "type": "string"
-                        },
-                        "targetPort": {
-                          "oneOf": [
+                          "anyOf": [
                             {
+                              "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
                               "type": "string"
                             },
                             {
-                              "type": "integer"
+                              "pattern": "\\{\\{",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "targetPort": {
+                          "anyOf": [
+                            {
+                              "oneOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "pattern": "\\{\\{",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "integer"
+                                }
+                              ]
+                            },
+                            {
+                              "pattern": "\\{\\{",
+                              "type": "string"
                             }
                           ]
                         }
@@ -2543,7 +2378,62 @@
             }
           ]
         },
-        "type": {}
+        "type": {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            }
+          ],
+          "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+          "type": "string"
+        }
       },
       "type": "object"
     },
@@ -2555,22 +2445,44 @@
     "tickTime": {},
     "tls": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "client": {}
+                  },
+                  "required": [
+                    "client"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "client": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "client"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "client": {
           "additionalProperties": {},
           "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
+            "enabled": {}
           },
           "type": "object"
         }

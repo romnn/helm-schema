@@ -18,19 +18,38 @@ use crate::schema_tree::SchemaDocument;
 use crate::values_yaml::yaml_value_at_path;
 use crate::{common_prefix_len, split_value_path};
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ConditionalBaseEffect {
+    /// This pure requirement does not participate in base ownership.
+    None,
+    /// The conditional domain owns the path and leaves no unconditional base.
+    Own,
+    /// The conditional domain owns the path beside a retained, unclosed base.
+    Preserve,
+    /// This incomplete domain does not own a base, but prevents an exact
+    /// sibling domain from claiming completeness.
+    Require,
+}
+
+#[derive(Debug, Clone)]
+struct NestedGuardScope {
+    ancestor_segments: Vec<String>,
+    guards: Vec<ConditionalGuard>,
+}
+
 pub(crate) struct ConditionalResolvedSchema {
     pub(crate) target_value_path: String,
     ancestor_segments: Vec<String>,
     relative_target_segments: Vec<String>,
     guards: Vec<ConditionalGuard>,
+    nested_guard_scopes: Vec<NestedGuardScope>,
     pub(crate) target_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
-    pub(crate) preserve_base_schema: bool,
+    pub(crate) base_effect: ConditionalBaseEffect,
     fold_unconditional_object_host_into_base: bool,
-    /// The conditional is a pure `allOf` arm (fail implication): it adds a
-    /// requirement without owning the path's shape, so base classification
-    /// must ignore it entirely — an implication must never flip an
-    /// overlay-owned base to the resolved schema nor empty a resolved one.
+    /// Whether the conditional is a pure `allOf` requirement rather than a
+    /// branch-owned schema projection. [`Self::base_effect`] independently
+    /// records whether that arm participates in base ownership.
     pub(crate) arm_only: bool,
     /// Every member access on this target rides the nil-safe grouped form
     /// (`(.Values.x).member`), which renders at an absent or null-deleted
@@ -175,6 +194,16 @@ pub(crate) fn collect_conditional_schemas(
                         helm_schema_core::FailValueRequirement::MemberHost { .. }
                     )
                 });
+            let member_host_complete_domain = member_host_only
+                && implication.requirements.iter().all(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::MemberHost {
+                            complete_domain: true,
+                            ..
+                        }
+                    )
+                });
             if !implication.outer_guards.is_empty()
                 && !implication_guards_supported(
                     &implication.outer_guards,
@@ -213,24 +242,17 @@ pub(crate) fn collect_conditional_schemas(
                 &implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }
                     | helm_schema_core::ContractRequirementTarget::MembersWhereEquals { .. }
-            ) {
-                for descendant in member_descendants
+            ) && let Some(member_schema) = member_descendant_projection(
+                target_segments.as_slice(),
+                member_descendants
                     .get(target_segments.as_slice())
-                    .into_iter()
-                    .flatten()
-                {
-                    let Some(relative_segments) = descendant
-                        .path_segments
-                        .strip_prefix(target_segments.as_slice())
-                    else {
-                        continue;
-                    };
-                    target_schema = crate::schema_tree::insert_path_schema_value(
-                        target_schema,
-                        relative_segments,
-                        descendant.schema.clone(),
-                    );
-                }
+                    .map(Vec::as_slice)
+                    .unwrap_or_default(),
+            ) {
+                target_schema = crate::schema_tree::conjoin_collection_member_schema_value(
+                    target_schema,
+                    &member_schema,
+                );
             }
             // Anchor at the ROOT: an arm appended at (or under) the target
             // node lands inside one union alternative, letting the other
@@ -249,9 +271,10 @@ pub(crate) fn collect_conditional_schemas(
             // open, so the base goes to the guarded-only lane and the arm
             // alone enforces the type where the dig actually executes
             // (KPS's `customRules` under `defaultRules.create: false`).
-            // Member-shaped requirements (HasMember, MemberHost) keep the
-            // established preserve rules — their presence guards scope
-            // probes, not the host's whole typing.
+            // A member-access domain owns the declared fallback: outside its
+            // exact arms the chart never navigates the host, so values.yaml
+            // shape is not a runtime constraint. Only independent structural
+            // evidence may retain the base beside those arms.
             let presence_scoped_type_arm =
                 implication.requirements.iter().all(|requirement| {
                     matches!(
@@ -260,13 +283,26 @@ pub(crate) fn collect_conditional_schemas(
                             | helm_schema_core::FailValueRequirement::SchemaTypeEvenNull(_)
                     )
                 }) && implication_has_self_presence_guard(implication, target_value_path);
-            let preserve_base_schema = implication.outer_guards.is_empty()
+            let resolved_domain = if member_host_only {
+                &resolved_target.structural_schema
+            } else {
+                &resolved_target.schema
+            };
+            let preserve_base_schema = (member_host_only && !member_host_complete_domain)
+                || implication.outer_guards.is_empty()
                 || (!implication_has_self_truthy_guard(implication, target_value_path)
                     && !presence_scoped_type_arm
                     && resolved_schema_admits_fail_requirement_domain(
-                        &resolved_target.schema,
+                        resolved_domain,
                         implication,
                     ));
+            let base_effect = if !preserve_base_schema {
+                ConditionalBaseEffect::Own
+            } else if member_host_only && !member_host_complete_domain {
+                ConditionalBaseEffect::Require
+            } else {
+                ConditionalBaseEffect::None
+            };
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
                 relative_target_segments: target_segments
@@ -275,12 +311,13 @@ pub(crate) fn collect_conditional_schemas(
                     .to_vec(),
                 ancestor_segments,
                 guards: implication.outer_guards.clone(),
+                nested_guard_scopes: Vec::new(),
                 target_schema,
                 provider_schema_candidate: None,
-                preserve_base_schema,
-                fold_unconditional_object_host_into_base: member_host_only,
+                base_effect,
+                fold_unconditional_object_host_into_base: member_host_complete_domain,
                 arm_only: true,
-                relax_untyped_host: member_host_only && all_member_hosts_presence_scoped,
+                relax_untyped_host: member_host_complete_domain && all_member_hosts_presence_scoped,
             });
         }
 
@@ -298,12 +335,32 @@ pub(crate) fn collect_conditional_schemas(
                 }
 
                 let target_segments = split_value_path(target_value_path);
-                let ancestor_segments =
-                    conditional_ancestor_segments(&target_segments, &overlay.guards);
+                let Some((outer_guards, nested_guard_scopes)) =
+                    partition_guard_scopes(&target_segments, &overlay.guards)
+                else {
+                    continue;
+                };
+                let ancestor_segments = nested_guard_scopes
+                    .first()
+                    .filter(|_| outer_guards.is_empty())
+                    .map(|scope| {
+                        let mut parent = scope.ancestor_segments.clone();
+                        parent.pop();
+                        parent
+                    })
+                    .unwrap_or_else(|| {
+                        conditional_ancestor_segments(&target_segments, &outer_guards)
+                    });
                 let active_by_defaults =
                     evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
                 let resolved_overlay =
                     resolve_overlay_target_schema(target_value_path, &overlay, provider);
+                // The range header supplies the branch's complete runtime
+                // domain. Its declared sample shape cannot remain as an
+                // unconditional base without deleting valid map or integer
+                // lanes while the range is active.
+                let preserve_overlay_base = !overlay.evidence.facts.is_ranged_source
+                    && (overlay.preserve_base_schema || has_unconditional_self_presence_contract);
                 // A ranged branch's runtime domain is structural evidence, not
                 // a declared-default placeholder. Add it before conditional
                 // policy so a fixed map default cannot reintroduce literal
@@ -315,17 +372,69 @@ pub(crate) fn collect_conditional_schemas(
                         &evidence.fail_implications,
                         &overlay.guards,
                     );
-                let branch_schema = if overlay.evidence.facts.is_ranged_source
-                    && !member_implication_owns_range_domain
+                if member_implication_owns_range_domain {
+                    // The fail implication already carries the branch's
+                    // complete runtime domain. Keep only this empty ownership
+                    // marker; passing an evidence-free overlay through
+                    // conditional policy would substitute its values.yaml
+                    // sample shape and re-type members the range accepts.
+                    conditionals.push(ConditionalResolvedSchema {
+                        target_value_path: target_value_path.clone(),
+                        relative_target_segments: target_segments
+                            .get(ancestor_segments.len()..)
+                            .unwrap_or_default()
+                            .to_vec(),
+                        ancestor_segments,
+                        guards: outer_guards.clone(),
+                        nested_guard_scopes: nested_guard_scopes.clone(),
+                        target_schema: crate::schema_model::empty_schema(),
+                        provider_schema_candidate: None,
+                        base_effect: if preserve_overlay_base {
+                            ConditionalBaseEffect::Preserve
+                        } else {
+                            ConditionalBaseEffect::Own
+                        },
+                        fold_unconditional_object_host_into_base: false,
+                        relax_untyped_host: false,
+                        arm_only: false,
+                    });
+                    continue;
+                }
+                let range_allows_integer = !overlay.evidence.facts.has_structured_item_descendants
+                    && !overlay.evidence.facts.has_destructured_range_use
+                    && !overlay.evidence.facts.has_string_contract_items;
+                let mut range_domain = crate::runtime_iterable_schema(range_allows_integer);
+                let mut member_schemas = Vec::new();
+                if let Some(member_schema) = member_descendant_projection(
+                    target_segments.as_slice(),
+                    member_descendants
+                        .get(target_segments.as_slice())
+                        .map(Vec::as_slice)
+                        .unwrap_or_default(),
+                ) {
+                    member_schemas.push(member_schema);
+                }
+                if let Some(member_schema) =
+                    structural_collection_member_projection(&resolved_target.structural_schema)
                 {
-                    crate::merge::merge_schema_list(vec![
-                        resolved_overlay.schema,
-                        crate::runtime_iterable_schema(
-                            !overlay.evidence.facts.has_structured_item_descendants
-                                && !overlay.evidence.facts.has_destructured_range_use
-                                && !overlay.evidence.facts.has_string_contract_items,
-                        ),
-                    ])
+                    member_schemas.push(member_schema);
+                }
+                if !member_schemas.is_empty() {
+                    let member_schema = crate::merge::merge_schema_list(member_schemas);
+                    range_domain = crate::schema_tree::conjoin_collection_member_schema_value(
+                        range_domain,
+                        &member_schema,
+                    );
+                }
+                let branch_schema = if overlay.evidence.facts.has_self_range_guard_render_use {
+                    // The render executes only after this subject's range
+                    // header accepts it. That exact Helm input domain has
+                    // priority over a provider backprojection from the loop
+                    // body, which describes the emitted value but cannot
+                    // make the already-running range reject its subject.
+                    crate::merge::union_schema_list(vec![resolved_overlay.schema, range_domain])
+                } else if overlay.evidence.facts.is_ranged_source {
+                    crate::merge::merge_schema_list(vec![resolved_overlay.schema, range_domain])
                 } else {
                     resolved_overlay.schema
                 };
@@ -356,11 +465,15 @@ pub(crate) fn collect_conditional_schemas(
                                 .unwrap_or_default()
                                 .to_vec(),
                             ancestor_segments,
-                            guards: overlay.guards.clone(),
+                            guards: outer_guards.clone(),
+                            nested_guard_scopes: nested_guard_scopes.clone(),
                             target_schema,
                             provider_schema_candidate: None,
-                            preserve_base_schema: overlay.preserve_base_schema
-                                || has_unconditional_self_presence_contract,
+                            base_effect: if preserve_overlay_base {
+                                ConditionalBaseEffect::Preserve
+                            } else {
+                                ConditionalBaseEffect::Own
+                            },
                             fold_unconditional_object_host_into_base: false,
                             relax_untyped_host: false,
                             arm_only: false,
@@ -379,11 +492,15 @@ pub(crate) fn collect_conditional_schemas(
                         .unwrap_or_default()
                         .to_vec(),
                     ancestor_segments,
-                    guards: overlay.guards.clone(),
+                    guards: outer_guards,
+                    nested_guard_scopes,
                     target_schema,
                     provider_schema_candidate,
-                    preserve_base_schema: overlay.preserve_base_schema
-                        || has_unconditional_self_presence_contract,
+                    base_effect: if preserve_overlay_base {
+                        ConditionalBaseEffect::Preserve
+                    } else {
+                        ConditionalBaseEffect::Own
+                    },
                     fold_unconditional_object_host_into_base: false,
                     relax_untyped_host: false,
                     arm_only: false,
@@ -395,6 +512,156 @@ pub(crate) fn collect_conditional_schemas(
     append_merge_shadow_arms(&mut conditionals, contract_schema_signals, provider);
     append_omitted_member_arms(&mut conditionals, contract_schema_signals, provider);
     conditionals
+}
+
+fn member_descendant_projection(
+    target_segments: &[String],
+    descendants: &[&ResolvedPathSchema],
+) -> Option<Value> {
+    let mut member_schema = descendants
+        .iter()
+        .filter_map(|descendant| {
+            let relative = descendant.path_segments.strip_prefix(target_segments)?;
+            (relative == ["*"]
+                && !crate::schema_model::is_empty_schema(&descendant.structural_schema))
+            .then(|| descendant.structural_schema.clone())
+        })
+        .reduce(crate::merge::merge_two_schemas);
+    let mut has_descendant = member_schema.is_some();
+
+    for descendant in descendants {
+        let Some(relative) = descendant.path_segments.strip_prefix(target_segments) else {
+            continue;
+        };
+        let Some(("*", tail)) = relative
+            .split_first()
+            .map(|(head, tail)| (head.as_str(), tail))
+        else {
+            continue;
+        };
+        if tail.is_empty() {
+            continue;
+        }
+        has_descendant = true;
+        let current = member_schema
+            .take()
+            .unwrap_or_else(|| SchemaNode::untyped_member_host().into_value());
+        member_schema = Some(crate::schema_tree::insert_path_schema_value(
+            current,
+            tail,
+            descendant.structural_schema.clone(),
+        ));
+    }
+    if !has_descendant {
+        return None;
+    }
+    Some(member_schema.unwrap_or_else(|| SchemaNode::untyped_member_host().into_value()))
+}
+
+fn structural_collection_member_projection(schema: &Value) -> Option<Value> {
+    if crate::schema_model::is_empty_schema(schema) {
+        return None;
+    }
+    let object = schema.as_object()?;
+
+    for keyword in ["anyOf", "oneOf"] {
+        let Some(arms) = object.get(keyword).and_then(Value::as_array) else {
+            continue;
+        };
+        let members = arms
+            .iter()
+            .filter_map(structural_collection_member_projection)
+            .collect::<Vec<_>>();
+        if members.is_empty() {
+            return None;
+        }
+        if members.iter().any(crate::schema_model::is_empty_schema) {
+            return Some(crate::schema_model::empty_schema());
+        }
+        return Some(
+            SchemaNode::any_of(members.into_iter().map(SchemaNode::foreign).collect()).into_value(),
+        );
+    }
+
+    if let Some(arms) = object.get("allOf").and_then(Value::as_array) {
+        let members = arms
+            .iter()
+            .filter_map(structural_collection_member_projection)
+            .filter(|member| !crate::schema_model::is_empty_schema(member))
+            .collect::<Vec<_>>();
+        if !members.is_empty() {
+            return Some(
+                SchemaNode::all_of(members.into_iter().map(SchemaNode::foreign).collect())
+                    .into_value(),
+            );
+        }
+    }
+
+    let schema_types = match object.get("type") {
+        Some(Value::String(schema_type)) => vec![schema_type.as_str()],
+        Some(Value::Array(schema_types)) => schema_types
+            .iter()
+            .filter_map(Value::as_str)
+            .collect::<Vec<_>>(),
+        _ => Vec::new(),
+    };
+    let object_lane = schema_types.contains(&"object")
+        || (schema_types.is_empty()
+            && object.keys().any(|keyword| {
+                matches!(
+                    keyword.as_str(),
+                    "additionalProperties"
+                        | "maxProperties"
+                        | "minProperties"
+                        | "patternProperties"
+                        | "properties"
+                        | "propertyNames"
+                        | "required"
+                )
+            }));
+    let array_lane = schema_types.contains(&"array")
+        || (schema_types.is_empty()
+            && object.keys().any(|keyword| {
+                matches!(
+                    keyword.as_str(),
+                    "additionalItems"
+                        | "contains"
+                        | "items"
+                        | "maxItems"
+                        | "minItems"
+                        | "prefixItems"
+                        | "uniqueItems"
+                )
+            }));
+    if !object_lane && !array_lane {
+        return None;
+    }
+
+    let mut members = Vec::new();
+    if object_lane {
+        let member = match object.get("additionalProperties") {
+            Some(Value::Bool(_)) | None => crate::schema_model::empty_schema(),
+            Some(schema) => schema.clone(),
+        };
+        members.push(member);
+    }
+    if array_lane {
+        let member = match object.get("items") {
+            Some(schema) if !schema.is_boolean() && !schema.is_array() => schema.clone(),
+            _ => crate::schema_model::empty_schema(),
+        };
+        members.push(member);
+    }
+    if members.iter().any(crate::schema_model::is_empty_schema) {
+        return Some(crate::schema_model::empty_schema());
+    }
+    match members.as_slice() {
+        [] => None,
+        [member] => Some(member.clone()),
+        _ => Some(
+            SchemaNode::any_of(members.into_iter().map(SchemaNode::foreign).collect()).into_value(),
+        ),
+    }
 }
 
 /// Per-key arms for members a guard-scoped `omit` may remove before the
@@ -468,11 +735,12 @@ fn append_omitted_member_arms(
                 relative_target_segments: target_segments.clone(),
                 ancestor_segments: Vec::new(),
                 guards,
+                nested_guard_scopes: Vec::new(),
                 target_schema: serde_json::json!({
                     "properties": { member: member_schema }
                 }),
                 provider_schema_candidate: None,
-                preserve_base_schema: true,
+                base_effect: ConditionalBaseEffect::None,
                 fold_unconditional_object_host_into_base: false,
                 relax_untyped_host: false,
                 arm_only: true,
@@ -562,9 +830,10 @@ fn append_merge_shadow_arms(
                     relative_target_segments: target_segments.clone(),
                     ancestor_segments: Vec::new(),
                     guards,
+                    nested_guard_scopes: Vec::new(),
                     target_schema: whole,
                     provider_schema_candidate: None,
-                    preserve_base_schema: true,
+                    base_effect: ConditionalBaseEffect::None,
                     fold_unconditional_object_host_into_base: false,
                     relax_untyped_host: false,
                     arm_only: true,
@@ -612,9 +881,10 @@ fn append_merge_shadow_arms(
                     relative_target_segments: target_segments.clone(),
                     ancestor_segments: Vec::new(),
                     guards,
+                    nested_guard_scopes: Vec::new(),
                     target_schema,
                     provider_schema_candidate: None,
-                    preserve_base_schema: true,
+                    base_effect: ConditionalBaseEffect::None,
                     fold_unconditional_object_host_into_base: false,
                     relax_untyped_host: false,
                     arm_only: true,
@@ -794,6 +1064,7 @@ fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> 
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsTruthyMember { .. }
             | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => {}
@@ -966,7 +1237,7 @@ fn requirement_admits_runtime_type(
         FailValueRequirement::MatchesPattern { .. }
         | FailValueRequirement::NotMatchesPattern { .. }
         | FailValueRequirement::StringLengthBounds { .. } => runtime_type == "string",
-        FailValueRequirement::MemberHost { handled_kinds } => {
+        FailValueRequirement::MemberHost { handled_kinds, .. } => {
             runtime_type == "object" || handled_kinds.iter().any(|handled| handled == runtime_type)
         }
         FailValueRequirement::Iterable { allow_integer } => {
@@ -1101,6 +1372,75 @@ pub(crate) fn resolve_overlay_target_schema(
     PathSchemaResolver::resolve_single_path_evidence(&evidence, provider)
 }
 
+fn partition_guard_scopes(
+    target_segments: &[String],
+    guards: &[ConditionalGuard],
+) -> Option<(Vec<ConditionalGuard>, Vec<NestedGuardScope>)> {
+    let mut outer_guards = Vec::new();
+    let mut nested: BTreeMap<Vec<String>, Vec<ConditionalGuard>> = BTreeMap::new();
+
+    for guard in guards {
+        let mut member_anchor = None;
+        let mut saw_document_path = false;
+        for path in guard.value_paths() {
+            let segments = split_value_path(&path);
+            let Some(last_wildcard) = segments.iter().rposition(|segment| segment == "*") else {
+                saw_document_path = true;
+                continue;
+            };
+            let anchor = segments.get(..=last_wildcard)?.to_vec();
+            if !target_segments.starts_with(&anchor)
+                || member_anchor
+                    .as_ref()
+                    .is_some_and(|existing| existing != &anchor)
+            {
+                return None;
+            }
+            member_anchor = Some(anchor);
+        }
+
+        let Some(member_anchor) = member_anchor else {
+            outer_guards.push(guard.clone());
+            continue;
+        };
+        // One Boolean guard cannot read both a ranged member and an outer
+        // document path from inside that member: JSON Schema has no upward
+        // navigation. Expression lowering keeps ordinary conjunctions as
+        // separate guards, so only genuinely inseparable formulas abstain.
+        if saw_document_path {
+            return None;
+        }
+        nested.entry(member_anchor).or_default().push(guard.clone());
+    }
+
+    outer_guards.sort();
+    outer_guards.dedup();
+    let mut nested_guard_scopes = nested
+        .into_iter()
+        .map(|(ancestor_segments, mut guards)| {
+            guards.sort();
+            guards.dedup();
+            NestedGuardScope {
+                ancestor_segments,
+                guards,
+            }
+        })
+        .collect::<Vec<_>>();
+    nested_guard_scopes.sort_by_key(|scope| scope.ancestor_segments.len());
+    if nested_guard_scopes.windows(2).any(|scopes| {
+        let [outer, inner] = scopes else {
+            return false;
+        };
+        !inner
+            .ancestor_segments
+            .starts_with(&outer.ancestor_segments)
+    }) {
+        return None;
+    }
+
+    Some((outer_guards, nested_guard_scopes))
+}
+
 fn conditional_ancestor_segments(
     target_segments: &[String],
     guards: &[ConditionalGuard],
@@ -1161,6 +1501,7 @@ fn implication_guards_supported(
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsTruthyMember { .. }
             | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => true,
@@ -1202,6 +1543,7 @@ fn guards_supported_with_self_path(
             | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::ContainsMemberEquals { .. }
+            | ConditionalGuard::ContainsTruthyMember { .. }
             | ConditionalGuard::ContainsEquals { .. }
             | ConditionalGuard::AtMostOneMember { .. }
             | ConditionalGuard::MinMembers { .. } => true,
@@ -1255,16 +1597,21 @@ pub(crate) fn append_terminal_clauses(
         root_schema.append_conditional(&[], condition, SchemaNode::foreign(Value::Bool(false)));
     }
     for guards in clauses {
-        // A clause every guard of which can hold VACUOUSLY (with the
-        // guarded path or an ancestor absent) must anchor at the root: an
-        // `if` nested under `properties.<ancestor>` never fires for
-        // documents missing the ancestor — exactly a state such a clause
-        // covers (a helper's `required global.version` rejects a document
-        // with no `global` at all).
-        let ancestor_segments = if guards.iter().all(guard_holds_vacuously) {
+        let shared_ancestor = shared_guard_ancestor_segments(guards);
+        let all_vacuous = guards.iter().all(guard_holds_vacuously);
+        // Keep present values attributed to their nearest shared object.
+        // A separate root clause evaluates the original formula only while
+        // that object is missing; retaining every guard matters because a
+        // negated presence test can make the formula false there.
+        let split_vacuous_ancestor = all_vacuous
+            && !shared_ancestor.is_empty()
+            && !shared_ancestor.iter().any(|segment| segment == "*");
+        let ancestor_segments = if split_vacuous_ancestor {
+            shared_ancestor.clone()
+        } else if all_vacuous {
             Vec::new()
         } else {
-            shared_guard_ancestor_segments(guards)
+            shared_ancestor
         };
         if !guards
             .iter()
@@ -1284,6 +1631,35 @@ pub(crate) fn append_terminal_clauses(
             condition,
             SchemaNode::foreign(Value::Bool(false)),
         );
+        // `deeper_stage` is the effective subtree when the document supplies
+        // no ancestor. A definitively false original formula makes the
+        // missing-ancestor companion unreachable; uncertainty stays open.
+        if split_vacuous_ancestor
+            && evaluate_guard_set_on_values(guards, absence.deeper_stage) != Some(false)
+        {
+            let path = helm_schema_core::join_value_path(&ancestor_segments);
+            let absent = ConditionalGuard::Absent { path };
+            let root = Vec::new();
+            let mut missing_ancestor_guards = guards.clone();
+            missing_ancestor_guards.push(absent);
+            if missing_ancestor_guards
+                .iter()
+                .all(|guard| guard_encodes_fully(guard, &root, values_yaml_doc, absence))
+            {
+                let condition = SchemaNode::all_of(build_condition_clauses(
+                    &missing_ancestor_guards,
+                    &root,
+                    values_yaml_doc,
+                    absence,
+                    crate::condition_encoding::ConditionPolarity::Narrow,
+                ));
+                root_schema.append_conditional(
+                    &root,
+                    condition,
+                    SchemaNode::foreign(Value::Bool(false)),
+                );
+            }
+        }
     }
 }
 
@@ -1299,6 +1675,7 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::IntLt { .. }
         | ConditionalGuard::HasKey { .. }
         | ConditionalGuard::ContainsMemberEquals { .. }
+        | ConditionalGuard::ContainsTruthyMember { .. }
         | ConditionalGuard::ContainsEquals { .. }
         | ConditionalGuard::MinMembers { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
@@ -1378,8 +1755,9 @@ pub(crate) fn append_conditional_schemas(
         Vec<ConditionalResolvedSchema>,
     > = BTreeMap::new();
     for conditional in conditionals {
-        // Schema-less conditionals exist only to mark a serialized-use
-        // target for base classification; nothing to emit.
+        // Schema-less conditionals carry base ownership established by a
+        // transform or by a separate implication that already emits the
+        // complete runtime domain; they have no schema arm to append.
         if crate::schema_model::is_empty_schema(&conditional.target_schema) {
             continue;
         }
@@ -1400,11 +1778,14 @@ pub(crate) fn append_conditional_schemas(
         let mut merged: Option<Value> = None;
         let mut separate = Vec::new();
         for conditional in group {
-            let fragment = build_target_fragment(
-                &conditional.relative_target_segments,
-                SchemaNode::foreign(conditional.target_schema),
-            )
-            .into_value();
+            let Some(fragment) = build_scoped_target_fragment(
+                &conditional,
+                values_yaml_doc,
+                absence,
+                &mut condition_cache,
+            ) else {
+                continue;
+            };
             match &mut merged {
                 None => merged = Some(fragment),
                 Some(target) => {
@@ -1495,6 +1876,49 @@ pub(crate) fn append_conditional_schemas(
         };
         root_schema.append_conditional(&ancestor_segments, condition, content);
     }
+}
+
+fn build_scoped_target_fragment(
+    conditional: &ConditionalResolvedSchema,
+    values_yaml_doc: &YamlValue,
+    absence: crate::condition_encoding::AbsenceDefaults<'_>,
+    condition_cache: &mut crate::condition_encoding::ConditionFragmentCache,
+) -> Option<Value> {
+    let mut target_segments = conditional.ancestor_segments.clone();
+    target_segments.extend(conditional.relative_target_segments.iter().cloned());
+    let mut current_anchor = target_segments;
+    let mut content = SchemaNode::foreign(conditional.target_schema.clone());
+
+    for scope in conditional.nested_guard_scopes.iter().rev() {
+        let relative = current_anchor.strip_prefix(scope.ancestor_segments.as_slice())?;
+        let then_schema = build_target_fragment(relative, content);
+        if !scope.guards.iter().all(|guard| {
+            guard_encodes_fully(guard, &scope.ancestor_segments, values_yaml_doc, absence)
+        }) {
+            return None;
+        }
+        let condition =
+            SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
+                &scope.guards,
+                &scope.ancestor_segments,
+                values_yaml_doc,
+                absence,
+                condition_cache,
+            ));
+        let condition = condition.into_value();
+        content = if crate::schema_model::is_empty_schema(&condition) {
+            then_schema
+        } else {
+            SchemaNode::foreign(serde_json::json!({
+                "if": condition,
+                "then": then_schema.into_value(),
+            }))
+        };
+        current_anchor = scope.ancestor_segments.clone();
+    }
+
+    let relative = current_anchor.strip_prefix(conditional.ancestor_segments.as_slice())?;
+    Some(build_target_fragment(relative, content).into_value())
 }
 
 fn is_object_domain_only(schema: &Value) -> bool {

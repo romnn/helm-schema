@@ -141,15 +141,12 @@
                             "paths": {
                               "anyOf": [
                                 {
-                                  "items": {
-                                    "type": "string"
-                                  },
+                                  "items": {},
                                   "type": "array"
                                 },
                                 {
-                                  "not": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
+                                  "additionalProperties": {},
+                                  "type": "object"
                                 }
                               ]
                             }
@@ -166,15 +163,12 @@
                             "paths": {
                               "anyOf": [
                                 {
-                                  "items": {
-                                    "type": "string"
-                                  },
+                                  "items": {},
                                   "type": "array"
                                 },
                                 {
-                                  "not": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
+                                  "additionalProperties": {},
+                                  "type": "object"
                                 }
                               ]
                             }
@@ -973,19 +967,6 @@
               {
                 "additionalProperties": {},
                 "properties": {
-                  "hosts": {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
                   "ingressClassName": {
                     "anyOf": [
                       {
@@ -1157,6 +1138,15 @@
                               }
                             },
                             {
+                              "type": "array"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            },
+                            {
                               "type": "object"
                             }
                           ]
@@ -1180,6 +1170,15 @@
                               "not": {
                                 "$ref": "#/$defs/helm-truthy"
                               }
+                            },
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
                             },
                             {
                               "type": "object"
@@ -1319,15 +1318,6 @@
                     }
                   }
                 }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "items": {},
-                    "type": "array"
-                  }
-                }
               }
             ]
           }
@@ -1335,18 +1325,7 @@
       ],
       "properties": {
         "annotations": {},
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "enabled": {},
         "hosts": {},
         "ingressClassName": {},
         "tls": {}

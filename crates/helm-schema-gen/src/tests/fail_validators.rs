@@ -1,4 +1,5 @@
 use super::*;
+use color_eyre::eyre;
 use indoc::indoc;
 
 /// A `regexMatch` fail whose subject reached the match through `tpl` (a
@@ -625,6 +626,86 @@ fn cross_path_fail_formulas_lower_as_terminal_clauses() {
             "{label}: instance={instance}; schema={schema}"
         );
     }
+}
+
+/// A vacuous terminal still rejects a missing shared object, but a present
+/// object's failure is reported at that object instead of at the document
+/// root.
+#[test]
+fn vacuous_terminal_clauses_keep_present_failures_local() -> eyre::Result<()> {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: config
+        data:
+          {{- if and (not .Values.check.disabled) (ne .Values.check.value "ok") }}
+          {{- fail "invalid check value" }}
+          {{- end }}
+          ok: "true"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+    let validator = jsonschema::validator_for(&schema)?;
+    let invalid = serde_json::json!({ "check": { "value": "bad" } });
+    let paths = validator
+        .iter_errors(&invalid)
+        .map(|error| error.instance_path().to_string())
+        .collect::<Vec<_>>();
+
+    assert!(
+        paths.iter().any(|path| path == "/check"),
+        "the present-object failure stays local: paths={paths:#?}; schema={schema}"
+    );
+    assert!(
+        !paths.iter().any(String::is_empty),
+        "the present-object failure must not also report at the root: paths={paths:#?}"
+    );
+    assert!(
+        !validator.is_valid(&serde_json::json!({})),
+        "the split root clause still covers the missing object"
+    );
+    assert!(
+        validator.is_valid(&serde_json::json!({ "check": { "value": "ok" } })),
+        "the non-failing value renders"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn localized_terminal_clauses_preserve_negated_presence_semantics() -> eyre::Result<()> {
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::new(),
+        vec![vec![
+            helm_schema_core::ConditionalGuard::Not(Box::new(
+                helm_schema_core::ConditionalGuard::Truthy {
+                    path: "tags.feature".to_string(),
+                },
+            )),
+            helm_schema_core::ConditionalGuard::Not(Box::new(
+                helm_schema_core::ConditionalGuard::Absent {
+                    path: "tags.feature".to_string(),
+                },
+            )),
+        ]],
+    );
+    let schema = schema_for_values_yaml(signals, None);
+    let validator = jsonschema::validator_for(&schema)?;
+
+    assert!(
+        validator.is_valid(&serde_json::json!({})),
+        "a missing parent also makes the negated presence conjunct false"
+    );
+    assert!(
+        !validator.is_valid(&serde_json::json!({ "tags": { "feature": false } })),
+        "an explicitly disabled feature reaches the failure"
+    );
+    assert!(
+        validator.is_valid(&serde_json::json!({ "tags": { "feature": true } })),
+        "an enabled feature skips the failure"
+    );
+
+    Ok(())
 }
 
 /// Range domains compose with their consumers: a single-variable direct
@@ -1812,6 +1893,11 @@ fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
     // `service` host rides along.
     for (overrides, want, label) in [
         (
+            serde_json::json!({}),
+            true,
+            "a port without an http3 block skips the terminal",
+        ),
+        (
             serde_json::json!({ "ports": { "web": { "http3": { "enabled": true } } } }),
             false,
             "http3 without tls aborts through the default service",
@@ -1916,6 +2002,11 @@ fn compound_ranged_terminals_negate_to_member_alternatives() {
             serde_json::json!({ "http3": { "enabled": false } }),
             true,
             "disabled http3 escapes",
+        ),
+        (
+            serde_json::json!({ "port": 8000 }),
+            true,
+            "an absent http3 block escapes",
         ),
         (serde_json::json!(null), true, "a falsy port config escapes"),
     ] {

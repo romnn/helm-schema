@@ -113,7 +113,7 @@ fn self_guarded_range_collection_keeps_exact_empty_object_placeholder() {
 }
 
 #[test]
-fn guard_only_empty_map_default_stays_open_object() {
+fn guard_only_empty_map_default_does_not_constrain_the_input_kind() {
     let src = indoc! {r#"
         apiVersion: v1
         kind: Pod
@@ -133,25 +133,17 @@ fn guard_only_empty_map_default_stays_open_object() {
     "};
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
-    let config = schema
-        .pointer("/properties/config")
-        .expect("config present");
+
     sim_assert_eq!(
-        have: config.get("type").and_then(Value::as_str),
-        want: Some("object"),
-        "guard-only empty-map default should keep the values.yaml object evidence, got {config}"
-    );
-    sim_assert_eq!(
-        have: config
-            .get("additionalProperties")
-            .and_then(Value::as_object)
-            .map(serde_json::Map::len),
-        want: Some(0),
-        "guard-only empty-map default should remain open, got {config}"
-    );
-    assert!(
-        config.get("anyOf").is_none(),
-        "guard-only empty-map default should not become an exact-empty-or-boolean union, got {config}"
+        have: schema,
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "config": {},
+            },
+            "type": "object",
+        })
     );
 }
 

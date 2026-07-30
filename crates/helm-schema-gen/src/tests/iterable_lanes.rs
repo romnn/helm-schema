@@ -196,13 +196,11 @@ fn decodable_guard_keeps_child_string_contract() {
     );
 }
 
-/// hint degradation: when an approximate guard poisons a path's
-/// conditional overlays, its branch-scoped "string" hint must stay a
-/// widen-only guarded hint instead of degrading to path-level typing —
-/// the unconditional total render proves non-strings pass (bitnami
-/// postgresql `auth.password` through `common.secrets.passwords.manage`).
+/// An exact tilde-semver guard keeps its branch's provider contract scoped.
+/// The unconditional total render admits every kind outside that branch, but
+/// cannot erase the `ConfigMap` string sink while the branch is live.
 #[test]
-fn approximate_guard_hints_stay_branch_scoped() {
+fn exact_tilde_guard_keeps_branch_scoped_provider_contract() {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -210,7 +208,7 @@ fn approximate_guard_hints_stay_branch_scoped() {
           name: test
         data:
           plain: {{ .Values.password | toString | quote }}
-          {{- if semverCompare ">=1.2.0" .Values.appVersion }}
+          {{- if semverCompare "~1.2.0" .Values.appVersion }}
           guarded: {{ .Values.password | default "pw" }}
           {{- end }}
     "#};
@@ -220,24 +218,34 @@ fn approximate_guard_hints_stay_branch_scoped() {
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    // `semverCompare` reads `appVersion` on every render and aborts on a
-    // nil operand, so every case supplies it; the guard itself still cannot
-    // be decoded, which is what this pins.
-    for (password, label) in [
-        (serde_json::json!("secret"), "strings always render"),
+    // `semverCompare` reads `appVersion` on every render and aborts on a nil
+    // operand, so every case supplies it.
+    for (password, app_version, want, label) in [
+        (
+            serde_json::json!("secret"),
+            "1.2.3",
+            true,
+            "strings satisfy the live ConfigMap sink",
+        ),
         (
             serde_json::json!(123),
-            "the default-literal string hint lives behind a semver guard the \
-             encoding cannot represent; it must not bind the base the total \
-             stringification renders",
+            "1.2.3",
+            false,
+            "the live ConfigMap data slot rejects an unquoted number",
+        ),
+        (
+            serde_json::json!(123),
+            "1.3.0",
+            true,
+            "outside the tilde range only the total render remains",
         ),
     ] {
         let instance = composed_instance(
             values_yaml,
-            serde_json::json!({ "password": password, "appVersion": "1.2.3" }),
+            serde_json::json!({ "password": password, "appVersion": app_version }),
         );
         assert!(
-            schema_accepts_instance(&schema, &instance),
+            schema_accepts_instance(&schema, &instance) == want,
             "{label}: instance={instance}; schema={schema}"
         );
     }

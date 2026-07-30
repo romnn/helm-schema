@@ -75,20 +75,13 @@
                               "additionalProperties": {},
                               "properties": {
                                 "name": {},
-                                "password": {
-                                  "type": "string"
-                                },
                                 "tls": {
                                   "additionalProperties": {},
                                   "properties": {
                                     "ca": {},
                                     "cert": {},
                                     "key": {}
-                                  },
-                                  "type": "object"
-                                },
-                                "username": {
-                                  "type": "string"
+                                  }
                                 }
                               },
                               "type": "object"
@@ -100,20 +93,13 @@
                               "additionalProperties": {},
                               "properties": {
                                 "name": {},
-                                "password": {
-                                  "type": "string"
-                                },
                                 "tls": {
                                   "additionalProperties": {},
                                   "properties": {
                                     "ca": {},
                                     "cert": {},
                                     "key": {}
-                                  },
-                                  "type": "object"
-                                },
-                                "username": {
-                                  "type": "string"
+                                  }
                                 }
                               },
                               "type": "object"
@@ -480,11 +466,93 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "config": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "jetstream": {}
+                      },
+                      "required": [
+                        "jetstream"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "jetstream": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "config": {}
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "config": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "properties": {
+    "config": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
                     "jetstream": {}
                   },
@@ -494,15 +562,7 @@
                   "type": "object"
                 }
               },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "config": {
+              {
                 "properties": {
                   "jetstream": {
                     "enum": [
@@ -515,61 +575,17 @@
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    }
-  ],
-  "properties": {
-    "config": {
-      "additionalProperties": {},
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "jetstream": {
           "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "accounts": {
-                    "items": {},
-                    "type": "array"
-                  }
-                }
-              }
-            }
-          ],
           "properties": {
             "accounts": {},
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
+            "enabled": {}
           },
           "type": "object"
         }
