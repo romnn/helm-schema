@@ -11293,3 +11293,96 @@ previous handoff quoted. The `cargo-fc` tooling changes in `Cargo.toml` and
 `taskfile.yaml` are sound and independent of all of this.
 
 Still 18 of the audit's 70 root deletions open; this round moves none.
+
+## Typed scalar dispatch and the one-truth-condition rework (2026-07-30, fiftieth round)
+
+**Outcome: the forty-ninth round's five-step architecture direction lands,
+plus two review-found soundness fixes.** All gates green: workspace suite
+1018, integration suite 288 (55-chart corpus included), `task lint`,
+`cargo fmt --check`, and the downstream luup2 `check:local` with the
+installed binary. Temporal runs `--profile lean` downstream.
+
+### What landed, per direction
+
+1. **One truth condition per evaluation.** Expression evaluation returns a
+   `TruthCondition` (`Unknown | Partial{when_true, when_false} | Exact`)
+   consumed by `and`/`or`, branch activation, and helper dispatch alike.
+   `Partial` never exposes a negatable predicate and swaps its sound
+   subsets under negation. The staged `operand_condition` model was never
+   landed; nothing parallel survives.
+2. **Literal-dispatch helpers under their real call context** via
+   `ScalarValueDispatch` (mutually exclusive `(Predicate, ScalarValue)`
+   arms with a `complete` domain bit). The bespoke KubeVersion lane
+   (`KubeVersionSource` plus five decoder functions) is DELETED — policy
+   versions flow as static root strings through constant dispatch, and
+   `semverCompare` decides through the parsed `semver`/`nom` range
+   evaluator in helm-schema-ast.
+3. **Member access stays a `Predicate` tree** simplified by a bounded,
+   deterministic ROBDD (`predicate_bdd.rs`: BTree-backed, 4096-node cap,
+   sound fallback to the input formula, refuses approximate atoms) before
+   encoding. New `ContainsMemberEquals`/`ContainsTruthyMember` guards
+   carry range-sentinel existentials.
+4. **Base ownership is a typed semantic output.**
+   `MEMBER_ACCESS_GUARD_FANOUT` and its arm-cap machinery are gone;
+   `ConditionalBaseEffect` (`None/Own/Preserve/Require`) replaces the
+   bool pair, and lowering abstention degrades to preservation, never an
+   ownership flip.
+5. **One typed `RangeSubject`** (input identity vs member identity vs
+   influence) shared by the document and inline-region range lanes,
+   replacing five overlapping extractors.
+
+Also: parent-to-child global-values propagation during coalescing replaces
+the output-stage global mirror (deleted with `subchart_value_prefixes`);
+`tpl (toYaml …)` provider sinks get a structure-preserving templated-YAML
+preimage with type-level declared-intent redundancy in the merge; and the
+opt-in `--profile lean` emission gate (plan/schema-emission-profiles.md)
+drops the conditional channel at lowering time.
+
+### Review adjudication: two confirmed false rejections, fixed in-round
+
+Both were confirmed against `helm template` before fixture adoption:
+
+- **Non-monotone range sentinels were read existentially.**
+  `{{ if .enabled }}{{ $f = true }}{{ else }}{{ $f = false }}{{ end }}`
+  inside a range is last-write-wins, but the join emitted an exact
+  `ContainsTruthyMember`: `[{enabled: true}, {enabled: false}]` renders
+  and was rejected. Fix: `truthiness_clears` marks locals whose
+  reassignment does not imply truthiness (sticky across write-throughs,
+  reset on declarations, unioned at joins); a range exit DROPS marked
+  reductions instead of quantifying. Monotone sentinels keep the exact
+  existential. Pinned by `nonmonotone_range_sentinel_abstains.rs`.
+- **Stringified pattern tests claimed raw-level string exactness.**
+  `regexMatch p (toString .Values.x)` lowered to an exact
+  `MatchesPattern` (`type: string`); the fail arm backprojected it
+  unconditionally, so `port: 3` (renders as `"3"`, matches) was rejected.
+  Fix: exactness is decided per arm by the `stringified` flag (partial
+  `when_true: match / when_false: string ∧ ¬match` otherwise), and the
+  legacy `regex_match_predicate` abstains on totally stringified
+  subjects. Pinned by `stringified_pattern_condition_stays_partial.rs`.
+
+Fixture adoption followed the standing gate: one clean dump run after the
+final build; 8 corpus schemas changed (sealed-secrets, harbor, traefik,
+loki, signoz-signoz, kyverno, datadog, airflow); a three-granularity
+old-vs-new Rust probe battery (top-level and second-level deletions plus
+member probes over composed defaults) measured ZERO acceptance flips in
+either direction, and every chart's shipped values.yaml still validates.
+
+### Residual (next rounds)
+
+- No negated-pattern guard exists, so a fail arm over a stringified
+  pattern cannot spell `if (string ∧ ¬match) then false`: helm-rejected
+  strings at such sinks are now accepted (widening). Add the guard
+  variant to restore the sound arm.
+- `typeIs`/`kindIs` numeric spellings (`int64`, `float64`) still promote
+  a provenance-dependent fact to exact, negatable truth; they should
+  return partial/unknown.
+- `contains`/`hasPrefix`/`hasSuffix` legacy decoders share the
+  stringified-subject collapse shape (unconfirmed; no corpus witness).
+- The legacy `condition_predicate.rs` decoder still runs beside the
+  evaluator; keep deleting the lanes the evaluator now answers, or the
+  one-model claim regresses.
+- The lean profile still lacks its plan-specified corpus fixture lane and
+  full⇒lean widening harness; `relax_host_object_type` remains a
+  full-profile base widening that lean skips without a guarding test.
+- Truthy-reduction joins outside ranges still over-claim for kill-switch
+  seeds (entry-truthy reductions leak unstamped through joins).

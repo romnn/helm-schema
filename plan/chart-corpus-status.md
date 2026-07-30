@@ -1,16 +1,20 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-29 after the forty-ninth round, REVIEWED AND
-REJECTED. Nothing from rounds 48–49 lands. The nested block-scalar range
-fix produced FALSE REJECTIONS (`config.traces: []` and two more render
-under helm and were rejected), which its battery hid because 503 flips
-labelled TIGHTEN were read as safe — **a TIGHTEN is a direction, not a
-verdict, and flips must still be adjudicated against helm.** Review also
-found the emission design underneath is a local maximum: an emission-size
-budget (`MEMBER_ACCESS_GUARD_FANOUT`) decides base OWNERSHIP, so no local
-repair can stop trading one chart for another. The F53 lane is now an
-architecture task, not a patch — see the work log's forty-ninth round for
-the five-step direction. The semver guard-chain round
+Last reconciled 2026-07-30 after the fiftieth round, which LANDED the
+forty-ninth round's five-step architecture direction: one exact-or-unknown
+truth condition per evaluation, typed scalar dispatch under real call
+contexts, member-access conditions kept as `Predicate` trees simplified by
+a bounded BDD, base ownership as a typed semantic output (the
+`MEMBER_ACCESS_GUARD_FANOUT` budget is deleted), and one shared
+`RangeSubject` analysis. Review of the round confirmed two false
+rejections against helm (a non-monotone range sentinel read
+existentially, and stringified pattern tests claiming raw string
+exactness); both were fixed in-round with regression pins, and the 8
+changed corpus fixtures were adopted after a zero-flip probe battery —
+see the work log's fiftieth round for the residual list. The
+forty-ninth round's rejection remains the standing lesson: **a TIGHTEN is
+a direction, not a verdict, and flips must still be adjudicated against
+helm.** The semver guard-chain round
 (forty-seventh) taught a short-circuit chain's operands to carry
 their own decoded condition instead of an approximate marker, and repaired
 the member-carrier union that decode exposed. The call-dict navigation
@@ -2202,17 +2206,16 @@ strict Kubernetes schema while their valid controls passed.
   raising the cap converts 169 more of the 438 already-capped paths into
   conditional targets with emptied bases.
 
-  This lane is an architecture task now. The direction, in landing order:
-  one exact-or-unknown truth condition returned by expression evaluation
-  and consumed by `and`/`or`, branch activation and helper dispatch alike
-  (deleting the parallel `operand_condition` model rather than pinning it);
-  literal-dispatch helpers evaluated under their REAL abstract call context
-  so `include "…" .Values` binds the callee dot to `ValuesPath("")`; member
-  access kept as a `Predicate` tree and simplified before encoding instead
-  of lowered early into DNF arms; base ownership made an explicit semantic
-  output that no size budget may override; and one typed range-subject
-  analysis shared by both range lanes. See the work log's forty-ninth
-  round.
+  The fiftieth round LANDED this direction: one exact-or-unknown truth
+  condition consumed by `and`/`or`, branch activation and helper dispatch
+  alike; literal-dispatch helpers evaluated under their real abstract call
+  context; member access kept as a `Predicate` tree simplified by a
+  bounded BDD before encoding; base ownership as the typed
+  `ConditionalBaseEffect` output with the fanout budget deleted; and one
+  typed `RangeSubject` analysis shared by both range lanes. The lane's
+  remaining precision work continues from the fiftieth round's residual
+  list in the work log (negated-pattern guard, `typeIs` numeric
+  spellings, legacy `condition_predicate.rs` lane deletion).
 
 - **F56/F62/F8/F80/F98 — provider contracts still lose required leaves
   and nested/helper payloads.** The remaining losses are bounded and have
