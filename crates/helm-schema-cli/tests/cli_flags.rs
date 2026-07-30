@@ -2,8 +2,9 @@
 //! validation rules, and strict-mode invariants.
 
 use clap::Parser;
+use color_eyre::eyre;
 use helm_schema_cli::Cli;
-use helm_schema_cli::cli::{CrdVersionLookup, DiagFormat, K8sVersionFallback};
+use helm_schema_cli::cli::{CrdVersionLookup, DiagFormat, K8sVersionFallback, SchemaProfile};
 use test_util::prelude::sim_assert_eq;
 
 fn parse(args: &[&str]) -> Result<Cli, String> {
@@ -43,6 +44,16 @@ fn cli_output_minimize_defaults_on_with_opt_out() {
 fn cli_output_strip_descriptions_flag_parses() {
     let cli = parse(&["--strip-descriptions"]).expect("parse");
     assert!(cli.output.strip_descriptions);
+}
+
+#[test]
+fn cli_schema_profile_defaults_to_full_and_accepts_lean() -> eyre::Result<()> {
+    let cli = parse(&[]).map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(have: cli.profile, want: SchemaProfile::Full);
+
+    let cli = parse(&["--profile", "lean"]).map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(have: cli.profile, want: SchemaProfile::Lean);
+    Ok(())
 }
 
 #[test]

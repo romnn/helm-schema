@@ -10,7 +10,7 @@
 
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
-use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use helm_schema_cli::{GenerateOptions, ProviderOptions, SchemaProfile};
 use indoc::indoc;
 use vfs::VfsPath;
 
@@ -74,6 +74,7 @@ fn generated_schema() -> eyre::Result<serde_json::Value> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

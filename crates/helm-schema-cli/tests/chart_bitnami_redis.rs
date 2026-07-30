@@ -5,12 +5,30 @@
 use color_eyre::eyre;
 
 use test_util::prelude::sim_assert_eq;
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/descriptions.rs"]
 mod descriptions;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 #[path = "common/values_yaml.rs"]
 mod values_yaml;
+
+#[test]
+fn bitnami_redis_master_persistence_rejects_a_scalar_host() -> eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("bitnami-redis")?;
+    let validator = jsonschema::validator_for(&schema)?;
+    let instance = chart_instances::with_override(
+        "bitnami-redis",
+        serde_json::json!({ "master": { "persistence": 7 } }),
+    )?;
+
+    assert!(
+        !validator.is_valid(&instance),
+        "the configmap reads master.persistence.path even after Helm's table replacement"
+    );
+    Ok(())
+}
 
 #[test]
 fn bitnami_redis_values_descriptions_apply() -> eyre::Result<()> {

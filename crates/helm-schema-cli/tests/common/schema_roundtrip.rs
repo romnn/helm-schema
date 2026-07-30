@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
-use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use helm_schema_cli::{GenerateOptions, ProviderOptions, SchemaProfile};
 use serde_json::Value;
 use vfs::VfsPath;
 
@@ -35,6 +35,7 @@ pub fn generate_chart_schema_for_path(chart_relative_path: &str) -> eyre::Result
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             // Provider availability is a deterministic test INPUT: the
@@ -59,7 +60,8 @@ pub fn generate_chart_schema_for_path(chart_relative_path: &str) -> eyre::Result
         },
     };
 
-    AnalysisSession::new(opts)
+    let session = AnalysisSession::new(opts);
+    session
         .generated_schema()
         // Mirror the CLI's default output policy: repeated schema subtrees
         // are interned into root-level `$defs` before anything ships.

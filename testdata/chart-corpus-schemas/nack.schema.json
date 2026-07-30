@@ -889,10 +889,38 @@
       ]
     },
     "schema47": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "jetstream": {}
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "jetstream": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "jetstream"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema48": {
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "null"
     },
-    "schema48": {
+    "schema49": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
@@ -965,21 +993,21 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema51": {
+    "schema52": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema52": {
+    "schema53": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema55": {
+    "schema56": {
       "additionalProperties": {},
       "properties": {
         "secret": {
@@ -991,14 +1019,14 @@
         }
       }
     },
-    "schema57": {
+    "schema58": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema58": {
+    "schema59": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -1040,16 +1068,10 @@
         "null"
       ]
     },
-    "schema66": {
+    "schema67": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
-    },
-    "schema68": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
     },
     "schema7": {
       "additionalProperties": false,
@@ -1089,7 +1111,13 @@
         "null"
       ]
     },
-    "schema71": {
+    "schema70": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema75": {
       "oneOf": [
         {
           "type": [
@@ -1105,19 +1133,14 @@
         }
       ]
     },
-    "schema72": {
+    "schema76": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema75": {
+    "schema79": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema76": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
       }
     },
     "schema8": {
@@ -1187,6 +1210,11 @@
             }
           }
         }
+      }
+    },
+    "schema80": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
       }
     }
   },
@@ -1593,233 +1621,31 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
+        "properties": {
+          "jetstream": {
             "properties": {
-              "jetstream": {
+              "tls": {
                 "properties": {
-                  "tls": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "tls"
+                  "enabled"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "jetstream"
+              "tls"
             ],
             "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "settings": {
-                            "properties": {
-                              "client_ca": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "client_ca"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "settings"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "settings": {
-                            "properties": {
-                              "client_cert": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "client_cert"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "settings"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "settings": {
-                            "properties": {
-                              "client_key": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "client_key"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "settings"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              }
-            ]
           }
-        ]
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -1969,30 +1795,59 @@
     },
     {
       "if": {
-        "anyOf": [
+        "$ref": "#/$defs/schema47"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "jetstream": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "jetstream": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jetstream"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "jetstream"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "jetstream": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema47"
           }
         ]
       },
@@ -2000,46 +1855,53 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "jetstream": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "image": {}
+                    "jetstream": {
+                      "properties": {
+                        "nats": {}
+                      },
+                      "required": [
+                        "nats"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "image"
+                    "jetstream"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "jetstream"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "jetstream": {
+              {
                 "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
+                  "jetstream": {
+                    "properties": {
+                      "nats": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "nats"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "image"
+                  "jetstream"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema47"
           }
         ]
       },
@@ -2047,93 +1909,53 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "jetstream": {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "nats": {}
+                    "jetstream": {
+                      "properties": {
+                        "tls": {}
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "nats"
+                    "jetstream"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "jetstream"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "jetstream": {
+              {
                 "properties": {
-                  "nats": {
-                    "enum": [
-                      null
-                    ]
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "nats"
+                  "jetstream"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "jetstream": {
-                  "properties": {
-                    "tls": {}
-                  },
-                  "required": [
-                    "tls"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "jetstream"
-              ],
-              "type": "object"
-            }
+            ]
           },
           {
-            "properties": {
-              "jetstream": {
-                "properties": {
-                  "tls": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema47"
           }
         ]
       },
@@ -2353,7 +2175,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema53"
                   }
                 },
                 "required": [
@@ -2370,7 +2192,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -2494,10 +2316,10 @@
                     "$ref": "#/$defs/schema6"
                   },
                   "name": {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema49"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema58"
                   }
                 },
                 "type": [
@@ -2592,7 +2414,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema71"
+                    "$ref": "#/$defs/schema75"
                   }
                 },
                 "type": [
@@ -3402,7 +3224,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -3484,10 +3306,10 @@
                               "$ref": "#/$defs/schema6"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema48"
+                              "$ref": "#/$defs/schema49"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema57"
+                              "$ref": "#/$defs/schema58"
                             }
                           },
                           "type": [
@@ -3530,7 +3352,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/schema48"
+                              "$ref": "#/$defs/schema49"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -3733,14 +3555,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema53"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/schema48"
+                        "$ref": "#/$defs/schema49"
                       }
                     },
                     "type": "object",
@@ -3839,7 +3661,7 @@
                     "$ref": "#/$defs/schema44"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/schema29"
@@ -4081,7 +3903,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema70"
         },
         {
           "not": {
@@ -4216,7 +4038,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema70"
         },
         {
           "not": {
@@ -4235,7 +4057,7 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema70"
             },
             {
               "additionalProperties": {
@@ -4263,11 +4085,7 @@
           ],
           "description": "global labels will be applied to all resources deployed by the chart"
         }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
+      }
     },
     "imagePullSecrets": {
       "anyOf": [
@@ -4365,7 +4183,7 @@
                             "$ref": "#/$defs/schema17"
                           },
                           {
-                            "$ref": "#/$defs/schema47"
+                            "$ref": "#/$defs/schema48"
                           },
                           {
                             "not": {
@@ -4582,6 +4400,99 @@
               "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
             }
           }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "nats": {}
+                  },
+                  "required": [
+                    "nats"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "nats": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "nats"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tls": {}
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {
@@ -4624,10 +4535,10 @@
           "description": "NATS URL",
           "properties": {
             "credentials": {
-              "$ref": "#/$defs/schema55"
+              "$ref": "#/$defs/schema56"
             },
             "nkey": {
-              "$ref": "#/$defs/schema55"
+              "$ref": "#/$defs/schema56"
             },
             "url": {}
           },
@@ -4638,18 +4549,7 @@
           "additionalProperties": {},
           "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
           "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
+            "enabled": {},
             "secretName": {
               "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
             },
@@ -4674,10 +4574,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema75"
+              "$ref": "#/$defs/schema79"
             },
             {
-              "$ref": "#/$defs/schema76"
+              "$ref": "#/$defs/schema80"
             },
             {
               "not": {
@@ -4695,16 +4595,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema58"
+              "$ref": "#/$defs/schema59"
             },
             {
               "$ref": "#/$defs/schema40"
             },
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema72"
+              "$ref": "#/$defs/schema76"
             }
           ],
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -4726,10 +4626,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema75"
+              "$ref": "#/$defs/schema79"
             },
             {
-              "$ref": "#/$defs/schema76"
+              "$ref": "#/$defs/schema80"
             },
             {
               "not": {
@@ -4747,16 +4647,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema58"
+              "$ref": "#/$defs/schema59"
             },
             {
               "$ref": "#/$defs/schema40"
             },
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema72"
+              "$ref": "#/$defs/schema76"
             }
           ],
           "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -4789,7 +4689,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema70"
         },
         {
           "additionalProperties": {
@@ -4816,7 +4716,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema70"
         },
         {
           "additionalProperties": {
@@ -4897,7 +4797,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema70"
         },
         {
           "not": {
@@ -5010,7 +4910,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema70"
         },
         {
           "not": {

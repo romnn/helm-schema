@@ -3,7 +3,7 @@
 use clap::Parser;
 use color_eyre::eyre::{self, OptionExt as _, WrapErr, eyre};
 use helm_schema::AnalysisSession;
-use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions};
+use helm_schema_cli::{Cli, GenerateOptions, ProviderOptions, SchemaProfile};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
@@ -141,6 +141,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()>
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
@@ -155,6 +156,33 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()>
     let actual = generate_values_schema_for_chart(&opts)
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
+    let defaults_yaml = test_util::read_testdata("fixture-charts/full-fixture/values.yaml")?;
+    let defaults: serde_json::Value =
+        serde_yaml::from_str(&defaults_yaml).wrap_err("parse fixture defaults")?;
+    let validator = jsonschema::validator_for(&actual)?;
+    let ingress_case =
+        |enabled: serde_json::Value, hosts: serde_json::Value| -> eyre::Result<bool> {
+            let mut instance = defaults.clone();
+            let ingress = instance
+                .pointer_mut("/ingress")
+                .and_then(serde_json::Value::as_object_mut)
+                .ok_or_eyre("fixture ingress defaults")?;
+            ingress.insert("enabled".to_string(), enabled);
+            ingress.insert("hosts".to_string(), hosts);
+            Ok(validator.is_valid(&instance))
+        };
+    assert!(
+        ingress_case(serde_json::json!("yes"), serde_json::json!([]))?,
+        "a truthy non-Boolean ingress flag renders"
+    );
+    assert!(
+        !ingress_case(serde_json::json!(true), serde_json::json!([7]))?,
+        "live ingress host members must support member access"
+    );
+    assert!(
+        ingress_case(serde_json::json!(false), serde_json::json!([7]))?,
+        "dormant ingress host members stay unconstrained"
+    );
 
     if std::env::var("SCHEMA_DUMP").is_ok() {
         let path =
@@ -242,6 +270,7 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Re
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -313,6 +342,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Resul
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -424,6 +454,7 @@ fn static_chart_crds_type_custom_resource_values() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             allow_net: false,
             crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
@@ -507,6 +538,7 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Re
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             allow_net: false,
             crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
@@ -555,6 +587,10 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Re
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -624,6 +660,7 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
         include_subchart_values: true,
         values_files: vec![layer_one, layer_two],
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -670,7 +707,7 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
     clippy::too_many_lines,
     reason = "the parent/subchart fixture set and its scoping assertions belong to one contiguous scenario"
 )]
-fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
+fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -729,6 +766,7 @@ fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -744,22 +782,12 @@ fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    let global_schema = serde_json::json!({
-      // Helm shares `global` across the chart tree, so the root namespace
-      // stays open to keys only other charts read. `bar` renders only
-      // through `quote`, which stringifies any input.
-      "additionalProperties": {},
-      "properties": {
-        "bar": {}
-      },
-      "type": "object"
-    });
     let child_global_defaults_schema = serde_json::json!({
       "additionalProperties": {},
       "properties": {
-        "bar": {
-          "type": "boolean"
-        }
+        // `quote` accepts every value kind. The Boolean declaration supplies
+        // the default but does not narrow supported overrides.
+        "bar": {}
       },
       "type": "object"
     });
@@ -767,28 +795,37 @@ fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
     let expected = serde_json::json!({
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
-      // helm's dependency coalescing type-asserts the alias' values root,
-      // and the subchart navigates `.Values.global.…` on every render (its
-      // subchart-declared default makes only the explicit null spelling
-      // reach the read as nil).
+      // Helm's dependency coalescing type-asserts the alias' values root.
+      // The subchart reads its effective `kid.global`; a deleted child
+      // global reaches the member read as nil, while a scalar ROOT global
+      // merely skips injection.
       "allOf": [
         {
           "additionalProperties": {},
           "properties": { "kid": { "anyOf": [{ "type": "object" }, { "type": "null" }] } }
-        },
-        {
-          "if": {
-            "properties": { "global": { "enum": [null] } },
-            "required": ["global"],
-            "type": "object"
-          },
-          "then": false
         }
       ],
       "properties": {
-        "global": global_schema,
+        // This is a Helm propagation input, not the child template's
+        // effective values object. Non-map sources are valid and skip.
+        "global": {},
         "kid": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  { "type": "object" },
+                  {
+                    "properties": { "global": { "enum": [null] } },
+                    "required": ["global"],
+                    "type": "object"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "foo": {},
             "global": child_global_defaults_schema,
@@ -809,6 +846,15 @@ fn subchart_values_are_scoped_and_global_is_merged() -> eyre::Result<()> {
     });
 
     sim_assert_eq!(have: actual, want: expected);
+    let validator = jsonschema::validator_for(&actual)?;
+    assert!(
+        validator.is_valid(&serde_json::json!({ "global": "disabled" })),
+        "a scalar source global skips Helm injection"
+    );
+    assert!(
+        !validator.is_valid(&serde_json::json!({ "kid": { "global": "disabled" } })),
+        "a scalar child global reaches the child member access and aborts"
+    );
     Ok(())
 }
 
@@ -877,6 +923,7 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -982,6 +1029,7 @@ fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Re
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
@@ -1115,6 +1163,7 @@ fn library_subchart_helper_descendant_access_does_not_widen_parent_objects() -> 
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1207,6 +1256,7 @@ fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
@@ -1278,6 +1328,7 @@ fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> eyre::Res
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
@@ -1362,6 +1413,7 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> eyre::Result
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1442,6 +1494,7 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field() -> eyre
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1539,6 +1592,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1631,6 +1685,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
@@ -1723,6 +1778,7 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre:
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
@@ -1811,6 +1867,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

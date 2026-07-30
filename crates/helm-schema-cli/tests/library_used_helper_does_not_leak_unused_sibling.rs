@@ -16,7 +16,7 @@
 
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
-use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use helm_schema_cli::{GenerateOptions, ProviderOptions, SchemaProfile};
 use indoc::indoc;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
@@ -110,6 +110,7 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> eyre::Result<()> {
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -193,6 +194,7 @@ fn unused_helper_in_used_library_does_not_perturb_infer_required() -> eyre::Resu
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: true,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

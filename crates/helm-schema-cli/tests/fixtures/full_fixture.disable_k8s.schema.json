@@ -38,9 +38,7 @@
               "items": {
                 "additionalProperties": {},
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
+                  "name": {},
                   "value": {}
                 },
                 "type": "object"
@@ -51,9 +49,7 @@
               "additionalProperties": {
                 "additionalProperties": {},
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
+                  "name": {},
                   "value": {}
                 },
                 "type": "object"
@@ -183,15 +179,19 @@
                                     "properties": {
                                       "path": {},
                                       "pathType": {}
-                                    },
-                                    "type": "object"
+                                    }
                                   },
                                   "type": "array"
                                 },
                                 {
-                                  "not": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
+                                  "additionalProperties": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "path": {},
+                                      "pathType": {}
+                                    }
+                                  },
+                                  "type": "object"
                                 }
                               ]
                             }
@@ -213,15 +213,19 @@
                                     "properties": {
                                       "path": {},
                                       "pathType": {}
-                                    },
-                                    "type": "object"
+                                    }
                                   },
                                   "type": "array"
                                 },
                                 {
-                                  "not": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
+                                  "additionalProperties": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "path": {},
+                                      "pathType": {}
+                                    }
+                                  },
+                                  "type": "object"
                                 }
                               ]
                             }
@@ -244,6 +248,18 @@
             }
           }
         ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
       }
     },
     {
@@ -538,19 +554,6 @@
                     }
                   }
                 }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                }
               }
             ]
           }
@@ -559,18 +562,7 @@
       "properties": {
         "annotations": {},
         "className": {},
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "enabled": {},
         "hosts": {},
         "tls": {
           "items": {},

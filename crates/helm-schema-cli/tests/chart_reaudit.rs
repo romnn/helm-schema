@@ -204,6 +204,74 @@ fn oauth2_proxy_consumers_follow_the_selected_helper_branch() -> eyre::Result<()
 }
 
 #[test]
+fn oauth2_proxy_service_port_keeps_the_unconditional_numeric_contract() -> eyre::Result<()> {
+    assert_chart_cases(
+        "oauth2-proxy",
+        vec![
+            SemanticCase::accepted(
+                "integer service port",
+                json!({ "service": { "portNumber": 8080 } }),
+            ),
+            SemanticCase::accepted(
+                "numeric-string service port",
+                json!({ "service": { "portNumber": "8080" } }),
+            ),
+            SemanticCase::rejected(
+                "named service port",
+                "/service/portNumber",
+                json!({ "service": { "portNumber": "http" } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn bitnami_postgresql_fips_contracts_follow_their_live_branches() -> eyre::Result<()> {
+    assert_chart_cases(
+        "bitnami-postgresql",
+        vec![
+            SemanticCase::accepted(
+                "global false FIPS sentinel",
+                json!({ "global": { "defaultFips": false } }),
+            ),
+            SemanticCase::rejected(
+                "global true FIPS value",
+                "/global/defaultFips",
+                json!({ "global": { "defaultFips": true } }),
+            ),
+            SemanticCase::accepted(
+                "dormant password-update OpenSSL FIPS value",
+                json!({
+                    "passwordUpdateJob": {
+                        "enabled": false,
+                        "fips": { "openssl": true }
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "dormant backup FIPS value",
+                json!({
+                    "backup": {
+                        "enabled": false,
+                        "cronjob": { "fips": "audit" }
+                    }
+                }),
+            ),
+            SemanticCase::rejected(
+                "live backup FIPS value",
+                "/backup/cronjob/fips",
+                json!({
+                    "backup": {
+                        "enabled": true,
+                        "cronjob": { "fips": "audit" }
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
 fn istiod_string_and_object_consumers_reject_wrong_kinds() -> eyre::Result<()> {
     assert_chart_cases(
         "istiod",
@@ -240,7 +308,7 @@ fn istiod_constructed_tpl_selector_reaches_removed_value_fail() -> eyre::Result<
         vec![
             SemanticCase::rejected(
                 "truthy removed Stackdriver option",
-                "",
+                "/telemetry/v2/stackdriver",
                 json!({
                     "telemetry": {
                         "v2": { "stackdriver": { "disableOutbound": true } }
@@ -353,6 +421,34 @@ fn nfs_archive_on_delete_keeps_quoted_scalar_forms() -> eyre::Result<()> {
             SemanticCase::accepted(
                 "boolean archiveOnDelete",
                 json!({ "storageClass": { "archiveOnDelete": false } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn nfs_tolerations_rejects_a_scalar_on_the_configured_kubernetes_version() -> eyre::Result<()> {
+    assert_chart_cases(
+        "nfs-subdir-external-provisioner",
+        vec![
+            SemanticCase::rejected(
+                "truthy string tolerations",
+                "/tolerations",
+                json!({ "tolerations": "audit" }),
+            ),
+            SemanticCase::accepted("false tolerations", json!({ "tolerations": false })),
+            SemanticCase::accepted("zero tolerations", json!({ "tolerations": 0 })),
+            SemanticCase::accepted("empty-string tolerations", json!({ "tolerations": "" })),
+            SemanticCase::accepted("null tolerations", json!({ "tolerations": null })),
+            SemanticCase::accepted(
+                "structured tolerations",
+                json!({
+                    "tolerations": [{
+                        "key": "dedicated",
+                        "operator": "Exists",
+                        "effect": "NoSchedule"
+                    }]
+                }),
             ),
         ],
     )
@@ -2788,9 +2884,9 @@ fn external_secrets_deleted_render_mode_selects_the_default_literal_arm() -> eyr
 /// `ingress.extraPaths[].backend.serviceName`/`servicePort` is set while
 /// the capability helper resolves the `networking.k8s.io/v1` Ingress api.
 /// With `kubeVersion` pinned at or above 1.19 the abort is certain; the
-/// old api keeps the legacy format, and without a pinned version the
-/// selection is cluster-dependent, so the schema abstains. Each polarity
-/// reproduces under `helm template`.
+/// old api keeps the legacy format, and without a chart override the
+/// configured analysis-policy Kubernetes version selects the stable api.
+/// Each polarity reproduces under `helm template`.
 #[test]
 fn oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api() -> eyre::Result<()> {
     assert_chart_cases(
@@ -2829,8 +2925,9 @@ fn oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api() -> eyre::Res
                               "port": { "name": "use-annotation" } } } }
                     ] } }),
             ),
-            SemanticCase::accepted(
-                "unpinned kubeVersion leaves the capability selection open",
+            SemanticCase::rejected(
+                "policy kubeVersion selects v1 without a chart override",
+                "/ingress/extraPaths",
                 json!({ "ingress": { "enabled": true, "hosts": ["h.example"],
                     "extraPaths": [
                         { "path": "/*", "backend": { "serviceName": "ssl-redirect" } }
@@ -2976,7 +3073,7 @@ fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> eyre::Result
             ),
             SemanticCase::rejected(
                 "kvstoreMode outside the literal membership",
-                "",
+                "/clustermesh/apiserver/kvstoremesh",
                 json!({ "clustermesh": { "apiserver": { "kvstoremesh": { "kvstoreMode": "bogus" } } } }),
             ),
             SemanticCase::accepted(
@@ -3266,7 +3363,7 @@ fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> eyre::Result<(
         vec![
             SemanticCase::rejected(
                 "explicitly disabled library tag",
-                "",
+                "/tags",
                 json!({ "tags": { "bitnami-common": false } }),
             ),
             SemanticCase::accepted(
@@ -4075,7 +4172,7 @@ fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> 
             ),
             SemanticCase::rejected(
                 "a deleted parent-only host under the dependency root aborts",
-                "",
+                "/grafana",
                 json!({ "grafana": { "operator": null } }),
             ),
             SemanticCase::rejected(
@@ -4098,7 +4195,7 @@ fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> 
             ),
             SemanticCase::rejected(
                 "a deletion inside that same root still aborts",
-                "",
+                "/crds",
                 json!({ "crds": { "migration": null } }),
             ),
         ],
@@ -4107,7 +4204,7 @@ fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> 
         "signoz-signoz",
         vec![SemanticCase::rejected(
             "a nested subchart deletion aborts its own read",
-            "",
+            "/clickhouse",
             json!({ "clickhouse": { "image": null } }),
         )],
     )

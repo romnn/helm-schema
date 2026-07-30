@@ -14,6 +14,19 @@ mod schema_roundtrip;
 mod values_yaml;
 
 #[test]
+fn traefik_log_root_is_required_by_the_otlp_guard_chain() -> eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let validator = jsonschema::validator_for(&schema)?;
+    let instance = chart_instances::with_override("traefik", serde_json::json!({ "log": null }))?;
+
+    assert!(
+        !validator.is_valid(&instance),
+        "deleting log reaches the requirements template's .Values.log.otlp.enabled read"
+    );
+    Ok(())
+}
+
+#[test]
 fn traefik_plugin_validator_holds() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
@@ -62,7 +75,8 @@ fn traefik_plugin_validator_holds() -> eyre::Result<()> {
 /// The "default" entry iterates on every render, so its `ne
 /// $service.enabled false` gate re-decodes as a sound subset and the
 /// terminal binds: http3 without `http.tls.enabled` aborts while a
-/// disabled default service keeps the terminal dormant.
+/// missing HTTP/3 block or a disabled default service keeps the terminal
+/// dormant.
 #[test]
 fn traefik_http3_terminal_binds_through_the_services_overlay() -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
@@ -73,6 +87,11 @@ fn traefik_http3_terminal_binds_through_the_services_overlay() -> eyre::Result<(
         "http": { "tls": { "enabled": false } }
     });
     for (override_, want, label) in [
+        (
+            serde_json::json!({}),
+            true,
+            "ports without an http3 block skip the terminal",
+        ),
         (
             serde_json::json!({ "ports": { "websecure": bad_port.clone() } }),
             false,

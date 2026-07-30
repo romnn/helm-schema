@@ -14,7 +14,7 @@
 
 use color_eyre::eyre::{self, WrapErr};
 use helm_schema::AnalysisSession;
-use helm_schema_cli::{GenerateOptions, ProviderOptions};
+use helm_schema_cli::{GenerateOptions, ProviderOptions, SchemaProfile};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
@@ -102,6 +102,7 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> eyre::Result
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
+        profile: SchemaProfile::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

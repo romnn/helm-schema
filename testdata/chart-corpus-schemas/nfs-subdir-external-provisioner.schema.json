@@ -1152,46 +1152,6 @@
               "rbac"
             ],
             "type": "object"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "storageClass": {
-                  "properties": {
-                    "provisionerName": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "provisionerName"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "storageClass"
-              ],
-              "type": "object"
-            }
           }
         ]
       },
@@ -1595,6 +1555,10 @@
                   "mountOptions": {
                     "anyOf": [
                       {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
                         "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
                         "items": {
                           "type": [
@@ -1605,9 +1569,19 @@
                         "type": "array"
                       },
                       {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
                         "not": {
                           "$ref": "#/$defs/helm-truthy"
                         }
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
                       },
                       {
                         "type": "object"
@@ -2772,9 +2746,11 @@
                       {
                         "anyOf": [
                           {
+                            "items": {},
                             "type": "array"
                           },
                           {
+                            "additionalProperties": {},
                             "type": "object"
                           },
                           {
@@ -2798,12 +2774,7 @@
           "anyOf": [
             {
               "description": "mountOptions is the list of mount options, e.g. [\"ro\", \"soft\"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
+              "items": {},
               "type": "array"
             },
             {
@@ -2997,18 +2968,7 @@
         }
       ],
       "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "enabled": {},
         "maxUnavailable": {}
       },
       "type": "object"
@@ -3138,16 +3098,6 @@
       "description": "For RBAC support:",
       "properties": {
         "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ],
           "description": "Specifies whether RBAC resources should be created"
         }
       },
@@ -3720,18 +3670,7 @@
         "archiveOnDelete": {
           "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
         },
-        "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "create": {},
         "defaultClass": {
           "description": "Set StorageClass as the default StorageClass\nIgnored if storageClass.create is false",
           "type": "boolean"
@@ -3799,8 +3738,66 @@
       ]
     },
     "tolerations": {
-      "items": {},
-      "type": "array"
+      "anyOf": [
+        {
+          "description": "If specified, the pod's tolerations.",
+          "items": {
+            "additionalProperties": false,
+            "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+            "properties": {
+              "effect": {
+                "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "operator": {
+                "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tolerationSeconds": {
+                "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "value": {
+                "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "type": "object"

@@ -50,7 +50,7 @@
                   ]
                 },
                 "creationTimestamp": {
-                  "$ref": "#/$defs/schema130"
+                  "$ref": "#/$defs/schema131"
                 },
                 "deletionGracePeriodSeconds": {
                   "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -61,7 +61,7 @@
                   ]
                 },
                 "deletionTimestamp": {
-                  "$ref": "#/$defs/schema130"
+                  "$ref": "#/$defs/schema131"
                 },
                 "finalizers": {
                   "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -154,7 +154,7 @@
                         ]
                       },
                       "time": {
-                        "$ref": "#/$defs/schema130"
+                        "$ref": "#/$defs/schema131"
                       }
                     },
                     "type": [
@@ -286,7 +286,7 @@
                   "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                   "properties": {
                     "apiGroup": {
-                      "$ref": "#/$defs/schema131"
+                      "$ref": "#/$defs/schema132"
                     },
                     "kind": {
                       "description": "Kind is the type of resource being referenced",
@@ -311,7 +311,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "apiGroup": {
-                      "$ref": "#/$defs/schema131"
+                      "$ref": "#/$defs/schema132"
                     },
                     "kind": {
                       "description": "Kind is the type of resource being referenced",
@@ -343,7 +343,7 @@
                   "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                   "properties": {
                     "limits": {
-                      "$ref": "#/$defs/schema118"
+                      "$ref": "#/$defs/schema119"
                     },
                     "requests": {
                       "$ref": "#/$defs/schema83"
@@ -804,14 +804,14 @@
         "null"
       ]
     },
-    "schema106": {
+    "schema107": {
       "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema107": {
+    "schema108": {
       "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
       "type": [
         "string",
@@ -887,64 +887,18 @@
         "null"
       ]
     },
-    "schema112": {
+    "schema113": {
       "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
       "type": "string"
     },
-    "schema115": {
+    "schema116": {
       "description": "medium represents what type of storage medium should back this directory. The default is \"\" which means to use the node's default medium. Must be an empty string (default) or Memory. More info: https://kubernetes.io/docs/concepts/storage/volumes#emptydir",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema116": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {}
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "tls": {
-              "properties": {
-                "type": {
-                  "not": {
-                    "enum": [
-                      "metrics-server"
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "tls"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "schema118": {
+    "schema119": {
       "additionalProperties": {
         "oneOf": [
           {
@@ -1036,17 +990,12 @@
         "null"
       ]
     },
-    "schema125": {
+    "schema126": {
       "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
       "type": [
         "boolean",
         "null"
       ]
-    },
-    "schema129": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
     },
     "schema13": {
       "additionalProperties": false,
@@ -1150,6 +1099,11 @@
       ]
     },
     "schema130": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "schema131": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
       "format": "date-time",
       "type": [
@@ -1157,7 +1111,7 @@
         "null"
       ]
     },
-    "schema131": {
+    "schema132": {
       "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
       "type": [
         "string",
@@ -1229,41 +1183,13 @@
       },
       "type": "object"
     },
-    "schema163": {
+    "schema164": {
       "description": "name of the volume. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "schema178": {
+    "schema179": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
-    },
-    "schema179": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "image": {}
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "image": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "image"
-          ],
-          "type": "object"
-        }
-      ]
     },
     "schema18": {
       "additionalProperties": false,
@@ -1346,14 +1272,42 @@
         "null"
       ]
     },
-    "schema191": {
+    "schema180": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "image": {}
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "image": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema192": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema201": {
+    "schema202": {
       "properties": {
         "tls": {
           "properties": {
@@ -1374,7 +1328,7 @@
       ],
       "type": "object"
     },
-    "schema203": {
+    "schema204": {
       "properties": {
         "tls": {
           "properties": {
@@ -1394,6 +1348,29 @@
         "tls"
       ],
       "type": "object"
+    },
+    "schema205": {
+      "not": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "helm"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      }
     },
     "schema21": {
       "additionalProperties": false,
@@ -1482,7 +1459,7 @@
         "null"
       ]
     },
-    "schema210": {
+    "schema212": {
       "properties": {
         "tls": {
           "properties": {
@@ -1502,6 +1479,25 @@
         "tls"
       ],
       "type": "object"
+    },
+    "schema218": {
+      "not": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "type": {}
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      }
     },
     "schema23": {
       "additionalProperties": false,
@@ -1572,7 +1568,7 @@
         "null"
       ]
     },
-    "schema237": {
+    "schema239": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -1682,22 +1678,7 @@
         "null"
       ]
     },
-    "schema253": {
-      "properties": {
-        "type": {
-          "not": {
-            "enum": [
-              "metrics-server"
-            ]
-          }
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "schema254": {
+    "schema255": {
       "description": "Added capabilities",
       "items": {
         "type": [
@@ -1766,7 +1747,7 @@
         "null"
       ]
     },
-    "schema264": {
+    "schema266": {
       "properties": {
         "type": {
           "enum": [
@@ -1779,12 +1760,25 @@
       ],
       "type": "object"
     },
-    "schema265": {
+    "schema267": {
+      "properties": {
+        "type": {
+          "enum": [
+            "metrics-server"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema268": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema266": {
+    "schema269": {
       "properties": {
         "type": {
           "enum": [
@@ -1795,12 +1789,6 @@
       "required": [
         "type"
       ],
-      "type": "object"
-    },
-    "schema268": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
       "type": "object"
     },
     "schema27": {
@@ -1843,6 +1831,12 @@
       ]
     },
     "schema271": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema273": {
       "properties": {
         "type": {
           "enum": [
@@ -1855,7 +1849,7 @@
       ],
       "type": "object"
     },
-    "schema272": {
+    "schema275": {
       "oneOf": [
         {
           "type": [
@@ -1871,7 +1865,7 @@
         }
       ]
     },
-    "schema273": {
+    "schema276": {
       "oneOf": [
         {
           "type": [
@@ -1887,27 +1881,18 @@
         }
       ]
     },
-    "schema274": {
+    "schema277": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema276": {
-      "properties": {
-        "type": {}
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "schema278": {
+    "schema281": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema280": {
+    "schema283": {
       "anyOf": [
         {
           "type": "null"
@@ -1917,22 +1902,22 @@
         }
       ]
     },
-    "schema281": {
+    "schema284": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema282": {
+    "schema285": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema283": {
+    "schema286": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema285": {
+    "schema288": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3744,7 +3729,78 @@
         "null"
       ]
     },
-    "schema86": {
+    "schema85": {
+      "allOf": [
+        {
+          "properties": {
+            "tls": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "existingSecret"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tls"
+          ],
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "type": {}
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "tls": {
+                  "properties": {
+                    "type": {
+                      "not": {
+                        "enum": [
+                          "metrics-server"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "schema87": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -3875,7 +3931,7 @@
         "null"
       ]
     },
-    "schema91": {
+    "schema92": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
@@ -3893,7 +3949,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema96": {
+    "schema97": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -3908,7 +3964,7 @@
       "properties": {},
       "type": "object"
     },
-    "schema98": {
+    "schema99": {
       "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
       "format": "int64",
       "type": [
@@ -3924,7 +3980,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema203"
+            "$ref": "#/$defs/schema204"
           },
           {
             "not": {
@@ -3969,7 +4025,7 @@
         "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
-            "$ref": "#/$defs/schema278"
+            "$ref": "#/$defs/schema281"
           }
         }
       }
@@ -4056,59 +4112,98 @@
             "type": "object"
           },
           {
+            "not": {
+              "$ref": "#/$defs/schema204"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema205"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "apiService": {
+            "additionalProperties": {},
+            "properties": {
+              "caBundle": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The PEM encoded CA bundle for TLS verification"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "apiService": {
+                "properties": {
+                  "caBundle": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "caBundle"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "apiService"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "apiService": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "apiService"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
-                "properties": {
-                  "apiService": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "apiService"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "addInjectorAnnotations": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "addInjectorAnnotations"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema218"
               },
               {
                 "properties": {
                   "tls": {
                     "properties": {
                       "type": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "not": {
+                          "enum": [
+                            "cert-manager"
+                          ]
+                        }
                       }
                     },
                     "required": [
@@ -4123,6 +4218,9 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "$ref": "#/$defs/schema205"
           }
         ]
       },
@@ -4132,21 +4230,16 @@
           "apiService": {
             "additionalProperties": {},
             "properties": {
-              "annotations": {
+              "caBundle": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema86"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "type": "string"
                   },
                   {
                     "type": "null"
                   }
                 ],
-                "description": "Annotations to add to the API service"
+                "description": "The PEM encoded CA bundle for TLS verification"
               }
             }
           }
@@ -4273,7 +4366,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema210"
+            "$ref": "#/$defs/schema212"
           }
         ]
       },
@@ -4285,7 +4378,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema96"
+                    "$ref": "#/$defs/schema97"
                   },
                   {
                     "not": {
@@ -4373,7 +4466,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema278"
+                    "$ref": "#/$defs/schema281"
                   },
                   {
                     "not": {
@@ -4392,13 +4485,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema281"
+                        "$ref": "#/$defs/schema284"
                       },
                       {
-                        "$ref": "#/$defs/schema283"
+                        "$ref": "#/$defs/schema286"
                       },
                       {
-                        "$ref": "#/$defs/schema285"
+                        "$ref": "#/$defs/schema288"
                       },
                       {
                         "not": {
@@ -4411,19 +4504,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema282"
+                        "$ref": "#/$defs/schema285"
                       },
                       {
-                        "$ref": "#/$defs/schema237"
+                        "$ref": "#/$defs/schema239"
                       },
                       {
-                        "$ref": "#/$defs/schema129"
+                        "$ref": "#/$defs/schema130"
                       },
                       {
-                        "$ref": "#/$defs/schema265"
+                        "$ref": "#/$defs/schema268"
                       },
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema277"
                       }
                     ],
                     "type": "string"
@@ -4446,7 +4539,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema281"
                       },
                       {
                         "not": {
@@ -4470,13 +4563,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema281"
+                            "$ref": "#/$defs/schema284"
                           },
                           {
-                            "$ref": "#/$defs/schema283"
+                            "$ref": "#/$defs/schema286"
                           },
                           {
-                            "$ref": "#/$defs/schema285"
+                            "$ref": "#/$defs/schema288"
                           },
                           {
                             "not": {
@@ -4489,19 +4582,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema282"
+                            "$ref": "#/$defs/schema285"
                           },
                           {
-                            "$ref": "#/$defs/schema237"
+                            "$ref": "#/$defs/schema239"
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema130"
                           },
                           {
-                            "$ref": "#/$defs/schema265"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -4582,13 +4675,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema281"
+                            "$ref": "#/$defs/schema284"
                           },
                           {
-                            "$ref": "#/$defs/schema283"
+                            "$ref": "#/$defs/schema286"
                           },
                           {
-                            "$ref": "#/$defs/schema285"
+                            "$ref": "#/$defs/schema288"
                           },
                           {
                             "not": {
@@ -4601,19 +4694,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema282"
+                            "$ref": "#/$defs/schema285"
                           },
                           {
-                            "$ref": "#/$defs/schema237"
+                            "$ref": "#/$defs/schema239"
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema130"
                           },
                           {
-                            "$ref": "#/$defs/schema265"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -4777,34 +4870,25 @@
             "type": "object"
           },
           {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema204"
           },
           {
-            "$ref": "#/$defs/schema203"
-          },
-          {
-            "$ref": "#/$defs/schema210"
+            "$ref": "#/$defs/schema212"
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema116"
+                "not": {
+                  "properties": {
+                    "tls": {
+                      "$ref": "#/$defs/schema267"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
               },
               {
                 "not": {
@@ -4837,7 +4921,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema201"
+                      "$ref": "#/$defs/schema202"
                     }
                   ]
                 }
@@ -4962,7 +5046,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema178"
+                    "$ref": "#/$defs/schema179"
                   }
                 ]
               }
@@ -5002,13 +5086,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema281"
+                        "$ref": "#/$defs/schema284"
                       },
                       {
-                        "$ref": "#/$defs/schema283"
+                        "$ref": "#/$defs/schema286"
                       },
                       {
-                        "$ref": "#/$defs/schema285"
+                        "$ref": "#/$defs/schema288"
                       },
                       {
                         "not": {
@@ -5021,19 +5105,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema282"
+                        "$ref": "#/$defs/schema285"
                       },
                       {
-                        "$ref": "#/$defs/schema237"
+                        "$ref": "#/$defs/schema239"
                       },
                       {
-                        "$ref": "#/$defs/schema129"
+                        "$ref": "#/$defs/schema130"
                       },
                       {
-                        "$ref": "#/$defs/schema265"
+                        "$ref": "#/$defs/schema268"
                       },
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema277"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -5091,7 +5175,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema203"
+            "$ref": "#/$defs/schema204"
           }
         ]
       },
@@ -5146,53 +5230,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "existingIssuer": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "existingIssuer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema203"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema203"
-          }
-        ]
+        "$ref": "#/$defs/schema204"
       },
       "then": {
         "additionalProperties": {},
@@ -5240,49 +5278,7 @@
             "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "certManager": {
-                        "properties": {
-                          "existingIssuer": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "existingIssuer"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema203"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema203"
+            "$ref": "#/$defs/schema204"
           }
         ]
       },
@@ -5306,7 +5302,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema210"
+        "$ref": "#/$defs/schema212"
       },
       "then": {
         "allOf": [
@@ -5376,73 +5372,12 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "existingSecret": {
-                        "properties": {
-                          "lookup": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "lookup"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "existingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema201"
+                "$ref": "#/$defs/schema202"
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "existingSecret": {
-                        "properties": {
-                          "name": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "existingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema201"
-              },
-              {
-                "$ref": "#/$defs/schema116"
-              }
-            ]
+            "$ref": "#/$defs/schema85"
           }
         ]
       },
@@ -5482,6 +5417,18 @@
               "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created"
             }
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
         }
       }
     },
@@ -5580,7 +5527,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema179"
+        "$ref": "#/$defs/schema180"
       },
       "then": false
     },
@@ -5870,7 +5817,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema203"
+                "$ref": "#/$defs/schema204"
               }
             ]
           }
@@ -5949,73 +5896,12 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "existingSecret": {
-                            "properties": {
-                              "lookup": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "lookup"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "existingSecret"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema201"
+                    "$ref": "#/$defs/schema202"
                   }
                 ]
               },
               {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "existingSecret": {
-                            "properties": {
-                              "name": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "existingSecret"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema201"
-                  },
-                  {
-                    "$ref": "#/$defs/schema116"
-                  }
-                ]
+                "$ref": "#/$defs/schema85"
               }
             ]
           }
@@ -6056,7 +5942,7 @@
                             "$ref": "#/$defs/schema59"
                           },
                           "limits": {
-                            "$ref": "#/$defs/schema118"
+                            "$ref": "#/$defs/schema119"
                           },
                           "requests": {
                             "$ref": "#/$defs/schema83"
@@ -6097,7 +5983,7 @@
                             "description": "Adds and removes POSIX capabilities from running containers.",
                             "properties": {
                               "add": {
-                                "$ref": "#/$defs/schema254"
+                                "$ref": "#/$defs/schema255"
                               },
                               "drop": {
                                 "description": "Removed capabilities",
@@ -6119,10 +6005,10 @@
                             ]
                           },
                           "privileged": {
-                            "$ref": "#/$defs/schema125"
+                            "$ref": "#/$defs/schema126"
                           },
                           "procMount": {
-                            "$ref": "#/$defs/schema106"
+                            "$ref": "#/$defs/schema107"
                           },
                           "readOnlyRootFilesystem": {
                             "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
@@ -6132,7 +6018,7 @@
                             ]
                           },
                           "runAsGroup": {
-                            "$ref": "#/$defs/schema98"
+                            "$ref": "#/$defs/schema99"
                           },
                           "runAsNonRoot": {
                             "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
@@ -6191,7 +6077,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema179"
+                "$ref": "#/$defs/schema180"
               }
             ]
           },
@@ -6444,7 +6330,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
           "not": {
@@ -6472,31 +6358,56 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "insecureSkipTLSVerify": {
-                "anyOf": [
-                  {
-                    "description": "InsecureSkipTLSVerify disables TLS certificate verification when communicating with this server. This is strongly discouraged.  You should use the CABundle instead.",
-                    "type": "boolean"
-                  },
-                  {
-                    "description": "InsecureSkipTLSVerify disables TLS certificate verification when communicating with this server. This is strongly discouraged.  You should use the CABundle instead.",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-                    "type": "string"
+            "allOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema87"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Annotations to add to the API service"
                   }
-                ],
-                "description": "Specifies whether to skip TLS verification"
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "insecureSkipTLSVerify": {
+                    "anyOf": [
+                      {
+                        "description": "InsecureSkipTLSVerify disables TLS certificate verification when communicating with this server. This is strongly discouraged.  You should use the CABundle instead.",
+                        "type": "boolean"
+                      },
+                      {
+                        "description": "InsecureSkipTLSVerify disables TLS certificate verification when communicating with this server. This is strongly discouraged.  You should use the CABundle instead.",
+                        "type": "null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Specifies whether to skip TLS verification"
+                  }
+                }
               }
-            }
+            ]
           }
         }
       ],
@@ -6508,16 +6419,6 @@
           "description": "The PEM encoded CA bundle for TLS verification"
         },
         "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ],
           "description": "Specifies if the v1beta1.metrics.k8s.io API service should be created.\nYou typically want this enabled! If you disable API service creation you have to\nmanage it outside of this chart for e.g horizontal pod autoscaling to\nwork with this release."
         },
         "insecureSkipTLSVerify": {
@@ -6532,10 +6433,10 @@
     "commonLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
-          "$ref": "#/$defs/schema96"
+          "$ref": "#/$defs/schema97"
         },
         {
           "not": {
@@ -6555,7 +6456,7 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/schema178"
+          "$ref": "#/$defs/schema179"
         }
       ]
     },
@@ -6565,10 +6466,10 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
-          "$ref": "#/$defs/schema86"
+          "$ref": "#/$defs/schema87"
         },
         {
           "not": {
@@ -6647,7 +6548,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
           "not": {
@@ -6764,10 +6665,10 @@
                 "description": "Represents an empty directory for a pod. Empty directory volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "medium": {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema116"
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema273"
+                    "$ref": "#/$defs/schema276"
                   }
                 },
                 "type": [
@@ -6808,7 +6709,7 @@
                 "$ref": "#/$defs/schema13"
               },
               "name": {
-                "$ref": "#/$defs/schema163"
+                "$ref": "#/$defs/schema164"
               },
               "nfs": {
                 "$ref": "#/$defs/schema55"
@@ -6876,8 +6777,7 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {
-          "description": "Specifies if metrics-server should be started in hostNetwork mode.\nYou would require this enabled if you use alternate overlay networking for pods and\nAPI server unable to communicate with metrics-server. As an example, this is required\nif you use Weave network on EKS",
-          "type": "boolean"
+          "description": "Specifies if metrics-server should be started in hostNetwork mode.\nYou would require this enabled if you use alternate overlay networking for pods and\nAPI server unable to communicate with metrics-server. As an example, this is required\nif you use Weave network on EKS"
         }
       },
       "type": "object"
@@ -6890,13 +6790,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema281"
+                  "$ref": "#/$defs/schema284"
                 },
                 {
-                  "$ref": "#/$defs/schema283"
+                  "$ref": "#/$defs/schema286"
                 },
                 {
-                  "$ref": "#/$defs/schema285"
+                  "$ref": "#/$defs/schema288"
                 },
                 {
                   "not": {
@@ -6909,16 +6809,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema237"
+                  "$ref": "#/$defs/schema239"
                 },
                 {
-                  "$ref": "#/$defs/schema129"
+                  "$ref": "#/$defs/schema130"
                 },
                 {
-                  "$ref": "#/$defs/schema265"
+                  "$ref": "#/$defs/schema268"
                 },
                 {
-                  "$ref": "#/$defs/schema274"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6942,7 +6842,7 @@
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/schema91"
+            "$ref": "#/$defs/schema92"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
@@ -6977,18 +6877,7 @@
     "metrics": {
       "additionalProperties": {},
       "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        }
+        "enabled": {}
       },
       "type": "object"
     },
@@ -7010,7 +6899,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
           "additionalProperties": {
@@ -7036,10 +6925,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
-          "$ref": "#/$defs/schema86"
+          "$ref": "#/$defs/schema87"
         },
         {
           "not": {
@@ -7110,13 +6999,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema281"
+                            "$ref": "#/$defs/schema284"
                           },
                           {
-                            "$ref": "#/$defs/schema283"
+                            "$ref": "#/$defs/schema286"
                           },
                           {
-                            "$ref": "#/$defs/schema285"
+                            "$ref": "#/$defs/schema288"
                           },
                           {
                             "not": {
@@ -7129,16 +7018,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema237"
+                            "$ref": "#/$defs/schema239"
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema130"
                           },
                           {
-                            "$ref": "#/$defs/schema265"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
@@ -7163,16 +7052,6 @@
       ],
       "properties": {
         "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ],
           "description": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
         },
         "maxUnavailable": {},
@@ -7184,10 +7063,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
-          "$ref": "#/$defs/schema96"
+          "$ref": "#/$defs/schema97"
         },
         {
           "not": {
@@ -7299,7 +7178,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
           "not": {
@@ -7316,16 +7195,6 @@
       "additionalProperties": {},
       "properties": {
         "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ],
           "description": "Specifies whether RBAC resources should be created"
         },
         "pspEnabled": {
@@ -7372,7 +7241,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema178"
+          "$ref": "#/$defs/schema179"
         }
       ]
     },
@@ -7386,13 +7255,13 @@
               "$ref": "#/$defs/schema59"
             },
             "limits": {
-              "$ref": "#/$defs/schema118"
+              "$ref": "#/$defs/schema119"
             },
             "requests": {
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema273"
+                    "$ref": "#/$defs/schema276"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7457,7 +7326,7 @@
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/schema178"
+                "$ref": "#/$defs/schema179"
               }
             ]
           }
@@ -7469,13 +7338,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema281"
+              "$ref": "#/$defs/schema284"
             },
             {
-              "$ref": "#/$defs/schema283"
+              "$ref": "#/$defs/schema286"
             },
             {
-              "$ref": "#/$defs/schema285"
+              "$ref": "#/$defs/schema288"
             },
             {
               "not": {
@@ -7488,16 +7357,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema237"
+              "$ref": "#/$defs/schema239"
             },
             {
-              "$ref": "#/$defs/schema129"
+              "$ref": "#/$defs/schema130"
             },
             {
-              "$ref": "#/$defs/schema265"
+              "$ref": "#/$defs/schema268"
             },
             {
-              "$ref": "#/$defs/schema274"
+              "$ref": "#/$defs/schema277"
             }
           ],
           "description": "If specified, the pod will be dispatched by specified scheduler. If not specified, the pod will be dispatched by default scheduler.",
@@ -7538,14 +7407,14 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/schema254"
+                      "$ref": "#/$defs/schema255"
                     },
                     "drop": {
                       "anyOf": [
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema280"
+                            "$ref": "#/$defs/schema283"
                           },
                           "type": "array"
                         },
@@ -7563,10 +7432,10 @@
               ]
             },
             "privileged": {
-              "$ref": "#/$defs/schema125"
+              "$ref": "#/$defs/schema126"
             },
             "procMount": {
-              "$ref": "#/$defs/schema106"
+              "$ref": "#/$defs/schema107"
             },
             "readOnlyRootFilesystem": {
               "anyOf": [
@@ -7580,7 +7449,7 @@
               ]
             },
             "runAsGroup": {
-              "$ref": "#/$defs/schema98"
+              "$ref": "#/$defs/schema99"
             },
             "runAsNonRoot": {
               "anyOf": [
@@ -7615,10 +7484,10 @@
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
-                      "$ref": "#/$defs/schema107"
+                      "$ref": "#/$defs/schema108"
                     },
                     "type": {
-                      "$ref": "#/$defs/schema112"
+                      "$ref": "#/$defs/schema113"
                     }
                   },
                   "required": [
@@ -7661,10 +7530,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema268"
+              "$ref": "#/$defs/schema271"
             },
             {
-              "$ref": "#/$defs/schema86"
+              "$ref": "#/$defs/schema87"
             },
             {
               "not": {
@@ -7679,10 +7548,10 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema268"
+              "$ref": "#/$defs/schema271"
             },
             {
-              "$ref": "#/$defs/schema96"
+              "$ref": "#/$defs/schema97"
             },
             {
               "not": {
@@ -7703,7 +7572,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/schema178"
+              "$ref": "#/$defs/schema179"
             }
           ]
         },
@@ -7712,13 +7581,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema281"
+                  "$ref": "#/$defs/schema284"
                 },
                 {
-                  "$ref": "#/$defs/schema283"
+                  "$ref": "#/$defs/schema286"
                 },
                 {
-                  "$ref": "#/$defs/schema285"
+                  "$ref": "#/$defs/schema288"
                 },
                 {
                   "not": {
@@ -7731,16 +7600,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema237"
+                  "$ref": "#/$defs/schema239"
                 },
                 {
-                  "$ref": "#/$defs/schema129"
+                  "$ref": "#/$defs/schema130"
                 },
                 {
-                  "$ref": "#/$defs/schema265"
+                  "$ref": "#/$defs/schema268"
                 },
                 {
-                  "$ref": "#/$defs/schema274"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -7778,7 +7647,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema86"
+                        "$ref": "#/$defs/schema87"
                       },
                       {
                         "not": {
@@ -7801,13 +7670,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema281"
+                            "$ref": "#/$defs/schema284"
                           },
                           {
-                            "$ref": "#/$defs/schema283"
+                            "$ref": "#/$defs/schema286"
                           },
                           {
-                            "$ref": "#/$defs/schema285"
+                            "$ref": "#/$defs/schema288"
                           },
                           {
                             "not": {
@@ -7820,16 +7689,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema237"
+                            "$ref": "#/$defs/schema239"
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema130"
                           },
                           {
-                            "$ref": "#/$defs/schema265"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -7882,7 +7751,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/schema191"
+                              "$ref": "#/$defs/schema192"
                             },
                             "namespace": {
                               "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
@@ -7955,13 +7824,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema281"
+                  "$ref": "#/$defs/schema284"
                 },
                 {
-                  "$ref": "#/$defs/schema283"
+                  "$ref": "#/$defs/schema286"
                 },
                 {
-                  "$ref": "#/$defs/schema285"
+                  "$ref": "#/$defs/schema288"
                 },
                 {
                   "not": {
@@ -7974,16 +7843,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema237"
+                  "$ref": "#/$defs/schema239"
                 },
                 {
-                  "$ref": "#/$defs/schema129"
+                  "$ref": "#/$defs/schema130"
                 },
                 {
-                  "$ref": "#/$defs/schema265"
+                  "$ref": "#/$defs/schema268"
                 },
                 {
-                  "$ref": "#/$defs/schema274"
+                  "$ref": "#/$defs/schema277"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -8035,7 +7904,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/schema266"
+            "$ref": "#/$defs/schema269"
           },
           "then": {
             "allOf": [
@@ -8050,13 +7919,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema281"
+                                "$ref": "#/$defs/schema284"
                               },
                               {
-                                "$ref": "#/$defs/schema283"
+                                "$ref": "#/$defs/schema286"
                               },
                               {
-                                "$ref": "#/$defs/schema285"
+                                "$ref": "#/$defs/schema288"
                               },
                               {
                                 "not": {
@@ -8069,19 +7938,19 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema282"
+                                "$ref": "#/$defs/schema285"
                               },
                               {
-                                "$ref": "#/$defs/schema237"
+                                "$ref": "#/$defs/schema239"
                               },
                               {
-                                "$ref": "#/$defs/schema129"
+                                "$ref": "#/$defs/schema130"
                               },
                               {
-                                "$ref": "#/$defs/schema265"
+                                "$ref": "#/$defs/schema268"
                               },
                               {
-                                "$ref": "#/$defs/schema274"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Requested 'duration' (i.e. lifetime) of the Certificate. Note that the\nissuer may choose to ignore the requested duration, just like any other\nrequested attribute.\n\nIf unset, this defaults to 90 days.\nMinimum accepted duration is 1 hour.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.",
@@ -8110,13 +7979,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema281"
+                                "$ref": "#/$defs/schema284"
                               },
                               {
-                                "$ref": "#/$defs/schema283"
+                                "$ref": "#/$defs/schema286"
                               },
                               {
-                                "$ref": "#/$defs/schema285"
+                                "$ref": "#/$defs/schema288"
                               },
                               {
                                 "not": {
@@ -8129,19 +7998,19 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema282"
+                                "$ref": "#/$defs/schema285"
                               },
                               {
-                                "$ref": "#/$defs/schema237"
+                                "$ref": "#/$defs/schema239"
                               },
                               {
-                                "$ref": "#/$defs/schema129"
+                                "$ref": "#/$defs/schema130"
                               },
                               {
-                                "$ref": "#/$defs/schema265"
+                                "$ref": "#/$defs/schema268"
                               },
                               {
-                                "$ref": "#/$defs/schema274"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "How long before the currently issued certificate's expiry cert-manager should\nrenew the certificate. For example, if a certificate is valid for 60 minutes,\nand `renewBefore=10m`, cert-manager will begin to attempt to renew the certificate\n50 minutes after it was issued (i.e. when there are 10 minutes remaining until\nthe certificate is no longer valid).\n\nNOTE: The actual lifetime of the issued certificate is used to determine the\nrenewal time. If an issuer returns a certificate with a different lifetime than\nthe one requested, cert-manager will use the lifetime of the issued certificate.\n\nIf unset, this defaults to 1/3 of the issued certificate's lifetime.\nMinimum accepted value is 5 minutes.\nValue must be in units accepted by Go time.ParseDuration https://golang.org/pkg/time/#ParseDuration.\nCannot be set if the `renewBeforePercentage` field is set.",
@@ -8193,7 +8062,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema266"
+                "$ref": "#/$defs/schema269"
               }
             ]
           },
@@ -8211,13 +8080,13 @@
                           "kind": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema281"
+                                "$ref": "#/$defs/schema284"
                               },
                               {
-                                "$ref": "#/$defs/schema283"
+                                "$ref": "#/$defs/schema286"
                               },
                               {
-                                "$ref": "#/$defs/schema285"
+                                "$ref": "#/$defs/schema288"
                               },
                               {
                                 "not": {
@@ -8230,19 +8099,19 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema282"
+                                "$ref": "#/$defs/schema285"
                               },
                               {
-                                "$ref": "#/$defs/schema237"
+                                "$ref": "#/$defs/schema239"
                               },
                               {
-                                "$ref": "#/$defs/schema129"
+                                "$ref": "#/$defs/schema130"
                               },
                               {
-                                "$ref": "#/$defs/schema265"
+                                "$ref": "#/$defs/schema268"
                               },
                               {
-                                "$ref": "#/$defs/schema274"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Kind of the existing cert-manager issuer",
@@ -8266,13 +8135,13 @@
                           "name": {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema281"
+                                "$ref": "#/$defs/schema284"
                               },
                               {
-                                "$ref": "#/$defs/schema283"
+                                "$ref": "#/$defs/schema286"
                               },
                               {
-                                "$ref": "#/$defs/schema285"
+                                "$ref": "#/$defs/schema288"
                               },
                               {
                                 "not": {
@@ -8285,19 +8154,19 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema282"
+                                "$ref": "#/$defs/schema285"
                               },
                               {
-                                "$ref": "#/$defs/schema237"
+                                "$ref": "#/$defs/schema239"
                               },
                               {
-                                "$ref": "#/$defs/schema129"
+                                "$ref": "#/$defs/schema130"
                               },
                               {
-                                "$ref": "#/$defs/schema265"
+                                "$ref": "#/$defs/schema268"
                               },
                               {
-                                "$ref": "#/$defs/schema274"
+                                "$ref": "#/$defs/schema277"
                               }
                             ],
                             "description": "Name of the existing cert-manager issuer",
@@ -8316,19 +8185,12 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/schema264"
+                "$ref": "#/$defs/schema266"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/schema276"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema253"
-                  }
-                ]
+                "not": {
+                  "$ref": "#/$defs/schema267"
+                }
               }
             ]
           },
@@ -8343,13 +8205,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema281"
+                            "$ref": "#/$defs/schema284"
                           },
                           {
-                            "$ref": "#/$defs/schema283"
+                            "$ref": "#/$defs/schema286"
                           },
                           {
-                            "$ref": "#/$defs/schema285"
+                            "$ref": "#/$defs/schema288"
                           },
                           {
                             "not": {
@@ -8362,16 +8224,16 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema237"
+                            "$ref": "#/$defs/schema239"
                           },
                           {
-                            "$ref": "#/$defs/schema129"
+                            "$ref": "#/$defs/schema130"
                           },
                           {
-                            "$ref": "#/$defs/schema265"
+                            "$ref": "#/$defs/schema268"
                           },
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema277"
                           }
                         ],
                         "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -8398,7 +8260,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/schema266"
+                "$ref": "#/$defs/schema269"
               },
               {
                 "anyOf": [
@@ -8452,7 +8314,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/schema271"
+                "$ref": "#/$defs/schema273"
               },
               {
                 "anyOf": [
@@ -8556,8 +8418,13 @@
           "properties": {
             "certDurationDays": {
               "description": "Cert validity duration in days"
+            },
+            "lookup": {
+              "description": "Use helm lookup function to reuse Secret created in previous helm install",
+              "type": "boolean"
             }
-          }
+          },
+          "type": "object"
         },
         "type": {
           "anyOf": [
@@ -8627,10 +8494,10 @@
                   "description": "Represents an empty directory for a pod. Empty directory volumes support ownership management and SELinux relabeling.",
                   "properties": {
                     "medium": {
-                      "$ref": "#/$defs/schema115"
+                      "$ref": "#/$defs/schema116"
                     },
                     "sizeLimit": {
-                      "$ref": "#/$defs/schema273"
+                      "$ref": "#/$defs/schema276"
                     }
                   },
                   "type": "object"
@@ -8673,7 +8540,7 @@
               "$ref": "#/$defs/schema13"
             },
             "name": {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema164"
             },
             "nfs": {
               "$ref": "#/$defs/schema55"
@@ -8879,10 +8746,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/schema272"
+                  "$ref": "#/$defs/schema275"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/schema272"
+                  "$ref": "#/$defs/schema275"
                 }
               },
               "type": [
@@ -8901,7 +8768,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema268"
+          "$ref": "#/$defs/schema271"
         },
         {
           "not": {
