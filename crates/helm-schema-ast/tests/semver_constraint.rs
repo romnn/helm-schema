@@ -1,6 +1,7 @@
 //! Semantic-version constraint lowering regressions.
 
-use helm_schema_ast::semver_constraint_match_pattern;
+use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_ast::{semver_constraint_match_pattern, semver_constraint_matches_version};
 use test_util::prelude::sim_assert_eq;
 
 #[derive(Clone, Copy)]
@@ -161,6 +162,56 @@ fn unsupported_constraint_shapes_abstain() {
         assert!(
             semver_constraint_match_pattern(constraint).is_none(),
             "constraint {constraint:?} must abstain"
+        );
+    }
+}
+
+#[test]
+fn exact_three_component_tilde_range_matches_patch_updates() -> eyre::Result<()> {
+    let pattern =
+        semver_constraint_match_pattern("~3.0.0").ok_or_eyre("exact tilde range must encode")?;
+    let regex = regex::Regex::new(&pattern)?;
+    for (version, want) in [
+        ("3", true),
+        ("3.0", true),
+        ("3.0.0", true),
+        ("v3.0.7", true),
+        ("03.00.0009+build.1", true),
+        ("3.0.0-alpha", false),
+        ("2.99.99", false),
+        ("3.1.0", false),
+        ("4.0.0", false),
+        ("junk", false),
+    ] {
+        sim_assert_eq!(
+            have: regex.is_match(version),
+            want: want,
+            "version={version} pattern={pattern}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn concrete_policy_versions_support_caret_constraints() {
+    let cases = [
+        ("^1.6-0", "1.35.0", Some(true)),
+        ("^1.6-0", "1.5.9", Some(false)),
+        ("^1.6-0", "2.0.0", Some(false)),
+        ("^0.2.3", "0.2.9", Some(true)),
+        ("^0.2.3", "0.3.0", Some(false)),
+        (">=1.6-0", "1.35.0", Some(true)),
+        ("^1.6-0 || ^2.0", "1.35.0", None),
+        ("~1.35.0", "1.35.4", Some(true)),
+        ("~1.35.0", "1.36.0", Some(false)),
+        ("not a constraint", "1.35.0", None),
+        ("^1.6-0", "not-a-version", None),
+    ];
+    for (constraint, version, want) in cases {
+        sim_assert_eq!(
+            have: semver_constraint_matches_version(constraint, version),
+            want: want,
+            "constraint={constraint} version={version}"
         );
     }
 }

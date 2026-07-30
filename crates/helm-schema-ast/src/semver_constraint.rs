@@ -12,6 +12,13 @@
 
 use std::fmt::Write as _;
 
+use nom::bytes::complete::{tag, take_while1};
+use nom::character::complete::{char, digit1, space0};
+use nom::combinator::{all_consuming, opt, recognize};
+use nom::multi::many0;
+use nom::sequence::{delimited, pair, preceded};
+use semver::{Version, VersionReq};
+
 /// The comparison operator of a single bounded comparator constraint.
 #[derive(Clone, Copy)]
 enum ComparisonOp {
@@ -25,8 +32,9 @@ enum ComparisonOp {
 /// version strings that satisfy it.
 ///
 /// Returns `None` for constraint shapes outside the supported subset: a
-/// single `<`/`<=`/`>`/`>=` comparator against a plain numeric bound, plus
-/// the two prerelease-FLOOR idioms charts use to opt prereleases in:
+/// single `<`/`<=`/`>`/`>=` comparator against a plain numeric bound, an
+/// exact three-component tilde range, plus the two prerelease-FLOOR idioms
+/// charts use to opt prereleases in:
 /// `>=X-0` (every version whose core satisfies `>= X`, prereleases
 /// included — no prerelease identifier sorts below `0`) and `<X-D` with a
 /// single-digit prerelease `D` (every version whose core satisfies `< X`,
@@ -40,6 +48,9 @@ enum ComparisonOp {
 #[must_use]
 pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
     let text = constraint.trim();
+    if let Some(version) = text.strip_prefix('~') {
+        return tilde_patch_match_pattern(version.trim());
+    }
     let (op, rest) = if let Some(rest) = text.strip_prefix(">=") {
         (ComparisonOp::Ge, rest)
     } else if let Some(rest) = text.strip_prefix("<=") {
@@ -82,6 +93,98 @@ pub fn semver_constraint_match_pattern(constraint: &str) -> Option<String> {
     Some(format!(
         "^v?(?:{body})(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     ))
+}
+
+/// `~MAJOR.MINOR.PATCH` fixes the first two components and admits every
+/// patch at or above the written lower bound. Missing version components
+/// still read as zero, so the one- and two-component spellings participate
+/// only when the omitted lower-bound components are zero.
+fn tilde_patch_match_pattern(version: &str) -> Option<String> {
+    let version = version.strip_prefix('v').unwrap_or(version);
+    if version.contains(['-', '+']) {
+        return None;
+    }
+    let parts: Vec<&str> = version.split('.').collect();
+    let [major, minor, patch] = parts.as_slice() else {
+        return None;
+    };
+    if parts
+        .iter()
+        .any(|part| part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()))
+    {
+        return None;
+    }
+    let bound = [
+        major.parse::<u64>().ok()?,
+        minor.parse::<u64>().ok()?,
+        patch.parse::<u64>().ok()?,
+    ];
+    let major = decimal_eq_pattern(bound[0]);
+    let minor = decimal_eq_pattern(bound[1]);
+    let patch = format!(
+        "(?:{}|{})",
+        decimal_eq_pattern(bound[2]),
+        decimal_gt_pattern(bound[2])
+    );
+    let mut cores = vec![format!("{major}\\.{minor}\\.{patch}")];
+    if bound[2] == 0 {
+        cores.push(format!("{major}\\.{minor}"));
+    }
+    if bound[1] == 0 && bound[2] == 0 {
+        cores.push(major);
+    }
+    Some(format!(
+        "^v?(?:{})(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+        cores.join("|")
+    ))
+}
+
+/// Evaluates a supported Helm semantic-version constraint against a concrete
+/// version.
+///
+/// A fixed analysis-policy version needs no regex language for possible
+/// values-file overrides. Parsing the complete range and version directly
+/// lets the control-flow evaluator decide forms such as `^1.6-0` without
+/// pretending that the same constraint has been encoded for arbitrary user
+/// strings. Unsupported constraint syntax returns `None`.
+#[must_use]
+pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Option<bool> {
+    if let Some(pattern) = semver_constraint_match_pattern(constraint) {
+        return Some(regex::Regex::new(&pattern).ok()?.is_match(version));
+    }
+    let requirement = VersionReq::parse(constraint).ok().or_else(|| {
+        let (_, normalized) =
+            all_consuming(delimited(space0, masterminds_loose_caret, space0))(constraint).ok()?;
+        VersionReq::parse(&normalized).ok()
+    })?;
+    let version = Version::parse(version.strip_prefix(['v', 'V']).unwrap_or(version)).ok()?;
+    Some(requirement.matches(&version))
+}
+
+fn masterminds_loose_caret(input: &str) -> nom::IResult<&str, String> {
+    let (input, _) = char('^')(input)?;
+    let (input, _) = space0(input)?;
+    let (input, _) = opt(tag("v"))(input)?;
+    let (input, major) = digit1(input)?;
+    let (input, minor) = opt(preceded(char('.'), digit1))(input)?;
+    let (input, _) = char('-')(input)?;
+    let (input, prerelease) = semver_identifiers(input)?;
+    let (input, build) = opt(preceded(char('+'), semver_identifiers))(input)?;
+
+    let minor = minor.unwrap_or("0");
+    let build = build.map_or_else(String::new, |value| format!("+{value}"));
+    Ok((input, format!("^{major}.{minor}.0-{prerelease}{build}")))
+}
+
+fn semver_identifiers(input: &str) -> nom::IResult<&str, &str> {
+    recognize(pair(
+        semver_identifier,
+        many0(preceded(char('.'), semver_identifier)),
+    ))(input)
+}
+
+fn semver_identifier(input: &str) -> nom::IResult<&str, &str> {
+    take_while1(|character: char| character.is_ascii_alphanumeric() || character == '-')(input)
 }
 
 /// One semver prerelease tail (`-alpha.1`): a dash followed by dot-separated
