@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_ir::{ContractIr, SymbolicIrContext};
+use helm_schema_ir::{ContractIr, SymbolicIrContext, SymbolicPolicy};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::local_crd_projection::collect_static_crd_universe;
@@ -29,6 +29,13 @@ pub(crate) fn analyze_charts(
     kubernetes_version: Option<&str>,
 ) -> EngineResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
+    if charts.iter().any(|chart| !chart.values_prefix.is_empty()) {
+        // Helm accepts a root `global` value for dependency propagation even
+        // when the root chart does not declare or read it. Keep the namespace
+        // visible without assigning it a shape: a non-map source is valid and
+        // simply skips injection into every child.
+        contract.push_pathless_scalar("global");
+    }
     let mut local_schema_universe = collect_static_crd_universe(charts)?;
     for chart in charts {
         for path in chart
@@ -50,8 +57,12 @@ pub(crate) fn analyze_charts(
         }
         let symbolic_context = SymbolicIrContext::with_policy(
             defines,
-            values_roots.string_defaults_for_prefix(&chart.values_prefix),
-            kubernetes_version.map(str::to_string),
+            SymbolicPolicy {
+                chart_default_strings: values_roots
+                    .string_defaults_for_prefix(&chart.values_prefix),
+                kubernetes_version: kubernetes_version.map(str::to_string),
+                static_root_strings: chart.static_root_strings.clone(),
+            },
         );
         let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, &corpus);
         let ManifestContractAnalysis {

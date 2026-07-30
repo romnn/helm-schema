@@ -5,6 +5,7 @@ mod inference_args;
 mod k8s_args;
 mod output_args;
 mod perf_args;
+mod profile_args;
 
 use std::path::PathBuf;
 
@@ -17,6 +18,7 @@ pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::OutputArgs;
 pub use perf_args::PerfArgs;
+pub use profile_args::SchemaProfile;
 
 /// Complete command-line interface for one schema-generation invocation.
 #[derive(Parser, Debug, Clone)]
@@ -56,6 +58,14 @@ pub struct Cli {
     /// Performance tracing options.
     #[command(flatten)]
     pub perf: PerfArgs,
+
+    /// Select how much analyzed contract evidence is emitted.
+    ///
+    /// `lean` omits document-level conditional validation. It only widens
+    /// acceptance and substantially reduces Helm's schema compilation cost on
+    /// large charts.
+    #[arg(long, value_enum, default_value_t)]
+    pub profile: SchemaProfile,
 
     /// Schema files to merge on top of the inferred output, applied in
     /// the order given. Repeatable: pass multiple `--override-schema`

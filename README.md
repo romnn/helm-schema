@@ -72,6 +72,20 @@ Compact output:
 helm-schema ./path/to/chart --output values.schema.json --compact
 ```
 
+For exceptionally conditional charts that exceed Helm's 5 MiB chart-file
+limit or compile slowly during `helm lint`, emit the lean validation profile:
+
+```bash
+helm-schema ./path/to/chart \
+  --profile lean \
+  --output values.schema.json \
+  --compact
+```
+
+Lean keeps base path, type, and provider constraints, but omits
+document-level conditional refinements. It can therefore accept some values
+that full validation rejects. Full validation remains the default.
+
 ### Helpful workflows
 
 Generate a schema fully offline (no network access) using a pre-populated schema cache:
@@ -344,4 +358,3 @@ This project is **useful and works for many charts**, but it is **not yet fully 
 
 Helm templating and YAML composition have many edge cases (whitespace trimming, dynamic keys, helper indirection, runtime-only behavior, etc.).
 Expect some charts to require manual overrides and expect occasional incorrect or missing inference.
-

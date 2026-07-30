@@ -64,7 +64,6 @@ struct PreparedSession {
     dependency_refill_values_yaml: Option<String>,
     explicit_value_paths: BTreeSet<String>,
     values_descriptions: BTreeMap<String, String>,
-    subchart_value_prefixes: Vec<Vec<String>>,
 }
 
 impl PreparedSession {
@@ -116,11 +115,6 @@ impl PreparedSession {
             dependency_refill_values_yaml,
             explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
-            subchart_value_prefixes: charts
-                .iter()
-                .filter(|chart| !chart.values_prefix.is_empty())
-                .map(|chart| chart.values_prefix.clone())
-                .collect(),
         })
     }
 }
@@ -253,10 +247,7 @@ impl AnalysisSession {
                     &self.prepared()?.explicit_value_paths,
                 );
             }
-            Ok(GeneratedSchema {
-                schema,
-                subchart_value_prefixes: resolved.subchart_value_prefixes.clone(),
-            })
+            Ok(GeneratedSchema { schema })
         })?)
         .clone())
     }
@@ -265,8 +256,8 @@ impl AnalysisSession {
     ///
     /// This is the session-level counterpart to the CLI's final output stage:
     /// it starts from the memoized generated schema, applies override/policy
-    /// inputs, mirrors global schema into subcharts, resolves reference mode,
-    /// and returns the final document callers would write to disk.
+    /// inputs, resolves reference mode, and returns the final document callers
+    /// would write to disk.
     ///
     /// # Errors
     ///
@@ -281,7 +272,6 @@ impl AnalysisSession {
         apply_schema_output_pipeline(
             generated.schema,
             policy_inputs,
-            &generated.subchart_value_prefixes,
             self.chart_base_dir(),
             output_options,
         )
@@ -394,13 +384,11 @@ impl AnalysisSession {
                     .with_dependency_refill_values_yaml(
                         prepared.dependency_refill_values_yaml.as_deref(),
                     )
-                    .with_values_descriptions(&prepared.values_descriptions),
+                    .with_values_descriptions(&prepared.values_descriptions)
+                    .with_profile(self.opts.profile),
             );
 
-            Ok(ResolvedContract {
-                schema,
-                subchart_value_prefixes: prepared.subchart_value_prefixes.clone(),
-            })
+            Ok(ResolvedContract { schema })
         })
     }
 }

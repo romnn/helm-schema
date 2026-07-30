@@ -15,7 +15,7 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use vfs::VfsPath;
 
 pub use cli::Cli;
-pub use helm_schema::generation::GenerateOptions;
+pub use helm_schema::generation::{GenerateOptions, SchemaProfile};
 pub use helm_schema::provider::ProviderOptions;
 pub use helm_schema::{CliError, flatten, schema_override};
 
@@ -85,6 +85,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
         include_subchart_values: !cli.chart.no_subchart_values,
         values_files: cli.chart.values_files.clone(),
         infer_required: cli.chart.infer_required,
+        profile: cli.profile.into(),
         provider: provider_options,
     };
 

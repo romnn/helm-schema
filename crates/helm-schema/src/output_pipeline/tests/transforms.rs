@@ -21,7 +21,6 @@ fn reference_mode_preserves_refs_when_requested() {
     let output = apply_schema_output_pipeline(
         schema,
         PolicyInputs::default(),
-        &[],
         std::path::Path::new("/does/not/matter"),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::PreserveRefs,
@@ -60,7 +59,6 @@ fn self_contained_reference_mode_preserves_prepared_internal_refs() {
     let output = apply_schema_output_pipeline(
         schema,
         PolicyInputs::default(),
-        &[],
         std::path::Path::new("/does/not/matter"),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
@@ -101,7 +99,6 @@ fn self_contained_reference_mode_rejects_unprepared_external_refs() {
     let err = apply_schema_output_pipeline(
         schema,
         PolicyInputs::default(),
-        &[],
         std::path::Path::new("/does/not/matter"),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
@@ -138,7 +135,6 @@ fn fully_inlined_export_reference_mode_inlines_prepared_internal_refs() {
     let output = apply_schema_output_pipeline(
         schema,
         PolicyInputs::default(),
-        &[],
         std::path::Path::new("/does/not/matter"),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::FullyInlinedExport,
@@ -168,7 +164,6 @@ fn output_pipeline_marks_final_schema_as_generated() {
     let output = apply_schema_output_pipeline(
         schema,
         PolicyInputs::default(),
-        &[],
         std::path::Path::new("/does/not/matter"),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::PreserveRefs,

@@ -6,7 +6,6 @@
 
 mod descriptions;
 mod format;
-mod global_mirror;
 mod options;
 mod overrides;
 mod transforms;

@@ -53,12 +53,33 @@ By default the output is **self-contained**: external file/URL `$ref`s discovere
 
 ## Minimization
 
-Branch-scoped guard arms tend to repeat large fragments. By default, `helm-schema` interns repeated subtrees into root-level `$defs` and references them with `$ref`. This is an **output-only** transform — it never affects inference — and it matters in practice: it keeps big charts well under Helm's 5 MiB chart-file limit and speeds up every downstream validator.
+Branch-scoped guard arms tend to repeat large fragments. By default, `helm-schema` interns repeated subtrees into root-level `$defs` and references them with `$ref`. This is an **output-only** transform — it never affects inference — and it matters in practice: it substantially reduces large schemas and speeds up downstream validators.
 
 ```bash
 # Keep everything inline (larger, but no $ref indirection)
 helm-schema ./mychart --no-minimize
 ```
+
+Minimization is lossless, so it cannot guarantee that every schema fits
+Helm's 5 MiB chart-file limit. Disabling it generally makes both the file and
+downstream validator compilation larger.
+
+## Emission profiles
+
+The default `full` profile emits every supported constraint. For exceptionally
+conditional charts, the `lean` profile omits document-level conditional
+validation while preserving base path, type, values-default, and provider
+constraints:
+
+```bash
+helm-schema ./mychart --profile lean --compact
+```
+
+Lean is an output policy over the same analysis result, not a separate
+inference mode. Removing conditional refinements can only widen acceptance:
+the lean schema may admit a value that the full schema rejects, but it must
+not reject one that full accepts. This trade-off reduces schema size and
+Helm validator compilation cost on arm-heavy charts.
 
 ## Formatting
 

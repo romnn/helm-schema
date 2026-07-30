@@ -5,6 +5,8 @@ use vfs::VfsPath;
 
 use crate::provider_builder::ProviderOptions;
 
+pub use helm_schema_gen::SchemaProfile;
+
 /// Inputs and analysis policy for generating one chart schema.
 #[derive(Debug, Clone)]
 pub struct GenerateOptions {
@@ -18,6 +20,8 @@ pub struct GenerateOptions {
     pub values_files: Vec<PathBuf>,
     /// Whether the optional required-property heuristic runs.
     pub infer_required: bool,
+    /// Amount of analyzed contract evidence emitted into the schema.
+    pub profile: SchemaProfile,
     /// Kubernetes and CRD schema-provider policy.
     pub provider: ProviderOptions,
 }
@@ -33,15 +37,11 @@ pub struct GenerateOptions {
 pub struct ResolvedContract {
     /// JSON Schema lowered from structural contract evidence.
     pub schema: Value,
-    /// Values prefixes owned by discovered subcharts.
-    pub subchart_value_prefixes: Vec<Vec<String>>,
 }
 
-/// Final schema and subchart metadata after optional generation transforms.
+/// Final schema after optional generation transforms.
 #[derive(Debug, Clone)]
 pub struct GeneratedSchema {
     /// Final generated JSON Schema.
     pub schema: Value,
-    /// Values prefixes owned by discovered subcharts.
-    pub subchart_value_prefixes: Vec<Vec<String>>,
 }

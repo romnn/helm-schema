@@ -26,6 +26,7 @@ Run `helm-schema --help` for the authoritative, version-specific summary.
 | `-o`, `--output <FILE>` | Write the schema to a file; standard output is used when absent. |
 | `--compact` | Compact JSON instead of the default pretty-printed output. |
 | `--strip-descriptions` | Remove JSON Schema `description` annotations. Schema-aware: a property literally named `description` is kept. |
+| `--profile <full\|lean>` | Select emitted validation detail. `full` is the default. `lean` omits document-level conditional validation to reduce Helm validator compilation cost and only widens acceptance. |
 | `--keep-refs` | Leave file/URL `$ref` strings as-is. By default external refs are resolved into root-level `$defs` so the output is self-contained. Conflicts with `--inline-refs`. |
 | `--inline-refs` | Fully inline resolved file/URL `$ref`s instead of writing `$defs`. |
 | `--no-minimize` | Keep repeated subtrees inline instead of interning them into root-level `$defs`. Interning is on by default. |

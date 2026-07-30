@@ -15,8 +15,24 @@ use crate::load_budget::{LoadBudget, read_to_end_capped};
 struct ChartYaml {
     name: Option<String>,
 
+    version: Option<String>,
+
+    #[serde(rename = "apiVersion")]
+    api_version: Option<String>,
+
+    #[serde(rename = "appVersion")]
+    app_version: Option<String>,
+
+    description: Option<String>,
+
+    home: Option<String>,
+
+    icon: Option<String>,
+
     #[serde(rename = "type")]
     chart_type: Option<String>,
+
+    annotations: Option<BTreeMap<String, String>>,
 
     dependencies: Option<Vec<ChartDependency>>,
 }
@@ -27,6 +43,11 @@ struct ChartDependency {
     alias: Option<String>,
     condition: Option<String>,
     tags: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RequirementsYaml {
+    dependencies: Option<Vec<ChartDependency>>,
 }
 
 #[derive(Debug, Clone)]
@@ -63,11 +84,13 @@ fn discover_chart_contexts_inner(
         .chart_type
         .as_deref()
         .is_some_and(|chart_type| chart_type.eq_ignore_ascii_case("library"));
+    let static_root_strings = chart_static_root_strings(&chart_yaml);
 
     out.push(ChartContext {
         chart_dir: chart_dir.clone(),
         values_prefix: parent_prefix.to_vec(),
         is_library,
+        static_root_strings,
         dependency_activation_chain: dependency_activation_chain.to_vec(),
     });
 
@@ -138,6 +161,31 @@ fn discover_chart_contexts_inner(
     }
 
     Ok(())
+}
+
+fn chart_static_root_strings(chart: &ChartYaml) -> BTreeMap<Vec<String>, String> {
+    let mut strings = BTreeMap::new();
+    for (field, value) in [
+        ("Name", chart.name.as_ref()),
+        ("Version", chart.version.as_ref()),
+        ("APIVersion", chart.api_version.as_ref()),
+        ("AppVersion", chart.app_version.as_ref()),
+        ("Description", chart.description.as_ref()),
+        ("Home", chart.home.as_ref()),
+        ("Icon", chart.icon.as_ref()),
+        ("Type", chart.chart_type.as_ref()),
+    ] {
+        if let Some(value) = value {
+            strings.insert(vec!["Chart".to_string(), field.to_string()], value.clone());
+        }
+    }
+    for (key, value) in chart.annotations.as_ref().into_iter().flatten() {
+        strings.insert(
+            vec!["Chart".to_string(), "Annotations".to_string(), key.clone()],
+            value.clone(),
+        );
+    }
+    strings
 }
 
 fn is_chart_archive(file_name: &str) -> bool {
@@ -346,5 +394,14 @@ fn read_chart_yaml(chart_dir: &VfsPath) -> EngineResult<ChartYaml> {
         chart_yaml
     };
 
-    Ok(serde_yaml::from_str(&path.read_to_string()?)?)
+    let mut metadata: ChartYaml = serde_yaml::from_str(&path.read_to_string()?)?;
+    if metadata.dependencies.is_none() {
+        let requirements_yaml = chart_dir.join("requirements.yaml")?;
+        if requirements_yaml.is_file()? {
+            let requirements: RequirementsYaml =
+                serde_yaml::from_str(&requirements_yaml.read_to_string()?)?;
+            metadata.dependencies = requirements.dependencies;
+        }
+    }
+    Ok(metadata)
 }

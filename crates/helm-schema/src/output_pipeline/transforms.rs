@@ -6,13 +6,12 @@ use serde_json::Value;
 use crate::error::EngineResult;
 use crate::flatten;
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
-use crate::output_pipeline::global_mirror::mirror_global_schema_into_subcharts;
 use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use crate::schema_override;
 
 const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 
-/// Applies overrides, subchart mirroring, reference policy, and final minimization.
+/// Applies overrides, reference policy, and final minimization.
 ///
 /// # Errors
 ///
@@ -22,7 +21,6 @@ const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
     skip_all,
     fields(
         override_count = policy_inputs.override_count(),
-        subchart_count = subchart_value_prefixes.len(),
         reference_mode = ?options.reference_mode,
         strip_descriptions = options.strip_descriptions,
         minimize = options.minimize,
@@ -31,15 +29,12 @@ const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 pub fn apply_schema_output_pipeline(
     mut schema: Value,
     policy_inputs: PolicyInputs,
-    subchart_value_prefixes: &[Vec<String>],
     base_dir: &Path,
     options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
     for override_schema in policy_inputs.into_prepared_override_schemas() {
         schema = schema_override::apply_schema_override(schema, override_schema);
     }
-
-    mirror_global_schema_into_subcharts(&mut schema, subchart_value_prefixes);
 
     schema = apply_output_transforms(schema, base_dir, options)?;
     if let Value::Object(object) = &mut schema {

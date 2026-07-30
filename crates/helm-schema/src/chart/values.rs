@@ -37,14 +37,14 @@ pub fn build_composed_values_yaml(
 }
 
 /// The dependency charts' declared defaults, composed under their value
-/// prefixes (with subchart `global` values hoisted like helm does), MINUS
-/// every path the parent chart's own values.yaml declares. A key present
-/// here fills at the SUBCHART's coalesce stage even when the parent-level
-/// document misses it, so schema generation reads absence at such paths
-/// as the subchart default instead of nil. Parent-declared keys are
-/// excluded because their absence can only mean helm null-deletion, which
-/// poisons the key through every later merge stage — the subchart default
-/// does NOT resurrect a deleted key.
+/// prefixes with each parent's effective `global` values propagated into
+/// its direct children, MINUS every path the root chart's own values.yaml
+/// declares. A key present here fills at the SUBCHART's coalesce stage even
+/// when the parent-level document misses it, so schema generation reads
+/// absence at such paths as the subchart default instead of nil.
+/// Root-declared keys are excluded because their absence can only mean Helm
+/// null-deletion, which poisons the key through every later merge stage —
+/// the subchart default does NOT resurrect a deleted key.
 #[instrument(skip_all)]
 pub fn build_dependency_values_yaml(charts: &[ChartContext]) -> EngineResult<Option<String>> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
@@ -146,74 +146,39 @@ pub fn build_composed_values_descriptions(
 }
 
 fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> EngineResult<()> {
-    // Helm hoists each subchart's `global` values into the root `.Values.global`,
-    // then exposes that effective global object back inside every subchart.
-    // Mirroring the same shape here keeps the composed values document aligned
-    // with what `helm lint --strict` validates after Helm's own value merge.
-    let mut sub_docs: Vec<(&ChartContext, YamlValue)> = Vec::new();
-    for chart in charts {
-        if chart.values_prefix.is_empty() {
-            continue;
-        }
+    let mut subcharts = charts
+        .iter()
+        .filter(|chart| !chart.values_prefix.is_empty())
+        .collect::<Vec<_>>();
+    subcharts.sort_by(|left, right| {
+        left.values_prefix
+            .len()
+            .cmp(&right.values_prefix.len())
+            .then_with(|| left.values_prefix.cmp(&right.values_prefix))
+    });
+
+    for chart in subcharts {
+        let parent_prefix = chart
+            .values_prefix
+            .get(..chart.values_prefix.len().saturating_sub(1))
+            .unwrap_or_default();
+        let parent_global = value_at_path(doc, parent_prefix)
+            .and_then(YamlValue::as_mapping)
+            .and_then(|mapping| mapping.get(YamlValue::String("global".to_string())))
+            .cloned();
+        let target = ensure_mapping_path(doc, &chart.values_prefix);
+        coalesce_global_values(target, parent_global.as_ref());
 
         let path = chart.chart_dir.join("values.yaml")?;
         if !path.is_file()? {
             continue;
         }
-
-        let mut sub_doc: YamlValue = serde_yaml::from_str(&path.read_to_string()?)?;
-
-        if let Some(global_doc) = take_global_key(&mut sub_doc) {
-            merge_global_values(doc, global_doc);
-        }
-
-        sub_docs.push((chart, sub_doc));
-    }
-
-    let empty_global = YamlValue::Mapping(serde_yaml::Mapping::default());
-    let root_global = doc
-        .as_mapping()
-        .and_then(|mapping| mapping.get(YamlValue::String("global".to_string())))
-        .cloned()
-        .unwrap_or(empty_global);
-
-    for (chart, mut sub_doc) in sub_docs {
-        if !matches!(sub_doc, YamlValue::Mapping(_)) {
-            sub_doc = YamlValue::Mapping(serde_yaml::Mapping::default());
-        }
-        if let YamlValue::Mapping(mapping) = &mut sub_doc {
-            mapping.insert(YamlValue::String("global".to_string()), root_global.clone());
-        }
-        merge_values_at_prefix(doc, &chart.values_prefix, sub_doc);
+        let defaults: YamlValue = serde_yaml::from_str(&path.read_to_string()?)?;
+        let dependency_keys = direct_dependency_keys(charts, &chart.values_prefix);
+        coalesce_chart_values(target, defaults, &dependency_keys);
     }
 
     Ok(())
-}
-
-fn take_global_key(doc: &mut YamlValue) -> Option<YamlValue> {
-    let YamlValue::Mapping(mapping) = doc else {
-        return None;
-    };
-
-    mapping.remove(YamlValue::String("global".to_string()))
-}
-
-fn merge_global_values(root: &mut YamlValue, global_doc: YamlValue) {
-    let target = ensure_mapping_path(root, &["global".to_string()]);
-
-    if matches!(target, YamlValue::Null) {
-        *target = YamlValue::Mapping(serde_yaml::Mapping::default());
-    }
-
-    let YamlValue::Mapping(mapping) = target else {
-        return;
-    };
-
-    let YamlValue::Mapping(sub_mapping) = global_doc else {
-        return;
-    };
-
-    merge_mapping_existing_prefers_left(mapping, sub_mapping);
 }
 
 fn add_values_file_descriptions(
@@ -250,13 +215,90 @@ fn add_layered_values_file_descriptions(
     Ok(())
 }
 
-fn merge_values_at_prefix(root: &mut YamlValue, prefix: &[String], sub: YamlValue) {
-    let target = ensure_mapping_path(root, prefix);
+fn value_at_path<'a>(root: &'a YamlValue, path: &[String]) -> Option<&'a YamlValue> {
+    let mut current = root;
+    for segment in path {
+        current = current
+            .as_mapping()?
+            .get(YamlValue::String(segment.clone()))?;
+    }
+    Some(current)
+}
 
-    if let YamlValue::Mapping(mapping) = target
-        && let YamlValue::Mapping(sub_mapping) = sub
-    {
-        merge_mapping_existing_prefers_left(mapping, sub_mapping);
+fn direct_dependency_keys(
+    charts: &[ChartContext],
+    parent_prefix: &[String],
+) -> std::collections::BTreeSet<String> {
+    charts
+        .iter()
+        .filter_map(|chart| {
+            (chart.values_prefix.len() == parent_prefix.len() + 1
+                && chart.values_prefix.starts_with(parent_prefix))
+            .then(|| chart.values_prefix.last().cloned())
+            .flatten()
+        })
+        .collect()
+}
+
+fn coalesce_global_values(destination_chart: &mut YamlValue, source_global: Option<&YamlValue>) {
+    let YamlValue::Mapping(destination) = destination_chart else {
+        return;
+    };
+    let global_key = YamlValue::String("global".to_string());
+    let mut destination_global = match destination.get(&global_key) {
+        None => serde_yaml::Mapping::new(),
+        Some(YamlValue::Mapping(mapping)) => mapping.clone(),
+        Some(_) => return,
+    };
+    let source_global = match source_global {
+        None => serde_yaml::Mapping::new(),
+        Some(YamlValue::Mapping(mapping)) => mapping.clone(),
+        Some(_) => return,
+    };
+
+    for (key, source_value) in source_global {
+        if let YamlValue::Mapping(source_mapping) = source_value {
+            match destination_global.get(&key) {
+                None => {
+                    destination_global.insert(key, YamlValue::Mapping(source_mapping));
+                }
+                Some(YamlValue::Mapping(destination_mapping)) => {
+                    let mut merged = source_mapping;
+                    merge_mapping_existing_prefers_left(
+                        &mut merged,
+                        destination_mapping.clone(),
+                        true,
+                    );
+                    destination_global.insert(key, YamlValue::Mapping(merged));
+                }
+                Some(_) => {}
+            }
+        } else if !destination_global
+            .get(&key)
+            .is_some_and(YamlValue::is_mapping)
+        {
+            destination_global.insert(key, source_value);
+        }
+    }
+
+    destination.insert(global_key, YamlValue::Mapping(destination_global));
+}
+
+fn coalesce_chart_values(
+    destination: &mut YamlValue,
+    defaults: YamlValue,
+    dependency_keys: &std::collections::BTreeSet<String>,
+) {
+    let (YamlValue::Mapping(destination), YamlValue::Mapping(defaults)) = (destination, defaults)
+    else {
+        return;
+    };
+
+    for (key, default) in defaults {
+        let preserve_nulls = key
+            .as_str()
+            .is_some_and(|key| dependency_keys.contains(key));
+        merge_value_existing_prefers_left(destination, key, default, preserve_nulls);
     }
 }
 
@@ -281,26 +323,33 @@ fn ensure_mapping_path<'a>(root: &'a mut YamlValue, path: &[String]) -> &'a mut 
     current
 }
 
-fn merge_yaml_existing_prefers_left(left: YamlValue, right: YamlValue) -> YamlValue {
-    match (left, right) {
-        (YamlValue::Mapping(mut left), YamlValue::Mapping(right)) => {
-            merge_mapping_existing_prefers_left(&mut left, right);
-            YamlValue::Mapping(left)
-        }
-        (left, _) => left,
-    }
-}
-
 fn merge_mapping_existing_prefers_left(
     target: &mut serde_yaml::Mapping,
     incoming: serde_yaml::Mapping,
+    preserve_nulls: bool,
 ) {
     for (key, value) in incoming {
-        if let Some(existing) = target.get(&key).cloned() {
-            target.insert(key, merge_yaml_existing_prefers_left(existing, value));
-        } else {
-            target.insert(key, value);
-        }
+        merge_value_existing_prefers_left(target, key, value, preserve_nulls);
+    }
+}
+
+fn merge_value_existing_prefers_left(
+    target: &mut serde_yaml::Mapping,
+    key: YamlValue,
+    incoming: YamlValue,
+    preserve_nulls: bool,
+) {
+    let Some(existing) = target.get(&key).cloned() else {
+        target.insert(key, incoming);
+        return;
+    };
+    if existing.is_null() && !preserve_nulls && !incoming.is_null() {
+        target.remove(&key);
+        return;
+    }
+    if let (YamlValue::Mapping(mut existing), YamlValue::Mapping(incoming)) = (existing, incoming) {
+        merge_mapping_existing_prefers_left(&mut existing, incoming, preserve_nulls);
+        target.insert(key, YamlValue::Mapping(existing));
     }
 }
 

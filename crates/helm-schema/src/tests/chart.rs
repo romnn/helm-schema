@@ -1,9 +1,65 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
+use std::collections::BTreeMap;
 
 use crate::chart::discovery;
 use crate::chart::*;
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn chart_metadata_becomes_segmented_static_root_strings() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {r#"
+            apiVersion: v2
+            appVersion: "7"
+            name: root
+            version: 0.1.0
+            annotations:
+              fips: "true"
+              traefik.io/proxy-min-version: "3.0.0"
+        "#},
+    )?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let root = charts.first().ok_or_eyre("discover root chart")?;
+    sim_assert_eq!(
+        have: &root.static_root_strings,
+        want: &BTreeMap::from([
+            (
+                vec!["Chart".to_string(), "APIVersion".to_string()],
+                "v2".to_string(),
+            ),
+            (
+                vec!["Chart".to_string(), "Annotations".to_string(), "fips".to_string()],
+                "true".to_string(),
+            ),
+            (
+                vec![
+                    "Chart".to_string(),
+                    "Annotations".to_string(),
+                    "traefik.io/proxy-min-version".to_string(),
+                ],
+                "3.0.0".to_string(),
+            ),
+            (
+                vec!["Chart".to_string(), "AppVersion".to_string()],
+                "7".to_string(),
+            ),
+            (
+                vec!["Chart".to_string(), "Name".to_string()],
+                "root".to_string(),
+            ),
+            (
+                vec!["Chart".to_string(), "Version".to_string()],
+                "0.1.0".to_string(),
+            ),
+        ])
+    );
+
+    Ok(())
+}
 
 #[test]
 fn dependency_activation_paths_are_scoped_from_chart_yaml() -> eyre::Result<()> {
@@ -79,6 +135,50 @@ fn dependency_activation_paths_are_scoped_from_chart_yaml() -> eyre::Result<()> 
     sim_assert_eq!(
         have: leaf.dependency_activation_chain[1].tag_paths,
         want: vec!["tags.nested".to_string()]
+    );
+
+    Ok(())
+}
+
+#[test]
+fn dependency_aliases_and_activation_are_read_from_helm_v2_requirements() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v1
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("requirements.yaml")?,
+        indoc! {"
+            dependencies:
+              - name: child
+                alias: operator
+                version: 0.1.0
+                condition: feature.operator.enabled
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v1
+            name: child
+            version: 0.1.0
+        "},
+    )?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let child = charts
+        .iter()
+        .find(|chart| chart.values_prefix == ["operator".to_string()])
+        .ok_or_eyre("discover aliased Helm v2 dependency")?;
+    sim_assert_eq!(have: child.dependency_activation_chain.len(), want: 1);
+    sim_assert_eq!(
+        have: &child.dependency_activation_chain[0].condition_paths,
+        want: &vec!["feature.operator.enabled".to_string()]
     );
 
     Ok(())

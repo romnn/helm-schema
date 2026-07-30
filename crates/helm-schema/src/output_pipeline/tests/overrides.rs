@@ -77,9 +77,8 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         "type": "object"
     });
 
-    let output =
-        apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, output_options)
-            .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(schema, policy_inputs, &temp_dir, output_options)
+        .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -144,9 +143,8 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
         "type": "object"
     });
 
-    let output =
-        apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, output_options)
-            .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(schema, policy_inputs, &temp_dir, output_options)
+        .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -191,9 +189,8 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
         "type": "object"
     });
 
-    let output =
-        apply_schema_output_pipeline(schema, policy_inputs, &[], &temp_dir, output_options)
-            .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(schema, policy_inputs, &temp_dir, output_options)
+        .expect("apply output pipeline");
 
     sim_assert_eq!(
         have: output
