@@ -22,6 +22,20 @@ fn complementary_conjunctions_resolve_to_their_shared_key() {
 }
 
 #[test]
+fn nested_boolean_predicates_normalize_before_dnf_projection() {
+    let enabled = truthy("enabled");
+    let condition = GuardDnf::from_conjunction([
+        enabled.clone(),
+        Predicate::Or(vec![enabled.clone(), enabled.negated()]),
+    ]);
+
+    sim_assert_eq!(
+        have: condition,
+        want: GuardDnf::from_conjunction([truthy("enabled")])
+    );
+}
+
+#[test]
 fn weaker_conjunction_absorbs_its_strict_superset() {
     let condition = GuardDnf::from_disjunction([
         vec![truthy("shared")],

@@ -307,6 +307,26 @@ pub enum Guard {
         /// Literal that at least one list item must equal.
         value: GuardValue,
     },
+    /// Some iterated item of the collection at `path` has `member` equal to
+    /// `value`. This is the quantified result of a monotone Boolean local
+    /// set inside a range under an equality test.
+    ContainsMemberEquals {
+        /// Values path expected to hold the iterated collection.
+        path: String,
+        /// Member name compared within each collection item.
+        member: String,
+        /// Literal that at least one member must equal.
+        value: GuardValue,
+    },
+    /// Some iterated item of the collection at `path` has a Helm-truthy
+    /// `member`. This is the quantified result of a monotone Boolean local
+    /// set inside a range under a truthiness test.
+    ContainsTruthyMember {
+        /// Values path expected to hold the iterated collection.
+        path: String,
+        /// Member whose truthiness selects the sentinel state.
+        member: String,
+    },
 }
 
 impl Guard {
@@ -350,7 +370,9 @@ impl Guard {
             | Self::AtMostOneMember { .. }
             | Self::MinMembers { .. }
             | Self::HasKey { .. }
-            | Self::ContainsEquals { .. } => {}
+            | Self::ContainsEquals { .. }
+            | Self::ContainsMemberEquals { .. }
+            | Self::ContainsTruthyMember { .. } => {}
         }
     }
 
@@ -377,7 +399,9 @@ impl Guard {
             | Guard::AtMostOneMember { path }
             | Guard::MinMembers { path, .. }
             | Guard::HasKey { path, .. }
-            | Guard::ContainsEquals { path, .. } => {
+            | Guard::ContainsEquals { path, .. }
+            | Guard::ContainsMemberEquals { path, .. }
+            | Guard::ContainsTruthyMember { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -472,6 +496,19 @@ impl Guard {
             Guard::ContainsEquals { path, value } => Guard::ContainsEquals {
                 path: map(&path),
                 value,
+            },
+            Guard::ContainsMemberEquals {
+                path,
+                member,
+                value,
+            } => Guard::ContainsMemberEquals {
+                path: map(&path),
+                member,
+                value,
+            },
+            Guard::ContainsTruthyMember { path, member } => Guard::ContainsTruthyMember {
+                path: map(&path),
+                member,
             },
         }
     }

@@ -133,3 +133,81 @@ fn approximate_predicate_keeps_an_opaque_complement_without_becoming_a_guard() {
     sim_assert_eq!(have: predicate.contract_guards(), want: Vec::<Guard>::new());
     assert!(predicate.contains_approximation());
 }
+
+#[test]
+fn boolean_normalization_absorbs_a_repeated_positive_arm() {
+    let selected = Predicate::truthy_path("selected");
+    let fallback = Predicate::truthy_path("fallback");
+    let predicate = Predicate::And(vec![
+        selected.clone(),
+        Predicate::Or(vec![selected.clone().negated(), fallback.clone()]),
+    ]);
+
+    sim_assert_eq!(
+        have: predicate.normalize_boolean(),
+        want: Predicate::And(vec![fallback, selected])
+    );
+}
+
+#[test]
+fn boolean_normalization_absorbs_a_repeated_negative_arm() {
+    let selected = Predicate::truthy_path("selected");
+    let fallback = Predicate::truthy_path("fallback");
+    let predicate = Predicate::Or(vec![
+        selected.clone(),
+        Predicate::And(vec![selected.negated(), fallback.clone()]),
+    ]);
+
+    sim_assert_eq!(
+        have: predicate.normalize_boolean(),
+        want: Predicate::Or(vec![fallback, Predicate::truthy_path("selected")])
+    );
+}
+
+#[test]
+fn boolean_normalization_collapses_complementary_branch_outputs() {
+    let selected = Predicate::truthy_path("selected");
+    let branch = Predicate::truthy_path("branch");
+    let predicate = Predicate::Or(vec![
+        Predicate::And(vec![selected.clone(), branch.clone()]),
+        Predicate::And(vec![selected.clone(), branch.negated()]),
+    ]);
+
+    sim_assert_eq!(have: predicate.normalize_boolean(), want: selected);
+}
+
+#[test]
+fn boolean_normalization_canonicalizes_atomic_negative_guards() {
+    let selected = Guard::Eq {
+        path: "mode".to_string(),
+        value: GuardValue::string("selected"),
+    };
+    let excluded = Guard::NotEq {
+        path: "mode".to_string(),
+        value: GuardValue::string("selected"),
+    };
+
+    sim_assert_eq!(
+        have: Predicate::And(vec![
+            Predicate::from(selected),
+            Predicate::from(excluded)
+        ])
+        .normalize_boolean(),
+        want: Predicate::False
+    );
+}
+
+#[test]
+fn boolean_normalization_keeps_approximate_formulas_opaque() {
+    let approximate = Predicate::approximate_with_sound_predicate(
+        "partial",
+        ["selected".to_string()].into_iter().collect(),
+        Predicate::truthy_path("selected"),
+    );
+    let predicate = Predicate::Or(vec![approximate, Predicate::truthy_path("fallback")]);
+
+    sim_assert_eq!(
+        have: predicate.clone().normalize_boolean(),
+        want: predicate
+    );
+}

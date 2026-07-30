@@ -21,6 +21,10 @@ pub enum ValueKind {
     /// `toYaml` accepts any input shape, while the rendered YAML fragment's
     /// structural placement can still constrain the resulting document.
     YamlSerialized = 4,
+    /// `tpl (toYaml …)` preserves the serialized YAML structure, while
+    /// template actions may replace constrained string leaves before the
+    /// provider consumes them.
+    TemplatedYamlSerialized = 5,
 }
 
 /// One arm of a values-predicate-selected `kind:` chain

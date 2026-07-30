@@ -11,6 +11,7 @@ mod guard_dnf;
 mod output_path;
 mod pattern_dialect;
 mod predicate;
+mod predicate_bdd;
 mod provenance;
 mod provider_origin;
 mod provider_schema_fragment;

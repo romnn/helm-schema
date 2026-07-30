@@ -18,12 +18,11 @@ pub enum Predicate {
         marker: String,
         /// Values paths mentioned by the unlowerable expression.
         paths: BTreeSet<String>,
-        /// Guards whose conjunction IMPLIES the real condition (a sound
-        /// subset). Usable only in POSITIVE polarity where firing less
-        /// often is safe — a fail-arm's outer condition — never through a
-        /// negation, which would invert the containment. Empty when no
-        /// bounded strengthening was recognized.
-        sound_subset: Vec<Guard>,
+        /// A predicate that IMPLIES the real condition (a sound subset).
+        /// Usable only in POSITIVE polarity where firing less often is safe
+        /// — a fail-arm's outer condition — never through a negation, which
+        /// would invert the containment.
+        sound_subset: Option<Box<Predicate>>,
     },
     /// Exactly lowerable atomic guard.
     Guard(Guard),
@@ -65,7 +64,7 @@ impl Predicate {
         Self::Approximate {
             marker: marker.into(),
             paths,
-            sound_subset: Vec::new(),
+            sound_subset: None,
         }
     }
 
@@ -77,6 +76,29 @@ impl Predicate {
         paths: BTreeSet<String>,
         sound_subset: Vec<Guard>,
     ) -> Self {
+        let sound_subset = match sound_subset.as_slice() {
+            [] => None,
+            _ => Some(Box::new(Self::all(
+                sound_subset.into_iter().map(Self::from).collect(),
+            ))),
+        };
+        Self::Approximate {
+            marker: marker.into(),
+            paths,
+            sound_subset,
+        }
+    }
+
+    /// Marks an unlowerable condition with a typed predicate that implies it.
+    #[must_use]
+    pub fn approximate_with_sound_predicate(
+        marker: impl Into<String>,
+        paths: BTreeSet<String>,
+        sound_subset: Self,
+    ) -> Self {
+        let sound_subset = (!matches!(sound_subset, Self::False)
+            && !sound_subset.contains_approximation())
+        .then(|| Box::new(sound_subset.normalize_boolean()));
         Self::Approximate {
             marker: marker.into(),
             paths,
@@ -105,6 +127,16 @@ impl Predicate {
         }
     }
 
+    /// Canonicalizes an exact Boolean formula without distributive expansion.
+    ///
+    /// Opaque approximate predicates are returned unchanged. Exact formulas
+    /// use a bounded decision diagram internally and fall back to the input
+    /// formula if neither normal form stays bounded.
+    #[must_use]
+    pub fn normalize_boolean(self) -> Self {
+        crate::predicate_bdd::normalize(self)
+    }
+
     /// Reports whether the predicate is the constant `true` or `false` formula.
     #[must_use]
     pub fn is_trivial(&self) -> bool {
@@ -112,7 +144,6 @@ impl Predicate {
     }
 
     /// Whether this predicate contains a condition that could not be lowered exactly.
-    /// Returns every values path referenced by the formula.
     #[must_use]
     pub fn contains_approximation(&self) -> bool {
         match self {
@@ -157,7 +188,9 @@ impl Predicate {
                 | Guard::AtMostOneMember { .. }
                 | Guard::MinMembers { .. }
                 | Guard::HasKey { .. }
-                | Guard::ContainsEquals { .. },
+                | Guard::ContainsEquals { .. }
+                | Guard::ContainsMemberEquals { .. }
+                | Guard::ContainsTruthyMember { .. },
             ) => vec![self],
             Self::And(predicates) => predicates
                 .into_iter()
@@ -313,7 +346,9 @@ impl Predicate {
                 | Guard::AtMostOneMember { .. }
                 | Guard::MinMembers { .. }
                 | Guard::HasKey { .. }
-                | Guard::ContainsEquals { .. },
+                | Guard::ContainsEquals { .. }
+                | Guard::ContainsMemberEquals { .. }
+                | Guard::ContainsTruthyMember { .. },
             ) => {}
         }
     }
@@ -349,9 +384,7 @@ impl Predicate {
                 marker,
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
                 sound_subset: sound_subset
-                    .into_iter()
-                    .map(|guard| guard.map_value_paths(map))
-                    .collect(),
+                    .map(|predicate| Box::new(predicate.map_value_paths(map))),
             },
             Self::Guard(guard) => Self::Guard(guard.map_value_paths(map)),
             Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),

@@ -245,6 +245,7 @@ fn normalize_conjunction(
             Predicate::And(predicates) => predicates
                 .into_iter()
                 .all(|predicate| push(predicate, normalized)),
+            Predicate::Or(predicates) if disjunction_is_tautology(&predicates) => true,
             predicate => {
                 if normalized
                     .iter()
@@ -264,7 +265,28 @@ fn normalize_conjunction(
             return None;
         }
     }
+    let absorbed_disjunctions = normalized
+        .iter()
+        .filter(|predicate| match predicate {
+            Predicate::Or(alternatives) => alternatives
+                .iter()
+                .any(|alternative| normalized.contains(alternative)),
+            _ => false,
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    for predicate in absorbed_disjunctions {
+        normalized.remove(&predicate);
+    }
     Some(normalized.into_iter().collect())
+}
+
+fn disjunction_is_tautology(predicates: &[Predicate]) -> bool {
+    predicates.iter().any(|predicate| {
+        predicates
+            .iter()
+            .any(|other| predicates_are_complementary(predicate, other))
+    })
 }
 
 fn predicates_are_contradictory(left: &Predicate, right: &Predicate) -> bool {
@@ -272,7 +294,7 @@ fn predicates_are_contradictory(left: &Predicate, right: &Predicate) -> bool {
         return true;
     }
 
-    matches!(
+    if matches!(
         (left, right),
         (
             Predicate::Guard(Guard::Eq {
@@ -293,7 +315,71 @@ fn predicates_are_contradictory(left: &Predicate, right: &Predicate) -> bool {
                 value: right_value,
             })
         ) if left_path == right_path && left_value == right_value
-    )
+    ) {
+        return true;
+    }
+
+    match (left, right) {
+        (
+            Predicate::Guard(Guard::Eq {
+                path: left_path,
+                value: left_value,
+            }),
+            Predicate::Guard(Guard::Eq {
+                path: right_path,
+                value: right_value,
+            }),
+        ) => left_path == right_path && left_value != right_value,
+        (
+            Predicate::Guard(Guard::MatchesPattern {
+                path: pattern_path, ..
+            }),
+            Predicate::Guard(Guard::Eq {
+                path: value_path,
+                value,
+            }),
+        )
+        | (
+            Predicate::Guard(Guard::Eq {
+                path: value_path,
+                value,
+            }),
+            Predicate::Guard(Guard::MatchesPattern {
+                path: pattern_path, ..
+            }),
+        ) => pattern_path == value_path && !matches!(value, crate::GuardValue::String(_)),
+        (
+            Predicate::Guard(Guard::TypeIs {
+                path: type_path,
+                schema_type,
+            }),
+            Predicate::Guard(Guard::Eq {
+                path: value_path,
+                value,
+            }),
+        )
+        | (
+            Predicate::Guard(Guard::Eq {
+                path: value_path,
+                value,
+            }),
+            Predicate::Guard(Guard::TypeIs {
+                path: type_path,
+                schema_type,
+            }),
+        ) => type_path == value_path && !guard_value_has_schema_type(value, schema_type),
+        _ => false,
+    }
+}
+
+fn guard_value_has_schema_type(value: &crate::GuardValue, schema_type: &str) -> bool {
+    match value {
+        crate::GuardValue::String(_) => schema_type == "string",
+        crate::GuardValue::Bool(_) => schema_type == "boolean",
+        crate::GuardValue::Int(_) => matches!(schema_type, "integer" | "number"),
+        crate::GuardValue::Float(_) => schema_type == "number",
+        crate::GuardValue::Null => schema_type == "null",
+    }
 }
 
 fn predicates_are_complementary(left: &Predicate, right: &Predicate) -> bool {

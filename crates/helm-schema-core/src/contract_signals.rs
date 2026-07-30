@@ -89,6 +89,15 @@ pub enum ConditionalGuard {
         /// Literal that at least one member must equal.
         value: GuardValue,
     },
+    /// SOME iterated item of the collection at `path` has a Helm-truthy
+    /// `member` — the document-level meaning of a Boolean range sentinel
+    /// (`Range(path) ∧ Truthy(path.*.member)`).
+    ContainsTruthyMember {
+        /// Values path expected to hold the iterated collection.
+        path: String,
+        /// Member whose truthiness selects the sentinel state.
+        member: String,
+    },
     /// SOME item of the list at `path` deep-equals the scalar literal —
     /// Sprig `has LITERAL .Values.list`. `has` returns false on a nil
     /// haystack and aborts on non-lists, so the guard holds exactly for
@@ -181,6 +190,10 @@ impl ConditionalGuard {
                 member,
                 value,
             },
+            Self::ContainsTruthyMember { path, member } => Self::ContainsTruthyMember {
+                path: map(&path),
+                member,
+            },
             Self::ContainsEquals { path, value } => Self::ContainsEquals {
                 path: map(&path),
                 value,
@@ -219,6 +232,7 @@ impl ConditionalGuard {
             | Self::IntLt { path, .. }
             | Self::HasKey { path, .. }
             | Self::ContainsMemberEquals { path, .. }
+            | Self::ContainsTruthyMember { path, .. }
             | Self::ContainsEquals { path, .. }
             | Self::AtMostOneMember { path }
             | Self::MinMembers { path, .. } => {
@@ -594,6 +608,10 @@ pub enum FailValueRequirement {
     MemberHost {
         /// Non-object JSON kinds explicitly handled by chart dispatch.
         handled_kinds: Vec<String>,
+        /// Whether this arm belongs to the exact, complete access domain.
+        /// A sound-subset arm may reject states where navigation certainly
+        /// executes, but it must not decide ownership of the path's base.
+        complete_domain: bool,
     },
     /// The value is iterated by `range`: collections and nil render, and
     /// integer counts iterate when the loop body has no member structure.
@@ -939,6 +957,9 @@ pub struct ContractValuePathFacts {
     pub is_partial_scalar_value_path: bool,
     /// Whether any rendering sink consumes the path.
     pub has_render_use: bool,
+    /// Whether any use consumes the value rather than merely testing it in a
+    /// positive control-flow header.
+    pub has_non_control_use: bool,
     /// Whether a rendering sink consumes the path without a branch guard.
     pub has_unconditional_render_use: bool,
     /// Whether any rendering sink is guarded by this path's own truthiness.
