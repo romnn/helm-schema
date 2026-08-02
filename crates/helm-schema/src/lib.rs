@@ -40,7 +40,7 @@ pub mod output {
     pub use crate::load_budget::LoadBudget;
     pub use crate::output_pipeline::{
         JsonOutputFormat, OutputPipelineOptions, PolicyInputOptions, PolicyInputs, ReferenceMode,
-        apply_schema_output_pipeline, load_policy_inputs, write_schema_json,
+        load_policy_inputs, write_schema_json,
     };
 }
 

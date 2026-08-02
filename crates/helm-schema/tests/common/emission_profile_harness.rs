@@ -36,6 +36,16 @@ pub(crate) enum ProbeInstance {
     Coalesced(Value),
 }
 
+impl ProbeInstance {
+    pub(crate) fn helm_values_file(&self) -> Option<Value> {
+        match self {
+            Self::Defaults => Some(Value::Object(Map::new())),
+            Self::SparseOverride(value) => Some(value.clone()),
+            Self::Coalesced(_) => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub(crate) struct SemanticControl {
     pub(crate) name: &'static str,
@@ -152,6 +162,18 @@ pub(crate) fn generate_profile_outputs(
     Ok((full, lean))
 }
 
+pub(crate) fn profile_session(
+    chart_relative_path: &str,
+    profile: SchemaProfile,
+    infer_required: bool,
+) -> AnalysisSession {
+    AnalysisSession::new(generate_options(
+        chart_relative_path,
+        profile,
+        infer_required,
+    ))
+}
+
 pub(crate) fn read_root_defaults(chart_relative_path: &str) -> eyre::Result<Value> {
     let path = chart_path(chart_relative_path).join("values.yaml");
     let source =
@@ -230,14 +252,29 @@ fn generate_schema(
     chart_relative_path: &str,
     profile: SchemaProfile,
 ) -> eyre::Result<GeneratedSchema> {
+    profile_session(chart_relative_path, profile, false)
+        .generated_schema()
+        .map(|mut generated| {
+            generated.schema = helm_schema_json_schema_minify::minimize_schema(generated.schema);
+            generated
+        })
+        .map_err(eyre::Report::from)
+        .wrap_err_with(|| format!("generate {profile:?} schema for {chart_relative_path}"))
+}
+
+fn generate_options(
+    chart_relative_path: &str,
+    profile: SchemaProfile,
+    infer_required: bool,
+) -> GenerateOptions {
     let chart_dir = chart_path(chart_relative_path);
     let chart_dir = chart_dir.to_string_lossy().to_string();
-    let options = GenerateOptions {
+    GenerateOptions {
         chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
-        infer_required: false,
+        infer_required,
         profile,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
@@ -255,15 +292,7 @@ fn generate_schema(
             ),
             ..Default::default()
         },
-    };
-    AnalysisSession::new(options)
-        .generated_schema()
-        .map(|mut generated| {
-            generated.schema = helm_schema_json_schema_minify::minimize_schema(generated.schema);
-            generated
-        })
-        .map_err(eyre::Report::from)
-        .wrap_err_with(|| format!("generate {profile:?} schema for {chart_relative_path}"))
+    }
 }
 
 fn chart_path(chart_relative_path: &str) -> std::path::PathBuf {

@@ -1,10 +1,14 @@
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
-use super::GENERATED_SCHEMA_MARKER_KEY;
 use crate::output_pipeline::{
-    OutputPipelineOptions, PolicyInputs, ReferenceMode, apply_schema_output_pipeline,
+    FinalOutputPolicy, OutputPipelineOptions, PolicyInputs, ReferenceMode,
+    apply_schema_output_pipeline,
 };
+
+fn output_policy() -> FinalOutputPolicy {
+    FinalOutputPolicy::for_profile(crate::generation::SchemaProfile::Full, false)
+}
 
 #[test]
 fn reference_mode_preserves_refs_when_requested() {
@@ -22,6 +26,7 @@ fn reference_mode_preserves_refs_when_requested() {
         schema,
         PolicyInputs::default(),
         std::path::Path::new("/does/not/matter"),
+        output_policy(),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::PreserveRefs,
             strip_descriptions: false,
@@ -60,6 +65,7 @@ fn self_contained_reference_mode_preserves_prepared_internal_refs() {
         schema,
         PolicyInputs::default(),
         std::path::Path::new("/does/not/matter"),
+        output_policy(),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
             strip_descriptions: false,
@@ -100,6 +106,7 @@ fn self_contained_reference_mode_rejects_unprepared_external_refs() {
         schema,
         PolicyInputs::default(),
         std::path::Path::new("/does/not/matter"),
+        output_policy(),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::SelfContained,
             strip_descriptions: false,
@@ -136,6 +143,7 @@ fn fully_inlined_export_reference_mode_inlines_prepared_internal_refs() {
         schema,
         PolicyInputs::default(),
         std::path::Path::new("/does/not/matter"),
+        output_policy(),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::FullyInlinedExport,
             strip_descriptions: false,
@@ -165,6 +173,7 @@ fn output_pipeline_marks_final_schema_as_generated() {
         schema,
         PolicyInputs::default(),
         std::path::Path::new("/does/not/matter"),
+        output_policy(),
         OutputPipelineOptions {
             reference_mode: ReferenceMode::PreserveRefs,
             strip_descriptions: false,
@@ -175,7 +184,7 @@ fn output_pipeline_marks_final_schema_as_generated() {
 
     sim_assert_eq!(
         have: output
-            .get(GENERATED_SCHEMA_MARKER_KEY)
+            .get("x-helm-schema-generated")
             .and_then(Value::as_bool),
         want: Some(true)
     );

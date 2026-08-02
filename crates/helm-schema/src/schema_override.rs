@@ -1,62 +1,94 @@
+use std::collections::BTreeSet;
+
 use serde_json::Value;
 
-/// Internal sibling marker used to preserve "replace this subtree"
-/// intent across override reference preparation.
-///
-/// The override loader sets `$ref-replace` next to every `$ref` it
-/// finds *before* refs are bundled or fully inlined. The sibling survives that
-/// preparation and signals to the merge that the prepared content should swap
-/// into the base, not deep-merge with whatever helm-schema's inference
-/// produced for the same path. The marker is stripped from the final output.
-pub const REPLACE_MARKER: &str = "$ref-replace";
+#[derive(Debug)]
+pub(crate) struct UnpreparedOverride {
+    schema: Value,
+    replace_at: BTreeSet<String>,
+}
 
-/// Walk the override and tag every object with `$ref` as
-/// "replace on merge". Run by the CLI before reference preparation so the
-/// marker rides through bundling or dereferencing and reaches the merge.
-pub fn mark_refs_for_replacement(value: &mut Value) {
-    match value {
-        Value::Object(obj) => {
-            if obj.contains_key("$ref") {
-                obj.insert(REPLACE_MARKER.to_string(), Value::Bool(true));
-            }
-            for (_, v) in obj.iter_mut() {
-                mark_refs_for_replacement(v);
-            }
+impl UnpreparedOverride {
+    pub(crate) fn capture(schema: Value) -> Self {
+        let mut replace_at = BTreeSet::new();
+        collect_replacement_pointers(&schema, "", &mut replace_at);
+        Self { schema, replace_at }
+    }
+
+    pub(crate) fn schema(&self) -> &Value {
+        &self.schema
+    }
+
+    pub(crate) fn into_prepared(self, schema: Value) -> PreparedOverride {
+        PreparedOverride {
+            schema,
+            replace_at: self.replace_at,
         }
-        Value::Array(arr) => {
-            for v in arr.iter_mut() {
-                mark_refs_for_replacement(v);
-            }
+    }
+
+    fn into_prepared_unmodified(self) -> PreparedOverride {
+        PreparedOverride {
+            schema: self.schema,
+            replace_at: self.replace_at,
         }
-        _ => {}
     }
 }
 
-/// Merges an override into a base schema using replacement markers and schema-aware recursion.
+#[derive(Debug)]
+pub(crate) struct PreparedOverride {
+    schema: Value,
+    replace_at: BTreeSet<String>,
+}
+
+impl PreparedOverride {
+    pub(crate) fn identity(&self) -> Value {
+        serde_json::json!({
+            "schema": self.schema,
+            "replace-at": self.replace_at,
+        })
+    }
+}
+
+/// Merges one raw override into a base schema using schema-aware recursion.
+///
+/// `$ref`-bearing subtrees replace inferred content. Replacement intent is
+/// captured separately from the JSON document, so caller-authored keywords
+/// are never repurposed as merge controls.
 #[must_use]
 pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
-    let (mut base_obj, mut override_obj) = match (base, override_schema) {
+    apply_prepared_schema_override(
+        base,
+        UnpreparedOverride::capture(override_schema).into_prepared_unmodified(),
+    )
+}
+
+pub(crate) fn apply_prepared_schema_override(
+    base: Value,
+    override_schema: PreparedOverride,
+) -> Value {
+    apply_schema_override_at(
+        base,
+        override_schema.schema,
+        "",
+        &override_schema.replace_at,
+    )
+}
+
+fn apply_schema_override_at(
+    base: Value,
+    override_schema: Value,
+    pointer: &str,
+    replace_at: &BTreeSet<String>,
+) -> Value {
+    if replace_at.contains(pointer) {
+        return override_schema;
+    }
+
+    let (mut base_obj, override_obj) = match (base, override_schema) {
         (Value::Object(base_obj), Value::Object(override_obj)) => (base_obj, override_obj),
-        (_, ov) => return strip_replace_markers(ov),
+        (_, override_schema) => return override_schema,
     };
 
-    // Two replacement signals collapse to the same semantic: an override
-    // subtree must swap into the base, not deep-merge with it.
-    //   1. Raw `$ref` — JSON Schema draft-07 ignores its siblings, so an
-    //      inferred `type`/`properties` left in the base would either
-    //      contradict the refed content (e.g. inferred
-    //      `cloud: {type: [boolean, string]}` vs an override
-    //      `cloud: {$ref: ./cloud.json}` whose enum includes `null`) or
-    //      survive into the output where the JSON Schema spec said they
-    //      shouldn't.
-    //   2. `REPLACE_MARKER` left behind by `mark_refs_for_replacement`
-    //      when the CLI prepares override refs. Bundled refs may remain as
-    //      refs and fully inlined refs are gone, but the marker carries the
-    //      same replacement intent across both preparation modes.
-    let had_replace_marker = override_obj.remove(REPLACE_MARKER).is_some();
-    if override_obj.contains_key("$ref") || had_replace_marker {
-        return Value::Object(override_obj);
-    }
     if override_obj.contains_key("anyOf")
         || override_obj.contains_key("oneOf")
         || override_obj.contains_key("allOf")
@@ -77,10 +109,17 @@ pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
                 base_obj.insert(k, Value::Array(a));
             }
             (_, Some(bv), ov) => {
-                base_obj.insert(k, apply_schema_override(bv, ov));
+                let child_pointer = format!(
+                    "{pointer}/{}",
+                    helm_schema_json_schema_walk::escape_json_pointer_segment(&k)
+                );
+                base_obj.insert(
+                    k,
+                    apply_schema_override_at(bv, ov, &child_pointer, replace_at),
+                );
             }
             (_, None, ov) => {
-                base_obj.insert(k, strip_replace_markers(ov));
+                base_obj.insert(k, ov);
             }
         }
     }
@@ -88,18 +127,27 @@ pub fn apply_schema_override(base: Value, override_schema: Value) -> Value {
     Value::Object(base_obj)
 }
 
-fn strip_replace_markers(value: Value) -> Value {
+fn collect_replacement_pointers(value: &Value, pointer: &str, replace_at: &mut BTreeSet<String>) {
     match value {
-        Value::Object(mut obj) => {
-            obj.remove(REPLACE_MARKER);
-            let mapped = obj
-                .into_iter()
-                .map(|(k, v)| (k, strip_replace_markers(v)))
-                .collect();
-            Value::Object(mapped)
+        Value::Object(object) => {
+            if object.contains_key("$ref") {
+                replace_at.insert(pointer.to_string());
+                return;
+            }
+            for (key, child) in object {
+                let child_pointer = format!(
+                    "{pointer}/{}",
+                    helm_schema_json_schema_walk::escape_json_pointer_segment(key)
+                );
+                collect_replacement_pointers(child, &child_pointer, replace_at);
+            }
         }
-        Value::Array(arr) => Value::Array(arr.into_iter().map(strip_replace_markers).collect()),
-        other => other,
+        Value::Array(items) => {
+            for (index, item) in items.iter().enumerate() {
+                collect_replacement_pointers(item, &format!("{pointer}/{index}"), replace_at);
+            }
+        }
+        _ => {}
     }
 }
 

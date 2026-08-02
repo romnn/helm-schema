@@ -1,0 +1,816 @@
+{
+  "$defs": {
+    "1": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "ConfigMap"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "2": {
+      "anyOf": [
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ]
+    },
+    "3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "requiredText": {}
+            },
+            "required": [
+              "requiredText"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "requiredText": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "requiredText"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "4": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "5": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "Service"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "6": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "7": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "8": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "host": {
+                    "properties": {
+                      "nested": {}
+                    },
+                    "required": [
+                      "nested"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "host": {
+                  "properties": {
+                    "nested": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "nested"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "host"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "host": {
+            "additionalProperties": {},
+            "properties": {
+              "nested": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "host": {}
+                },
+                "required": [
+                  "host"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "host": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "host"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "host": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "local": {
+          "additionalProperties": {},
+          "properties": {
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "version": {
+          "pattern": "^v[0-9]+\\.[0-9]+$",
+          "type": "string"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "worker": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "dynamic": {}
+              },
+              "required": [
+                "dynamic"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "dynamic": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dynamic"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "guard": {}
+              },
+              "required": [
+                "guard"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "guard": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "guard"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "local": {}
+              },
+              "required": [
+                "local"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "local": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "local"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "version": {}
+              },
+              "required": [
+                "version"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "version": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "version"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "requiredText": {
+                "enum": [
+                  ""
+                ]
+              }
+            },
+            "required": [
+              "requiredText"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/3"
+          },
+          {
+            "$ref": "#/$defs/3"
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "description": "caller override",
+  "properties": {
+    "dynamic": {
+      "additionalProperties": {},
+      "properties": {
+        "kind": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "global": {},
+    "guard": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {},
+        "message": {}
+      },
+      "type": "object"
+    },
+    "host": {
+      "additionalProperties": {},
+      "properties": {
+        "nested": {
+          "additionalProperties": {},
+          "properties": {
+            "value": {}
+          }
+        }
+      }
+    },
+    "local": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/5"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/1"
+                }
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "setting": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "$ref": "#/$defs/4"
+                        },
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/$defs/4"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      }
+                    ],
+                    "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+                    "type": "string"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/7"
+                  },
+                  {
+                    "$ref": "#/$defs/6"
+                  },
+                  {
+                    "$ref": "#/$defs/8"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/1"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "setting": {
+                "anyOf": [
+                  {
+                    "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/7"
+                  },
+                  {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/6"
+                  },
+                  {
+                    "$ref": "#/$defs/8"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/1"
+              },
+              {
+                "$ref": "#/$defs/5"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "setting": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "ConfigMap"
+              ]
+            },
+            {
+              "enum": [
+                "Service"
+              ]
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "setting": {}
+      },
+      "type": "object"
+    },
+    "replicas": {
+      "$ref": "#/$defs/2"
+    },
+    "requiredText": {},
+    "version": {
+      "type": "string"
+    },
+    "worker": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "$ref": "#/$defs/2"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "global": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "replicas": {}
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "x-helm-schema-generated": true,
+  "x-helm-schema-policy": {
+    "annotation-format-version": 1,
+    "modifiers": {
+      "overrides": {
+        "count": 1,
+        "digest": "5fa48af28944eabe68dea21d5f8100b6a155b39a35c7145dcb531b9b0629f773"
+      },
+      "reference-mode": "preserved"
+    },
+    "narrowing": [],
+    "policy-fingerprint": "95931ecb2094f8f5311ce635900435d13b200eb9e02241f43d5b73dbd72f440b",
+    "policy-vocabulary-version": 1,
+    "requested-profile": "full",
+    "resolved": {
+      "kind-partitions": true,
+      "local-conditionals": true,
+      "root-anchored-conditionals": true,
+      "terminal-clauses": true
+    }
+  }
+}

@@ -5,7 +5,9 @@ use vfs::VfsPath;
 
 use crate::provider_builder::ProviderOptions;
 
-pub use helm_schema_gen::{EmissionReport, SchemaProfile, SelectionDifferenceDirection};
+pub use helm_schema_gen::{
+    EmissionClassKind, EmissionReport, ResolvedEmissionPolicy, SchemaProfile,
+};
 
 /// Inputs and analysis policy for generating one chart schema.
 #[derive(Debug, Clone)]

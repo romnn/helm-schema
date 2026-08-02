@@ -12192,3 +12192,30 @@ Because there is no TIGHTEN or LOOSEN verdict, no per-flip Helm adjudication is
 needed. The full live semantic-control lane still passes under Helm 4.2.3 and
 the pinned provider boundary, and both fixture suites match the clean-dump
 candidates exactly.
+
+## Lean policy and final annotations (2026-08-02, sixty-fourth round)
+
+The middle-point lean decision table is now the operative selector: Mandatory
+and ordinary locally anchored facts survive, while root-anchored ordinary
+facts, kind partitions, and terminal clauses are dropped. The Step 1a shadow
+registry is consumed and removed. On the pinned Temporal wrapper this retains
+10 Mandatory and 6,849 OrdinaryLocal facts, drops 4,641 OrdinaryRoot and 693
+TerminalGuarded facts, and produces a 1,599,019-byte compact description-free
+final output. Three strict Helm lint runs have a 19.31-second median, below the
+recorded veto envelope and the 4.5 MiB size budget.
+
+Four lean schemas are pinned in the separate emission-profile fixture tree;
+the full corpus and generator fixtures remain unchanged. A compiled Rust
+transition prober checks 476 coalesced documents and reports 45 tightenings,
+zero inverse flips. Helm 4.2.3 rejects 34 during template rendering and strict
+Kubernetes 1.29 validation rejects the 11 remaining rendered manifests, so no
+tightening is adopted from direction alone.
+
+Final emitted documents now carry a deterministic, versioned resolved-policy
+annotation after every output transform. Boolean schemas are wrapped without
+changing acceptance, and caller annotations cannot forge the resolved policy.
+Override `$ref` replacement intent is captured out of band and participates in
+both merge behavior and the application-ordered fingerprint; caller-authored
+`$ref-replace` keys remain ordinary data. Four final-output equality fixtures
+pin those contracts while `GeneratedSchema` and the semantic corpus remain
+unannotated.

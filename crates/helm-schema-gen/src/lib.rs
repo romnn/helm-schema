@@ -31,10 +31,12 @@ pub(crate) use emission_plan::CompletionPass;
 use emission_plan::LoweredEmissionPlan;
 use emission_policy::EmissionPolicy;
 
-pub use emission_policy::{EmissionClassKind, EmissionOrigin, SchemaProfile};
+pub use emission_policy::{
+    EmissionClassKind, EmissionOrigin, POLICY_VOCABULARY_VERSION, ResolvedEmissionPolicy,
+    SchemaProfile,
+};
 pub use emission_report::{
     CanonicalizationCounts, CarrierCounts, EmissionReport, FactCounts, MandatoryOutcomes,
-    SelectionDifference, SelectionDifferenceDirection,
 };
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
@@ -176,10 +178,7 @@ fn generate_values_schema_through(
     completion_pass: CompletionPass,
 ) -> (Value, EmissionReport) {
     let plan = LoweredEmissionPlan::build(input);
-    let projected = match input.profile {
-        SchemaProfile::Full => plan.project(EmissionPolicy::for_profile(SchemaProfile::Full)),
-        SchemaProfile::Lean => plan.project_legacy(SchemaProfile::Lean),
-    };
+    let projected = plan.project(EmissionPolicy::for_profile(input.profile));
     let completed = plan.complete(projected, completion_pass);
     (completed.schema, completed.emission_report)
 }

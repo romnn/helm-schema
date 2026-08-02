@@ -8,7 +8,7 @@ use crate::base_schema::{ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
-use crate::emission_policy::{EmissionClass, EmissionPolicy, SchemaProfile};
+use crate::emission_policy::{EmissionClass, EmissionPolicy};
 use crate::emission_report::{EmissionReport, FactRecord};
 use crate::overlay_lowering::{
     ConditionalHostPreparation, LoweredConjunct, append_selected_constraints,
@@ -75,28 +75,6 @@ pub(crate) enum CompletionPass {
     SharedDefinitions,
     ProgramWrappers,
     Descriptions,
-}
-
-#[derive(Clone, Copy)]
-enum ProjectionSelector {
-    Legacy(SchemaProfile),
-    Policy(EmissionPolicy),
-}
-
-impl ProjectionSelector {
-    fn selected(self, class: &EmissionClass) -> bool {
-        match self {
-            Self::Legacy(profile) => profile == SchemaProfile::Full,
-            Self::Policy(policy) => policy.selects(class),
-        }
-    }
-
-    fn projected(self, class: &EmissionClass) -> bool {
-        match self {
-            Self::Legacy(profile) => EmissionPolicy::for_profile(profile).selects(class),
-            Self::Policy(policy) => policy.selects(class),
-        }
-    }
 }
 
 impl LoweredEmissionPlan {
@@ -183,30 +161,16 @@ impl LoweredEmissionPlan {
 
     pub(crate) fn project(&self, policy: EmissionPolicy) -> ProjectedTree {
         debug_assert!(policy.is_valid());
-        self.project_with(ProjectionSelector::Policy(policy))
-    }
-
-    pub(crate) fn project_legacy(&self, profile: SchemaProfile) -> ProjectedTree {
-        self.project_with(ProjectionSelector::Legacy(profile))
-    }
-
-    fn project_with(&self, selector: ProjectionSelector) -> ProjectedTree {
         let mut emission_report = EmissionReport::default();
         let mut selected_indices = Vec::new();
         let mut selected_conditionals = Vec::new();
-        let mut fact_index = 0;
         for (conditional_index, conjunct) in self.conditional_schemas.iter().enumerate() {
-            let selected = selector.selected(&conjunct.class);
+            let selected = policy.selects(&conjunct.class);
             emission_report.record_fact(FactRecord {
-                fact_index,
                 class: &conjunct.class,
                 origin: conjunct.origin,
-                target_value_path: &conjunct.carrier.target_value_path,
-                schema: &conjunct.schema,
                 selected,
-                projected_selected: selector.projected(&conjunct.class),
             });
-            fact_index += 1;
             if selected {
                 selected_indices.push(conditional_index);
                 selected_conditionals.push(conjunct.clone());
@@ -216,17 +180,12 @@ impl LoweredEmissionPlan {
             .terminal_schemas
             .iter()
             .filter(|conjunct| {
-                let selected = selector.selected(&conjunct.class);
+                let selected = policy.selects(&conjunct.class);
                 emission_report.record_fact(FactRecord {
-                    fact_index,
                     class: &conjunct.class,
                     origin: conjunct.origin,
-                    target_value_path: &conjunct.carrier.target_value_path,
-                    schema: &conjunct.schema,
                     selected,
-                    projected_selected: selector.projected(&conjunct.class),
                 });
-                fact_index += 1;
                 selected
             })
             .cloned()

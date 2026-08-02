@@ -9,15 +9,21 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 - Default: proceed with the recommended middle-point contract: mandatory facts and local
   conditionals remain enabled; root-anchored conditionals, kind partitions, and terminal clauses
   are disabled.
-- Status: pending Step 2 measurements and the Step 3 reconfirmation.
-- Veto window: open until the affected lean fixtures ship.
+- Status: preliminary default adopted in Step 2. The exact Temporal preset is
+  below the size budget, its median strict-lint time is 19.31 seconds, and no
+  monotonicity-law failure occurred. Step 3 must reconfirm this decision after
+  canonical emission and the late reachability prune.
+- Veto window: open through the Step 3 reconfirmation.
 
 ### Temporal migration
 
 - Default: migrate the chart-local integration to `helm-schema.yaml` with `profile: lean` and
   `emission.local-conditionals: off`, removing the CLI profile flag.
-- Status: pending Step 2 implementation and measurements.
-- Veto window: open until the affected temporal fixture/config ships.
+- Status: default selected by the Step 2 measurements. The downstream
+  `HELM_SCHEMA_OPTIONS`/`helm-schema.yaml` mutation is intentionally deferred
+  to Step 4, when the config loader exists; applying it earlier would remove
+  the only operative selector while the new file is still ignored.
+- Veto window: open until the Step 4 Temporal config fixture ships.
 
 ## Step -1 — round-58 review-findings closure
 
@@ -555,11 +561,11 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts checked.
   - `task tokei:core`: exit 0; production Rust is 59,115 LOC (`+86` from
     Step 1b).
-- Commit: pending.
+- Commit: `d0ab756` (`refactor(schema): prune unreachable provider definitions`).
 
 ## Step 2 — lean policy and annotations
 
-- Status: pending.
+- Status: landed; commit pending.
 - Measured results:
   - Pre-registered shadow-projection input from Step 1a: controls 9 facts
     (`3594d70cd4304790641f1d5ee12a157da54a9215846bb181260f4f79b6f271e7`),
@@ -569,10 +575,133 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     (`602e49d724de9477fb87081089e29a49e6e28b0b22474dd4ca5e6b93d85c38ae`).
     All are projection-only. The report contains the full ordered identity of
     every fact (index, class/origin, target, class digest, payload digest).
-- Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+  - The decision-table selector is now operative. Full selects every fact;
+    lean selects every Mandatory and OrdinaryLocal fact and selects zero
+    OrdinaryRoot, kind-partition, or terminal facts. The temporary legacy
+    selector, shadow accounting, and difference identities are deleted after
+    serving their Step 1a pre-registration purpose.
+  - On the Temporal anchor, full lowers 10 Mandatory, 4,641 OrdinaryRoot,
+    6,849 OrdinaryLocal, and 693 TerminalGuarded facts. Middle lean retains
+    the 10 Mandatory and all 6,849 OrdinaryLocal facts, dropping the other
+    5,334. Its description-free compact final output is 1,599,019 shipped
+    bytes and 55,589 objects; full is 3,961,838 bytes and 141,839 objects.
+  - Strict Helm lint over the exact middle schema took 22.53, 19.31, and
+    14.64 seconds (median 19.31); the same wrapper without a schema took 0.07
+    seconds in all three runs. `jv` 0.7.0 compile took 6.59, 6.67, and 6.58
+    seconds. The preset is below the 4.5 MiB budget and does not materially
+    exceed the plan's 20–30 second veto envelope.
+  - The compiled transition prober checks 476 default-composed/null-deletion
+    documents across the four lean anchors. It finds 45 legacy-accepts /
+    middle-rejects transitions and zero inverse flips. The ordinary and
+    Temporal pairwise batteries prove `accepts(full) ⊆ accepts(lean)`.
+  - Four complete lean equality fixtures now live only under
+    `testdata/emission-profile-schemas/lean/`. The 56 full corpus schemas and
+    all 20 generator fixtures remain byte-identical to Step 1b VE.
+  - Final output carries a deterministic versioned policy annotation after
+    overrides, reference transport, description stripping, and minification.
+    `GeneratedSchema` remains unannotated. Four complete final-output fixtures
+    cover full/lean metadata, caller-key overwrite, deterministic identity,
+    and the draft-07 Boolean-root wrapper.
+  - Override replacement intent is captured out of band on initial read and
+    retained as normalized JSON pointers through every reference mode. Merge
+    and the application-ordered SHA-256 override digest consume the same
+    representation. Caller-authored `$ref-replace` is ordinary schema data;
+    non-schema override roots are rejected before preparation.
+- Deviations:
+  - The per-knob Step 2 measurement is exact at the fact-selection boundary:
+    the Temporal class counts above register each knob's fact delta. Serialized
+    per-knob timing/size comparisons remain part of the dedicated Step 5
+    benchmark because the multi-policy projection API remains crate-private,
+    as required, and no public experimental knob was introduced for
+    measurement.
+  - The Temporal migration decision is executed as a selected default here,
+    but its downstream file mutation waits for Step 4's config loader. Applying
+    the file now would be inert while removing the operative CLI profile.
+- Adjudication evidence:
+  - Every one of the 45 transition tightenings was replayed at template level
+    with Helm 4.2.3 and `--skip-schema-validation`: 34 fail during rendering
+    and the remaining 11 render but fail strict Kubernetes 1.29 provider
+    validation. No adopted tightening accepts at both oracle boundaries.
+  - The pre-registered `version: v1` family is among the Helm failures; the
+    chart reports `version must be vMAJOR.MINOR`, confirming the Mandatory
+    pattern is not a false rejection.
+  - The three-category hermetic controls and their live replay pass after the
+    selector flip. Retained dependency-local replica typing rejects
+    non-coercible spellings; removed root/kind/terminal teeth widen only their
+    registered cases; positive controls continue to render and validate.
+  - Helm's embedded validator and the compiled Rust validator agree on the
+    Boolean wrappers, `if`/`then`, type arrays, internal refs, and extension
+    annotations touched by this round.
+- Review dossier:
+  - Operative policy floors and ordinary/Temporal monotonicity:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E 'not test(/(early_provider_definition_pruning_is_acceptance_equivalent|middle_lean_transition_has_only_preregistered_tightenings|temporal_middle_policy_measurements)/)'`.
+  - Exact transition prober plus all 45 live adjudications:
+    `LEGACY_LEAN_SCHEMA_DIR=/tmp/helm-schema-step2-lean-old
+    ADJUDICATE_WITH_HELM=1 cargo nextest run -P integration -p helm-schema
+    --test schema_emission_profiles -E
+    'test(middle_lean_transition_has_only_preregistered_tightenings)'
+    --run-ignored ignored-only --no-capture`; it reports
+    `probes_checked=476 tightenings=45 inverse=0` plus one `HELM_REJECT` or
+    `PROVIDER_REJECT` line for every tightening.
+  - Exact Temporal fact and generated-document deltas:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E 'test(temporal_middle_policy_measurements)'
+    --run-ignored ignored-only --no-capture`.
+  - Version-pattern direct replay: `helm template
+    step2-preregister-pattern testdata/charts/schema-emission-controls
+    --skip-schema-validation --set-string version=v1`; expected exit 1.
+  - Exact compact output and size: `target/debug/helm-schema
+    testdata/charts/schema-emission-temporal-wrapper --profile lean
+    --exclude-tests --strip-descriptions --compact --k8s-version
+    v1.29.0-standalone-strict --strict-k8s-version
+    --k8s-schema-cache-dir
+    testdata/provider-bundle/kubernetes-json-schema-cache
+    --crd-catalog-cache-dir
+    testdata/provider-bundle/crds-catalog-cache --offline --output
+    /tmp/helm-schema-step2-temporal-middle.schema.json`, then `wc -c` and
+    `jq '[.. | objects] | length'` on the output.
+  - Helm compile timing: copy the wrapper to
+    `/tmp/helm-schema-step2-temporal-lint`, place the exact compact output at
+    `values.schema.json`, create the otherwise-empty `templates/` directory,
+    then run `/usr/bin/time -f
+    'elapsed=%e user=%U system=%S max_rss_kb=%M exit=%x' helm lint
+    /tmp/helm-schema-step2-temporal-lint --strict` three times. Move the schema
+    aside and repeat for the no-schema baseline.
+  - `jv` compile timing: `/usr/bin/time -f
+    'elapsed=%e user=%U system=%S max_rss_kb=%M exit=%x' jv -q
+    /tmp/helm-schema-step2-temporal-middle.schema.json` three times.
+  - Override-intent and final-output contracts: `cargo nextest run -p
+    helm-schema -E 'test(/(prepared_override_identity_includes_replacement_intent|caller_authored_ref_replace_keys_do_not_collide_with_merge_intent|override_loader_rejects_non_schema_roots|final_policy_annotation_is_deterministic_and_overwrites_caller_key|boolean_roots_are_wrapped_without_changing_acceptance)/)'`, then
+    `cargo nextest run -P integration -p helm-schema --test
+    final_output_policy`.
+  - Single clean final-build dump for all semantic lanes:
+    `TMPDIR=/tmp/helm-schema-step2-final-dump SCHEMA_DUMP=1 cargo nextest
+    run -P integration --no-fail-fast -p helm-schema-gen -p
+    helm-schema-cli -p helm-schema -E 'test(schema_fixtures_match) |
+    binary(chart_corpus) |
+    test(lean_profile_schemas_match_their_separate_fixture_lane) |
+    binary(final_output_policy)'`; 61 tests pass and all 84 dump files are
+    from the same final build.
+  - Adopted separate-lane equality: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profiles -E
+    'test(lean_profile_schemas_match_their_separate_fixture_lane)'`, then
+    `cargo nextest run -P integration -p helm-schema --test
+    final_output_policy`.
+  - Full semantic lanes untouched: `git diff --exit-code d0ab756 --
+    testdata/chart-corpus-schemas crates/helm-schema-gen/tests/fixtures`.
+- Gates on the final Step 2 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations checked.
+  - `cargo nextest run --workspace`: exit 0; 1,153 passed.
+  - `task test:integration`: exit 0; 545 passed, 6 skipped.
+  - `task test:all`: exit 0; 1,702 passed, 6 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked.
+  - `task tokei:core`: exit 0; production Rust is 59,242 LOC (`+127` from
+    Step 1b VE).
 - Commit: pending.
 
 ## Step 3 — canonical emission and final output metrics

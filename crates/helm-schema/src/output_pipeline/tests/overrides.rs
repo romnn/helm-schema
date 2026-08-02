@@ -3,11 +3,12 @@ use std::fs;
 use std::path::PathBuf;
 use test_util::prelude::sim_assert_eq;
 
+use color_eyre::eyre;
 use serde_json::Value;
 
 use crate::output_pipeline::{
-    OutputPipelineOptions, PolicyInputOptions, ReferenceMode, apply_schema_output_pipeline,
-    load_policy_inputs,
+    FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, ReferenceMode,
+    apply_schema_output_pipeline, load_policy_inputs,
 };
 
 fn test_temp_dir(name: &str) -> PathBuf {
@@ -31,6 +32,10 @@ fn output_options(reference_mode: ReferenceMode) -> OutputPipelineOptions {
         strip_descriptions: false,
         minimize: false,
     }
+}
+
+fn output_policy() -> FinalOutputPolicy {
+    FinalOutputPolicy::for_profile(crate::generation::SchemaProfile::Full, false)
 }
 
 #[test]
@@ -77,8 +82,14 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(schema, policy_inputs, &temp_dir, output_options)
-        .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(
+        schema,
+        policy_inputs,
+        &temp_dir,
+        output_policy(),
+        output_options,
+    )
+    .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -143,8 +154,14 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(schema, policy_inputs, &temp_dir, output_options)
-        .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(
+        schema,
+        policy_inputs,
+        &temp_dir,
+        output_policy(),
+        output_options,
+    )
+    .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -189,8 +206,14 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(schema, policy_inputs, &temp_dir, output_options)
-        .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(
+        schema,
+        policy_inputs,
+        &temp_dir,
+        output_policy(),
+        output_options,
+    )
+    .expect("apply output pipeline");
 
     sim_assert_eq!(
         have: output
@@ -200,4 +223,123 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
     );
 
     fs::remove_dir_all(&temp_dir).expect("remove temp dir");
+}
+
+#[test]
+fn override_loader_rejects_non_schema_roots() -> eyre::Result<()> {
+    let temp_dir = test_temp_dir("invalid-root");
+    fs::create_dir_all(&temp_dir)?;
+    for (index, root) in [
+        serde_json::json!(null),
+        serde_json::json!(3),
+        serde_json::json!("schema"),
+        serde_json::json!([]),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let path = temp_dir.join(format!("override-{index}.json"));
+        fs::write(&path, serde_json::to_vec(&root)?)?;
+        let result = load_policy_inputs(&[path], &policy_options(ReferenceMode::PreserveRefs));
+        sim_assert_eq!(have: result.is_err(), want: true);
+    }
+    fs::remove_dir_all(&temp_dir)?;
+    Ok(())
+}
+
+#[test]
+fn prepared_override_identity_includes_replacement_intent() -> eyre::Result<()> {
+    let temp_dir = test_temp_dir("override-identity");
+    fs::create_dir_all(&temp_dir)?;
+    fs::write(
+        temp_dir.join("shared.json"),
+        r#"{"enum":[null,"azure","minikube"]}"#,
+    )?;
+    let referenced_path = temp_dir.join("referenced.json");
+    fs::write(
+        &referenced_path,
+        r#"{"properties":{"cloud":{"$ref":"./shared.json"}}}"#,
+    )?;
+    let inline_path = temp_dir.join("inline.json");
+    fs::write(
+        &inline_path,
+        r#"{"properties":{"cloud":{"enum":[null,"azure","minikube"]}}}"#,
+    )?;
+    let options = policy_options(ReferenceMode::FullyInlinedExport);
+    let referenced = load_policy_inputs(&[referenced_path], &options)?;
+    let inline = load_policy_inputs(&[inline_path], &options)?;
+
+    sim_assert_eq!(
+        have: referenced.identity().digest == inline.identity().digest,
+        want: false
+    );
+
+    fs::remove_dir_all(&temp_dir)?;
+    Ok(())
+}
+
+#[test]
+fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::Result<()> {
+    let temp_dir = test_temp_dir("caller-ref-replace");
+    fs::create_dir_all(&temp_dir)?;
+    fs::write(
+        temp_dir.join("shared.json"),
+        r#"{"enum":["azure","minikube"]}"#,
+    )?;
+    let override_path = temp_dir.join("override.json");
+    fs::write(
+        &override_path,
+        indoc! {r#"
+            {
+                "properties": {
+                    "cloud": {
+                        "$ref": "./shared.json",
+                        "$ref-replace": "caller ref value"
+                    }
+                },
+                "x-caller": {
+                    "$ref-replace": "caller non-ref value"
+                }
+            }
+        "#},
+    )?;
+    let base = serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {"cloud": {"type": "string"}}
+    });
+
+    for reference_mode in [
+        ReferenceMode::SelfContained,
+        ReferenceMode::FullyInlinedExport,
+        ReferenceMode::PreserveRefs,
+    ] {
+        let policy_inputs = load_policy_inputs(
+            std::slice::from_ref(&override_path),
+            &policy_options(reference_mode),
+        )?;
+        let output = apply_schema_output_pipeline(
+            base.clone(),
+            policy_inputs,
+            &temp_dir,
+            output_policy(),
+            output_options(reference_mode),
+        )?;
+        sim_assert_eq!(
+            have: output.pointer("/x-caller/$ref-replace"),
+            want: Some(&serde_json::json!("caller non-ref value"))
+        );
+        let ref_location_value = output.pointer("/properties/cloud/$ref-replace");
+        if reference_mode == ReferenceMode::SelfContained {
+            sim_assert_eq!(have: ref_location_value, want: None);
+        } else {
+            sim_assert_eq!(
+                have: ref_location_value,
+                want: Some(&serde_json::json!("caller ref value"))
+            );
+        }
+    }
+
+    fs::remove_dir_all(&temp_dir)?;
+    Ok(())
 }

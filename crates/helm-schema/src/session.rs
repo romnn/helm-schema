@@ -15,8 +15,8 @@ use crate::chart;
 use crate::error::EngineResult;
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
-    OutputPipelineOptions, PolicyInputOptions, PolicyInputs, apply_schema_output_pipeline,
-    load_policy_inputs,
+    FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, PolicyInputs,
+    apply_schema_output_pipeline, load_policy_inputs,
 };
 use crate::provider_builder;
 use crate::values_roots;
@@ -279,6 +279,7 @@ impl AnalysisSession {
             generated.schema,
             policy_inputs,
             self.chart_base_dir(),
+            FinalOutputPolicy::for_profile(self.opts.profile, self.opts.infer_required),
             output_options,
         )
     }

@@ -1,6 +1,10 @@
 //! Schema emission policy.
 
 use helm_schema_core::ConditionalGuard;
+use serde::Serialize;
+
+/// Version of the emission-policy vocabulary used in output annotations.
+pub const POLICY_VOCABULARY_VERSION: u64 = 1;
 
 /// Selects how much analyzed contract evidence is emitted as JSON Schema.
 ///
@@ -19,6 +23,33 @@ pub enum SchemaProfile {
     /// This profile exists for Helm's validator, whose schema compilation
     /// cost grows superlinearly on large conditional documents.
     Lean,
+}
+
+impl SchemaProfile {
+    /// Stable profile spelling used in serialized policy metadata.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Full => "full",
+            Self::Lean => "lean",
+        }
+    }
+
+    /// Resolves this preset into the complete version-1 policy vocabulary.
+    #[must_use]
+    pub const fn resolved_policy(self) -> ResolvedEmissionPolicy {
+        EmissionPolicy::for_profile(self).resolved()
+    }
+}
+
+/// Read-only resolved emission policy used in final output metadata.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct ResolvedEmissionPolicy {
+    root_anchored_conditionals: bool,
+    local_conditionals: bool,
+    terminal_clauses: bool,
+    kind_partitions: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -237,6 +268,15 @@ impl EmissionPolicy {
         !self.knobs.kind_partitions
             || self.knobs.root_anchored_conditionals
             || self.knobs.local_conditionals
+    }
+
+    const fn resolved(self) -> ResolvedEmissionPolicy {
+        ResolvedEmissionPolicy {
+            root_anchored_conditionals: self.knobs.root_anchored_conditionals,
+            local_conditionals: self.knobs.local_conditionals,
+            terminal_clauses: self.knobs.terminal_clauses,
+            kind_partitions: self.knobs.kind_partitions,
+        }
     }
 
     pub(crate) fn selects(self, class: &EmissionClass) -> bool {

@@ -43,6 +43,14 @@ pub enum ReferenceMode {
 }
 
 impl ReferenceMode {
+    pub(crate) const fn annotation_name(self) -> &'static str {
+        match self {
+            Self::SelfContained => "bundled",
+            Self::FullyInlinedExport => "fully-inlined",
+            Self::PreserveRefs => "preserved",
+        }
+    }
+
     /// Resolves mutually exclusive CLI flags into one reference policy.
     #[must_use]
     pub fn from_flags(keep_refs: bool, inline_refs: bool) -> Self {

@@ -1,0 +1,270 @@
+{
+  "$defs": {
+    "1": {
+      "anyOf": [
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "local": {
+          "additionalProperties": {},
+          "properties": {
+            "kind": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "version": {
+          "pattern": "^v[0-9]+\\.[0-9]+$",
+          "type": "string"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "worker": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "properties": {
+    "dynamic": {
+      "additionalProperties": {},
+      "properties": {
+        "kind": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "global": {},
+    "guard": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {},
+        "message": {}
+      },
+      "type": "object"
+    },
+    "host": {
+      "additionalProperties": {},
+      "properties": {
+        "nested": {
+          "additionalProperties": {},
+          "properties": {
+            "value": {}
+          }
+        }
+      }
+    },
+    "local": {
+      "additionalProperties": {},
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "ConfigMap"
+              ]
+            },
+            {
+              "enum": [
+                "Service"
+              ]
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "setting": {}
+      },
+      "type": "object"
+    },
+    "replicas": {
+      "$ref": "#/$defs/1"
+    },
+    "requiredText": {},
+    "version": {
+      "type": "string"
+    },
+    "worker": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "$ref": "#/$defs/1"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "global": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "replicas": {}
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "x-helm-schema-generated": true,
+  "x-helm-schema-policy": {
+    "annotation-format-version": 1,
+    "modifiers": {
+      "overrides": {
+        "count": 0,
+        "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "reference-mode": "bundled"
+    },
+    "narrowing": [],
+    "policy-fingerprint": "6e2e23374b5a91f6b265c69be0de4eb28f232ecde57b00fc97e463f4cdfa1b31",
+    "policy-vocabulary-version": 1,
+    "requested-profile": "lean",
+    "resolved": {
+      "kind-partitions": false,
+      "local-conditionals": true,
+      "root-anchored-conditionals": false,
+      "terminal-clauses": false
+    }
+  }
+}

@@ -5,11 +5,10 @@ use serde_json::Value;
 
 use crate::error::EngineResult;
 use crate::flatten;
+use crate::output_pipeline::annotation::{FinalOutputPolicy, annotate_final_schema};
 use crate::output_pipeline::descriptions::strip_schema_descriptions;
 use crate::output_pipeline::{OutputPipelineOptions, PolicyInputs, ReferenceMode};
 use crate::schema_override;
-
-const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
 
 /// Applies overrides, reference policy, and final minimization.
 ///
@@ -26,21 +25,20 @@ const GENERATED_SCHEMA_MARKER_KEY: &str = "x-helm-schema-generated";
         minimize = options.minimize,
     )
 )]
-pub fn apply_schema_output_pipeline(
+pub(crate) fn apply_schema_output_pipeline(
     mut schema: Value,
     policy_inputs: PolicyInputs,
     base_dir: &Path,
+    policy: FinalOutputPolicy,
     options: OutputPipelineOptions,
 ) -> EngineResult<Value> {
+    let override_identity = policy_inputs.identity();
     for override_schema in policy_inputs.into_prepared_override_schemas() {
-        schema = schema_override::apply_schema_override(schema, override_schema);
+        schema = schema_override::apply_prepared_schema_override(schema, override_schema);
     }
 
     schema = apply_output_transforms(schema, base_dir, options)?;
-    if let Value::Object(object) = &mut schema {
-        object.insert(GENERATED_SCHEMA_MARKER_KEY.to_string(), Value::Bool(true));
-    }
-    Ok(schema)
+    annotate_final_schema(schema, policy, &override_identity, options.reference_mode)
 }
 
 #[tracing::instrument(

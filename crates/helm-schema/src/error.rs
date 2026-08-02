@@ -19,6 +19,22 @@ pub enum CliError {
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
 
+    /// A caller override is not a JSON Schema document root.
+    #[error("override schema root in {path} must be an object or boolean, found {kind}")]
+    InvalidOverrideRoot {
+        /// Override file carrying the invalid root.
+        path: PathBuf,
+        /// JSON kind found at the document root.
+        kind: &'static str,
+    },
+
+    /// A final output document is not a JSON Schema root.
+    #[error("final schema root must be an object or boolean, found {kind}")]
+    InvalidFinalSchemaRoot {
+        /// JSON kind found at the document root.
+        kind: &'static str,
+    },
+
     /// Helm template source could not be parsed.
     #[error("template parse error: {0}")]
     TemplateParse(#[from] helm_schema_ast::ParseError),

@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
-fn lean_profile_omits_only_document_level_conditionals() {
+fn lean_profile_keeps_local_conditionals_and_omits_document_level_conditionals() {
     let source = indoc! {r#"
         {{- if .Values.enabled }}
         data:
@@ -126,10 +126,6 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
             have: report.facts.lowered,
             want: report.facts.selected + report.facts.dropped
         );
-        sim_assert_eq!(
-            have: report.projected_facts.lowered,
-            want: report.projected_facts.selected + report.projected_facts.dropped
-        );
     }
     let full_mandatory =
         full.counts_for_class(crate::emission_policy::EmissionClassKind::Mandatory);
@@ -139,21 +135,17 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
         have: full_mandatory.selected,
         want: full.mandatory_outcomes.total()
     );
-    let projected_mandatory =
-        lean.projected_counts_for_class(crate::emission_policy::EmissionClassKind::Mandatory);
-    sim_assert_eq!(have: projected_mandatory.dropped, want: 0);
+    let lean_mandatory =
+        lean.counts_for_class(crate::emission_policy::EmissionClassKind::Mandatory);
+    sim_assert_eq!(have: lean_mandatory.dropped, want: 0);
     sim_assert_eq!(
-        have: lean
-            .counts_for_class(crate::emission_policy::EmissionClassKind::Mandatory)
-            .selected,
-        want: 0
+        have: lean_mandatory.selected,
+        want: lean.mandatory_outcomes.total()
     );
-    sim_assert_eq!(have: lean.mandatory_outcomes.total(), want: 0);
+    assert!(lean_mandatory.selected > 0);
     assert!(full.facts.selected > lean.facts.selected);
     for class in [
-        crate::emission_policy::EmissionClassKind::Mandatory,
         crate::emission_policy::EmissionClassKind::OrdinaryRoot,
-        crate::emission_policy::EmissionClassKind::OrdinaryLocal,
         crate::emission_policy::EmissionClassKind::KindPartitionRoot,
         crate::emission_policy::EmissionClassKind::KindPartitionLocal,
         crate::emission_policy::EmissionClassKind::TerminalAlways,
@@ -161,7 +153,9 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
     ] {
         sim_assert_eq!(have: lean.counts_for_class(class).selected, want: 0);
     }
-    assert!(!lean.selection_differences.is_empty());
+    let lean_local =
+        lean.counts_for_class(crate::emission_policy::EmissionClassKind::OrdinaryLocal);
+    sim_assert_eq!(have: lean_local.selected, want: lean_local.lowered);
 }
 
 #[test]
@@ -273,7 +267,10 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
     for pass in passes {
         let full = plan.complete(plan.project(full_policy), pass).schema;
         let lean = plan
-            .complete(plan.project_legacy(SchemaProfile::Lean), pass)
+            .complete(
+                plan.project(EmissionPolicy::for_profile(SchemaProfile::Lean)),
+                pass,
+            )
             .schema;
         let full = jsonschema::validator_for(&full)
             .map_err(|error| eyre::eyre!("compile full schema after {pass:?}: {error}"))?;

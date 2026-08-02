@@ -13,6 +13,47 @@ use harness::{
     read_json_fixture, read_root_defaults, sparse_override, structural_probe_battery,
 };
 
+const LEAN_FIXTURE_CHARTS: &[&str] = &[
+    "schema-emission-controls",
+    "schema-emission-local-kind",
+    "schema-emission-temporal-wrapper",
+    "schema-emission-unconditional-fail",
+];
+
+#[test]
+fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    for chart in LEAN_FIXTURE_CHARTS {
+        let (_, lean) = generate_profile_schemas(chart)?;
+        let fixture_path = test_util::workspace_testdata()
+            .join("emission-profile-schemas/lean")
+            .join(format!("{chart}.schema.json"));
+        if std::env::var("SCHEMA_DUMP").is_ok() {
+            let dump_path = std::env::temp_dir().join(format!(
+                "helm-schema.emission-profile.lean.{chart}.schema.json"
+            ));
+            let mut bytes = serde_json::to_vec_pretty(&lean).wrap_err("serialize lean schema")?;
+            bytes.push(b'\n');
+            std::fs::write(&dump_path, bytes)
+                .wrap_err_with(|| format!("write {}", dump_path.display()))?;
+        }
+        if !fixture_path.exists() && std::env::var("SCHEMA_DUMP").is_ok() {
+            continue;
+        }
+        let expected: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(&fixture_path)
+                .wrap_err_with(|| format!("read {}", fixture_path.display()))?,
+        )
+        .wrap_err_with(|| format!("parse {}", fixture_path.display()))?;
+        sim_assert_eq!(
+            have: lean,
+            want: expected,
+            "{chart}: lean profile fixture mismatch"
+        );
+    }
+    Ok(())
+}
+
 #[test]
 fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
@@ -40,9 +81,8 @@ fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()
 }
 
 #[test]
-fn legacy_lean_reports_step_2_projection_differences() -> eyre::Result<()> {
+fn lean_profile_obeys_the_middle_point_fact_floor() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let mut have = Vec::new();
     for chart in [
         "schema-emission-controls",
         "schema-emission-local-kind",
@@ -50,46 +90,36 @@ fn legacy_lean_reports_step_2_projection_differences() -> eyre::Result<()> {
     ] {
         let (full, lean) = generate_profile_outputs(chart)?;
         eyre::ensure!(
-            full.emission_report.selection_differences.is_empty(),
-            "full has a legacy/projection disagreement for {chart}"
+            full.emission_report.facts.selected == full.emission_report.facts.lowered,
+            "full drops a fact for {chart}"
         );
+        for class in [
+            helm_schema::generation::EmissionClassKind::OrdinaryRoot,
+            helm_schema::generation::EmissionClassKind::KindPartitionRoot,
+            helm_schema::generation::EmissionClassKind::KindPartitionLocal,
+            helm_schema::generation::EmissionClassKind::TerminalAlways,
+            helm_schema::generation::EmissionClassKind::TerminalGuarded,
+        ] {
+            eyre::ensure!(
+                lean.emission_report.counts_for_class(class).selected == 0,
+                "lean selects {class:?} facts for {chart}"
+            );
+        }
+        let mandatory = lean
+            .emission_report
+            .counts_for_class(helm_schema::generation::EmissionClassKind::Mandatory);
         eyre::ensure!(
-            lean.emission_report
-                .selection_differences
-                .iter()
-                .all(|difference| difference.direction
-                    == helm_schema::generation::SelectionDifferenceDirection::ProjectionOnly),
-            "legacy lean retains a fact that the decision-table projection drops for {chart}"
+            mandatory.dropped == 0,
+            "lean drops mandatory facts for {chart}"
         );
-        have.push((
-            chart,
-            lean.emission_report.selection_differences.len(),
-            lean.emission_report.selection_differences_sha256(),
-        ));
+        let local = lean
+            .emission_report
+            .counts_for_class(helm_schema::generation::EmissionClassKind::OrdinaryLocal);
+        eyre::ensure!(
+            local.selected == local.lowered,
+            "lean drops local conditional facts for {chart}"
+        );
     }
-    sim_assert_eq!(
-        have: have,
-        want: vec![
-            (
-                "schema-emission-controls",
-                9,
-                "3594d70cd4304790641f1d5ee12a157da54a9215846bb181260f4f79b6f271e7"
-                    .to_string(),
-            ),
-            (
-                "schema-emission-local-kind",
-                4,
-                "5b51fa618edae0059e8a9dfac20091d7228a4a6b76af01912ce2c6cfa27dd255"
-                    .to_string(),
-            ),
-            (
-                "schema-emission-temporal-wrapper",
-                6_859,
-                "602e49d724de9477fb87081089e29a49e6e28b0b22474dd4ca5e6b93d85c38ae"
-                    .to_string(),
-            ),
-        ]
-    );
     Ok(())
 }
 
@@ -199,13 +229,13 @@ fn provider_controls() -> Vec<SemanticControl> {
 
 fn conditional_controls() -> Vec<SemanticControl> {
     use ContractVerdict::{Accept, Reject};
-    use ControlCategory::{PositiveControl, RemovedTooth};
+    use ControlCategory::{PositiveControl, RemovedTooth, RetainedTooth};
     use Transport::ValuesFileJson;
 
     vec![
         control(
             "required value deletion",
-            RemovedTooth,
+            RetainedTooth,
             sparse_override(&["requiredText"], json!(null)),
             ValuesFileJson,
             Reject("required aborts template rendering"),
@@ -218,8 +248,8 @@ fn conditional_controls() -> Vec<SemanticControl> {
             sparse_override(&["version"], json!("v1")),
             ValuesFileJson,
             Reject("the chart rejects a non-matching version"),
-            true,
-            "the pattern is guarded by a terminal clause removed from lean",
+            false,
+            "the unguarded pattern is mandatory and survives every profile",
         ),
         control(
             "nil-safe object host deletion",
@@ -243,14 +273,14 @@ fn conditional_controls() -> Vec<SemanticControl> {
         ),
         control(
             "enabled dependency rejects a wrong replica kind",
-            RemovedTooth,
+            RetainedTooth,
             ProbeInstance::SparseOverride(
                 json!({ "worker": { "enabled": true, "replicas": "three" } }),
             ),
             ValuesFileJson,
             Reject("the enabled worker renders invalid replicas"),
-            true,
-            "today's lean profile drops dependency-gated provider typing",
+            false,
+            "the middle-point lean contract retains dependency-local provider typing",
         ),
     ]
 }
@@ -391,15 +421,62 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
         },
         SemanticControl {
             name: "temporal replicaCount non-coercible spelling",
-            category: ControlCategory::RemovedTooth,
+            category: ControlCategory::RetainedTooth,
             instance: sparse_override(&["temporal", "server", "replicaCount"], json!("three")),
             transport: Transport::ValuesFileJson,
             contract: ContractVerdict::Reject("Deployment replicas is not an integer"),
-            lean_accepts: true,
-            rationale: "today's lean profile drops this dependency-local provider refinement",
+            lean_accepts: false,
+            rationale: "the middle-point lean contract retains dependency-local provider typing",
         },
     ])?;
     Ok(())
+}
+
+#[test]
+#[ignore = "maintenance: records Step 2 Temporal policy measurements"]
+fn temporal_middle_policy_measurements() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let (full, lean) = generate_profile_outputs("schema-emission-temporal-wrapper")?;
+    let full_bytes = serde_json::to_vec(&full.schema)?.len();
+    let lean_bytes = serde_json::to_vec(&lean.schema)?.len();
+    let full_objects = count_schema_objects(&full.schema);
+    let lean_objects = count_schema_objects(&lean.schema);
+    eprintln!(
+        "full_bytes={full_bytes} full_objects={full_objects} lean_bytes={lean_bytes} lean_objects={lean_objects}"
+    );
+    for class in [
+        helm_schema::generation::EmissionClassKind::Mandatory,
+        helm_schema::generation::EmissionClassKind::OrdinaryRoot,
+        helm_schema::generation::EmissionClassKind::OrdinaryLocal,
+        helm_schema::generation::EmissionClassKind::KindPartitionRoot,
+        helm_schema::generation::EmissionClassKind::KindPartitionLocal,
+        helm_schema::generation::EmissionClassKind::TerminalAlways,
+        helm_schema::generation::EmissionClassKind::TerminalGuarded,
+    ] {
+        let counts = full.emission_report.counts_for_class(class);
+        let lean_counts = lean.emission_report.counts_for_class(class);
+        eprintln!(
+            "class={class:?} lowered={} full_selected={} lean_selected={} delta={}",
+            counts.lowered,
+            counts.selected,
+            lean_counts.selected,
+            counts.selected - lean_counts.selected
+        );
+    }
+    Ok(())
+}
+
+fn count_schema_objects(value: &serde_json::Value) -> usize {
+    match value {
+        serde_json::Value::Object(object) => {
+            1 + object.values().map(count_schema_objects).sum::<usize>()
+        }
+        serde_json::Value::Array(items) => items.iter().map(count_schema_objects).sum(),
+        serde_json::Value::Null
+        | serde_json::Value::Bool(_)
+        | serde_json::Value::Number(_)
+        | serde_json::Value::String(_) => 0,
+    }
 }
 
 #[test]
@@ -520,5 +597,121 @@ fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<
         flips.join("\n")
     );
     eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
+    Ok(())
+}
+
+#[test]
+#[ignore = "maintenance: requires LEGACY_LEAN_SCHEMA_DIR"]
+fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let baseline_dir = std::path::PathBuf::from(
+        std::env::var("LEGACY_LEAN_SCHEMA_DIR")
+            .wrap_err("LEGACY_LEAN_SCHEMA_DIR must contain legacy lean schemas")?,
+    );
+    let mut probes_checked = 0;
+    let mut tightenings = Vec::new();
+    let mut inverse = Vec::new();
+    let adjudicate_live = std::env::var("ADJUDICATE_WITH_HELM").is_ok();
+    if adjudicate_live {
+        let output = std::process::Command::new("helm")
+            .args(["version", "--template", "{{.Version}}"])
+            .output()
+            .wrap_err("read Helm version for transition adjudication")?;
+        eyre::ensure!(output.status.success(), "helm version failed");
+        let version = String::from_utf8(output.stdout).wrap_err("decode Helm version")?;
+        eyre::ensure!(
+            version.trim() == "v4.2.3",
+            "transition adjudication requires Helm v4.2.3, found {}",
+            version.trim()
+        );
+    }
+
+    for chart in LEAN_FIXTURE_CHARTS {
+        let baseline_path = baseline_dir.join(format!("{chart}.schema.json"));
+        let baseline: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(&baseline_path)
+                .wrap_err_with(|| format!("read {}", baseline_path.display()))?,
+        )
+        .wrap_err_with(|| format!("parse {}", baseline_path.display()))?;
+        let current = generate_profile_schemas(chart)?.1;
+        let defaults = if *chart == "schema-emission-temporal-wrapper" {
+            read_json_fixture(chart, "coalesced-defaults.json")?
+        } else {
+            read_root_defaults(chart)?
+        };
+        let transition = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
+        for (probe_name, probe) in structural_probe_battery(&defaults) {
+            probes_checked += 1;
+            let (legacy, middle) = transition.verdicts(&probe);
+            match (legacy, middle) {
+                (true, false) => {
+                    if adjudicate_live {
+                        adjudicate_transition_tightening(chart, &probe_name, &probe)?;
+                    }
+                    tightenings.push(format!("{chart}: {probe_name}"));
+                }
+                (false, true) => inverse.push(format!("{chart}: {probe_name}")),
+                (false, false) | (true, true) => {}
+            }
+        }
+    }
+
+    eyre::ensure!(
+        inverse.is_empty(),
+        "middle lean unexpectedly loosens legacy lean:\n{}",
+        inverse.join("\n")
+    );
+    eyre::ensure!(
+        !tightenings.is_empty(),
+        "middle lean produced no preregistered transition tightenings"
+    );
+    eprintln!(
+        "probes_checked={probes_checked} tightenings={} inverse=0",
+        tightenings.len()
+    );
+    for tightening in tightenings {
+        eprintln!("TIGHTEN {tightening}");
+    }
+    Ok(())
+}
+
+fn adjudicate_transition_tightening(
+    chart: &str,
+    probe_name: &str,
+    probe: &ProbeInstance,
+) -> eyre::Result<()> {
+    let values = probe
+        .helm_values_file()
+        .ok_or_else(|| eyre::eyre!("{chart}: {probe_name} is not a Helm values-file probe"))?;
+    let tempdir = tempfile::tempdir().wrap_err("create live adjudication directory")?;
+    let values_path = tempdir.path().join("values.json");
+    std::fs::write(&values_path, serde_json::to_vec(&values)?)
+        .wrap_err("write live adjudication values")?;
+    let chart_path = test_util::workspace_testdata().join("charts").join(chart);
+    let rendered = std::process::Command::new("helm")
+        .args(["template", "step2-lean-transition"])
+        .arg(chart_path)
+        .arg("--skip-schema-validation")
+        .arg("-f")
+        .arg(values_path)
+        .output()
+        .wrap_err_with(|| format!("render {chart}: {probe_name}"))?;
+    if !rendered.status.success() {
+        eprintln!("HELM_REJECT {chart}: {probe_name}");
+        return Ok(());
+    }
+
+    let manifest_path = tempdir.path().join("rendered.yaml");
+    std::fs::write(&manifest_path, rendered.stdout).wrap_err("write rendered manifest")?;
+    let provider = std::process::Command::new("kubeconform")
+        .args(["-strict", "-kubernetes-version", "1.29.0"])
+        .arg(manifest_path)
+        .output()
+        .wrap_err_with(|| format!("validate {chart}: {probe_name}"))?;
+    eyre::ensure!(
+        !provider.status.success(),
+        "{chart}: {probe_name} renders and passes the provider; the middle-lean tightening is a false rejection"
+    );
+    eprintln!("PROVIDER_REJECT {chart}: {probe_name}");
     Ok(())
 }
