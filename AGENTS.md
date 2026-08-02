@@ -233,6 +233,53 @@ Therefore:
 
 - Use `cargo nextest run --workspace` (debug mode) for the full suite. Do not use `--release`.
 
+## Verification gates
+
+A round of analyzer/generator work is done only when every gate below has
+been run on the FINAL tree and its result reported individually. Never
+summarize with "all gates pass" without having executed each gate after
+the last code or fixture edit — a gate that was not run is a gate that
+failed. When checking a gate's outcome, check the gate command's own exit
+code: piping through `tail`/`grep` reports the pipe's exit, not the
+gate's.
+
+1. `cargo fmt --check`.
+2. `task lint`. A clippy failure in one crate aborts checking of every
+   dependent crate, so lint is not green until the WHOLE workspace
+   compiles under clippy — fix the first failure and re-run to the end.
+3. `task lint:fc` (feature-combination lint via cargo-fc).
+4. `cargo nextest run --workspace` (unit suite).
+5. `task test:integration`. The corpus fixture suite lives ONLY in the
+   nextest `integration` profile; the default profile silently filters
+   it out, so a plain nextest run can be vacuously green while every
+   corpus fixture mismatches.
+6. `task test:all` before declaring a round final (includes the live
+   network tests).
+7. The downstream luup2 gate whenever schema semantics change:
+   `cargo install --path ./crates/helm-schema-cli/`, then
+   `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml check:local`.
+8. For refactors, report the production LOC delta via `task tokei:core`.
+
+### Fixture regeneration and flip adjudication
+
+- Regenerate fixtures with ONE clean dump run after the final build.
+  Never mix dump batches produced by different code states: a stale
+  binary fakes progressive drift and pins wrong output.
+- Every corpus acceptance flip must be adjudicated against real
+  `helm template` before a fixture is adopted. **A TIGHTEN is a
+  direction, not a verdict** — a tightening that rejects something helm
+  renders is a false rejection, and batteries that only count flip
+  directions hide exactly that.
+- For old-vs-new acceptance probing use a compiled Rust prober (the
+  `jsonschema` crate in a scratch integration test) at three
+  granularities: top-level deletions, second-level deletions, and empty
+  member/item probes, all composed over chart defaults with
+  null-deletion merge semantics. Python jsonschema is ~100x too slow on
+  the large schemas.
+- Schemas validate the COALESCED values document: test instances must
+  compose over chart defaults, and a bare `{}` means every declared key
+  null-deleted, not "defaults apply".
+
 ## Schema tests
 
 - Schema integration tests must assert full JSON schema equality using diff-based assertions (e.g. `sim_assert_eq!(actual, expected)`; see "Equality assertions in tests" below).
