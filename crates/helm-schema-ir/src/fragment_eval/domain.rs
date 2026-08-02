@@ -121,7 +121,7 @@ pub fn and_conditions(outer: PathCondition, inner: PathCondition) -> PathConditi
             }
         }
     }
-    Predicate::all(parts)
+    Predicate::all(parts).normalize_boolean()
 }
 
 /// One node of the abstract rendered document.
@@ -298,6 +298,11 @@ impl Splice {
 /// lower into [`Guarded`] arms so the guard structure stays in the tree.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SpliceMeta {
+    /// The splice carries the raw values-path value rather than merely an
+    /// influence on derived output. Positive execution subsets may project a
+    /// provider contract through this row without constraining an operand of
+    /// a selector or formatter.
+    pub input_identity: bool,
     /// The render site substitutes a fallback when the path is empty/nil
     /// (`default`, chart-level `set … default` mutations).
     pub defaulted: bool,
@@ -328,6 +333,9 @@ pub struct SpliceMeta {
     /// values, so this splice's row binds a string contract under its own
     /// conditions.
     pub string_contract: bool,
+    /// The splice supplies the token-opening `%s` of a complete literal
+    /// `printf` result.
+    pub plain_slot_string_format: bool,
     /// The splice renders JSON text whose decoded value preserves this input identity.
     pub json_serialized: bool,
     /// The splice's runtime identity was recovered through JSON decoding.
@@ -365,6 +373,28 @@ pub struct SpliceMeta {
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.
     pub site: Option<Rc<SiteFacts>>,
+}
+
+impl SpliceMeta {
+    pub(crate) fn is_input_identity(&self) -> bool {
+        self.input_identity
+            && !self.encoded
+            && !self.shape_erased
+            && !self.stringified
+            && !self.nil_omitted
+            && !self.yaml_serialized
+            && !self.templated_yaml
+            && !self.string_contract
+            && !self.plain_slot_string_format
+            && !self.json_serialized
+            && self.lexical_escapes.is_empty()
+            && self.split_segment.is_none()
+            && self.merge_layers.is_none()
+            && !self.range_key
+            && self.omitted_members.is_empty()
+            && !self.digest
+            && !self.merge_operand
+    }
 }
 
 /// An opaque fragment position: content unknown, influence preserved.

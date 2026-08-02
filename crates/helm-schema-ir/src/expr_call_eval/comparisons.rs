@@ -24,8 +24,6 @@ pub(super) fn eval_ternary(
 ) -> EvalResult {
     let mut effects = Effects::default();
     let has_piped_condition = piped_condition.is_some();
-    let mut condition_path = None;
-    let mut condition_identity = BTreeSet::new();
     let condition_truth;
     if let Some((condition, _is_direct_values_path)) = piped_condition {
         // Derived Boolean values carry no raw identity, so this records a
@@ -36,10 +34,8 @@ pub(super) fn eval_ternary(
             strict_operand_nil_aborts("ternary", false),
             &mut effects,
         );
-        condition_path = condition.value.as_ref().and_then(raw_condition_path);
-        condition_identity = identity_value_paths(condition.value.as_ref());
         condition_truth = condition.truth.clone();
-        effects.merge(condition.effects);
+        effects.merge(condition.effects.consumed_as_predicate());
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
         record_strict_kind_result(
@@ -48,22 +44,14 @@ pub(super) fn eval_ternary(
             strict_operand_nil_aborts("ternary", false),
             &mut effects,
         );
-        condition_path = condition.value.as_ref().and_then(raw_condition_path);
-        condition_identity = identity_value_paths(condition.value.as_ref());
         condition_truth = condition.truth.clone();
-        effects.merge(condition.effects);
+        effects.merge(condition.effects.consumed_as_predicate());
     } else {
         condition_truth = TruthCondition::Unknown;
     }
-    // The condition only SELECTS an arm — its value never renders into the
-    // output slot, so its identity must not become a placed row there (a
-    // Service port-name slot would stamp its provider string schema onto a
-    // raw Boolean flag, as in harbor's `ternary "https-web" "http-web"
-    // .Values.internalTLS.enabled`). The strict-kind capture above keeps
-    // the Boolean operand contract.
-    for path in &condition_identity {
-        effects.output_paths.remove(path);
-    }
+    // The strict-kind capture and predicate contracts above describe
+    // consuming the condition. Its returned identity never reaches the
+    // ternary's output slot.
     let mut values = Vec::new();
     let mut scalar_dispatches = Vec::new();
     for (index, arg) in args.iter().enumerate() {
@@ -71,15 +59,11 @@ pub(super) fn eval_ternary(
             continue;
         }
         let mut result = eval_expr_with_helper_calls(arg, env, resolver);
-        if index < 2
-            && let Some(path) = &condition_path
-        {
-            let predicate = if index == 0 {
-                Predicate::truthy_path(path.clone())
-            } else {
-                Predicate::truthy_path(path.clone()).negated()
-            };
-            conjoin_result_selection(&mut result, predicate);
+        if index < 2 {
+            super::conjoin_result_selection(
+                &mut result,
+                &BTreeSet::from([ternary_selection_predicate(&condition_truth, index == 0)]),
+            );
         }
         effects.merge(result.effects);
         if index < 2 {
@@ -100,56 +84,30 @@ pub(super) fn eval_ternary(
     result
 }
 
-fn raw_condition_path(value: &AbstractValue) -> Option<String> {
-    match value {
-        AbstractValue::ValuesPath(path)
-        | AbstractValue::JsonDecodedPath(path)
-        | AbstractValue::OutputPath(path, _) => Some(path.clone()),
-        AbstractValue::Choice(choices) => {
-            let mut paths = choices.iter().filter_map(raw_condition_path);
-            let first = paths.next()?;
-            paths.all(|path| path == first).then_some(first)
-        }
-        AbstractValue::FirstTruthy(candidates) => {
-            let mut paths = candidates.iter().filter_map(raw_condition_path);
-            let first = paths.next()?;
-            paths.all(|path| path == first).then_some(first)
-        }
-        AbstractValue::Top
-        | AbstractValue::Unknown
-        | AbstractValue::RangeKey(_)
-        | AbstractValue::KeysList(_)
-        | AbstractValue::RootContext
-        | AbstractValue::StringSet(_)
-        | AbstractValue::DerivedBoolean(_)
-        | AbstractValue::Dict(_)
-        | AbstractValue::List(_)
-        | AbstractValue::Overlay { .. }
-        | AbstractValue::MergedLayers(_)
-        | AbstractValue::SplitList { .. }
-        | AbstractValue::SplitSegment { .. }
-        | AbstractValue::Widened(_) => None,
+fn ternary_selection_predicate(condition: &TruthCondition, when_true: bool) -> Predicate {
+    let subset = if when_true {
+        condition.when_true()
+    } else {
+        condition.when_false()
+    };
+    if condition.predicate().is_some() {
+        return subset;
     }
-}
-
-fn conjoin_result_selection(result: &mut EvalResult, predicate: Predicate) {
-    let selection = BTreeSet::from([predicate]);
-    for path in identity_value_paths(result.value.as_ref()) {
-        result
-            .effects
-            .local_output_meta
-            .entry(path)
-            .or_default()
-            .conjoin_branches(&selection);
-    }
+    Predicate::approximate_output_selection(
+        "ternary output selection",
+        subset.value_paths(),
+        subset,
+    )
 }
 
 pub(super) fn eval_type_is(
+    function: &str,
     args: &[TemplateExpr],
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = Effects::default();
+    let type_name = args.first().and_then(literal_type_name);
     let schema_type = type_is_schema_type(args.first());
     let mut truth = TruthCondition::Unknown;
     let mut subject_paths = BTreeSet::new();
@@ -157,21 +115,44 @@ pub(super) fn eval_type_is(
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         if index == 1 {
             subject_paths = identity_value_paths(result.value.as_ref());
-            if let Some(schema_type) = &schema_type {
-                truth = type_is_truth(&result, schema_type);
+            if function == "kindIs"
+                && type_name == Some("invalid")
+                && let [path] = subject_paths.iter().collect::<Vec<_>>().as_slice()
+            {
+                truth = TruthCondition::exact(Predicate::invalid_kind_path((*path).clone()));
+            } else if let (Some(schema_type), Some(type_name)) = (&schema_type, type_name) {
+                truth = type_is_truth(&result, schema_type, type_name);
             }
         }
         effects.merge(result.effects);
     }
     if let Some(schema_type) = schema_type {
-        effects.add_tested_type_hints(subject_paths, &schema_type);
+        let tested_paths = truth
+            .when_true()
+            .value_paths()
+            .into_iter()
+            .chain(truth.when_false().value_paths())
+            .filter(|path| subject_paths.contains(path))
+            .collect();
+        // A type test over a structurally derived value can be constant even
+        // when that value retains source provenance. Only paths that control
+        // a known test polarity inherit an input-type hint.
+        effects.add_tested_type_hints(tested_paths, &schema_type);
     }
     let mut result = EvalResult::with_effects(None, effects);
     result.truth = truth;
     result
 }
 
-fn type_is_truth(result: &EvalResult, schema_type: &str) -> TruthCondition {
+fn literal_type_name(expr: &TemplateExpr) -> Option<&str> {
+    let TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) = expr.deparen()
+    else {
+        return None;
+    };
+    Some(value)
+}
+
+fn type_is_truth(result: &EvalResult, schema_type: &str, type_name: &str) -> TruthCondition {
     if let Some(value) = result
         .scalar_dispatch
         .as_ref()
@@ -185,15 +166,21 @@ fn type_is_truth(result: &EvalResult, schema_type: &str) -> TruthCondition {
         .value
         .as_ref()
         .map_or(TruthCondition::Unknown, |value| {
-            abstract_value_type_is(value, schema_type)
+            abstract_value_type_is(value, schema_type, type_name)
         })
 }
 
-fn abstract_value_type_is(value: &AbstractValue, schema_type: &str) -> TruthCondition {
+fn abstract_value_type_is(
+    value: &AbstractValue,
+    schema_type: &str,
+    type_name: &str,
+) -> TruthCondition {
     match value {
-        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+        AbstractValue::ValuesPath(path) => {
             if path.is_empty() {
                 TruthCondition::exact(bool_predicate(schema_type == "object"))
+            } else if matches!(type_name, "int64" | "float64") {
+                values_numeric_type_truth(path, type_name)
             } else {
                 TruthCondition::exact(Predicate::from(Guard::TypeIs {
                     path: path.clone(),
@@ -201,11 +188,21 @@ fn abstract_value_type_is(value: &AbstractValue, schema_type: &str) -> TruthCond
                 }))
             }
         }
+        AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
+            if matches!(type_name, "int64" | "float64") {
+                values_numeric_type_truth(path, type_name)
+            } else {
+                TruthCondition::exact(Predicate::from(Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: schema_type.to_string(),
+                }))
+            }
+        }
+        AbstractValue::JsonDecodedPath(path) => {
+            json_decoded_numeric_type_truth(path, schema_type, type_name)
+        }
         AbstractValue::OutputPath(path, meta) if meta.json_decoded => {
-            TruthCondition::exact(Predicate::from(Guard::TypeIs {
-                path: path.clone(),
-                schema_type: schema_type.to_string(),
-            }))
+            json_decoded_numeric_type_truth(path, schema_type, type_name)
         }
         AbstractValue::Dict(_)
         | AbstractValue::Overlay { .. }
@@ -222,9 +219,11 @@ fn abstract_value_type_is(value: &AbstractValue, schema_type: &str) -> TruthCond
         AbstractValue::DerivedBoolean(_) => {
             TruthCondition::exact(bool_predicate(schema_type == "boolean"))
         }
-        AbstractValue::Choice(choices) => type_is_for_alternatives(choices.iter(), schema_type),
+        AbstractValue::Choice(choices) => {
+            type_is_for_alternatives(choices.iter(), schema_type, type_name)
+        }
         AbstractValue::FirstTruthy(candidates) => {
-            type_is_for_alternatives(candidates.iter(), schema_type)
+            type_is_for_alternatives(candidates.iter(), schema_type, type_name)
         }
         AbstractValue::Top
         | AbstractValue::Unknown
@@ -237,10 +236,11 @@ fn abstract_value_type_is(value: &AbstractValue, schema_type: &str) -> TruthCond
 fn type_is_for_alternatives<'a>(
     alternatives: impl IntoIterator<Item = &'a AbstractValue>,
     schema_type: &str,
+    type_name: &str,
 ) -> TruthCondition {
     let conditions = alternatives
         .into_iter()
-        .map(|value| abstract_value_type_is(value, schema_type))
+        .map(|value| abstract_value_type_is(value, schema_type, type_name))
         .collect::<Vec<_>>();
     if conditions.is_empty() {
         return TruthCondition::Unknown;
@@ -250,6 +250,44 @@ fn type_is_for_alternatives<'a>(
         Predicate::all(conditions.iter().map(TruthCondition::when_false).collect()),
         false,
     )
+}
+
+fn values_numeric_type_truth(path: &str, type_name: &str) -> TruthCondition {
+    let integer = Predicate::from(Guard::TypeIs {
+        path: path.to_string(),
+        schema_type: "integer".to_string(),
+    });
+    let number = Predicate::from(Guard::TypeIs {
+        path: path.to_string(),
+        schema_type: "number".to_string(),
+    });
+    match type_name {
+        "int64" => TruthCondition::from_subsets(Predicate::False, integer.negated(), false),
+        "float64" => TruthCondition::from_subsets(
+            Predicate::all(vec![number.clone(), integer.negated()]),
+            number.negated(),
+            false,
+        ),
+        _ => TruthCondition::Unknown,
+    }
+}
+
+fn json_decoded_numeric_type_truth(
+    path: &str,
+    schema_type: &str,
+    type_name: &str,
+) -> TruthCondition {
+    match type_name {
+        "int64" => TruthCondition::exact(Predicate::False),
+        "float64" => TruthCondition::exact(Predicate::from(Guard::TypeIs {
+            path: path.to_string(),
+            schema_type: "number".to_string(),
+        })),
+        _ => TruthCondition::exact(Predicate::from(Guard::TypeIs {
+            path: path.to_string(),
+            schema_type: schema_type.to_string(),
+        })),
+    }
 }
 
 fn guard_value_schema_type(value: &GuardValue) -> &'static str {

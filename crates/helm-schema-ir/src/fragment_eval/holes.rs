@@ -4,10 +4,11 @@
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
 //! re-parse structurally and become guarded scalar arms.
 
+use std::collections::BTreeSet;
+
 use helm_schema_ast::{TemplateExpr, parse_expr_text};
 use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
-use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::Effects;
 use crate::expr_eval::literal_helper_call_callee;
@@ -15,6 +16,7 @@ use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
 
 use super::domain::{
@@ -33,6 +35,7 @@ pub(super) struct HoleEval {
     pub(super) value: Option<AbstractValue>,
     pub(super) effects: Effects,
     pub(super) truth: TruthCondition,
+    pub(super) json_payload_truth: TruthCondition,
     pub(super) scalar_dispatch: Option<ScalarValueDispatch>,
 }
 
@@ -62,9 +65,10 @@ enum Segment {
 /// paths that attribute at the hole beyond the value's own paths (condition
 /// operands of `ternary`/`and`/`or`, shallow local sources, …) — the
 /// current pipeline emits every expression output path at the slot, so the
-/// projection keeps that rule. At scalar sites, ancestor paths with a more
-/// specific path in the same hole are dropped (the pipeline's
-/// most-specific-path retain rule for scalar slots).
+/// projection keeps that rule. Ancestor paths with a more specific path in
+/// the same scalar hole are dropped. Fragment holes do the same when a helper
+/// summary identifies the descendant as rendered output: the ancestor is
+/// then an execution effect, not a second value reaching the sink.
 fn prepare_hole_value(
     value: Option<AbstractValue>,
     effects: &Effects,
@@ -78,14 +82,18 @@ fn prepare_hole_value(
         .filter(|path| !path.is_empty())
         .cloned()
         .collect();
-    let drop: std::collections::BTreeSet<String> = if scalar_site {
-        all.iter()
-            .filter(|path| helm_schema_core::values_path_has_descendant(path, &all))
-            .cloned()
-            .collect()
-    } else {
-        std::collections::BTreeSet::new()
-    };
+    let drop: std::collections::BTreeSet<String> = all
+        .iter()
+        .filter(|path| {
+            helm_schema_core::values_path_has_descendant(path, &all)
+                && (scalar_site
+                    || effects.helper_rendered.iter().any(|row| {
+                        value_paths.contains(&row.path)
+                            && helm_schema_core::values_path_is_descendant(&row.path, path)
+                    }))
+        })
+        .cloned()
+        .collect();
     let value = value.and_then(|value| value.remove_fragment_paths(&drop));
     let extras = effect_paths
         .into_iter()
@@ -295,8 +303,15 @@ impl Interpreter<'_> {
         };
         let document_root =
             !self.helper_scope && width.is_none() && self.line_indent(span.start) == 0;
-        if let Some(spliced) = self.splice_helper_call_hole(&exprs) {
+        if let Some((spliced, root_render_indent)) = self.splice_helper_call_hole(&exprs) {
             let mut out = spliced;
+            let width = match (width, root_render_indent) {
+                (Some(width), Some(root_render_indent)) => {
+                    Some(width.saturating_add(root_render_indent))
+                }
+                (None, _) => None,
+                (width, None) => width,
+            };
             // A helper spliced at column zero renders its own document, so the
             // rule below reaches whatever ranged member its body emits WHOLE
             // there, under that arm's own conditions (traefik and Sealed
@@ -319,6 +334,12 @@ impl Interpreter<'_> {
             return (out, width);
         }
         let hole = self.eval_hole_exprs(&exprs);
+        if self.helper_scope && hole.json_payload_truth != TruthCondition::Unknown {
+            self.json_payload_truth_outputs.push((
+                Predicate::all(self.active_predicates.clone()),
+                hole.json_payload_truth.clone(),
+            ));
+        }
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
@@ -372,6 +393,7 @@ impl Interpreter<'_> {
             stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             string_contract_paths: row_string_contract_paths,
+            plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
             local_source_paths: &hole.effects.local_source_paths,
@@ -483,7 +505,16 @@ impl Interpreter<'_> {
                 templated: true,
             });
         }
-        let captures: Vec<crate::eval_effect::FailCapture> = captures
+        for path in &effects.plain_text_preserving_paths {
+            if reaches_slot(path) {
+                captures.push(crate::eval_effect::CaptureKind::PlainSlotText {
+                    path: path.clone(),
+                    token_initial: true,
+                    templated: false,
+                });
+            }
+        }
+        let mut captures: Vec<crate::eval_effect::FailCapture> = captures
             .into_iter()
             .map(|kind| crate::eval_effect::FailCapture {
                 conjunction: Vec::new(),
@@ -491,8 +522,94 @@ impl Interpreter<'_> {
                 kind,
             })
             .collect();
+        let mut formatted_paths = effects.plain_slot_string_format_paths.clone();
+        let mut formatted_meta = value
+            .map(AbstractValue::plain_slot_string_format_meta)
+            .unwrap_or_default();
+        for (path, meta) in &effects.local_output_meta {
+            if meta.plain_slot_string_format {
+                formatted_meta.entry(path.clone()).or_default().merge(meta);
+            }
+        }
+        for (path, meta) in &formatted_meta {
+            if meta.plain_slot_string_format && !meta.partial_text {
+                formatted_paths.insert(path.clone());
+            }
+        }
+        for path in formatted_paths {
+            let mut shared = BTreeSet::new();
+            if effects.defaults.contains(&path) || effects.local_default_paths.contains(&path) {
+                shared.insert(Predicate::truthy_path(path.clone()));
+            }
+            let branches = formatted_meta
+                .get(&path)
+                .filter(|meta| !meta.predicates.is_empty())
+                .map_or_else(
+                    || vec![shared.clone()],
+                    |meta| {
+                        meta.predicates
+                            .iter()
+                            .map(|branch| {
+                                let mut conjunction = shared.clone();
+                                conjunction.extend(branch.iter().cloned());
+                                conjunction
+                            })
+                            .collect()
+                    },
+                );
+            for conjunction in branches {
+                for kind in [
+                    crate::eval_effect::CaptureKind::PrintfStringOperand { path: path.clone() },
+                    crate::eval_effect::CaptureKind::AbsenceAborts { path: path.clone() },
+                ] {
+                    captures.push(crate::eval_effect::FailCapture {
+                        conjunction: conjunction.iter().cloned().collect(),
+                        ranged: crate::range_modes::RangeModes::default(),
+                        kind,
+                    });
+                }
+            }
+        }
         if !captures.is_empty() {
             self.record_yaml_text_fails(&captures);
+        }
+    }
+
+    fn absorb_helper_summary_type_hints(&mut self, summary: &super::summary::FragmentSummary) {
+        for (path, hints) in &summary.type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let sink = if self.hint_scope_is_unconditional(path) {
+                &mut self.type_hints
+            } else {
+                &mut self.guarded_type_hints
+            };
+            sink.entry(path.clone())
+                .or_default()
+                .extend(hints.iter().cloned());
+        }
+        for (path, hints) in &summary.guarded_type_hints {
+            if !path.trim().is_empty() {
+                self.guarded_type_hints
+                    .entry(path.clone())
+                    .or_default()
+                    .extend(hints.iter().cloned());
+            }
+        }
+        for (path, hints) in &summary.fallback_type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let sink = if self.hint_scope_is_unconditional(path) {
+                &mut self.fallback_type_hints
+            } else {
+                // Branch-scoped fallback hints remain intent, not a consumer contract.
+                &mut self.guarded_fallback_type_hints
+            };
+            sink.entry(path.clone())
+                .or_default()
+                .extend(hints.iter().cloned());
         }
     }
 
@@ -506,7 +623,7 @@ impl Interpreter<'_> {
     fn splice_helper_call_hole(
         &mut self,
         exprs: &[TemplateExpr],
-    ) -> Option<Guarded<AbstractFragment>> {
+    ) -> Option<(Guarded<AbstractFragment>, Option<usize>)> {
         let (name, arg) = splice_target_helper_call(exprs)?;
         if !self.db.has_helper(name) || self.helper_seen.contains(name) {
             return None;
@@ -540,59 +657,40 @@ impl Interpreter<'_> {
         claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
         self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);
         self.absorb_helper_fails(&summary.fail_conditions);
-        // This splice reached a STRUCTURAL position through nothing but
-        // indent shaping, so the body's text renders as document content:
-        // its own plain slots are slots of this document. A value slot
-        // renders the body as one scalar instead, where the text is the
-        // caller's own token rather than structure.
+        if self.in_value_slot {
+            self.record_plain_slot_text(summary.value.as_ref(), &Effects::default());
+        }
+        // An indent-only structural splice renders the body as document
+        // content, so its plain slots belong to this document. A value slot
+        // instead renders the body as the caller's scalar token.
         if !self.in_value_slot {
             self.record_yaml_text_fails(&summary.text_fails);
         }
         self.absorb_member_host_conversions(&summary.member_host_conversions);
-        for (path, hints) in &summary.type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.type_hints
-            } else {
-                &mut self.guarded_type_hints
-            };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
-        }
-        for (path, hints) in &summary.guarded_type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.guarded_type_hints
-                .entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
-        }
-        for (path, hints) in &summary.fallback_type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.fallback_type_hints
-            } else {
-                // Branch-scoped fallback hints keep their fallback identity
-                //: overlay lowering must know they are intent, not a
-                // consumer contract.
-                &mut self.guarded_fallback_type_hints
-            };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
-        }
+        self.absorb_helper_summary_type_hints(summary);
         self.shape_erased_paths
             .extend(summary.shape_erased_paths.iter().cloned());
         self.yaml_serialized_paths
             .extend(summary.yaml_serialized_paths.iter().cloned());
-        self.string_contract_paths
-            .extend(summary.string_contract_paths.iter().cloned());
+        let mut self_guarded_contracts = std::collections::BTreeSet::new();
+        for path in &summary.string_contract_paths {
+            let guarded_by_source = self.active_predicates.iter().any(|predicate| {
+                matches!(
+                    predicate,
+                    Predicate::Guard(
+                        Guard::Truthy { path: guarded }
+                            | Guard::Range { path: guarded }
+                            | Guard::With { path: guarded }
+                    ) if guarded == path
+                )
+            });
+            if guarded_by_source {
+                self_guarded_contracts.insert(path.clone());
+            } else {
+                self.string_contract_paths.insert(path.clone());
+            }
+        }
+        self.absorb_condition_string_captures(&self_guarded_contracts);
         self.range_modes.merge(&summary.range_modes);
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
@@ -605,19 +703,25 @@ impl Interpreter<'_> {
             .extend(summary.values_default_sources.iter().cloned());
         self.values_root_overlay_prefixes_observed
             .extend(summary.values_root_overlay_prefixes.iter().cloned());
-        // A wrapper-engine body computed its own pre-rewrite snapshot;
-        // callers carry it verbatim (their reads run after the call).
+        // A wrapper snapshot stays verbatim because caller reads run afterward.
         self.pre_rewrite_strict_paths
             .extend(summary.pre_rewrite_strict_paths.iter().cloned());
         self.values_root_helper_includes_observed
             .extend(summary.values_root_helper_includes.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
-        Some(splice_summary(summary, self.current_site.as_ref()))
+        Some((
+            splice_summary(summary, self.current_site.as_ref(), self.in_value_slot),
+            summary.root_render_indent,
+        ))
     }
 
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
     /// string parts.
+    #[expect(
+        clippy::too_many_lines,
+        reason = "hole evaluation must restore site state across every early return and keep lowering inputs synchronized"
+    )]
     pub(super) fn eval_hole_parts(&mut self, span: Span) -> Vec<(PathCondition, Vec<StringPart>)> {
         let text = self.text(span);
         if hole_is_control_fragment(text) {
@@ -691,6 +795,7 @@ impl Interpreter<'_> {
             stringified_paths: &hole.effects.stringified_paths,
             nil_omitting_paths: &hole.effects.nil_omitting_paths,
             string_contract_paths: row_string_contract_paths,
+            plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
             json_serialized_paths: &hole.effects.json_serialized_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
             local_source_paths: &hole.effects.local_source_paths,
@@ -716,6 +821,23 @@ impl Interpreter<'_> {
         }
         if !plain_parts.is_empty() {
             arms.push((Predicate::True, plain_parts));
+        }
+        if !defaulted.is_empty() && !arms.is_empty() {
+            let covered = Predicate::Or(
+                arms.iter()
+                    .map(|(condition, _)| condition.clone())
+                    .collect(),
+            )
+            .normalize_boolean();
+            if !covered.contains_approximation() {
+                let fallback = covered.negated().normalize_boolean();
+                if fallback != Predicate::False {
+                    // An unattributed fallback still renders. Its empty part
+                    // arm keeps neighboring scalar segments live when the
+                    // selected value comes from chart context or a literal.
+                    arms.push((fallback, Vec::new()));
+                }
+            }
         }
         for (_, parts) in &mut arms {
             stamp_part_sites(parts, self.current_site.as_ref());
@@ -851,6 +973,8 @@ impl Interpreter<'_> {
             token_initial: std::collections::BTreeSet<String>,
             double_quoted: std::collections::BTreeSet<String>,
             single_quoted: std::collections::BTreeSet<String>,
+            double_quoted_templated: std::collections::BTreeSet<String>,
+            single_quoted_templated: std::collections::BTreeSet<String>,
             plain_templated: std::collections::BTreeSet<String>,
         }
 
@@ -889,7 +1013,8 @@ impl Interpreter<'_> {
                             && !splice.meta.json_serialized
                             && splice.meta.split_segment.is_none()
                             && !splice.meta.range_key
-                            && !splice.values_path.is_empty();
+                            && !splice.values_path.is_empty()
+                            && !templated.contains(&splice.values_path);
                         // A `tpl` render is the raw value's own text whenever
                         // that value carries no template action, so an
                         // UNQUOTED position still binds the plain token's
@@ -901,12 +1026,33 @@ impl Interpreter<'_> {
                             && value_slot
                             && templated.contains(&splice.values_path)
                             && !splice.meta.encoded
-                            && !splice.meta.shape_erased
+                            && (!splice.meta.shape_erased || splice.meta.stringified)
                             && !splice.meta.yaml_serialized
                             && !splice.meta.json_serialized
                             && splice.meta.split_segment.is_none()
                         {
                             claims.plain_templated.insert(splice.values_path.clone());
+                        }
+                        if templated.contains(&splice.values_path)
+                            && !splice.meta.encoded
+                            && (!splice.meta.shape_erased || splice.meta.stringified)
+                            && !splice.meta.yaml_serialized
+                            && !splice.meta.json_serialized
+                            && splice.meta.split_segment.is_none()
+                        {
+                            match state {
+                                QuoteContext::Double => {
+                                    claims
+                                        .double_quoted_templated
+                                        .insert(splice.values_path.clone());
+                                }
+                                QuoteContext::Single => {
+                                    claims
+                                        .single_quoted_templated
+                                        .insert(splice.values_path.clone());
+                                }
+                                QuoteContext::None => {}
+                            }
                         }
                         if !raw {
                             continue;
@@ -955,6 +1101,12 @@ impl Interpreter<'_> {
                 .single_quoted
                 .retain(|path| arm.single_quoted.contains(path));
             agreed
+                .double_quoted_templated
+                .retain(|path| arm.double_quoted_templated.contains(path));
+            agreed
+                .single_quoted_templated
+                .retain(|path| arm.single_quoted_templated.contains(path));
+            agreed
                 .plain_templated
                 .retain(|path| arm.plain_templated.contains(path));
         }
@@ -969,21 +1121,37 @@ impl Interpreter<'_> {
                 kind: crate::eval_effect::CaptureKind::Fail,
             });
         }
-        for (paths, style) in [
+        for (paths, style, templated) in [
             (
                 agreed.double_quoted,
                 helm_schema_core::QuotedScalarStyle::Double,
+                false,
             ),
             (
                 agreed.single_quoted,
                 helm_schema_core::QuotedScalarStyle::Single,
+                false,
+            ),
+            (
+                agreed.double_quoted_templated,
+                helm_schema_core::QuotedScalarStyle::Double,
+                true,
+            ),
+            (
+                agreed.single_quoted_templated,
+                helm_schema_core::QuotedScalarStyle::Single,
+                true,
             ),
         ] {
             for path in paths {
                 captures.push(crate::eval_effect::FailCapture {
                     conjunction: Vec::new(),
                     ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::QuotedSerialization { path, style },
+                    kind: crate::eval_effect::CaptureKind::QuotedSerialization {
+                        path,
+                        style,
+                        templated,
+                    },
                 });
             }
         }
@@ -1091,6 +1259,9 @@ impl Interpreter<'_> {
                             start: hole.start,
                             end: facts.region_end,
                         });
+                    } else if facts.region_end > block.body.end {
+                        cursor = block.body.end;
+                        break;
                     }
                 }
                 None => {
@@ -1141,9 +1312,23 @@ impl Interpreter<'_> {
         scalar_arms_to_fragment(self.eval_hole_parts(span), true)
     }
 
+    /// A control region whose rendered body remains below a block-scalar
+    /// header contributes guarded text, not structure beside that scalar.
+    pub(super) fn eval_block_adopted_control(&mut self, span: Span) -> Guarded<AbstractFragment> {
+        scalar_arms_to_fragment(self.eval_inline_region(span), true)
+    }
+
+    pub(super) fn eval_structural_control_output(
+        &mut self,
+        span: Span,
+    ) -> Guarded<AbstractFragment> {
+        scalar_arms_to_fragment(self.eval_inline_region(span), false)
+    }
+
     /// A fragment-rendering hole inside a render-suppressed blob: rendered
-    /// helper rows become pathless reads that keep their kinds, and direct
-    /// value paths read with the hole's fragment kind.
+    /// helper rows become pathless serialized reads, and direct values are
+    /// serialized text rather than structural members of the enclosing
+    /// document.
     fn eval_suppressed_fragment_hole(&mut self, span: Span) {
         let exprs = parse_expr_text(self.text(span));
         if exprs.is_empty() {
@@ -1158,7 +1343,7 @@ impl Interpreter<'_> {
         self.record_required_subjects(&exprs);
         let _ = self.inline_static_file_fragments(&exprs);
         let hole = self.eval_hole_exprs(&exprs);
-        self.absorb_hole_effects(&hole.effects, RenderedDemotion::Document);
+        self.absorb_hole_effects(&hole.effects, RenderedDemotion::Serialized);
         // The block's text is opaque unless its key names a YAML document,
         // and only a splice that reaches it through nothing but indent
         // shaping still renders the called body's own characters. Both hold
@@ -1167,7 +1352,7 @@ impl Interpreter<'_> {
         if self.block_text_is_yaml && splice_target_helper_call(&exprs).is_some() {
             self.record_yaml_text_fails(&hole.effects.helper_text_fails);
         }
-        self.push_effects_reads(&hole, ValueKind::Fragment);
+        self.push_effects_reads(&hole, ValueKind::Serialized);
         self.restore_site(previous_site);
     }
 }

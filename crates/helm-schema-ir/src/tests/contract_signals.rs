@@ -47,6 +47,62 @@ fn signals_for_template_at_kubernetes_version(
     .into_schema_signals()
 }
 
+#[test]
+fn checksum_influence_does_not_own_a_dormant_provider_base() -> eyre::Result<()> {
+    let mut checksum = ContractUse::new(
+        "secretName".to_string(),
+        YamlPath(vec![
+            "metadata".to_string(),
+            "annotations".to_string(),
+            "checksum/tls".to_string(),
+        ]),
+        ValueKind::Serialized,
+        Vec::new(),
+        None,
+    );
+    checksum.digest = true;
+    let sink = ContractUse::new(
+        "secretName".to_string(),
+        YamlPath(vec!["metadata".to_string(), "name".to_string()]),
+        ValueKind::Scalar,
+        vec![Guard::Truthy {
+            path: "enabled".to_string(),
+        }],
+        Some(ResourceRef::concrete(
+            "v1".to_string(),
+            "Service".to_string(),
+        )),
+    );
+    let signals = signals_for(vec![checksum, sink]);
+    let evidence = signals
+        .evidence_for("secretName")
+        .ok_or_eyre("secretName evidence")?;
+    let overlays = evidence
+        .conditional_overlays
+        .iter()
+        .map(|overlay| (overlay.guards.clone(), overlay.preserve_base_schema))
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: (
+            evidence.facts.has_unconditional_render_use,
+            evidence.facts.used_as_serialized,
+            overlays,
+        ),
+        want: (
+            false,
+            false,
+            vec![(
+                vec![ConditionalGuard::Truthy {
+                    path: "enabled".to_string(),
+                }],
+                false,
+            )],
+        ),
+    );
+    Ok(())
+}
+
 fn nullable_paths_for(signals: &ContractSchemaSignals) -> BTreeSet<String> {
     signals
         .schema_evidence_by_value_path()
@@ -1262,6 +1318,20 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
             .all(|evidence| !evidence.requiredness.is_positive_header),
         "plain pathless scalar uses must not be treated as positive header facts: {:#?}",
         signals.schema_evidence_by_value_path()
+    );
+    sim_assert_eq!(
+        have: signals
+            .schema_evidence_by_value_path()
+            .iter()
+            .filter(|(path, _)| {
+                matches!(path.as_str(), "helper.dependency" | "rendered.value")
+            })
+            .map(|(path, evidence)| (path.clone(), evidence.facts.has_non_control_use))
+            .collect::<Vec<_>>(),
+        want: vec![
+            ("helper.dependency".to_string(), false),
+            ("rendered.value".to_string(), false),
+        ]
     );
 }
 

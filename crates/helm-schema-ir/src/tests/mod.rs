@@ -146,6 +146,86 @@ fn ranged_tpl_executes_matching_values_default_programs() {
 }
 
 #[test]
+fn ranged_tpl_executes_a_selected_nested_default_program() {
+    let source = indoc! {r#"
+        {{- range $key, $value := index .Values "grafana.ini" }}
+        {{- if kindIs "map" $value }}
+        {{- range $elem, $elemVal := $value }}
+        {{- if kindIs "invalid" $elemVal }}
+        {{ $elem }} =
+        {{- else if kindIs "slice" $elemVal }}
+        {{ $elem }} = {{ toJson $elemVal }}
+        {{- else if kindIs "string" $elemVal }}
+        {{ $elem }} = {{ tpl $elemVal $ }}
+        {{- else }}
+        {{ $elem }} = {{ $elemVal }}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let program = indoc! {r"
+        {{ if (and .Values.ingress.enabled .Values.ingress.hosts) }}
+          {{ tpl (.Values.ingress.hosts | first) . }}
+        {{ else if (and .Values.route.main.enabled .Values.route.main.hostnames) }}
+          {{ tpl (.Values.route.main.hostnames | first) . }}
+        {{ else }}
+          fallback
+        {{ end }}
+    "};
+    let defines = DefineIndex::new();
+    let context = SymbolicIrContext::with_chart_default_strings(
+        &defines,
+        std::collections::BTreeMap::from([(
+            r"grafana\.ini.server.domain".to_string(),
+            program.to_string(),
+        )]),
+    );
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let selected_program = helm_schema_core::ConditionalGuard::Eq {
+        path: r"grafana\.ini.server.domain".to_string(),
+        value: helm_schema_core::GuardValue::string(program),
+    };
+    let ingress_branch = helm_schema_core::ConditionalGuard::AllOf(vec![
+        helm_schema_core::ConditionalGuard::Truthy {
+            path: "ingress.enabled".to_string(),
+        },
+        helm_schema_core::ConditionalGuard::Truthy {
+            path: "ingress.hosts".to_string(),
+        },
+    ]);
+
+    sim_assert_eq!(
+        have: signals.terminal_clauses(),
+        want: &vec![
+            vec![
+                selected_program.clone(),
+                helm_schema_core::ConditionalGuard::Absent {
+                    path: "ingress".to_string(),
+                },
+            ],
+            vec![
+                selected_program.clone(),
+                helm_schema_core::ConditionalGuard::Absent {
+                    path: "route".to_string(),
+                },
+                helm_schema_core::ConditionalGuard::Not(Box::new(ingress_branch.clone())),
+            ],
+            vec![
+                selected_program,
+                helm_schema_core::ConditionalGuard::Absent {
+                    path: "route.main".to_string(),
+                },
+                helm_schema_core::ConditionalGuard::Not(Box::new(ingress_branch)),
+            ],
+        ],
+    );
+}
+
+#[test]
 fn base_path_include_executes_implicit_template_source() {
     let src = indoc! {r#"
         apiVersion: v1

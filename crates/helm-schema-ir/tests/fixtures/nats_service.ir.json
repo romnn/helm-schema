@@ -64,10 +64,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.cluster.enabled"
     },
     {
@@ -214,10 +211,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.gateway.enabled"
     },
     {
@@ -364,10 +358,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.leafnodes.enabled"
     },
     {
@@ -455,7 +446,11 @@
         [
           {
             "path": "config",
-            "type": "truthy"
+            "type": "with"
+          },
+          {
+            "path": "config.merge",
+            "type": "default"
           }
         ]
       ],
@@ -487,96 +482,6 @@
             "jsonpatch"
           ],
           "span": {
-            "end": 4832,
-            "start": 4062
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4203,
-            "start": 4099
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4719,
-            "start": 4467
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6330,
-            "start": 5302
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 5443,
-            "start": 5339
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6217,
-            "start": 5686
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7701,
-            "start": 6672
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7588,
-            "start": 7083
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
             "end": 8324,
             "start": 8296
           },
@@ -600,10 +505,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -611,6 +512,10 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "test"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -715,10 +620,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.monitor.enabled"
     },
     {
@@ -865,10 +767,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.mqtt.enabled"
     },
     {
@@ -1065,68 +964,12 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 4215,
-            "start": 4104
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 8324,
-            "start": 8296
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "tplYaml"
-          ],
-          "span": {
-            "end": 683,
-            "start": 623
-          },
-          "template_path": "charts/nats/templates/_tplYaml.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "config.patch"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -1201,10 +1044,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -1233,13 +1072,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -1269,6 +1108,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -1343,10 +1186,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -1375,13 +1214,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -1411,6 +1250,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -1505,10 +1348,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -1537,13 +1376,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -1573,6 +1412,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -1667,10 +1510,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -1699,13 +1538,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -1735,6 +1574,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -1829,10 +1672,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -1840,6 +1679,10 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "test"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -1884,10 +1727,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -1916,13 +1755,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -1952,6 +1791,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -2046,10 +1889,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -2057,6 +1896,10 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "test"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -2101,10 +1944,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -2112,13 +1951,13 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "copy"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2127,13 +1966,13 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "move"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2142,13 +1981,13 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "test"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2157,13 +1996,13 @@
             "path": "config.patch.*.op",
             "type": "not_eq",
             "value": "add"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2171,13 +2010,13 @@
           {
             "path": "config.patch.*.op",
             "type": "absent"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2214,13 +2053,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2250,13 +2089,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2279,13 +2118,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2315,13 +2154,13 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2351,6 +2190,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -2515,12 +2358,12 @@
       "condition": [
         [
           {
-            "path": "config",
+            "path": "config.patch",
             "type": "truthy"
           },
           {
-            "path": "config.patch",
-            "type": "truthy"
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -2595,10 +2438,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -2606,6 +2445,10 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "test"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -2650,10 +2493,6 @@
       "condition": [
         [
           {
-            "path": "config",
-            "type": "truthy"
-          },
-          {
             "path": "config.patch",
             "type": "truthy"
           },
@@ -2661,13 +2500,13 @@
             "path": "config.patch.*.op",
             "type": "eq",
             "value": "test"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ],
         [
-          {
-            "path": "config",
-            "type": "truthy"
-          },
           {
             "path": "config.patch",
             "type": "truthy"
@@ -2701,6 +2540,10 @@
               ]
             ],
             "type": "any_of"
+          },
+          {
+            "path": "config",
+            "type": "with"
           }
         ]
       ],
@@ -2815,10 +2658,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.profiling.enabled"
     },
     {
@@ -2965,10 +2805,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "config.websocket.enabled"
     },
     {
@@ -3317,7 +3154,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -3379,7 +3217,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -4003,16 +3842,6 @@
             "jsonpatch"
           ],
           "span": {
-            "end": 7588,
-            "start": 7083
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
             "end": 7941,
             "start": 7759
           },
@@ -4032,6 +3861,10 @@
           {
             "path": "service",
             "type": "with"
+          },
+          {
+            "path": "service.merge",
+            "type": "default"
           }
         ]
       ],
@@ -4071,6 +3904,7 @@
       ],
       "resource": null,
       "source_expr": "service.merge",
+      "stringified": true,
       "template_supplied_member_keys": [
         "apiVersion",
         "kind",
@@ -4163,62 +3997,6 @@
         "kind": "Service"
       },
       "source_expr": "service.name"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 8324,
-            "start": 8296
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "tplYaml"
-          ],
-          "span": {
-            "end": 683,
-            "start": 623
-          },
-          "template_path": "charts/nats/templates/_tplYaml.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.patch",
-      "template_supplied_member_keys": [
-        "apiVersion",
-        "kind",
-        "metadata",
-        "spec"
-      ]
     },
     {
       "condition": [
@@ -5906,10 +5684,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.cluster.enabled"
     },
     {
@@ -5976,10 +5751,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.gateway.enabled"
     },
     {
@@ -6046,10 +5818,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.leafnodes.enabled"
     },
     {
@@ -6116,10 +5885,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.monitor.enabled"
     },
     {
@@ -6186,10 +5952,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.mqtt.enabled"
     },
     {
@@ -6256,10 +6019,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.nats.enabled"
     },
     {
@@ -6326,10 +6086,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.profiling.enabled"
     },
     {
@@ -6396,10 +6153,7 @@
           "template_path": "files/service.yaml"
         }
       ],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.ports.websocket.enabled"
     }
   ],

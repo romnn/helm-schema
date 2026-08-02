@@ -531,18 +531,17 @@ fn printf_no_substitution_resolves_to_format() {
     );
 }
 
-/// `printf "%d" .x` uses a non-`%s` directive — refuse to model.
+/// An exact integer passed to `%d` folds to its decimal spelling.
 #[test]
-fn printf_non_string_directive_emits_no_candidates() {
+fn printf_integer_directive_emits_exact_candidate() {
     let helpers = index_with(indoc! {r#"
         {{- define "x.apiVersion" -}}
         {{- printf "%d" 1 -}}
         {{- end -}}
     "#});
-    let outs = evaluate_helper("x.apiVersion", &helpers).all_literals();
-    assert!(
-        outs.is_empty(),
-        "non-%s printf directive must emit no candidates; got {outs:?}"
+    sim_assert_eq!(
+        have: evaluate_helper("x.apiVersion", &helpers).all_literals(),
+        want: vec!["1"]
     );
 }
 

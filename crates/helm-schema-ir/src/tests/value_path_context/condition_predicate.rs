@@ -38,12 +38,12 @@ fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
     sim_assert_eq!(
         have: predicate,
         want: Predicate::Or(vec![
-            Predicate::from(Guard::Absent {
-                path: "hostUsers".to_string(),
-            }),
             Predicate::from(Guard::Eq {
                 path: "hostUsers".to_string(),
                 value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Absent {
+                path: "hostUsers".to_string(),
             }),
         ]),
     );

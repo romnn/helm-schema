@@ -2,7 +2,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates};
+use crate::scalar_value::{
+    ScalarValueDispatch, TruthCondition, any_predicates, conjoin_predicates,
+};
 use helm_schema_core::Predicate;
 
 use super::SymbolicLocalState;
@@ -89,7 +91,13 @@ pub(super) fn joined_scalar_dispatch_arms(
     entry: &SymbolicLocalState,
     arms: &[(TruthCondition, SymbolicLocalState)],
     has_unconditional_else: bool,
-) -> HashMap<String, ScalarValueDispatch> {
+) -> Option<HashMap<String, ScalarValueDispatch>> {
+    if arms
+        .iter()
+        .any(|(condition, _)| matches!(condition, TruthCondition::Unknown))
+    {
+        return None;
+    }
     let mut outcomes = arms.to_vec();
     if !has_unconditional_else {
         outcomes.push((
@@ -138,7 +146,65 @@ pub(super) fn joined_scalar_dispatch_arms(
             },
         );
     }
-    joined
+    Some(joined)
+}
+
+pub(super) fn joined_truthy_reduction_arms(
+    entry: &SymbolicLocalState,
+    arms: &[(TruthCondition, SymbolicLocalState)],
+    has_unconditional_else: bool,
+) -> Option<HashMap<String, Predicate>> {
+    let mut outcomes = arms.to_vec();
+    if !has_unconditional_else {
+        outcomes.push((
+            TruthCondition::any(arms.iter().map(|(condition, _)| condition.clone())).negated(),
+            entry.clone(),
+        ));
+    }
+    if outcomes
+        .iter()
+        .any(|(condition, _)| condition.predicate().is_none())
+    {
+        return None;
+    }
+
+    let variables: BTreeSet<&String> = entry.truthy_reductions.keys().collect();
+    let mut joined = HashMap::new();
+    for variable in variables {
+        let Some(entry_reduction) = entry.truthy_reductions.get(variable) else {
+            continue;
+        };
+        if matches!(entry_reduction, Predicate::False)
+            || !outcomes.iter().any(|(_, state)| {
+                matches!(
+                    state.truthy_reductions.get(variable),
+                    Some(Predicate::False)
+                )
+            })
+        {
+            continue;
+        }
+        let mut alternatives = Vec::new();
+        let mut complete = true;
+        for (condition, state) in &outcomes {
+            let arm_condition = condition.predicate().cloned()?;
+            let Some(reduction) = state.truthy_reductions.get(variable) else {
+                complete = false;
+                break;
+            };
+            if reduction.contains_approximation() {
+                complete = false;
+                break;
+            }
+            if let Some(alternative) = conjoin_predicates(arm_condition, reduction.clone()) {
+                alternatives.push(alternative);
+            }
+        }
+        if complete {
+            joined.insert(variable.clone(), any_predicates(alternatives));
+        }
+    }
+    Some(joined)
 }
 
 /// Join fragment values, keeping a guarded traversal's ADVANCED value when

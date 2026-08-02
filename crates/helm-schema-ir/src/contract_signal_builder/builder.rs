@@ -3,10 +3,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::scalar_value::TruthCondition;
 use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
 use helm_schema_core::{
-    ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
-    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementTarget,
-    ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, GuardDnf, GuardValue,
-    MetadataFieldKind, Predicate,
+    ApproximationRole, ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay,
+    ContractFailImplication, ContractPathSchemaEvidence, ContractRequirednessEvidence,
+    ContractRequirementTarget, ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement,
+    GuardDnf, GuardValue, MetadataFieldKind, Predicate,
 };
 
 #[tracing::instrument(skip_all)]
@@ -86,6 +86,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         let acc = path_accumulator(&mut paths, value_path);
         acc.referenced = true;
         acc.facts.facts.has_string_contract = true;
+        acc.facts.facts.has_non_self_guarded_string_contract = true;
         acc.type_hints.insert("string".to_string());
     }
     for (value_path, schema_types) in type_hints {
@@ -246,6 +247,8 @@ impl PathSchemaFactsAccumulator {
         self.facts.used_as_serialized |= facts.used_as_serialized;
         self.facts.used_as_yaml_serialized |= facts.used_as_yaml_serialized;
         self.facts.has_string_contract |= facts.has_string_contract;
+        self.facts.has_non_self_guarded_string_contract |=
+            facts.has_non_self_guarded_string_contract;
         self.facts.has_string_contract_items |= facts.has_string_contract_items;
         self.facts.used_as_pathless_fragment |= facts.used_as_pathless_fragment;
         self.facts.accepted_values_root_fragment |= facts.accepted_values_root_fragment;
@@ -258,6 +261,7 @@ impl PathSchemaFactsAccumulator {
         self.facts.is_partial_scalar_value_path |= facts.is_partial_scalar_value_path;
         self.facts.is_nullable |= facts.is_nullable;
         self.facts.has_non_control_use |= facts.has_non_control_use;
+        self.facts.has_unlayered_non_control_use |= facts.has_unlayered_non_control_use;
         self.facts.merge_render_use_facts(facts);
     }
 
@@ -401,21 +405,27 @@ fn record_contract_use(
         } else {
             predicates
         };
-        // A first-iteration sound subset (`AtMostOneMember`) replaces its
-        // approximate conjunct before recording: the strengthened
-        // conjunction describes a genuine SUBSET of the row's real firing
-        // states, so every fact recorded under it — including narrowing
-        // evidence — binds where the row provably fires and nowhere else
-        // (the signoz singleton-`additionalEnvs` lane). Other sound-subset
-        // kinds stay approximate here: only the collection-size bound has
-        // been audited for row polarity.
+        // Audited positive-evidence subsets replace their approximate
+        // conjunct before recording. The first-iteration collection bound is
+        // structural. Other CONTROL subsets apply where a source reaches a
+        // resolved provider sink: they identify states where the row
+        // certainly renders, regardless of whether its payload is scalar or
+        // structured. OUTPUT-SELECTION subsets stay approximate here because
+        // influence on a selected value does not prove source identity.
         let predicates: Vec<Predicate> = predicates
             .into_iter()
             .map(|predicate| match &predicate {
                 Predicate::Approximate {
+                    role: ApproximationRole::Control,
                     sound_subset: Some(sound_subset),
                     ..
-                } if at_most_one_member_predicate(sound_subset) => sound_subset.as_ref().clone(),
+                } if at_most_one_member_predicate(sound_subset)
+                    || (contract_use.resource.is_some()
+                        && !contract_use.path.0.is_empty()
+                        && predicate_to_guard(sound_subset, None).is_some()) =>
+                {
+                    sound_subset.as_ref().clone()
+                }
                 _ => predicate,
             })
             .collect();
@@ -431,6 +441,21 @@ fn at_most_one_member_predicate(predicate: &Predicate) -> bool {
         }
         _ => false,
     }
+}
+
+fn predicate_is_truthy_disjunction_over(predicate: &Predicate, paths: &[String]) -> bool {
+    let Predicate::Or(alternatives) = predicate else {
+        return false;
+    };
+    let candidates = alternatives
+        .iter()
+        .filter_map(|alternative| match alternative {
+            Predicate::Guard(Guard::Truthy { path }) => Some(path.clone()),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+    candidates.len() == alternatives.len()
+        && candidates == paths.iter().cloned().collect::<BTreeSet<_>>()
 }
 
 /// A row rendering the collection's RANGE KEY contributes exactly one fact:
@@ -449,7 +474,7 @@ fn record_range_key_slot_use(
     {
         return;
     }
-    let Some(provider_use) = provider_schema_use(contract_use, false) else {
+    let Some(provider_use) = provider_schema_use(contract_use, false, false) else {
         return;
     };
     for conjunction in contract_use.condition.disjuncts() {
@@ -576,14 +601,19 @@ fn record_contract_use_conjunction(
         .as_ref()
         .filter(|merge| merge.layers.get(merge.position) == Some(&contract_use.source_expr))
         // Binding-carried layer facts reroute only when the merge involves
-        // a nil-scrubbed layer (airflow's worker chain): there the member
-        // typing must scope to the states each layer actually supplies —
-        // shadowed members stay open and scrubbed members null-relax.
+        // a structural transform: there the member typing must scope to the
+        // states each layer actually supplies. Shadowed members stay open,
+        // nil-scrubbed members null-relax, and parsed-map layers type only
+        // mapping inputs.
         // Ordinary binding-carried merges keep the pre-layered routing:
         // their sibling dispatch arms (bitnami's `tplvalues.render` string
         // lane) rely on the branch alternatives the rerouting suppresses.
         .filter(|merge| {
-            !merge.via_binding || merge.nil_scrubbed_layers.iter().any(|scrubbed| *scrubbed)
+            !merge.via_binding
+                || merge
+                    .transforms
+                    .iter()
+                    .any(|transform| *transform != helm_schema_core::MergeLayerTransform::Identity)
         })
         // Positive row conditions the ungated arm drops only widen its
         // firing states within the render's own selection facts (the
@@ -633,13 +663,19 @@ fn record_contract_use_conjunction(
             .unwrap_or_else(|| lowerable_conditional_guard_subset(contract_use, predicates));
         collapse_layered_truthy_gates(guards, &merge.layers)
     });
-    let lowerable_guards = if merge_layered.is_some() {
-        Some(vec![ConditionalGuard::Truthy {
-            path: contract_use.source_expr.clone(),
-        }])
-    } else {
-        lowerable_guards
-    };
+    let lowerable_guards = merge_layered.map_or(lowerable_guards, |merge| {
+        let guard = match merge.own_transform() {
+            helm_schema_core::MergeLayerTransform::ParsedMap => ConditionalGuard::TypeIs {
+                path: contract_use.source_expr.clone(),
+                schema_type: "object".to_string(),
+            },
+            helm_schema_core::MergeLayerTransform::Identity
+            | helm_schema_core::MergeLayerTransform::NilScrubbed => ConditionalGuard::Truthy {
+                path: contract_use.source_expr.clone(),
+            },
+        };
+        Some(vec![guard])
+    });
     if ranged_member_parent(&contract_use.source_expr).is_some()
         && predicates
             .iter()
@@ -672,7 +708,6 @@ fn record_contract_use_conjunction(
         && predicates.iter().any(|predicate| {
             matches!(predicate, Predicate::Guard(Guard::Default { path }) if path == &contract_use.source_expr)
         });
-
     // A row dispatched by a type test on its own path belongs to a
     // type-switch (`if eq (typeOf .Values.x) "string" … else …`): values of
     // unmatched types render nothing, which is valid, so the dispatch arms
@@ -698,6 +733,11 @@ fn record_contract_use_conjunction(
                         if predicate_tests_source_type(inner, &contract_use.source_expr)
                 )
         });
+    let total_stringified = contract_use.stringified
+        && !matches!(
+            contract_use.kind,
+            ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
+        );
 
     // The serialized-tolerance fact is itself widen-only — the use it
     // records never rejects an input, it only stops intent-grade channels
@@ -711,6 +751,7 @@ fn record_contract_use_conjunction(
     if has_source && has_approximate {
         let serialized_tolerant = matches!(contract_use.kind, ValueKind::Serialized)
             || (contract_use.kind == ValueKind::PartialScalar && !path_is_empty)
+            || total_stringified
             || type_dispatched;
         if serialized_tolerant {
             let acc = path_accumulator(paths, &contract_use.source_expr);
@@ -729,18 +770,27 @@ fn record_contract_use_conjunction(
             ),
             used_as_serialized: matches!(contract_use.kind, ValueKind::Serialized)
                 || (contract_use.kind == ValueKind::PartialScalar && !path_is_empty)
+                || total_stringified
                 || type_dispatched,
             used_as_yaml_serialized: matches!(
                 contract_use.kind,
                 ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
             ),
             has_string_contract: contract_use.has_string_contract && !type_dispatched,
+            has_non_self_guarded_string_contract: contract_use.has_string_contract
+                && !type_dispatched
+                && !predicates.iter().any(|predicate| {
+                    predicate_skips_falsy_source(predicate, &contract_use.source_expr)
+                }),
             used_as_pathless_fragment: matches!(
                 contract_use.kind,
                 ValueKind::Fragment
                     | ValueKind::YamlSerialized
                     | ValueKind::TemplatedYamlSerialized
             ) && path_is_empty,
+            has_parsed_map_layered_use: merge_layered.is_some_and(|merge| {
+                merge.own_transform() == helm_schema_core::MergeLayerTransform::ParsedMap
+            }),
             is_partial_scalar_value_path: contract_use.kind == ValueKind::PartialScalar,
             is_nullable: !path_is_empty
                 || self_range_guarded
@@ -753,11 +803,13 @@ fn record_contract_use_conjunction(
                 || pathless_self_default_guarded,
             ..ContractValuePathFacts::default()
         };
-        if !path_is_empty {
-            // A merge operand's map contract keys on the call's live gate and
-            // rides the fail implication exactly; a digest row hashes derived
-            // text without consuming the raw value. Neither can reject a
-            // falsy input at the base, so the falsy escape survives them.
+        let scoped_pathless_string_contract = path_is_empty
+            && contract_use.has_string_contract
+            && ranged_member_parent(&contract_use.source_expr).is_none();
+        if !path_is_empty || scoped_pathless_string_contract {
+            // Merge operands and digest rows do not consume a falsy input at
+            // this use. Textual placement alone does not prove that: strict
+            // formatters such as `%s` still abort on empty maps and arrays.
             let falsy_tolerant_use =
                 merge_layered.is_some() || contract_use.digest || contract_use.merge_operand;
             facts.record_render_use(
@@ -774,18 +826,12 @@ fn record_contract_use_conjunction(
             && predicates.iter().all(|predicate| {
                 predicate_is_positive_header(predicate, &contract_use.source_expr)
             });
-        facts.has_non_control_use = !positive_header;
-        // A serialized splice renders text the sink cannot type back onto
-        // the input, so it contributes no metadata field kind either.
-        let metadata_field_kind = if matches!(
-            contract_use.kind,
-            ValueKind::PartialScalar | ValueKind::Serialized
-        ) || type_dispatched
-        {
-            None
-        } else {
-            metadata_field_kind_from_yaml_path(&contract_use.path.0)
-        };
+        // A pathless scalar row is the value's influence on a control
+        // region, including its negated and branch-collapsed forms. It does
+        // not render the source value into the resource. Other pathless
+        // kinds carry actual fragment/text output.
+        facts.has_non_control_use = !path_is_empty || contract_use.kind != ValueKind::Scalar;
+        facts.has_unlayered_non_control_use = facts.has_non_control_use && merge_layered.is_none();
         let acc = path_accumulator(paths, &contract_use.source_expr);
         acc.requiredness.is_positive_header |= positive_header;
         // An UNCONDITIONAL string-contract row types the path itself;
@@ -818,27 +864,55 @@ fn record_contract_use_conjunction(
                     | ValueKind::YamlSerialized
                     | ValueKind::TemplatedYamlSerialized
             )
-            && lowerable_guards.as_ref().is_some_and(|guards| {
-                guards.iter().any(|guard| {
-                    matches!(
-                        guard,
-                        ConditionalGuard::TypeIs { schema_type, .. }
-                            if schema_type == "object" || schema_type == "array"
-                    )
-                })
-            });
+            && (matches!(
+                contract_use.kind,
+                ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
+            ) && complement_dispatched
+                || lowerable_guards.as_ref().is_some_and(|guards| {
+                    guards.iter().any(|guard| {
+                        matches!(
+                            guard,
+                            ConditionalGuard::TypeIs { schema_type, .. }
+                                if schema_type == "object" || schema_type == "array"
+                        )
+                    })
+                }));
+        // A serialized splice renders text the sink cannot type back onto
+        // the input, so it contributes no metadata field kind either. A
+        // structural type partition is different: the selected object or
+        // array itself reaches the sink, so metadata typing belongs inside
+        // that arm even when the resource kind could not be resolved.
+        let metadata_field_kind = if matches!(
+            contract_use.kind,
+            ValueKind::PartialScalar | ValueKind::Serialized
+        ) || (contract_use.stringified
+            && !matches!(
+                contract_use.kind,
+                ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
+            ))
+            || (type_dispatched && !structural_dispatch_arm)
+        {
+            None
+        } else {
+            metadata_field_kind_from_yaml_path(&contract_use.path.0)
+        };
+        let source_null_tolerant = path_is_empty || has_matching_self_guard;
         let provider_use = (!type_dispatched || complement_dispatched || structural_dispatch_arm)
-            .then(|| provider_schema_use(contract_use, self_range_guarded))
+            .then(|| provider_schema_use(contract_use, self_range_guarded, source_null_tolerant))
             .flatten()
             // A row whose layer facts stay UN-rerouted (binding-carried,
-            // no scrub involved) types through the ordinary branch/base
-            // lanes; its use must not also seed synthesized layer arms.
+            // no structural transform involved) types through the ordinary
+            // branch/base lanes; its use must not also seed synthesized
+            // layer arms.
             // Rows whose position mismatches their own path (member
             // projections of a layered parent) keep the info — their
             // synthesized member arms are exactly round 18's ungated lanes.
             .map(|mut provider_use| {
                 let keeps_layer_arms = provider_use.merge_layers.as_ref().is_some_and(|merge| {
-                    !merge.via_binding || merge.nil_scrubbed_layers.iter().any(|scrubbed| *scrubbed)
+                    !merge.via_binding
+                        || merge.transforms.iter().any(|transform| {
+                            *transform != helm_schema_core::MergeLayerTransform::Identity
+                        })
                 });
                 if !keeps_layer_arms {
                     provider_use.merge_layers = None;
@@ -887,6 +961,10 @@ fn record_contract_use_conjunction(
         // partition merely selects from), while the BRANCH keeps the real
         // structural use without the tolerance (which would dissolve the
         // arm's own provider typing into the serialized preimage).
+        let guarded_string_contract = scoped_pathless_string_contract
+            && lowerable_guards
+                .as_ref()
+                .is_some_and(|guards| !guards.is_empty());
         let (path_facts, branch_facts) = if structural_dispatch_arm {
             let mut path_facts = facts;
             path_facts.used_as_fragment = false;
@@ -895,29 +973,40 @@ fn record_contract_use_conjunction(
             let mut branch_facts = facts;
             branch_facts.used_as_serialized = false;
             (path_facts, branch_facts)
-        } else if contract_use.digest {
-            // A digest row's slot observes fresh derived text, so its
-            // serialized tolerance holds only where the row fires: the
-            // BRANCH keeps it (grafana's checksum'd `datasources` branch
-            // must not re-type through the declared default), while the
-            // PATH must not gain a serialization use that would let the
-            // base resolution treat the whole path as serialization-owned.
+        } else if guarded_string_contract {
+            // A pathless strict-consumer claim under a foreign gate types
+            // only that branch. Keeping the same fact on the path base would
+            // reject values while the consumer's chart is dormant.
             let mut path_facts = facts;
-            path_facts.used_as_serialized = false;
+            path_facts.has_string_contract = false;
             (path_facts, facts)
+        } else if contract_use.digest {
+            // A digest observes fresh derived text, not the raw input. Its
+            // tolerance belongs only to a live overlay branch; path-level
+            // render facts would let an unconditional checksum own the
+            // input base even when the helper's real sink is dormant.
+            (ContractValuePathFacts::default(), facts)
         } else {
             (facts, facts)
         };
-        acc.record_source_use(
-            &SourceUseFactSplit {
-                path: path_facts,
-                branch: branch_facts,
-            },
-            path_is_empty || has_matching_self_guard,
-            lowerable_guards,
-            branch_provider_use,
-            metadata_field_kind,
-        );
+        if layer_arms_carry_sink_typing {
+            // The self-selection guard routes merge arms; it is not an
+            // independent sink branch whose declared default may be typed.
+            acc.referenced = true;
+            acc.facts.record_facts(path_facts);
+            acc.facts.record_nullable_observation(source_null_tolerant);
+        } else {
+            acc.record_source_use(
+                &SourceUseFactSplit {
+                    path: path_facts,
+                    branch: branch_facts,
+                },
+                source_null_tolerant,
+                lowerable_guards,
+                branch_provider_use,
+                metadata_field_kind,
+            );
+        }
     }
 
     for path in predicates
@@ -952,11 +1041,6 @@ fn record_contract_use_conjunction(
         }
         let acc = path_accumulator(paths, &path);
         acc.referenced |= has_source;
-        if !path_is_empty {
-            let mut facts = ContractValuePathFacts::default();
-            facts.record_render_use(range_guard_paths.contains(&path), None, None);
-            acc.facts.record_facts(facts);
-        }
     }
     if has_source && !has_approximate {
         for path in range_guard_paths {
@@ -1216,12 +1300,35 @@ fn record_fail_conjunction(
         );
         return;
     }
-    if let crate::eval_effect::CaptureKind::ValueType { path, schema_type } = &capture.kind {
+    if let crate::eval_effect::CaptureKind::ValueType {
+        path,
+        schema_type,
+        null_aborts,
+    } = &capture.kind
+    {
+        // The path-wide contract set intentionally loses execution scope.
+        // Only this exact capture can distinguish a raw consumer from one
+        // skipped by the operand's own truthiness guard.
+        if schema_type == "string"
+            && !capture
+                .conjunction
+                .iter()
+                .any(|predicate| predicate_skips_falsy_source(predicate, path))
+        {
+            path_accumulator(paths, path)
+                .facts
+                .facts
+                .has_non_self_guarded_string_contract = true;
+        }
         record_value_requirement_capture(
             paths,
             capture,
             path,
-            FailValueRequirement::SchemaType(schema_type.clone()),
+            if *null_aborts {
+                FailValueRequirement::SchemaTypeEvenNull(schema_type.clone())
+            } else {
+                FailValueRequirement::SchemaType(schema_type.clone())
+            },
         );
         return;
     }
@@ -1240,19 +1347,40 @@ fn record_fail_conjunction(
         allow_integer,
     } = &capture.kind
     {
-        // The chain header's own with-marker stamp is a conjunctive
-        // approximation of its disjunctive condition; the capture's exact
-        // selection conjuncts refine it, and a leftover marker for a
-        // `¬truthy` prior would contradict them (encoded as truthiness, the
-        // marker can never co-hold with the negation). Genuine enclosing
-        // conditions on OTHER paths stay.
+        // A `with` selection stamps one positive marker per candidate beside
+        // the chain's disjunction. Helper transfer may spell those markers
+        // as `Truthy` instead of `With`. Remove exactly one marker per path
+        // only when the complete stamp is present; the capture's appended
+        // selection tail remains, as do genuine enclosing conditions.
         let mut capture = capture.clone();
-        capture.conjunction.retain(|predicate| {
-            !matches!(
-                predicate,
-                Predicate::Guard(Guard::With { path }) if chain.contains(path)
-            )
+        let has_chain_disjunction = capture
+            .conjunction
+            .iter()
+            .any(|predicate| predicate_is_truthy_disjunction_over(predicate, chain));
+        let has_all_markers = chain.iter().all(|candidate| {
+            capture.conjunction.iter().any(|predicate| {
+                matches!(
+                    predicate,
+                    Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
+                        if path == candidate
+                )
+            })
         });
+        if has_chain_disjunction && has_all_markers {
+            let mut remaining_markers = chain.iter().cloned().collect::<BTreeSet<_>>();
+            capture.conjunction.retain(|predicate| {
+                if predicate_is_truthy_disjunction_over(predicate, chain) {
+                    return false;
+                }
+                let Predicate::Guard(
+                    Guard::Truthy { path: marker } | Guard::With { path: marker },
+                ) = predicate
+                else {
+                    return true;
+                };
+                !remaining_markers.remove(marker)
+            });
+        }
         record_value_requirement_capture(
             paths,
             &capture,
@@ -1362,12 +1490,29 @@ fn record_fail_conjunction(
         );
         return;
     }
-    if let crate::eval_effect::CaptureKind::QuotedSerialization { path, style } = &capture.kind {
+    if let crate::eval_effect::CaptureKind::QuotedSerialization {
+        path,
+        style,
+        templated,
+    } = &capture.kind
+    {
         record_value_requirement_capture(
             paths,
             capture,
             path,
-            FailValueRequirement::QuotedSerializationSafe { style: *style },
+            FailValueRequirement::QuotedSerializationSafe {
+                style: *style,
+                templated: *templated,
+            },
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::PrintfStringOperand { path } = &capture.kind {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::PrintfStringOperand,
         );
         return;
     }
@@ -3383,8 +3528,11 @@ impl ContractPathAccumulator {
             return;
         }
         self.facts.record_facts(facts.path);
-        let row_forms_overlay_branch = facts.path.has_render_use
-            && !facts.path.has_unconditional_render_use
+        // A parsed-map merge may render unconditionally, but this source
+        // supplies sink members only on its mapping-input partition.
+        let row_forms_overlay_branch = facts.branch.has_render_use
+            && (!facts.branch.has_unconditional_render_use
+                || facts.branch.has_parsed_map_layered_use)
             && lowerable_guards
                 .as_ref()
                 .is_some_and(|guards| !guards.is_empty());
@@ -3394,15 +3542,17 @@ impl ContractPathAccumulator {
             }
             self.facts.record_metadata_field_kind(metadata_field_kind);
         }
-        if facts.path.has_render_use {
-            if facts.path.has_unconditional_render_use
-                || lowerable_guards.as_ref().is_some_and(Vec::is_empty)
-            {
+        if facts.branch.has_render_use {
+            let path_is_unconditional = facts.path.has_render_use
+                && ((facts.path.has_unconditional_render_use
+                    && !facts.path.has_parsed_map_layered_use)
+                    || lowerable_guards.as_ref().is_some_and(Vec::is_empty));
+            if path_is_unconditional {
                 // All predicates were the row's own structural range
                 // ancestry, so its sink evidence applies to every emitted
                 // member and belongs to the base rather than an empty arm.
                 self.has_unconditional_overlay_peer = true;
-            } else if let Some(guards) = lowerable_guards {
+            } else if let Some(guards) = lowerable_guards.filter(|guards| !guards.is_empty()) {
                 let branch = self.conditional_overlay_branches.entry(guards).or_default();
                 branch.facts.is_nullable = true;
                 branch.record_nullable_observation(source_null_tolerant);
@@ -3414,7 +3564,9 @@ impl ContractPathAccumulator {
                 }
             }
         }
-        self.facts.record_nullable_observation(source_null_tolerant);
+        if facts.path.has_render_use {
+            self.facts.record_nullable_observation(source_null_tolerant);
+        }
     }
 
     #[expect(
@@ -3841,6 +3993,7 @@ fn lowerable_conditional_guard_subset(
 fn provider_schema_use(
     contract_use: &ContractUse,
     self_range_guarded: bool,
+    source_null_tolerant: bool,
 ) -> Option<ProviderSchemaUse> {
     // A nil-omitting stringification (Sprig `quote`/`squote` skip nil
     // operands) of a RANGED member leaf still forces an explicit null
@@ -3859,6 +4012,14 @@ fn provider_schema_use(
             contract_use.kind,
             ValueKind::PartialScalar | ValueKind::Serialized
         ) && !nil_omitting_ranged_leaf)
+        || (contract_use.stringified
+            && !matches!(
+                contract_use.kind,
+                ValueKind::Scalar
+                    | ValueKind::YamlSerialized
+                    | ValueKind::TemplatedYamlSerialized
+            )
+            && !nil_omitting_ranged_leaf)
         || contract_use.path.0.is_empty()
         // A string-consuming transform produced this rendered text, so the
         // slot observes the TRANSFORM's output, never the raw spelling: a
@@ -3880,6 +4041,7 @@ fn provider_schema_use(
         value_path: contract_use.source_expr.clone(),
         path: contract_use.path.clone(),
         kind: contract_use.kind,
+        stringified: contract_use.stringified,
         resource,
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         split_segment: contract_use.split_segment.clone(),
@@ -3907,6 +4069,7 @@ fn provider_schema_use(
                 .0
                 .last()
                 .is_none_or(|segment| !segment.ends_with("[*]")),
+        source_null_tolerant,
         outer_guards: Vec::new(),
     })
 }
@@ -4141,6 +4304,13 @@ fn guard_to_conditional_guard(
             path: path(value_path)?,
             key: key.clone(),
         }),
+        Guard::NotHasKey {
+            path: value_path,
+            key,
+        } => Some(ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
+            path: path(value_path)?,
+            key: key.clone(),
+        }))),
         Guard::ContainsMemberEquals {
             path: value_path,
             member,
@@ -4172,6 +4342,22 @@ fn guard_to_conditional_guard(
             path: path(value_path)?,
             pattern: pattern.clone(),
         }),
+        Guard::NotMatchesPattern {
+            path: value_path,
+            pattern,
+        } => {
+            let value_path = path(value_path)?;
+            Some(ConditionalGuard::AllOf(vec![
+                ConditionalGuard::TypeIs {
+                    path: value_path.clone(),
+                    schema_type: "string".to_string(),
+                },
+                ConditionalGuard::Not(Box::new(ConditionalGuard::MatchesPattern {
+                    path: value_path,
+                    pattern: pattern.clone(),
+                })),
+            ]))
+        }
         Guard::MatchesPattern { .. }
         | Guard::RangeKeyPrefix { .. }
         | Guard::RangeKeyMatches { .. }
@@ -4316,6 +4502,15 @@ fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool 
     )
 }
 
+fn predicate_skips_falsy_source(predicate: &Predicate, source_expr: &str) -> bool {
+    matches!(
+        predicate,
+        Predicate::Guard(
+            Guard::Truthy { path } | Guard::Range { path } | Guard::With { path }
+        ) if path == source_expr
+    )
+}
+
 fn predicate_is_self_presence(predicate: &Predicate, source_expr: &str) -> bool {
     matches!(
         predicate,
@@ -4414,6 +4609,7 @@ fn predicate_is_positive_header(predicate: &Predicate, source_expr: &str) -> boo
     matches!(
         predicate,
         Predicate::Guard(Guard::Truthy { path }
+            | Guard::With { path }
             | Guard::Eq { path, .. }
             | Guard::TypeIs { path, .. }) if path == source_expr
     )

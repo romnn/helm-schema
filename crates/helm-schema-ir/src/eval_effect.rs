@@ -93,6 +93,15 @@ pub(crate) struct Effects {
     /// the render do not — those belong to the program's output, which is why
     /// the same paths are `derived_text_paths`.
     pub(crate) templated_text_identity_paths: BTreeSet<String>,
+    /// Paths transformed only by ASCII case mapping in THIS expression.
+    /// Case mapping preserves every character that can structurally end a
+    /// plain YAML token, so a plain-slot sink still projects that lexical
+    /// language even though the transform independently requires a string.
+    pub(crate) plain_text_preserving_paths: BTreeSet<String>,
+    /// Paths substituted by a `%s` that opens a complete literal `printf`
+    /// result. A plain-slot sink requires the selected raw arm to be a
+    /// present, structurally safe string; other placements remain total.
+    pub(crate) plain_slot_string_format_paths: BTreeSet<String>,
     /// Range-key paths whose rendered text in THIS expression still carries
     /// the raw key's token-ending characters: a `replace` whose token and
     /// replacement cannot introduce or remove one leaves the unquoted-slot
@@ -205,8 +214,14 @@ pub(crate) enum CaptureKind {
         total_text_preimage: bool,
     },
     /// A scalar path must have the named JSON Schema type whenever the
-    /// capture's execution predicates hold.
-    ValueType { path: String, schema_type: String },
+    /// capture's execution predicates hold. `null_aborts` distinguishes a
+    /// strict Go parameter from a selected input whose null arm never reaches
+    /// that parameter.
+    ValueType {
+        path: String,
+        schema_type: String,
+        null_aborts: bool,
+    },
     /// A range header iterates this values path itself, or a wildcard path
     /// identifies the values-backed member alternative supplied to a
     /// derived iterable. The header establishes that input's iterable
@@ -266,7 +281,11 @@ pub(crate) enum CaptureKind {
     QuotedSerialization {
         path: String,
         style: helm_schema_core::QuotedScalarStyle,
+        templated: bool,
     },
+    /// A `%s` substitution opens a plain token, so the raw operand must
+    /// format as either string text or a structurally safe mapping.
+    PrintfStringOperand { path: String },
     /// A raw splice inside an UNQUOTED scalar: the path's own text must keep
     /// the plain token intact (`: `, ` #`, and line breaks end it).
     PlainSlotText {
@@ -300,6 +319,34 @@ impl FailCapture {
 }
 
 impl CaptureKind {
+    pub(crate) fn sole_value_path(&self) -> Option<&str> {
+        match self {
+            Self::Fail | Self::MemberAccess { .. } => None,
+            Self::RangeKeyStrings { paths }
+            | Self::RangeKeyPlainSlot { paths }
+            | Self::CollectionItems { paths, .. }
+            | Self::SplitIndexAccess { paths, .. } => {
+                let mut paths = paths.iter();
+                match (paths.next(), paths.next()) {
+                    (Some(path), None) => Some(path),
+                    _ => None,
+                }
+            }
+            Self::IndexAccess { path, .. }
+            | Self::ValueType { path, .. }
+            | Self::RangeInput { path, .. }
+            | Self::RangeSelection { path, .. }
+            | Self::DigSubject { path }
+            | Self::RequiredPresence { path }
+            | Self::AbsenceAborts { path }
+            | Self::ComparableKind { path, .. }
+            | Self::ValuePattern { path, .. }
+            | Self::QuotedSerialization { path, .. }
+            | Self::PrintfStringOperand { path }
+            | Self::PlainSlotText { path, .. } => Some(path),
+        }
+    }
+
     /// Rewrite every values path the kind payload carries (dependency
     /// namespacing rebases captures under the subchart's key exactly like
     /// the conjunction's predicate paths).
@@ -324,6 +371,7 @@ impl CaptureKind {
             | Self::ComparableKind { path, .. }
             | Self::ValuePattern { path, .. }
             | Self::QuotedSerialization { path, .. }
+            | Self::PrintfStringOperand { path }
             | Self::PlainSlotText { path, .. } => {
                 *path = map(path);
             }
@@ -377,6 +425,8 @@ impl Effects {
             direct_string_consumer_paths,
             nil_strict_identity_paths,
             templated_text_identity_paths,
+            plain_text_preserving_paths,
+            plain_slot_string_format_paths,
             plain_text_range_key_paths,
             chart_default_paths,
             local_default_paths,
@@ -424,6 +474,10 @@ impl Effects {
             .extend(nil_strict_identity_paths);
         self.templated_text_identity_paths
             .extend(templated_text_identity_paths);
+        self.plain_text_preserving_paths
+            .extend(plain_text_preserving_paths);
+        self.plain_slot_string_format_paths
+            .extend(plain_slot_string_format_paths);
         self.plain_text_range_key_paths
             .extend(plain_text_range_key_paths);
         self.chart_default_paths.extend(chart_default_paths);
@@ -456,16 +510,11 @@ impl Effects {
                 self.helper_reads.push(read);
             }
         }
-        for row in helper_rendered {
-            if !self.helper_rendered.contains(&row) {
-                self.helper_rendered.push(row);
-            }
-        }
-        for row in helper_dependency_rendered {
-            if !self.helper_dependency_rendered.contains(&row) {
-                self.helper_dependency_rendered.push(row);
-            }
-        }
+        append_unique_rendered_rows(&mut self.helper_rendered, helper_rendered);
+        append_unique_rendered_rows(
+            &mut self.helper_dependency_rendered,
+            helper_dependency_rendered,
+        );
         self.helper_suppressed_paths.extend(helper_suppressed_paths);
         for condition in helper_fails {
             if !self.helper_fails.contains(&condition) {
@@ -521,8 +570,7 @@ impl Effects {
             tested_type_hints: _,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
-            // Describes the returned YAML text after `tpl`, not evaluation
-            // of an argument whose value the callee ignores.
+            // Describes returned YAML text, not evaluation of an ignored argument.
             templated_yaml_paths: _,
             json_serialized_paths,
             encoded_paths,
@@ -545,6 +593,8 @@ impl Effects {
             direct_string_consumer_paths,
             nil_strict_identity_paths,
             templated_text_identity_paths,
+            plain_text_preserving_paths: _,
+            plain_slot_string_format_paths: _,
             plain_text_range_key_paths,
             chart_default_paths,
             local_default_paths: _,
@@ -559,7 +609,7 @@ impl Effects {
             values_root_helper_includes,
             helper_reads,
             helper_rendered,
-            mut helper_dependency_rendered,
+            helper_dependency_rendered,
             helper_suppressed_paths,
             helper_fails,
             // Describes the text the argument RENDERS, which never reaches a
@@ -568,11 +618,8 @@ impl Effects {
             helper_text_fails: _,
             member_host_conversions,
         } = self;
-        for row in helper_rendered {
-            if !helper_dependency_rendered.contains(&row) {
-                helper_dependency_rendered.push(row);
-            }
-        }
+        let mut helper_dependency_rendered = helper_dependency_rendered;
+        append_unique_rendered_rows(&mut helper_dependency_rendered, helper_rendered);
         Self {
             output_paths: BTreeSet::new(),
             bound_output_paths: BTreeSet::new(),
@@ -599,6 +646,8 @@ impl Effects {
             direct_string_consumer_paths,
             nil_strict_identity_paths,
             templated_text_identity_paths,
+            plain_text_preserving_paths: BTreeSet::new(),
+            plain_slot_string_format_paths: BTreeSet::new(),
             plain_text_range_key_paths,
             chart_default_paths,
             local_default_paths: BTreeSet::new(),
@@ -619,6 +668,21 @@ impl Effects {
             helper_text_fails: Vec::new(),
             member_host_conversions,
         }
+    }
+
+    /// Keep contracts learned while consuming an expression as a predicate,
+    /// without treating the predicate's returned value as rendered output.
+    pub(crate) fn consumed_as_predicate(self) -> Self {
+        let type_hints = self.type_hints.clone();
+        let guarded_type_hints = self.guarded_type_hints.clone();
+        let fallback_type_hints = self.fallback_type_hints.clone();
+        let tested_type_hints = self.tested_type_hints.clone();
+        let mut effects = self.execution_only();
+        effects.type_hints = type_hints;
+        effects.guarded_type_hints = guarded_type_hints;
+        effects.fallback_type_hints = fallback_type_hints;
+        effects.tested_type_hints = tested_type_hints;
+        effects
     }
 
     pub(crate) fn add_default_paths(&mut self, paths: BTreeSet<String>) {
@@ -653,7 +717,7 @@ impl Effects {
     pub(crate) fn promote_tested_type_hints(&mut self) {
         for (path, hints) in std::mem::take(&mut self.tested_type_hints) {
             for hint in hints {
-                insert_type_hint(&mut self.type_hints, path.clone(), &hint);
+                insert_type_hint(&mut self.guarded_type_hints, path.clone(), &hint);
             }
         }
     }
@@ -715,11 +779,22 @@ impl Effects {
     }
 }
 
+fn append_unique_rendered_rows(target: &mut Vec<RenderedRow>, rows: Vec<RenderedRow>) {
+    for row in rows {
+        if !target.contains(&row) {
+            target.push(row);
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct EvalResult {
     pub(crate) value: Option<AbstractValue>,
     pub(crate) effects: Effects,
     pub(crate) truth: TruthCondition,
+    /// Truthiness of the typed payload retained across a JSON encode/decode
+    /// round trip. The serialized text has different Helm truthiness.
+    pub(crate) json_payload_truth: TruthCondition,
     pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
     /// Exact scalar values of fields in a statically constructed mapping.
     ///
@@ -752,6 +827,7 @@ impl EvalResult {
             effects: Effects::from_value(&value),
             value: Some(value),
             truth,
+            json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch,
             field_scalar_dispatches: BTreeMap::new(),
         }
@@ -765,6 +841,7 @@ impl EvalResult {
             value,
             effects,
             truth: TruthCondition::Unknown,
+            json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch: None,
             field_scalar_dispatches: BTreeMap::new(),
         }

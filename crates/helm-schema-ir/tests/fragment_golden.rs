@@ -50,7 +50,7 @@ fn branchy_mapping_merges_guarded_entry_arms() {
                         key "checksum":
                           when always:
                             scalar [text{"fixed"}]
-                    when (!(truthy(commonAnnotations)) && truthy(legacyAnnotations)):
+                    when (truthy(legacyAnnotations) && !(truthy(commonAnnotations))):
                       mapping:
                         key "legacy":
                           when always:

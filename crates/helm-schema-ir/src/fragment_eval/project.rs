@@ -30,6 +30,7 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
         &mut conditions,
         &mut contract,
         &std::collections::BTreeSet::new(),
+        &[],
     );
     for read in &document.reads {
         if read.condition.is_never() {
@@ -89,6 +90,7 @@ fn walk_guarded(
     conditions: &mut Vec<Predicate>,
     contract: &mut ContractIr,
     member_sibling_keys: &std::collections::BTreeSet<String>,
+    structural_sibling_conditions: &[Predicate],
 ) {
     let open_mapping_entry = find_open_mapping_entry(guarded);
     // Sibling MAPPING arms of the same guarded position contribute literal
@@ -97,6 +99,9 @@ fn walk_guarded(
     // provider slot must know them so its object requiredness does not
     // re-demand template-supplied members. Conditional siblings widen the
     // set, which can only relax requiredness, never reject.
+    // The presence-abort lane below is different: each sibling retains its
+    // execution predicate because `toYaml nil` cannot continue a mapping or
+    // sequence that the template already began on that arm.
     let mut sibling_keys = member_sibling_keys.clone();
     for (_, node) in &guarded.arms {
         if let AbstractFragment::Mapping(mapping) = node {
@@ -106,6 +111,51 @@ fn walk_guarded(
             }));
         }
     }
+    let mut sibling_conditions = structural_sibling_conditions.to_vec();
+    for (sibling_condition, sibling) in &guarded.arms {
+        match sibling {
+            AbstractFragment::Mapping(mapping) => {
+                for entry in &mapping.entries {
+                    if !matches!(&entry.key, EntryKey::Literal(key) if !key.is_empty()) {
+                        continue;
+                    }
+                    if entry.value.arms.is_empty() {
+                        sibling_conditions.push(sibling_condition.clone());
+                        continue;
+                    }
+                    sibling_conditions.extend(entry.value.arms.iter().map(
+                        |(value_condition, _)| {
+                            Predicate::all(vec![sibling_condition.clone(), value_condition.clone()])
+                                .normalize_boolean()
+                        },
+                    ));
+                }
+            }
+            AbstractFragment::Sequence(sequence) => {
+                for item in &sequence.items {
+                    sibling_conditions.extend(item.arms.iter().map(|(item_condition, _)| {
+                        Predicate::all(vec![sibling_condition.clone(), item_condition.clone()])
+                            .normalize_boolean()
+                    }));
+                }
+            }
+            AbstractFragment::Scalar(_)
+            | AbstractFragment::Splice(_)
+            | AbstractFragment::Opaque(_) => {}
+        }
+    }
+    sibling_conditions.retain(|condition| !matches!(condition, Predicate::False));
+    sibling_conditions.sort();
+    sibling_conditions.dedup();
+    let minimal_sibling_conditions = sibling_conditions
+        .iter()
+        .filter(|condition| {
+            !sibling_conditions.iter().any(|other| {
+                other != *condition && predicate_is_conjunctive_subset(other, condition)
+            })
+        })
+        .cloned()
+        .collect::<Vec<_>>();
     for (condition, node) in &guarded.arms {
         let pushed = !condition.is_trivial();
         if pushed {
@@ -117,7 +167,14 @@ fn walk_guarded(
         {
             effective_path.0.push(key.clone());
         }
-        walk_node(node, &effective_path, conditions, contract, &sibling_keys);
+        walk_node(
+            node,
+            &effective_path,
+            conditions,
+            contract,
+            &sibling_keys,
+            &minimal_sibling_conditions,
+        );
         if pushed {
             conditions.pop();
         }
@@ -217,12 +274,17 @@ fn predicate_is_conjunctive_subset(subset: &Predicate, superset: &Predicate) -> 
     subset_conjuncts.is_subset(&superset_conjuncts)
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "the recursive fragment variant match keeps each node kind under one shared path and condition invariant"
+)]
 fn walk_node(
     node: &AbstractFragment,
     path: &YamlPath,
     conditions: &mut Vec<Predicate>,
     contract: &mut ContractIr,
     member_sibling_keys: &std::collections::BTreeSet<String>,
+    structural_sibling_conditions: &[Predicate],
 ) {
     let no_siblings = std::collections::BTreeSet::new();
     match node {
@@ -240,15 +302,48 @@ fn walk_node(
                     _ => None,
                 })
                 .collect();
+            let mut literal_key_conditions = mapping
+                .entries
+                .iter()
+                .filter(|entry| matches!(&entry.key, EntryKey::Literal(key) if !key.is_empty()))
+                .flat_map(|entry| {
+                    if entry.value.arms.is_empty() {
+                        vec![Predicate::True]
+                    } else {
+                        entry
+                            .value
+                            .arms
+                            .iter()
+                            .map(|(condition, _)| condition.clone())
+                            .collect()
+                    }
+                })
+                .collect::<Vec<_>>();
+            literal_key_conditions.sort();
+            literal_key_conditions.dedup();
             for entry in &mapping.entries {
                 match &entry.key {
                     EntryKey::Literal(key) if !key.is_empty() => {
                         let mut child = path.clone();
                         child.0.push(key.clone());
-                        walk_guarded(&entry.value, &child, conditions, contract, &no_siblings);
+                        walk_guarded(
+                            &entry.value,
+                            &child,
+                            conditions,
+                            contract,
+                            &no_siblings,
+                            &[],
+                        );
                     }
                     EntryKey::Literal(_) => {
-                        walk_guarded(&entry.value, path, conditions, contract, &literal_keys);
+                        walk_guarded(
+                            &entry.value,
+                            path,
+                            conditions,
+                            contract,
+                            &literal_keys,
+                            &literal_key_conditions,
+                        );
                     }
                     EntryKey::Dynamic(_) => {
                         // Templated keys: the key's reads were recorded at
@@ -258,7 +353,14 @@ fn walk_node(
                         // additionalProperties schema without guessing the
                         // rendered key.
                         let child = dynamic_mapping_value_path(path);
-                        walk_guarded(&entry.value, &child, conditions, contract, &no_siblings);
+                        walk_guarded(
+                            &entry.value,
+                            &child,
+                            conditions,
+                            contract,
+                            &no_siblings,
+                            &[],
+                        );
                     }
                 }
             }
@@ -266,7 +368,7 @@ fn walk_node(
         AbstractFragment::Sequence(sequence) => {
             let item_path = sequence_item_path(path);
             for item in &sequence.items {
-                walk_guarded(item, &item_path, conditions, contract, &no_siblings);
+                walk_guarded(item, &item_path, conditions, contract, &no_siblings, &[]);
             }
         }
         AbstractFragment::Scalar(scalar) => {
@@ -282,6 +384,47 @@ fn walk_node(
         AbstractFragment::Splice(splice) => {
             let row = splice_row(splice, path, conditions, member_sibling_keys);
             if !row.condition.is_never() {
+                if row.kind == ValueKind::YamlSerialized
+                    && !structural_sibling_conditions.is_empty()
+                    && !row.source_expr.contains('*')
+                    && !splice.meta.defaulted
+                    && !splice.meta.merge_operand
+                    && splice.meta.merge_layers.is_none()
+                {
+                    // A direct serialized value continues structural YAML the
+                    // template already began. If its source is absent,
+                    // `toYaml` writes `null` where another mapping member or
+                    // sequence item must begin and Helm cannot parse the
+                    // document. Computed merge/default results do not preserve
+                    // this identity.
+                    let mut conjunctions = std::collections::BTreeSet::new();
+                    for sibling_condition in structural_sibling_conditions {
+                        let condition = Predicate::all(
+                            conditions
+                                .iter()
+                                .cloned()
+                                .chain(std::iter::once(sibling_condition.clone()))
+                                .collect(),
+                        )
+                        .normalize_boolean();
+                        let conjunction = match condition {
+                            Predicate::False => continue,
+                            Predicate::True => Vec::new(),
+                            Predicate::And(predicates) => predicates,
+                            predicate => vec![predicate],
+                        };
+                        conjunctions.insert(conjunction);
+                    }
+                    contract.extend_fail_conditions(conjunctions.into_iter().map(|conjunction| {
+                        crate::eval_effect::FailCapture {
+                            conjunction,
+                            ranged: crate::range_modes::RangeModes::default(),
+                            kind: crate::eval_effect::CaptureKind::AbsenceAborts {
+                                path: row.source_expr.clone(),
+                            },
+                        }
+                    }));
+                }
                 contract.push(row);
             }
         }
@@ -313,7 +456,11 @@ fn project_parts(
         match part {
             StringPart::Text(_) => {}
             StringPart::Splice(splice) => {
-                let row = splice_row(splice, path, conditions, &std::collections::BTreeSet::new());
+                let mut row =
+                    splice_row(splice, path, conditions, &std::collections::BTreeSet::new());
+                if scalar.suppressed {
+                    row.kind = ValueKind::Serialized;
+                }
                 if !row.condition.is_never() {
                     contract.push(row);
                 }
@@ -326,7 +473,11 @@ fn project_parts(
                     contract.push(placed_row(
                         taint_path.clone(),
                         path,
-                        ValueKind::PartialScalar,
+                        if scalar.suppressed {
+                            ValueKind::Serialized
+                        } else {
+                            ValueKind::PartialScalar
+                        },
                         GuardDnf::from_conjunction(conditions.iter().cloned()),
                         taint.site.as_deref(),
                         &taint.provenance,
@@ -349,6 +500,33 @@ fn splice_row(
             path: splice.values_path.clone(),
         };
         condition = condition.conjoined_with_guards([default_guard.clone()]);
+    }
+    if splice.meta.is_input_identity()
+        && !splice.meta.defaulted
+        && !path.0.is_empty()
+        && splice
+            .meta
+            .site
+            .as_ref()
+            .and_then(|site| site.resource.as_ref())
+            .is_some()
+    {
+        // An approximate execution predicate can still expose a sound live
+        // subset. It is safe to retain that subset for an identity splice:
+        // the provider sees this input value there. Derived scalar influence
+        // stays opaque and therefore keeps the approximation.
+        condition = GuardDnf::from_disjunction(condition.disjuncts().iter().map(|conjunction| {
+            conjunction.iter().map(|predicate| match predicate {
+                Predicate::Approximate {
+                    role: helm_schema_core::ApproximationRole::OutputSelection,
+                    sound_subset: Some(sound_subset),
+                    ..
+                } if predicate.value_paths().contains(&splice.values_path) => {
+                    sound_subset.as_ref().clone()
+                }
+                other => other.clone(),
+            })
+        }));
     }
     // Serialization and encoding transforms don't expose the input shape to
     // the sink schema. Fragment serialization stays distinguishable from a
@@ -379,6 +557,7 @@ fn splice_row(
         &splice.meta.provenance,
     );
     row.has_string_contract = splice.meta.string_contract;
+    row.stringified = splice.meta.stringified;
     row.template_supplied_member_keys = member_sibling_keys.clone();
     row.split_segment = splice.meta.split_segment.clone();
     row.range_key = splice.meta.range_key;

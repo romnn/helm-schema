@@ -30,10 +30,12 @@ pub(super) enum RenderedDemotion {
     /// Document-lane pathless claims keeping their kinds (document-scope
     /// assignments capture the rows as local evidence).
     Document,
-    /// Dependency-lane scalar claims (helper-body captures and
-    /// render-suppressed blobs: the caller sees summary facts, and
-    /// dependency rows are scalar by construction).
+    /// Dependency-lane scalar claims for helper-body captures whose caller
+    /// sees summary facts rather than returned structure.
     Dependency,
+    /// Pathless serialized claims for helper output embedded in a block
+    /// scalar. Its values influence text, not the enclosing YAML structure.
+    Serialized,
 }
 
 /// The subject expressions of every `required(message, subject)` call in
@@ -81,6 +83,9 @@ fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
         | Guard::HasKey {
             path: guard_path, ..
         }
+        | Guard::NotHasKey {
+            path: guard_path, ..
+        }
         | Guard::ContainsEquals {
             path: guard_path, ..
         }
@@ -98,6 +103,9 @@ fn guard_gates_hint(guard: &Guard, path: &str) -> bool {
             path: guard_path, ..
         }
         | Guard::NotTypeIs {
+            path: guard_path, ..
+        }
+        | Guard::NotMatchesPattern {
             path: guard_path, ..
         } => !guard_path.trim().is_empty(),
         Guard::Or { paths } => paths
@@ -332,6 +340,7 @@ impl Interpreter<'_> {
         let mut values = Vec::new();
         let mut effects = Effects::default();
         let mut truth = TruthCondition::Unknown;
+        let mut json_payload_truth = TruthCondition::Unknown;
         let mut scalar_dispatch = None;
         for expr in exprs {
             let result = document_result_from_expr(
@@ -344,6 +353,7 @@ impl Interpreter<'_> {
             );
             if exprs.len() == 1 {
                 truth = result.truth.clone();
+                json_payload_truth = result.json_payload_truth.clone();
                 scalar_dispatch = result.scalar_dispatch.clone();
             }
             values.extend(result.value);
@@ -353,6 +363,7 @@ impl Interpreter<'_> {
             value: AbstractValue::choice(values).map(|value| value.to_context_value()),
             effects,
             truth,
+            json_payload_truth,
             scalar_dispatch,
         }
     }
@@ -489,8 +500,10 @@ impl Interpreter<'_> {
         }
         self.parsed_yaml_input_paths
             .extend(effects.parsed_yaml_input_paths.iter().cloned());
-        self.yaml_serialized_paths
-            .extend(effects.yaml_serialized_paths.iter().cloned());
+        if !matches!(demotion, RenderedDemotion::Serialized) {
+            self.yaml_serialized_paths
+                .extend(effects.yaml_serialized_paths.iter().cloned());
+        }
         self.shape_erased_paths
             .extend(effects.shape_erased_paths.iter().cloned());
         self.shape_erased_paths
@@ -582,6 +595,17 @@ impl Interpreter<'_> {
             RenderedDemotion::Dependency => {
                 for row in &effects.helper_rendered {
                     self.push_meta_reads(&row.path, ValueKind::Scalar, &row.meta, &claims, true);
+                }
+            }
+            RenderedDemotion::Serialized => {
+                for row in &effects.helper_rendered {
+                    self.push_meta_reads(
+                        &row.path,
+                        ValueKind::Serialized,
+                        &row.meta,
+                        &claims,
+                        false,
+                    );
                 }
             }
         }
@@ -677,6 +701,7 @@ fn runtime_requirement_paths(
         | CaptureKind::ComparableKind { path, .. }
         | CaptureKind::ValuePattern { path, .. }
         | CaptureKind::QuotedSerialization { path, .. }
+        | CaptureKind::PrintfStringOperand { path }
         | CaptureKind::PlainSlotText { path, .. }
         | CaptureKind::RangeSelection { path, .. } => [path.clone()].into_iter().collect(),
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
@@ -693,7 +718,10 @@ fn runtime_requirement_paths(
 fn predicate_is_runtime_kind_requirement(predicate: &Predicate) -> bool {
     match predicate {
         Predicate::Guard(
-            Guard::TypeIs { .. } | Guard::NotTypeIs { .. } | Guard::MatchesPattern { .. },
+            Guard::TypeIs { .. }
+            | Guard::NotTypeIs { .. }
+            | Guard::MatchesPattern { .. }
+            | Guard::NotMatchesPattern { .. },
         ) => true,
         Predicate::Not(inner) => predicate_is_runtime_kind_requirement(inner),
         Predicate::True

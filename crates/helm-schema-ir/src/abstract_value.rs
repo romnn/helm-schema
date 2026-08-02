@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::helper_meta::HelperOutputMeta;
+use helm_schema_core::Predicate;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[expect(
@@ -93,13 +94,28 @@ impl AbstractValue {
     /// Returns the path whose runtime value this value is structurally
     /// identical to.
     ///
-    /// Helper output is an identity only after a matching JSON decode has
-    /// recovered the source value. Other output metadata records influence
-    /// or transformed text, neither of which permits structural projection.
+    /// Guarded raw input and matching JSON decodes preserve identity. Other
+    /// output metadata records influence or transformed text, neither of
+    /// which permits structural projection.
     pub(crate) fn direct_values_identity(&self) -> Option<String> {
         match self {
             Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
-            Self::OutputPath(path, meta) if meta.json_decoded => Some(path.clone()),
+            Self::OutputPath(path, meta) if meta.is_input_identity() || meta.json_decoded => {
+                Some(path.clone())
+            }
+            _ => None,
+        }
+    }
+
+    /// Returns the raw input path carried by this value, including through
+    /// transformations whose output is no longer structurally identical.
+    ///
+    /// Consumers use this only when they explicitly backproject through the
+    /// recorded transform, such as a pattern tested after `tpl`.
+    pub(crate) fn input_identity_path(&self) -> Option<String> {
+        match self {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path.clone()),
+            Self::OutputPath(path, meta) if meta.input_identity => Some(path.clone()),
             _ => None,
         }
     }
@@ -107,6 +123,48 @@ impl AbstractValue {
     pub(crate) fn paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_paths(&mut paths, true, false);
+        paths
+    }
+
+    /// Scopes metadata already embedded in output identities and returns the
+    /// paths that carried it. Selection operators must not also create a
+    /// predicate-only metadata row for those paths: merging that sibling row
+    /// back later would turn `inner AND selection` into `inner OR selection`.
+    pub(crate) fn conjoin_output_path_branches(
+        &mut self,
+        predicates: &BTreeSet<Predicate>,
+    ) -> BTreeSet<String> {
+        fn conjoin(
+            value: &mut AbstractValue,
+            predicates: &BTreeSet<Predicate>,
+            paths: &mut BTreeSet<String>,
+        ) {
+            match value {
+                AbstractValue::OutputPath(path, meta) => {
+                    meta.conjoin_branches(predicates);
+                    paths.insert(path.clone());
+                }
+                AbstractValue::Choice(choices) => {
+                    *choices = std::mem::take(choices)
+                        .into_iter()
+                        .map(|mut choice| {
+                            conjoin(&mut choice, predicates, paths);
+                            choice
+                        })
+                        .collect();
+                }
+                AbstractValue::FirstTruthy(candidates)
+                | AbstractValue::MergedLayers(candidates) => {
+                    for candidate in candidates {
+                        conjoin(candidate, predicates, paths);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        let mut paths = BTreeSet::new();
+        conjoin(self, predicates, &mut paths);
         paths
     }
 
@@ -260,13 +318,29 @@ impl AbstractValue {
         out
     }
 
+    /// Returns token-opening formatter metadata without merging sibling
+    /// derivations that did not carry that fact.
+    ///
+    /// A path may occur in both arms of a helper while opening the token in
+    /// only one. Filtering before the per-path merge keeps the formatter
+    /// fact paired with that arm's predicates.
+    pub(crate) fn plain_slot_string_format_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = BTreeMap::new();
+        self.collect_plain_slot_string_format_meta(&mut out);
+        out
+    }
+
     pub(crate) fn with_output_meta(
         self,
         meta_by_path: &BTreeMap<String, HelperOutputMeta>,
     ) -> Self {
         match self {
             Self::ValuesPath(path) => match meta_by_path.get(&path) {
-                Some(meta) => Self::OutputPath(path, meta.clone()),
+                Some(meta) => {
+                    let mut meta = meta.clone();
+                    meta.input_identity = true;
+                    Self::OutputPath(path, meta)
+                }
                 None => Self::ValuesPath(path),
             },
             Self::JsonDecodedPath(path) => match meta_by_path.get(&path) {
@@ -312,6 +386,55 @@ impl AbstractValue {
                 candidates
                     .into_iter()
                     .map(|value| value.with_output_meta(meta_by_path))
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
+    /// Removes a token-opening formatter contract after quoting the complete
+    /// result makes its diagnostic text safe at the caller's YAML slot.
+    pub(crate) fn clear_plain_slot_string_format(self) -> Self {
+        match self {
+            Self::OutputPath(path, mut meta) => {
+                meta.plain_slot_string_format = false;
+                Self::OutputPath(path, meta)
+            }
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.clear_plain_slot_string_format()))
+                    .collect(),
+            ),
+            Self::List(items) => Self::List(
+                items
+                    .into_iter()
+                    .map(Self::clear_plain_slot_string_format)
+                    .collect(),
+            ),
+            Self::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.clear_plain_slot_string_format()))
+                    .collect(),
+                fallback: Box::new(fallback.clear_plain_slot_string_format()),
+            },
+            Self::Choice(choices) => Self::Choice(
+                choices
+                    .into_iter()
+                    .map(Self::clear_plain_slot_string_format)
+                    .collect(),
+            ),
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(Self::clear_plain_slot_string_format)
+                    .collect(),
+            ),
+            Self::MergedLayers(layers) => Self::MergedLayers(
+                layers
+                    .into_iter()
+                    .map(Self::clear_plain_slot_string_format)
                     .collect(),
             ),
             other => other,
@@ -370,18 +493,24 @@ impl AbstractValue {
                     && layer_paths.len() > 1
                     && layer_paths.iter().all(|path| !path.is_empty())
                 {
-                    let nil_scrubbed_layers: Vec<bool> = layers
+                    let transforms = layers
                         .iter()
-                        .map(
-                            |layer| matches!(layer, Self::OutputPath(_, meta) if meta.nil_scrubbed),
-                        )
-                        .collect();
+                        .map(|layer| match layer {
+                            Self::OutputPath(_, meta) if meta.nil_scrubbed => {
+                                helm_schema_core::MergeLayerTransform::NilScrubbed
+                            }
+                            Self::OutputPath(_, meta) if meta.parsed_map => {
+                                helm_schema_core::MergeLayerTransform::ParsedMap
+                            }
+                            _ => helm_schema_core::MergeLayerTransform::Identity,
+                        })
+                        .collect::<Vec<_>>();
                     for (position, layer_path) in layer_paths.iter().enumerate() {
                         let entry = out.entry(layer_path.clone()).or_default();
                         entry.merge_layers = Some(helm_schema_core::MergeLayersUse {
                             layers: layer_paths.clone(),
                             position,
-                            nil_scrubbed_layers: nil_scrubbed_layers.clone(),
+                            transforms: transforms.clone(),
                             via_binding: true,
                         });
                     }
@@ -402,10 +531,60 @@ impl AbstractValue {
         }
     }
 
+    fn collect_plain_slot_string_format_meta(&self, out: &mut BTreeMap<String, HelperOutputMeta>) {
+        match self {
+            Self::OutputPath(path, meta) if meta.plain_slot_string_format => {
+                out.entry(path.clone()).or_default().merge(meta);
+            }
+            Self::Dict(entries) => {
+                for value in entries.values() {
+                    value.collect_plain_slot_string_format_meta(out);
+                }
+            }
+            Self::List(items) => {
+                for value in items {
+                    value.collect_plain_slot_string_format_meta(out);
+                }
+            }
+            Self::Overlay { entries, fallback } => {
+                for value in entries.values() {
+                    value.collect_plain_slot_string_format_meta(out);
+                }
+                fallback.collect_plain_slot_string_format_meta(out);
+            }
+            Self::Choice(choices) => {
+                for value in choices {
+                    value.collect_plain_slot_string_format_meta(out);
+                }
+            }
+            Self::FirstTruthy(candidates) | Self::MergedLayers(candidates) => {
+                for value in candidates {
+                    value.collect_plain_slot_string_format_meta(out);
+                }
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
+            | Self::KeysList(_)
+            | Self::OutputPath(_, _)
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
+            | Self::Widened(_) => {}
+        }
+    }
+
     pub(crate) fn require_rendered_source_presence(self) -> Self {
         match self {
             Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
-                let mut meta = HelperOutputMeta::default();
+                let mut meta = HelperOutputMeta {
+                    input_identity: true,
+                    ..HelperOutputMeta::default()
+                };
                 meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
                     helm_schema_core::Guard::Absent { path: path.clone() },
                 )
@@ -459,7 +638,7 @@ impl AbstractValue {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
             Self::KeysList(path) => Some(Self::RangeKey(path.clone())),
             Self::JsonDecodedPath(path) => Some(Self::JsonDecodedPath(item_path(path))),
-            Self::OutputPath(path, meta) if meta.json_decoded => {
+            Self::OutputPath(path, meta) if meta.is_input_identity() || meta.json_decoded => {
                 Some(Self::OutputPath(item_path(path), meta.clone()))
             }
             Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
@@ -509,6 +688,29 @@ impl AbstractValue {
             | Self::DerivedBoolean(_)
             | Self::Dict(_)
             | Self::Widened(_) => None,
+        }
+    }
+
+    /// Marks a value as a mapping decoded for structural member selection.
+    /// `pick` observes literal members of its map subject even when that map
+    /// came through rendered helper text, so those member identities remain
+    /// projectable instead of collapsing back to the whole source path.
+    pub(crate) fn into_parsed_map(self) -> Self {
+        match self {
+            Self::OutputPath(path, mut meta) => {
+                meta.parsed_map = true;
+                Self::OutputPath(path, meta)
+            }
+            Self::Choice(choices) => {
+                Self::Choice(choices.into_iter().map(Self::into_parsed_map).collect())
+            }
+            Self::FirstTruthy(candidates) => {
+                Self::FirstTruthy(candidates.into_iter().map(Self::into_parsed_map).collect())
+            }
+            Self::MergedLayers(layers) => {
+                Self::MergedLayers(layers.into_iter().map(Self::into_parsed_map).collect())
+            }
+            other => other,
         }
     }
 
@@ -920,12 +1122,11 @@ impl AbstractValue {
     }
 
     /// The ordered candidate paths of a selection chain whose candidates
-    /// are RAW path identities (an `OutputPath` may be a transform of its
-    /// path, whose truthiness the selection actually tested — never the
-    /// path's own). A non-identity candidate has no nameable truthiness
-    /// condition, so the per-candidate decode abstains past it; a literal
-    /// TAIL candidate is tolerated because no later candidate needs its
-    /// negation.
+    /// are raw path identities. An [`Self::OutputPath`] qualifies only when
+    /// its metadata proves structural input identity; transformed outputs
+    /// have different truthiness and cannot be named by the raw path. A
+    /// non-identity candidate therefore stops the decode, while a literal
+    /// tail is tolerated because no later candidate needs its negation.
     pub(crate) fn selection_chain_identity_paths(&self) -> Option<Vec<String>> {
         let Self::FirstTruthy(candidates) = self else {
             return None;
@@ -934,6 +1135,9 @@ impl AbstractValue {
         for candidate in candidates {
             match candidate {
                 Self::ValuesPath(path) | Self::JsonDecodedPath(path) => paths.push(path.clone()),
+                Self::OutputPath(path, meta) if meta.is_input_identity() => {
+                    paths.push(path.clone());
+                }
                 _ => break,
             }
         }
@@ -967,9 +1171,55 @@ impl AbstractValue {
             Self::OutputPath(prefix, meta) if meta.json_decoded => {
                 let mut segments = helm_schema_core::split_value_path(prefix);
                 segments.extend(rest.iter().cloned());
+                let mut meta = meta.clone();
+                // A fallback for the decoded container does not supply any
+                // of its selected descendants.
+                meta.defaulted = false;
                 Some(Self::OutputPath(
                     helm_schema_core::join_value_path(segments),
-                    meta.clone(),
+                    meta,
+                ))
+            }
+            Self::OutputPath(prefix, meta)
+                if meta.is_input_member_identity()
+                    && rest
+                        .first()
+                        .is_none_or(|member| !meta.omitted_keys.contains_key(member)) =>
+            {
+                let mut segments = helm_schema_core::split_value_path(prefix);
+                segments.extend(rest.iter().cloned());
+                let mut meta = meta.clone();
+                meta.defaulted = false;
+                // `omit` describes members of the selected container. Once
+                // an unomitted member is selected, those names say nothing
+                // about the descendant value.
+                meta.omitted_keys.clear();
+                Some(Self::OutputPath(
+                    helm_schema_core::join_value_path(segments),
+                    meta,
+                ))
+            }
+            Self::OutputPath(prefix, meta) if meta.parsed_map => {
+                let mut segments = helm_schema_core::split_value_path(prefix);
+                segments.extend(rest.iter().cloned());
+                let mut meta = meta.clone();
+                // Map-only YAML decoding preserves the selected member's
+                // identity, but a fallback for the container does not
+                // supply that member.
+                meta.defaulted = false;
+                Some(Self::OutputPath(
+                    helm_schema_core::join_value_path(segments),
+                    meta,
+                ))
+            }
+            Self::OutputPath(prefix, meta) if meta.is_identity_preserving_default() => {
+                let mut segments = helm_schema_core::split_value_path(prefix);
+                segments.extend(rest.iter().cloned());
+                let mut meta = meta.clone();
+                meta.defaulted = false;
+                Some(Self::OutputPath(
+                    helm_schema_core::join_value_path(segments),
+                    meta,
                 ))
             }
             Self::OutputPath(prefix, meta) => Some(Self::OutputPath(prefix.clone(), meta.clone())),

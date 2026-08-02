@@ -34,25 +34,15 @@ pub(super) fn type_descriptor_sources(
         return None;
     };
     let subject = helm_schema_ast::type_descriptor_call_subject(function, args)?.deparen();
-    if !matches!(
-        subject,
-        TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)
-    ) {
-        return None;
+    let mut sources = interpreter
+        .value_path_context()
+        .type_descriptor_subject_sources(subject)?;
+    for (path, meta) in &mut sources {
+        if let Some(output) = output_meta.get(path) {
+            meta.merge(output);
+        }
     }
-    let paths = interpreter.value_path_context().paths_for_expr(subject);
-    if paths.is_empty() {
-        return None;
-    }
-    Some(
-        paths
-            .into_iter()
-            .map(|path| {
-                let meta = output_meta.get(&path).cloned().unwrap_or_default();
-                (path, meta)
-            })
-            .collect(),
-    )
+    Some(sources)
 }
 
 /// Whether the expression's produced VALUE is derived text (a
@@ -450,13 +440,14 @@ impl Interpreter<'_> {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             self.record_required_subjects(rhs);
             let inlined_template_value = self.inline_static_template_value(rhs);
-            let rhs_truthy_reduction = {
+            let condition_truthy_reduction = {
                 let context = self.value_path_context();
                 context
                     .condition_lowering_is_faithful(&assignment.rhs_expr)
                     .then(|| context.condition_predicate_expr(&assignment.rhs_expr))
             };
             let output_effects = self.value_path_context().expression_output_effects(rhs);
+            let bound_default_paths = output_effects.default_paths_with_local();
             let hole = self.eval_hole_exprs(rhs);
             let scalar_dispatch = hole.scalar_dispatch.clone();
             // The binding is the hole value without widened members (an
@@ -464,6 +455,22 @@ impl Interpreter<'_> {
             // fragment).
             let fragment_value = inlined_template_value
                 .or_else(|| hole.value.clone().and_then(AbstractValue::without_widened));
+            // A derived Boolean's value and truth are the same semantic
+            // fact. Other result kinds may carry truth used internally by
+            // their evaluator, but promoting it to an unrelated local would
+            // let scratch assignments scope later output.
+            let derived_boolean_truth = if matches!(
+                fragment_value.as_ref(),
+                Some(AbstractValue::DerivedBoolean(_))
+            ) {
+                hole.truth
+                    .predicate()
+                    .filter(|predicate| !predicate.contains_approximation())
+                    .cloned()
+            } else {
+                None
+            };
+            let rhs_truthy_reduction = derived_boolean_truth.or(condition_truthy_reduction);
             let previous_truthy_reduction = self
                 .locals
                 .truthy_reductions
@@ -696,14 +703,20 @@ impl Interpreter<'_> {
                 .filter(|path| !fragment_paths.contains(*path))
                 .collect();
             output_meta.retain(|path, _| !dependency_only_paths.contains(path));
-            // A `=` re-assignment under branch predicates keeps those
-            // predicates on each flowing path's meta: the write-through
-            // survives the branch join in the locals, so the conditions must
-            // ride the meta to the render site. A truthiness condition about
-            // a *different* flowing path describes a sibling's branch and
-            // stays off this path's meta.
-            if assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
-                && !self.active_predicates.is_empty()
+            // A reassignment evaluated under branch predicates keeps them on
+            // each flowing path's meta because the write can survive a branch
+            // join. A declared ordered-merge identity needs the same stamp:
+            // its layer meta crosses helper-summary boundaries before the
+            // surrounding fragment can apply the lexical branch guard.
+            // Other declarations stay lexical and inherit the guard at their
+            // render site. A truthiness condition about a different flowing
+            // path describes a sibling's branch and stays off this path's
+            // meta.
+            let merge_identity_crosses_helper =
+                output_meta.values().any(|meta| meta.merge_layers.is_some());
+            if !self.active_predicates.is_empty()
+                && (assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
+                    || merge_identity_crosses_helper)
             {
                 if let Some(binding) = &fragment_value {
                     for path in binding.fragment_rendered_paths() {
@@ -730,7 +743,7 @@ impl Interpreter<'_> {
             // erase a branch's recorded ones.
             self.locals
                 .default_paths
-                .insert(assignment.variable.clone(), output_effects.defaults.clone());
+                .insert(assignment.variable.clone(), bound_default_paths);
             self.locals
                 .output_meta
                 .insert(assignment.variable.clone(), output_meta);

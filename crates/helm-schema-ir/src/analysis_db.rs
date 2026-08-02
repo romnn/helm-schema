@@ -24,6 +24,14 @@ pub(crate) struct ParsedHelperBody<'a> {
     pub(crate) tree: tree_sitter::Tree,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum CustomMergeHelper {
+    /// A recursive merge of two map arguments, with the second taking precedence.
+    Pair,
+    /// A list of rendered values decoded as maps and merged in list order.
+    ParsedMapList,
+}
+
 pub(crate) struct IrAnalysisDb {
     define_bodies: HashMap<String, CachedDefineBody>,
     implicit_template_names: BTreeMap<String, String>,
@@ -36,7 +44,7 @@ pub(crate) struct IrAnalysisDb {
     /// resource spans), shared across memoized-summary misses.
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
-    custom_merge_helpers: RefCell<HashMap<String, bool>>,
+    custom_merge_helpers: RefCell<HashMap<String, Option<CustomMergeHelper>>>,
     nil_scrub_helpers: RefCell<HashMap<String, bool>>,
     /// Exact immutable Helm root fields, represented separately from values.
     static_root_fields: HashMap<String, AbstractValue>,
@@ -378,15 +386,15 @@ impl IrAnalysisDb {
     /// renders exactly `toYaml ACC`. Under those rules the output is a
     /// merge of OVERWRITE over INPUT, so the call site can substitute the
     /// layered value without evaluating the recursion.
-    pub(crate) fn custom_merge_helper(&self, name: &str) -> Option<()> {
+    pub(crate) fn custom_merge_helper(&self, name: &str) -> Option<CustomMergeHelper> {
         if let Some(cached) = self.custom_merge_helpers.borrow().get(name) {
-            return cached.then_some(());
+            return *cached;
         }
-        let recognized = self.classify_custom_merge_helper(name).is_some();
+        let recognized = self.classify_custom_merge_helper(name);
         self.custom_merge_helpers
             .borrow_mut()
             .insert(name.to_string(), recognized);
-        recognized.then_some(())
+        recognized
     }
 
     /// Recognize the nil-scrub define shape (airflow's `removeNilFields`):
@@ -574,11 +582,19 @@ impl IrAnalysisDb {
         .then_some(())
     }
 
+    fn classify_custom_merge_helper(&self, name: &str) -> Option<CustomMergeHelper> {
+        if self.classify_pair_merge_helper(name).is_some() {
+            return Some(CustomMergeHelper::Pair);
+        }
+        self.classify_parsed_map_list_merge_helper(name)
+            .map(|()| CustomMergeHelper::ParsedMapList)
+    }
+
     #[expect(
         clippy::too_many_lines,
-        reason = "keeping this semantic operation together makes its state transitions easier to audit"
+        reason = "keeping this semantic recognition operation together makes its invariants easier to audit"
     )]
-    fn classify_custom_merge_helper(&self, name: &str) -> Option<()> {
+    fn classify_pair_merge_helper(&self, name: &str) -> Option<()> {
         let body = self.parsed_helper_body(name)?;
 
         let mut ranges = Vec::new();
@@ -776,6 +792,127 @@ impl IrAnalysisDb {
         literal_lists.remove(&source).map(|_keys| ())
     }
 
+    /// Recognizes the Bitnami-style rendered-map merge exactly.
+    ///
+    /// Each `.values` member is rendered by a typed string-or-`toYaml`
+    /// helper, decoded with Helm's map-only `fromYaml`, and merged into a
+    /// fresh accumulator before that accumulator is serialized. Therefore
+    /// only mapping source shapes retain identity at the output.
+    fn classify_parsed_map_list_merge_helper(&self, name: &str) -> Option<()> {
+        let body = self.parsed_helper_body(name)?;
+        let expressions = helm_schema_ast::parse_action_expressions(body.source);
+        let [init, range_subject, assignment, render] = expressions.as_slice() else {
+            return None;
+        };
+
+        let accumulator = match init.deparen() {
+            TemplateExpr::VariableDefinition { name, value }
+                if matches!(
+                    value.deparen(),
+                    TemplateExpr::Call { function, args }
+                        if function == "dict" && args.is_empty()
+                ) =>
+            {
+                name.trim_start_matches('$')
+            }
+            _ => return None,
+        };
+        if !matches!(range_subject.deparen(), TemplateExpr::Field(path) if *path == ["values"]) {
+            return None;
+        }
+
+        let TemplateExpr::Assignment {
+            name: assigned,
+            value,
+        } = assignment
+        else {
+            return None;
+        };
+        if assigned.trim_start_matches('$') != accumulator {
+            return None;
+        }
+        let TemplateExpr::Pipeline(stages) = value.deparen() else {
+            return None;
+        };
+        let [include, from_yaml, merge] = stages.as_slice() else {
+            return None;
+        };
+        let renderer = parsed_map_renderer_call(include)?;
+        if !self.classify_typed_yaml_renderer(renderer)
+            || !matches!(
+                from_yaml.deparen(),
+                TemplateExpr::Call { function, args }
+                    if function == "fromYaml" && args.is_empty()
+            )
+            || !matches!(
+                merge.deparen(),
+                TemplateExpr::Call { function, args }
+                    if function == "merge"
+                        && matches!(
+                            args.as_slice(),
+                            [TemplateExpr::Variable(variable)]
+                                if variable.trim_start_matches('$') == accumulator
+                        )
+            )
+            || !matches!(
+                render.deparen(),
+                TemplateExpr::Pipeline(stages)
+                    if matches!(
+                        stages.as_slice(),
+                        [TemplateExpr::Variable(variable), TemplateExpr::Call { function, args }]
+                            if variable.trim_start_matches('$') == accumulator
+                                && function == "toYaml"
+                                && args.is_empty()
+                    )
+            )
+        {
+            return None;
+        }
+
+        let mut ranges = Vec::new();
+        collect_nodes_of_kind(body.tree.root_node(), "range_action", &mut ranges);
+        let [range] = ranges.as_slice() else {
+            return None;
+        };
+        let range_source = body.source.get(range.byte_range())?;
+        let range_expressions = helm_schema_ast::parse_action_expressions(range_source);
+        matches!(
+            range_expressions.as_slice(),
+            [range_subject, range_assignment]
+                if range_subject == expressions.get(1)?
+                    && range_assignment == expressions.get(2)?
+        )
+        .then_some(())
+    }
+
+    fn classify_typed_yaml_renderer(&self, name: &str) -> bool {
+        let Some(body) = self.parsed_helper_body(name) else {
+            return false;
+        };
+        let expressions = helm_schema_ast::parse_action_expressions(body.source);
+        let [binding, contains, scope, scoped_tpl, tpl, output] = expressions.as_slice() else {
+            return false;
+        };
+        let TemplateExpr::VariableDefinition {
+            name: binding_name,
+            value,
+        } = binding
+        else {
+            return false;
+        };
+        let binding_name = binding_name.trim_start_matches('$');
+        typed_yaml_renderer_binding(value)
+            && contains_tests_render_subject(contains)
+            && matches!(scope.deparen(), TemplateExpr::Field(path) if *path == ["scope"])
+            && tpl_consumes_binding(scoped_tpl, binding_name)
+            && tpl_consumes_binding(tpl, binding_name)
+            && matches!(
+                output.deparen(),
+                TemplateExpr::Variable(variable)
+                    if variable.trim_start_matches('$') == binding_name
+            )
+    }
+
     pub(crate) fn parsed_helper_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
         let body = self.define_bodies.get(name)?;
         Some(ParsedHelperBody {
@@ -933,6 +1070,7 @@ fn resolve_bound_helper_call(
         context_value_from_outer_expr(
             expr,
             Some(&params.eval_env.locals),
+            Some(&params.eval_env.local_output_meta),
             params.outer_bindings,
             params.current_dot,
         )
@@ -1203,6 +1341,147 @@ fn header_has_key_literals(header: &helm_schema_ast::TemplateHeader) -> Option<B
         None
     } else {
         Some(literals)
+    }
+}
+
+fn parsed_map_renderer_call(expression: &TemplateExpr) -> Option<&str> {
+    let TemplateExpr::Call { function, args } = expression.deparen() else {
+        return None;
+    };
+    if function != "include" && function != "template" {
+        return None;
+    }
+    let [
+        TemplateExpr::Literal(helm_schema_ast::Literal::String(renderer)),
+        argument,
+    ] = args.as_slice()
+    else {
+        return None;
+    };
+    let TemplateExpr::Call {
+        function: dict,
+        args: entries,
+    } = argument.deparen()
+    else {
+        return None;
+    };
+    if dict != "dict" {
+        return None;
+    }
+    entries
+        .chunks_exact(2)
+        .any(|entry| {
+            matches!(
+                entry,
+                [
+                    TemplateExpr::Literal(helm_schema_ast::Literal::String(key)),
+                    TemplateExpr::Field(path),
+                ] if key == "value" && path.is_empty()
+            )
+        })
+        .then_some(renderer)
+}
+
+fn typed_yaml_renderer_binding(expression: &TemplateExpr) -> bool {
+    let TemplateExpr::Pipeline(stages) = expression.deparen() else {
+        return false;
+    };
+    matches!(
+        stages.as_slice(),
+        [
+            TemplateExpr::Call {
+                function: type_is,
+                args: type_args,
+            },
+            TemplateExpr::Call {
+                function: ternary,
+                args: ternary_args,
+            },
+        ] if type_is == "typeIs"
+            && matches!(
+                type_args.as_slice(),
+                [
+                    TemplateExpr::Literal(helm_schema_ast::Literal::String(kind)),
+                    TemplateExpr::Field(subject),
+                ] if kind == "string" && *subject == ["value"]
+            )
+            && matches!(
+                ternary_args.as_slice(),
+                [TemplateExpr::Field(raw), serialized]
+                    if *raw == ["value"] && matches!(
+                        serialized.deparen(),
+                        TemplateExpr::Pipeline(serialized_stages)
+                            if matches!(
+                                serialized_stages.as_slice(),
+                                [
+                                    TemplateExpr::Field(subject),
+                                    TemplateExpr::Call { function, args },
+                                ] if *subject == ["value"]
+                                    && function == "toYaml"
+                                    && args.is_empty()
+                            )
+                    )
+            )
+    )
+}
+
+fn contains_tests_render_subject(expression: &TemplateExpr) -> bool {
+    matches!(
+        expression.deparen(),
+        TemplateExpr::Call { function, args }
+            if function == "contains"
+                && matches!(
+                    args.as_slice(),
+                    [
+                        TemplateExpr::Literal(helm_schema_ast::Literal::String(open)),
+                        encoded,
+                    ] if open == "{{" && matches!(
+                        encoded.deparen(),
+                        TemplateExpr::Call { function, args }
+                            if function == "toJson"
+                                && matches!(
+                                    args.as_slice(),
+                                    [TemplateExpr::Field(path)] if *path == ["value"]
+                                )
+                    )
+                )
+    )
+}
+
+fn tpl_consumes_binding(expression: &TemplateExpr, binding: &str) -> bool {
+    let TemplateExpr::Call { function, args } = expression.deparen() else {
+        return false;
+    };
+    if function != "tpl" {
+        return false;
+    }
+    let Some(program) = args.first() else {
+        return false;
+    };
+    let mut consumes = false;
+    program.walk(|inner| {
+        if matches!(
+            inner,
+            TemplateExpr::Variable(variable)
+                if variable.trim_start_matches('$') == binding
+        ) {
+            consumes = true;
+        }
+    });
+    consumes
+}
+
+fn collect_nodes_of_kind<'tree>(
+    node: tree_sitter::Node<'tree>,
+    kind: &str,
+    out: &mut Vec<tree_sitter::Node<'tree>>,
+) {
+    if node.kind() == kind {
+        out.push(node);
+    }
+    let mut walker = node.walk();
+    for child in node.named_children(&mut walker) {
+        collect_nodes_of_kind(child, kind, out);
     }
 }
 

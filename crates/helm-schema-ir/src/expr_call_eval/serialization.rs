@@ -11,10 +11,14 @@ use super::strict_operands::{
     record_range_key_string_consumer_effects, record_string_consumer_effects,
 };
 use super::value_facts::{
-    identity_value_paths, serialization_payload_paths, value_paths, value_strings,
+    complete_string_set, identity_value_paths, serialization_payload_paths, value_paths,
+    value_strings,
 };
 use super::{eval_all_args, merge_arg_effects};
-use helm_schema_ast::{literal_printf_format, render_printf_string_sets};
+use helm_schema_ast::{
+    literal_printf_format, render_printf_scalar_values, render_printf_string_sets,
+    token_initial_printf_string_argument,
+};
 
 pub(super) fn eval_printf(
     args: &[TemplateExpr],
@@ -25,30 +29,79 @@ pub(super) fn eval_printf(
     let mut provenance_paths = BTreeSet::new();
     let mut widened_paths = BTreeSet::new();
     let mut values = Vec::with_capacity(args.len());
+    let mut scalar_values = Vec::with_capacity(args.len());
+    let token_initial_string_argument = token_initial_printf_string_argument(args);
 
     for (index, arg) in args.iter().enumerate() {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
+        scalar_values.push(
+            result
+                .scalar_dispatch
+                .as_ref()
+                .and_then(crate::scalar_value::ScalarValueDispatch::constant_value),
+        );
         let identity_paths = identity_value_paths(result.value.as_ref());
+        let plain_slot_format_paths = if token_initial_string_argument == Some(index) {
+            identity_paths
+                .iter()
+                .filter(|path| {
+                    !result.effects.derived_text_paths.contains(*path)
+                        && !result
+                            .effects
+                            .local_output_meta
+                            .get(*path)
+                            .is_some_and(|meta| {
+                                meta.shape_erased || meta.derived_text || meta.partial_text
+                            })
+                })
+                .cloned()
+                .collect()
+        } else {
+            BTreeSet::new()
+        };
         widened_paths.extend(
             value_paths(result.value.as_ref())
                 .difference(&identity_paths)
                 .cloned(),
         );
         effects.merge(result.effects);
+        effects
+            .plain_slot_string_format_paths
+            .extend(plain_slot_format_paths);
         record_printf_argument_effects(index == 0, &identity_paths, &mut effects);
         provenance_paths.extend(identity_paths);
         values.push(result.value);
     }
 
     let rendered = literal_printf_format(args).and_then(|format| {
-        let arg_strings = values
+        let exact_scalars = scalar_values
             .iter()
             .skip(1)
-            .map(|value| value_strings(value.as_ref()))
-            .collect::<Vec<_>>();
-        render_printf_string_sets(format, &arg_strings)
+            .cloned()
+            .collect::<Option<Vec<_>>>();
+        exact_scalars
+            .as_deref()
+            .and_then(|scalars| render_printf_scalar_values(format, scalars))
+            .map(|rendered| BTreeSet::from([rendered]))
+            .or_else(|| {
+                let arg_strings = values
+                    .iter()
+                    .skip(1)
+                    .map(|value| complete_string_set(value.as_ref()))
+                    .collect::<Option<Vec<_>>>()?;
+                render_printf_string_sets(format, &arg_strings)
+            })
     });
 
+    let scalar_dispatch = rendered.as_ref().and_then(|rendered| {
+        let mut values = rendered.iter();
+        match (values.next(), values.next()) {
+            (Some(value), None) => Some(crate::scalar_value::ScalarValueDispatch::constant(
+                helm_schema_core::GuardValue::string(value.clone()),
+            )),
+            _ => None,
+        }
+    });
     let mut values = Vec::new();
     if let Some(rendered) = rendered {
         values.push(AbstractValue::StringSet(rendered));
@@ -61,7 +114,11 @@ pub(super) fn eval_printf(
     if let Some(widened) = AbstractValue::widened(widened_paths) {
         values.push(widened);
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+    let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    match scalar_dispatch {
+        Some(dispatch) => result.with_scalar_dispatch(dispatch),
+        None => result,
+    }
 }
 
 /// A total conversion (`quote`/`toString` via `strval`, the numeric casts
@@ -70,6 +127,19 @@ pub(super) fn eval_printf(
 /// an earlier string-consuming stage (`b64enc | quote`) keeps its contract
 /// on the raw path.
 pub(super) fn record_total_conversion_effects(paths: BTreeSet<String>, effects: &mut Effects) {
+    effects
+        .plain_slot_string_format_paths
+        .retain(|path| !paths.contains(path));
+    for path in &paths {
+        if let Some(meta) = effects.local_output_meta.get_mut(path) {
+            meta.plain_slot_string_format = false;
+        }
+    }
+    for row in &mut effects.helper_rendered {
+        if paths.contains(&row.path) {
+            row.meta.plain_slot_string_format = false;
+        }
+    }
     effects.add_shape_erased_paths(paths.clone());
     effects.derived_text_paths.extend(paths);
 }
@@ -110,10 +180,9 @@ pub(super) fn eval_print(
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         effects.merge(result.effects);
-        let strings = value_strings(result.value.as_ref());
-        if strings.is_empty() {
+        let Some(strings) = complete_string_set(result.value.as_ref()) else {
             return EvalResult::with_effects(None, effects);
-        }
+        };
         let mut next = BTreeSet::new();
         for prefix in &rendered {
             for value in &strings {
@@ -290,9 +359,33 @@ fn replace_preserves_plain_token_language(
 ) -> bool {
     let irrelevant = |text: &String| {
         !text.is_empty()
-            && !text
-                .chars()
-                .any(|character| ":#\r\n \t!&*{}[],|>@`%-?'\"".contains(character))
+            && !text.chars().any(|character| {
+                matches!(
+                    character,
+                    ':' | '#'
+                        | '\r'
+                        | '\n'
+                        | ' '
+                        | '\t'
+                        | '!'
+                        | '&'
+                        | '*'
+                        | '{'
+                        | '}'
+                        | '['
+                        | ']'
+                        | ','
+                        | '|'
+                        | '>'
+                        | '@'
+                        | '`'
+                        | '%'
+                        | '-'
+                        | '?'
+                        | '\''
+                        | '"'
+                )
+            })
     };
     !old_values.is_empty()
         && !new_values.is_empty()
@@ -379,8 +472,14 @@ pub(super) fn eval_tpl(
         // string-only consumer.
         let subject_paths = identity_value_paths(template.value.as_ref());
         record_string_consumer_effects(&subject_paths, &mut effects);
-        if let Some(AbstractValue::ValuesPath(path)) = template.value.as_ref() {
-            effects.nil_strict_identity_paths.insert(path.clone());
+        if let Some(path) = template.value.as_ref().and_then(|value| match value {
+            AbstractValue::ValuesPath(path) => Some(path),
+            AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path),
+            _ => None,
+        }) {
+            if matches!(template.value.as_ref(), Some(AbstractValue::ValuesPath(_))) {
+                effects.nil_strict_identity_paths.insert(path.clone());
+            }
             effects.templated_text_identity_paths.insert(path.clone());
         }
         record_range_key_string_consumer_effects(template.value.as_ref(), &mut effects);
@@ -469,11 +568,14 @@ pub(super) fn eval_to_json(
 }
 
 pub(super) fn eval_to_json_result(result: EvalResult) -> EvalResult {
+    let payload_truth = result.truth.clone();
     let paths = serialization_payload_paths(result.value.as_ref());
     let mut effects = result.effects;
     effects.json_serialized_paths.extend(paths.iter().cloned());
     effects.derived_text_paths.extend(paths);
-    EvalResult::with_effects(result.value, effects)
+    let mut serialized = EvalResult::with_effects(result.value, effects);
+    serialized.json_payload_truth = payload_truth;
+    serialized
 }
 
 pub(super) fn eval_from_json_pipeline(
@@ -488,6 +590,7 @@ pub(super) fn eval_from_json_pipeline(
 }
 
 pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
+    let payload_truth = result.json_payload_truth.clone();
     if let Some(folded) = literal_decoded_value(result.value.as_ref(), DecodeFormat::Json) {
         return EvalResult::with_effects(Some(folded), result.effects);
     }
@@ -511,7 +614,9 @@ pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
         effects.string_contract_paths.extend(paths);
         None
     };
-    EvalResult::with_effects(value, effects)
+    let mut decoded = EvalResult::with_effects(value, effects);
+    decoded.truth = payload_truth;
+    decoded
 }
 
 pub(super) fn eval_from_yaml_pipeline(

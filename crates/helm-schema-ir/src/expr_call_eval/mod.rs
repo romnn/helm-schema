@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_ast::{Literal, TemplateExpr};
 use helm_schema_core::{GuardDnf, Predicate};
@@ -39,7 +39,7 @@ use serialization::{
     record_printf_argument_effects, record_total_conversion_effects,
 };
 use strict_operands::{
-    pipeline_string_operand_facts, record_collection_item_kind_result,
+    pipeline_string_operand_facts, push_fail_capture, record_collection_item_kind_result,
     record_length_bearing_operand, record_length_bearing_result, record_operand_presence_operands,
     record_operand_presence_result, record_raw_range_key_string_consumer_paths,
     record_strict_kind_operands, record_strict_kind_result, record_strict_parser_call,
@@ -69,6 +69,21 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         "set" if args.len() == 3 => eval_set_call(args, env, resolver),
+        "unset" if args.len() == 2 => {
+            let [target, key] = args else {
+                return EvalResult::none();
+            };
+            let operand = eval_expr_with_helper_calls(target, env, resolver);
+            let mut effects = operand.effects.clone();
+            effects.merge(eval_expr_with_helper_calls(key, env, resolver).effects);
+            record_strict_kind_result(
+                &operand,
+                "object",
+                strict_operand_nil_aborts(function, direct_values_path(target).is_some()),
+                &mut effects,
+            );
+            EvalResult::with_effects(operand.value, effects)
+        }
         "default" if matches!(args, [_, _]) => {
             let [fallback, primary] = args else {
                 return EvalResult::none();
@@ -558,6 +573,16 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         "tpl" if args.len() == 2 => eval_tpl(args, env, resolver),
+        "lookup" if args.len() == 4 => {
+            let mut effects = Effects::default();
+            merge_arg_effects(args, env, resolver, &mut effects);
+            record_string_call_consumers("lookup", args, env, resolver, &mut effects);
+            // `lookup` returns cluster state selected by its arguments, not
+            // any argument's runtime value. Keep argument evaluation and
+            // strict string contracts as dependencies while leaving the
+            // external map's contents unknown to downstream sinks.
+            EvalResult::with_effects(Some(AbstractValue::Unknown), effects)
+        }
         "cat" => eval_cat(args, env, resolver),
         "index" => eval_index(args, false, env, resolver),
         "get" if args.len() == 2 => eval_index(args, true, env, resolver),
@@ -568,13 +593,24 @@ pub(crate) fn eval_call_with_helper_calls(
             };
             let message = eval_expr_with_helper_calls(message, env, resolver);
             let mut subject = eval_expr_with_helper_calls(subject, env, resolver);
+            // Direct input identities use the dedicated required-presence
+            // lane. A derived subject can instead fail when its exact
+            // reduction is falsy, so retain that negated reduction as the
+            // call's terminal condition.
+            if !matches!(
+                subject.value.as_ref(),
+                Some(AbstractValue::ValuesPath(_) | AbstractValue::JsonDecodedPath(_))
+            ) && let Some(truth) = subject.truth.predicate()
+            {
+                push_fail_capture(vec![truth.clone().negated()], &mut subject.effects);
+            }
             subject.effects.merge(message.effects);
             subject
         }
-        "typeIs" | "kindIs" if args.len() >= 2 => eval_type_is(args, env, resolver),
+        "typeIs" | "kindIs" if args.len() >= 2 => eval_type_is(function, args, env, resolver),
         "fromYaml" if args.len() == 1 => eval_from_yaml(args, env, resolver),
         "toYaml" if args.len() == 1 => eval_to_yaml(args, env, resolver),
-        "fromJson" if args.len() == 1 => eval_from_json(args, env, resolver),
+        "fromJson" | "fromJsonArray" if args.len() == 1 => eval_from_json(args, env, resolver),
         "toJson" | "mustToJson" | "toRawJson" | "mustToRawJson" if args.len() == 1 => {
             eval_to_json(args, env, resolver)
         }
@@ -609,7 +645,11 @@ pub(crate) fn eval_call_with_helper_calls(
                 &raw_range_key_paths,
                 &mut effects,
             );
-            let value = if function == "toString" {
+            let value = if matches!(function, "quote" | "squote") {
+                result
+                    .value
+                    .map(AbstractValue::clear_plain_slot_string_format)
+            } else if function == "toString" {
                 mark_stringified_identities(result.value)
             } else {
                 result.value
@@ -628,9 +668,20 @@ pub(crate) fn eval_call_with_helper_calls(
                 || is_string_predicate_function(function))
                 && !args.is_empty() =>
         {
-            let scalar_truth = args.last().and_then(|subject| {
-                let subject = eval_expr_with_helper_calls(subject, env, resolver);
-                scalar_pattern_condition(function, args, subject.scalar_dispatch.as_ref())
+            let scalar_truth = args.last().and_then(|subject_expr| {
+                let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
+                let dispatch = subject
+                    .scalar_dispatch
+                    .or_else(|| direct_stringified_dispatch(subject_expr, env, resolver));
+                scalar_pattern_condition(function, args, dispatch.as_ref()).or_else(|| {
+                    direct_quoted_falsy_pattern_condition(
+                        function,
+                        args,
+                        subject_expr,
+                        env,
+                        resolver,
+                    )
+                })
             });
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
@@ -889,7 +940,11 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                     &raw_range_key_paths,
                     &mut effects,
                 );
-                let value = if function == "toString" {
+                let value = if matches!(function, "quote" | "squote") {
+                    current
+                        .value
+                        .map(AbstractValue::clear_plain_slot_string_format)
+                } else if function == "toString" {
                     mark_stringified_identities(current.value)
                 } else {
                     current.value
@@ -901,7 +956,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 }
             }
             "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
-            "fromJson" => eval_from_json_pipeline(current, args, env, resolver),
+            "fromJson" | "fromJsonArray" => eval_from_json_pipeline(current, args, env, resolver),
             "printf" => {
                 let mut effects = current.effects;
                 // The piped value is printf's FINAL data argument; `args`
@@ -1214,12 +1269,109 @@ fn scalar_pattern_condition(
             let pattern = literal_string(args.first()?)?;
             Some(dispatch.condition_matches_pattern(pattern))
         }
+        "contains" => {
+            let needle = literal_string(args.first()?)?;
+            Some(dispatch.condition_matches_pattern(&escape_regex_literal(needle)))
+        }
+        "hasPrefix" => {
+            let prefix = literal_string(args.first()?)?;
+            Some(dispatch.condition_matches_pattern(&format!("^{}", escape_regex_literal(prefix))))
+        }
+        "hasSuffix" => {
+            let suffix = literal_string(args.first()?)?;
+            Some(dispatch.condition_matches_pattern(&format!("{}$", escape_regex_literal(suffix))))
+        }
         "semverCompare" => {
             let constraint = literal_string(args.first()?)?;
             Some(dispatch.condition_matches_semver(constraint))
         }
         _ => None,
     }
+}
+
+fn escape_regex_literal(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        if matches!(
+            character,
+            '.' | '+' | '*' | '?' | '(' | ')' | '|' | '[' | ']' | '{' | '}' | '^' | '$' | '\\'
+        ) {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
+}
+
+fn direct_stringified_dispatch(
+    expr: &TemplateExpr,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> Option<ScalarValueDispatch> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    if function != "toString" {
+        return None;
+    }
+    let [subject] = args.as_slice() else {
+        return None;
+    };
+    eval_expr_with_helper_calls(subject, env, resolver)
+        .scalar_dispatch
+        .map(|dispatch| dispatch.stringified())
+}
+
+fn direct_quoted_falsy_pattern_condition(
+    function: &str,
+    args: &[TemplateExpr],
+    subject_expr: &TemplateExpr,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> Option<TruthCondition> {
+    let TemplateExpr::Call {
+        function: conversion,
+        args: conversion_args,
+    } = subject_expr.deparen()
+    else {
+        return None;
+    };
+    let [subject] = conversion_args.as_slice() else {
+        return None;
+    };
+    if conversion != "quote" {
+        return None;
+    }
+    let needle = literal_string(args.first()?)?;
+    let falsy_spellings = [
+        "",
+        r#""""#,
+        r#""0""#,
+        r#""false""#,
+        r#""<nil>""#,
+        r#""[]""#,
+        r#""map[]""#,
+    ];
+    let matches_falsy = match function {
+        "contains" => falsy_spellings.iter().any(|value| value.contains(needle)),
+        "hasPrefix" => falsy_spellings
+            .iter()
+            .any(|value| value.starts_with(needle)),
+        "hasSuffix" => falsy_spellings.iter().any(|value| value.ends_with(needle)),
+        _ => return None,
+    };
+    if matches_falsy {
+        return None;
+    }
+    let subject = eval_expr_with_helper_calls(subject, env, resolver);
+    let AbstractValue::ValuesPath(path) = subject.value? else {
+        return None;
+    };
+    Some(TruthCondition::from_subsets(
+        Predicate::False,
+        Predicate::truthy_path(path).negated(),
+        false,
+    ))
 }
 
 fn literal_string(expr: &TemplateExpr) -> Option<&str> {
@@ -1241,17 +1393,34 @@ fn combined_short_circuit_truth(operands: &[TruthCondition], conjunction: bool) 
     }
 }
 
-fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predicate>) {
+pub(super) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predicate>) {
     if predicates.is_empty() {
         return;
     }
+    let (embedded_paths, embedded_meta) = result.value.take().map_or_else(
+        || (BTreeSet::new(), BTreeMap::new()),
+        |value| {
+            // The value and `local_output_meta` are parallel projections of
+            // the same identities. Fuse them before selection, then publish
+            // the selected metadata back from one owner; otherwise a fresh
+            // predicate-only sibling later unions away the helper's inner
+            // branch condition.
+            let mut value = value.with_output_meta(&result.effects.local_output_meta);
+            let embedded_paths = value.conjoin_output_path_branches(predicates);
+            let embedded_meta = value.output_meta();
+            result.value = Some(value);
+            (embedded_paths, embedded_meta)
+        },
+    );
+    for (path, meta) in embedded_meta {
+        result.effects.local_output_meta.insert(path, meta);
+    }
     for path in identity_value_paths(result.value.as_ref()) {
-        result
-            .effects
-            .local_output_meta
-            .entry(path)
-            .or_default()
-            .conjoin_branches(predicates);
+        if !embedded_paths.contains(&path) {
+            let mut meta = crate::helper_meta::HelperOutputMeta::default();
+            meta.conjoin_branches(predicates);
+            result.effects.local_output_meta.insert(path, meta);
+        }
     }
     for row in &mut result.effects.helper_rendered {
         row.meta.conjoin_branches(predicates);
@@ -1304,6 +1473,7 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
             predicates.iter().cloned().collect(),
             path,
             "string".to_string(),
+            false,
             effects,
         );
     }

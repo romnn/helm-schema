@@ -11,10 +11,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "acmesolver.image"
     },
     {
@@ -32,10 +29,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "acmesolver.image.digest"
     },
     {
@@ -80,10 +74,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "acmesolver.image.registry"
     },
     {
@@ -182,10 +173,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "affinity"
     },
     {
@@ -216,10 +204,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "automountServiceAccountToken"
     },
     {
@@ -250,10 +235,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "clusterResourceNamespace"
     },
     {
@@ -281,6 +263,38 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "config",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "config",
+              "volumeMounts"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "config",
+              "volumes"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "config"
+    },
+    {
+      "condition": [
         []
       ],
       "kind": "Scalar",
@@ -302,10 +316,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "containerSecurityContext"
     },
     {
@@ -369,10 +380,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "deploymentAnnotations"
     },
     {
@@ -406,10 +414,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "disableAutoApproval"
     },
     {
@@ -423,10 +428,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "dns01RecursiveNameservers"
     },
     {
@@ -463,10 +465,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "dns01RecursiveNameserversOnly"
     },
     {
@@ -480,10 +479,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "enableCertificateOwnerRef"
     },
     {
@@ -514,10 +510,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "extraArgs"
     },
     {
@@ -554,10 +547,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "extraEnv"
     },
     {
@@ -594,10 +584,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "featureGates"
     },
     {
@@ -690,7 +677,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -731,7 +719,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -849,10 +838,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.hostUsers"
     },
     {
@@ -887,10 +873,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.imagePullSecrets"
     },
     {
@@ -930,10 +913,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.leaderElection"
     },
     {
@@ -951,10 +931,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.leaderElection.leaseDuration"
     },
     {
@@ -1022,10 +999,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.leaderElection.renewDeadline"
     },
     {
@@ -1070,10 +1044,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.leaderElection.retryPeriod"
     },
     {
@@ -1109,10 +1080,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.logLevel"
     },
     {
@@ -1132,6 +1100,23 @@
         "kind": "Deployment"
       },
       "source_expr": "global.logLevel"
+    },
+    {
+      "condition": [
+        [
+          {
+            "paths": [
+              "global.nodeSelector",
+              "nodeSelector"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "global.nodeSelector"
     },
     {
       "condition": [
@@ -1229,10 +1214,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.priorityClassName"
     },
     {
@@ -1264,10 +1246,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "global.revisionHistoryLimit"
     },
     {
@@ -1296,10 +1275,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "hostAliases"
     },
     {
@@ -1335,10 +1311,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "http_proxy"
     },
     {
@@ -1376,10 +1349,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "https_proxy"
     },
     {
@@ -1499,7 +1469,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "image.digest"
+      "source_expr": "image.digest",
+      "stringified": true
     },
     {
       "condition": [
@@ -1586,7 +1557,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "image.registry"
+      "source_expr": "image.registry",
+      "stringified": true
     },
     {
       "condition": [
@@ -1625,7 +1597,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "image.repository"
+      "source_expr": "image.repository",
+      "stringified": true
     },
     {
       "condition": [
@@ -1664,7 +1637,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "image.repository"
+      "source_expr": "image.repository",
+      "stringified": true
     },
     {
       "condition": [
@@ -1711,7 +1685,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "image.tag"
+      "source_expr": "image.tag",
+      "stringified": true
     },
     {
       "condition": [
@@ -1724,10 +1699,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "ingressShim"
     },
     {
@@ -1745,10 +1717,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "ingressShim.defaultIssuerGroup"
     },
     {
@@ -1793,10 +1762,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "ingressShim.defaultIssuerKind"
     },
     {
@@ -1841,10 +1807,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "ingressShim.defaultIssuerName"
     },
     {
@@ -1885,10 +1848,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "livenessProbe"
     },
     {
@@ -1906,10 +1866,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "livenessProbe.enabled"
     },
     {
@@ -2063,10 +2020,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "maxConcurrentChallenges"
     },
     {
@@ -2163,7 +2117,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2200,7 +2155,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2240,7 +2196,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2278,7 +2235,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2317,7 +2275,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2356,7 +2315,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2404,7 +2364,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -2440,7 +2401,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "namespace"
+      "source_expr": "namespace",
+      "stringified": true
     },
     {
       "condition": [
@@ -2453,10 +2415,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "no_proxy"
     },
     {
@@ -2482,6 +2441,23 @@
         "kind": "Deployment"
       },
       "source_expr": "no_proxy"
+    },
+    {
+      "condition": [
+        [
+          {
+            "paths": [
+              "global.nodeSelector",
+              "nodeSelector"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "nodeSelector"
     },
     {
       "condition": [
@@ -2597,10 +2573,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "podAnnotations"
     },
     {
@@ -2641,10 +2614,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "podDnsConfig"
     },
     {
@@ -2680,10 +2650,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "podDnsPolicy"
     },
     {
@@ -2719,10 +2686,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "podLabels"
     },
     {
@@ -2767,10 +2731,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "prometheus.enabled"
     },
     {
@@ -2788,10 +2749,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "prometheus.podmonitor.enabled"
     },
     {
@@ -2813,10 +2771,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "prometheus.servicemonitor.enabled"
     },
     {
@@ -2845,10 +2800,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "resources"
     },
     {
@@ -2885,10 +2837,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "securityContext"
     },
     {
@@ -2915,12 +2864,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "serviceAccount.create",
-            "type": "truthy"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -2937,23 +2881,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "serviceAccount.create"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "serviceAccount.create",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
       "source_expr": "serviceAccount.create"
     },
     {
@@ -3002,7 +2929,8 @@
         "api_version": "apps/v1",
         "kind": "Deployment"
       },
-      "source_expr": "serviceAccount.name"
+      "source_expr": "serviceAccount.name",
+      "stringified": true
     },
     {
       "condition": [
@@ -3015,10 +2943,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "strategy"
     },
     {
@@ -3052,10 +2977,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "tolerations"
     },
     {
@@ -3091,10 +3013,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "topologySpreadConstraints"
     },
     {
@@ -3139,10 +3058,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "volumeMounts"
     },
     {
@@ -3188,10 +3104,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
+      "resource": null,
       "source_expr": "volumes"
     },
     {

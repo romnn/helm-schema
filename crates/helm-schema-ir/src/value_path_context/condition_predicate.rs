@@ -48,6 +48,22 @@ fn literal_string(expr: &TemplateExpr) -> Option<&str> {
     }
 }
 
+fn single_root_field(expr: &TemplateExpr) -> Option<&str> {
+    match expr.deparen() {
+        TemplateExpr::Field(path) => match path.as_slice() {
+            [field] => Some(field),
+            _ => None,
+        },
+        TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
+            match path.as_slice() {
+                [field] => Some(field),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
 /// The typed guard value of a plain scalar literal. Floats abstain: their
 /// file-vs-`--set` numeric channels compare differently, so an equality
 /// target would overstate what the analysis knows.
@@ -111,6 +127,7 @@ impl ValuePathContext<'_> {
         eval_expr(expr, &self.expression_eval_env())
             .truth
             .predicate()
+            .filter(|predicate| !predicate.contains_approximation())
             .cloned()
     }
 
@@ -183,7 +200,7 @@ impl ValuePathContext<'_> {
                 "ne" => self.value_comparison_predicate(args, true).is_some(),
                 "semverCompare" => false,
                 "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args).is_some(),
-                "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
+                "typeIs" | "kindIs" => self.type_is_predicate(function, args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
                 "hasPrefix" => {
                     self.range_key_prefix_predicate(args).is_some()
@@ -264,17 +281,19 @@ impl ValuePathContext<'_> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             // A pipeline condition may still admit a positive sound
             // strengthening (cilium's transformed `… | semverCompare
-            // "<0.9.0"` fail gate) even though the pipeline itself stays
-            // approximate.
-            if !negated {
-                let subset = self.comparison_sound_subset(expr);
-                if !subset.is_empty() {
-                    return Predicate::approximate_with_sound_subset(
-                        marker,
-                        self.resolved_values_paths_from_expr(expr),
-                        subset,
-                    );
-                }
+            // "<0.9.0"` fail gate), while a negated rerooted selector can
+            // prove its ordered merge falsy when every layer is falsy.
+            let subset = if negated {
+                self.negated_comparison_sound_subset(expr)
+            } else {
+                self.comparison_sound_subset(expr)
+            };
+            if !subset.is_empty() {
+                return Predicate::approximate_with_sound_subset(
+                    marker,
+                    self.resolved_values_paths_from_expr(expr),
+                    subset,
+                );
             }
             let leaf = Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
             // The stand-in covers the unknown condition in BOTH polarities:
@@ -455,7 +474,7 @@ impl ValuePathContext<'_> {
             "ne" => self.value_comparison_predicate(args, true),
             "semverCompare" => None,
             "gt" | "lt" | "ge" | "le" => self.positive_len_predicate(function, args),
-            "typeIs" | "kindIs" => self.type_is_predicate(args),
+            "typeIs" | "kindIs" => self.type_is_predicate(function, args),
             "coalesce" => self.coalesce_truthy_predicate(args),
             "default" => self.default_truthy_predicate(args),
             "merge" | "mustMerge" | "mergeOverwrite" | "mustMergeOverwrite" => {
@@ -512,9 +531,9 @@ impl ValuePathContext<'_> {
             if !literal_string(default)?.is_empty() {
                 return None;
             }
-            let AbstractValue::ValuesPath(base) = self.with_body_fragment_value_expr(map)? else {
-                return None;
-            };
+            let base = self
+                .with_body_fragment_value_expr(map)?
+                .direct_values_identity()?;
             let (leaf_key, parent_keys) = keys.split_last()?;
             let parent = parent_keys.iter().fold(base, |path, key| {
                 helm_schema_core::append_value_path(&path, key)
@@ -584,9 +603,9 @@ impl ValuePathContext<'_> {
         // The subject must be ONE values-backed map identity — the
         // whole-values root (`.Values` or `.Values.AsMap`) or a single
         // path. A choice of subjects would misstate the leaf condition.
-        let AbstractValue::ValuesPath(base) = self.with_body_fragment_value_expr(subject)? else {
-            return None;
-        };
+        let base = self
+            .with_body_fragment_value_expr(subject)?
+            .direct_values_identity()?;
         let path = keys.iter().fold(base, |path, key| {
             helm_schema_core::append_value_path(&path, key)
         });
@@ -884,7 +903,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Call { function, args }
                 if function == "typeIs" || function == "kindIs" =>
             {
-                self.type_is_predicate(args).map(|p| p.negated())
+                self.type_is_predicate(function, args).map(|p| p.negated())
             }
             TemplateExpr::Call { function, args } if function == "hasKey" => {
                 self.has_key_predicate(args).map(|p| p.negated())
@@ -1040,8 +1059,8 @@ impl ValuePathContext<'_> {
         if subject_is_total_stringification(subject) {
             return None;
         }
-        let path = match self.with_body_fragment_value_expr(subject)? {
-            AbstractValue::ValuesPath(path) if !path.is_empty() => path,
+        let value = self.with_body_fragment_value_expr(subject)?;
+        let path = match value {
             // The subject is a destructured range KEY: the pattern applies
             // per key of the ranged collection (traefik's uppercase
             // `ingressRoute` gate).
@@ -1051,7 +1070,9 @@ impl ValuePathContext<'_> {
                     pattern: pattern.to_string(),
                 }));
             }
-            _ => return None,
+            value => value
+                .input_identity_path()
+                .filter(|path| !path.is_empty())?,
         };
         // A subject that reached this consumer through `tpl` carries its
         // rendered OUTPUT here, not the raw program: the pattern then
@@ -1075,10 +1096,13 @@ impl ValuePathContext<'_> {
             return None;
         };
         let affix = literal_string(affix)?;
-        let path = match self.with_body_fragment_value_expr(subject)? {
-            AbstractValue::ValuesPath(path) if !path.is_empty() => path,
-            _ => return None,
-        };
+        if subject_is_total_stringification(subject) {
+            return None;
+        }
+        let path = self
+            .with_body_fragment_value_expr(subject)?
+            .input_identity_path()
+            .filter(|path| !path.is_empty())?;
         let templated = self.subject_is_derived_text(subject, &path);
         let pattern = if suffix {
             format!("{}$", escape_regex_literal(affix))
@@ -1097,10 +1121,13 @@ impl ValuePathContext<'_> {
             return None;
         };
         let needle = literal_string(needle)?;
-        let path = match self.with_body_fragment_value_expr(subject)? {
-            AbstractValue::ValuesPath(path) if !path.is_empty() => path,
-            _ => return None,
-        };
+        if subject_is_total_stringification(subject) {
+            return None;
+        }
+        let path = self
+            .with_body_fragment_value_expr(subject)?
+            .input_identity_path()
+            .filter(|path| !path.is_empty())?;
         Some(Predicate::from(Guard::MatchesPattern {
             path,
             pattern: escape_regex_literal(needle),
@@ -1170,14 +1197,17 @@ impl ValuePathContext<'_> {
         (!alternatives.is_empty()).then_some(Predicate::Or(alternatives))
     }
 
-    fn type_is_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+    fn type_is_predicate(&self, function: &str, args: &[TemplateExpr]) -> Option<Predicate> {
         let TemplateExpr::Literal(Literal::String(type_name) | Literal::RawString(type_name)) =
             args.first()?.deparen()
         else {
             return None;
         };
+        if matches!(type_name.as_str(), "int64" | "float64") {
+            return None;
+        }
         let schema_type = type_is_schema_type(args.first());
-        if type_name != "invalid" && schema_type.is_none() {
+        if schema_type.is_none() && !(function == "kindIs" && type_name == "invalid") {
             return None;
         }
         let predicates = args
@@ -1191,7 +1221,7 @@ impl ValuePathContext<'_> {
                     path,
                     schema_type: schema_type.clone(),
                 }),
-                None => invalid_kind_predicate(path),
+                None => Predicate::invalid_kind_path(path),
             })
             .collect::<Vec<_>>();
         (!predicates.is_empty()).then(|| Predicate::all(predicates))
@@ -1657,6 +1687,44 @@ impl ValuePathContext<'_> {
         })
     }
 
+    fn absent_root_field_comparison_predicate(
+        &self,
+        left: &TemplateExpr,
+        right: &TemplateExpr,
+        negated: bool,
+    ) -> Option<Predicate> {
+        if !matches!(self.current_dot_binding, Some(AbstractValue::RootContext)) {
+            return None;
+        }
+        let field = match (single_root_field(left), guard_value_literal(right)) {
+            (Some(field), Some(_)) => field,
+            _ => match (single_root_field(right), guard_value_literal(left)) {
+                (Some(field), Some(_)) => field,
+                _ => return None,
+            },
+        };
+        if self.root_bindings.contains_key(field)
+            || self.root_value_dispatches.contains_key(field)
+            || matches!(
+                field,
+                "Capabilities"
+                    | "Chart"
+                    | "Files"
+                    | "Release"
+                    | "Subcharts"
+                    | "Template"
+                    | "Values"
+            )
+        {
+            return None;
+        }
+        Some(if negated {
+            Predicate::True
+        } else {
+            Predicate::False
+        })
+    }
+
     /// A single-segment root-context field (`.mode`) under a root (or
     /// unresolved) dot that carries a joined value dispatch.
     fn root_dispatch_field<'expr>(&self, expr: &'expr TemplateExpr) -> Option<&'expr str> {
@@ -1667,19 +1735,10 @@ impl ValuePathContext<'_> {
         {
             return None;
         }
-        let field = match expr.deparen() {
-            TemplateExpr::Field(path) => path.as_slice(),
-            TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
-                path.as_slice()
-            }
-            _ => return None,
-        };
-        let [field] = field else {
-            return None;
-        };
+        let field = single_root_field(expr)?;
         self.root_value_dispatches
             .contains_key(field)
-            .then_some(field.as_str())
+            .then_some(field)
     }
 
     fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
@@ -1698,11 +1757,16 @@ impl ValuePathContext<'_> {
         }
     }
 
-    /// Sound subsets of a comparison's NEGATION: the int-cast lanes
+    /// Sound subsets of a condition's NEGATION: an ordered merge is
+    /// certainly falsy when every layer is falsy, and the int-cast lanes
     /// region-flip exactly (¬(x > N) ⇔ x < N+1 over the coerced value,
     /// ¬(x == N) ⇔ x ≠ N, ¬(x ≠ N) ⇔ x == N); other comparison families
     /// abstain under negation.
     fn negated_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let subset = self.negated_merged_layers_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
         let subset = self.int_cast_comparison_region_subset(expr, true);
         if !subset.is_empty() {
             return subset;
@@ -1715,6 +1779,39 @@ impl ValuePathContext<'_> {
             "ne" => self.int_cast_equality_region(args),
             _ => Vec::new(),
         }
+    }
+
+    /// Every raw layer being Helm-falsy is a sound subset of an ordered
+    /// merge being falsy. Nil-scrubbed layers may also become empty from a
+    /// truthy all-null map, so the converse is deliberately not claimed.
+    fn negated_merged_layers_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        fn collect_paths(layers: &[AbstractValue], paths: &mut Vec<String>) -> bool {
+            for layer in layers {
+                if let AbstractValue::MergedLayers(nested) = layer {
+                    if !collect_paths(nested, paths) {
+                        return false;
+                    }
+                } else if let Some(path) = layer.merge_layer_identity() {
+                    paths.push(path);
+                } else {
+                    return false;
+                }
+            }
+            true
+        }
+
+        let Some(AbstractValue::MergedLayers(layers)) =
+            eval_expr(expr, &self.expression_eval_env()).value
+        else {
+            return Vec::new();
+        };
+        let mut paths = Vec::new();
+        if !collect_paths(&layers, &mut paths) {
+            return Vec::new();
+        }
+        paths.sort();
+        paths.dedup();
+        paths.into_iter().map(|path| Guard::Not { path }).collect()
     }
 
     /// Sound positive strengthenings of otherwise-undecodable comparison
@@ -2305,7 +2402,7 @@ impl ValuePathContext<'_> {
             "typeIs" => {
                 args.iter()
                     .any(|arg| self.expr_needs_context_value_resolution(arg))
-                    && self.type_is_predicate(args).is_none()
+                    && self.type_is_predicate("typeIs", args).is_none()
             }
             _ => false,
         }
@@ -2341,6 +2438,9 @@ impl ValuePathContext<'_> {
         // are mutually exclusive and total, so the negated form is the
         // exact complement.
         if let Some(predicate) = self.root_field_dispatch_predicate(left, right, negated) {
+            return Some(predicate);
+        }
+        if let Some(predicate) = self.absent_root_field_comparison_predicate(left, right, negated) {
             return Some(predicate);
         }
         // Only a DIRECT selector operand claims a value equality: seeing
@@ -2625,40 +2725,9 @@ impl ValuePathContext<'_> {
             TemplateExpr::Call { function, args }
                 if helm_schema_ast::type_descriptor_call_subject(function, args).is_some() =>
             {
-                // Selectors and bound locals (a range's value variable,
-                // a `$x := .Values.y` binding) both describe a single
-                // resolvable path.
                 let subject =
                     helm_schema_ast::type_descriptor_call_subject(function, args)?.deparen();
-                let subject = matches!(
-                    subject,
-                    TemplateExpr::Field(_)
-                        | TemplateExpr::Selector { .. }
-                        | TemplateExpr::Variable(_)
-                )
-                .then_some(subject)?;
-                let paths = self.paths_for_expr(subject);
-                if paths.is_empty() {
-                    return None;
-                }
-                let local_meta = match subject {
-                    TemplateExpr::Variable(name) => {
-                        self.template_output_meta.get(name.trim_start_matches('$'))
-                    }
-                    _ => None,
-                };
-                Some(
-                    paths
-                        .into_iter()
-                        .map(|path| {
-                            let meta = local_meta
-                                .and_then(|meta| meta.get(&path))
-                                .cloned()
-                                .unwrap_or_default();
-                            (path, meta)
-                        })
-                        .collect(),
-                )
+                self.type_descriptor_subject_sources(subject)
             }
             TemplateExpr::Variable(name) => self
                 .typeof_bindings
@@ -2666,6 +2735,85 @@ impl ValuePathContext<'_> {
                 .cloned(),
             _ => None,
         }
+    }
+
+    pub(crate) fn type_descriptor_subject_sources(
+        &self,
+        subject: &TemplateExpr,
+    ) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
+        if matches!(
+            subject,
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)
+        ) {
+            let paths = self.paths_for_expr(subject);
+            if paths.is_empty() {
+                return None;
+            }
+            let local_meta = match subject {
+                TemplateExpr::Variable(name) => {
+                    self.template_output_meta.get(name.trim_start_matches('$'))
+                }
+                _ => None,
+            };
+            return Some(
+                paths
+                    .into_iter()
+                    .map(|path| {
+                        let meta = local_meta
+                            .and_then(|meta| meta.get(&path))
+                            .cloned()
+                            .unwrap_or_default();
+                        (path, meta)
+                    })
+                    .collect(),
+            );
+        }
+
+        if let TemplateExpr::Call { function, args } = subject
+            && function == "or"
+            && !args.is_empty()
+        {
+            // `typeOf (or ...)` observes the selected operand, so every
+            // candidate keeps the short-circuit conditions under which it
+            // supplies that type descriptor.
+            let paths = args
+                .iter()
+                .map(|arg| self.single_resolved_values_path_expr(arg))
+                .collect::<Option<Vec<_>>>()?;
+            let mut sources = std::collections::BTreeMap::new();
+            let mut prior_falsy = Vec::new();
+            for (index, path) in paths.iter().enumerate() {
+                let mut selected = prior_falsy.clone();
+                if index + 1 < paths.len() {
+                    selected.push(Predicate::truthy_path(path.clone()));
+                }
+                let mut meta = crate::helper_meta::HelperOutputMeta::default();
+                meta.predicates.insert(selected.into_iter().collect());
+                sources.insert(path.clone(), meta);
+                prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
+            }
+            return Some(sources);
+        }
+
+        let value = eval_expr(subject, &self.expression_eval_env()).value?;
+        let value_meta = value.output_meta();
+        if !value_meta.is_empty() {
+            return Some(value_meta);
+        }
+        let paths = value.selection_chain_identity_paths()?;
+        let mut sources = std::collections::BTreeMap::new();
+        let mut prior_falsy = Vec::new();
+        for (index, path) in paths.iter().enumerate() {
+            let mut selected = prior_falsy.clone();
+            if index + 1 < paths.len() {
+                selected.push(Predicate::truthy_path(path.clone()));
+            }
+            let mut meta = value_meta.get(path).cloned().unwrap_or_default();
+            meta.predicates.insert(selected.into_iter().collect());
+            sources.insert(path.clone(), meta);
+            prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
+        }
+        Some(sources)
     }
 
     /// `regexMatch pat (typeOf x)` tests the FINITE set of type spellings a
@@ -2719,7 +2867,7 @@ impl ValuePathContext<'_> {
                 })
                 .collect();
             if null_matches != 0 {
-                kind_alternatives.push(invalid_kind_predicate(path.clone()));
+                kind_alternatives.push(Predicate::invalid_kind_path(path.clone()));
             }
             let type_predicate = predicate_any(kind_alternatives);
             if meta.predicates.is_empty() {
@@ -2776,7 +2924,7 @@ impl ValuePathContext<'_> {
                     path,
                     schema_type: schema_type.to_string(),
                 }),
-                None => invalid_kind_predicate(path),
+                None => Predicate::invalid_kind_path(path),
             };
             let type_predicate = if negated {
                 type_predicate.negated()
@@ -2815,16 +2963,6 @@ impl ValuePathContext<'_> {
             (Some(_), None) | (None, Some(_))
         )
     }
-}
-
-fn invalid_kind_predicate(path: String) -> Predicate {
-    Predicate::Or(vec![
-        Predicate::from(Guard::Absent { path: path.clone() }),
-        Predicate::from(Guard::Eq {
-            path,
-            value: GuardValue::Null,
-        }),
-    ])
 }
 
 /// The raw values whose Go `toString` rendering equals `text`, for an
@@ -3079,6 +3217,20 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
             })
             .negated(),
         ),
+        // Guard metadata can wrap a raw path identity in `OutputPath`
+        // without transforming its runtime value. Its map keys remain the
+        // raw path's keys; the metadata's predicates already scope the
+        // selected output arm.
+        AbstractValue::OutputPath(path, meta)
+            if (meta.is_input_identity() || meta.json_decoded) && !path.is_empty() =>
+        {
+            Some(
+                Predicate::from(Guard::Absent {
+                    path: helm_schema_core::append_value_path(path, key),
+                })
+                .negated(),
+            )
+        }
         // A nil-scrubbed identity over-approximates presence by the input
         // key's presence: the delta is exactly the nil-ish states, whose
         // member typing the scrubbed layer's arms null-relax, so candidate
@@ -3092,8 +3244,9 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
         // A JSON-roundtripped identity keeps map keys exactly, so key
         // presence reads from the raw path (nats' jsonpatch members reach
         // their `hasKey` gates as `service.patch.*` through the
-        // toJson/fromJson call boundary). Any value transform, branch
-        // condition, or key removal breaks that identity and abstains.
+        // toJson/fromJson call boundary). A range member's existence
+        // already implies truthiness of its collection ancestors; other
+        // branch conditions and value transforms still force abstention.
         AbstractValue::OutputPath(path, meta)
             if !path.is_empty()
                 && !meta.shape_erased
@@ -3103,7 +3256,16 @@ pub(crate) fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicat
                 && !meta.derived_text
                 && !meta.partial_text
                 && meta.merge_layers.is_none()
-                && meta.predicates.is_empty()
+                && meta.predicates.iter().all(|conjunction| {
+                    conjunction.iter().all(|predicate| {
+                        matches!(
+                            predicate,
+                            Predicate::Guard(Guard::Truthy { path: guarded })
+                                if guarded != path
+                                    && helm_schema_core::values_path_is_descendant(path, guarded)
+                        )
+                    })
+                })
                 && meta.capture_exclusions.is_empty()
                 && meta.lexical_escapes.is_empty()
                 && meta.omitted_keys.is_empty()

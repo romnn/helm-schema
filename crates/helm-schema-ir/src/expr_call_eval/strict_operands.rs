@@ -53,6 +53,19 @@ pub(super) fn record_string_transform_effects(
     record_string_consumer_effects(string_paths, effects);
     record_nil_strict_identity_operand(value, effects);
     record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
+    if matches!(function, "lower" | "upper") {
+        for path in string_paths {
+            let selected = effects.defaults.contains(path)
+                || effects.local_default_paths.contains(path)
+                || effects
+                    .local_output_meta
+                    .get(path)
+                    .is_some_and(|meta| meta.defaulted || !meta.predicates.is_empty());
+            if !selected && !effects.derived_text_paths.contains(path) {
+                effects.plain_text_preserving_paths.insert(path.clone());
+            }
+        }
+    }
     effects
         .derived_text_paths
         .extend(influence_paths.iter().cloned());
@@ -224,7 +237,11 @@ fn parser_operand_has_partitioned_identity(
                         .is_some_and(|meta| !meta.predicates.is_empty())
                     || parser_output_metas(operand.value.as_ref(), path)
                         .iter()
-                        .any(|meta| !meta.predicates.is_empty() || meta.defaulted)
+                        .any(|meta| {
+                            !meta.predicates.is_empty()
+                                || !meta.capture_exclusions.is_empty()
+                                || meta.defaulted
+                        })
             }))
 }
 
@@ -441,7 +458,13 @@ pub(super) fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: 
                 .is_some_and(|meta| !meta.predicates.is_empty());
         if has_selection_condition {
             for conjunction in operand_selection_conjunctions(effects, path) {
-                push_value_type_capture(conjunction, path.clone(), "string".to_string(), effects);
+                push_value_type_capture(
+                    conjunction,
+                    path.clone(),
+                    "string".to_string(),
+                    false,
+                    effects,
+                );
             }
         } else {
             effects.string_contract_paths.insert(path.clone());
@@ -523,7 +546,13 @@ pub(super) fn record_strict_kind_result(
     for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
             conjunction.extend(shadow.iter().cloned());
-            push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
+            push_value_type_capture(
+                conjunction,
+                path.clone(),
+                schema_type.to_string(),
+                nil_aborts,
+                effects,
+            );
         }
     }
     if nil_aborts {
@@ -747,7 +776,13 @@ pub(super) fn record_collection_item_kind_result(
                     effects,
                 );
             }
-            push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
+            push_value_type_capture(
+                conjunction,
+                path.clone(),
+                schema_type.to_string(),
+                false,
+                effects,
+            );
         }
     }
 }
@@ -780,12 +815,17 @@ pub(super) fn push_value_type_capture(
     conjunction: Vec<Predicate>,
     path: String,
     schema_type: String,
+    null_aborts: bool,
     effects: &mut Effects,
 ) {
     let capture = crate::eval_effect::FailCapture {
         conjunction,
         ranged: crate::range_modes::RangeModes::default(),
-        kind: crate::eval_effect::CaptureKind::ValueType { path, schema_type },
+        kind: crate::eval_effect::CaptureKind::ValueType {
+            path,
+            schema_type,
+            null_aborts,
+        },
     };
     if !effects.helper_fails.contains(&capture) {
         effects.helper_fails.push(capture);

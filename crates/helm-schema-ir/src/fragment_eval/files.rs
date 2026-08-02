@@ -167,7 +167,7 @@ impl Interpreter<'_> {
             .iter()
             .filter(|predicate| {
                 !values_default_path.is_some_and(|path| {
-                    ancestor_range_is_implied_by_selected_default(predicate, path)
+                    call_site_predicate_is_implied_by_selected_default(predicate, path)
                 })
             })
             .cloned()
@@ -243,15 +243,60 @@ impl Interpreter<'_> {
     }
 }
 
-fn ancestor_range_is_implied_by_selected_default(predicate: &Predicate, path: &str) -> bool {
-    let Predicate::Guard(Guard::Range { path: ranged_path }) = predicate else {
-        return false;
-    };
-    let ranged = helm_schema_core::split_value_path(ranged_path);
+fn call_site_predicate_is_implied_by_selected_default(predicate: &Predicate, path: &str) -> bool {
+    fn known_truth(
+        predicate: &Predicate,
+        implied_kind: &impl Fn(&str) -> Option<&'static str>,
+    ) -> Option<bool> {
+        match predicate {
+            Predicate::True => Some(true),
+            Predicate::False => Some(false),
+            Predicate::Guard(Guard::Range { path } | Guard::Truthy { path }) => {
+                implied_kind(path).map(|_| true)
+            }
+            Predicate::Guard(Guard::Absent { path }) => implied_kind(path).map(|_| false),
+            Predicate::Guard(Guard::TypeIs { path, schema_type }) => {
+                implied_kind(path).map(|kind| kind == schema_type)
+            }
+            Predicate::Guard(Guard::Eq {
+                path,
+                value: GuardValue::Null,
+            }) => implied_kind(path).map(|_| false),
+            Predicate::Not(inner) => known_truth(inner, implied_kind).map(|value| !value),
+            Predicate::And(items) => {
+                let values = items
+                    .iter()
+                    .map(|item| known_truth(item, implied_kind))
+                    .collect::<Option<Vec<_>>>()?;
+                Some(values.into_iter().all(|value| value))
+            }
+            Predicate::Or(items) => {
+                let values = items
+                    .iter()
+                    .map(|item| known_truth(item, implied_kind))
+                    .collect::<Option<Vec<_>>>()?;
+                Some(values.into_iter().any(|value| value))
+            }
+            Predicate::Approximate { .. } | Predicate::Guard(_) => None,
+        }
+    }
+
     let selected = helm_schema_core::split_value_path(path);
-    ranged.len() < selected.len()
-        && ranged
-            .iter()
-            .zip(&selected)
-            .all(|(expected, actual)| expected == "*" || expected == actual)
+    let implied_kind = |candidate: &str| {
+        let candidate = helm_schema_core::split_value_path(candidate);
+        let matches = candidate.len() <= selected.len()
+            && candidate
+                .iter()
+                .zip(&selected)
+                .all(|(expected, actual)| expected == "*" || expected == actual);
+        matches.then_some({
+            if candidate.len() == selected.len() {
+                "string"
+            } else {
+                "object"
+            }
+        })
+    };
+
+    known_truth(predicate, &implied_kind) == Some(true)
 }

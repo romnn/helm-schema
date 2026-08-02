@@ -14,12 +14,6 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "commonAnnotations",
-            "pattern": "\\{\\{",
-            "templated": false,
-            "type": "matches_pattern"
           }
         ]
       ],
@@ -38,31 +32,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
       "source_expr": "commonAnnotations"
     },
     {
@@ -123,7 +92,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "commonAnnotations"
+      "source_expr": "commonAnnotations",
+      "stringified": true
     },
     {
       "condition": [
@@ -290,6 +260,7 @@
         "kind": "PrometheusRule"
       },
       "source_expr": "commonLabels",
+      "stringified": true,
       "template_supplied_member_keys": [
         "app.kubernetes.io/name"
       ]
@@ -367,7 +338,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -409,7 +381,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -422,10 +395,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
+      "resource": null,
       "source_expr": "metrics.enabled"
     },
     {
@@ -442,12 +412,6 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.additionalLabels",
-            "pattern": "\\{\\{",
-            "templated": false,
-            "type": "matches_pattern"
           }
         ]
       ],
@@ -466,31 +430,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "metrics.prometheusRule.additionalLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.additionalLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
       "source_expr": "metrics.prometheusRule.additionalLabels"
     },
     {
@@ -571,10 +510,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
+      "resource": null,
       "source_expr": "metrics.prometheusRule.enabled"
     },
     {
@@ -701,7 +637,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "metrics.prometheusRule.rules"
+      "source_expr": "metrics.prometheusRule.rules",
+      "stringified": true
     },
     {
       "condition": [
@@ -894,7 +831,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -942,7 +880,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -991,7 +930,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1036,7 +976,8 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "namespaceOverride"
+      "source_expr": "namespaceOverride",
+      "stringified": true
     }
   ],
   "version": 3

@@ -565,13 +565,10 @@ impl ScalarValue {
                 // `^[0-9]+$` while the guard rejects the integer. Only a
                 // string-restricted rendering keeps the guard exact.
                 if *stringified {
-                    let raw_string_mismatch = Predicate::all(vec![
-                        Predicate::from(Guard::TypeIs {
-                            path: path.clone(),
-                            schema_type: "string".to_string(),
-                        }),
-                        predicate.clone().negated(),
-                    ]);
+                    let raw_string_mismatch = Predicate::from(Guard::NotMatchesPattern {
+                        path: path.clone(),
+                        pattern: pattern.to_string(),
+                    });
                     TruthCondition::from_subsets(predicate, raw_string_mismatch, false)
                 } else {
                     TruthCondition::exact(predicate)

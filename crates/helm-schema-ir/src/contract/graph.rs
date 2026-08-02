@@ -195,8 +195,36 @@ impl ContractIr {
             self.values_root_overlay_prefixes.clear();
             // A path-wide runtime string contract is unconditional only
             // within its own chart's rendering: under activation guards the
-            // consumer may never run, so the fact must not type the base.
-            self.string_contract_value_paths.clear();
+            // consumer may never run. Materialize it as an ordinary guarded
+            // semantic row so the active branch keeps the contract without
+            // typing the dormant base.
+            let string_contract_paths = std::mem::take(&mut self.string_contract_value_paths);
+            for path in string_contract_paths {
+                if let Some(hints) = self.type_hints.get_mut(&path) {
+                    hints.remove("string");
+                    if hints.is_empty() {
+                        self.type_hints.remove(&path);
+                    }
+                }
+                self.uses.push(ContractUse {
+                    source_expr: path,
+                    path: YamlPath(Vec::new()),
+                    kind: ValueKind::Scalar,
+                    condition: helm_schema_core::GuardDnf::from_guards(guards.iter().cloned()),
+                    resource: None,
+                    provenance: Vec::new(),
+                    has_string_contract: true,
+                    stringified: false,
+                    template_supplied_member_keys: BTreeSet::new(),
+                    split_segment: None,
+                    merge_layers: None,
+                    range_key: false,
+                    nil_omitting: false,
+                    omitted_members: BTreeMap::new(),
+                    digest: false,
+                    merge_operand: false,
+                });
+            }
         }
     }
 
@@ -304,6 +332,49 @@ impl ContractIr {
                 capture
             })
             .collect();
+    }
+
+    /// Projects dependency `global.*` contracts through Helm's parent-first
+    /// coalesce while preserving the dependency-local fallback.
+    pub fn project_dependency_global_contracts(&mut self, prefix: &[String]) {
+        if prefix.is_empty() {
+            return;
+        }
+        let global_sources = dependency_global_sources(prefix);
+        let Some(dependency_global) = global_sources.last() else {
+            return;
+        };
+
+        let projected_string_contracts = self
+            .string_contract_value_paths
+            .iter()
+            .filter(|path| {
+                let segments = helm_schema_core::split_value_path(path);
+                let dependency_global_segments =
+                    helm_schema_core::split_value_path(dependency_global);
+                segments
+                    .strip_prefix(dependency_global_segments.as_slice())
+                    .is_some_and(|relative| relative.iter().any(|segment| segment != "*"))
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        for path in projected_string_contracts {
+            self.string_contract_value_paths.remove(&path);
+            let mut contract_use = ContractUse::new(
+                path.clone(),
+                YamlPath(Vec::new()),
+                ValueKind::Scalar,
+                Vec::new(),
+                None,
+            );
+            contract_use.has_string_contract = true;
+            self.uses.push(contract_use);
+        }
+
+        project_global_uses(&mut self.uses, &global_sources);
+        project_global_uses(&mut self.dependency_uses, &global_sources);
+        project_global_fail_captures(&mut self.fail_conditions, &global_sources);
+        project_global_range_modes(&mut self.range_modes, &global_sources);
     }
 
     /// Add declared input-type hints for values paths without projecting them
@@ -561,5 +632,226 @@ impl ContractIr {
             &fail_conditions,
             &dependency_values_root_fragments,
         )
+    }
+}
+
+fn dependency_global_sources(prefix: &[String]) -> Vec<String> {
+    (0..=prefix.len())
+        .map(|prefix_len| {
+            helm_schema_core::join_value_path(
+                prefix
+                    .get(..prefix_len)
+                    .unwrap_or_default()
+                    .iter()
+                    .cloned()
+                    .chain(std::iter::once("global".to_string())),
+            )
+        })
+        .collect()
+}
+
+fn project_global_uses(uses: &mut Vec<ContractUse>, global_sources: &[String]) {
+    let Some(dependency_global) = global_sources.last() else {
+        return;
+    };
+    let dependency_global_segments = helm_schema_core::split_value_path(dependency_global);
+    let mut projected = Vec::with_capacity(uses.len());
+    for dependency_use in std::mem::take(uses) {
+        let source_segments = helm_schema_core::split_value_path(&dependency_use.source_expr);
+        let Some(relative) = source_segments.strip_prefix(dependency_global_segments.as_slice())
+        else {
+            projected.push(dependency_use);
+            continue;
+        };
+        let Some((selection_relative, key)) = global_selection_path(relative) else {
+            projected.push(dependency_use);
+            continue;
+        };
+
+        for (source_index, global_source) in global_sources.iter().enumerate() {
+            let selection_source = helm_schema_core::join_value_path(
+                helm_schema_core::split_value_path(global_source)
+                    .into_iter()
+                    .chain(selection_relative.iter().cloned()),
+            );
+            let mut selected_use = dependency_use.clone();
+            selected_use.map_value_paths(&mut |path| {
+                replace_value_path_prefix(path, dependency_global, global_source)
+            });
+            selected_use.condition =
+                selected_use
+                    .condition
+                    .conjoined_with_guards(global_source_selection_guards(
+                        global_sources,
+                        selection_relative,
+                        source_index,
+                        &selection_source,
+                        key,
+                    ));
+            projected.push(selected_use);
+        }
+    }
+    *uses = projected;
+}
+
+fn global_selection_path(relative: &[String]) -> Option<(&[String], &str)> {
+    let selection_len = relative
+        .iter()
+        .position(|segment| segment == "*")
+        .unwrap_or(relative.len());
+    let selection = relative.get(..selection_len)?;
+    Some((selection, selection.last()?.as_str()))
+}
+
+fn global_source_selection_guards(
+    global_sources: &[String],
+    relative: &[String],
+    source_index: usize,
+    source: &str,
+    key: &str,
+) -> Vec<Guard> {
+    let mut guards = Vec::new();
+    for higher_priority in global_sources.iter().take(source_index) {
+        let higher_source = helm_schema_core::join_value_path(
+            helm_schema_core::split_value_path(higher_priority)
+                .into_iter()
+                .chain(relative.iter().cloned()),
+        );
+        let mut container_segments = helm_schema_core::split_value_path(&higher_source);
+        container_segments.pop();
+        guards.push(Guard::AnyOf {
+            alternatives: vec![
+                vec![Guard::NotHasKey {
+                    path: helm_schema_core::join_value_path(container_segments),
+                    key: key.to_string(),
+                }],
+                vec![Guard::Eq {
+                    path: higher_source,
+                    value: helm_schema_core::GuardValue::Null,
+                }],
+            ],
+        });
+    }
+    if source_index + 1 < global_sources.len() {
+        let mut container_segments = helm_schema_core::split_value_path(source);
+        container_segments.pop();
+        guards.push(Guard::HasKey {
+            path: helm_schema_core::join_value_path(container_segments),
+            key: key.to_string(),
+        });
+        guards.push(Guard::NotEq {
+            path: source.to_string(),
+            value: helm_schema_core::GuardValue::Null,
+        });
+    }
+    guards
+}
+
+fn replace_value_path_prefix(path: &str, from: &str, to: &str) -> String {
+    let path_segments = helm_schema_core::split_value_path(path);
+    let from_segments = helm_schema_core::split_value_path(from);
+    let Some(relative) = path_segments.strip_prefix(from_segments.as_slice()) else {
+        return path.to_string();
+    };
+    helm_schema_core::join_value_path(
+        helm_schema_core::split_value_path(to)
+            .into_iter()
+            .chain(relative.iter().cloned()),
+    )
+}
+
+fn project_global_fail_captures(
+    captures: &mut Vec<crate::eval_effect::FailCapture>,
+    global_sources: &[String],
+) {
+    let Some(dependency_global) = global_sources.last() else {
+        return;
+    };
+    let dependency_global_segments = helm_schema_core::split_value_path(dependency_global);
+    let mut projected = Vec::with_capacity(captures.len());
+    for dependency_capture in std::mem::take(captures) {
+        let Some(source_path) = dependency_capture.kind.sole_value_path() else {
+            projected.push(dependency_capture);
+            continue;
+        };
+        let source_segments = helm_schema_core::split_value_path(source_path);
+        let Some(relative) = source_segments.strip_prefix(dependency_global_segments.as_slice())
+        else {
+            projected.push(dependency_capture);
+            continue;
+        };
+        let Some((selection_relative, key)) = global_selection_path(relative) else {
+            projected.push(dependency_capture);
+            continue;
+        };
+
+        for (source_index, global_source) in global_sources.iter().enumerate() {
+            let selection_source = helm_schema_core::join_value_path(
+                helm_schema_core::split_value_path(global_source)
+                    .into_iter()
+                    .chain(selection_relative.iter().cloned()),
+            );
+            let mut selected_capture = dependency_capture.clone();
+            selected_capture.conjunction = selected_capture
+                .conjunction
+                .into_iter()
+                .map(|predicate| {
+                    predicate.map_value_paths(&mut |path| {
+                        replace_value_path_prefix(path, dependency_global, global_source)
+                    })
+                })
+                .collect();
+            selected_capture.kind.map_value_paths(&mut |path| {
+                replace_value_path_prefix(path, dependency_global, global_source)
+            });
+            selected_capture.conjunction.extend(
+                global_source_selection_guards(
+                    global_sources,
+                    selection_relative,
+                    source_index,
+                    &selection_source,
+                    key,
+                )
+                .into_iter()
+                .map(helm_schema_core::Predicate::from),
+            );
+            projected.push(selected_capture);
+        }
+    }
+    *captures = projected;
+}
+
+fn project_global_range_modes(
+    range_modes: &mut crate::range_modes::RangeModes,
+    global_sources: &[String],
+) {
+    let Some(dependency_global) = global_sources.last() else {
+        return;
+    };
+    let dependency_segments = helm_schema_core::split_value_path(dependency_global);
+    let projected_paths = range_modes
+        .iter()
+        .filter_map(|(path, mode)| {
+            let segments = helm_schema_core::split_value_path(path);
+            let relative = segments.strip_prefix(dependency_segments.as_slice())?;
+            (!relative.is_empty()).then(|| (path.to_string(), relative.to_vec(), mode))
+        })
+        .collect::<Vec<_>>();
+
+    for (path, relative, mode) in projected_paths {
+        range_modes.remove(&path);
+        if global_selection_path(&relative).is_none() {
+            continue;
+        }
+        for global_source in global_sources {
+            range_modes.merge_mode(
+                helm_schema_core::join_value_path(
+                    helm_schema_core::split_value_path(global_source)
+                        .into_iter()
+                        .chain(relative.iter().cloned()),
+                ),
+                mode,
+            );
+        }
     }
 }

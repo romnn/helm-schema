@@ -259,10 +259,11 @@ impl Interpreter<'_> {
             input_identity.as_ref(),
             destructured,
         );
+        self.record_selection_range_captures(range_subject.value.as_ref(), destructured);
         let mut own = Vec::new();
         for path in &source_paths {
             let guard = Guard::Range { path: path.clone() };
-            self.push_read(path, std::slice::from_ref(&guard));
+            self.push_control_read(path, std::slice::from_ref(&guard));
             own.push(Predicate::from(guard.clone()));
             self.push_predicate(Predicate::from(guard));
         }
@@ -377,6 +378,47 @@ impl Interpreter<'_> {
             {
                 self.fail_conditions.push(capture);
             }
+        }
+    }
+
+    /// Records the exact iterable obligation for each selected raw path in
+    /// a first-truthy chain.
+    ///
+    /// The prior candidates' falsiness determines which path is selected;
+    /// the selected path's own truthiness keeps a final falsy fallback open,
+    /// because Helm accepts that state without iterating it.
+    pub(super) fn record_selection_range_captures(
+        &mut self,
+        iterable_value: Option<&crate::abstract_value::AbstractValue>,
+        destructured: bool,
+    ) {
+        let Some(chain) = iterable_value
+            .and_then(crate::abstract_value::AbstractValue::selection_chain_identity_paths)
+        else {
+            return;
+        };
+        let mut prior_falsy = Vec::new();
+        for path in &chain {
+            let mut tail = prior_falsy.clone();
+            tail.push(Predicate::truthy_path(path.clone()));
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: self.fail_capture_conjunction(tail),
+                ranged: self.capture_ranged_modes(),
+                kind: crate::eval_effect::CaptureKind::RangeSelection {
+                    path: path.clone(),
+                    chain: chain.clone(),
+                    allow_integer: !destructured,
+                },
+            };
+            if !capture
+                .conjunction
+                .iter()
+                .any(|predicate| matches!(predicate, Predicate::False))
+                && !self.fail_conditions.contains(&capture)
+            {
+                self.fail_conditions.push(capture);
+            }
+            prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
         }
     }
 
@@ -547,7 +589,7 @@ impl Interpreter<'_> {
         let guards = predicate.contract_guards();
         for guard in &guards {
             for path in guard.value_paths() {
-                self.push_read(path, std::slice::from_ref(guard));
+                self.push_control_read(path, std::slice::from_ref(guard));
             }
             self.push_predicate(Predicate::from(guard.clone()));
         }
@@ -627,6 +669,7 @@ impl Interpreter<'_> {
                     stringified_paths: &hole.effects.stringified_paths,
                     nil_omitting_paths: &hole.effects.nil_omitting_paths,
                     string_contract_paths: row_string_contract_paths,
+                    plain_slot_string_format_paths: &hole.effects.plain_slot_string_format_paths,
                     json_serialized_paths: &hole.effects.json_serialized_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,
                     local_source_paths: &hole.effects.local_source_paths,

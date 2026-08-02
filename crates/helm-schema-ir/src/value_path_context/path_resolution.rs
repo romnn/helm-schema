@@ -7,7 +7,7 @@ use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::Effects;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{direct_values_path, eval_expr, eval_exprs_effects};
-use crate::fragment_expr_eval::fragment_context_value;
+use crate::fragment_expr_eval::{document_result_from_expr, fragment_context_value};
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::TruthCondition;
 
@@ -89,6 +89,7 @@ impl ValuePathContext<'_> {
             expr,
             self.root_bindings,
             &self.template_bindings,
+            self.template_output_meta,
             self.fragment_context,
             self.current_dot_fragment.as_ref(),
         )
@@ -103,7 +104,16 @@ impl ValuePathContext<'_> {
     }
 
     pub(crate) fn range_subject_expr(&self, expr: &TemplateExpr) -> RangeSubject {
-        let evaluated = eval_expr(expr, &self.expression_eval_env());
+        let env = self.expression_eval_env();
+        let mut seen = std::collections::HashSet::new();
+        let evaluated = document_result_from_expr(
+            expr,
+            &env,
+            Some(self.root_bindings),
+            self.current_dot_fragment.as_ref(),
+            self.fragment_context,
+            &mut seen,
+        );
         let mut influence_paths = evaluated.effects.output_value_paths();
         let value = self
             .with_body_fragment_value_expr(expr)
@@ -179,9 +189,13 @@ fn range_member_value(value: &AbstractValue, effects: &Effects) -> Option<Abstra
                 || meta.merge_layers.is_some()
                 || output_meta_preserves_range_shape(meta) =>
         {
+            let mut meta = meta.clone();
+            // Defaulting the collection supplies an empty iterable, not
+            // defaults for fields of members that are actually present.
+            meta.defaulted = false;
             Some(AbstractValue::OutputPath(
                 helm_schema_core::append_value_path(path, "*"),
-                meta.clone(),
+                meta,
             ))
         }
         AbstractValue::KeysList(path) => Some(AbstractValue::RangeKey(path.clone())),
@@ -233,10 +247,14 @@ fn range_layer_member_value(value: &AbstractValue, effects: &Effects) -> Option<
         AbstractValue::JsonDecodedPath(path) => Some(AbstractValue::JsonDecodedPath(
             helm_schema_core::append_value_path(path, "*"),
         )),
-        AbstractValue::OutputPath(path, meta) => Some(AbstractValue::OutputPath(
-            helm_schema_core::append_value_path(path, "*"),
-            meta.clone(),
-        )),
+        AbstractValue::OutputPath(path, meta) => {
+            let mut meta = meta.clone();
+            meta.defaulted = false;
+            Some(AbstractValue::OutputPath(
+                helm_schema_core::append_value_path(path, "*"),
+                meta,
+            ))
+        }
         AbstractValue::Choice(choices) => AbstractValue::choice(
             choices
                 .iter()
@@ -365,7 +383,6 @@ fn output_meta_preserves_range_shape(meta: &HelperOutputMeta) -> bool {
         && !meta.json_serialized
         && !meta.nil_scrubbed
         && meta.merge_layers.is_none()
-        && meta.omitted_keys.is_empty()
         && meta.lexical_escapes.is_empty()
         && meta.empty_fold_spellings.is_none()
         && meta.empty_rescue.is_none()

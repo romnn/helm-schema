@@ -121,3 +121,48 @@ fn merge_recognition_requires_accumulator_discipline() {
     let db = super::IrAnalysisDb::new(&defines);
     assert!(db.custom_merge_helper("workersMergeValues").is_none());
 }
+
+const PARSED_MAP_MERGE_DEFINES: &str = indoc! {r#"
+    {{- define "render" -}}
+    {{- $value := typeIs "string" .value | ternary .value (.value | toYaml) }}
+    {{- if contains "{{" (toJson .value) }}
+      {{- if .scope }}
+        {{- tpl (cat "{{- with $.RelativeScope -}}" $value "{{- end }}") (merge (dict "RelativeScope" .scope) .context) }}
+      {{- else }}
+        {{- tpl $value .context }}
+      {{- end }}
+    {{- else }}
+      {{- $value }}
+    {{- end }}
+    {{- end -}}
+
+    {{- define "merge" -}}
+    {{- $dst := dict -}}
+    {{- range .values -}}
+    {{- $dst = include "render" (dict "value" . "context" $.context "scope" $.scope) | fromYaml | merge $dst -}}
+    {{- end -}}
+    {{ $dst | toYaml }}
+    {{- end -}}
+"#};
+
+#[test]
+fn recognizes_parsed_map_list_merge_helper() {
+    let mut defines = helm_schema_ast::DefineIndex::new();
+    defines.add_file_source("templates/_helpers.tpl", PARSED_MAP_MERGE_DEFINES);
+    let db = super::IrAnalysisDb::new(&defines);
+
+    assert!(matches!(
+        db.custom_merge_helper("merge"),
+        Some(super::CustomMergeHelper::ParsedMapList)
+    ));
+}
+
+#[test]
+fn parsed_map_merge_recognition_requires_map_only_decode() {
+    let source = PARSED_MAP_MERGE_DEFINES.replace("fromYaml", "fromYamlArray");
+    let mut defines = helm_schema_ast::DefineIndex::new();
+    defines.add_file_source("templates/_helpers.tpl", &source);
+    let db = super::IrAnalysisDb::new(&defines);
+
+    assert!(db.custom_merge_helper("merge").is_none());
+}

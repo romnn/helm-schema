@@ -69,6 +69,18 @@ impl RangeModes {
         self.modes.iter().map(|(path, mode)| (path.as_str(), *mode))
     }
 
+    pub(crate) fn remove(&mut self, path: &str) -> Option<RangeMode> {
+        self.modes.remove(path)
+    }
+
+    pub(crate) fn merge_mode(&mut self, path: String, mode: RangeMode) {
+        let merged = self.modes.entry(path).or_default();
+        merged.input_identity |= mode.input_identity;
+        merged.member_identity |= mode.member_identity;
+        merged.json_decoded |= mode.json_decoded;
+        merged.destructured |= mode.destructured;
+    }
+
     /// Rewrite every path, unioning modes that collapse onto one target.
     pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
     where

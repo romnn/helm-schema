@@ -10,6 +10,27 @@ pub(super) fn value_strings(value: Option<&AbstractValue>) -> BTreeSet<String> {
     value.map(AbstractValue::strings).unwrap_or_default()
 }
 
+pub(super) fn complete_string_set(value: Option<&AbstractValue>) -> Option<BTreeSet<String>> {
+    match value? {
+        AbstractValue::StringSet(strings) => Some(strings.clone()),
+        AbstractValue::Choice(choices) => {
+            let mut strings = BTreeSet::new();
+            for choice in choices {
+                strings.extend(complete_string_set(Some(choice))?);
+            }
+            Some(strings)
+        }
+        AbstractValue::FirstTruthy(choices) => {
+            let mut strings = BTreeSet::new();
+            for choice in choices {
+                strings.extend(complete_string_set(Some(choice))?);
+            }
+            Some(strings)
+        }
+        _ => None,
+    }
+}
+
 /// Paths whose value this abstract value may literally be. Widened influence
 /// is dataflow through an unknown call, not value identity: defaulting or
 /// type-hinting the call result (e.g. `required "..." .Values.x | quote`)

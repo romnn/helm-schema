@@ -9,7 +9,9 @@ use helm_schema_core::{Guard, Predicate};
 
 mod branch_join;
 
-use branch_join::{joined_branch_outcomes, joined_scalar_dispatch_arms};
+use branch_join::{
+    joined_branch_outcomes, joined_scalar_dispatch_arms, joined_truthy_reduction_arms,
+};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SymbolicLocalState {
@@ -112,7 +114,24 @@ impl SymbolicLocalState {
         arms: &[(TruthCondition, Self)],
         has_unconditional_else: bool,
     ) {
-        self.scalar_dispatches = joined_scalar_dispatch_arms(entry, arms, has_unconditional_else);
+        if let Some(joined) = joined_scalar_dispatch_arms(entry, arms, has_unconditional_else) {
+            self.scalar_dispatches = joined;
+        }
+    }
+
+    /// Rebuild local truthiness from the mutually exclusive arms of one
+    /// exact `if` chain. Every arm, including the implicit fallthrough,
+    /// contributes its selection condition so an untouched entry reduction
+    /// cannot erase a kill-switch reassignment at the union.
+    pub(crate) fn join_truthy_reduction_arms(
+        &mut self,
+        entry: &Self,
+        arms: &[(TruthCondition, Self)],
+        has_unconditional_else: bool,
+    ) {
+        if let Some(joined) = joined_truthy_reduction_arms(entry, arms, has_unconditional_else) {
+            self.truthy_reductions.extend(joined);
+        }
     }
 
     /// Conjoin `condition` onto every truthiness reduction this branch

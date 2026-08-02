@@ -106,13 +106,14 @@ fn record_member_access_captures(
 fn record_grouped_member_access_captures(
     receiver_path: &str,
     selected_path: &[String],
+    missing_receiver_aborts: bool,
     env: &EvalEnv,
     effects: &mut Effects,
 ) {
     let mut segments = helm_schema_core::split_value_path(receiver_path);
     let receiver_len = segments.len();
     segments.extend(selected_path.iter().cloned());
-    let receiver_guard = (!receiver_path.is_empty()).then(|| {
+    let receiver_guard = (!receiver_path.is_empty() && !missing_receiver_aborts).then(|| {
         Predicate::from(crate::Guard::Absent {
             path: receiver_path.to_string(),
         })
@@ -265,6 +266,9 @@ pub(crate) fn eval_expr_with_helper_calls(
             }
         }
         TemplateExpr::Selector { operand, path } => {
+            if let Some(result) = static_semver_numeric_selector(operand, path, env, resolver) {
+                return result;
+            }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && let Some(value) = env
                     .locals
@@ -290,6 +294,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                         record_grouped_member_access_captures(
                             &base,
                             path,
+                            false,
                             env,
                             &mut result.effects,
                         );
@@ -340,13 +345,26 @@ pub(crate) fn eval_expr_with_helper_calls(
                         .and_then(AbstractValue::direct_values_identity)
                 })
                 .flatten();
+            // Sprig `get` returns `""` for a missing key, so selecting a
+            // field from its result aborts instead of taking the grouped
+            // receiver's ordinary nil-safe path.
+            let missing_grouped_receiver_aborts = matches!(
+                operand.deparen(),
+                TemplateExpr::Call { function, .. } if function == "get"
+            );
             let value = base
                 .value
                 .as_ref()
                 .and_then(|value| value.apply_to_path(path));
             let mut effects = base.effects;
             if let Some(receiver_path) = grouped_receiver {
-                record_grouped_member_access_captures(&receiver_path, path, env, &mut effects);
+                record_grouped_member_access_captures(
+                    &receiver_path,
+                    path,
+                    missing_grouped_receiver_aborts,
+                    env,
+                    &mut effects,
+                );
             }
             effects.output_paths.clear();
             effects
@@ -374,6 +392,45 @@ pub(crate) fn eval_expr_with_helper_calls(
         }
         TemplateExpr::Variable(_) | TemplateExpr::Unknown(_) => EvalResult::none(),
     }
+}
+
+fn static_semver_numeric_selector(
+    operand: &TemplateExpr,
+    path: &[String],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> Option<EvalResult> {
+    let [field] = path else {
+        return None;
+    };
+    let TemplateExpr::Call { function, args } = operand.deparen() else {
+        return None;
+    };
+    let [version] = args.as_slice() else {
+        return None;
+    };
+    if function != "semver" {
+        return None;
+    }
+    let version = eval_expr_with_helper_calls(version, env, resolver);
+    let helm_schema_core::GuardValue::String(text) =
+        version.scalar_dispatch.as_ref()?.constant_value()?
+    else {
+        return None;
+    };
+    let parsed = semver::Version::parse(text.strip_prefix(['v', 'V']).unwrap_or(&text)).ok()?;
+    let component = match field.as_str() {
+        "Major" => parsed.major,
+        "Minor" => parsed.minor,
+        "Patch" => parsed.patch,
+        _ => return None,
+    };
+    let component = i64::try_from(component).ok()?;
+    Some(
+        EvalResult::with_effects(None, version.effects).with_scalar_dispatch(
+            ScalarValueDispatch::constant(helm_schema_core::GuardValue::Int(component)),
+        ),
+    )
 }
 
 /// Evaluate `.Values`-rooted selector segments (the part after `Values`),
@@ -440,6 +497,20 @@ pub(crate) fn bindings_for_helper_arg_with(
         };
     };
 
+    // A helper receives the argument value, not the caller's side-channel
+    // effects. Stamp binding-carried metadata onto that value before the
+    // helper context is split into named fields.
+    let mut eval_binding = |expr: &TemplateExpr| {
+        let mut result = eval_binding(expr);
+        let mut output_meta = result.effects.local_output_meta.clone();
+        for path in result.effects.default_paths_with_local() {
+            output_meta.entry(path).or_default().defaulted = true;
+        }
+        result.value = result
+            .value
+            .map(|value| value.with_output_meta(&output_meta));
+        result
+    };
     let (bindings, scalar_dispatches) = match arg.deparen() {
         TemplateExpr::Field(path) if path.is_empty() => {
             (outer.cloned().unwrap_or_default(), BTreeMap::new())

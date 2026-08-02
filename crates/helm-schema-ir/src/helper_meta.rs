@@ -50,6 +50,11 @@ pub enum LexicalEscape {
 #[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct HelperOutputMeta {
     pub(crate) predicates: BTreeSet<BTreeSet<Predicate>>,
+    /// The projected value remains the path's runtime value. This keeps
+    /// structural member selection exact when guard metadata turns a raw
+    /// [`crate::abstract_value::AbstractValue::ValuesPath`] into an output
+    /// identity.
+    pub(crate) input_identity: bool,
     pub(crate) defaulted: bool,
     /// The binding's value is a total stringification (`quote`, `toString`,
     /// `join`) of this path, so splices rendering it expose no input shape.
@@ -87,6 +92,10 @@ pub(crate) struct HelperOutputMeta {
     /// path while producing the binding's value: splices rendering it carry
     /// the contract under their own render conditions.
     pub(crate) string_contract: bool,
+    /// The path supplies the token-opening `%s` of a complete literal
+    /// `printf` result. A caller rendering that result in a plain slot must
+    /// retain the formatter's selected-string preimage.
+    pub(crate) plain_slot_string_format: bool,
     /// The path's value was serialized as JSON at this render boundary.
     pub(crate) json_serialized: bool,
     /// The path's runtime identity came from JSON decoding.
@@ -97,6 +106,9 @@ pub(crate) struct HelperOutputMeta {
     /// and the identity's truthiness over-approximates the scrubbed
     /// output's (an all-nil map scrubs to empty).
     pub(crate) nil_scrubbed: bool,
+    /// The path contributes only its mapping shape after Helm's map-only
+    /// `fromYaml` decode. Non-mapping source shapes produce no merge layer.
+    pub(crate) parsed_map: bool,
     /// The value is one layer of an ordered merge whose every layer has a
     /// path identity: rendering the binding renders the MERGE, so the
     /// path's sink typing must scope to the states its layer actually
@@ -148,8 +160,59 @@ pub(crate) struct HelperOutputMeta {
 }
 
 impl HelperOutputMeta {
+    pub(crate) fn is_input_identity(&self) -> bool {
+        self.input_identity && !self.defaulted && self.is_structurally_untransformed()
+    }
+
+    pub(crate) fn is_input_member_identity(&self) -> bool {
+        self.input_identity
+            && !self.shape_erased
+            && !self.nil_omitted
+            && !self.stringified
+            && !self.yaml_serialized
+            && !self.templated_yaml
+            && !self.derived_text
+            && !self.partial_text
+            && !self.string_contract
+            && !self.plain_slot_string_format
+            && !self.json_serialized
+            && !self.json_decoded
+            && !self.nil_scrubbed
+            && !self.parsed_map
+            && self.merge_layers.is_none()
+            && self.lexical_escapes.is_empty()
+            && self.empty_fold_spellings.is_none()
+            && self.empty_rescue.is_none()
+    }
+
+    pub(crate) fn is_identity_preserving_default(&self) -> bool {
+        self.defaulted && self.is_structurally_untransformed()
+    }
+
+    fn is_structurally_untransformed(&self) -> bool {
+        !self.shape_erased
+            && !self.nil_omitted
+            && !self.stringified
+            && !self.yaml_serialized
+            && !self.templated_yaml
+            && !self.derived_text
+            && !self.partial_text
+            && !self.string_contract
+            && !self.plain_slot_string_format
+            && !self.json_serialized
+            && !self.json_decoded
+            && !self.nil_scrubbed
+            && !self.parsed_map
+            && self.merge_layers.is_none()
+            && self.omitted_keys.is_empty()
+            && self.lexical_escapes.is_empty()
+            && self.empty_fold_spellings.is_none()
+            && self.empty_rescue.is_none()
+    }
+
     pub(crate) fn merge(&mut self, other: &Self) {
         self.predicates.extend(other.predicates.iter().cloned());
+        self.input_identity |= other.input_identity;
         self.defaulted |= other.defaulted;
         self.shape_erased |= other.shape_erased;
         self.nil_omitted |= other.nil_omitted;
@@ -159,11 +222,13 @@ impl HelperOutputMeta {
         self.derived_text |= other.derived_text;
         self.partial_text |= other.partial_text;
         self.string_contract |= other.string_contract;
+        self.plain_slot_string_format |= other.plain_slot_string_format;
         self.json_serialized |= other.json_serialized;
         self.json_decoded |= other.json_decoded;
         // Any scrubbed derivation relaxes: the relaxation only widens
         // member typing, so it is safe when other derivations kept nulls.
         self.nil_scrubbed |= other.nil_scrubbed;
+        self.parsed_map |= other.parsed_map;
         // Layer facts must stay EXACT: disagreeing merge positions (or a
         // non-layered sibling derivation) drop to the ordinary row, whose
         // typing is the stricter direction.

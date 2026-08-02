@@ -167,6 +167,9 @@ fn fmt_guard(guard: &Guard) -> String {
             let suffix = if *templated { " templated" } else { "" };
             format!("matches({path} ~ {pattern}{suffix})")
         }
+        Guard::NotMatchesPattern { path, pattern } => {
+            format!("notMatches({path} ~ {pattern})")
+        }
         Guard::RangeKeyPrefix { path, prefix } => {
             format!("rangeKeyPrefix({path}: {prefix})")
         }
@@ -176,6 +179,7 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::AtMostOneMember { path } => format!("atMostOneMember({path})"),
         Guard::MinMembers { path, bound } => format!("minMembers({path} >= {bound})"),
         Guard::HasKey { path, key } => format!("hasKey({path}: {key})"),
+        Guard::NotHasKey { path, key } => format!("notHasKey({path}: {key})"),
         Guard::ContainsEquals { path, value } => format!("containsEquals({path} ∋ {value})"),
         Guard::ContainsMemberEquals {
             path,

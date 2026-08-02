@@ -50,6 +50,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) suppress_predicate_paths: BTreeSet<String>,
     /// The body's abstract fragment (sites carry helper-body facts).
     pub(crate) root: Guarded<AbstractFragment>,
+    /// Minimum indentation of rendered helper content before a caller applies
+    /// `indent`/`nindent`.
+    pub(crate) root_render_indent: Option<usize>,
     /// Pathless reads observed in the body (helper-internal guards only).
     pub(crate) reads: Vec<ValueRead>,
     /// Declared input-type hints observed unconditionally in the body.
@@ -100,6 +103,8 @@ pub(crate) struct FragmentSummary {
     pub(crate) pre_rewrite_strict_paths: BTreeSet<String>,
     /// The value projection (see module docs), computed once.
     pub(crate) value: Option<AbstractValue>,
+    /// Truthiness of a typed value serialized as this helper's JSON output.
+    pub(crate) json_payload_truth: TruthCondition,
     /// Known scalar output alternatives evaluated under this summary's
     /// bound call context.
     pub(crate) scalar_dispatch: Option<ScalarValueDispatch>,
@@ -112,6 +117,10 @@ pub(crate) struct FragmentSummary {
 
 /// Evaluate one bound helper body as a fragment. `seen` is the active call
 /// chain (this helper included), threaded so nested calls cut cycles.
+#[expect(
+    clippy::too_many_lines,
+    reason = "the helper summary must move one interpreter's correlated outputs into a single immutable phase result"
+)]
 pub(crate) fn eval_bound_helper_fragment(
     name: &str,
     resolution: &BoundHelperCallResolution,
@@ -147,6 +156,10 @@ pub(crate) fn eval_bound_helper_fragment(
     };
     let mut interpreter = make_interpreter();
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
+    let root_render_indent = roots
+        .iter()
+        .filter_map(|root| interpreter.helper_root_content_indent(root.node))
+        .min();
     let contributions = interpreter.eval_node_list(&roots);
     let root = contributions.assemble();
     let structural_scalar_dispatch = scalar_dispatch_from_fragment(&root);
@@ -171,6 +184,10 @@ pub(crate) fn eval_bound_helper_fragment(
     .flatten();
     let scalar_dispatch =
         merge_scalar_dispatch_candidates(structural_scalar_dispatch, projected_scalar_dispatch);
+    let json_payload_truth = match interpreter.json_payload_truth_outputs.as_slice() {
+        [(Predicate::True, truth)] => truth.clone(),
+        _ => TruthCondition::Unknown,
+    };
     // Guard reads that are strict ancestors of an index-narrowed path are
     // traversal steps, not conditions on the ancestor (the narrowing severed
     // them); dependency rows and the narrowed paths themselves stay.
@@ -190,9 +207,11 @@ pub(crate) fn eval_bound_helper_fragment(
     prune_sibling_conditions(&mut reads, &rendered);
     let mut summary = FragmentSummary {
         value: projected_value(&root),
+        json_payload_truth,
         scalar_dispatch,
         rendered,
         root,
+        root_render_indent,
         reads,
         suppress_predicate_paths: suppress,
         type_hints: interpreter.type_hints,
@@ -376,6 +395,7 @@ fn scalar_render_contribution(parts: &[StringPart]) -> Option<Vec<ScalarRenderPa
                 if splice.meta.encoded
                     || splice.meta.yaml_serialized
                     || splice.meta.json_serialized
+                    || splice.meta.plain_slot_string_format
                     || splice.meta.digest
                     || splice.meta.range_key
                     || splice.meta.split_segment.is_some()
@@ -435,12 +455,39 @@ impl FragmentSummary {
 pub(crate) fn splice_summary(
     summary: &FragmentSummary,
     call_site: Option<&Rc<SiteFacts>>,
+    stringify_scalar_output: bool,
 ) -> Guarded<AbstractFragment> {
     let mut root = summary.root.clone();
     for (_, node) in &mut root.arms {
         rebase_node_sites(node, call_site);
+        if stringify_scalar_output {
+            mark_root_scalar_output_stringified(node);
+        }
     }
     root
+}
+
+/// A helper spliced into one YAML value returns text even when its body
+/// selected a raw values path. Structured helper roots retain their shape.
+fn mark_root_scalar_output_stringified(node: &mut AbstractFragment) {
+    match node {
+        AbstractFragment::Scalar(scalar) => {
+            for part in &mut scalar.parts {
+                if let StringPart::Splice(splice) = part {
+                    splice.meta.stringified = true;
+                }
+            }
+        }
+        AbstractFragment::Splice(splice)
+            if matches!(splice.kind, ValueKind::Scalar | ValueKind::PartialScalar) =>
+        {
+            splice.meta.stringified = true;
+        }
+        AbstractFragment::Mapping(_)
+        | AbstractFragment::Sequence(_)
+        | AbstractFragment::Splice(_)
+        | AbstractFragment::Opaque(_) => {}
+    }
 }
 
 fn rebase_site(
@@ -533,14 +580,22 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
         .collect();
     merge_provenance_sites(&mut provenance, &splice.meta.provenance);
     let mut meta = HelperOutputMeta {
+        input_identity: splice.meta.input_identity,
         defaulted: splice.meta.defaulted,
         shape_erased: splice.meta.shape_erased,
+        // A helper returns rendered text even when its body selected a raw
+        // values path. Explicit metadata still carries conversions that
+        // happened before the helper boundary.
+        stringified: splice.meta.stringified
+            || matches!(splice.kind, ValueKind::Scalar | ValueKind::PartialScalar),
         nil_omitted: splice.meta.nil_omitted,
         templated_yaml: splice.meta.templated_yaml,
         string_contract: splice.meta.string_contract,
+        plain_slot_string_format: splice.meta.plain_slot_string_format,
         json_serialized: splice.meta.json_serialized,
         json_decoded: splice.meta.json_decoded,
         lexical_escapes: splice.meta.lexical_escapes.clone(),
+        omitted_keys: splice.meta.omitted_members.clone(),
         // Crossing the helper-summary boundary makes the layer facts
         // binding-carried: the caller renders the helper's OUTPUT, whose
         // sibling dispatch arms may rely on the base typing the direct

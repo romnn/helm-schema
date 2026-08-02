@@ -20,10 +20,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "architecture"
     },
     {
@@ -36,12 +33,6 @@
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "commonAnnotations",
-            "pattern": "\\{\\{",
-            "templated": false,
-            "type": "matches_pattern"
           }
         ]
       ],
@@ -60,27 +51,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
       "source_expr": "commonAnnotations"
     },
     {
@@ -137,7 +107,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "commonAnnotations"
+      "source_expr": "commonAnnotations",
+      "stringified": true
     },
     {
       "condition": [
@@ -306,6 +277,7 @@
         "kind": "NetworkPolicy"
       },
       "source_expr": "commonLabels",
+      "stringified": true,
       "template_supplied_member_keys": [
         "app.kubernetes.io/name"
       ]
@@ -383,7 +355,144 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels.app\\.kubernetes\\.io/instance",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "YamlSerialized",
+      "path": [
+        "spec",
+        "ingress[*]",
+        "from[*]",
+        "podSelector",
+        "matchLabels",
+        "app.kubernetes.io/instance"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.labels.matchLabels"
+          ],
+          "span": {
+            "end": 2042,
+            "start": 1743
+          },
+          "template_path": "charts/common/templates/_labels.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 729,
+            "start": 615
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 774,
+            "start": 748
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "commonLabels.app\\.kubernetes\\.io/instance",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "YamlSerialized",
+      "path": [
+        "spec",
+        "podSelector",
+        "matchLabels",
+        "app.kubernetes.io/instance"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.labels.matchLabels"
+          ],
+          "span": {
+            "end": 2042,
+            "start": 1743
+          },
+          "template_path": "charts/common/templates/_labels.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 729,
+            "start": 615
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 774,
+            "start": 748
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "commonLabels.app\\.kubernetes\\.io/instance",
+      "stringified": true
     },
     {
       "condition": [
@@ -458,77 +567,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "commonLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternal",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "ingress[*]",
-        "from[*]",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/instance"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels.app\\.kubernetes\\.io/name",
+      "stringified": true
     },
     {
       "condition": [
@@ -598,71 +638,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "commonLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "YamlSerialized",
-      "path": [
-        "spec",
-        "podSelector",
-        "matchLabels",
-        "app.kubernetes.io/instance"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.labels.matchLabels"
-          ],
-          "span": {
-            "end": 2042,
-            "start": 1743
-          },
-          "template_path": "charts/common/templates/_labels.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 729,
-            "start": 615
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 774,
-            "start": 748
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        },
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 817,
-            "start": 804
-          },
-          "template_path": "charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels.app\\.kubernetes\\.io/name",
+      "stringified": true
     },
     {
       "condition": [
@@ -726,7 +703,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels.app\\.kubernetes\\.io/name",
+      "stringified": true
     },
     {
       "condition": [
@@ -814,7 +792,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -910,10 +889,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "metrics.enabled"
     },
     {
@@ -1124,7 +1100,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1168,7 +1145,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1196,7 +1174,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "spec",
         "egress[*]",
@@ -1231,7 +1209,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1254,7 +1233,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "spec",
         "ingress[*]",
@@ -1289,7 +1268,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1308,7 +1288,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "spec",
         "podSelector",
@@ -1341,7 +1321,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1382,7 +1363,8 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "namespaceOverride"
+      "source_expr": "namespaceOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -1399,10 +1381,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.allowExternal"
     },
     {
@@ -1420,10 +1399,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.allowExternalEgress"
     },
     {
@@ -1437,10 +1413,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.enabled"
     },
     {
@@ -1457,12 +1430,6 @@
           {
             "path": "networkPolicy.allowExternalEgress",
             "type": "not"
-          },
-          {
-            "path": "networkPolicy.extraEgress",
-            "pattern": "\\{\\{",
-            "templated": false,
-            "type": "matches_pattern"
           }
         ]
       ],
@@ -1481,31 +1448,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "networkPolicy.extraEgress"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraEgress",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.allowExternalEgress",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
       "source_expr": "networkPolicy.extraEgress"
     },
     {
@@ -1578,12 +1520,6 @@
           {
             "path": "networkPolicy.extraIngress",
             "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraIngress",
-            "pattern": "\\{\\{",
-            "templated": false,
-            "type": "matches_pattern"
           }
         ]
       ],
@@ -1602,27 +1538,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "networkPolicy.extraIngress"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "networkPolicy.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "networkPolicy.extraIngress",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
       "source_expr": "networkPolicy.extraIngress"
     },
     {
@@ -1717,10 +1632,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.ingressNSMatchLabels"
     },
     {
@@ -1831,10 +1743,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.ingressNSPodMatchLabels"
     },
     {
@@ -1928,10 +1837,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.metrics.allowExternal"
     },
     {
@@ -1978,10 +1884,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.metrics.ingressNSMatchLabels"
     },
     {
@@ -2108,10 +2011,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
     },
     {
@@ -2270,10 +2170,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "networking.k8s.io/v1",
-        "kind": "NetworkPolicy"
-      },
+      "resource": null,
       "source_expr": "sentinel.enabled"
     }
   ],

@@ -5,6 +5,7 @@ use crate::expr_eval::{
     apply_local_set_mutations_expr, bindings_for_helper_arg_with, direct_values_path, eval_expr,
     eval_exprs_effects,
 };
+use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::ScalarValueDispatch;
 use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
@@ -45,6 +46,45 @@ fn env_from_root_fields(root_fields: HashMap<String, AbstractValue>) -> EvalEnv 
         allow_field_root_lookup: true,
         ..EvalEnv::default()
     }
+}
+
+#[test]
+fn static_semver_fields_fold_through_decimal_printf() {
+    let env = env_from_root_fields(HashMap::from([(
+        "Capabilities".to_string(),
+        dict(&[(
+            "KubeVersion",
+            dict(&[(
+                "Version",
+                AbstractValue::StringSet(BTreeSet::from(["v1.35.0".to_string()])),
+            )]),
+        )]),
+    )]));
+
+    sim_assert_eq!(
+        have: eval_expr(
+            &expr(
+                r#"printf "%d.%d.0" (semver .Capabilities.KubeVersion.Version).Major (semver .Capabilities.KubeVersion.Version).Minor"#,
+            ),
+            &env,
+        )
+        .value,
+        want: Some(AbstractValue::StringSet(BTreeSet::from([
+            "1.35.0".to_string(),
+        ]))),
+    );
+    sim_assert_eq!(
+        have: eval_expr(
+            &expr(
+                r#"semverCompare "<1.30.0" (printf "%d.%d.0" (semver .Capabilities.KubeVersion.Version).Major (semver .Capabilities.KubeVersion.Version).Minor)"#,
+            ),
+            &env,
+        )
+        .truth
+        .predicate()
+        .cloned(),
+        want: Some(Predicate::False),
+    );
 }
 
 #[test]
@@ -97,6 +137,41 @@ fn helper_argument_projection_uses_shared_expression_eval() {
                 AbstractValue::ValuesPath("serviceAccount".to_string()),
             ),
         ]),
+    );
+}
+
+/// A map-valued `default` on a rerooted helper argument preserves the raw
+/// primary's member identities. The fallback supplies the container, not
+/// defaults for children selected inside the helper.
+#[test]
+fn defaulted_helper_root_descends_to_raw_member_paths() {
+    let env = EvalEnv::from_helper_context(None, None);
+    let bindings = bindings_for_helper_arg_with(
+        Some(&expr(
+            r#"dict "Values" (.Values.dependency | default dict)"#,
+        )),
+        None,
+        |expr| {
+            let mut result = eval_expr(expr, &env);
+            result.value = result.value.map(|value| value.to_context_value());
+            result
+        },
+    )
+    .bindings;
+    let selected = bindings
+        .get("Values")
+        .and_then(|value| value.apply_to_path(&["nameOverride".to_string()]));
+    let mut expected_meta = HelperOutputMeta {
+        input_identity: true,
+        ..HelperOutputMeta::default()
+    };
+    expected_meta.conjoin_branches(&BTreeSet::from([Predicate::truthy_path("dependency")]));
+    sim_assert_eq!(
+        have: selected,
+        want: Some(AbstractValue::OutputPath(
+            "dependency.nameOverride".to_string(),
+            expected_meta,
+        )),
     );
 }
 
@@ -531,6 +606,16 @@ fn pipeline_ternary_returns_value_branches_not_condition() {
         have: result.value,
         want: Some(AbstractValue::ValuesPath("config".to_string()))
     );
+    sim_assert_eq!(
+        have: result.effects.type_hints.get("config"),
+        want: None,
+        "a type test selects an output arm; it does not restrict the input domain"
+    );
+    sim_assert_eq!(
+        have: result.effects.guarded_type_hints.get("config"),
+        want: Some(&BTreeSet::from(["string".to_string()])),
+        "the tested arm remains an accepted output alternative"
+    );
 }
 
 #[test]
@@ -558,6 +643,93 @@ fn type_test_uses_the_structural_value_instead_of_its_influences() {
         have: result.truth.predicate(),
         want: Some(&Predicate::True),
         "the dict is a map regardless of the runtime kinds of its member values"
+    );
+}
+
+#[test]
+fn values_numeric_type_spellings_remain_provenance_dependent() {
+    let int64 = eval_expr(
+        &expr(r#"typeIs "int64" .Values.value"#),
+        &EvalEnv::default(),
+    );
+    let float64 = eval_expr(
+        &expr(r#"kindIs "float64" .Values.value"#),
+        &EvalEnv::default(),
+    );
+    let integer = Predicate::from(Guard::TypeIs {
+        path: "value".to_string(),
+        schema_type: "integer".to_string(),
+    });
+    let number = Predicate::from(Guard::TypeIs {
+        path: "value".to_string(),
+        schema_type: "number".to_string(),
+    });
+
+    sim_assert_eq!(have: int64.truth.predicate(), want: None);
+    sim_assert_eq!(have: int64.truth.when_true(), want: Predicate::False);
+    sim_assert_eq!(have: int64.truth.when_false(), want: integer.negated());
+    sim_assert_eq!(have: float64.truth.predicate(), want: None);
+    sim_assert_eq!(
+        have: float64.truth.when_true(),
+        want: Predicate::all(vec![
+            number.clone(),
+            Predicate::from(Guard::TypeIs {
+                path: "value".to_string(),
+                schema_type: "integer".to_string(),
+            })
+            .negated(),
+        ])
+        .normalize_boolean()
+    );
+    sim_assert_eq!(have: float64.truth.when_false(), want: number.negated());
+}
+
+#[test]
+fn stringified_pattern_truth_keeps_raw_string_subsets() {
+    let result = eval_expr(
+        &expr(r#"regexMatch "^[0-9]+$" (toString .Values.value)"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+    sim_assert_eq!(
+        have: result.truth.when_true(),
+        want: Predicate::from(Guard::MatchesPattern {
+            path: "value".to_string(),
+            pattern: "^[0-9]+$".to_string(),
+            templated: false,
+        })
+    );
+    sim_assert_eq!(
+        have: result.truth.when_false(),
+        want: Predicate::from(Guard::NotMatchesPattern {
+            path: "value".to_string(),
+            pattern: "^[0-9]+$".to_string(),
+        })
+    );
+}
+
+#[test]
+fn stringified_contains_uses_go_compatible_literal_pattern_syntax() {
+    let result = eval_expr(
+        &expr(r#"contains "foo-bar" (toString .Values.value)"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.truth.when_true(),
+        want: Predicate::from(Guard::MatchesPattern {
+            path: "value".to_string(),
+            pattern: "foo-bar".to_string(),
+            templated: false,
+        })
+    );
+    sim_assert_eq!(
+        have: result.truth.when_false(),
+        want: Predicate::from(Guard::NotMatchesPattern {
+            path: "value".to_string(),
+            pattern: "foo-bar".to_string(),
+        })
     );
 }
 
@@ -879,6 +1051,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
                 crate::eval_effect::CaptureKind::ValueType {
                     path: "primary".to_string(),
                     schema_type: "string".to_string(),
+                    null_aborts: false,
                 },
                 BTreeSet::from([Predicate::truthy_path("primary")]),
             ),
@@ -886,6 +1059,7 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
                 crate::eval_effect::CaptureKind::ValueType {
                     path: "fallback".to_string(),
                     schema_type: "string".to_string(),
+                    null_aborts: false,
                 },
                 BTreeSet::from([
                     Predicate::truthy_path("primary").negated(),
@@ -985,6 +1159,7 @@ fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
             crate::eval_effect::CaptureKind::ValueType {
                 path: "payload".to_string(),
                 schema_type: "string".to_string(),
+                null_aborts: false,
             },
             BTreeSet::from([Predicate::truthy_path("ready").negated()]),
         )]),
@@ -1020,6 +1195,7 @@ fn truth_only_locals_drive_short_circuit_execution() {
                 crate::eval_effect::CaptureKind::ValueType {
                     path: "cfg".to_string(),
                     schema_type: "object".to_string(),
+                    null_aborts: true,
                 },
                 BTreeSet::new(),
             ),
@@ -1415,12 +1591,65 @@ fn ternary_condition_identity_stays_out_of_output_paths() {
             result.effects.helper_fails.iter().any(|capture| matches!(
                 &capture.kind,
                 crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
-                    | crate::eval_effect::CaptureKind::ValueType { path, schema_type }
+                    | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
                     if path == "internalTLS.enabled" && schema_type == "boolean"
             )),
             "the Boolean operand contract must survive: {action}"
         );
     }
+}
+
+#[test]
+fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contracts() {
+    let metadata = HelperOutputMeta {
+        input_identity: true,
+        predicates: BTreeSet::from([BTreeSet::from([Predicate::truthy_path(
+            "diagnosticMode.enabled",
+        )])]),
+        ..HelperOutputMeta::default()
+    };
+    let env = EvalEnv {
+        locals: HashMap::from([(
+            "flag".to_string(),
+            AbstractValue::ValuesPath("diagnosticMode.enabled".to_string()),
+        )]),
+        local_output_meta: HashMap::from([(
+            "flag".to_string(),
+            BTreeMap::from([("diagnosticMode.enabled".to_string(), metadata)]),
+        )]),
+        ..EvalEnv::default()
+    };
+    let result = eval_expr(
+        &single_expr(r#"$flag | ternary "enabled" "disabled""#),
+        &env,
+    );
+
+    sim_assert_eq!(
+        have: result.effects.local_output_meta,
+        want: BTreeMap::new()
+    );
+    assert!(
+        result.effects.helper_fails.iter().any(|capture| matches!(
+            &capture.kind,
+            crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
+                | crate::eval_effect::CaptureKind::ValueType { path, schema_type, .. }
+                if path == "diagnosticMode.enabled" && schema_type == "boolean"
+        )),
+        "the Boolean consumption contract must survive without returned metadata: {result:#?}"
+    );
+
+    let nested_consumer = eval_expr(
+        &single_expr(r#"empty (b64enc .Values.payload) | ternary "empty" "present""#),
+        &EvalEnv::default(),
+    );
+    assert!(
+        nested_consumer.effects.encoded_paths.contains("payload")
+            && nested_consumer
+                .effects
+                .string_contract_paths
+                .contains("payload"),
+        "evaluating the predicate still runs its strict nested consumer: {nested_consumer:#?}"
+    );
 }
 
 /// `merge` keeps the FIRST occurrence of a key across its arguments, so

@@ -1,7 +1,10 @@
 use crate::{
     ContractIr, ContractProvenance, ContractUse, Guard, GuardValue, ResourceRef, SourceSpan,
-    ValueKind, YamlPath,
+    SymbolicIrContext, ValueKind, YamlPath,
 };
+use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_ast::DefineIndex;
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -117,9 +120,13 @@ fn contract_ir_keeps_dependency_use_separate_from_resource_claim() {
 }
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the single scenario compares path rewriting across every correlated contract field"
+)]
 fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
     let mut contract = ContractIr::default();
-    contract.push(ContractUse::new(
+    let mut contract_use = ContractUse::new(
         "serviceAccount.name".to_string(),
         YamlPath(vec!["metadata".to_string(), "name".to_string()]),
         ValueKind::Scalar,
@@ -143,7 +150,26 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
             },
         ],
         None,
-    ));
+    );
+    contract_use.merge_layers = Some(helm_schema_core::MergeLayersUse {
+        layers: vec![
+            "serviceAccount.name".to_string(),
+            "global.serviceAccount.name".to_string(),
+        ],
+        position: 0,
+        transforms: vec![
+            helm_schema_core::MergeLayerTransform::ParsedMap,
+            helm_schema_core::MergeLayerTransform::Identity,
+        ],
+        via_binding: true,
+    });
+    contract_use.omitted_members.insert(
+        "automountServiceAccountToken".to_string(),
+        vec![Guard::Truthy {
+            path: "serviceAccount.keepAutomount".to_string(),
+        }],
+    );
+    contract.push(contract_use);
 
     contract.map_value_paths(|path| {
         if path.starts_with("global.") {
@@ -185,6 +211,181 @@ fn contract_ir_maps_value_paths_without_touching_rendered_yaml_path() {
                     }],
                 ],
             },
+        ]
+    );
+    sim_assert_eq!(
+        have: value_use
+            .merge_layers
+            .as_ref()
+            .map(|merge| merge.layers.as_slice()),
+        want: Some(
+            [
+                "subchart.serviceAccount.name".to_string(),
+                "global.serviceAccount.name".to_string(),
+            ]
+            .as_slice()
+        )
+    );
+    sim_assert_eq!(
+        have: value_use
+            .omitted_members
+            .get("automountServiceAccountToken")
+            .map(Vec::as_slice),
+        want: Some(
+            [Guard::Truthy {
+                path: "subchart.serviceAccount.keepAutomount".to_string(),
+            }]
+            .as_slice()
+        )
+    );
+}
+
+#[test]
+fn dependency_global_projection_keeps_parent_override_and_child_fallback_arms() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse::new(
+        "metrics.global.imageRegistry".to_string(),
+        YamlPath(vec!["data".to_string(), "registry".to_string()]),
+        ValueKind::Scalar,
+        Vec::new(),
+        None,
+    )]);
+
+    contract.project_dependency_global_contracts(&["metrics".to_string()]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(have: finalized.uses().len(), want: 2);
+    sim_assert_eq!(
+        have: finalized
+            .uses()
+            .iter()
+            .map(|contract_use| (
+                contract_use.source_expr.clone(),
+                contract_use.single_guard_conjunction()
+            ))
+            .collect::<Vec<_>>(),
+        want: vec![
+            (
+                "global.imageRegistry".to_string(),
+                vec![
+                    Guard::NotEq {
+                        path: "global.imageRegistry".to_string(),
+                        value: helm_schema_core::GuardValue::Null,
+                    },
+                    Guard::HasKey {
+                        path: "global".to_string(),
+                        key: "imageRegistry".to_string(),
+                    },
+                ]
+            ),
+            (
+                "metrics.global.imageRegistry".to_string(),
+                vec![Guard::AnyOf {
+                    alternatives: vec![
+                        vec![Guard::Eq {
+                            path: "global.imageRegistry".to_string(),
+                            value: helm_schema_core::GuardValue::Null,
+                        }],
+                        vec![Guard::NotHasKey {
+                            path: "global".to_string(),
+                            key: "imageRegistry".to_string(),
+                        }],
+                    ],
+                }]
+            ),
+        ]
+    );
+}
+
+#[test]
+fn nested_dependency_global_projection_partitions_every_ancestor_source() {
+    let mut contract = ContractIr::from_contract_uses(vec![ContractUse::new(
+        "metrics.agent.global.imageRegistry".to_string(),
+        YamlPath(vec!["data".to_string(), "registry".to_string()]),
+        ValueKind::Scalar,
+        Vec::new(),
+        None,
+    )]);
+
+    contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(
+        have: finalized
+            .uses()
+            .iter()
+            .map(|contract_use| (
+                contract_use.source_expr.clone(),
+                contract_use.single_guard_conjunction()
+            ))
+            .collect::<Vec<_>>(),
+        want: vec![
+            (
+                "global.imageRegistry".to_string(),
+                vec![
+                    Guard::NotEq {
+                        path: "global.imageRegistry".to_string(),
+                        value: helm_schema_core::GuardValue::Null,
+                    },
+                    Guard::HasKey {
+                        path: "global".to_string(),
+                        key: "imageRegistry".to_string(),
+                    },
+                ]
+            ),
+            (
+                "metrics.agent.global.imageRegistry".to_string(),
+                vec![
+                    Guard::AnyOf {
+                        alternatives: vec![
+                            vec![Guard::Eq {
+                                path: "global.imageRegistry".to_string(),
+                                value: helm_schema_core::GuardValue::Null,
+                            }],
+                            vec![Guard::NotHasKey {
+                                path: "global".to_string(),
+                                key: "imageRegistry".to_string(),
+                            }],
+                        ],
+                    },
+                    Guard::AnyOf {
+                        alternatives: vec![
+                            vec![Guard::Eq {
+                                path: "metrics.global.imageRegistry".to_string(),
+                                value: helm_schema_core::GuardValue::Null,
+                            }],
+                            vec![Guard::NotHasKey {
+                                path: "metrics.global".to_string(),
+                                key: "imageRegistry".to_string(),
+                            }],
+                        ],
+                    },
+                ]
+            ),
+            (
+                "metrics.global.imageRegistry".to_string(),
+                vec![
+                    Guard::NotEq {
+                        path: "metrics.global.imageRegistry".to_string(),
+                        value: helm_schema_core::GuardValue::Null,
+                    },
+                    Guard::AnyOf {
+                        alternatives: vec![
+                            vec![Guard::Eq {
+                                path: "global.imageRegistry".to_string(),
+                                value: helm_schema_core::GuardValue::Null,
+                            }],
+                            vec![Guard::NotHasKey {
+                                path: "global".to_string(),
+                                key: "imageRegistry".to_string(),
+                            }],
+                        ],
+                    },
+                    Guard::HasKey {
+                        path: "metrics.global".to_string(),
+                        key: "imageRegistry".to_string(),
+                    },
+                ]
+            ),
         ]
     );
 }
@@ -269,6 +470,97 @@ fn contract_ir_finalize_derives_projection_and_signals_from_one_normalized_contr
 }
 
 #[test]
+fn dependency_global_projection_moves_range_members_to_live_sources() {
+    let defines = DefineIndex::new();
+    let mut contract = SymbolicIrContext::new(&defines).generate_contract_ir(indoc! {"
+        {{- range .Values.global.imagePullSecrets }}
+        {{ .name }}
+        {{- end }}
+    "});
+    contract.map_value_paths(|path| format!("metrics.agent.{path}"));
+    contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(
+        have: finalized
+            .uses()
+            .iter()
+            .map(|contract_use| contract_use.source_expr.clone())
+            .filter(|path| path.contains("imagePullSecrets"))
+            .collect::<std::collections::BTreeSet<_>>(),
+        want: std::collections::BTreeSet::from([
+            "global.imagePullSecrets".to_string(),
+            "global.imagePullSecrets.*.name".to_string(),
+            "metrics.global.imagePullSecrets".to_string(),
+            "metrics.global.imagePullSecrets.*.name".to_string(),
+            "metrics.agent.global.imagePullSecrets".to_string(),
+            "metrics.agent.global.imagePullSecrets.*.name".to_string(),
+        ])
+    );
+}
+
+#[test]
+fn with_header_candidates_do_not_inherit_the_body_sink() {
+    let defines = DefineIndex::new();
+    let finalized = SymbolicIrContext::new(&defines)
+        .generate_contract_ir(indoc! {"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: probe
+            spec:
+              template:
+                spec:
+                  {{- with .Values.primary | default .Values.fallback }}
+                  priorityClassName: {{ . }}
+                  {{- end }}
+        "})
+        .finalize();
+
+    let fallback_uses = finalized
+        .uses()
+        .iter()
+        .filter(|contract_use| contract_use.source_expr == "fallback")
+        .map(|contract_use| {
+            (
+                contract_use.path.clone(),
+                contract_use.resource.is_some(),
+                contract_use.single_guard_conjunction(),
+            )
+        })
+        .collect::<Vec<_>>();
+    sim_assert_eq!(
+        have: fallback_uses,
+        want: vec![
+            (
+                YamlPath(Vec::new()),
+                false,
+                vec![Guard::Or {
+                    paths: vec!["fallback".to_string(), "primary".to_string()],
+                }],
+            ),
+            (
+                YamlPath(vec![
+                    "spec".to_string(),
+                    "template".to_string(),
+                    "spec".to_string(),
+                    "priorityClassName".to_string(),
+                ]),
+                true,
+                vec![
+                    Guard::Truthy {
+                        path: "fallback".to_string(),
+                    },
+                    Guard::Not {
+                        path: "primary".to_string(),
+                    },
+                ],
+            ),
+        ]
+    );
+}
+
+#[test]
 fn contract_ir_activation_guards_gate_fail_captures() {
     // A cross-path `fail` conjunction from a dependency chart becomes a
     // document-level terminal clause; the dependency's `condition:`
@@ -303,4 +595,57 @@ fn contract_ir_activation_guards_gate_fail_captures() {
             },
         ]]
     );
+}
+
+#[test]
+fn contract_ir_activation_guards_scope_runtime_string_contracts() -> eyre::Result<()> {
+    let mut contract = ContractIr::default();
+    contract.extend_string_contract_value_paths(["image.repository".to_string()]);
+    contract.add_type_hint("image.repository", "string");
+    contract.append_guards_to_all_uses(&[Guard::Truthy {
+        path: "postgresql.enabled".to_string(),
+    }]);
+
+    let finalized = contract.finalize();
+    sim_assert_eq!(have: finalized.uses().len(), want: 1);
+    let use_ = finalized
+        .uses()
+        .first()
+        .ok_or_eyre("expected one scoped string-contract row")?;
+    sim_assert_eq!(have: use_.source_expr.as_str(), want: "image.repository");
+    sim_assert_eq!(have: use_.path.clone(), want: YamlPath(Vec::new()));
+    sim_assert_eq!(have: use_.has_string_contract, want: true);
+    sim_assert_eq!(
+        have: use_.single_guard_conjunction(),
+        want: vec![Guard::Truthy {
+            path: "postgresql.enabled".to_string(),
+        }]
+    );
+
+    let evidence = finalized
+        .schema_signals()
+        .evidence_for("image.repository")
+        .ok_or_eyre("expected scoped string-contract evidence")?;
+    sim_assert_eq!(have: evidence.facts.has_string_contract, want: false);
+    sim_assert_eq!(have: evidence.type_hints.contains("string"), want: false);
+    sim_assert_eq!(have: evidence.conditional_overlays.len(), want: 1);
+    let overlay = evidence
+        .conditional_overlays
+        .first()
+        .ok_or_eyre("expected one string-contract overlay")?;
+    sim_assert_eq!(
+        have: overlay.guards.clone(),
+        want: vec![helm_schema_core::ConditionalGuard::Truthy {
+            path: "postgresql.enabled".to_string(),
+        }]
+    );
+    sim_assert_eq!(
+        have: overlay.evidence.facts.has_string_contract,
+        want: true
+    );
+    sim_assert_eq!(
+        have: overlay.evidence.type_hints.contains("string"),
+        want: true
+    );
+    Ok(())
 }

@@ -6,11 +6,15 @@
           {
             "path": "commonAnnotations",
             "type": "truthy"
-          },
+          }
+        ],
+        [
           {
-            "path": "commonAnnotations",
-            "schema_type": "string",
-            "type": "type_is"
+            "paths": [
+              "commonAnnotations",
+              "service.annotations"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -29,32 +33,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
       "source_expr": "commonAnnotations"
     },
     {
@@ -138,11 +116,6 @@
           {
             "path": "commonLabels",
             "type": "truthy"
-          },
-          {
-            "path": "commonLabels",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -161,23 +134,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "commonLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
       "source_expr": "commonLabels"
     },
     {
@@ -326,7 +282,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -399,7 +356,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -439,7 +397,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -486,7 +445,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -544,38 +504,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "namespaceOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.annotations",
-            "type": "truthy"
-          },
-          {
-            "path": "service.annotations",
-            "schema_type": "string",
-            "type": "type_is"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.render"
-          ],
-          "span": {
-            "end": 378,
-            "start": 234
-          },
-          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_tplvalues.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.annotations"
+      "source_expr": "namespaceOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -597,10 +527,19 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 378,
+            "start": 234
+          },
+          "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/charts/common/templates/_tplvalues.tpl"
+        }
+      ],
+      "resource": null,
       "source_expr": "service.annotations"
     },
     {
@@ -689,10 +628,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.clusterIP"
     },
     {
@@ -731,10 +667,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.disableBaseClientPort"
     },
     {
@@ -779,11 +712,6 @@
           {
             "path": "service.extraPorts",
             "type": "truthy"
-          },
-          {
-            "path": "service.extraPorts",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -802,23 +730,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "service.extraPorts"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.extraPorts",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
       "source_expr": "service.extraPorts"
     },
     {
@@ -907,10 +818,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.loadBalancerIP"
     },
     {
@@ -949,10 +857,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.loadBalancerSourceRanges"
     },
     {
@@ -995,10 +900,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.nodePorts.client"
     },
     {
@@ -1060,10 +962,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.nodePorts.tls"
     },
     {
@@ -1195,10 +1094,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.sessionAffinity"
     },
     {
@@ -1227,11 +1123,6 @@
           {
             "path": "service.sessionAffinityConfig",
             "type": "truthy"
-          },
-          {
-            "path": "service.sessionAffinityConfig",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -1250,23 +1141,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "service.sessionAffinityConfig"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.sessionAffinityConfig",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
       "source_expr": "service.sessionAffinityConfig"
     },
     {
@@ -1305,7 +1179,8 @@
         "api_version": "v1",
         "kind": "Service"
       },
-      "source_expr": "service.sessionAffinityConfig"
+      "source_expr": "service.sessionAffinityConfig",
+      "stringified": true
     },
     {
       "condition": [
@@ -1471,10 +1346,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "service.type"
     },
     {
@@ -1503,10 +1375,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "v1",
-        "kind": "Service"
-      },
+      "resource": null,
       "source_expr": "tls.client.enabled"
     }
   ],

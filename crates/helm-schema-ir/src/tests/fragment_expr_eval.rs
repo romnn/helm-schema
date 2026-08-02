@@ -2,7 +2,9 @@ use indoc::indoc;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
-use helm_schema_core::{ConditionalGuard, Guard, GuardValue, Predicate};
+use helm_schema_core::{
+    ApproximationRole, ConditionalGuard, Guard, GuardDnf, GuardValue, Predicate,
+};
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
@@ -12,7 +14,7 @@ use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
 use crate::helper_meta::HelperOutputMeta;
-use crate::scalar_value::{ScalarRenderPart, ScalarValue, ScalarValueDispatch};
+use crate::scalar_value::{ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition};
 use test_util::prelude::sim_assert_eq;
 
 fn helper_result_from_expr_with_fragment_locals(
@@ -47,6 +49,374 @@ fn wrapped_with_program_keeps_exact_else_requirements() {
                 .all(|capture| !capture.contains_approximation()),
         "{document:#?}"
     );
+}
+
+#[test]
+fn yaml_serialization_requires_presence_only_with_coexecuting_mapping_members() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = indoc! {r#"
+        {{- if .Values.config.create }}
+        data:
+          {{- if .Values.config.clusterWide }}
+          {{- toYaml .Values.config.data | nindent 2 }}
+          {{- else }}
+          {{- $namespace := dict "WATCH_NAMESPACE" .Release.Namespace }}
+          {{- $data := merge .Values.config.data $namespace }}
+          {{- toYaml $data | nindent 2 }}
+          {{- end }}
+        {{- end }}
+    "#};
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let clauses = signals
+        .terminal_clauses()
+        .iter()
+        .filter(|clause| {
+            clause
+                .iter()
+                .any(|guard| guard.value_paths().iter().any(|path| path == "config.data"))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: clauses,
+        want: vec![vec![
+            ConditionalGuard::Truthy {
+                path: "config.create".to_string(),
+            },
+            ConditionalGuard::Absent {
+                path: "config.data".to_string(),
+            },
+            ConditionalGuard::Not(ConditionalGuard::Truthy {
+                path: "config.clusterWide".to_string(),
+            }
+            .into()),
+        ]]
+    );
+}
+
+#[test]
+fn helper_yaml_serialization_keeps_its_fixed_sequence_sibling() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "pod" -}}
+            volumeMounts:
+              - name: config
+                mountPath: /config
+            {{- if eq .Values.kind "DaemonSet" }}
+              {{- toYaml .Values.daemonSetVolumeMounts | nindent 2 }}
+            {{- end }}
+            {{- end -}}
+        "#},
+    );
+    let context = crate::SymbolicIrContext::new(&defines);
+    let signals = context
+        .generate_contract_ir(r#"{{ include "pod" . }}"#)
+        .finalize()
+        .into_schema_signals();
+    let clauses = signals
+        .terminal_clauses()
+        .iter()
+        .filter(|clause| {
+            clause.iter().any(|guard| {
+                guard
+                    .value_paths()
+                    .iter()
+                    .any(|path| path == "daemonSetVolumeMounts")
+            })
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: clauses,
+        want: vec![vec![
+            ConditionalGuard::Eq {
+                path: "kind".to_string(),
+                value: GuardValue::string("DaemonSet"),
+            },
+            ConditionalGuard::Absent {
+                path: "daemonSetVolumeMounts".to_string(),
+            },
+        ]]
+    );
+}
+
+#[test]
+fn direct_provider_scalar_keeps_positive_subset_of_int_cast_guard() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = indoc! {r"
+        {{- if and (not .Values.sentinel.enabled) (gt (int64 .Values.master.count) 0) }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: redis
+        spec:
+          ports:
+            - name: redis
+              port: {{ .Values.master.service.ports.redis }}
+        {{- end }}
+    "};
+    let contract = context.generate_contract_ir(source).finalize();
+    let port = contract
+        .uses()
+        .iter()
+        .find(|use_| use_.source_expr == "master.service.ports.redis");
+
+    let int_gt = Predicate::from(Guard::IntGt {
+        path: "master.count".to_string(),
+        bound: 0,
+    });
+    sim_assert_eq!(
+        have: port.map(|use_| use_.condition.clone()),
+        want: Some(GuardDnf::from_conjunction([
+            Predicate::Approximate {
+                marker: "0:0:0:1".to_string(),
+                paths: BTreeSet::from(["master.count".to_string()]),
+                role: ApproximationRole::Control,
+                sound_subset: Some(Box::new(int_gt)),
+            },
+            Predicate::from(Guard::Not {
+                path: "sentinel.enabled".to_string(),
+            }),
+        ]))
+    );
+
+    let evidence = contract
+        .schema_signals()
+        .evidence_for("master.service.ports.redis")
+        .cloned();
+    sim_assert_eq!(
+        have: evidence.and_then(|evidence| {
+            evidence
+                .conditional_overlays
+                .into_iter()
+                .find(|overlay| {
+                    overlay.guards
+                        == [
+                            ConditionalGuard::IntGt {
+                                path: "master.count".to_string(),
+                                bound: 0,
+                            },
+                            ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                                path: "sentinel.enabled".to_string(),
+                            })),
+                        ]
+                })
+                .map(|overlay| overlay.evidence.provider_schema_uses)
+        }),
+        want: Some(vec![crate::ProviderSchemaUse {
+            value_path: "master.service.ports.redis".to_string(),
+            path: crate::YamlPath(vec![
+                "spec".to_string(),
+                "ports[*]".to_string(),
+                "port".to_string(),
+            ]),
+            kind: crate::ValueKind::Scalar,
+            stringified: false,
+            resource: crate::ResourceRef::concrete("v1".to_string(), "Service".to_string()),
+            is_self_range_collection: false,
+            source_null_tolerant: false,
+            template_supplied_member_keys: BTreeSet::new(),
+            split_segment: None,
+            merge_layers: None,
+            range_key: false,
+            nil_omitting: false,
+            omitted_members: BTreeMap::new(),
+            outer_guards: Vec::new(),
+        }])
+    );
+}
+
+#[test]
+fn yaml_serialization_scopes_presence_to_conditional_mapping_members() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = indoc! {r#"
+        {{- if .Values.enabled }}
+        metadata:
+          annotations:
+        {{ toYaml .Values.annotations | indent 4 }}
+        {{- if .Values.internalTls }}
+            backend-protocol: "HTTPS"
+        {{- end }}
+        {{- if eq .Values.controller "ncp" }}
+            use-regex: "true"
+        {{- end }}
+        {{- end }}
+    "#};
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let clauses = signals
+        .terminal_clauses()
+        .iter()
+        .filter(|clause| {
+            clause
+                .iter()
+                .any(|guard| guard.value_paths().iter().any(|path| path == "annotations"))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(
+        have: clauses,
+        want: vec![
+            vec![
+                ConditionalGuard::Truthy {
+                    path: "enabled".to_string(),
+                },
+                ConditionalGuard::Truthy {
+                    path: "internalTls".to_string(),
+                },
+                ConditionalGuard::Absent {
+                    path: "annotations".to_string(),
+                },
+            ],
+            vec![
+                ConditionalGuard::Truthy {
+                    path: "enabled".to_string(),
+                },
+                ConditionalGuard::Eq {
+                    path: "controller".to_string(),
+                    value: helm_schema_core::GuardValue::string("ncp"),
+                },
+                ConditionalGuard::Absent {
+                    path: "annotations".to_string(),
+                },
+            ],
+        ]
+    );
+}
+
+#[test]
+fn defaulted_helper_merge_does_not_require_the_raw_source() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "json-pass" -}}
+            {{- toJson . -}}
+            {{- end -}}
+            {{- define "load" -}}
+            {{- $doc := dict "apiVersion" "v1" "kind" "ConfigMap" -}}
+            {{- $doc = mergeOverwrite $doc (deepCopy (.merge | default dict)) -}}
+            {{- get (include "json-pass" (dict "doc" $doc) | fromJson) "doc" | toYaml -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let fragment_context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let call_argument = single_expr(".Values.configMap");
+    let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let mut summary_seen = HashSet::new();
+    let call = analysis_db.summarize_bound_helper_call(
+        "load",
+        Some(&call_argument),
+        Some(&root_bindings),
+        None,
+        &summary_env,
+        fragment_context,
+        &mut summary_seen,
+    );
+    let rendered = call
+        .summary
+        .rendered
+        .iter()
+        .filter(|row| row.path == "configMap.merge")
+        .map(|row| row.meta.defaulted)
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: rendered, want: vec![true]);
+
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = indoc! {r#"
+        {{- with .Values.configMap }}
+        {{- include "load" . }}
+        {{- end }}
+    "#};
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let clauses = signals
+        .terminal_clauses()
+        .iter()
+        .filter(|clause| {
+            clause.iter().any(|guard| {
+                guard
+                    .value_paths()
+                    .iter()
+                    .any(|path| path == "configMap.merge")
+            })
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: clauses, want: Vec::<Vec<ConditionalGuard>>::new());
+}
+
+#[test]
+fn defaulted_helper_output_keeps_its_stringified_identity() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "workload.fullname" -}}
+            {{- if .Values.fullnameOverride -}}
+            {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+            {{- else -}}
+            {{- $name := default .Chart.Name .Values.nameOverride -}}
+            {{- $releaseName := regexReplaceAll "(-?[^a-z\\d\\-])+-?" (lower .Release.Name) "-" -}}
+            {{- if contains $name $releaseName -}}
+            {{- $releaseName | trunc 63 | trimSuffix "-" -}}
+            {{- else -}}
+            {{- printf "%s-%s" $releaseName $name | trunc 63 | trimSuffix "-" -}}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
+            {{- define "workload.serviceAccountName" -}}
+            {{- if .Values.master.serviceAccount.create -}}
+              {{ default (printf "%s-master" (include "workload.fullname" .)) .Values.master.serviceAccount.name }}
+            {{- else -}}
+              {{ default "default" .Values.master.serviceAccount.name }}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let source = indoc! {r#"
+        {{- if .Values.master.serviceAccount.create }}
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: {{ template "workload.serviceAccountName" . }}
+        {{- end }}
+    "#};
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    let name_rows = contract
+        .uses()
+        .iter()
+        .filter(|contract_use| {
+            contract_use.source_expr == "master.serviceAccount.name"
+                && contract_use.path == crate::YamlPath(vec!["metadata".into(), "name".into()])
+        })
+        .map(|contract_use| contract_use.stringified)
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: name_rows, want: vec![true]);
 }
 
 #[test]
@@ -268,7 +638,7 @@ fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
     )]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, Some(&root_bindings), None),
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
@@ -1067,6 +1437,89 @@ fn helper_conditions_preserve_stringified_trimmed_local_values() {
 }
 
 #[test]
+fn helper_output_equality_decodes_a_versioned_boolean_dispatch() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "envoy.enabled" -}}
+            {{- if not .Values.l7Proxy -}}
+              {{- false -}}
+            {{- else if not (kindIs "invalid" .Values.envoy.enabled) -}}
+              {{- .Values.envoy.enabled -}}
+            {{- else if semverCompare ">=1.16" (default "1.16" .Values.upgradeCompatibility) -}}
+              {{- true -}}
+            {{- else -}}
+              {{- false -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"eq (include "envoy.enabled" .) "true""#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    assert!(
+        result.truth.predicate().is_some(),
+        "the complete helper dispatch must produce an exact equality predicate: {result:#?}"
+    );
+}
+
+#[test]
+fn helper_output_retains_a_token_initial_printf_argument() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "image" -}}
+            {{- $repository := .Values.primary | default .Values.fallback -}}
+            {{- printf "%s:tag" $repository -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([(
+        "Values".to_string(),
+        AbstractValue::ValuesPath(String::new()),
+    )]);
+    let expr = single_expr(r#"include "image" ."#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+    let meta = result.value.as_ref().map(AbstractValue::output_meta);
+
+    assert!(
+        meta.as_ref().is_some_and(|meta| {
+            meta.values()
+                .any(|meta| meta.plain_slot_string_format && !meta.partial_text)
+        }),
+        "the helper's complete printf output must retain its token-opening argument: {result:#?}"
+    );
+}
+
+#[test]
 fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
@@ -1274,7 +1727,7 @@ fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
     )]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, Some(&root_bindings), None),
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "Values".to_string(),
             AbstractValue::values_root(),
@@ -1288,7 +1741,7 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
     let fragment_locals = context_local();
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, Some(&fragment_locals), None, None),
+        have: context_value_from_outer_expr(&expr, Some(&fragment_locals), None, None, None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             AbstractValue::ValuesPath("serviceAccount.name".to_string()),
@@ -1361,6 +1814,8 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
             "nameOverride".to_string(),
             HelperOutputMeta {
                 predicates: BTreeSet::new(),
+                input_identity: true,
+                stringified: true,
                 defaulted: false,
                 provenance: vec![crate::ContractProvenance::new(
                     "<inline:0>".to_string(),
@@ -1433,15 +1888,25 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
         .iter()
         .find(|row| row.path == "worker.securityContext")
         .expect("worker legacy candidate");
+    let earlier_candidate_skipped = Predicate::all(vec![
+        Predicate::from(Guard::Absent {
+            path: "worker.securityContexts".to_string(),
+        })
+        .negated(),
+        Predicate::from(Guard::Absent {
+            path: "worker.securityContexts.pod".to_string(),
+        })
+        .negated(),
+        Predicate::truthy_path("worker.securityContexts.pod"),
+    ])
+    .negated()
+    .normalize_boolean();
     assert!(
-        legacy.meta.predicates.iter().any(|branch| {
-            branch.iter().any(|predicate| {
-                matches!(predicate, Predicate::Not(_))
-                    && predicate
-                        .value_paths()
-                        .contains("worker.securityContexts.pod")
-            })
-        }),
+        legacy
+            .meta
+            .predicates
+            .iter()
+            .any(|branch| branch.contains(&earlier_candidate_skipped)),
         "the legacy candidate must require every earlier break condition to be false: {legacy:#?}"
     );
     assert!(
@@ -1465,7 +1930,9 @@ fn bound_helper_break_keeps_priority_candidate_conditions() {
         .filter(|capture| {
             matches!(
                 &capture.kind,
-                crate::eval_effect::CaptureKind::ValueType { path, schema_type }
+                crate::eval_effect::CaptureKind::ValueType {
+                    path, schema_type, ..
+                }
                     if path == "worker.securityContexts" && schema_type == "object"
             )
         })
@@ -1674,6 +2141,32 @@ fn bound_helper_keeps_join_observation_separate_from_output_transforms() {
             .contains("server.namespaces"),
         "a body-wide observation must not transform every returned occurrence: {result:#?}",
     );
+
+    let decoded = single_expr(r#"include "prometheus.namespaces" . | fromJsonArray"#);
+    let mut seen = HashSet::new();
+    let decoded = helper_result_from_expr_with_fragment_locals(
+        &decoded,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
+    );
+    sim_assert_eq!(
+        have: decoded.truth,
+        want: TruthCondition::exact(Predicate::all(vec![
+            Predicate::from(Guard::Truthy {
+                path: "rbac.create".to_string(),
+            }),
+            Predicate::from(Guard::Truthy {
+                path: "server.namespaces".to_string(),
+            }),
+            Predicate::from(Guard::Truthy {
+                path: "server.useExistingClusterRoleName".to_string(),
+            }),
+        ])),
+        "the decoded list is live exactly where the helper appended a namespace"
+    );
 }
 
 #[test]
@@ -1694,6 +2187,8 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
             "nameOverride".to_string(),
             HelperOutputMeta {
                 predicates: BTreeSet::new(),
+                input_identity: true,
+                stringified: true,
                 defaulted: false,
                 provenance: vec![crate::ContractProvenance::new(
                     "<inline:0>".to_string(),
@@ -1727,6 +2222,7 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
         have: context_value_from_outer_expr(
             &single_expr(r#"dict "doc" $values"#),
             Some(&locals),
+            None,
             None,
             None,
         ),
@@ -1809,6 +2305,8 @@ fn yaml_helper_output_preserves_structured_value_for_decoding() {
         want: Some(AbstractValue::OutputPath(
             "hostUsers".to_string(),
             HelperOutputMeta {
+                input_identity: true,
+                stringified: true,
                 provenance: vec![crate::ContractProvenance::new(
                     "<inline:0>".to_string(),
                     crate::SourceSpan::new(83, 106),

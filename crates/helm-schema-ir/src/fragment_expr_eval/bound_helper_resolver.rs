@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
+use crate::analysis_db::CustomMergeHelper;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
@@ -120,7 +121,8 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
         effects
             .root_set_value_dispatches
             .extend(summary.root_set_value_dispatches.clone());
-        let result = EvalResult::with_effects(summary.value.clone(), effects);
+        let mut result = EvalResult::with_effects(summary.value.clone(), effects);
+        result.json_payload_truth = summary.json_payload_truth.clone();
         Some(match &summary.scalar_dispatch {
             Some(dispatch) => result.with_scalar_dispatch(dispatch.clone()),
             None => result,
@@ -144,8 +146,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
 
 impl BoundHelperValueResolver<'_, '_, '_, '_> {
     /// A call to a recognized custom merge helper resolves to the layered
-    /// merge of its `(list INPUT OVERWRITE …)` operands instead of the
-    /// recursive body summary.
+    /// merge of its exact operands instead of the recursive body summary.
     ///
     /// The layer order is exact for the helper's full-overwrite keys; for
     /// other keys its per-kind exceptions (an empty-slice overwrite loses,
@@ -155,7 +156,13 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
     /// are marked YAML-serialized text so the conventional
     /// `include … | fromYaml` decode recovers the value.
     fn custom_merge_call(&mut self, name: &str, arg: Option<&TemplateExpr>) -> Option<EvalResult> {
-        self.params.context.analysis_db.custom_merge_helper(name)?;
+        match self.params.context.analysis_db.custom_merge_helper(name)? {
+            CustomMergeHelper::Pair => self.custom_pair_merge_call(arg),
+            CustomMergeHelper::ParsedMapList => self.parsed_map_list_merge_call(arg),
+        }
+    }
+
+    fn custom_pair_merge_call(&mut self, arg: Option<&TemplateExpr>) -> Option<EvalResult> {
         let TemplateExpr::Call { function, args } = arg?.deparen() else {
             return None;
         };
@@ -181,11 +188,13 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         let input_layer = input
             .value
             .clone()
+            .map(|value| value.with_output_meta(&input.effects.local_output_meta))
             .and_then(AbstractValue::without_widened)
             .unwrap_or(AbstractValue::Unknown);
         let overwrite_layer = overwrite
             .value
             .clone()
+            .map(|value| value.with_output_meta(&overwrite.effects.local_output_meta))
             .and_then(AbstractValue::without_widened)
             .unwrap_or(AbstractValue::Unknown);
         if input_layer.paths().is_empty() && overwrite_layer.paths().is_empty() {
@@ -220,6 +229,76 @@ impl BoundHelperValueResolver<'_, '_, '_, '_> {
         let mut effects = Effects::default();
         effects.merge(input.effects.execution_only());
         effects.merge(overwrite.effects.execution_only());
+        let payload_paths = value.paths();
+        effects
+            .yaml_serialized_paths
+            .extend(payload_paths.iter().cloned());
+        effects.derived_text_paths.extend(payload_paths);
+        Some(EvalResult::with_effects(Some(value), effects))
+    }
+
+    fn parsed_map_list_merge_call(&mut self, arg: Option<&TemplateExpr>) -> Option<EvalResult> {
+        let TemplateExpr::Call {
+            function: dict,
+            args: entries,
+        } = arg?.deparen()
+        else {
+            return None;
+        };
+        if dict != "dict" {
+            return None;
+        }
+        let values = entries.chunks_exact(2).find_map(|entry| {
+            matches!(
+                entry.first().map(TemplateExpr::deparen),
+                Some(TemplateExpr::Literal(helm_schema_ast::Literal::String(key)))
+                    if key == "values"
+            )
+            .then(|| entry.get(1))
+            .flatten()
+        })?;
+        let TemplateExpr::Call {
+            function: list,
+            args: operands,
+        } = values.deparen()
+        else {
+            return None;
+        };
+        if list != "list" || operands.is_empty() {
+            return None;
+        }
+
+        let mut effects = Effects::default();
+        let mut layers = Vec::new();
+        for operand in operands {
+            let mut seen = self.params.seen.clone();
+            let result = document_result_from_expr(
+                operand,
+                self.caller_env,
+                self.params.outer,
+                self.params.current_dot,
+                self.params.context,
+                &mut seen,
+            );
+            effects.merge(result.effects.execution_only());
+            let layer = result.value?.without_widened()?;
+            let path = layer.merge_layer_identity()?;
+            if path.is_empty() {
+                return None;
+            }
+            let mut meta = layer.output_meta().remove(&path).unwrap_or_default();
+            meta.json_decoded = true;
+            meta.parsed_map = true;
+            meta.conjoin_branches(&std::collections::BTreeSet::from([
+                helm_schema_core::Predicate::from(helm_schema_core::Guard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "object".to_string(),
+                }),
+            ]));
+            layers.push(AbstractValue::OutputPath(path, meta));
+        }
+
+        let value = AbstractValue::MergedLayers(layers);
         let payload_paths = value.paths();
         effects
             .yaml_serialized_paths

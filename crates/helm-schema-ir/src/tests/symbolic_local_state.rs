@@ -4,6 +4,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
+use crate::scalar_value::TruthCondition;
 use crate::symbolic_local_state::SymbolicLocalState;
 use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
@@ -391,6 +392,39 @@ fn branch_join_unions_truthy_reductions_across_outcomes() {
     sim_assert_eq!(
         have: joined.truthy_reductions.get("message"),
         want: Some(&Predicate::truthy_path("legacy"))
+    );
+}
+
+#[test]
+fn exact_if_join_conditions_an_untouched_entry_truthy_reduction() {
+    let mut entry = SymbolicLocalState::default();
+    entry
+        .truthy_reductions
+        .insert("continue".to_string(), Predicate::truthy_path("gate"));
+    let mut stopped = entry.clone();
+    stopped
+        .truthy_reductions
+        .insert("continue".to_string(), Predicate::False);
+    let mut joined = entry.clone();
+
+    joined.join_truthy_reduction_arms(
+        &entry,
+        &[(
+            TruthCondition::exact(Predicate::truthy_path("stop")),
+            stopped,
+        )],
+        false,
+    );
+
+    sim_assert_eq!(
+        have: joined.truthy_reductions.get("continue"),
+        want: Some(
+            &Predicate::all(vec![
+                Predicate::truthy_path("gate"),
+                Predicate::truthy_path("stop").negated(),
+            ])
+            .normalize_boolean()
+        )
     );
 }
 

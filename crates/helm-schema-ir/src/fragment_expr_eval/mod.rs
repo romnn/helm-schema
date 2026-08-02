@@ -1,7 +1,7 @@
 mod bound_helper_resolver;
 mod context;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
@@ -11,11 +11,13 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::EvalResult;
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::eval_expr;
+use crate::helper_meta::HelperOutputMeta;
 use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers};
 
 pub(crate) fn context_value_from_outer_expr(
     expr: &TemplateExpr,
     outer_locals: Option<&HashMap<String, AbstractValue>>,
+    outer_output_meta: Option<&HashMap<String, BTreeMap<String, HelperOutputMeta>>>,
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
 ) -> Option<AbstractValue> {
@@ -50,11 +52,14 @@ pub(crate) fn context_value_from_outer_expr(
         dot,
         root_fields: outer.cloned().unwrap_or_default(),
         locals: outer_locals.cloned().unwrap_or_default(),
+        local_output_meta: outer_output_meta.cloned().unwrap_or_default(),
         allow_field_root_lookup: true,
         ..EvalEnv::default()
     };
-    eval_expr(expr, &env)
+    let result = eval_expr(expr, &env);
+    result
         .value
+        .map(|value| value.with_output_meta(&result.effects.local_output_meta))
         .map(|value| value.to_context_value())
 }
 
@@ -69,6 +74,7 @@ pub(crate) fn fragment_context_value(
     expr: &TemplateExpr,
     root_bindings: &HashMap<String, AbstractValue>,
     template_bindings: &HashMap<String, AbstractValue>,
+    template_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     fragment_context: FragmentEvalContext<'_>,
     current_dot_fragment: Option<&AbstractValue>,
 ) -> Option<AbstractValue> {
@@ -77,13 +83,15 @@ pub(crate) fn fragment_context_value(
     context_value_from_outer_expr(
         expr,
         Some(&locals),
+        Some(template_output_meta),
         Some(root_bindings),
         current_dot_fragment,
     )
     .or_else(|| {
-        fragment_context.fragment_value_from_expr(
+        fragment_context.fragment_value_from_expr_with_meta(
             expr,
             template_bindings,
+            template_output_meta,
             current_dot_fragment,
             &mut HashSet::new(),
         )

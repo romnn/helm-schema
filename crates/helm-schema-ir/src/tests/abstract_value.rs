@@ -92,6 +92,87 @@ fn top_propagates_through_descent() {
 }
 
 #[test]
+fn guard_metadata_preserves_raw_identity_through_member_selection() {
+    let mut metadata = HelperOutputMeta {
+        input_identity: true,
+        ..HelperOutputMeta::default()
+    };
+    metadata
+        .predicates
+        .insert(BTreeSet::from([Predicate::truthy_path(
+            "workers.celery.enableDefault",
+        )]));
+    let value = path("workers.celery.sets.*").with_output_meta(&BTreeMap::from([(
+        "workers.celery.sets.*".to_string(),
+        metadata,
+    )]));
+    let selected = value.apply_to_path(&["securityContexts".to_string(), "pod".to_string()]);
+    let mut expected_meta = HelperOutputMeta {
+        input_identity: true,
+        ..HelperOutputMeta::default()
+    };
+    expected_meta
+        .predicates
+        .insert(BTreeSet::from([Predicate::truthy_path(
+            "workers.celery.enableDefault",
+        )]));
+    let expected = AbstractValue::OutputPath(
+        "workers.celery.sets.*.securityContexts.pod".to_string(),
+        expected_meta,
+    );
+
+    sim_assert_eq!(have: selected.as_ref(), want: Some(&expected));
+    sim_assert_eq!(
+        have: crate::value_path_context::value_has_key(&expected, "runAsUser"),
+        want: Some(
+            Predicate::from(helm_schema_core::Guard::Absent {
+                path: "workers.celery.sets.*.securityContexts.pod.runAsUser".to_string(),
+            })
+            .negated()
+        )
+    );
+}
+
+#[test]
+fn transformed_metadata_cannot_promote_a_guarded_path_to_input_identity() {
+    let metadata = HelperOutputMeta {
+        input_identity: true,
+        derived_text: true,
+        ..HelperOutputMeta::default()
+    };
+    let value = AbstractValue::OutputPath("source".to_string(), metadata.clone());
+
+    sim_assert_eq!(
+        have: value.apply_to_path(&["member".to_string()]),
+        want: Some(AbstractValue::OutputPath("source".to_string(), metadata))
+    );
+}
+
+#[test]
+fn omit_metadata_is_consumed_by_member_selection() {
+    let metadata = HelperOutputMeta {
+        input_identity: true,
+        omitted_keys: BTreeMap::from([("secret".to_string(), Vec::new())]),
+        ..HelperOutputMeta::default()
+    };
+    let value = AbstractValue::OutputPath("service".to_string(), metadata.clone());
+    let mut selected_metadata = metadata.clone();
+    selected_metadata.omitted_keys.clear();
+
+    sim_assert_eq!(
+        have: value.apply_to_path(&["enabled".to_string()]),
+        want: Some(AbstractValue::OutputPath(
+            "service.enabled".to_string(),
+            selected_metadata
+        ))
+    );
+    sim_assert_eq!(
+        have: value.apply_to_path(&["secret".to_string()]),
+        want: Some(AbstractValue::OutputPath("service".to_string(), metadata))
+    );
+}
+
+#[test]
 fn omit_keys_removes_known_map_entries_but_preserves_values_root() {
     let value = AbstractValue::Overlay {
         entries: BTreeMap::from([

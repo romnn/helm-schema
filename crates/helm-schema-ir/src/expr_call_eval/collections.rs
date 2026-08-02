@@ -6,7 +6,7 @@ use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::scalar_value::ScalarValueDispatch;
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_ast::expression_schema_type;
 use helm_schema_core::{GuardValue, Predicate};
 
@@ -67,6 +67,7 @@ pub(super) fn eval_default(
                 .local_output_meta
                 .entry(primary_path.clone())
                 .or_default();
+            meta.input_identity = true;
             meta.conjoin_branches(&BTreeSet::from([Predicate::truthy_path(
                 primary_path.clone(),
             )]));
@@ -87,11 +88,9 @@ pub(super) fn eval_default(
         }
         let fallback_condition = BTreeSet::from([Predicate::truthy_path(primary_path).negated()]);
         for path in fallback_paths {
-            effects
-                .local_output_meta
-                .entry(path)
-                .or_default()
-                .conjoin_branches(&fallback_condition);
+            let meta = effects.local_output_meta.entry(path).or_default();
+            meta.input_identity = true;
+            meta.conjoin_branches(&fallback_condition);
         }
     }
     // `values` holds the primary first and the fallback second exactly when
@@ -126,8 +125,10 @@ pub(super) fn eval_coalesce(
     let mut values = Vec::new();
     let mut default_paths = BTreeSet::new();
     let mut candidate_paths = Vec::with_capacity(args.len());
+    let mut candidate_truths = Vec::with_capacity(args.len());
     for arg in args {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
+        candidate_truths.push(result.truth.clone());
         default_paths.extend(identity_value_paths(result.value.as_ref()));
         let candidate_path = matches!(
             arg.deparen(),
@@ -155,11 +156,9 @@ pub(super) fn eval_coalesce(
             if seen.insert(path.clone()) {
                 let mut selection = previous_false.clone();
                 selection.insert(Predicate::truthy_path(path.clone()));
-                effects
-                    .local_output_meta
-                    .entry(path.clone())
-                    .or_default()
-                    .conjoin_branches(&selection);
+                let meta = effects.local_output_meta.entry(path.clone()).or_default();
+                meta.input_identity = true;
+                meta.conjoin_branches(&selection);
             }
             previous_false.insert(Predicate::truthy_path(path).negated());
         }
@@ -191,7 +190,9 @@ pub(super) fn eval_coalesce(
             });
         }
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+    let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    result.truth = TruthCondition::any(candidate_truths);
+    result
 }
 
 /// The per-path [`crate::helper_meta::EmptyRescue`] spellings for a
@@ -287,6 +288,7 @@ pub(super) fn eval_pick(
         subject.effects.merge(key.effects);
     }
     let value = subject.value.map(|value| {
+        let value = value.into_parsed_map();
         let entries = keys
             .into_iter()
             .filter_map(|key| {
@@ -297,7 +299,10 @@ pub(super) fn eval_pick(
             .collect();
         AbstractValue::Dict(entries)
     });
-    EvalResult::with_effects(value, subject.effects)
+    // The selected structure above owns the returned value. Raw output
+    // paths from the map-producing helper are eager dependencies, not a
+    // second whole-map splice beside the selected keys.
+    EvalResult::with_effects(value, subject.effects.execution_only())
 }
 
 pub(super) fn eval_list(
@@ -323,9 +328,13 @@ pub(super) fn eval_concat(
     let mut items = Vec::new();
     let mut effects = Effects::default();
     for arg in args {
-        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        let mut result = eval_expr_with_helper_calls(arg, env, resolver);
+        let value = result
+            .value
+            .take()
+            .map(|value| value.with_output_meta(&result.effects.local_output_meta));
         effects.merge(result.effects);
-        match result.value {
+        match value {
             Some(AbstractValue::List(mut values)) => items.append(&mut values),
             Some(value) => {
                 if let Some(item) = value.fragment_range_item() {
@@ -761,7 +770,15 @@ pub(super) fn eval_omit(
     // filtered in place), so the removal is recorded as an effect: sink
     // typing for the removed members must not bind through this render
     // (external-secrets' OpenShift `adaptSecurityContext` omit).
-    if let Some(path) = value.as_ref().and_then(AbstractValue::unique_path) {
+    if let Some(path) = value
+        .as_ref()
+        .and_then(AbstractValue::direct_values_identity)
+    {
+        base.effects
+            .local_output_meta
+            .entry(path.clone())
+            .or_default()
+            .input_identity = true;
         base.effects
             .omitted_map_keys
             .entry(path)
@@ -778,11 +795,25 @@ pub(super) fn eval_merge(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let mut piped_meta = piped.effects.local_output_meta.clone();
+    piped_meta.retain(|_, meta| !meta.omitted_keys.is_empty());
+    let piped_values = piped
+        .value
+        .map(|value| value.with_output_meta(&piped_meta))
+        .into_iter()
+        .collect::<Vec<_>>();
     let mut effects = piped.effects;
-    let piped_values = piped.value.into_iter().collect::<Vec<_>>();
     let operand_count = args.len() + piped_values.len();
     let mut values = Vec::new();
-    merge_arg_values(args, env, resolver, &mut values, &mut effects);
+    for arg in args {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        let mut output_meta = result.effects.local_output_meta.clone();
+        output_meta.retain(|_, meta| !meta.omitted_keys.is_empty());
+        if let Some(value) = result.value {
+            values.push(value.with_output_meta(&output_meta));
+        }
+        effects.merge(result.effects);
+    }
     // A Go pipeline passes the piped subject as the LAST argument.
     values.extend(piped_values);
     // An overwrite-merge whose destination is the LITERAL values root

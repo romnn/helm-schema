@@ -55,8 +55,8 @@ use crate::analysis_db::IrAnalysisDb;
 use crate::eval_effect::{CaptureKind, FailCapture};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
-use crate::node_eval::control_header;
-use crate::scalar_value::ScalarValueDispatch;
+use crate::node_eval::{NodeAction, control_header, node_action};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use crate::symbolic_local_state::SymbolicLocalState;
 use crate::value_path_context::ValuePathContext;
 use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
@@ -617,6 +617,8 @@ pub(super) struct Interpreter<'a> {
     /// The active helper call chain, threaded into expression evaluation so
     /// nested bound calls cut cycles.
     pub(super) helper_seen: HashSet<String>,
+    /// Typed payload truth observed at whole-hole JSON helper outputs.
+    pub(super) json_payload_truth_outputs: Vec<(Predicate, TruthCondition)>,
     pub(super) locals: SymbolicLocalState,
     pub(super) dot_stack: Vec<Option<AbstractValue>>,
     /// The value-flavor dot of a helper scope's root frame (the call
@@ -764,6 +766,7 @@ impl<'a> Interpreter<'a> {
             helper_scope: false,
             scalar_output_projection: false,
             helper_seen: HashSet::new(),
+            json_payload_truth_outputs: Vec::new(),
             locals: SymbolicLocalState::default(),
             dot_stack: Vec::new(),
             root_value_dot: None,
@@ -1140,6 +1143,23 @@ impl<'a> Interpreter<'a> {
         );
     }
 
+    /// Records a control dependency without attributing the region's YAML sink.
+    pub(super) fn push_control_read(&mut self, values_path: &str, extra_guards: &[Guard]) {
+        let provenance = self
+            .current_site
+            .as_ref()
+            .map(|site| site.provenance.iter().cloned().collect())
+            .unwrap_or_default();
+        self.push_read_row(
+            values_path,
+            crate::ValueKind::Scalar,
+            extra_guards,
+            None,
+            provenance,
+            false,
+        );
+    }
+
     pub(super) fn push_read_row(
         &mut self,
         values_path: &str,
@@ -1358,9 +1378,9 @@ impl<'a> Interpreter<'a> {
         let mut paths = self.string_contract_paths.clone();
         for capture in &self.fail_conditions {
             match &capture.kind {
-                crate::eval_effect::CaptureKind::ValueType { path, schema_type }
-                    if schema_type == "string" =>
-                {
+                crate::eval_effect::CaptureKind::ValueType {
+                    path, schema_type, ..
+                } if schema_type == "string" => {
                     paths.insert(path.clone());
                 }
                 crate::eval_effect::CaptureKind::ValuePattern { path, .. } => {
@@ -1802,6 +1822,38 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    /// Minimum caller-relative indent of a helper's rendered root.
+    ///
+    /// A left-trimmed bare output at the helper root removes its source
+    /// indentation before emitting text. Its caller's `nindent` therefore
+    /// starts from column zero; adding the helper source column would place
+    /// an appended list fragment inside the preceding item's last field.
+    pub(super) fn helper_root_content_indent(&self, node: &Node) -> Option<usize> {
+        match node {
+            Node::Mapping(entry) => Some(entry.indent),
+            Node::Sequence(item) => Some(item.indent),
+            Node::Scalar(line) => Some(line.indent),
+            Node::Control(region) => region
+                .branches
+                .iter()
+                .flat_map(|branch| &branch.body)
+                .filter_map(|child| self.helper_root_content_indent(child))
+                .min(),
+            Node::Output(action)
+                if parse_expr_text(self.text(action.span))
+                    .iter()
+                    .rev()
+                    .find_map(TemplateExpr::fragment_indent_width)
+                    .is_none()
+                    && self.text(action.span).trim_start().starts_with("{{-") =>
+            {
+                Some(0)
+            }
+            Node::Output(action) => Some(self.output_render_indent(action.span)),
+            Node::Comment(_) | Node::Opaque(_) => None,
+        }
+    }
+
     /// The column a bare output's text renders at: the width its expression
     /// states, else the action's own source column.
     pub(super) fn output_render_indent(&self, span: Span) -> usize {
@@ -1860,24 +1912,65 @@ impl<'a> Interpreter<'a> {
                         value.extend(evaluated);
                     }
                 }
-                let (children, siblings) = self.split_structural_children(view, entry.indent);
+                let (mut children, siblings) = self.split_structural_children(view, entry.indent);
                 // A bare output hanging at or above a block-scalar entry's
                 // indent (`key: |` followed by a column-0 `{{- include … }}`)
                 // renders into the still-open block whenever its text is
-                // deeper than the entry, so it contributes block text — not
-                // structure escaping to the parent container.
-                let siblings = if entry.block.is_some() {
-                    let (adopted, rest): (Vec<_>, Vec<_>) = siblings
+                // deeper than the entry. The CST can retain that escaped
+                // output as either a direct child or a sibling; both are
+                // block text, not structure in the parent container.
+                let siblings = if let Some(block) = &entry.block {
+                    let mut adopted = Vec::new();
+                    let mut escaped_controls = Vec::new();
+                    let mut remaining_children = Vec::new();
+                    for child in children {
+                        match child.node {
+                            Node::Output(_) => adopted.push(child),
+                            Node::Control(region)
+                                if self.control_renders_below_block(region, entry.indent) =>
+                            {
+                                adopted.push(child);
+                            }
+                            Node::Control(region) if region.span.start < block.body.end => {
+                                escaped_controls.push(child);
+                            }
+                            _ => remaining_children.push(child),
+                        }
+                    }
+                    children = remaining_children;
+                    let (adopted_siblings, rest): (Vec<_>, Vec<_>) = siblings
                         .into_iter()
                         .partition(|child| matches!(child.node, Node::Output(_)));
+                    adopted.extend(adopted_siblings);
                     let previous_block =
                         std::mem::replace(&mut self.block_text_is_yaml, block_holds_yaml);
                     for adopted_view in adopted {
-                        if let Node::Output(action) = adopted_view.node {
-                            value.extend(self.eval_block_adopted_output(action.span));
+                        match adopted_view.node {
+                            Node::Output(action) => {
+                                value.extend(self.eval_block_adopted_output(action.span));
+                            }
+                            Node::Control(region) => {
+                                value.extend(self.eval_block_adopted_control(region.span));
+                            }
+                            _ => {}
                         }
                     }
                     self.block_text_is_yaml = previous_block;
+                    for escaped_view in escaped_controls {
+                        let Node::Control(region) = escaped_view.node else {
+                            continue;
+                        };
+                        let value = self.eval_structural_control_output(region.span);
+                        let width = self
+                            .control_render_indent(region.span)
+                            .unwrap_or_else(|| self.line_indent(region.span.start));
+                        out.floating.push(FloatingOutput {
+                            width,
+                            column_only: false,
+                            origin: region.span.start,
+                            value,
+                        });
+                    }
                     rest
                 } else {
                     siblings
@@ -1911,17 +2004,58 @@ impl<'a> Interpreter<'a> {
                     value.extend(self.eval_scalar_parts(parts));
                     self.in_value_slot = previous_slot;
                 }
-                let (children, siblings) = self.split_structural_children(view, item.indent);
+                let (mut children, siblings) = self.split_structural_children(view, item.indent);
                 // `- |` items adopt shallow bare outputs as block text, the
-                // same as block-scalar mapping entries above.
-                let siblings = if item.block.is_some() {
-                    let (adopted, rest): (Vec<_>, Vec<_>) = siblings
+                // same as block-scalar mapping entries above. The CST can
+                // retain an escaped output as a child or a sibling.
+                let siblings = if let Some(block) = &item.block {
+                    let mut adopted = Vec::new();
+                    let mut escaped_controls = Vec::new();
+                    let mut remaining_children = Vec::new();
+                    for child in children {
+                        match child.node {
+                            Node::Output(_) => adopted.push(child),
+                            Node::Control(region)
+                                if self.control_renders_below_block(region, item.indent) =>
+                            {
+                                adopted.push(child);
+                            }
+                            Node::Control(region) if region.span.start < block.body.end => {
+                                escaped_controls.push(child);
+                            }
+                            _ => remaining_children.push(child),
+                        }
+                    }
+                    children = remaining_children;
+                    let (adopted_siblings, rest): (Vec<_>, Vec<_>) = siblings
                         .into_iter()
                         .partition(|child| matches!(child.node, Node::Output(_)));
+                    adopted.extend(adopted_siblings);
                     for adopted_view in adopted {
-                        if let Node::Output(action) = adopted_view.node {
-                            value.extend(self.eval_block_adopted_output(action.span));
+                        match adopted_view.node {
+                            Node::Output(action) => {
+                                value.extend(self.eval_block_adopted_output(action.span));
+                            }
+                            Node::Control(region) => {
+                                value.extend(self.eval_block_adopted_control(region.span));
+                            }
+                            _ => {}
                         }
+                    }
+                    for escaped_view in escaped_controls {
+                        let Node::Control(region) = escaped_view.node else {
+                            continue;
+                        };
+                        let value = self.eval_structural_control_output(region.span);
+                        let width = self
+                            .control_render_indent(region.span)
+                            .unwrap_or_else(|| self.line_indent(region.span.start));
+                        out.floating.push(FloatingOutput {
+                            width,
+                            column_only: false,
+                            origin: region.span.start,
+                            value,
+                        });
                     }
                     rest
                 } else {
@@ -2050,6 +2184,85 @@ impl<'a> Interpreter<'a> {
                         .any(|expr| expr.fragment_indent_width().is_some())
             }
             Node::Comment(_) | Node::Opaque(_) => true,
+        }
+    }
+
+    fn control_renders_below_block(
+        &self,
+        region: &helm_schema_syntax::ControlRegion,
+        block_indent: usize,
+    ) -> bool {
+        self.control_render_indent(region.span)
+            .is_some_and(|indent| indent > block_indent)
+    }
+
+    fn control_render_indent(&self, span: Span) -> Option<usize> {
+        let text = self.text(span);
+        let tree = parse_go_template(text)?;
+        self.template_render_indent(tree.root_node(), text, span.start)
+    }
+
+    fn template_render_indent(
+        &self,
+        node: tree_sitter::Node<'_>,
+        source: &str,
+        source_offset: usize,
+    ) -> Option<usize> {
+        match node_action(source, node) {
+            NodeAction::Text => {
+                let text = node.utf8_text(source.as_bytes()).ok()?;
+                text.split_inclusive('\n')
+                    .scan(node.start_byte(), |line_start, line| {
+                        let start = *line_start;
+                        *line_start += line.len();
+                        Some((start, line))
+                    })
+                    .filter_map(|(line_start, line)| {
+                        let content_offset =
+                            line.char_indices().find_map(|(offset, character)| {
+                                (!character.is_whitespace()).then_some(offset)
+                            })?;
+                        Some(self.line_indent(source_offset + line_start + content_offset))
+                    })
+                    .min()
+            }
+            NodeAction::Output(expressions) => expressions
+                .as_ref()
+                .and_then(|expressions| {
+                    expressions
+                        .iter()
+                        .rev()
+                        .find_map(TemplateExpr::fragment_indent_width)
+                })
+                .or_else(|| Some(self.line_indent(source_offset + node.start_byte()))),
+            NodeAction::If(_) | NodeAction::With(_) | NodeAction::Range(_) => {
+                let mut cursor = node.walk();
+                let mut minimum = None;
+                if cursor.goto_first_child() {
+                    loop {
+                        if matches!(
+                            cursor.field_name(),
+                            Some("consequence" | "alternative" | "option")
+                        ) && let Some(indent) =
+                            self.template_render_indent(cursor.node(), source, source_offset)
+                        {
+                            minimum =
+                                Some(minimum.map_or(indent, |current: usize| current.min(indent)));
+                        }
+                        if !cursor.goto_next_sibling() {
+                            break;
+                        }
+                    }
+                }
+                minimum
+            }
+            NodeAction::Descend => {
+                let mut cursor = node.walk();
+                node.named_children(&mut cursor)
+                    .filter_map(|child| self.template_render_indent(child, source, source_offset))
+                    .min()
+            }
+            NodeAction::Suppressed | NodeAction::Assignment(_) => None,
         }
     }
 

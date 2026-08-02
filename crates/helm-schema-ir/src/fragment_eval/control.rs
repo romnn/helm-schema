@@ -126,7 +126,9 @@ impl Interpreter<'_> {
             // incomplete.
             let arm_decoded = match &arm {
                 ArmSpec::Else => true,
-                ArmSpec::If(_) => own_condition.is_some(),
+                ArmSpec::If(_) => own_condition
+                    .as_ref()
+                    .is_some_and(|condition| !condition.contains_approximation()),
                 _ => false,
             };
             if let Some(own) = own_condition {
@@ -307,12 +309,12 @@ impl Interpreter<'_> {
                     concretization.apply(&arm_condition)
                 }
             };
-            self.locals
-                .conjoin_changed_truthy_reductions(&entry_locals, &stamped_condition);
-            outcomes.push(self.locals.clone());
             if let Some(semantic_arm_truth) = semantic_arm_truth {
                 local_arm_states.push((semantic_arm_truth, self.locals.clone()));
             }
+            self.locals
+                .conjoin_changed_truthy_reductions(&entry_locals, &stamped_condition);
+            outcomes.push(self.locals.clone());
             if entry_root.is_some() {
                 root_arm_states.push((
                     arm_condition.clone(),
@@ -352,6 +354,11 @@ impl Interpreter<'_> {
         }
         self.locals.join_branch_outcomes(&entry_locals, &outcomes);
         if region.kind == ControlKind::If {
+            self.locals.join_truthy_reduction_arms(
+                &entry_locals,
+                &local_arm_states,
+                has_unconditional_else,
+            );
             self.locals.join_scalar_dispatch_arms(
                 &entry_locals,
                 &local_arm_states,
@@ -618,6 +625,7 @@ impl Interpreter<'_> {
                     kind: crate::eval_effect::CaptureKind::ValueType {
                         path: path.clone(),
                         schema_type: "string".to_string(),
+                        null_aborts: false,
                     },
                 }
             })
@@ -707,14 +715,14 @@ impl Interpreter<'_> {
             );
         }
         for path in &bound_values {
-            self.push_read(path, &[]);
+            self.push_control_read(path, &[]);
         }
         // Helper-body conditions over bound helper calls resolve through the
         // call's summary: its claim paths become guard reads, and when the
         // condition itself decodes nothing they stand in as the arm's truthy
         // conditions (the summary lane's rule for `if include …` headers).
         for path in &helper_paths {
-            self.push_read(path, &[]);
+            self.push_control_read(path, &[]);
         }
         if evaluated_truth_is_unknown
             && matches!(predicate, Predicate::True)
@@ -742,13 +750,13 @@ impl Interpreter<'_> {
             if conjunct.contract_guards_are_exact() {
                 for guard in &conjunct.contract_guards() {
                     for path in guard.value_paths() {
-                        self.push_read(path, std::slice::from_ref(guard));
+                        self.push_control_read(path, std::slice::from_ref(guard));
                     }
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
             } else if !matches!(conjunct, Predicate::True) {
                 for path in conjunct.value_paths() {
-                    self.push_read(&path, &[]);
+                    self.push_control_read(&path, &[]);
                 }
                 self.push_predicate(conjunct);
             }
@@ -873,15 +881,7 @@ impl Interpreter<'_> {
         };
         let (mut predicate, mut faithful, bound_values, dot) = {
             let context = self.value_path_context();
-            // Helper bodies decode `with` like `if` (truthy conditions), the
-            // shape the summary lane always produced: a helper row's
-            // self-condition must stay a positive header for the signal
-            // builder, where document rows carry the with-marker flavor.
-            let predicate = if self.helper_scope {
-                context.condition_predicate_expr(header.expr())
-            } else {
-                context.with_condition_predicate_expr(header.expr())
-            };
+            let predicate = context.with_condition_predicate_expr(header.expr());
             let faithful = context.condition_lowering_is_faithful(header.expr());
             (
                 predicate,
@@ -931,11 +931,11 @@ impl Interpreter<'_> {
             }
         }
         for path in &bound_values {
-            self.push_read(path, &[]);
+            self.push_control_read(path, &[]);
         }
         for guard in &predicate.contract_guards() {
             for path in guard.value_paths() {
-                self.push_read(path, &[]);
+                self.push_control_read(path, &[]);
             }
         }
         if let TemplateExpr::VariableDefinition { name, .. } = header.expr()
@@ -987,14 +987,10 @@ impl Interpreter<'_> {
         let range_is_statically_nonempty = iterable_value
             .as_ref()
             .is_some_and(AbstractValue::definitely_nonempty_iterable);
-        let derived_range_condition = matches!(range_source.deparen(), TemplateExpr::Variable(_))
-            .then(|| {
-                range_subject
-                    .input_identity
-                    .is_none()
-                    .then(|| range_subject.truth.predicate().cloned())
-                    .flatten()
-            })
+        let derived_range_condition = range_subject
+            .input_identity
+            .is_none()
+            .then(|| range_subject.truth.predicate().cloned())
             .flatten();
         let source_paths = range_subject
             .influence_paths
@@ -1068,47 +1064,7 @@ impl Interpreter<'_> {
                 self.fail_conditions.push(capture);
             }
         }
-        // A range over a first-truthy selection chain (`with A | default B`
-        // dots, `range (A | default B)`) iterates the SELECTED candidate,
-        // so each identity candidate owes an iterable shape exactly on its
-        // selected states: `truthy(A) ⇒ iterable(A)`, and `¬truthy(A) ∧
-        // truthy(B) ⇒ iterable(B)`. The own-truthiness conjunct keeps the
-        // last candidate sound too (`default` selects a falsy fallback
-        // verbatim, but a falsy scalar there is the accepted-widening
-        // direction, never a false rejection), and the prior negations keep
-        // a truthy scalar beside a selected collection accepted (kyverno's
-        // per-controller `imagePullSecrets | default global`). The claim
-        // rides the fail-capture lane: it is header-abort evidence, and a
-        // read row would be absorbed into the wider co-sited with-header
-        // read at canonicalization.
-        let selection_chain = iterable_value
-            .as_ref()
-            .and_then(AbstractValue::selection_chain_identity_paths);
-        if let Some(chain) = &selection_chain {
-            let mut prior_falsy: Vec<Predicate> = Vec::new();
-            for path in chain {
-                let mut tail = prior_falsy.clone();
-                tail.push(Predicate::truthy_path(path.clone()));
-                let capture = crate::eval_effect::FailCapture {
-                    conjunction: self.fail_capture_conjunction(tail),
-                    ranged: self.capture_ranged_modes(),
-                    kind: crate::eval_effect::CaptureKind::RangeSelection {
-                        path: path.clone(),
-                        chain: chain.clone(),
-                        allow_integer: !destructured,
-                    },
-                };
-                if !capture
-                    .conjunction
-                    .iter()
-                    .any(|p| matches!(p, Predicate::False))
-                    && !self.fail_conditions.contains(&capture)
-                {
-                    self.fail_conditions.push(capture);
-                }
-                prior_falsy.push(Predicate::truthy_path(path.clone()).negated());
-            }
-        }
+        self.record_selection_range_captures(iterable_value.as_ref(), destructured);
         let mut own = Vec::new();
         let mut extra = Contributions::default();
         for path in &source_paths {
@@ -1129,9 +1085,9 @@ impl Interpreter<'_> {
                     destructured || input_identity_path.as_deref() == Some(path.as_str());
                 if !self.helper_scope || direct_range_of_path {
                     let guard = Guard::Range { path: path.clone() };
-                    self.push_read(path, std::slice::from_ref(&guard));
+                    self.push_control_read(path, std::slice::from_ref(&guard));
                 } else {
-                    self.push_read(path, &[]);
+                    self.push_control_read(path, &[]);
                 }
             }
             if derived_range_condition.is_none() {

@@ -6,11 +6,6 @@
           {
             "path": "affinity",
             "type": "truthy"
-          },
-          {
-            "path": "affinity",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -29,49 +24,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "affinity"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "affinity",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "affinity"
     },
     {
@@ -139,6 +91,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "affinity",
+      "stringified": true,
       "template_supplied_member_keys": [
         "nodeAffinity",
         "podAffinity",
@@ -225,11 +178,6 @@
           {
             "path": "diagnosticMode.enabled",
             "type": "not"
-          },
-          {
-            "path": "args",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -248,53 +196,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "args"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "args",
-            "type": "truthy"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "args"
     },
     {
@@ -366,7 +267,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "args"
+      "source_expr": "args",
+      "stringified": true
     },
     {
       "condition": [
@@ -491,29 +393,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "auth.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.quorum.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "auth.quorum.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -535,80 +415,6 @@
     {
       "condition": [
         []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "auth.client.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "auth.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "auth.client.existingSecret",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "auth.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "auth.client.existingSecret",
-            "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.quorum.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "auth.quorum.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -635,44 +441,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "auth.client.existingSecret"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "auth.client.existingSecret"
     },
     {
@@ -742,7 +510,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "auth.client.existingSecret"
+      "source_expr": "auth.client.existingSecret",
+      "stringified": true
     },
     {
       "condition": [
@@ -797,59 +566,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "auth.quorum.enabled",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "auth.client.existingSecret",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "auth.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "auth.quorum.existingSecret",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.quorum.enabled",
-                  "type": "truthy"
-                },
-                {
-                  "path": "tls.quorum.passwordsSecretName",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -865,46 +582,12 @@
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
       ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "auth.quorum.enabled"
     },
     {
       "condition": [
-        [
-          {
-            "path": "auth.quorum.enabled",
-            "type": "truthy"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -931,44 +614,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "auth.quorum.existingSecret"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "auth.quorum.existingSecret"
     },
     {
@@ -1038,7 +683,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "auth.quorum.existingSecret"
+      "source_expr": "auth.quorum.existingSecret",
+      "stringified": true
     },
     {
       "condition": [
@@ -1332,11 +978,6 @@
           {
             "path": "diagnosticMode.enabled",
             "type": "not"
-          },
-          {
-            "path": "command",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -1355,53 +996,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "command"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "command",
-            "type": "truthy"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "command"
     },
     {
@@ -1473,7 +1067,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "command"
+      "source_expr": "command",
+      "stringified": true
     },
     {
       "condition": [
@@ -1551,11 +1146,6 @@
           {
             "path": "commonAnnotations",
             "type": "truthy"
-          },
-          {
-            "path": "commonAnnotations",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -1574,49 +1164,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "commonAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "commonAnnotations"
     },
     {
@@ -1681,7 +1228,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "commonAnnotations"
+      "source_expr": "commonAnnotations",
+      "stringified": true
     },
     {
       "condition": [
@@ -1752,11 +1300,6 @@
           {
             "path": "commonLabels",
             "type": "truthy"
-          },
-          {
-            "path": "commonLabels",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -1775,49 +1318,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "commonLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "commonLabels"
     },
     {
@@ -1965,21 +1465,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "configuration",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "configuration",
-              "existingConfigmap"
-            ],
-            "type": "or"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -1995,36 +1481,7 @@
           "template_path": "charts/signoz-signoz/charts/clickhouse/charts/zookeeper/templates/_helpers.tpl"
         }
       ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "configuration"
     },
     {
@@ -2864,36 +2321,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "containerSecurityContext.enabled"
     },
     {
@@ -2909,7 +2337,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
@@ -2953,11 +2381,6 @@
           {
             "path": "diagnosticMode.enabled",
             "type": "not"
-          },
-          {
-            "path": "customLivenessProbe",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -2976,53 +2399,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "customLivenessProbe"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "customLivenessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "customLivenessProbe"
     },
     {
@@ -3095,6 +2471,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "customLivenessProbe",
+      "stringified": true,
       "template_supplied_member_keys": [
         "exec"
       ]
@@ -3182,11 +2559,6 @@
           {
             "path": "diagnosticMode.enabled",
             "type": "not"
-          },
-          {
-            "path": "customReadinessProbe",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -3205,53 +2577,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "customReadinessProbe"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "customReadinessProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "customReadinessProbe"
     },
     {
@@ -3324,6 +2649,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "customReadinessProbe",
+      "stringified": true,
       "template_supplied_member_keys": [
         "exec"
       ]
@@ -3411,11 +2737,6 @@
           {
             "path": "diagnosticMode.enabled",
             "type": "not"
-          },
-          {
-            "path": "customStartupProbe",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -3434,53 +2755,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "customStartupProbe"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "customStartupProbe",
-            "type": "truthy"
-          },
-          {
-            "path": "diagnosticMode.enabled",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "customStartupProbe"
     },
     {
@@ -3553,6 +2827,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "customStartupProbe",
+      "stringified": true,
       "template_supplied_member_keys": [
         "tcpSocket"
       ]
@@ -3640,6 +2915,28 @@
         ]
       ],
       "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "dataLogDir"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "dataLogDir",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Serialized",
       "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
@@ -3923,7 +3220,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "diagnosticMode.args"
+      "source_expr": "diagnosticMode.args",
+      "stringified": true
     },
     {
       "condition": [
@@ -4087,7 +3385,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "diagnosticMode.command"
+      "source_expr": "diagnosticMode.command",
+      "stringified": true
     },
     {
       "condition": [
@@ -4161,86 +3460,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "diagnosticMode.enabled"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image.debug",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "diagnosticMode.enabled"
     },
     {
@@ -4272,44 +3492,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "existingConfigmap"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "existingConfigmap"
     },
     {
@@ -4373,7 +3555,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "existingConfigmap"
+      "source_expr": "existingConfigmap",
+      "stringified": true
     },
     {
       "condition": [
@@ -4381,11 +3564,6 @@
           {
             "path": "extraEnvVars",
             "type": "truthy"
-          },
-          {
-            "path": "extraEnvVars",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -4404,49 +3582,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "extraEnvVars"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnvVars",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "extraEnvVars"
     },
     {
@@ -4588,11 +3723,15 @@
           {
             "path": "extraEnvVarsCM",
             "type": "truthy"
-          },
+          }
+        ],
+        [
           {
-            "path": "extraEnvVarsCM",
-            "schema_type": "string",
-            "type": "type_is"
+            "paths": [
+              "extraEnvVarsCM",
+              "extraEnvVarsSecret"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -4611,58 +3750,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "extraEnvVarsCM"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnvVarsCM",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "extraEnvVarsCM"
     },
     {
@@ -4732,7 +3819,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "extraEnvVarsCM"
+      "source_expr": "extraEnvVarsCM",
+      "stringified": true
     },
     {
       "condition": [
@@ -4808,11 +3896,15 @@
           {
             "path": "extraEnvVarsSecret",
             "type": "truthy"
-          },
+          }
+        ],
+        [
           {
-            "path": "extraEnvVarsSecret",
-            "schema_type": "string",
-            "type": "type_is"
+            "paths": [
+              "extraEnvVarsCM",
+              "extraEnvVarsSecret"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -4831,58 +3923,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "extraEnvVarsSecret"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraEnvVarsSecret",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "paths": [
-              "extraEnvVarsCM",
-              "extraEnvVarsSecret"
-            ],
-            "type": "or"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "extraEnvVarsSecret"
     },
     {
@@ -4952,7 +3992,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "extraEnvVarsSecret"
+      "source_expr": "extraEnvVarsSecret",
+      "stringified": true
     },
     {
       "condition": [
@@ -5028,11 +4069,6 @@
           {
             "path": "extraVolumeMounts",
             "type": "truthy"
-          },
-          {
-            "path": "extraVolumeMounts",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -5051,49 +4087,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "extraVolumeMounts"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraVolumeMounts",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "extraVolumeMounts"
     },
     {
@@ -5235,11 +4228,6 @@
           {
             "path": "extraVolumes",
             "type": "truthy"
-          },
-          {
-            "path": "extraVolumes",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -5258,49 +4246,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "extraVolumes"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "extraVolumes",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "extraVolumes"
     },
     {
@@ -5691,7 +4636,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -5750,7 +4696,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -5817,7 +4764,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -5884,7 +4832,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -6099,7 +5048,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -6226,7 +5176,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -6299,7 +5250,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -6404,7 +5356,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "fullnameOverride"
+      "source_expr": "fullnameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -6645,56 +5598,12 @@
       "condition": [
         [
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "path": "global",
+            "type": "truthy"
           },
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
+            "path": "global.imagePullSecrets",
+            "type": "range"
           },
           {
             "path": "global.imagePullSecrets.*",
@@ -6977,7 +5886,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "global.imageRegistry"
+      "source_expr": "global.imageRegistry",
+      "stringified": true
     },
     {
       "condition": [
@@ -7087,7 +5997,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "global.imageRegistry"
+      "source_expr": "global.imageRegistry",
+      "stringified": true
     },
     {
       "condition": [
@@ -7313,59 +6224,47 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.storageClass",
-                  "type": "not_eq",
-                  "value": "-"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
+                },
                 {
                   "path": "global.storageClass",
                   "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ],
               [
                 {
                   "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
                   "type": "not"
-                }
-              ],
-              [
+                },
                 {
                   "path": "persistence.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
+              ],
               [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                },
                 {
                   "path": "global",
                   "type": "not"
-                }
-              ],
-              [
+                },
                 {
-                  "path": "global.storageClass",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.storageClass",
+                  "path": "persistence.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
@@ -7414,59 +6313,47 @@
                 {
                   "path": "global",
                   "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "persistence.storageClass",
-                  "type": "not_eq",
-                  "value": "-"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
+                },
                 {
                   "path": "global.storageClass",
                   "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ],
               [
                 {
                   "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
                   "type": "not"
-                }
-              ],
-              [
+                },
                 {
                   "path": "persistence.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
+              ],
               [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                },
                 {
                   "path": "global",
                   "type": "not"
-                }
-              ],
-              [
+                },
                 {
-                  "path": "global.storageClass",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.storageClass",
+                  "path": "persistence.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
@@ -7596,11 +6483,6 @@
           {
             "path": "hostAliases",
             "type": "truthy"
-          },
-          {
-            "path": "hostAliases",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -7619,49 +6501,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "hostAliases"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "hostAliases",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "hostAliases"
     },
     {
@@ -7728,7 +6567,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "hostAliases"
+      "source_expr": "hostAliases",
+      "stringified": true
     },
     {
       "condition": [
@@ -7825,56 +6665,6 @@
       ],
       "resource": null,
       "source_expr": "image"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "image.debug",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "image.debug"
     },
     {
       "condition": [
@@ -8056,7 +6846,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.digest"
+      "source_expr": "image.digest",
+      "stringified": true
     },
     {
       "condition": [
@@ -8216,7 +7007,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.digest"
+      "source_expr": "image.digest",
+      "stringified": true
     },
     {
       "condition": [
@@ -8391,59 +7183,11 @@
       "condition": [
         [
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
             "path": "global.imagePullSecrets.*",
+            "type": "range"
+          },
+          {
+            "path": "image.pullSecrets",
             "type": "range"
           },
           {
@@ -8652,7 +7396,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.registry"
+      "source_expr": "image.registry",
+      "stringified": true
     },
     {
       "condition": [
@@ -8756,7 +7501,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.registry"
+      "source_expr": "image.registry",
+      "stringified": true
     },
     {
       "condition": [
@@ -8894,7 +7640,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.repository"
+      "source_expr": "image.repository",
+      "stringified": true
     },
     {
       "condition": [
@@ -9046,7 +7793,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.repository"
+      "source_expr": "image.repository",
+      "stringified": true
     },
     {
       "condition": [
@@ -9184,7 +7932,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.tag"
+      "source_expr": "image.tag",
+      "stringified": true
     },
     {
       "condition": [
@@ -9336,7 +8085,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "image.tag"
+      "source_expr": "image.tag",
+      "stringified": true
     },
     {
       "condition": [
@@ -9344,11 +8094,6 @@
           {
             "path": "initContainers",
             "type": "truthy"
-          },
-          {
-            "path": "initContainers",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -9367,49 +8112,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "initContainers"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "initContainers",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "initContainers"
     },
     {
@@ -9476,7 +8178,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "initContainers"
+      "source_expr": "initContainers",
+      "stringified": true
     },
     {
       "condition": [
@@ -9600,36 +8303,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "jvmFlags"
     },
     {
@@ -9710,11 +8384,6 @@
           {
             "path": "lifecycleHooks",
             "type": "truthy"
-          },
-          {
-            "path": "lifecycleHooks",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -9733,49 +8402,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "lifecycleHooks"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "lifecycleHooks",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "lifecycleHooks"
     },
     {
@@ -9843,7 +8469,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "lifecycleHooks"
+      "source_expr": "lifecycleHooks",
+      "stringified": true
     },
     {
       "condition": [
@@ -10024,6 +8651,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "livenessProbe",
+      "stringified": true,
       "template_supplied_member_keys": [
         "exec"
       ]
@@ -10124,36 +8752,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "livenessProbe.enabled"
     },
     {
@@ -10465,36 +9064,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "metrics.enabled"
     },
     {
@@ -10728,7 +9298,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -10794,7 +9365,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -10868,7 +9440,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -10934,7 +9507,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11009,7 +9583,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11118,7 +9693,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11231,7 +9807,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11340,7 +9917,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11453,7 +10031,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11527,7 +10106,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11789,7 +10369,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -11931,7 +10512,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -12011,7 +10593,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -12131,7 +10714,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nameOverride"
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -12225,7 +10809,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "namespaceOverride"
+      "source_expr": "namespaceOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -12291,7 +10876,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "namespaceOverride"
+      "source_expr": "namespaceOverride",
+      "stringified": true
     },
     {
       "condition": [
@@ -12371,7 +10957,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nodeAffinityPreset.key"
+      "source_expr": "nodeAffinityPreset.key",
+      "stringified": true
     },
     {
       "condition": [
@@ -12456,7 +11043,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nodeAffinityPreset.key"
+      "source_expr": "nodeAffinityPreset.key",
+      "stringified": true
     },
     {
       "condition": [
@@ -12859,11 +11447,6 @@
           {
             "path": "nodeSelector",
             "type": "truthy"
-          },
-          {
-            "path": "nodeSelector",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -12882,49 +11465,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "nodeSelector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nodeSelector",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "nodeSelector"
     },
     {
@@ -12991,7 +11531,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "nodeSelector"
+      "source_expr": "nodeSelector",
+      "stringified": true
     },
     {
       "condition": [
@@ -13293,11 +11834,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "path": "persistence.annotations",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ],
         [
@@ -13312,11 +11848,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "path": "persistence.annotations",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -13335,75 +11866,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "persistence.annotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "dataLogDir",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.annotations",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.dataLogDir.existingClaim",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "persistence.annotations",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.existingClaim",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "persistence.annotations"
     },
     {
@@ -13535,7 +11997,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "persistence.annotations"
+      "source_expr": "persistence.annotations",
+      "stringified": true
     },
     {
       "condition": [
@@ -13715,36 +12178,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "persistence.dataLogDir.existingClaim"
     },
     {
@@ -13820,11 +12254,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "path": "persistence.dataLogDir.selector",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -13843,61 +12272,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "persistence.dataLogDir.selector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "dataLogDir",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.dataLogDir.selector",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.dataLogDir.existingClaim",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "persistence.dataLogDir.selector"
     },
     {
@@ -13993,7 +12367,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "persistence.dataLogDir.selector"
+      "source_expr": "persistence.dataLogDir.selector",
+      "stringified": true
     },
     {
       "condition": [
@@ -14226,36 +12601,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "persistence.enabled"
     },
     {
@@ -14269,36 +12615,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "persistence.existingClaim"
     },
     {
@@ -14374,11 +12691,6 @@
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
-          },
-          {
-            "path": "persistence.labels",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ],
         [
@@ -14393,11 +12705,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "path": "persistence.labels",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -14416,75 +12723,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "persistence.labels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "dataLogDir",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.labels",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.dataLogDir.existingClaim",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.labels",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.existingClaim",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "persistence.labels"
     },
     {
@@ -14616,7 +12854,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "persistence.labels"
+      "source_expr": "persistence.labels",
+      "stringified": true
     },
     {
       "condition": [
@@ -14762,11 +13001,6 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
-          },
-          {
-            "path": "persistence.selector",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -14785,57 +13019,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "persistence.selector"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.selector",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.existingClaim",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "persistence.selector"
     },
     {
@@ -14927,7 +13110,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "persistence.selector"
+      "source_expr": "persistence.selector",
+      "stringified": true
     },
     {
       "condition": [
@@ -15175,94 +13359,52 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global",
-              "persistence.storageClass"
-            ],
-            "type": "or"
-          },
-          {
             "alternatives": [
               [
                 {
                   "path": "global",
                   "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ],
               [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "not"
+                },
                 {
                   "path": "persistence.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.storageClass",
-                  "type": "truthy"
-                }
               ],
               [
                 {
                   "path": "persistence.storageClass",
                   "type": "truthy"
-                }
-              ],
-              [
+                },
                 {
                   "path": "global",
                   "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.storageClass",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
+                },
                 {
                   "path": "persistence.storageClass",
-                  "type": "not_eq",
-                  "value": "-"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.storageClass",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
@@ -15298,94 +13440,52 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global",
-              "persistence.storageClass"
-            ],
-            "type": "or"
-          },
-          {
             "alternatives": [
               [
                 {
                   "path": "global",
                   "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "not_eq",
+                  "value": "-"
                 }
               ],
               [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "not"
+                },
                 {
                   "path": "persistence.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.storageClass",
-                  "type": "truthy"
-                }
               ],
               [
                 {
                   "path": "persistence.storageClass",
                   "type": "truthy"
-                }
-              ],
-              [
+                },
                 {
                   "path": "global",
                   "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global.storageClass",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
+                },
                 {
                   "path": "persistence.storageClass",
-                  "type": "not_eq",
-                  "value": "-"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.storageClass",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.storageClass",
                   "type": "not_eq",
                   "value": "-"
                 }
@@ -15516,11 +13616,6 @@
           {
             "path": "podAnnotations",
             "type": "truthy"
-          },
-          {
-            "path": "podAnnotations",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -15539,49 +13634,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "podAnnotations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podAnnotations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "podAnnotations"
     },
     {
@@ -15778,11 +13830,6 @@
           {
             "path": "podLabels",
             "type": "truthy"
-          },
-          {
-            "path": "podLabels",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -15801,49 +13848,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "podLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "podLabels",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "podLabels"
     },
     {
@@ -16094,36 +14098,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "podSecurityContext.enabled"
     },
     {
@@ -16139,7 +14114,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
@@ -16230,36 +14205,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "priorityClassName"
     },
     {
@@ -16423,6 +14369,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "readinessProbe",
+      "stringified": true,
       "template_supplied_member_keys": [
         "exec"
       ]
@@ -16523,36 +14470,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "readinessProbe.enabled"
     },
     {
@@ -16613,6 +14531,20 @@
         "kind": "StatefulSet"
       },
       "source_expr": "readinessProbe.probeCommandTimeout"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "replicaCount",
+            "type": "range"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "resource": null,
+      "source_expr": "replicaCount"
     },
     {
       "condition": [
@@ -16704,36 +14636,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "resources"
     },
     {
@@ -16796,36 +14699,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "schedulerName"
     },
     {
@@ -16887,36 +14761,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "service.disableBaseClientPort"
     },
     {
@@ -17335,7 +15180,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "serviceAccount.name"
+      "source_expr": "serviceAccount.name",
+      "stringified": true
     },
     {
       "condition": [
@@ -17343,11 +15189,6 @@
           {
             "path": "sidecars",
             "type": "truthy"
-          },
-          {
-            "path": "sidecars",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -17366,49 +15207,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "sidecars"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "sidecars",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "sidecars"
     },
     {
@@ -17701,6 +15499,7 @@
         "kind": "StatefulSet"
       },
       "source_expr": "startupProbe",
+      "stringified": true,
       "template_supplied_member_keys": [
         "tcpSocket"
       ]
@@ -17801,36 +15600,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "startupProbe.enabled"
     },
     {
@@ -17978,12 +15748,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "tls.client.autoGenerated",
-            "type": "truthy"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -18005,103 +15770,6 @@
     {
       "condition": [
         []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "tls.client.autoGenerated"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "tls.client.autoGenerated",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.client.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "auth.client.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.quorum.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "auth.quorum.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -18128,44 +15796,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "tls.client.enabled"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "tls.client.enabled"
     },
     {
@@ -18221,30 +15851,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "tls.client.autoGenerated",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.existingSecret",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.client.existingSecret",
-            "type": "truthy"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -18271,44 +15878,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "tls.client.existingSecret"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "tls.client.existingSecret"
     },
     {
@@ -18376,7 +15945,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.existingSecret"
+      "source_expr": "tls.client.existingSecret",
+      "stringified": true
     },
     {
       "condition": [
@@ -18397,36 +15967,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "tls.client.keystorePassword"
     },
     {
@@ -18608,7 +16149,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.passwordsSecretKeystoreKey"
+      "source_expr": "tls.client.passwordsSecretKeystoreKey",
+      "stringified": true
     },
     {
       "condition": [
@@ -18683,29 +16225,12 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.passwordsSecretKeystoreKey"
+      "source_expr": "tls.client.passwordsSecretKeystoreKey",
+      "stringified": true
     },
     {
       "condition": [
-        [
-          {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "tls.client.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -18756,44 +16281,6 @@
     },
     {
       "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "tls.client.passwordsSecretName"
-    },
-    {
-      "condition": [
         [
           {
             "path": "tls.client.enabled",
@@ -18859,7 +16346,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.passwordsSecretName"
+      "source_expr": "tls.client.passwordsSecretName",
+      "stringified": true
     },
     {
       "condition": [
@@ -18931,7 +16419,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.passwordsSecretName"
+      "source_expr": "tls.client.passwordsSecretName",
+      "stringified": true
     },
     {
       "condition": [
@@ -19054,7 +16543,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.passwordsSecretTruststoreKey"
+      "source_expr": "tls.client.passwordsSecretTruststoreKey",
+      "stringified": true
     },
     {
       "condition": [
@@ -19129,7 +16619,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.client.passwordsSecretTruststoreKey"
+      "source_expr": "tls.client.passwordsSecretTruststoreKey",
+      "stringified": true
     },
     {
       "condition": [
@@ -19150,36 +16641,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "tls.client.truststorePassword"
     },
     {
@@ -19286,35 +16748,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "tls.quorum.autoGenerated",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.autoGenerated",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -19336,143 +16770,6 @@
     {
       "condition": [
         []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "tls.quorum.autoGenerated"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "tls.quorum.autoGenerated",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.autoGenerated",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "not"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.client.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "auth.client.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "auth.quorum.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "auth.quorum.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.passwordsSecretName",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ]
       ],
       "kind": "Scalar",
       "path": [],
@@ -19499,44 +16796,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "tls.quorum.enabled"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "tls.quorum.enabled"
     },
     {
@@ -19592,53 +16851,7 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "tls.quorum.autoGenerated",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.existingSecret",
-            "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "tls.client.existingSecret",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.autoGenerated",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "tls.client.enabled",
-                  "type": "not"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "tls.quorum.existingSecret",
-            "type": "truthy"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -19665,44 +16878,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "tls.quorum.existingSecret"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "tls.quorum.existingSecret"
     },
     {
@@ -19770,7 +16945,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.existingSecret"
+      "source_expr": "tls.quorum.existingSecret",
+      "stringified": true
     },
     {
       "condition": [
@@ -19791,36 +16967,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "tls.quorum.keystorePassword"
     },
     {
@@ -20002,7 +17149,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.passwordsSecretKeystoreKey"
+      "source_expr": "tls.quorum.passwordsSecretKeystoreKey",
+      "stringified": true
     },
     {
       "condition": [
@@ -20077,29 +17225,12 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.passwordsSecretKeystoreKey"
+      "source_expr": "tls.quorum.passwordsSecretKeystoreKey",
+      "stringified": true
     },
     {
       "condition": [
-        [
-          {
-            "path": "tls.quorum.enabled",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
-            "path": "tls.quorum.passwordsSecretName",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ]
+        []
       ],
       "kind": "Scalar",
       "path": [],
@@ -20150,44 +17281,6 @@
     },
     {
       "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "tls.quorum.passwordsSecretName"
-    },
-    {
-      "condition": [
         [
           {
             "path": "tls.quorum.enabled",
@@ -20253,7 +17346,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.passwordsSecretName"
+      "source_expr": "tls.quorum.passwordsSecretName",
+      "stringified": true
     },
     {
       "condition": [
@@ -20325,7 +17419,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.passwordsSecretName"
+      "source_expr": "tls.quorum.passwordsSecretName",
+      "stringified": true
     },
     {
       "condition": [
@@ -20448,7 +17543,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.passwordsSecretTruststoreKey"
+      "source_expr": "tls.quorum.passwordsSecretTruststoreKey",
+      "stringified": true
     },
     {
       "condition": [
@@ -20523,7 +17619,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tls.quorum.passwordsSecretTruststoreKey"
+      "source_expr": "tls.quorum.passwordsSecretTruststoreKey",
+      "stringified": true
     },
     {
       "condition": [
@@ -20544,36 +17641,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "tls.quorum.truststorePassword"
     },
     {
@@ -20645,36 +17713,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "tls.resources"
     },
     {
@@ -20739,11 +17778,6 @@
           {
             "path": "tolerations",
             "type": "truthy"
-          },
-          {
-            "path": "tolerations",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -20762,49 +17796,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "tolerations"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "tolerations",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "tolerations"
     },
     {
@@ -20871,7 +17862,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "tolerations"
+      "source_expr": "tolerations",
+      "stringified": true
     },
     {
       "condition": [
@@ -20944,11 +17936,6 @@
           {
             "path": "topologySpreadConstraints",
             "type": "truthy"
-          },
-          {
-            "path": "topologySpreadConstraints",
-            "schema_type": "string",
-            "type": "type_is"
           }
         ]
       ],
@@ -20967,49 +17954,6 @@
         }
       ],
       "resource": null,
-      "source_expr": "topologySpreadConstraints"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "topologySpreadConstraints",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
       "source_expr": "topologySpreadConstraints"
     },
     {
@@ -21076,7 +18020,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "topologySpreadConstraints"
+      "source_expr": "topologySpreadConstraints",
+      "stringified": true
     },
     {
       "condition": [
@@ -21154,36 +18099,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "updateStrategy"
     },
     {
@@ -21311,36 +18227,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "volumePermissions.containerSecurityContext.enabled"
     },
     {
@@ -21358,36 +18245,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "volumePermissions.enabled"
     },
     {
@@ -21625,7 +18483,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "volumePermissions.image.digest"
+      "source_expr": "volumePermissions.image.digest",
+      "stringified": true
     },
     {
       "condition": [
@@ -21764,63 +18623,15 @@
       "condition": [
         [
           {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "truthy"
-                }
-              ],
-              [
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "global",
-                  "type": "not"
-                }
-              ],
-              [
-                {
-                  "path": "global.imagePullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "image.pullSecrets",
-                  "type": "range"
-                }
-              ],
-              [
-                {
-                  "path": "volumePermissions.image.pullSecrets",
-                  "type": "range"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
             "path": "global.imagePullSecrets.*",
             "type": "range"
           },
           {
             "path": "image.pullSecrets.*",
+            "type": "range"
+          },
+          {
+            "path": "volumePermissions.image.pullSecrets",
             "type": "range"
           },
           {
@@ -22041,7 +18852,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "volumePermissions.image.registry"
+      "source_expr": "volumePermissions.image.registry",
+      "stringified": true
     },
     {
       "condition": [
@@ -22195,7 +19007,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "volumePermissions.image.repository"
+      "source_expr": "volumePermissions.image.repository",
+      "stringified": true
     },
     {
       "condition": [
@@ -22349,7 +19162,8 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "volumePermissions.image.tag"
+      "source_expr": "volumePermissions.image.tag",
+      "stringified": true
     },
     {
       "condition": [
@@ -22370,36 +19184,7 @@
       ],
       "kind": "Scalar",
       "path": [],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
+      "resource": null,
       "source_expr": "volumePermissions.resources"
     },
     {
