@@ -3,6 +3,7 @@
 mod base_schema;
 mod condition_encoding;
 mod emission_policy;
+mod emission_report;
 mod foreign_schema;
 mod merge;
 mod overlay_lowering;
@@ -30,8 +31,11 @@ use base_schema::{ConditionalTargetIndex, classify_base};
 use condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
+use emission_policy::EmissionPolicy;
+use emission_report::FactRecord;
 use overlay_lowering::{
-    append_conditional_schemas, append_terminal_clauses, collect_conditional_schemas,
+    LoweredConjunct, append_selected_constraints, append_terminal_clauses,
+    collect_conditional_schemas, prepare_conditional_hosts,
 };
 use path_resolver::PathSchemaResolver;
 use provider_definitions::{
@@ -39,7 +43,11 @@ use provider_definitions::{
 };
 use schema_tree::{SchemaDocument, draft07_root_document};
 
-pub use emission_policy::SchemaProfile;
+pub use emission_policy::{EmissionClassKind, EmissionOrigin, SchemaProfile};
+pub use emission_report::{
+    CanonicalizationCounts, CarrierCounts, EmissionReport, FactCounts, MandatoryOutcomes,
+    SelectionDifference, SelectionDifferenceDirection,
+};
 
 /// Inputs for JSON Schema generation from the current contract schema signals.
 ///
@@ -159,6 +167,26 @@ impl<'a> ValuesSchemaInput<'a> {
     reason = "the input is a Copy bundle of borrows built by chained `with_*` calls, and generation runs once per chart"
 )]
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
+    generate_values_schema_with_report(input).0
+}
+
+/// Generates a JSON Schema and the fact-level accounting from the same emitter run.
+///
+/// The report describes generator emission before caller-owned overrides and
+/// output-pipeline transforms.
+#[tracing::instrument(skip_all)]
+#[expect(
+    clippy::large_types_passed_by_value,
+    reason = "the input is a Copy bundle of borrows built by chained `with_*` calls, and generation runs once per chart"
+)]
+pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> (Value, EmissionReport) {
+    generate_values_schema_through(&input, CompletionPass::Descriptions)
+}
+
+fn generate_values_schema_through(
+    input: &ValuesSchemaInput<'_>,
+    completion_pass: CompletionPass,
+) -> (Value, EmissionReport) {
     let empty_values_descriptions = BTreeMap::new();
     let values_descriptions = input
         .values_descriptions
@@ -201,7 +229,7 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         input.contract_schema_signals.values_default_sources(),
     );
 
-    let root_schema = build_root_schema(
+    let (root_schema, report) = build_root_schema(
         input.contract_schema_signals,
         RootValuesDocuments {
             composed: &values_yaml_doc,
@@ -212,9 +240,10 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         values_descriptions,
         input.provider,
         input.profile,
+        completion_pass,
     );
 
-    draft07_root_document(root_schema)
+    (draft07_root_document(root_schema), report)
 }
 
 /// The domain Go's `range` iterates without aborting: collections and nil
@@ -243,6 +272,18 @@ struct RootValuesDocuments<'a> {
     dependency_refill: &'a YamlValue,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CompletionPass {
+    Projected,
+    ValuesDefaultBackfill,
+    OpenGlobal,
+    DeclaredDefaults,
+    RepeatedProviderPayloads,
+    SharedDefinitions,
+    ProgramWrappers,
+    Descriptions,
+}
+
 #[tracing::instrument(skip_all)]
 #[expect(
     clippy::too_many_lines,
@@ -254,7 +295,8 @@ fn build_root_schema(
     values_descriptions: &BTreeMap<String, String>,
     provider: &dyn ResourceSchemaOracle,
     profile: SchemaProfile,
-) -> Value {
+    completion_pass: CompletionPass,
+) -> (Value, EmissionReport) {
     let RootValuesDocuments {
         composed: values_yaml_doc,
         input_defaults: input_defaults_doc,
@@ -269,7 +311,7 @@ fn build_root_schema(
         provider,
     );
     let mut resolved_paths = path_resolver.resolve_all();
-    let mut conditional_schemas = collect_conditional_schemas(
+    let all_conditional_schemas = collect_conditional_schemas(
         &resolved_paths,
         contract_schema_signals,
         values_yaml_doc,
@@ -279,10 +321,49 @@ fn build_root_schema(
     // Keep conditional targets in base classification even when their arms
     // are omitted. This makes the reduced document the full document minus
     // constraints instead of reclassifying guarded evidence as unconditional.
-    let conditional_targets = ConditionalTargetIndex::from_conditionals(&conditional_schemas);
-    if profile == SchemaProfile::Lean {
-        conditional_schemas.clear();
+    let conditional_targets = ConditionalTargetIndex::from_conditionals(&all_conditional_schemas);
+    let policy = EmissionPolicy::for_profile(profile);
+    debug_assert!(policy.is_valid());
+    let mut report = EmissionReport::default();
+    let mut conditional_schemas = Vec::new();
+    let mut fact_index = 0;
+    for conjunct in all_conditional_schemas {
+        let selected = profile == SchemaProfile::Full;
+        let projected_selected = policy.selects(&conjunct.class);
+        report.record_fact(FactRecord {
+            fact_index,
+            class: &conjunct.class,
+            origin: conjunct.origin,
+            target_value_path: &conjunct.carrier.target_value_path,
+            schema: &conjunct.schema,
+            selected,
+            projected_selected,
+        });
+        fact_index += 1;
+        if selected {
+            conditional_schemas.push(conjunct);
+        }
     }
+    let terminal_schemas = contract_schema_signals
+        .terminal_clauses()
+        .iter()
+        .map(|guards| LoweredConjunct::terminal(guards.clone()))
+        .filter(|conjunct| {
+            let selected = profile == SchemaProfile::Full;
+            let projected_selected = policy.selects(&conjunct.class);
+            report.record_fact(FactRecord {
+                fact_index,
+                class: &conjunct.class,
+                origin: conjunct.origin,
+                target_value_path: &conjunct.carrier.target_value_path,
+                schema: &conjunct.schema,
+                selected,
+                projected_selected,
+            });
+            fact_index += 1;
+            selected
+        })
+        .collect::<Vec<_>>();
     let provider_definitions = extract_provider_definitions(
         &mut resolved_paths,
         &mut conditional_schemas,
@@ -375,20 +456,30 @@ fn build_root_schema(
         dependency_refill: dependency_refill_doc,
         dependency_roots: &dependency_roots,
     };
-    append_conditional_schemas(
+    prepare_conditional_hosts(&mut root_schema, &mut conditional_schemas, &mut report);
+    append_selected_constraints(
         &mut root_schema,
         conditional_schemas,
         values_yaml_doc,
         absence,
+        &mut report,
     );
-    if profile == SchemaProfile::Full {
+    if !terminal_schemas.is_empty() {
+        let terminal_clauses = terminal_schemas
+            .iter()
+            .filter_map(LoweredConjunct::terminal_guards)
+            .map(<[helm_schema_core::ConditionalGuard]>::to_vec)
+            .collect::<Vec<_>>();
         append_terminal_clauses(
             &mut root_schema,
-            contract_schema_signals.terminal_clauses(),
+            &terminal_clauses,
             contract_schema_signals.values_default_sources(),
             values_yaml_doc,
             absence,
         );
+    }
+    if completion_pass == CompletionPass::Projected {
+        return finish_build(root_schema.into_value(), report);
     }
     // A serialized path's schema is deliberately unconstrained; the
     // declared-default filler must keep the slot present without re-typing
@@ -424,7 +515,13 @@ fn build_root_schema(
             &default_fill_skip_paths,
         );
     }
+    if completion_pass == CompletionPass::ValuesDefaultBackfill {
+        return finish_build(root_schema.into_value(), report);
+    }
     root_schema.open_helm_global_namespace();
+    if completion_pass == CompletionPass::OpenGlobal {
+        return finish_build(root_schema.into_value(), report);
+    }
 
     let mut root_schema = root_schema.into_value();
     if let Ok(declared_defaults) = serde_json::to_value(input_defaults_doc)
@@ -434,10 +531,16 @@ fn build_root_schema(
         root_schema =
             resolve_policy::preserve_declared_default_in_schema(root_schema, &declared_defaults);
     }
+    if completion_pass == CompletionPass::DeclaredDefaults {
+        return finish_build(root_schema, report);
+    }
     let mut provider_definitions = provider_definitions;
     {
         let _span = tracing::info_span!("extract_repeated_provider_payloads").entered();
         provider_definitions.extend(extract_repeated_provider_payloads(&mut root_schema));
+    }
+    if completion_pass == CompletionPass::RepeatedProviderPayloads {
+        return finish_build(root_schema, report);
     }
     let truthy_span = tracing::info_span!("helm_truthy_scan").entered();
     if value_references_helm_truthy(&root_schema)
@@ -467,6 +570,9 @@ fn build_root_schema(
     }
     drop(truthy_span);
     insert_definitions_into_root(&mut root_schema, provider_definitions);
+    if completion_pass == CompletionPass::SharedDefinitions {
+        return finish_build(root_schema, report);
+    }
     {
         let _span = tracing::info_span!("apply_program_wrappers").entered();
         program_wrapper::apply_program_wrapper_alternatives(
@@ -475,12 +581,62 @@ fn build_root_schema(
             contract_schema_signals.values_program_wrapper_exclusions(),
         );
     }
+    if completion_pass == CompletionPass::ProgramWrappers {
+        return finish_build(root_schema, report);
+    }
     {
         let _span = tracing::info_span!("apply_values_descriptions").entered();
         schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);
     }
     drop(fill_span);
-    root_schema
+    finish_build(root_schema, report)
+}
+
+fn finish_build(schema: Value, mut report: EmissionReport) -> (Value, EmissionReport) {
+    report.carriers = count_emitted_carriers(&schema, report.carriers.grouping_fan_in);
+    (schema, report)
+}
+
+fn count_emitted_carriers(
+    schema: &Value,
+    grouping_fan_in: usize,
+) -> emission_report::CarrierCounts {
+    fn visit(schema: &Value, path_depth: usize, counts: &mut emission_report::CarrierCounts) {
+        let Some(object) = schema.as_object() else {
+            if let Some(items) = schema.as_array() {
+                for item in items {
+                    visit(item, path_depth, counts);
+                }
+            }
+            return;
+        };
+        if object.contains_key("if") && object.contains_key("then") {
+            counts.condition_nodes += 1;
+            if path_depth == 0 {
+                counts.root += 1;
+            } else {
+                counts.local += 1;
+            }
+        }
+        for (key, child) in object {
+            let child_depth = if matches!(
+                key.as_str(),
+                "properties" | "items" | "additionalProperties"
+            ) {
+                path_depth + 1
+            } else {
+                path_depth
+            };
+            visit(child, child_depth, counts);
+        }
+    }
+
+    let mut counts = emission_report::CarrierCounts {
+        grouping_fan_in,
+        ..emission_report::CarrierCounts::default()
+    };
+    visit(schema, 0, &mut counts);
+    counts
 }
 
 pub(crate) use helm_schema_core::split_value_path;

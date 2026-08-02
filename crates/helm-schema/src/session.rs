@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use helm_schema_core::{
     ConditionalGuard, ContractSchemaSignals, ContractUse, ContractValuePathFacts, MetadataFieldKind,
 };
-use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
+use helm_schema_gen::{ValuesSchemaInput, generate_values_schema_with_report};
 use helm_schema_ir::{ContractDocument, ContractIr, FinalizedContract};
 use helm_schema_k8s::{Diagnostic, DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
@@ -250,7 +250,10 @@ impl AnalysisSession {
                     &self.prepared()?.explicit_value_paths,
                 );
             }
-            Ok(GeneratedSchema { schema })
+            Ok(GeneratedSchema {
+                schema,
+                emission_report: resolved.emission_report.clone(),
+            })
         })?)
         .clone())
     }
@@ -380,7 +383,7 @@ impl AnalysisSession {
             let provider =
                 provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
 
-            let schema = generate_values_schema(
+            let (schema, emission_report) = generate_values_schema_with_report(
                 ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
                     .with_values_yaml(prepared.values_yaml.as_deref())
                     .with_dependency_values_yaml(prepared.dependency_values_yaml.as_deref())
@@ -392,7 +395,10 @@ impl AnalysisSession {
                     .with_profile(self.opts.profile),
             );
 
-            Ok(ResolvedContract { schema })
+            Ok(ResolvedContract {
+                schema,
+                emission_report,
+            })
         })
     }
 }

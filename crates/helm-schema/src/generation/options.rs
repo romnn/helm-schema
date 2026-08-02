@@ -5,7 +5,7 @@ use vfs::VfsPath;
 
 use crate::provider_builder::ProviderOptions;
 
-pub use helm_schema_gen::SchemaProfile;
+pub use helm_schema_gen::{EmissionReport, SchemaProfile, SelectionDifferenceDirection};
 
 /// Inputs and analysis policy for generating one chart schema.
 #[derive(Debug, Clone)]
@@ -37,6 +37,8 @@ pub struct GenerateOptions {
 pub struct ResolvedContract {
     /// JSON Schema lowered from structural contract evidence.
     pub schema: Value,
+    /// Fact and carrier accounting from schema emission.
+    pub emission_report: EmissionReport,
 }
 
 /// Final schema after optional generation transforms.
@@ -44,4 +46,6 @@ pub struct ResolvedContract {
 pub struct GeneratedSchema {
     /// Final generated JSON Schema.
     pub schema: Value,
+    /// Fact and carrier accounting from schema emission.
+    pub emission_report: EmissionReport,
 }

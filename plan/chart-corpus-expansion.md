@@ -12084,3 +12084,35 @@ The compact description-free anchor outputs measure 3,996,667 bytes / 142,903
 objects for full and 43,626 bytes / 2,166 objects for today's lean. Those
 measurements are a baseline only; the exact-preset validator compile veto is
 measured after the new policy exists in Step 2.
+
+## Emission fact representation (2026-08-02, sixtieth round)
+
+Step 1a replaces the conditional emitter's parallel guard fields with one
+tagged fact representation. `EmissionClass` owns guard scopes and the semantic
+root/local anchor; `LoweredConjunct` carries origin, carrier shape, schema, and
+provider-candidate identity. The total decision table is implemented as the
+private `EmissionPolicy`, including representable unconditional termination,
+but the analyzer still has no `Terminal::Always` producer in this round.
+
+The pre-existing lean gate remains authoritative until Step 2. The standard
+lean decision table runs in shadow mode and the `EmissionReport` records both
+selections plus every disagreement by lowering index, class/origin, target,
+class digest, and payload digest. Exact ordered-set pins register 9 future
+retentions for the controls chart, 4 for the local-kind audit chart, and 6,859
+for the Temporal wrapper. Every difference is projection-only. The controls
+chart's unguarded version-pattern implication is the first Step 2 semantic
+candidate; Helm 4.2.3 exits 1 for `version: v1`, confirming the constraint is
+not a false rejection.
+
+The kind audit proves partitions are not intrinsically root-anchored. A chart
+whose `workload.kind` selects the provider schema for `workload.strategy`
+lowers a true local partition, so arbitrary anchors remain and enabling kind
+partitions is invalid only when both anchor lanes are disabled. The chart's
+Deployment and StatefulSet controls select their respective provider payloads,
+and its defaults render with Helm.
+
+Host preparation and selected-constraint emission are separate phases with
+unchanged ordering. The completion pass list is enumerable, and an exhaustive
+small-domain microchart checks `accepts(full) ⊆ accepts(legacy lean)` after each
+of its eight stages. One clean corpus dump and one clean generator-fixture dump
+remain byte-identical; this representation round has no acceptance flips.

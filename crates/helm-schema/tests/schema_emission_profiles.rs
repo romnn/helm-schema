@@ -2,14 +2,15 @@
 
 use color_eyre::eyre;
 use serde_json::json;
+use test_util::prelude::sim_assert_eq;
 
 #[path = "common/emission_profile_harness.rs"]
 mod harness;
 
 use harness::{
     ContractVerdict, ControlCategory, ProbeInstance, ProfileSchemas, SemanticControl, Transport,
-    generate_profile_schemas, read_json_fixture, read_root_defaults, sparse_override,
-    structural_probe_battery,
+    generate_profile_outputs, generate_profile_schemas, read_json_fixture, read_root_defaults,
+    sparse_override, structural_probe_battery,
 };
 
 #[test]
@@ -35,6 +36,60 @@ fn current_profiles_obey_monotonicity_and_semantic_controls() -> eyre::Result<()
             .map(|(name, instance)| (name.as_str(), instance)),
     )?;
 
+    Ok(())
+}
+
+#[test]
+fn legacy_lean_reports_step_2_projection_differences() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let mut have = Vec::new();
+    for chart in [
+        "schema-emission-controls",
+        "schema-emission-local-kind",
+        "schema-emission-temporal-wrapper",
+    ] {
+        let (full, lean) = generate_profile_outputs(chart)?;
+        eyre::ensure!(
+            full.emission_report.selection_differences.is_empty(),
+            "full has a legacy/projection disagreement for {chart}"
+        );
+        eyre::ensure!(
+            lean.emission_report
+                .selection_differences
+                .iter()
+                .all(|difference| difference.direction
+                    == helm_schema::generation::SelectionDifferenceDirection::ProjectionOnly),
+            "legacy lean retains a fact that the decision-table projection drops for {chart}"
+        );
+        have.push((
+            chart,
+            lean.emission_report.selection_differences.len(),
+            lean.emission_report.selection_differences_sha256(),
+        ));
+    }
+    sim_assert_eq!(
+        have: have,
+        want: vec![
+            (
+                "schema-emission-controls",
+                9,
+                "3594d70cd4304790641f1d5ee12a157da54a9215846bb181260f4f79b6f271e7"
+                    .to_string(),
+            ),
+            (
+                "schema-emission-local-kind",
+                4,
+                "5b51fa618edae0059e8a9dfac20091d7228a4a6b76af01912ce2c6cfa27dd255"
+                    .to_string(),
+            ),
+            (
+                "schema-emission-temporal-wrapper",
+                6_859,
+                "602e49d724de9477fb87081089e29a49e6e28b0b22474dd4ca5e6b93d85c38ae"
+                    .to_string(),
+            ),
+        ]
+    );
     Ok(())
 }
 
@@ -292,5 +347,63 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
             rationale: "today's lean profile drops this dependency-local provider refinement",
         },
     ])?;
+    Ok(())
+}
+
+#[test]
+fn local_kind_partition_is_a_local_policy_fact() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let chart = "schema-emission-local-kind";
+    let defaults = read_root_defaults(chart)?;
+    let (full, lean) = generate_profile_schemas(chart)?;
+    let profiles = ProfileSchemas::compile(&full, &lean, defaults)?;
+    let controls = [
+        SemanticControl {
+            name: "Deployment accepts Deployment strategy",
+            category: ControlCategory::PositiveControl,
+            instance: ProbeInstance::Defaults,
+            transport: Transport::ValuesFileJson,
+            contract: ContractVerdict::Accept,
+            lean_accepts: true,
+            rationale: "the selected provider arm owns the Deployment strategy shape",
+        },
+        SemanticControl {
+            name: "Deployment rejects StatefulSet strategy",
+            category: ControlCategory::RemovedTooth,
+            instance: ProbeInstance::SparseOverride(json!({
+                "workload": {
+                    "kind": "Deployment",
+                    "strategy": { "rollingUpdate": { "partition": 1 } },
+                }
+            })),
+            transport: Transport::ValuesFileJson,
+            contract: ContractVerdict::Reject(
+                "Deployment strategy has no rollingUpdate.partition member",
+            ),
+            lean_accepts: true,
+            rationale: "today's lean profile drops every conditional partition",
+        },
+        SemanticControl {
+            name: "StatefulSet accepts StatefulSet strategy",
+            category: ControlCategory::PositiveControl,
+            instance: ProbeInstance::SparseOverride(json!({
+                "workload": {
+                    "kind": "StatefulSet",
+                    "strategy": { "rollingUpdate": { "partition": 1 } },
+                }
+            })),
+            transport: Transport::ValuesFileJson,
+            contract: ContractVerdict::Accept,
+            lean_accepts: true,
+            rationale: "the adjacent local partition remains renderable",
+        },
+    ];
+
+    profiles.assert_controls(&controls)?;
+    profiles.assert_monotone(
+        controls
+            .iter()
+            .map(|control| (control.name, &control.instance)),
+    )?;
     Ok(())
 }

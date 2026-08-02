@@ -2,7 +2,7 @@ use std::path::Path;
 
 use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema::AnalysisSession;
-use helm_schema::generation::{GenerateOptions, SchemaProfile};
+use helm_schema::generation::{GenerateOptions, GeneratedSchema, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
 use jsonschema::Validator;
 use serde_json::{Map, Value};
@@ -140,6 +140,13 @@ impl ProfileSchemas {
 }
 
 pub(crate) fn generate_profile_schemas(chart_relative_path: &str) -> eyre::Result<(Value, Value)> {
+    let (full, lean) = generate_profile_outputs(chart_relative_path)?;
+    Ok((full.schema, lean.schema))
+}
+
+pub(crate) fn generate_profile_outputs(
+    chart_relative_path: &str,
+) -> eyre::Result<(GeneratedSchema, GeneratedSchema)> {
     let full = generate_schema(chart_relative_path, SchemaProfile::Full)?;
     let lean = generate_schema(chart_relative_path, SchemaProfile::Lean)?;
     Ok((full, lean))
@@ -210,7 +217,10 @@ pub(crate) fn sparse_override(path: &[&str], value: Value) -> ProbeInstance {
     ProbeInstance::SparseOverride(override_doc)
 }
 
-fn generate_schema(chart_relative_path: &str, profile: SchemaProfile) -> eyre::Result<Value> {
+fn generate_schema(
+    chart_relative_path: &str,
+    profile: SchemaProfile,
+) -> eyre::Result<GeneratedSchema> {
     let chart_dir = chart_path(chart_relative_path);
     let chart_dir = chart_dir.to_string_lossy().to_string();
     let options = GenerateOptions {
@@ -239,7 +249,10 @@ fn generate_schema(chart_relative_path: &str, profile: SchemaProfile) -> eyre::R
     };
     AnalysisSession::new(options)
         .generated_schema()
-        .map(|generated| helm_schema_json_schema_minify::minimize_schema(generated.schema))
+        .map(|mut generated| {
+            generated.schema = helm_schema_json_schema_minify::minimize_schema(generated.schema);
+            generated
+        })
         .map_err(eyre::Report::from)
         .wrap_err_with(|| format!("generate {profile:?} schema for {chart_relative_path}"))
 }

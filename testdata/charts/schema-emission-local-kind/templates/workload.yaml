@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: {{ .Values.workload.kind }}
+metadata:
+  name: schema-emission-local-kind
+spec:
+  selector:
+    matchLabels:
+      app: schema-emission-local-kind
+  template:
+    metadata:
+      labels:
+        app: schema-emission-local-kind
+    spec:
+      containers:
+        - name: app
+          image: example.invalid/schema-emission-local-kind:1
+  {{- if eq .Values.workload.kind "Deployment" }}
+  strategy: {{- toYaml .Values.workload.strategy | nindent 4 }}
+  {{- else if eq .Values.workload.kind "StatefulSet" }}
+  serviceName: schema-emission-local-kind
+  updateStrategy: {{- toYaml .Values.workload.strategy | nindent 4 }}
+  {{- end }}

@@ -5,7 +5,7 @@ use helm_schema_core::{ProviderOrigin, ProviderSchemaSource};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
-use crate::overlay_lowering::ConditionalResolvedSchema;
+use crate::overlay_lowering::LoweredConjunct;
 use crate::path_resolver::ResolvedPathSchema;
 use crate::provider_schema::{ProviderSchemaCandidate, rewrite_internal_refs_for_root_definition};
 
@@ -22,7 +22,7 @@ const MIN_SHARED_PROVIDER_PAYLOAD_BYTES: usize = 16 * 1024;
 #[tracing::instrument(skip_all)]
 pub(crate) fn extract_provider_definitions(
     resolved_paths: &mut [ResolvedPathSchema],
-    conditional_schemas: &mut [ConditionalResolvedSchema],
+    conditional_schemas: &mut [LoweredConjunct],
     values_descriptions: &BTreeMap<String, String>,
 ) -> BTreeMap<String, Value> {
     let description_paths = DescriptionPathIndex::new(values_descriptions);
@@ -65,20 +65,20 @@ pub(crate) fn extract_provider_definitions(
         resolved_path.schema = reference_schema(name);
     }
     for conditional in conditional_schemas {
-        let Some(provider_schema_candidate) = conditional.provider_schema_candidate.as_ref() else {
+        let Some(provider_schema_candidate) = conditional.provider_candidate.as_ref() else {
             continue;
         };
-        let target_segments = crate::split_value_path(&conditional.target_value_path);
+        let target_segments = crate::split_value_path(&conditional.carrier.target_value_path);
         if description_paths.has_description_at_or_below(&target_segments) {
             continue;
         }
-        if conditional.target_schema != *provider_schema_candidate.schema() {
+        if conditional.schema != *provider_schema_candidate.schema() {
             continue;
         }
         let Some(name) = ref_names_by_key.get(provider_schema_candidate.key()) else {
             continue;
         };
-        conditional.target_schema = reference_schema(name);
+        conditional.schema = reference_schema(name);
     }
 
     definitions_by_name
@@ -410,7 +410,7 @@ struct ProviderSchemaDefinitionEntries {
 impl ProviderSchemaDefinitionEntries {
     fn from_resolved_paths_and_conditionals(
         resolved_paths: &[ResolvedPathSchema],
-        conditional_schemas: &[ConditionalResolvedSchema],
+        conditional_schemas: &[LoweredConjunct],
         description_paths: &DescriptionPathIndex,
     ) -> Self {
         let mut entries = Self::default();
@@ -428,11 +428,10 @@ impl ProviderSchemaDefinitionEntries {
             entries.insert(provider_schema_candidate);
         }
         for conditional in conditional_schemas {
-            let Some(provider_schema_candidate) = conditional.provider_schema_candidate.as_ref()
-            else {
+            let Some(provider_schema_candidate) = conditional.provider_candidate.as_ref() else {
                 continue;
             };
-            let target_segments = crate::split_value_path(&conditional.target_value_path);
+            let target_segments = crate::split_value_path(&conditional.carrier.target_value_path);
             if description_paths.has_description_at_or_below(&target_segments) {
                 continue;
             }

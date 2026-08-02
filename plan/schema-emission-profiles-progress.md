@@ -133,7 +133,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Step 0a — harness and relax-host preflight
 
-- Status: in-progress.
+- Status: landed.
 - Measured results:
   - The compiled Rust harness generates full and lean independently, compiles
     each schema once, and composes every sparse probe over defaults with
@@ -236,17 +236,94 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0.
   - `task tokei:core`: exit 0; production Rust remains 58,107 LOC (delta
     zero from the prerequisite commit).
-- Commit: pending; Step 1a records the resulting hash after this commit is
-  created.
+- Commit: `286ac44` (`test(schema): add emission profile harness`).
 
 ## Step 1a — fact model, phase split, and reporting
 
-- Status: pending.
-- Measured results: pending.
-- Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed.
+- Measured results:
+  - The fact-model, total selection table, report accounting, host/constraint
+    phase split, local kind-partition chart, and eight-stage completion-pass
+    monotonicity test are implemented on the working tree.
+  - Five focused generator tests pass. The local kind-partition integration
+    control passes and Helm 4.2.3 renders its default Deployment arm.
+  - The 20 committed generator fixtures and all 55 committed chart-corpus
+    fixtures remain byte-identical.
+  - Legacy lean remains the operative Step 1a selector. The shadow
+    decision-table projection reports 9 retained facts for the controls
+    chart, 4 for the local-kind audit chart, and 6,859 for the Temporal
+    wrapper. Every disagreement is projection-only; there are no facts legacy
+    lean retains that the decision table drops. Ordered full-diff SHA-256 pins
+    are asserted for all three artifacts.
+  - One clean final-build dump wrote all 20 generator candidates and all 55
+    chart-corpus schemas; every candidate was byte-identical to its committed
+    fixture, so Step 1a has zero fixture flips.
+  - The workspace unit gate ran 1,142 tests; the integration gate ran 539
+    tests; the live-inclusive gate ran 1,685 tests. The downstream luup2 gate
+    checked all 32 charts successfully.
+  - Production Rust LOC moved from 58,107 to 58,850 (`+743`) for the fact
+    model, reporting surface, completion-stage seam, and tests of private
+    policy behavior.
+- Deviations:
+  - Disposition from Roman: there is no plan contradiction. `Mandatory ->
+    always emit` is a projection invariant, and the projection does not become
+    lean's operative selector until Step 2. Step 1a keeps the legacy lean gate
+    authoritative, carries classification as data, and runs the decision
+    table in shadow mode. The operative and projected accounting, plus every
+    fact-level disagreement, travel in the same `EmissionReport`.
+  - The Step 0a version-pattern control remains byte-for-byte and
+    verdict-for-verdict unchanged. Its shadow-projection disagreement is
+    pre-registered for Step 2 rather than adopted in this representation step.
+- Adjudication evidence:
+  - Helm 4.2.3 exits 1 for `version: v1` at the chart's explicit fail, so the
+    unguarded pattern is not a false rejection. Step 2 may retain it as a
+    Mandatory constraint after recategorizing the control.
+  - The new local kind-partition defaults render as Deployment and the
+    compiled schema controls prove Deployment/StatefulSet provider payloads
+    stay anchored below `workload`.
+- Review dossier:
+  - Focused fact/report, policy-validity, local-anchor, and completion-stage
+    tests: `cargo nextest run -p helm-schema-gen -E
+    'test(emission_profiles::)'`.
+  - Local kind-partition semantic control: `cargo nextest run -P integration
+    -p helm-schema --test schema_emission_profiles -E
+    'test(local_kind_partition_is_a_local_policy_fact)'`.
+  - Local kind Helm render: `helm template step1a-local-kind
+    testdata/charts/schema-emission-local-kind
+    --skip-schema-validation`.
+  - Byte-identical generator fixtures: `cargo nextest run -P integration -p
+    helm-schema-gen --test corpus -E 'test(schema_fixtures_match)'`.
+  - Byte-identical chart corpus: `cargo nextest run -P integration -p
+    helm-schema-cli --test chart_corpus`.
+  - Single clean final-build dump: `SCHEMA_DUMP=1 cargo nextest run -P
+    integration -p helm-schema-gen --test corpus -E
+    'test(schema_fixtures_match)'`, then `SCHEMA_DUMP=1 cargo nextest run -P
+    integration -p helm-schema-cli --no-fail-fast -E
+    'binary(chart_corpus)'`. Both report only exact matches.
+  - Exact shadow-diff registry: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profiles -E
+    'test(legacy_lean_reports_step_2_projection_differences)'`.
+  - Current-behavior pin: `cargo nextest run -P integration -p helm-schema
+    --test schema_emission_profiles -E
+    'test(current_profiles_obey_monotonicity_and_semantic_controls)'`.
+  - Version-pattern live adjudication: `helm template
+    step2-preregister-pattern testdata/charts/schema-emission-controls
+    --skip-schema-validation --set-string version=v1`; expected exit 1 with
+    `version must be vMAJOR.MINOR`.
+  - Exhaustive completion-stage law: `cargo nextest run -p helm-schema-gen -E
+    'test(emission_profiles::every_completion_stage_is_monotone)'`.
+- Gates on the final Step 1a tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations checked.
+  - `cargo nextest run --workspace`: exit 0; 1,142 passed.
+  - `task test:integration`: exit 0; 539 passed, 2 skipped.
+  - `task test:all`: exit 0; 1,685 passed, 2 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked.
+  - `task tokei:core`: exit 0; production Rust is 58,850 LOC (`+743` from
+    Step 0a).
 - Commit: pending.
 
 ## Step 1a.1 — unconditional termination producer
@@ -272,7 +349,15 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 ## Step 2 — lean policy and annotations
 
 - Status: pending.
-- Measured results: pending.
+- Measured results:
+  - Pre-registered shadow-projection input from Step 1a: controls 9 facts
+    (`3594d70cd4304790641f1d5ee12a157da54a9215846bb181260f4f79b6f271e7`),
+    local-kind 4 facts
+    (`5b51fa618edae0059e8a9dfac20091d7228a4a6b76af01912ce2c6cfa27dd255`),
+    Temporal 6,859 facts
+    (`602e49d724de9477fb87081089e29a49e6e28b0b22474dd4ca5e6b93d85c38ae`).
+    All are projection-only. The report contains the full ordered identity of
+    every fact (index, class/origin, target, class digest, payload digest).
 - Deviations: none.
 - Adjudication evidence: pending.
 - Review dossier: pending.

@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 
-use crate::overlay_lowering::{ConditionalBaseEffect, ConditionalResolvedSchema};
+use crate::overlay_lowering::{ConditionalBaseEffect, LoweredConjunct};
 use crate::path_resolver::ResolvedPathSchema;
 use crate::schema_model::is_fixed_object_schema;
 use crate::schema_node::SchemaNode;
@@ -180,21 +180,21 @@ pub(crate) struct ConditionalTargetIndex {
 }
 
 impl ConditionalTargetIndex {
-    pub(crate) fn from_conditionals(conditionals: &[ConditionalResolvedSchema]) -> Self {
+    pub(crate) fn from_conditionals(conditionals: &[LoweredConjunct]) -> Self {
         let mut targets = BTreeMap::new();
         let mut required_bases = BTreeSet::new();
         for conditional in conditionals {
-            let preserve_base_schema = match conditional.base_effect {
+            let preserve_base_schema = match conditional.carrier.base_effect {
                 ConditionalBaseEffect::None => continue,
                 ConditionalBaseEffect::Own => false,
                 ConditionalBaseEffect::Preserve => true,
                 ConditionalBaseEffect::Require => {
-                    required_bases.insert(conditional.target_value_path.clone());
+                    required_bases.insert(conditional.carrier.target_value_path.clone());
                     continue;
                 }
             };
             let entry = targets
-                .entry(conditional.target_value_path.clone())
+                .entry(conditional.carrier.target_value_path.clone())
                 .or_insert(ConditionalTargetSummary {
                     preserve_base_schema: false,
                 });

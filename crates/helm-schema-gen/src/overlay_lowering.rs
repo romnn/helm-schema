@@ -10,6 +10,10 @@ use serde_yaml::Value as YamlValue;
 use crate::condition_encoding::{
     build_condition_clauses, evaluate_guard_set_on_values, guard_encodes_fully,
 };
+use crate::emission_policy::{
+    ConditionalFlavor, EmissionClass, EmissionOrigin, GuardScopes, NestedGuardScope, TerminalWhen,
+};
+use crate::emission_report::EmissionReport;
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::conditional_target_schema;
@@ -32,19 +36,10 @@ pub(crate) enum ConditionalBaseEffect {
 }
 
 #[derive(Debug, Clone)]
-struct NestedGuardScope {
-    ancestor_segments: Vec<String>,
-    guards: Vec<ConditionalGuard>,
-}
-
-pub(crate) struct ConditionalResolvedSchema {
+pub(crate) struct ConjunctCarrier {
     pub(crate) target_value_path: String,
-    ancestor_segments: Vec<String>,
-    relative_target_segments: Vec<String>,
-    guards: Vec<ConditionalGuard>,
-    nested_guard_scopes: Vec<NestedGuardScope>,
-    pub(crate) target_schema: Value,
-    pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
+    pub(crate) ancestor_segments: Vec<String>,
+    pub(crate) relative_target_segments: Vec<String>,
     pub(crate) base_effect: ConditionalBaseEffect,
     fold_unconditional_object_host_into_base: bool,
     /// Whether the conditional is a pure `allOf` requirement rather than a
@@ -61,6 +56,118 @@ pub(crate) struct ConditionalResolvedSchema {
     relax_untyped_host: bool,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct LoweredConjunct {
+    pub(crate) class: EmissionClass,
+    pub(crate) origin: EmissionOrigin,
+    pub(crate) carrier: ConjunctCarrier,
+    pub(crate) schema: Value,
+    pub(crate) provider_candidate: Option<ProviderSchemaCandidate>,
+}
+
+impl LoweredConjunct {
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "the constructor makes the complete lowered carrier and its policy class auditable at every producer"
+    )]
+    fn schema(
+        origin: EmissionOrigin,
+        flavor: ConditionalFlavor,
+        target_value_path: String,
+        ancestor_segments: Vec<String>,
+        relative_target_segments: Vec<String>,
+        guards: Vec<ConditionalGuard>,
+        nested_guard_scopes: Vec<NestedGuardScope>,
+        target_schema: Value,
+        provider_schema_candidate: Option<ProviderSchemaCandidate>,
+        base_effect: ConditionalBaseEffect,
+        fold_unconditional_object_host_into_base: bool,
+        arm_only: bool,
+        relax_untyped_host: bool,
+    ) -> Self {
+        let class = EmissionClass::conditional(
+            GuardScopes::new(guards, nested_guard_scopes),
+            &ancestor_segments,
+            flavor,
+        );
+        Self {
+            class,
+            origin,
+            carrier: ConjunctCarrier {
+                target_value_path,
+                ancestor_segments,
+                relative_target_segments,
+                base_effect,
+                fold_unconditional_object_host_into_base,
+                arm_only,
+                relax_untyped_host,
+            },
+            schema: target_schema,
+            provider_candidate: provider_schema_candidate,
+        }
+    }
+
+    pub(crate) fn terminal(guards: Vec<ConditionalGuard>) -> Self {
+        let class = if guards.is_empty() {
+            EmissionClass::terminal_always()
+        } else {
+            EmissionClass::terminal_guarded(guards).unwrap_or_else(EmissionClass::terminal_always)
+        };
+        Self {
+            class,
+            origin: EmissionOrigin::FailImplication,
+            carrier: ConjunctCarrier {
+                target_value_path: String::new(),
+                ancestor_segments: Vec::new(),
+                relative_target_segments: Vec::new(),
+                base_effect: ConditionalBaseEffect::None,
+                fold_unconditional_object_host_into_base: false,
+                arm_only: true,
+                relax_untyped_host: false,
+            },
+            schema: Value::Bool(false),
+            provider_candidate: None,
+        }
+    }
+
+    fn guard_scopes(&self) -> Option<&GuardScopes> {
+        match &self.class {
+            EmissionClass::Conditional { guards, .. } => Some(guards),
+            EmissionClass::Mandatory => Some(&EMPTY_GUARD_SCOPES),
+            EmissionClass::Terminal { .. } => None,
+        }
+    }
+
+    fn outer_guards(&self) -> &[ConditionalGuard] {
+        self.guard_scopes()
+            .map(|scopes| scopes.outer.as_slice())
+            .unwrap_or_default()
+    }
+
+    fn nested_guard_scopes(&self) -> &[NestedGuardScope] {
+        self.guard_scopes()
+            .map(|scopes| scopes.nested.as_slice())
+            .unwrap_or_default()
+    }
+
+    pub(crate) fn terminal_guards(&self) -> Option<&[ConditionalGuard]> {
+        match &self.class {
+            EmissionClass::Terminal {
+                when: TerminalWhen::Always,
+            } => Some(&[]),
+            EmissionClass::Terminal {
+                when: TerminalWhen::Guarded(scopes),
+            } => Some(scopes.scopes().outer.as_slice()),
+            EmissionClass::Mandatory | EmissionClass::Conditional { .. } => None,
+        }
+    }
+}
+
+static EMPTY_GUARD_SCOPES: GuardScopes = GuardScopes {
+    outer: Vec::new(),
+    nested: Vec::new(),
+};
+
 #[tracing::instrument(skip_all)]
 #[expect(
     clippy::too_many_lines,
@@ -72,7 +179,7 @@ pub(crate) fn collect_conditional_schemas(
     values_yaml_doc: &YamlValue,
     subchart_defaults_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
-) -> Vec<ConditionalResolvedSchema> {
+) -> Vec<LoweredConjunct> {
     let mut synthesized_implications =
         crate::required_source_backprojection::synthesized_required_source_implications(
             contract_schema_signals,
@@ -141,19 +248,21 @@ pub(crate) fn collect_conditional_schemas(
             if crate::schema_model::is_empty_schema(&target_schema) {
                 continue;
             }
-            conditionals.push(ConditionalResolvedSchema {
-                target_value_path: String::new(),
-                relative_target_segments: Vec::new(),
-                ancestor_segments: Vec::new(),
-                guards: implication.outer_guards.clone(),
-                nested_guard_scopes: Vec::new(),
+            conditionals.push(LoweredConjunct::schema(
+                EmissionOrigin::Backprojection,
+                ConditionalFlavor::Ordinary,
+                String::new(),
+                Vec::new(),
+                Vec::new(),
+                implication.outer_guards.clone(),
+                Vec::new(),
                 target_schema,
-                provider_schema_candidate: None,
-                base_effect: ConditionalBaseEffect::None,
-                fold_unconditional_object_host_into_base: false,
-                arm_only: true,
-                relax_untyped_host: false,
-            });
+                None,
+                ConditionalBaseEffect::None,
+                false,
+                true,
+                false,
+            ));
         }
     }
 
@@ -200,7 +309,16 @@ pub(crate) fn collect_conditional_schemas(
                     implication_has_self_presence_guard(implication, target_value_path)
                 })
         };
-        for implication in evidence.fail_implications.iter().chain(synthesized) {
+        for (implication, origin) in evidence
+            .fail_implications
+            .iter()
+            .map(|implication| (implication, EmissionOrigin::FailImplication))
+            .chain(
+                synthesized
+                    .iter()
+                    .map(|implication| (implication, EmissionOrigin::Backprojection)),
+            )
+        {
             if is_bare_iterable_implication(implication)
                 && member_implication_covers_range_domain(
                     &evidence.fail_implications,
@@ -336,26 +454,29 @@ pub(crate) fn collect_conditional_schemas(
             } else {
                 ConditionalBaseEffect::None
             };
-            conditionals.push(ConditionalResolvedSchema {
-                target_value_path: target_value_path.clone(),
-                relative_target_segments: target_segments
+            conditionals.push(LoweredConjunct::schema(
+                origin,
+                ConditionalFlavor::Ordinary,
+                target_value_path.clone(),
+                ancestor_segments.clone(),
+                target_segments
                     .get(ancestor_segments.len()..)
                     .unwrap_or_default()
                     .to_vec(),
-                ancestor_segments,
-                guards: implication.outer_guards.clone(),
-                nested_guard_scopes: Vec::new(),
+                implication.outer_guards.clone(),
+                Vec::new(),
                 target_schema,
-                provider_schema_candidate: None,
+                None,
                 base_effect,
-                fold_unconditional_object_host_into_base: member_host_complete_domain,
-                arm_only: true,
-                relax_untyped_host: member_host_complete_domain && all_member_hosts_presence_scoped,
-            });
+                member_host_complete_domain,
+                true,
+                member_host_complete_domain && all_member_hosts_presence_scoped,
+            ));
         }
 
         for source_overlay in &evidence.conditional_overlays {
-            for overlay in kind_partitioned_overlays(source_overlay) {
+            for partition in kind_partitioned_overlays(source_overlay) {
+                let overlay = partition.overlay;
                 if is_unconditional_self_presence_overlay(target_value_path, &overlay) {
                     continue;
                 }
@@ -411,26 +532,28 @@ pub(crate) fn collect_conditional_schemas(
                     // marker; passing an evidence-free overlay through
                     // conditional policy would substitute its values.yaml
                     // sample shape and re-type members the range accepts.
-                    conditionals.push(ConditionalResolvedSchema {
-                        target_value_path: target_value_path.clone(),
-                        relative_target_segments: target_segments
+                    conditionals.push(LoweredConjunct::schema(
+                        EmissionOrigin::Overlay,
+                        partition.flavor,
+                        target_value_path.clone(),
+                        ancestor_segments.clone(),
+                        target_segments
                             .get(ancestor_segments.len()..)
                             .unwrap_or_default()
                             .to_vec(),
-                        ancestor_segments,
-                        guards: outer_guards.clone(),
-                        nested_guard_scopes: nested_guard_scopes.clone(),
-                        target_schema: crate::schema_model::empty_schema(),
-                        provider_schema_candidate: None,
-                        base_effect: if preserve_overlay_base {
+                        outer_guards.clone(),
+                        nested_guard_scopes.clone(),
+                        crate::schema_model::empty_schema(),
+                        None,
+                        if preserve_overlay_base {
                             ConditionalBaseEffect::Preserve
                         } else {
                             ConditionalBaseEffect::Own
                         },
-                        fold_unconditional_object_host_into_base: false,
-                        relax_untyped_host: false,
-                        arm_only: false,
-                    });
+                        false,
+                        false,
+                        false,
+                    ));
                     continue;
                 }
                 let range_allows_integer = !overlay.evidence.facts.has_structured_item_descendants
@@ -491,26 +614,28 @@ pub(crate) fn collect_conditional_schemas(
                     if overlay.evidence.facts.used_as_serialized
                         || overlay.evidence.facts.used_as_yaml_serialized
                     {
-                        conditionals.push(ConditionalResolvedSchema {
-                            target_value_path: target_value_path.clone(),
-                            relative_target_segments: target_segments
+                        conditionals.push(LoweredConjunct::schema(
+                            EmissionOrigin::Overlay,
+                            partition.flavor,
+                            target_value_path.clone(),
+                            ancestor_segments.clone(),
+                            target_segments
                                 .get(ancestor_segments.len()..)
                                 .unwrap_or_default()
                                 .to_vec(),
-                            ancestor_segments,
-                            guards: outer_guards.clone(),
-                            nested_guard_scopes: nested_guard_scopes.clone(),
+                            outer_guards.clone(),
+                            nested_guard_scopes.clone(),
                             target_schema,
-                            provider_schema_candidate: None,
-                            base_effect: if preserve_overlay_base {
+                            None,
+                            if preserve_overlay_base {
                                 ConditionalBaseEffect::Preserve
                             } else {
                                 ConditionalBaseEffect::Own
                             },
-                            fold_unconditional_object_host_into_base: false,
-                            relax_untyped_host: false,
-                            arm_only: false,
-                        });
+                            false,
+                            false,
+                            false,
+                        ));
                     }
                     continue;
                 }
@@ -518,26 +643,28 @@ pub(crate) fn collect_conditional_schemas(
                     .provider_schema_candidate
                     .filter(|candidate| candidate.survives_as(&target_schema));
 
-                conditionals.push(ConditionalResolvedSchema {
-                    target_value_path: target_value_path.clone(),
-                    relative_target_segments: target_segments
+                conditionals.push(LoweredConjunct::schema(
+                    EmissionOrigin::Overlay,
+                    partition.flavor,
+                    target_value_path.clone(),
+                    ancestor_segments.clone(),
+                    target_segments
                         .get(ancestor_segments.len()..)
                         .unwrap_or_default()
                         .to_vec(),
-                    ancestor_segments,
-                    guards: outer_guards,
+                    outer_guards,
                     nested_guard_scopes,
                     target_schema,
                     provider_schema_candidate,
-                    base_effect: if preserve_overlay_base {
+                    if preserve_overlay_base {
                         ConditionalBaseEffect::Preserve
                     } else {
                         ConditionalBaseEffect::Own
                     },
-                    fold_unconditional_object_host_into_base: false,
-                    relax_untyped_host: false,
-                    arm_only: false,
-                });
+                    false,
+                    false,
+                    false,
+                ));
             }
         }
     }
@@ -706,7 +833,7 @@ fn structural_collection_member_projection(schema: &Value) -> Option<Value> {
 /// not run). Keys without retain guards stay subtracted: their survival
 /// is undecidable, so their typing abstains.
 fn append_omitted_member_arms(
-    conditionals: &mut Vec<ConditionalResolvedSchema>,
+    conditionals: &mut Vec<LoweredConjunct>,
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
 ) {
@@ -763,21 +890,23 @@ fn append_omitted_member_arms(
             let Ok(member_schema) = serde_json::from_str::<Value>(&member_schema) else {
                 continue;
             };
-            conditionals.push(ConditionalResolvedSchema {
-                target_value_path: value_path.clone(),
-                relative_target_segments: target_segments.clone(),
-                ancestor_segments: Vec::new(),
+            conditionals.push(LoweredConjunct::schema(
+                EmissionOrigin::OmittedMember,
+                ConditionalFlavor::Ordinary,
+                value_path.clone(),
+                Vec::new(),
+                target_segments.clone(),
                 guards,
-                nested_guard_scopes: Vec::new(),
-                target_schema: serde_json::json!({
+                Vec::new(),
+                serde_json::json!({
                     "properties": { member: member_schema }
                 }),
-                provider_schema_candidate: None,
-                base_effect: ConditionalBaseEffect::None,
-                fold_unconditional_object_host_into_base: false,
-                relax_untyped_host: false,
-                arm_only: true,
-            });
+                None,
+                ConditionalBaseEffect::None,
+                false,
+                true,
+                false,
+            ));
         }
     }
 }
@@ -795,7 +924,7 @@ fn append_omitted_member_arms(
     reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
 )]
 fn append_merge_shadow_arms(
-    conditionals: &mut Vec<ConditionalResolvedSchema>,
+    conditionals: &mut Vec<LoweredConjunct>,
     contract_schema_signals: &ContractSchemaSignals,
     provider: &dyn ResourceSchemaOracle,
 ) {
@@ -901,19 +1030,21 @@ fn append_merge_shadow_arms(
                 } else {
                     ConditionalBaseEffect::Own
                 };
-                conditionals.push(ConditionalResolvedSchema {
-                    target_value_path: value_path.clone(),
-                    relative_target_segments: target_segments.clone(),
-                    ancestor_segments: Vec::new(),
+                conditionals.push(LoweredConjunct::schema(
+                    EmissionOrigin::MergeShadow,
+                    ConditionalFlavor::Ordinary,
+                    value_path.clone(),
+                    Vec::new(),
+                    target_segments.clone(),
                     guards,
-                    nested_guard_scopes: Vec::new(),
-                    target_schema: whole,
-                    provider_schema_candidate: None,
+                    Vec::new(),
+                    whole,
+                    None,
                     base_effect,
-                    fold_unconditional_object_host_into_base: false,
-                    relax_untyped_host: false,
-                    arm_only: true,
-                });
+                    false,
+                    true,
+                    false,
+                ));
             }
             if merge.position == 0 {
                 continue;
@@ -952,19 +1083,21 @@ fn append_merge_shadow_arms(
                 let target_schema = serde_json::json!({
                     "properties": { member: member_schema }
                 });
-                conditionals.push(ConditionalResolvedSchema {
-                    target_value_path: value_path.clone(),
-                    relative_target_segments: target_segments.clone(),
-                    ancestor_segments: Vec::new(),
+                conditionals.push(LoweredConjunct::schema(
+                    EmissionOrigin::MergeShadow,
+                    ConditionalFlavor::Ordinary,
+                    value_path.clone(),
+                    Vec::new(),
+                    target_segments.clone(),
                     guards,
-                    nested_guard_scopes: Vec::new(),
+                    Vec::new(),
                     target_schema,
-                    provider_schema_candidate: None,
-                    base_effect: ConditionalBaseEffect::None,
-                    fold_unconditional_object_host_into_base: false,
-                    relax_untyped_host: false,
-                    arm_only: true,
-                });
+                    None,
+                    ConditionalBaseEffect::None,
+                    false,
+                    true,
+                    false,
+                ));
             }
         }
     }
@@ -1068,7 +1201,12 @@ fn dereferenced_payload_subschema(
     }
 }
 
-fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
+struct PartitionedOverlay {
+    overlay: ConditionalPathOverlay,
+    flavor: ConditionalFlavor,
+}
+
+fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<PartitionedOverlay> {
     let mut kinds = BTreeSet::new();
     for use_ in &overlay.evidence.provider_schema_uses {
         if !use_.resource.kind_candidates.is_empty() {
@@ -1077,10 +1215,16 @@ fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<Conditiona
         }
     }
     if kinds.is_empty() {
-        return vec![overlay.clone()];
+        return vec![PartitionedOverlay {
+            overlay: overlay.clone(),
+            flavor: ConditionalFlavor::Ordinary,
+        }];
     }
     let Some(selector) = kind_selector_path(&overlay.guards, &kinds) else {
-        return vec![overlay.clone()];
+        return vec![PartitionedOverlay {
+            overlay: overlay.clone(),
+            flavor: ConditionalFlavor::Ordinary,
+        }];
     };
 
     kinds
@@ -1105,7 +1249,10 @@ fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<Conditiona
                 }
                 supports_kind
             });
-            (!partition.evidence.provider_schema_uses.is_empty()).then_some(partition)
+            (!partition.evidence.provider_schema_uses.is_empty()).then_some(PartitionedOverlay {
+                overlay: partition,
+                flavor: ConditionalFlavor::KindPartition,
+            })
         })
         .collect()
 }
@@ -1846,24 +1993,22 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
 }
 
 #[tracing::instrument(skip_all)]
-#[expect(
-    clippy::too_many_lines,
-    reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
-)]
-pub(crate) fn append_conditional_schemas(
+pub(crate) fn prepare_conditional_hosts(
     root_schema: &mut SchemaDocument,
-    mut conditionals: Vec<ConditionalResolvedSchema>,
-    values_yaml_doc: &YamlValue,
-    absence: crate::condition_encoding::AbsenceDefaults<'_>,
+    conditionals: &mut Vec<LoweredConjunct>,
+    report: &mut EmissionReport,
 ) {
-    let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     conditionals.retain(|conditional| {
-        let folds_into_base = conditional.fold_unconditional_object_host_into_base
-            && conditional.arm_only
-            && conditional.guards.is_empty()
-            && conditional.ancestor_segments.is_empty()
-            && is_object_domain_only(&conditional.target_schema)
-            && root_schema.constrain_existing_path_to_object(&conditional.relative_target_segments);
+        let folds_into_base = conditional.carrier.fold_unconditional_object_host_into_base
+            && conditional.carrier.arm_only
+            && conditional.outer_guards().is_empty()
+            && conditional.carrier.ancestor_segments.is_empty()
+            && is_object_domain_only(&conditional.schema)
+            && root_schema
+                .constrain_existing_path_to_object(&conditional.carrier.relative_target_segments);
+        if folds_into_base && matches!(conditional.class, EmissionClass::Mandatory) {
+            report.mandatory_outcomes.equivalent += 1;
+        }
         !folds_into_base
     });
     // Nil-safe member hosts drop the structural `type: object` their
@@ -1871,35 +2016,51 @@ pub(crate) fn append_conditional_schemas(
     // the exact contract (grouped reads render at absent/null receivers).
     // Only arms that actually emit may relax — a dropped arm would turn
     // the relaxation into a plain widening.
-    for conditional in &conditionals {
-        if conditional.relax_untyped_host
-            && !crate::schema_model::is_empty_schema(&conditional.target_schema)
+    for conditional in conditionals {
+        if conditional.carrier.relax_untyped_host
+            && !crate::schema_model::is_empty_schema(&conditional.schema)
         {
-            let mut segments = conditional.ancestor_segments.clone();
-            segments.extend(conditional.relative_target_segments.iter().cloned());
+            let mut segments = conditional.carrier.ancestor_segments.clone();
+            segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
             root_schema.relax_host_object_type(&segments);
         }
     }
+}
+
+#[tracing::instrument(skip_all)]
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping conditional grouping and emission together makes the equivalence rewrites auditable"
+)]
+pub(crate) fn append_selected_constraints(
+    root_schema: &mut SchemaDocument,
+    conditionals: Vec<LoweredConjunct>,
+    values_yaml_doc: &YamlValue,
+    absence: crate::condition_encoding::AbsenceDefaults<'_>,
+    report: &mut EmissionReport,
+) {
+    let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     // Conditionals sharing one guard set and scope conjoin into one if/then:
     // `allOf [{if G then A}, {if G then B}]` is `{if G then A ∧ B}`, and the
     // repeated `if` blocks dominate emitted size on charts with many guarded
     // blocks. Distinct targets merge disjointly; a leaf collision falls back
     // to its own conditional.
-    let mut grouped: BTreeMap<
-        (Vec<String>, Vec<ConditionalGuard>),
-        Vec<ConditionalResolvedSchema>,
-    > = BTreeMap::new();
+    let mut grouped: BTreeMap<(Vec<String>, Vec<ConditionalGuard>), Vec<LoweredConjunct>> =
+        BTreeMap::new();
     for conditional in conditionals {
         // Schema-less conditionals carry base ownership established by a
         // transform or by a separate implication that already emits the
         // complete runtime domain; they have no schema arm to append.
-        if crate::schema_model::is_empty_schema(&conditional.target_schema) {
+        if crate::schema_model::is_empty_schema(&conditional.schema) {
+            if matches!(conditional.class, EmissionClass::Mandatory) {
+                report.mandatory_outcomes.redundant += 1;
+            }
             continue;
         }
         grouped
             .entry((
-                conditional.ancestor_segments.clone(),
-                conditional.guards.clone(),
+                conditional.carrier.ancestor_segments.clone(),
+                conditional.outer_guards().to_vec(),
             ))
             .or_default()
             .push(conditional);
@@ -1907,42 +2068,52 @@ pub(crate) fn append_conditional_schemas(
     struct ContentGroup {
         fragment: Value,
         guard_sets: Vec<Vec<ConditionalGuard>>,
+        facts: usize,
+        mandatory_facts: usize,
     }
     let mut by_content: BTreeMap<(Vec<String>, String), ContentGroup> = BTreeMap::new();
     for ((ancestor_segments, guards), group) in grouped {
-        let mut merged: Option<Value> = None;
+        let mut merged: Option<(Value, usize, usize)> = None;
         let mut separate = Vec::new();
         for conditional in group {
+            let mandatory = usize::from(matches!(conditional.class, EmissionClass::Mandatory));
             let Some(fragment) = build_scoped_target_fragment(
                 &conditional,
                 values_yaml_doc,
                 absence,
                 &mut condition_cache,
             ) else {
+                report.mandatory_outcomes.fallback += mandatory;
                 continue;
             };
             match &mut merged {
-                None => merged = Some(fragment),
-                Some(target) => {
-                    if !merge_disjoint_property_fragment(target, fragment.clone()) {
-                        separate.push(fragment);
+                None => merged = Some((fragment, 1, mandatory)),
+                Some((target, facts, mandatory_facts)) => {
+                    if merge_disjoint_property_fragment(target, fragment.clone()) {
+                        *facts += 1;
+                        *mandatory_facts += mandatory;
+                    } else {
+                        separate.push((fragment, 1, mandatory));
                     }
                 }
             }
         }
-        for fragment in merged.into_iter().chain(separate) {
+        for (fragment, facts, mandatory_facts) in merged.into_iter().chain(separate) {
             // Conditionals with identical content under one scope disjoin
             // their guards: `if G1 then X` and `if G2 then X` is
             // `if anyOf [G1, G2] then X`, and X (often a repeated provider
             // schema) is the dominant emitted size.
-            by_content
+            let content = by_content
                 .entry((ancestor_segments.clone(), fragment.to_string()))
                 .or_insert_with(|| ContentGroup {
                     fragment,
                     guard_sets: Vec::new(),
-                })
-                .guard_sets
-                .push(guards.clone());
+                    facts: 0,
+                    mandatory_facts: 0,
+                });
+            content.guard_sets.push(guards.clone());
+            content.facts += facts;
+            content.mandatory_facts += mandatory_facts;
         }
     }
     // Arms sharing one scope and one encoded condition conjoin their
@@ -1952,17 +2123,26 @@ pub(crate) fn append_conditional_schemas(
     // Coalesced arms keep the FIRST occurrence's position so unaffected
     // documents keep their emission order; trivially-true fragments have
     // no if-block to save and land as their own conjuncts unchanged.
-    let mut emissions: Vec<(Vec<String>, SchemaNode, Vec<SchemaNode>)> = Vec::new();
+    struct PendingEmission {
+        ancestor_segments: Vec<String>,
+        condition: SchemaNode,
+        contents: Vec<SchemaNode>,
+        facts: usize,
+        mandatory_facts: usize,
+    }
+    let mut emissions = Vec::<PendingEmission>::new();
     let mut emission_index: BTreeMap<(Vec<String>, String), usize> = BTreeMap::new();
     for ((ancestor_segments, _), group) in by_content {
         // An empty guard set is trivially true: the fragment applies
         // unconditionally (an unguarded fail implication).
         if group.guard_sets.iter().any(Vec::is_empty) {
-            emissions.push((
+            emissions.push(PendingEmission {
                 ancestor_segments,
-                SchemaNode::empty(),
-                vec![SchemaNode::foreign(group.fragment)],
-            ));
+                condition: SchemaNode::empty(),
+                contents: vec![SchemaNode::foreign(group.fragment)],
+                facts: group.facts,
+                mandatory_facts: group.mandatory_facts,
+            });
             continue;
         }
         let mut conditions: Vec<SchemaNode> =
@@ -1989,42 +2169,48 @@ pub(crate) fn append_conditional_schemas(
         );
         match emission_index.entry(key) {
             std::collections::btree_map::Entry::Occupied(entry) => {
-                if let Some((_, _, fragments)) = emissions.get_mut(*entry.get()) {
-                    fragments.push(SchemaNode::foreign(group.fragment));
+                if let Some(emission) = emissions.get_mut(*entry.get()) {
+                    emission.contents.push(SchemaNode::foreign(group.fragment));
+                    emission.facts += group.facts;
+                    emission.mandatory_facts += group.mandatory_facts;
                 }
             }
             std::collections::btree_map::Entry::Vacant(entry) => {
                 entry.insert(emissions.len());
-                emissions.push((
+                emissions.push(PendingEmission {
                     ancestor_segments,
                     condition,
-                    vec![SchemaNode::foreign(group.fragment)],
-                ));
+                    contents: vec![SchemaNode::foreign(group.fragment)],
+                    facts: group.facts,
+                    mandatory_facts: group.mandatory_facts,
+                });
             }
         }
     }
-    for (ancestor_segments, condition, mut contents) in emissions {
-        let content = if contents.len() == 1 {
-            contents.remove(0)
+    for mut emission in emissions {
+        let content = if emission.contents.len() == 1 {
+            emission.contents.remove(0)
         } else {
-            SchemaNode::all_of(contents)
+            SchemaNode::all_of(emission.contents)
         };
-        root_schema.append_conditional(&ancestor_segments, condition, content);
+        report.carriers.grouping_fan_in = report.carriers.grouping_fan_in.max(emission.facts);
+        report.mandatory_outcomes.emitted += emission.mandatory_facts;
+        root_schema.append_conditional(&emission.ancestor_segments, emission.condition, content);
     }
 }
 
 fn build_scoped_target_fragment(
-    conditional: &ConditionalResolvedSchema,
+    conditional: &LoweredConjunct,
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
     condition_cache: &mut crate::condition_encoding::ConditionFragmentCache,
 ) -> Option<Value> {
-    let mut target_segments = conditional.ancestor_segments.clone();
-    target_segments.extend(conditional.relative_target_segments.iter().cloned());
+    let mut target_segments = conditional.carrier.ancestor_segments.clone();
+    target_segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
     let mut current_anchor = target_segments;
-    let mut content = SchemaNode::foreign(conditional.target_schema.clone());
+    let mut content = SchemaNode::foreign(conditional.schema.clone());
 
-    for scope in conditional.nested_guard_scopes.iter().rev() {
+    for scope in conditional.nested_guard_scopes().iter().rev() {
         let relative = current_anchor.strip_prefix(scope.ancestor_segments.as_slice())?;
         let then_schema = build_target_fragment(relative, content);
         if !scope.guards.iter().all(|guard| {
@@ -2052,7 +2238,7 @@ fn build_scoped_target_fragment(
         current_anchor = scope.ancestor_segments.clone();
     }
 
-    let relative = current_anchor.strip_prefix(conditional.ancestor_segments.as_slice())?;
+    let relative = current_anchor.strip_prefix(conditional.carrier.ancestor_segments.as_slice())?;
     Some(build_target_fragment(relative, content).into_value())
 }
 
