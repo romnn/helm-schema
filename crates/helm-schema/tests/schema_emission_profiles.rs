@@ -9,8 +9,8 @@ mod harness;
 
 use harness::{
     ContractVerdict, ControlCategory, ProbeInstance, ProfileSchemas, SemanticControl, Transport,
-    generate_profile_outputs, generate_profile_schemas, read_json_fixture, read_root_defaults,
-    sparse_override, structural_probe_battery,
+    generate_profile_outputs, generate_profile_schemas, read_chart_schema_fixture,
+    read_json_fixture, read_root_defaults, sparse_override, structural_probe_battery,
 };
 
 #[test]
@@ -90,6 +90,58 @@ fn legacy_lean_reports_step_2_projection_differences() -> eyre::Result<()> {
             ),
         ]
     );
+    Ok(())
+}
+
+#[test]
+fn unconditional_fail_is_an_independent_terminal_tooth() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let chart = "schema-emission-unconditional-fail";
+    let defaults = read_root_defaults(chart)?;
+    let (full, lean) = generate_profile_outputs(chart)?;
+    let fixture = read_chart_schema_fixture(chart)?;
+
+    sim_assert_eq!(have: &full.schema, want: &fixture);
+    let full_validator = jsonschema::validator_for(&full.schema)?;
+    for instance in [
+        serde_json::Value::Null,
+        json!(false),
+        json!(0),
+        json!("value"),
+        json!([]),
+        json!({}),
+        json!({ "enabled": true }),
+    ] {
+        eyre::ensure!(
+            !full_validator.is_valid(&instance),
+            "full accepted {instance} despite the unconditional terminal"
+        );
+    }
+    eyre::ensure!(
+        full.emission_report.facts.lowered == 1 && full.emission_report.facts.selected == 1,
+        "full must report one unconditional terminal fact"
+    );
+    eyre::ensure!(
+        lean.emission_report.facts.lowered == 1 && lean.emission_report.facts.selected == 0,
+        "legacy lean must drop the unconditional terminal fact"
+    );
+
+    let profiles = ProfileSchemas::compile(&full.schema, &lean.schema, defaults)?;
+    let controls = [SemanticControl {
+        name: "unconditional fail",
+        category: ControlCategory::RemovedTooth,
+        instance: ProbeInstance::Defaults,
+        transport: Transport::ValuesFileJson,
+        contract: ContractVerdict::Reject("the chart always aborts rendering"),
+        lean_accepts: true,
+        rationale: "terminal-clauses off soundly removes an always-false constraint",
+    }];
+    profiles.assert_controls(&controls)?;
+    profiles.assert_monotone(
+        controls
+            .iter()
+            .map(|control| (control.name, &control.instance)),
+    )?;
     Ok(())
 }
 

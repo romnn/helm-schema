@@ -1771,11 +1771,14 @@ fn record_fail_conjunction(
         // captures have member semantics no root clause can express, and
         // an approximate enclosing condition would make the clause fire
         // too widely.
-        if ranged.is_none()
+        if ranged.is_none() && conjunction.is_empty() {
+            if !terminal_clauses.iter().any(Vec::is_empty) {
+                terminal_clauses.push(Vec::new());
+            }
+        } else if ranged.is_none()
             && !conjunction
                 .iter()
                 .any(|predicate| matches!(predicate, Predicate::Guard(Guard::Range { .. })))
-            && !conjunction.is_empty()
         {
             let clause = conjunction
                 .iter()

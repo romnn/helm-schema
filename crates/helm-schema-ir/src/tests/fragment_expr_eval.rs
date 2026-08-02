@@ -52,6 +52,18 @@ fn wrapped_with_program_keeps_exact_else_requirements() {
 }
 
 #[test]
+fn unconditional_fail_produces_an_always_terminal_clause() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let signals = context
+        .generate_contract_ir(r#"{{ fail "chart always fails" }}"#)
+        .finalize()
+        .into_schema_signals();
+
+    sim_assert_eq!(have: signals.terminal_clauses(), want: &[Vec::new()]);
+}
+
+#[test]
 fn yaml_serialization_requires_presence_only_with_coexecuting_mapping_members() {
     let defines = DefineIndex::new();
     let context = crate::SymbolicIrContext::new(&defines);

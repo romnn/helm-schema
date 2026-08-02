@@ -710,10 +710,10 @@ pub struct ContractSchemaSignals {
     /// strict string consumer reads them before the engine's values-root
     /// rewrite, so a wrapper map there aborts rendering.
     values_program_wrapper_exclusions: BTreeSet<String>,
-    /// Terminating validator formulas spanning several paths: rendering
-    /// aborts whenever ALL guards of one clause hold, so no valid values
-    /// document may satisfy them (`fail`/`required` under fully lowerable
-    /// cross-path conditions).
+    /// Terminating validator formulas: rendering aborts whenever ALL guards
+    /// of one clause hold, so no valid values document may satisfy them
+    /// (`fail`/`required` under fully lowerable conditions). An empty clause
+    /// is an unconditional termination.
     terminal_clauses: Vec<Vec<ConditionalGuard>>,
 }
 

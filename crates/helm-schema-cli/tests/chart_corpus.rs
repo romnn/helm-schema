@@ -46,11 +46,18 @@ use serde_json::Value;
 ///   fails with "Chart cannot be installed without a valid clusterName!".
 /// - karpenter: `settings.clusterName` defaults to `""` with the same
 ///   `required` termination in its deployment.
+/// - schema-emission-unconditional-fail: the profile control deliberately
+///   executes an unguarded `fail`; full must reject every values document.
 // loki: `helm template` genuinely fails on pure defaults ("Please define
 // loki.storage.bucketNames.chunks"): `loki.schemaConfig` defaults to `{}`
 // (falsy) and `useTestSchema` to false, so validate.yaml's schema-config
 // `fail` plus the bucketNames `required` chain reject the shipped values.
-const KNOWN_VALUES_REJECTIONS: &[&str] = &["aws-load-balancer-controller", "karpenter", "loki"];
+const KNOWN_VALUES_REJECTIONS: &[&str] = &[
+    "aws-load-balancer-controller",
+    "karpenter",
+    "loki",
+    "schema-emission-unconditional-fail",
+];
 
 fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
     let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
@@ -148,6 +155,10 @@ chart_schema_case!(oauth2_proxy, "oauth2-proxy");
 chart_schema_case!(prometheus, "prometheus");
 chart_schema_case!(promtail, "promtail");
 chart_schema_case!(reloader, "reloader");
+chart_schema_case!(
+    schema_emission_unconditional_fail,
+    "schema-emission-unconditional-fail"
+);
 chart_schema_case!(sealed_secrets, "sealed-secrets");
 chart_schema_case!(signoz_signoz, "signoz-signoz");
 chart_schema_case!(surveyor, "surveyor");

@@ -73,6 +73,30 @@ fn replay_semantic_controls_against_helm_and_provider() -> eyre::Result<()> {
     Ok(())
 }
 
+#[test]
+#[ignore = "live maintenance lane: requires pinned Helm"]
+fn replay_unconditional_fail_against_helm() -> eyre::Result<()> {
+    assert_helm_version()?;
+    let chart = test_util::workspace_testdata().join("charts/schema-emission-unconditional-fail");
+    let output = Command::new("helm")
+        .args(["template", "unconditional-fail"])
+        .arg(chart)
+        .arg("--skip-schema-validation")
+        .output()
+        .wrap_err("render unconditional-fail control")?;
+
+    eyre::ensure!(
+        !output.status.success(),
+        "the unconditional-fail chart unexpectedly rendered"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    eyre::ensure!(
+        stderr.contains("schema emission unconditional fail"),
+        "Helm failure did not come from the control: {stderr}"
+    );
+    Ok(())
+}
+
 fn live_controls() -> Vec<LiveControl> {
     use LiveTransport::{Set, SetString, ValuesFileJson};
     use SinkVerdict::{Accept, Reject, Unresolved};

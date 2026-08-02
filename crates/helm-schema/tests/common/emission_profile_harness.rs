@@ -169,6 +169,15 @@ pub(crate) fn read_json_fixture(
     serde_json::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))
 }
 
+pub(crate) fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
+    let path = test_util::workspace_testdata()
+        .join("chart-corpus-schemas")
+        .join(format!("{chart}.schema.json"));
+    let source =
+        std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?;
+    serde_json::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))
+}
+
 pub(crate) fn structural_probe_battery(defaults: &Value) -> Vec<(String, ProbeInstance)> {
     let mut probes = vec![
         ("defaults".to_string(), ProbeInstance::Defaults),

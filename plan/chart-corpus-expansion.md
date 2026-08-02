@@ -12116,3 +12116,26 @@ unchanged ordering. The completion pass list is enumerable, and an exhaustive
 small-domain microchart checks `accepts(full) ⊆ accepts(legacy lean)` after each
 of its eight stages. One clean corpus dump and one clean generator-fixture dump
 remain byte-identical; this representation round has no acceptance flips.
+
+## Unconditional termination producer (2026-08-02, sixty-first round)
+
+Step 1a.1 preserves an empty direct-fail conjunction as an unconditional
+terminal clause instead of discarding it when no path-specific requirement can
+be formed. The existing `Terminal::Always` fact now reaches full emission as
+an always-false document constraint; the legacy lean selector and the shadow
+middle-point policy both drop it through the independent terminal knob.
+
+The dedicated `schema-emission-unconditional-fail` chart executes an
+unguarded `fail` for every values document. Its full schema fixture rejects
+every JSON kind, while the terminal-free lean projection accepts the chart's
+defaults. The chart is registered in the oracle-conditioned corpus rejection
+list: Helm 4.2.3 exits 1 under `--skip-schema-validation` with the control's
+exact failure message, so rejecting the defaults is intended chart behavior
+rather than a generator defect.
+
+One clean final-build dump produced all 20 generator candidates and all 56
+chart-corpus schemas. The existing 55 corpus fixtures and all generator
+fixtures remain byte-identical; the only new corpus artifact is the
+adjudicated unconditional-fail fixture. The hermetic profile suite retains its
+monotonicity and three-category controls, and the new control also passes its
+separate live Helm replay.

@@ -324,16 +324,68 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts checked.
   - `task tokei:core`: exit 0; production Rust is 58,850 LOC (`+743` from
     Step 0a).
-- Commit: pending.
+- Commit: `5a1b52e` (`refactor(schema): add emission fact model`).
 
 ## Step 1a.1 — unconditional termination producer
 
-- Status: pending.
-- Measured results: pending.
+- Status: landed.
+- Measured results:
+  - An empty direct-fail conjunction now produces exactly one
+    `Terminal::Always` fact. Full selects it and rejects all seven JSON-kind
+    representatives; legacy lean and the shadow middle-point policy drop it.
+  - The unconditional-fail chart is the corpus's 56th chart and is listed in
+    the oracle-conditioned defaults rejection set. Its full schema is pinned
+    by a complete equality fixture.
+  - The full six-test hermetic profile suite passes both the monotonicity law
+    and its retained-tooth / removed-tooth / positive-control assertions.
+  - One clean final-build dump reports all 20 generator candidates and all 56
+    chart schemas exact. No existing fixture changes; the only new fixture is
+    the unconditional-fail chart.
+  - Production Rust LOC moved from 58,850 to 58,853 (`+3`); the remaining
+    implementation is test and fixture evidence.
 - Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Adjudication evidence:
+  - Helm 4.2.3 exits 1 before rendering any manifest and reports `schema
+    emission unconditional fail`. Because the chart itself rejects every
+    values document, the full always-false schema is the correct contract.
+  - Turning terminal clauses off accepts the declared defaults, which is a
+    sound widening of the empty accepted language.
+- Review dossier:
+  - IR producer and full/lean semantic fixture:
+    `cargo nextest run -p helm-schema-ir -E
+    'test(unconditional_fail_produces_an_always_terminal_clause)'`, then
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(unconditional_fail_is_an_independent_terminal_tooth)'`.
+  - Both harness obligations on the behavior-changing tree:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles`.
+  - Live Helm replay of the new control: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profile_live --run-ignored ignored-only
+    -E 'test(replay_unconditional_fail_against_helm)'`.
+  - Direct Helm reproducer: `helm template unconditional-fail
+    testdata/charts/schema-emission-unconditional-fail
+    --skip-schema-validation`; expected exit 1 with the pinned control
+    message.
+  - Oracle-conditioned corpus floor and full-schema equality:
+    `cargo nextest run -P integration -p helm-schema-cli --test chart_corpus
+    -E 'test(schema_emission_unconditional_fail)'`.
+  - Clean generator dump: `SCHEMA_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-gen --test corpus -E 'test(schema_fixtures_match)'`.
+  - Clean 56-chart dump: `SCHEMA_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-cli --no-fail-fast -E 'binary(chart_corpus)'`.
+- Gates on the final Step 1a.1 tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations checked.
+  - `cargo nextest run --workspace`: exit 0; 1,143 passed.
+  - `task test:integration`: exit 0; 541 passed, 3 skipped.
+  - `task test:all`: exit 0; 1,688 passed, 3 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked.
+  - `task tokei:core`: exit 0; production Rust is 58,853 LOC (`+3` from Step
+    1a).
 - Commit: pending.
 
 ## Step 1b — immutable lowering plan and multi-policy projection
