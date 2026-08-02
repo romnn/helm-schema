@@ -10,7 +10,7 @@ use helm_schema_json_schema_walk::{visit_subschemas, visit_subschemas_mut};
 use serde_json::{Map, Value};
 
 const DEFINITIONS_KEY: &str = "$defs";
-const DEFINITION_NAME_PREFIX: &str = "schema";
+const DEFINITION_REF_PREFIX: &str = "#/$defs/";
 
 /// Deduplicate repeated JSON Schema subtrees into root-level `$defs`.
 ///
@@ -24,22 +24,38 @@ pub fn minimize_schema(schema: Value) -> Value {
         return schema;
     }
 
+    let mut candidate_schema = schema.clone();
+    remove_definitions(&mut candidate_schema);
     let mut candidates = BTreeMap::new();
-    collect_candidates(&schema, true, &mut candidates);
+    collect_candidates(&candidate_schema, true, &mut candidates);
     let planned = plan_definitions(&schema, candidates);
     if planned.is_empty() {
         return schema;
     }
 
     let mut schema = schema;
+    let existing_definitions = remove_definitions(&mut schema);
     let mut definitions = BTreeMap::new();
     rewrite_schema(&mut schema, true, &planned, &mut definitions);
+    insert_definitions(&mut schema, existing_definitions);
 
     if !definitions.is_empty() {
+        definitions = compact_definition_names(&mut schema, definitions);
         insert_definitions(&mut schema, definitions);
     }
 
     schema
+}
+
+fn remove_definitions(schema: &mut Value) -> BTreeMap<String, Value> {
+    let Some(definitions) = schema
+        .as_object_mut()
+        .and_then(|root| root.remove(DEFINITIONS_KEY))
+        .and_then(|definitions| definitions.as_object().cloned())
+    else {
+        return BTreeMap::new();
+    };
+    definitions.into_iter().collect()
 }
 
 fn can_insert_generated_definitions(schema: &Value) -> bool {
@@ -97,12 +113,29 @@ fn plan_definitions(
 fn next_definition_name(existing_names: &BTreeSet<String>, next_id: usize) -> (String, usize) {
     let mut id = next_id;
     loop {
-        let candidate = format!("{DEFINITION_NAME_PREFIX}{id}");
+        let candidate = base62(id);
         id += 1;
         if !existing_names.contains(&candidate) {
             return (candidate, id);
         }
     }
+}
+
+fn base62(mut value: usize) -> String {
+    const DIGITS: &[u8; 62] = b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    let mut reversed = Vec::new();
+    loop {
+        let Some(digit) = DIGITS.get(value % DIGITS.len()) else {
+            return String::new();
+        };
+        reversed.push(char::from(*digit));
+        value /= DIGITS.len();
+        if value == 0 {
+            break;
+        }
+    }
+    reversed.into_iter().rev().collect()
 }
 
 fn estimated_savings(schema_bytes: usize, occurrences: usize, name: &str) -> i128 {
@@ -139,6 +172,79 @@ fn rewrite_schema(
     });
 }
 
+fn compact_definition_names(
+    schema: &mut Value,
+    definitions: BTreeMap<String, Value>,
+) -> BTreeMap<String, Value> {
+    let generated_names = definitions.keys().cloned().collect::<BTreeSet<_>>();
+    let mut reference_counts = BTreeMap::new();
+    count_generated_references(schema, &generated_names, &mut reference_counts);
+
+    let mut ranked = definitions.into_iter().collect::<Vec<_>>();
+    ranked.sort_by(|(left_name, _), (right_name, _)| {
+        reference_counts
+            .get(right_name)
+            .copied()
+            .unwrap_or_default()
+            .cmp(&reference_counts.get(left_name).copied().unwrap_or_default())
+            .then_with(|| left_name.cmp(right_name))
+    });
+
+    let mut existing_names = existing_definition_names(schema);
+    let mut next_id = 1;
+    let mut renamed = Vec::with_capacity(ranked.len());
+    let mut references = BTreeMap::new();
+    for (old_name, definition) in ranked {
+        let (new_name, following_id) = next_definition_name(&existing_names, next_id);
+        existing_names.insert(new_name.clone());
+        next_id = following_id;
+        references.insert(
+            format!("{DEFINITION_REF_PREFIX}{old_name}"),
+            format!("{DEFINITION_REF_PREFIX}{new_name}"),
+        );
+        renamed.push((new_name, definition));
+    }
+
+    rewrite_generated_references(schema, &references);
+    renamed
+        .into_iter()
+        .map(|(name, mut definition)| {
+            rewrite_generated_references(&mut definition, &references);
+            (name, definition)
+        })
+        .collect()
+}
+
+fn count_generated_references(
+    schema: &Value,
+    generated_names: &BTreeSet<String>,
+    counts: &mut BTreeMap<String, usize>,
+) {
+    if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
+        if let Some(name) = reference.strip_prefix(DEFINITION_REF_PREFIX)
+            && generated_names.contains(name)
+        {
+            *counts.entry(name.to_string()).or_default() += 1;
+        }
+        return;
+    }
+    visit_subschemas(schema, &mut |subschema| {
+        count_generated_references(subschema, generated_names, counts);
+    });
+}
+
+fn rewrite_generated_references(schema: &mut Value, references: &BTreeMap<String, String>) {
+    if let Some(Value::String(reference)) = schema.get_mut("$ref") {
+        if let Some(replacement) = references.get(reference) {
+            reference.clone_from(replacement);
+        }
+        return;
+    }
+    visit_subschemas_mut(schema, &mut |subschema| {
+        rewrite_generated_references(subschema, references);
+    });
+}
+
 fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) {
     let Value::Object(root) = schema else {
         return;
@@ -155,21 +261,27 @@ fn insert_definitions(schema: &mut Value, definitions: BTreeMap<String, Value>) 
 }
 
 fn candidate_fingerprint(schema: &Value) -> Option<String> {
-    if !matches!(schema, Value::Object(_)) || contains_reference_scope_keyword(schema) {
+    if !matches!(schema, Value::Object(_)) || contains_unsafe_reference_scope_keyword(schema) {
         return None;
     }
     Some(helm_schema_json_schema_walk::canonical_json_string(schema))
 }
 
-fn contains_reference_scope_keyword(value: &Value) -> bool {
+fn contains_unsafe_reference_scope_keyword(value: &Value) -> bool {
     let Value::Object(object) = value else {
         return false;
     };
+    if let Some(reference) = object.get("$ref")
+        && !reference
+            .as_str()
+            .is_some_and(|reference| reference.starts_with(DEFINITION_REF_PREFIX))
+    {
+        return true;
+    }
     if object.keys().any(|key| {
         matches!(
             key.as_str(),
-            "$ref"
-                | "$id"
+            "$id"
                 | "id"
                 | "$anchor"
                 | "$dynamicRef"
@@ -185,7 +297,7 @@ fn contains_reference_scope_keyword(value: &Value) -> bool {
 
     let mut contains_scope = false;
     visit_subschemas(value, &mut |subschema| {
-        contains_scope |= contains_reference_scope_keyword(subschema);
+        contains_scope |= contains_unsafe_reference_scope_keyword(subschema);
     });
     contains_scope
 }
