@@ -1,0 +1,594 @@
+{
+  "temporal": {
+    "additionalAnnotations": {},
+    "additionalLabels": {},
+    "admintools": {
+      "additionalEnv": [],
+      "additionalEnvSecretName": "",
+      "additionalInitContainers": [],
+      "additionalVolumeMounts": [],
+      "additionalVolumes": [],
+      "affinity": {},
+      "containerSecurityContext": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true,
+        "runAsGroup": 11000,
+        "runAsNonRoot": true,
+        "runAsUser": 11000
+      },
+      "deploymentAnnotations": {},
+      "deploymentLabels": {},
+      "enabled": true,
+      "image": {
+        "pullPolicy": "Always",
+        "repository": "temporalio/admin-tools",
+        "tag": "1.27.2-tctl-1.18.2-cli-1.3.0"
+      },
+      "nodeSelector": {},
+      "podAnnotations": {
+        "kube-score/pod-probes": "disable"
+      },
+      "podDisruptionBudget": {
+        "minAvailable": 1
+      },
+      "podLabels": {},
+      "resources": {},
+      "securityContext": {
+        "runAsGroup": 11000,
+        "runAsNonRoot": true,
+        "runAsUser": 11000,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "service": {
+        "annotations": {},
+        "port": 22,
+        "type": "ClusterIP"
+      },
+      "tolerations": []
+    },
+    "cassandra": {
+      "config": {
+        "cluster_size": 3,
+        "heap_new_size": "128M",
+        "max_heap_size": "512M",
+        "num_tokens": 4,
+        "ports": {
+          "cql": 9042
+        },
+        "seed_size": 0
+      },
+      "enabled": false,
+      "image": {
+        "pullPolicy": "IfNotPresent",
+        "repo": "cassandra",
+        "tag": "3.11.3"
+      },
+      "persistence": {
+        "enabled": false
+      },
+      "service": {
+        "type": "ClusterIP"
+      }
+    },
+    "debug": false,
+    "elasticsearch": {
+      "enabled": false,
+      "host": "elasticsearch-master-headless",
+      "imageTag": "7.17.3",
+      "logLevel": "error",
+      "password": "",
+      "persistence": {
+        "enabled": false
+      },
+      "port": 9200,
+      "replicas": 3,
+      "scheme": "http",
+      "username": "",
+      "version": "v7",
+      "visibilityIndex": "temporal_visibility_v1_dev"
+    },
+    "fullnameOverride": "",
+    "global": {},
+    "grafana": {
+      "dashboardProviders": {
+        "dashboardproviders.yaml": {
+          "apiVersion": 1,
+          "providers": [
+            {
+              "disableDeletion": false,
+              "editable": true,
+              "folder": "",
+              "name": "default",
+              "options": {
+                "path": "/var/lib/grafana/dashboards/default"
+              },
+              "orgId": 1,
+              "type": "file"
+            }
+          ]
+        }
+      },
+      "dashboards": {
+        "default": {
+          "misc-advanced-visibility-specific-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/misc/advanced-visibility-specific.json"
+          },
+          "misc-clustermonitoring-kubernetes-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/misc/clustermonitoring-kubernetes.json"
+          },
+          "misc-frontend-service-specific-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/misc/frontend-service-specific.json"
+          },
+          "misc-history-service-specific-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/misc/history-service-specific.json"
+          },
+          "misc-matching-service-specific-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/misc/matching-service-specific.json"
+          },
+          "misc-worker-service-specific-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/misc/worker-service-specific.json"
+          },
+          "sdk-general-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/sdk/sdk-general.json"
+          },
+          "server-general-github": {
+            "datasource": "TemporalMetrics",
+            "url": "https://raw.githubusercontent.com/temporalio/dashboards/helm/server/server-general.json"
+          }
+        }
+      },
+      "datasources": {
+        "datasources.yaml": {
+          "apiVersion": 1,
+          "datasources": [
+            {
+              "access": "proxy",
+              "isDefault": true,
+              "name": "TemporalMetrics",
+              "type": "prometheus",
+              "url": "http://{{ .Release.Name }}-prometheus-server"
+            }
+          ]
+        }
+      },
+      "enabled": false,
+      "rbac": {
+        "create": false,
+        "namespaced": true,
+        "pspEnabled": false
+      },
+      "replicas": 1,
+      "testFramework": {
+        "enabled": false
+      }
+    },
+    "imagePullSecrets": {},
+    "mysql": {
+      "enabled": false
+    },
+    "nameOverride": "",
+    "postgresql": {
+      "enabled": true
+    },
+    "prometheus": {
+      "enabled": false,
+      "nodeExporter": {
+        "enabled": false
+      }
+    },
+    "schema": {
+      "containerSecurityContext": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true,
+        "runAsGroup": 11000,
+        "runAsNonRoot": true,
+        "runAsUser": 11000
+      },
+      "createDatabase": {
+        "enabled": false
+      },
+      "enabled": false,
+      "podAnnotations": {},
+      "podLabels": {},
+      "resources": {},
+      "securityContext": {
+        "runAsGroup": 11000,
+        "runAsNonRoot": true,
+        "runAsUser": 11000,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "setup": {
+        "backoffLimit": 100,
+        "enabled": false
+      },
+      "update": {
+        "backoffLimit": 100,
+        "enabled": false
+      }
+    },
+    "server": {
+      "additionalEnv": [],
+      "additionalInitContainers": [],
+      "additionalVolumeMounts": [],
+      "additionalVolumes": [],
+      "affinity": {},
+      "config": {
+        "logLevel": "debug,info",
+        "namespaces": {
+          "create": false,
+          "namespace": [
+            {
+              "name": "default",
+              "retention": "3d"
+            }
+          ]
+        },
+        "numHistoryShards": 512,
+        "persistence": {
+          "additionalStores": {},
+          "default": {
+            "cassandra": {
+              "consistency": {
+                "default": {
+                  "consistency": "local_quorum",
+                  "serialConsistency": "local_serial"
+                }
+              },
+              "existingSecret": "",
+              "hosts": [],
+              "keyspace": "temporal",
+              "password": "password",
+              "replicationFactor": 1,
+              "user": "user"
+            },
+            "driver": "sql",
+            "sql": {
+              "database": "temporal",
+              "driver": "postgres12",
+              "existingSecret": "",
+              "host": "postgres-cluster-rw.cnpg-system.svc.cluster.local",
+              "maxConnLifetime": "1h",
+              "maxConns": 20,
+              "maxIdleConns": 20,
+              "password": "changeme",
+              "port": 5432,
+              "secretName": "",
+              "user": "username"
+            }
+          },
+          "defaultStore": "default",
+          "visibility": {
+            "cassandra": {
+              "consistency": {
+                "default": {
+                  "consistency": "local_quorum",
+                  "serialConsistency": "local_serial"
+                }
+              },
+              "existingSecret": "",
+              "hosts": [],
+              "keyspace": "temporal_visibility",
+              "password": "password",
+              "replicationFactor": 1,
+              "user": "user"
+            },
+            "driver": "sql",
+            "sql": {
+              "database": "temporal_visibility",
+              "driver": "postgres12",
+              "existingSecret": "",
+              "host": "postgres-cluster-rw.cnpg-system.svc.cluster.local",
+              "maxConnLifetime": "1h",
+              "maxConns": 20,
+              "maxIdleConns": 20,
+              "password": "changeme",
+              "port": 5432,
+              "secretName": "",
+              "user": "username"
+            }
+          }
+        }
+      },
+      "deploymentAnnotations": {},
+      "deploymentLabels": {},
+      "enabled": true,
+      "frontend": {
+        "additionalEnv": [],
+        "affinity": {},
+        "containerSecurityContext": {
+          "allowPrivilegeEscalation": true,
+          "readOnlyRootFilesystem": false,
+          "runAsNonRoot": false
+        },
+        "deploymentAnnotations": {},
+        "deploymentLabels": {},
+        "ingress": {
+          "annotations": {},
+          "enabled": false,
+          "hosts": [
+            "/"
+          ],
+          "tls": []
+        },
+        "metrics": {
+          "annotations": {
+            "enabled": true
+          },
+          "prometheus": {},
+          "serviceMonitor": {}
+        },
+        "nodeSelector": {},
+        "podAnnotations": {
+          "kube-score/container-security-context-readonlyrootfilesystem": "disable",
+          "kube-score/container-security-context-user-group-id": "disable",
+          "kube-score/pod-probes": "disable"
+        },
+        "podDisruptionBudget": {
+          "minAvailable": 1
+        },
+        "podLabels": {},
+        "resources": {},
+        "service": {
+          "annotations": {},
+          "httpPort": 7243,
+          "membershipPort": 6933,
+          "port": 7233,
+          "type": "ClusterIP"
+        },
+        "tolerations": [],
+        "topologySpreadConstraints": []
+      },
+      "history": {
+        "additionalEnv": [],
+        "additionalEnvSecretName": "",
+        "affinity": {},
+        "containerSecurityContext": {
+          "allowPrivilegeEscalation": true,
+          "readOnlyRootFilesystem": false,
+          "runAsNonRoot": false
+        },
+        "deploymentAnnotations": {},
+        "deploymentLabels": {},
+        "metrics": {
+          "annotations": {
+            "enabled": true
+          },
+          "prometheus": {},
+          "serviceMonitor": {}
+        },
+        "nodeSelector": {},
+        "podAnnotations": {
+          "kube-score/container-security-context-readonlyrootfilesystem": "disable",
+          "kube-score/container-security-context-user-group-id": "disable",
+          "kube-score/pod-probes": "disable"
+        },
+        "podDisruptionBudget": {
+          "minAvailable": 1
+        },
+        "podLabels": {},
+        "resources": {},
+        "service": {
+          "membershipPort": 6934,
+          "port": 7234
+        },
+        "tolerations": [],
+        "topologySpreadConstraints": []
+      },
+      "image": {
+        "pullPolicy": "Always",
+        "repository": "temporalio/server",
+        "tag": "1.27.2"
+      },
+      "internalFrontend": {
+        "additionalEnv": [],
+        "affinity": {},
+        "containerSecurityContext": {},
+        "deploymentAnnotations": {},
+        "deploymentLabels": {},
+        "enabled": false,
+        "metrics": {
+          "annotations": {
+            "enabled": true
+          },
+          "prometheus": {},
+          "serviceMonitor": {}
+        },
+        "nodeSelector": {},
+        "podAnnotations": {},
+        "podDisruptionBudget": {},
+        "podLabels": {},
+        "resources": {},
+        "service": {
+          "annotations": {
+            "kube-score/service-targets-pod": "disable"
+          },
+          "httpPort": 7246,
+          "membershipPort": 6936,
+          "port": 7236,
+          "type": "ClusterIP"
+        },
+        "tolerations": [],
+        "topologySpreadConstraints": []
+      },
+      "matching": {
+        "additionalEnv": [],
+        "affinity": {},
+        "containerSecurityContext": {
+          "allowPrivilegeEscalation": true,
+          "readOnlyRootFilesystem": false,
+          "runAsNonRoot": false
+        },
+        "deploymentAnnotations": {},
+        "deploymentLabels": {},
+        "metrics": {
+          "annotations": {
+            "enabled": false
+          },
+          "prometheus": {},
+          "serviceMonitor": {}
+        },
+        "nodeSelector": {},
+        "podAnnotations": {
+          "kube-score/container-security-context-readonlyrootfilesystem": "disable",
+          "kube-score/container-security-context-user-group-id": "disable",
+          "kube-score/pod-probes": "disable"
+        },
+        "podDisruptionBudget": {
+          "minAvailable": 1
+        },
+        "podLabels": {},
+        "resources": {},
+        "service": {
+          "membershipPort": 6935,
+          "port": 7235
+        },
+        "tolerations": [],
+        "topologySpreadConstraints": []
+      },
+      "metrics": {
+        "annotations": {
+          "enabled": true
+        },
+        "excludeTags": {},
+        "prometheus": {
+          "timerType": "histogram"
+        },
+        "serviceMonitor": {
+          "additionalLabels": {},
+          "enabled": false,
+          "interval": "30s",
+          "metricRelabelings": []
+        },
+        "tags": {}
+      },
+      "nodeSelector": {},
+      "podAnnotations": {},
+      "podLabels": {},
+      "replicaCount": 1,
+      "resources": {},
+      "secretAnnotations": {},
+      "secretLabels": {},
+      "securityContext": {
+        "fsGroup": 1000,
+        "runAsNonRoot": true,
+        "runAsUser": 1000,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "tolerations": [],
+      "worker": {
+        "additionalEnv": [],
+        "affinity": {},
+        "containerSecurityContext": {
+          "allowPrivilegeEscalation": true,
+          "readOnlyRootFilesystem": false,
+          "runAsNonRoot": false
+        },
+        "deploymentAnnotations": {},
+        "deploymentLabels": {},
+        "metrics": {
+          "annotations": {
+            "enabled": true
+          },
+          "prometheus": {},
+          "serviceMonitor": {}
+        },
+        "nodeSelector": {},
+        "podAnnotations": {
+          "kube-score/container-security-context-readonlyrootfilesystem": "disable",
+          "kube-score/container-security-context-user-group-id": "disable",
+          "kube-score/pod-probes": "disable"
+        },
+        "podDisruptionBudget": {
+          "minAvailable": 1
+        },
+        "podLabels": {},
+        "resources": {},
+        "service": {
+          "membershipPort": 6939,
+          "port": 7239
+        },
+        "tolerations": [],
+        "topologySpreadConstraints": []
+      }
+    },
+    "serviceAccount": {
+      "create": true
+    },
+    "web": {
+      "additionalEnv": [],
+      "additionalEnvSecretName": "",
+      "additionalVolumeMounts": [],
+      "additionalVolumes": [],
+      "affinity": {},
+      "containerSecurityContext": {
+        "allowPrivilegeEscalation": true,
+        "readOnlyRootFilesystem": false,
+        "runAsNonRoot": false
+      },
+      "deploymentAnnotations": {},
+      "deploymentLabels": {},
+      "enabled": true,
+      "image": {
+        "pullPolicy": "Always",
+        "repository": "temporalio/ui",
+        "tag": "2.37.1"
+      },
+      "ingress": {
+        "annotations": {},
+        "enabled": false,
+        "hosts": [
+          "/"
+        ],
+        "tls": []
+      },
+      "nodeSelector": {},
+      "podAnnotations": {
+        "kube-score/container-security-context-readonlyrootfilesystem": "disable",
+        "kube-score/container-security-context-user-group-id": "disable",
+        "kube-score/pod-probes": "disable"
+      },
+      "podDisruptionBudget": {
+        "minAvailable": 1
+      },
+      "podLabels": {},
+      "replicaCount": 1,
+      "resources": {},
+      "securityContext": {
+        "runAsNonRoot": true,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "service": {
+        "annotations": {},
+        "port": 8080,
+        "type": "ClusterIP"
+      },
+      "tolerations": [],
+      "topologySpreadConstraints": []
+    }
+  }
+}

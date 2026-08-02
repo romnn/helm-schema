@@ -21,7 +21,7 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
 
 ## Step -1 — round-58 review-findings closure
 
-- Status: in-progress.
+- Status: landed.
 - Measured results:
   - Ten focused IR/generator/chart regressions pass.
   - Eight Helm 4.2.3 microchart adjudications pass with
@@ -35,6 +35,8 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     tightening.
   - Every adopted corpus fixture is byte-identical to the dump used by the
     prober.
+  - Production Rust LOC moved from 58,057 to 58,107 (`+50`) across the
+    prerequisite fixes and shared escaper consolidation.
 - Deviations:
   - The review shorthand “`else with` is live” was narrowed to the grammar
     Helm actually accepts: `else with` continues a `with` chain. The
@@ -127,18 +129,115 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
   - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
     check:local`: exit 0.
   - `task tokei:core`: exit 0.
-- Commit: pending; Step 0a records the resulting hash after this commit is
-  created.
+- Commit: `0164d77` (`fix(schema): close round-58 review findings`).
 
 ## Step 0a — harness and relax-host preflight
 
-- Status: pending.
-- Measured results: pending.
-- Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
-- Commit: pending.
+- Status: in-progress.
+- Measured results:
+  - The compiled Rust harness generates full and lean independently, compiles
+    each schema once, and composes every sparse probe over defaults with
+    null-deletion semantics. Its explicit coalesced `{}` probe deletes every
+    declared key rather than standing for defaults.
+  - The microchart lane checks 206 documents: defaults, the empty coalesced
+    document, every JSON-type replacement at top and second level, empty
+    member/item shapes, guard boundaries, pattern near-misses, and the 12
+    semantic controls. The temporal lane checks defaults plus a 40-cell
+    pairwise matrix. Both satisfy `accepts(full) ⊆ accepts(lean)`.
+  - The hermetic controls cover retained tooth, intentionally removed tooth,
+    and positive-control outcomes with `ValuesFileJson`, `Set`, and
+    `SetString` transports. The live replay confirms all 12 against Helm and
+    rendered-sink validation; seven validator-parity cases agree between the
+    Rust validator and Helm's embedded validator.
+  - The relax-host preflight passes: deleting the nil-safe member host is
+    accepted by full, accepted by lean, and renders with Helm. No production
+    patch was needed.
+  - The pinned Temporal wrapper's compact, description-free current outputs
+    measure 3,996,667 bytes / 142,903 objects for full and 43,626 bytes /
+    2,166 objects for today's lean. Warm release generation took 16.52 s and
+    11.26 s respectively; these are generation measurements, not the Step 2
+    validator-compile veto measurement.
+  - One clean 55-chart dump and one clean 20-candidate generator dump are
+    byte-identical to the round-58 fixtures: no fixture flips.
+- Deviations:
+  - The downstream `common` dependency is intentionally absent from the
+    minimal Temporal wrapper. It is a library consumed only by downstream
+    wrapper-owned templates; this anchor has none, so the dependency would
+    contribute no lowered facts. The omission and rationale are pinned in
+    `corpus-integrity.yaml`.
+  - Per the frozen representation/producer ordering, the unconditional-fail
+    semantic control lands with the Step 1a.1 producer. Step 0a does not pin
+    today's known omission as an expected full verdict.
+- Adjudication evidence:
+  - Wrong unconditional Deployment replicas render but fail the pinned
+    Kubernetes provider; integer and coercible-string transports render and
+    validate.
+  - Deleting `requiredText` and the version pattern near-miss abort Helm.
+  - A wrong dependency replica is dormant while the dependency condition is
+    false and provider-invalid when true.
+  - The ConfigMap branch rejects a Service spelling for `immutable`; the
+    adjacent Service branch accepts the same spelling. An unknown dynamic
+    kind remains `Unresolved` instead of becoming an accept/reject oracle.
+  - The Temporal archive is exactly 0.62.0 with SHA-256
+    `c2f01baeef60ed96335948640a8ac30fb49a10b906e20c259b92f81f2cba5c04`;
+    its dependency lock and Helm-produced coalesced defaults carry their own
+    recorded checksums.
+- Review dossier:
+  - Hermetic monotonicity and semantic controls:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles`.
+  - Live Helm/provider replay and validator parity:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profile_live --run-ignored ignored-only`.
+  - Relax-host preflight alone:
+    `cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(lean_profile_keeps_nil_safe_host_relaxation)'`.
+  - Temporal anchor render:
+    `helm template profile-temporal
+    testdata/charts/schema-emission-temporal-wrapper
+    --skip-schema-validation`.
+  - Archive/default integrity:
+    `sha256sum
+    testdata/charts/schema-emission-temporal-wrapper/charts/temporal-0.62.0.tgz
+    testdata/charts/schema-emission-temporal-wrapper/Chart.lock
+    testdata/charts/schema-emission-temporal-wrapper/coalesced-defaults.json`,
+    then `cargo nextest run -P integration -p helm-schema-cli --test
+    corpus_integrity`.
+  - Pinned full baseline:
+    `/usr/bin/time -p helm-schema
+    testdata/charts/schema-emission-temporal-wrapper --profile full
+    --strip-descriptions --compact --k8s-version
+    v1.29.0-standalone-strict --strict-k8s-version
+    --k8s-schema-cache-dir
+    testdata/provider-bundle/kubernetes-json-schema-cache
+    --crd-catalog-cache-dir
+    testdata/provider-bundle/crds-catalog-cache --offline --output
+    /tmp/schema-emission-temporal-full-pinned.json`.
+  - Pinned lean baseline: the preceding command with `--profile lean` and
+    output `/tmp/schema-emission-temporal-lean-pinned.json`.
+  - Baseline byte/object counts: `wc -c
+    /tmp/schema-emission-temporal-{full,lean}-pinned.json`, then
+    `jq '[.. | objects] | length'` on each file.
+  - Clean corpus dump: `SCHEMA_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-cli --no-fail-fast -E 'binary(chart_corpus)'`.
+  - Clean generator dump: `SCHEMA_DUMP=1 cargo nextest run -P integration
+    -p helm-schema-gen --test corpus -E 'test(schema_fixtures_match)'`.
+  - No production change: `git diff --exit-code 0164d77 -- 'crates/*/src'`.
+- Gates on the final Step 0a tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0.
+  - `cargo nextest run --workspace`: exit 0.
+  - `task test:integration`: exit 0.
+  - `task test:all`: exit 0.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0.
+  - `task tokei:core`: exit 0; production Rust remains 58,107 LOC (delta
+    zero from the prerequisite commit).
+- Commit: pending; Step 1a records the resulting hash after this commit is
+  created.
 
 ## Step 1a — fact model, phase split, and reporting
 

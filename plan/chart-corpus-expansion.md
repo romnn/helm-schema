@@ -12045,3 +12045,42 @@ chart defaults with null-deletion semantics. It reported two flips.
 Both states are pinned in `chart_reaudit`. The eight finding-specific Helm
 microchart tests also pass under Helm 4.2.3, and every adopted fixture is
 byte-identical to the dump used by the prober.
+
+## Schema-emission harness (2026-08-02, fifty-ninth round)
+
+Step 0a of `schema-emission-profiles.md` adds the missing widening harness
+before the fact representation changes. The ordinary lane generates current
+full and lean schemas independently, compiles each once with Rust
+`jsonschema`, composes sparse probes over chart defaults with Helm's
+null-deletion behavior, and treats an explicitly coalesced `{}` as every
+declared key deleted. A 206-document microchart battery and a 41-document
+Temporal pairwise matrix both prove `accepts(full) ⊆ accepts(lean)`.
+
+The semantic controls record transport, tri-state contract verdict, full
+verdict, lean verdict, and rationale across retained tooth, intentionally
+removed tooth, and positive-control categories. Their live maintenance lane
+replays 12 controls under Helm 4.2.3 and validates rendered sinks at the
+pinned Kubernetes 1.29 provider boundary. Seven Boolean-schema, `if/then`,
+type-array, internal-ref, and extension-annotation cases also agree between
+Helm's embedded validator and the Rust validator.
+
+The relax-host suspect is disproved on today's final tree: deleting the host
+of a nil-safe nested member read is accepted by full, accepted by lean, and
+renders. The plan's failure branch is therefore not taken and this round has
+no production-code change. Per the frozen representation/producer split, the
+unconditional-fail control lands in Step 1a.1 instead of recording today's
+known missing producer as expected behavior.
+
+The large anchor is a wrapper around the exact Temporal 0.62.0 archive. Its
+SHA-256 is
+`c2f01baeef60ed96335948640a8ac30fb49a10b906e20c259b92f81f2cba5c04`;
+`Chart.lock`, the archive checksum, relevant resolved wrapper defaults, and a
+Helm-produced coalesced-defaults document are committed with integrity
+metadata. The downstream `common` library is omitted because only
+downstream wrapper templates consume it and the minimal anchor has none.
+
+One clean 55-chart dump and the clean generator fixture dump are unchanged.
+The compact description-free anchor outputs measure 3,996,667 bytes / 142,903
+objects for full and 43,626 bytes / 2,166 objects for today's lean. Those
+measurements are a baseline only; the exact-preset validator compile veto is
+measured after the new policy exists in Step 2.

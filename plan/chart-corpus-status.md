@@ -1,6 +1,9 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-08-02 after the fifty-eighth round closed the seven
+Last reconciled 2026-08-02 after the fifty-ninth round added the frozen
+schema-emission profile harness, pinned Temporal wrapper, hermetic/live
+oracle lanes, and relax-host preflight without changing production behavior
+or fixtures. The preceding fifty-eighth round closed the seven
 confirmed review findings without reopening `In progress`: formatter
 operands now follow selection and later encoding, `kindIs "invalid"` requires
 an exact identity, `else with` abstains from an invented truth, literal regex
@@ -112,6 +115,16 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Schema-emission harness and relax-host preflight (fifty-ninth round).**
+  Separately generated current full/lean schemas now run through one compiled
+  Rust validator harness with coalesced-default/null-deletion probes. The 206
+  microchart documents and 41 Temporal pairwise documents satisfy the
+  widening law, and the three semantic categories have both hermetic verdicts
+  and a pinned Helm/provider replay. The nil-safe host deletion is accepted by
+  both profiles and Helm, so no production patch was necessary. The vendored
+  Temporal 0.62.0 wrapper, archive checksum, lock, and Helm-produced defaults
+  form the large anchor. Clean corpus and generator dumps have no flips.
 
 - **Round-58 confirmed review findings (fifty-eighth round).** Token-opening
   `printf` captures now retain their operand-selection predicates, stop at a

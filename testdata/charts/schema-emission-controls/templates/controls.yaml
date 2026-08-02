@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile-controls
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: profile-controls
+  template:
+    metadata:
+      labels:
+        app: profile-controls
+    spec:
+      containers:
+        - name: app
+          image: example.invalid/profile-controls:1
+          env:
+            - name: REQUIRED_TEXT
+              value: {{ required "requiredText must be set" .Values.requiredText | quote }}
+{{- if not (regexMatch "^v[0-9]+\\.[0-9]+$" .Values.version) }}
+{{- fail "version must be vMAJOR.MINOR" }}
+{{- end }}
+{{- with (((.Values.host).nested).value) }}
+            - name: HOST_VALUE
+              value: {{ . | quote }}
+{{- end }}
+{{- if .Values.guard.enabled }}
+            - name: GUARDED_MESSAGE
+              value: {{ .Values.guard.message | quote }}
+{{- end }}
+---
+{{- if eq .Values.local.kind "ConfigMap" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: profile-controls-local
+immutable: {{ .Values.local.setting }}
+{{- else if eq .Values.local.kind "Service" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile-controls-local
+spec:
+  type: {{ .Values.local.setting }}
+  selector:
+    app: profile-controls
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+{{- end }}
+---
+apiVersion: v1
+kind: {{ .Values.dynamic.kind }}
+metadata:
+  name: profile-controls-dynamic

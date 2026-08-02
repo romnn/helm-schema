@@ -1,0 +1,334 @@
+temporal:
+  serviceAccount:
+    create: true
+  additionalAnnotations: {}
+  additionalLabels: {}
+  server:
+    enabled: true
+    image:
+      pullPolicy: Always
+    deploymentLabels: {}
+    deploymentAnnotations: {}
+    podAnnotations: {}
+    podLabels: {}
+    secretLabels: {}
+    secretAnnotations: {}
+    resources: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    additionalVolumes: []
+    additionalVolumeMounts: []
+    additionalEnv: []
+    securityContext:
+      runAsNonRoot: true
+      # runAsUser: 11000
+      # runAsGroup: 11000
+      seccompProfile:
+        type: RuntimeDefault
+    # fsGroup: 1000
+    # runAsUser: 1000
+
+    # this is the temporal config file
+    # it is templated: https://github.com/temporalio/helm-charts/blob/main/charts/temporal/templates/server-configmap.yaml
+    # ref: https://docs.temporal.io/references/configuration#persistence
+    config:
+      persistence:
+        default:
+          driver: "sql"
+          sql:
+            driver: "postgres12"
+            host: postgres-cluster-rw.cnpg-system.svc.cluster.local
+            port: 5432
+            database: temporal
+            user: username
+            password: changeme
+            # existing secret with a single key called `password`
+            # existingSecret: *sql-persistence-password-secret-name
+            maxConns: 20
+            maxIdleConns: 20
+            maxConnLifetime: "1h"
+            # tls:
+            #  enabled: true
+            #  enableHostVerification: true
+            #  serverName: _HOST_ # this is strictly required when using serverless CRDB offerings
+            #  caFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).
+            #  certFile: /path/to/certs/<client-cert-file>
+            #  keyFile: /path/to/certs/<client-key-file>
+        # The local and cloud Postgres cluster charts already provision the
+        # temporal databases and the temporal_owner role. Temporal runtime and
+        # migrations should use that managed role rather than ad-hoc bootstrap
+        # credentials.
+        visibility:
+          driver: "sql"
+          sql:
+            driver: "postgres12"
+            host: postgres-cluster-rw.cnpg-system.svc.cluster.local
+            port: 5432
+            database: temporal_visibility
+            user: username
+            password: changeme
+            # existing secret with a single key called `password`
+            # existingSecret: *sql-persistence-password-secret-name
+            maxConns: 20
+            maxIdleConns: 20
+            maxConnLifetime: "1h"
+            # tls:
+            #  enabled: true
+            #  enableHostVerification: true
+            #  serverName: _HOST_ # this is strictly required when using serverless CRDB offerings
+            #  caFile: /path/to/certs/<CA-file> # Here we assumed that caFile, certFile, keyFile are stored in one secret mounted as 'secret-with-certs' (see: server.additionalVolumes and server.additionalVolumeMounts sections).
+            #  certFile: /path/to/certs/<client-cert-file>
+            #  keyFile: /path/to/certs/<client-key-file>
+    # server.frontend is the grpc/http temporal API, which we don't want to expose via an ingress.
+    frontend:
+      service:
+        annotations: {}
+      ingress:
+        enabled: false
+      deploymentLabels: {}
+      deploymentAnnotations: {}
+      podAnnotations:
+        # there is no way to set pod probes
+        "kube-score/pod-probes": "disable"
+        # worker requires writable filesystem and specific uid/gid
+        "kube-score/container-security-context-readonlyrootfilesystem": "disable"
+        "kube-score/container-security-context-user-group-id": "disable"
+      podLabels: {}
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      # additionalEnv: []
+      containerSecurityContext:
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        runAsNonRoot: false
+        # runAsUser: 11000
+        # runAsGroup: 11000
+        # capabilities:
+        #   drop:
+        #     - ALL
+      topologySpreadConstraints: []
+      podDisruptionBudget:
+        minAvailable: 1
+    internalFrontend:
+      enabled: false
+      service:
+        annotations:
+          # when internal frontend is disabled, a service is created without a deployment
+          "kube-score/service-targets-pod": "disable"
+    history:
+      deploymentLabels: {}
+      deploymentAnnotations: {}
+      podAnnotations:
+        # there is no way to set pod probes
+        "kube-score/pod-probes": "disable"
+        # worker requires writable filesystem and specific uid/gid
+        "kube-score/container-security-context-readonlyrootfilesystem": "disable"
+        "kube-score/container-security-context-user-group-id": "disable"
+      podLabels: {}
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      # additionalEnv: []
+      # additionalEnvSecretName: ""
+      containerSecurityContext:
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        runAsNonRoot: false
+        # runAsUser: 11000
+        # runAsGroup: 11000
+        # capabilities:
+        #   drop:
+        #     - ALL
+      topologySpreadConstraints: []
+      podDisruptionBudget:
+        minAvailable: 1
+    matching:
+      deploymentLabels: {}
+      deploymentAnnotations: {}
+      podAnnotations:
+        # there is no way to set pod probes
+        "kube-score/pod-probes": "disable"
+        # worker requires writable filesystem and specific uid/gid
+        "kube-score/container-security-context-readonlyrootfilesystem": "disable"
+        "kube-score/container-security-context-user-group-id": "disable"
+      podLabels: {}
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      # additionalEnv: []
+      containerSecurityContext:
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        runAsNonRoot: false
+        # runAsUser: 11000
+        # runAsGroup: 11000
+        # capabilities:
+        #   drop:
+        #     - ALL
+      topologySpreadConstraints: []
+      podDisruptionBudget:
+        minAvailable: 1
+    worker:
+      deploymentLabels: {}
+      deploymentAnnotations: {}
+      podAnnotations:
+        # there is no way to set pod probes
+        "kube-score/pod-probes": "disable"
+        # worker requires writable filesystem and specific uid/gid
+        "kube-score/container-security-context-readonlyrootfilesystem": "disable"
+        "kube-score/container-security-context-user-group-id": "disable"
+      podLabels: {}
+      resources: {}
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}
+      # additionalEnv: []
+      containerSecurityContext:
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        runAsNonRoot: false
+        # runAsUser: 11000
+        # runAsGroup: 11000
+        # capabilities:
+        #   drop:
+        #     - ALL
+      topologySpreadConstraints: []
+      podDisruptionBudget:
+        minAvailable: 1
+      # additionalVolumes:
+      #   - name: secret-with-certs
+      #     secret:
+      #       secretName: secret-with-certs
+      # additionalVolumeMounts:
+      #   - name: secret-with-certs
+      #     mountPath: /path/to/certs/
+  admintools:
+    enabled: true
+    image:
+      pullPolicy: Always
+    deploymentLabels: {}
+    deploymentAnnotations: {}
+    podLabels: {}
+    podAnnotations:
+      # there is no way to set pod probes
+      "kube-score/pod-probes": "disable"
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    # additionalVolumes: []
+    # additionalVolumeMounts: []
+    # additionalEnv: []
+    # additionalEnvSecretName: ""
+    # for sidecar containers, add containers here with restartPolicy: Always
+    # additionalInitContainers: []
+    resources: {}
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 11000
+      runAsGroup: 11000
+      capabilities:
+        drop:
+          - ALL
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 11000
+      runAsGroup: 11000
+      seccompProfile:
+        type: RuntimeDefault
+    podDisruptionBudget:
+      minAvailable: 1
+  web:
+    enabled: true
+    image:
+      pullPolicy: Always
+    # no ingress since we proxy through oauth2proxy
+    ingress:
+      enabled: false
+    deploymentLabels: {}
+    deploymentAnnotations: {}
+    podAnnotations:
+      # there is no way to set pod probes
+      "kube-score/pod-probes": "disable"
+      # web requires writable filesystem and specific uid/gid
+      "kube-score/container-security-context-readonlyrootfilesystem": "disable"
+      "kube-score/container-security-context-user-group-id": "disable"
+    podLabels: {}
+    resources: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    additionalVolumes: []
+    additionalVolumeMounts: []
+    # Adjust Web UI config with environment variables:
+    # https://docs.temporal.io/references/web-ui-environment-variables
+    additionalEnv: []
+    additionalEnvSecretName: ""
+    containerSecurityContext:
+      allowPrivilegeEscalation: true
+      readOnlyRootFilesystem: false
+      runAsNonRoot: false
+      # runAsUser: 11000
+      # runAsGroup: 11000
+      # capabilities:
+      #   drop:
+      #     - ALL
+    securityContext:
+      runAsNonRoot: true
+      # runAsUser: 11000
+      # runAsGroup: 11000
+      seccompProfile:
+        type: RuntimeDefault
+    topologySpreadConstraints: []
+    podDisruptionBudget:
+      minAvailable: 1
+  cassandra:
+    enabled: false
+  mysql:
+    enabled: false
+  postgresql:
+    enabled: true
+  prometheus:
+    enabled: false
+  grafana:
+    enabled: false
+  elasticsearch:
+    enabled: false
+  schema:
+    enabled: false
+    createDatabase:
+      enabled: false
+    setup:
+      enabled: false
+    update:
+      enabled: false
+    podAnnotations: {}
+    podLabels: {}
+    resources: {}
+    # containerSecurityContext: *container-security-context
+    # securityContext:
+    #   runAsNonRoot: true
+    #   seccompProfile:
+    #     type: RuntimeDefault
+
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 11000
+      runAsGroup: 11000
+      capabilities:
+        drop:
+          - ALL
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 11000
+      runAsGroup: 11000
+      seccompProfile:
+        type: RuntimeDefault

@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile-controls-worker
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: profile-controls-worker
+  template:
+    metadata:
+      labels:
+        app: profile-controls-worker
+    spec:
+      containers:
+        - name: worker
+          image: example.invalid/profile-controls-worker:1

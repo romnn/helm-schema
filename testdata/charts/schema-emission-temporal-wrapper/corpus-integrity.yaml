@@ -1,0 +1,21 @@
+version: 1
+helm:
+  version: v4.2.3
+  goVersion: go1.26.5
+provider:
+  kubernetesVersion: v1.29.0-standalone-strict
+lock:
+  file: Chart.lock
+  sha256: e401fb6aebdc95368cce83f2785d52e0e359298bb8be649fcbec637b914e2748
+coalescedDefaults:
+  file: coalesced-defaults.json
+  sha256: d3e856bdde254ce261a8bc67d3fbe8b07cb200115061fce173fda4bd44820765
+dependencies:
+  - name: temporal
+    version: 0.62.0
+    source: https://go.temporal.io/helm-charts
+    archive: charts/temporal-0.62.0.tgz
+    sha256: c2f01baeef60ed96335948640a8ac30fb49a10b906e20c259b92f81f2cba5c04
+omittedDependencies:
+  - name: common
+    rationale: The downstream common chart is a library used only by wrapper-owned templates; this minimal wrapper has no such templates, so it contributes no lowered facts.
