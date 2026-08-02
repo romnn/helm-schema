@@ -538,7 +538,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
         want: &json!({
             "$defs": {
                 "helm-double-quoted-safe": double_quoted_safe_definition(),
-                "helm-truthy": {
+                "t": {
                     "anyOf": [
                         { "const": true },
                         { "not": { "const": 0 }, "type": "number" },
@@ -560,7 +560,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
                         "properties": {
                             "serviceAccount": {
                                 "properties": {
-                                    "create": { "$ref": "#/$defs/helm-truthy" }
+                                    "create": { "$ref": "#/$defs/t" }
                                 },
                                 "required": ["create"],
                                 "type": "object"

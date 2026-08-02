@@ -30,6 +30,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
             collect_manifest_contract_for_template(&source, &path, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
+        manifest_contract.project_dependency_global_contracts(&chart.values_prefix);
         // Rendering this template unconditionally reaches these helper
         // names; a name only an inactive optional dependency defines aborts
         // with "no template". The activation predicates are already
@@ -69,6 +70,7 @@ pub(crate) fn collect_manifest_contract_for_chart(
         // strict calls and terminal effects remain in their own channels.
         notes_contract.mark_rendered_output_textual();
         notes_contract.map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
+        notes_contract.project_dependency_global_contracts(&chart.values_prefix);
         notes_contract = apply_chart_activation_guard_sets(notes_contract, &activation_guard_sets);
         contract.append(notes_contract);
     }

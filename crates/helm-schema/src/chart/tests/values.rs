@@ -1,7 +1,7 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 
-use super::build_composed_values_yaml;
+use super::{build_composed_values_yaml, build_dependency_global_ownership};
 use crate::chart::ChartContext;
 use crate::chart::discover_chart_contexts;
 use test_util::prelude::sim_assert_eq;
@@ -203,6 +203,76 @@ fn scalar_child_global_skips_parent_injection_and_child_defaults() -> eyre::Resu
     sim_assert_eq!(
         have: yaml_pointer(&doc, &["child", "global"]),
         want: Some(&serde_yaml::Value::String("disabled".to_string()))
+    );
+
+    Ok(())
+}
+
+#[test]
+fn dependency_global_ownership_keeps_chart_identity() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            global:
+              region: root
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/metrics/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: metrics
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/metrics/values.yaml")?,
+        indoc! {r#"
+            global:
+              imageRegistry: ""
+              storageClass:
+              labels:
+                owner: metrics
+        "#},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/metrics/charts/agent/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: agent
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/metrics/charts/agent/values.yaml")?,
+        indoc! {"
+            global:
+              imageRegistry: local
+              imagePullSecrets: []
+              labels:
+                region: local
+        "},
+    )?;
+
+    let ownership = build_dependency_global_ownership(&discover(&chart_dir)?)?;
+    sim_assert_eq!(
+        have: ownership.shadowed_input_paths,
+        want: std::collections::BTreeSet::from([
+            "metrics.agent.global.imageRegistry".to_string(),
+            "metrics.agent.global.labels.owner".to_string(),
+            "metrics.agent.global.region".to_string(),
+            "metrics.agent.global.storageClass".to_string(),
+            "metrics.global.region".to_string(),
+        ])
     );
 
     Ok(())

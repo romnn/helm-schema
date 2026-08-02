@@ -62,6 +62,7 @@ struct PreparedSession {
     values_yaml: Option<String>,
     dependency_values_yaml: Option<String>,
     dependency_refill_values_yaml: Option<String>,
+    shadowed_input_paths: BTreeSet<String>,
     explicit_value_paths: BTreeSet<String>,
     values_descriptions: BTreeMap<String, String>,
 }
@@ -104,6 +105,7 @@ impl PreparedSession {
             &values_roots,
             kubernetes_version.as_deref(),
         )?;
+        let shadowed_input_paths = chart_analysis.shadowed_input_paths;
 
         Ok(Self {
             analysis: Analysis {
@@ -113,6 +115,7 @@ impl PreparedSession {
             values_yaml,
             dependency_values_yaml,
             dependency_refill_values_yaml,
+            shadowed_input_paths,
             explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
         })
@@ -384,6 +387,7 @@ impl AnalysisSession {
                     .with_dependency_refill_values_yaml(
                         prepared.dependency_refill_values_yaml.as_deref(),
                     )
+                    .with_shadowed_input_paths(&prepared.shadowed_input_paths)
                     .with_values_descriptions(&prepared.values_descriptions)
                     .with_profile(self.opts.profile),
             );

@@ -18,6 +18,7 @@ use crate::values_roots::ValuesRoots;
 pub(crate) struct ChartAnalysis {
     pub(crate) contract: ContractIr,
     pub(crate) local_schema_universe: LocalSchemaUniverse,
+    pub(crate) shadowed_input_paths: BTreeSet<String>,
 }
 
 #[tracing::instrument(skip_all)]
@@ -51,6 +52,7 @@ pub(crate) fn analyze_charts(
     }
 
     let corpus = DefineCorpus::build(charts, defines);
+    let dependency_global_ownership = chart::build_dependency_global_ownership(charts)?;
     for chart in charts {
         if chart.is_library {
             continue;
@@ -90,5 +92,6 @@ pub(crate) fn analyze_charts(
     Ok(ChartAnalysis {
         contract,
         local_schema_universe,
+        shadowed_input_paths: dependency_global_ownership.shadowed_input_paths,
     })
 }

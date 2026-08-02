@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use helm_schema_ast::extract_values_yaml_descriptions;
@@ -81,6 +81,79 @@ pub fn build_dependency_refill_values_yaml(
     } else {
         Ok(Some(serialized))
     }
+}
+
+pub(crate) struct DependencyGlobalOwnership {
+    pub(crate) shadowed_input_paths: BTreeSet<String>,
+}
+
+pub(crate) fn build_dependency_global_ownership(
+    charts: &[ChartContext],
+) -> EngineResult<DependencyGlobalOwnership> {
+    let mut declarations = Vec::new();
+    for chart in charts {
+        let values_path = chart.chart_dir.join("values.yaml")?;
+        if !values_path.is_file()? {
+            continue;
+        }
+        let defaults = serde_yaml::from_str::<YamlValue>(&values_path.read_to_string()?)?;
+        let Some(global) = defaults
+            .as_mapping()
+            .and_then(|mapping| mapping.get(YamlValue::String("global".to_string())))
+            .and_then(YamlValue::as_mapping)
+        else {
+            continue;
+        };
+        let mut relative_paths = Vec::new();
+        collect_declared_default_paths(global, &mut Vec::new(), &mut relative_paths);
+        declarations.push((chart.values_prefix.clone(), relative_paths));
+    }
+
+    let mut shadowed_input_paths = BTreeSet::new();
+    for (owner_prefix, relative_paths) in declarations {
+        for chart in charts.iter().filter(|chart| {
+            chart.values_prefix.len() > owner_prefix.len()
+                && chart.values_prefix.starts_with(&owner_prefix)
+        }) {
+            for relative_path in &relative_paths {
+                shadowed_input_paths
+                    .insert(scoped_global_path(&chart.values_prefix, relative_path));
+            }
+        }
+    }
+
+    Ok(DependencyGlobalOwnership {
+        shadowed_input_paths,
+    })
+}
+
+fn collect_declared_default_paths(
+    mapping: &serde_yaml::Mapping,
+    prefix: &mut Vec<String>,
+    paths: &mut Vec<Vec<String>>,
+) {
+    for (key, value) in mapping {
+        let Some(key) = key.as_str() else {
+            continue;
+        };
+        prefix.push(key.to_string());
+        if let YamlValue::Mapping(mapping) = value {
+            collect_declared_default_paths(mapping, prefix, paths);
+        } else {
+            paths.push(prefix.clone());
+        }
+        prefix.pop();
+    }
+}
+
+fn scoped_global_path(chart_prefix: &[String], relative_path: &[String]) -> String {
+    helm_schema_core::join_value_path(
+        chart_prefix
+            .iter()
+            .cloned()
+            .chain(std::iter::once("global".to_string()))
+            .chain(relative_path.iter().cloned()),
+    )
 }
 
 /// `composed` minus every path `parent` declares: keys both documents

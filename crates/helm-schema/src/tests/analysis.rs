@@ -1268,6 +1268,104 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
 }
 
 #[test]
+fn nested_dependency_global_defaults_keep_null_fallback_contracts() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+            dependencies:
+              - name: clickhouse
+                version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {"
+            global:
+              imagePullSecrets: []
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/clickhouse/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: clickhouse
+            version: 0.1.0
+            dependencies:
+              - name: zookeeper
+                version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/clickhouse/values.yaml")?,
+        indoc! {"
+            global:
+              imagePullSecrets: []
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/clickhouse/charts/zookeeper/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: zookeeper
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/clickhouse/charts/zookeeper/values.yaml")?,
+        indoc! {"
+            global:
+              imagePullSecrets: []
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/clickhouse/charts/zookeeper/templates/service-account.yaml")?,
+        indoc! {"
+            apiVersion: v1
+            kind: ServiceAccount
+            metadata:
+              name: probe
+            imagePullSecrets:
+              {{- range .Values.global.imagePullSecrets }}
+              - name: {{ .name }}
+              {{- end }}
+        "},
+    )?;
+
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+        None,
+    )?;
+    let paths = collection
+        .contract
+        .finalize()
+        .uses()
+        .iter()
+        .map(|contract_use| contract_use.source_expr.clone())
+        .filter(|path| path.contains("imagePullSecrets"))
+        .collect::<std::collections::BTreeSet<_>>();
+
+    sim_assert_eq!(
+        have: paths,
+        want: std::collections::BTreeSet::from([
+            "global.imagePullSecrets.*.name".to_string(),
+            "clickhouse.global.imagePullSecrets.*.name".to_string(),
+            "clickhouse.zookeeper.global.imagePullSecrets.*.name".to_string(),
+        ])
+    );
+
+    Ok(())
+}
+
+#[test]
 fn literal_crd_template_populates_chart_local_schema_universe() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
