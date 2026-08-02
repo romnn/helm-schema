@@ -1,4 +1,4 @@
-# Schema emission policy: passes, profiles, and configuration — v2.5 (2026-08-02)
+# Schema emission policy: passes, profiles, and configuration — v2.6 (2026-08-02)
 
 Goal unchanged from v1 (2026-07-17): during live validation, helm-schema
 *generation* is not the dominant cost — `helm lint` is, because Helm 4
@@ -34,7 +34,11 @@ representation/producer split, the `ProjectedTree` /
 benchmark visibility, config-version support policy and source
 eligibility, complete Boolean-root handling, tri-state transport-aware
 oracle verdicts, definition-pruning churn isolation, and two wording
-corrections. **v2.5 is the final paper revision; further review happens
+corrections. v2.6 — four phase-boundary contracts: out-of-band
+replacement intent from the initial override read, preset-plus-delta
+`EmissionSelection`, the completion-pass monotonicity obligation, and
+the emission-vs-serialized finality split with a late reachability
+prune. **v2.6 is the final paper revision; further review happens
 against the implementation (step 0a onward), not this document.**
 
 This plan is written with the architecture-review-v3 target in mind
@@ -362,7 +366,23 @@ rewrite conditional arms (`program_wrapper.rs:185` area,
 `scope_conditional_arms_to_non_wrappers`), so the **`EmissionReport`'s
 carrier section is finalized only after the completion passes** —
 condition metrics recorded earlier would not describe the schema Helm
-compiles. Then the session-level tail:
+compiles.
+
+**Completion-pass obligation.** "Policy-free" does not by itself
+preserve widening: several completion passes branch on the projected
+schema's *shape* — declared-default preservation conditionally adds
+alternatives (`resolve_policy.rs:1452` area) and program wrappers
+rewrite according to accepted shapes (`program_wrapper.rs:73`) — so a
+monotone projection does not automatically yield a monotone completed
+output. Therefore every completion pass carries an explicit obligation:
+**it must be validation-equivalent or monotone over schema
+acceptance**, and stage-pair tests check `accepts(full) ⊆
+accepts(widened)` after each shape-sensitive pass on the exhaustive
+microcharts. A pass that cannot meet the obligation has its
+policy-sensitive decision moved into lowering/support — it does not
+stay in completion. X policies and arbitrary caller overrides remain
+explicitly outside this law. This localizes monotonicity failures to a
+named pass instead of a distant end-to-end harness flip. Then the session-level tail:
 
 ```text
 → required inference (X policy, if requested)
@@ -452,7 +472,13 @@ emission:
   migrates onto it):
 
   ```text
-  EmissionSelection = Preset(SchemaProfile) | Explicit(EmissionPolicy)
+  EmissionSelection =
+      Preset { profile: SchemaProfile, delta: EmissionPolicyDelta }
+    | Explicit(EmissionPolicy)
+  // EmissionPolicyDelta: optional W knobs only, so "preset plus knob
+  // deltas" (the temporal config: lean + local-conditionals off) keeps
+  // its provenance instead of collapsing to Explicit with a null
+  // requested-profile — resolved exactly once into:
   ResolvedEmissionPolicy {
       requested_profile: Option<SchemaProfile>,   // the annotation's
       policy: EmissionPolicy,                     // single source
@@ -499,26 +525,31 @@ any caller-provided key:
 
 - `policy-vocabulary-version` is inside the fingerprint: identical
   boolean objects must change identity when knob meanings change.
-- **Merge intent has one runtime representation**: after reference
-  preparation, the transient `$ref-replace` markers are extracted and
-  removed ONCE into
+- **Merge intent is out-of-band from the first read**: replacement
+  pointers are collected while initially reading the override, and the
+  JSON is **never mutated with control metadata** — today's
+  `mark_refs_for_replacement` (`schema_override.rs:16`) inserts
+  `$ref-replace` in-band and silently overwrites a caller-authored key
+  of that name, then rides the marker through reference preparation;
+  extracting after preparation would keep that collision window open.
 
   ```text
-  PreparedOverride {
-      schema: marker-free Value,
-      replace_at: sorted JSON pointers,
-  }
+  UnpreparedOverride { schema: Value, replace_at: sorted JSON pointers }
+      → reference preparation →
+  PreparedOverride   { schema: Value, replace_at: sorted JSON pointers }
   impl PreparedOverride { fn identity(&self) -> PreparedOverrideIdentity }
   ```
 
-  and **both merging and hashing consume `replace_at`** — never two
-  representations to keep synchronized, and a caller-authored
-  `$ref-replace` key can no longer collide with internal control
-  metadata. The digest is over the canonical application-ordered
-  identity array. Rationale: the markers change deep-merge into subtree
+  Descendant pointers shadowed by a replaced ancestor are normalized
+  away. **Both merging and hashing consume `replace_at`** — one
+  representation, no synchronization, no reserved keyword in caller
+  JSON. The digest is over the canonical application-ordered identity
+  array. Rationale: replacement changes deep-merge into subtree
   replacement (`output_pipeline/overrides.rs:55`,
-  `schema_override.rs:43`), so two marker-free-identical schemas can
-  merge differently. An inline-vs-ref-resolved collision test pins it.
+  `schema_override.rs:43`), so two content-identical schemas can merge
+  differently. Tests cover every reference mode plus caller-authored
+  `$ref-replace` keys at ref and non-ref locations, and the
+  inline-vs-ref-resolved collision case.
 - `reference-mode` identifies configuration, not validation semantics
   under every external resolver.
 - **Boolean roots**: a root replacement override can produce `true` or
@@ -583,12 +614,24 @@ lean:                        selected Ordinary/Root = 0,
 every policy:                mandatory_dropped = 0
 ```
 
-Carrier counts remain for grouping/performance accounting, and the
-report separately records **total final serialized conditional-keyword
-counts** — those, not provenance, are what Helm compiles after
-references and minification. The report reaches the shell benchmark
-through the in-crate benchmark test (see plan invariants), not tracing
-scraping.
+Carrier counts remain for grouping/performance accounting. **Serialized
+reality is a separate, later artifact**: the `EmissionReport` is final
+at generator completion, but overrides can add or remove conditionals,
+reference inlining can duplicate them, bundling can introduce them, and
+minification can share them (`transforms.rs:29-76`) — so
+`FinalOutputMetrics` is computed after reference transport,
+minification, and serialization, with bytes taken from the exact
+`write_schema_json` output. Those counts, not provenance, are what Helm
+compiles; size floors and compile-cost accounting read
+`FinalOutputMetrics`, fact floors read the `EmissionReport`. At the
+same late boundary, an **ownership-aware second reachability prune**
+removes generator-owned definitions orphaned by inlining or overrides —
+the early projection prune cannot see that far, and the minifier
+deliberately reinserts all pre-existing `$defs` unchanged
+(`helm-schema-json-schema-minify/src/lib.rs:27-43`), so fully inlined
+output would otherwise retain both the inlined payloads and their dead
+definitions. Both reports reach the shell benchmark through the
+in-crate benchmark test, not tracing scraping.
 
 ## Verification design
 
@@ -680,7 +723,10 @@ decision-table selection, and the report; split
 constraints" while exactly emulating current behavior. **Audit
 kind-partition anchoring** (local kind-partition microchart; resolve
 the constructor-vs-both-knobs question). `EmissionPolicy` (internal)
-replaces the bare enum. Floors begin reporting, not gating. Gate: both
+replaces the bare enum. Floors begin reporting, not gating. The
+completion-pass obligation's **stage-pair tests** land here too (the
+pass list is now enumerable): `accepts(full) ⊆ accepts(widened)` after
+each shape-sensitive completion pass on the microcharts. Gate: both
 profiles byte-identical on every fixture.
 
 ### Step 1a.1 — unconditional termination producer (behavior-changing)
@@ -725,10 +771,14 @@ record Roman's veto.
 
 Canonical Mandatory emission with the `Applied | NotApplicable`
 fallback and invariant test; constructor-level type-union collapse;
-delete the arm-then-fold vestige. VE evidence: algebraic rewrite spec +
-exhaustive small-domain property tests per shape + zero-flip battery.
-One clean dump; luup2 gate. **Reconfirm the lean veto** with final
-compile/size numbers under the final phase ordering.
+delete the arm-then-fold vestige. Introduce `FinalOutputMetrics` at the
+serialization boundary and the **late ownership-aware reachability
+prune** for generator-owned definitions orphaned by inlining or
+overrides (its own VE evidence, like the early prune). VE evidence:
+algebraic rewrite spec + exhaustive small-domain property tests per
+shape + zero-flip battery. One clean dump; luup2 gate. **Reconfirm the
+lean veto** with final compile/size numbers under the final phase
+ordering.
 
 ### Step 4 — configuration surface
 
