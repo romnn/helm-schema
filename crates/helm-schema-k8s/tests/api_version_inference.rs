@@ -34,6 +34,7 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         value_path: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
+        stringified: false,
         resource: ResourceRef::concrete(String::new(), kind.to_string()),
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
@@ -41,6 +42,7 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
+        source_null_tolerant: false,
         omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     }
@@ -541,6 +543,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() -> eyre::Result<()> {
         value_path: "x".to_string(),
         path: YamlPath(vec!["data".to_string()]),
         kind: ValueKind::Scalar,
+        stringified: false,
         resource: ResourceRef::concrete(String::new(), "ConfigMap".to_string()),
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
@@ -548,6 +551,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() -> eyre::Result<()> {
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
+        source_null_tolerant: false,
         omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };
@@ -584,6 +588,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() -> eyre::Result<()> {
         value_path: "x".to_string(),
         path: YamlPath(vec!["spec".to_string()]),
         kind: ValueKind::Scalar,
+        stringified: false,
         resource: ResourceRef::concrete(String::new(), "ServiceMonitor".to_string()),
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
@@ -591,6 +596,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() -> eyre::Result<()> {
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
+        source_null_tolerant: false,
         omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };

@@ -28,7 +28,7 @@ pub use contract_signals::{
     ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
     QuotedScalarStyle, ValuesDefaultSource, ValuesProgramWrapper,
 };
-pub use contract_use::{ContractUse, MergeLayersUse, SplitSegmentUse};
+pub use contract_use::{ContractUse, MergeLayerTransform, MergeLayersUse, SplitSegmentUse};
 pub use guard::{Guard, GuardValue};
 pub use guard_dnf::GuardDnf;
 pub use output_path::{
@@ -36,7 +36,7 @@ pub use output_path::{
     sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };
 pub use pattern_dialect::normalize_schema_pattern_dialects;
-pub use predicate::Predicate;
+pub use predicate::{ApproximationRole, Predicate};
 pub use provenance::{ContractProvenance, SourceSpan};
 pub use provider_origin::ProviderOrigin;
 pub use provider_schema_fragment::{

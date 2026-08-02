@@ -120,6 +120,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
             "matchLabels".to_string(),
         ]),
         kind: ValueKind::Fragment,
+        stringified: false,
         resource: ResourceRef::concrete(String::new(), "NetworkPolicy".to_string()),
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
@@ -127,6 +128,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
+        source_null_tolerant: false,
         omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     };

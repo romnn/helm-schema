@@ -13,6 +13,17 @@ pub struct SplitSegmentUse {
     pub last: bool,
 }
 
+/// A structural transform applied to one ordered merge layer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub enum MergeLayerTransform {
+    /// The layer reaches the merge unchanged.
+    Identity,
+    /// Nil members are recursively removed before the layer reaches the merge.
+    NilScrubbed,
+    /// Helm's map-only YAML decoder discards non-mapping source shapes.
+    ParsedMap,
+}
+
 /// The value is one layer of an ordered Sprig `merge`: a key of an earlier
 /// layer shadows the same key of every later layer at the rendered sink, so
 /// a later layer's member reaches the sink only where every earlier layer
@@ -23,19 +34,15 @@ pub struct MergeLayersUse {
     pub layers: Vec<String>,
     /// This use's own index within `layers`.
     pub position: usize,
-    /// Per-layer scrub markers, parallel to `layers`: a `true` layer's map
-    /// had nil members recursively removed before the merge (airflow's
-    /// `removeNilFields`), so that layer's sink typing must admit null
-    /// member spellings, and binding-carried rows of a scrub-involving
-    /// merge keep the layered routing.
-    pub nil_scrubbed_layers: Vec<bool>,
-    /// The layer facts were recovered from a local BINDING's meta (the
-    /// merged value flowed through a helper output before rendering)
-    /// rather than the render site's own layered value. Such rows keep
-    /// their base metadata field kind: the binding's other dispatch arms
-    /// (bitnami's `tplvalues.render` string lane) rely on the string-map
-    /// alternative it contributes, while direct render-site layers moved
-    /// that typing onto the synthesized arms entirely.
+    /// Per-layer transforms, parallel to `layers`.
+    pub transforms: Vec<MergeLayerTransform>,
+    /// Whether the layer facts came from a local binding's metadata rather
+    /// than the render site's own layered value.
+    ///
+    /// Identity-only binding merges keep their ordinary branch routing
+    /// because sibling dispatch arms may contribute other input shapes.
+    /// Structurally transformed bindings retain layered routing so each
+    /// transform's selection semantics remain visible at emission.
     pub via_binding: bool,
 }
 
@@ -46,6 +53,15 @@ impl MergeLayersUse {
         self.layers
             .get(..self.position.min(self.layers.len()))
             .unwrap_or_default()
+    }
+
+    /// Returns the transform applied to this use's layer.
+    #[must_use]
+    pub fn own_transform(&self) -> MergeLayerTransform {
+        self.transforms
+            .get(self.position)
+            .copied()
+            .unwrap_or(MergeLayerTransform::Identity)
     }
 }
 
@@ -70,6 +86,10 @@ pub struct ContractUse {
     /// values, but only where THIS row's condition holds.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub has_string_contract: bool,
+    /// Go template execution rendered the source through its `%v` spelling,
+    /// so a provider slot observes text rather than the raw input shape.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub stringified: bool,
     /// Literal member keys the TEMPLATE writes beside this fragment splice
     /// in the same mapping (`- name: tmp` next to `toYaml .Values.tmpVolume`):
     /// the rendered object already has them, so a provider slot's object
@@ -132,6 +152,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             #[serde(default)]
             has_string_contract: bool,
             #[serde(default)]
+            stringified: bool,
+            #[serde(default)]
             template_supplied_member_keys: std::collections::BTreeSet<String>,
             #[serde(default)]
             split_segment: Option<SplitSegmentUse>,
@@ -158,6 +180,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             resource: wire.resource,
             provenance: wire.provenance,
             has_string_contract: wire.has_string_contract,
+            stringified: wire.stringified,
             template_supplied_member_keys: wire.template_supplied_member_keys,
             split_segment: wire.split_segment,
             merge_layers: wire.merge_layers,
@@ -220,6 +243,7 @@ impl ContractUse {
             resource,
             provenance: provenance.into_iter().collect(),
             has_string_contract: false,
+            stringified: false,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,
             merge_layers: None,
@@ -252,5 +276,15 @@ impl ContractUse {
     {
         self.source_expr = map(&self.source_expr);
         self.condition.map_value_paths(map);
+        if let Some(merge) = &mut self.merge_layers {
+            for layer in &mut merge.layers {
+                *layer = map(layer);
+            }
+        }
+        for retain_guards in self.omitted_members.values_mut() {
+            for guard in retain_guards {
+                *guard = guard.clone().map_value_paths(map);
+            }
+        }
     }
 }

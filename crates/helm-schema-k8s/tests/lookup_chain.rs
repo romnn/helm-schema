@@ -33,6 +33,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         value_path: "x".to_string(),
         path,
         kind: ValueKind::Scalar,
+        stringified: false,
         resource,
         is_self_range_collection: false,
         template_supplied_member_keys: std::collections::BTreeSet::default(),
@@ -40,6 +41,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         merge_layers: None,
         range_key: false,
         nil_omitting: false,
+        source_null_tolerant: false,
         omitted_members: std::collections::BTreeMap::default(),
         outer_guards: Vec::new(),
     }

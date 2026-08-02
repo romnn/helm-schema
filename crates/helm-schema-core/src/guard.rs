@@ -146,6 +146,18 @@ pub enum Guard {
         /// Whether matching occurs after rendering the value through `tpl`.
         templated: bool,
     },
+    /// The path is a string that does not match a literal regular expression.
+    ///
+    /// This is narrower than the logical complement of
+    /// [`Guard::MatchesPattern`], which also includes every non-string.
+    /// Stringified predicate results use this guard for their sound
+    /// raw-string mismatch subset.
+    NotMatchesPattern {
+        /// Values path subjected to the pattern test.
+        path: String,
+        /// Literal regular expression excluded by the branch.
+        pattern: String,
+    },
     /// A destructured range key starts with a literal prefix. The path names
     /// the ranged collection; the predicate applies to its matching entries,
     /// not to the collection value itself.
@@ -295,6 +307,13 @@ pub enum Guard {
         /// Literal mapping key whose presence selects the branch.
         key: String,
     },
+    /// The mapping at `path` does not contain `key`.
+    NotHasKey {
+        /// Values path expected to hold a mapping.
+        path: String,
+        /// Literal mapping key whose absence selects the branch.
+        key: String,
+    },
     /// SOME item of the list at `path` deep-equals the scalar literal —
     /// Sprig `has LITERAL .Values.list`, the dual of the literal-list
     /// membership (`has .Values.x (list …)`). `has` returns false on a
@@ -357,6 +376,7 @@ impl Guard {
             | Self::NotEq { .. }
             | Self::Absent { .. }
             | Self::MatchesPattern { .. }
+            | Self::NotMatchesPattern { .. }
             | Self::RangeKeyPrefix { .. }
             | Self::RangeKeyEquals { .. }
             | Self::RangeKeyMatches { .. }
@@ -370,6 +390,7 @@ impl Guard {
             | Self::AtMostOneMember { .. }
             | Self::MinMembers { .. }
             | Self::HasKey { .. }
+            | Self::NotHasKey { .. }
             | Self::ContainsEquals { .. }
             | Self::ContainsMemberEquals { .. }
             | Self::ContainsTruthyMember { .. } => {}
@@ -386,6 +407,7 @@ impl Guard {
             | Guard::NotEq { path, .. }
             | Guard::Absent { path }
             | Guard::MatchesPattern { path, .. }
+            | Guard::NotMatchesPattern { path, .. }
             | Guard::RangeKeyPrefix { path, .. }
             | Guard::RangeKeyEquals { path, .. }
             | Guard::RangeKeyMatches { path, .. }
@@ -399,6 +421,7 @@ impl Guard {
             | Guard::AtMostOneMember { path }
             | Guard::MinMembers { path, .. }
             | Guard::HasKey { path, .. }
+            | Guard::NotHasKey { path, .. }
             | Guard::ContainsEquals { path, .. }
             | Guard::ContainsMemberEquals { path, .. }
             | Guard::ContainsTruthyMember { path, .. } => {
@@ -439,6 +462,10 @@ impl Guard {
                 pattern,
                 templated,
             },
+            Guard::NotMatchesPattern { path, pattern } => Guard::NotMatchesPattern {
+                path: map(&path),
+                pattern,
+            },
             Guard::RangeKeyEquals { path, key } => Guard::RangeKeyEquals {
                 path: map(&path),
                 key,
@@ -455,15 +482,7 @@ impl Guard {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
             },
             Guard::AnyOf { alternatives } => Guard::AnyOf {
-                alternatives: alternatives
-                    .into_iter()
-                    .map(|alternative| {
-                        alternative
-                            .into_iter()
-                            .map(|guard| guard.map_value_paths(map))
-                            .collect()
-                    })
-                    .collect(),
+                alternatives: map_guard_alternatives(alternatives, map),
             },
             Guard::Range { path } => Guard::Range { path: map(&path) },
             Guard::With { path } => Guard::With { path: map(&path) },
@@ -493,6 +512,10 @@ impl Guard {
                 path: map(&path),
                 key,
             },
+            Guard::NotHasKey { path, key } => Guard::NotHasKey {
+                path: map(&path),
+                key,
+            },
             Guard::ContainsEquals { path, value } => Guard::ContainsEquals {
                 path: map(&path),
                 value,
@@ -512,4 +535,19 @@ impl Guard {
             },
         }
     }
+}
+
+fn map_guard_alternatives<F>(alternatives: Vec<Vec<Guard>>, map: &mut F) -> Vec<Vec<Guard>>
+where
+    F: FnMut(&str) -> String,
+{
+    alternatives
+        .into_iter()
+        .map(|alternative| {
+            alternative
+                .into_iter()
+                .map(|guard| guard.map_value_paths(map))
+                .collect()
+        })
+        .collect()
 }

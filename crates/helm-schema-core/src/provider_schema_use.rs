@@ -9,10 +9,19 @@ pub struct ProviderSchemaUse {
     pub path: YamlPath,
     /// How the value contributes to rendered YAML at the slot.
     pub kind: ValueKind,
+    /// Whether Go template rendering stringifies the source before the
+    /// completed YAML document reparses it.
+    pub stringified: bool,
     /// Resource whose schema owns the slot.
     pub resource: ResourceRef,
     /// Whether the value is the collection directly ranged by the template.
     pub is_self_range_collection: bool,
+    /// Whether this particular render skips or substitutes a null source.
+    ///
+    /// This stays per-use because another render of the same values path may
+    /// emit null directly; aggregating the two loses which provider slot can
+    /// justify a source-presence requirement.
+    pub source_null_tolerant: bool,
     /// Literal member keys the template writes beside the splice in the
     /// same mapping; the slot schema's `required` must not re-demand them.
     pub template_supplied_member_keys: std::collections::BTreeSet<String>,

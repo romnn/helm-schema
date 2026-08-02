@@ -278,6 +278,23 @@ fn normalize_conjunction(
     for predicate in absorbed_disjunctions {
         normalized.remove(&predicate);
     }
+    let exact = Predicate::all(
+        normalized
+            .iter()
+            .filter(|predicate| !predicate.contains_approximation())
+            .cloned()
+            .collect(),
+    );
+    normalized.retain(|predicate| {
+        let Predicate::Approximate {
+            sound_subset: Some(sound_subset),
+            ..
+        } = predicate
+        else {
+            return true;
+        };
+        !crate::predicate_bdd::exact_implies(&exact, sound_subset)
+    });
     Some(normalized.into_iter().collect())
 }
 

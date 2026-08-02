@@ -156,6 +156,23 @@ fn equal_evidence_across_opaque_branch_complements_is_unconditional() {
 }
 
 #[test]
+fn conjunction_drops_an_approximation_proven_by_its_exact_sibling() {
+    let enabled = truthy("enabled");
+    let approximate = Predicate::approximate_with_sound_predicate(
+        "partial",
+        ["enabled".to_string(), "fallback".to_string()]
+            .into_iter()
+            .collect(),
+        Predicate::Or(vec![enabled.clone(), truthy("fallback")]),
+    );
+
+    sim_assert_eq!(
+        have: GuardDnf::from_conjunction([approximate, enabled.clone()]),
+        want: GuardDnf::from_conjunction([enabled])
+    );
+}
+
+#[test]
 fn conditional_guard_disjunction_uses_the_same_normalization() {
     let condition = GuardDnf::normalize_conditional_guard_disjunction([
         vec![

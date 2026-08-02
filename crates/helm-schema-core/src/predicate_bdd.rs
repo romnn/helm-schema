@@ -31,10 +31,10 @@ struct PredicateBdd {
 }
 
 pub(crate) fn normalize(predicate: Predicate) -> Predicate {
+    let predicate = simplify_structure(predicate);
     if predicate.contains_approximation() {
         return predicate;
     }
-    let predicate = simplify_structure(predicate);
     let Some(mut bdd) = PredicateBdd::for_predicate(&predicate) else {
         return predicate;
     };
@@ -74,6 +74,26 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
                     }
                 }
             }
+            let exact = Predicate::all(
+                factors
+                    .iter()
+                    .filter(|factor| !factor.contains_approximation())
+                    .cloned()
+                    .collect(),
+            );
+            factors.retain(|factor| {
+                let Predicate::Approximate {
+                    sound_subset: Some(sound_subset),
+                    ..
+                } = factor
+                else {
+                    return true;
+                };
+                // The subset implies the opaque runtime condition. When the
+                // other exact conjuncts already imply that subset, the
+                // runtime condition is known true and contributes nothing.
+                !exact_implies(&exact, sound_subset)
+            });
             match factors.len() {
                 0 => Predicate::True,
                 1 => factors.pop_first().unwrap_or(Predicate::True),
@@ -100,6 +120,20 @@ fn simplify_structure(predicate: Predicate) -> Predicate {
         }
         predicate => predicate,
     }
+}
+
+pub(crate) fn exact_implies(antecedent: &Predicate, consequent: &Predicate) -> bool {
+    if antecedent.contains_approximation() || consequent.contains_approximation() {
+        return false;
+    }
+    let counterexample = Predicate::And(vec![
+        antecedent.clone(),
+        Predicate::Not(Box::new(consequent.clone())),
+    ]);
+    let Some(mut bdd) = PredicateBdd::for_predicate(&counterexample) else {
+        return false;
+    };
+    bdd.build(&counterexample) == Some(FALSE)
 }
 
 impl PredicateBdd {

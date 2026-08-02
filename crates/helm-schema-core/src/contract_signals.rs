@@ -413,6 +413,15 @@ pub enum ContractRequirementTarget {
         /// Whether Helm's integer-count range form remains accepted.
         allow_integer: bool,
     },
+    /// Every ranged member except named object entries supplied by a deeper
+    /// values layer. Array members and newly added object entries still bind.
+    MembersExceptKeys {
+        /// Object keys whose member requirement is satisfied after values
+        /// layering even when the parent layer omits the required leaf.
+        keys: BTreeSet<String>,
+        /// Whether Helm's integer-count range form remains accepted.
+        allow_integer: bool,
+    },
     /// Values of object entries whose keys start with the literal prefix.
     /// Empty arrays and null remain valid because they execute no range body.
     MembersMatchingPrefix {
@@ -643,7 +652,14 @@ pub enum FailValueRequirement {
     QuotedSerializationSafe {
         /// YAML quoting grammar that serialized content must satisfy.
         style: QuotedScalarStyle,
+        /// The rendered text is a `tpl` result, so template-action-free
+        /// input is the identity while an actual program has unknown output.
+        templated: bool,
     },
+    /// A value substituted by fmt's `%s` may be a string or a mapping whose
+    /// recursive textual form remains structurally safe. Other JSON kinds
+    /// emit a leading fmt diagnostic or collection indicator.
+    PrintfStringOperand,
     /// The value's own text renders into an UNQUOTED YAML slot, so text that
     /// closes the plain token there corrupts the document: a `: ` (or
     /// trailing `:`) turns the slot into a nested mapping, a ` #` truncates
@@ -686,6 +702,7 @@ pub struct ContractSchemaSignals {
     schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
     referenced_value_paths: BTreeSet<String>,
     pruned_parent_value_paths: BTreeSet<String>,
+    unconditionally_omitted_value_paths: BTreeSet<String>,
     direct_ranged_value_paths: BTreeSet<String>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
     values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
@@ -707,7 +724,7 @@ impl ContractSchemaSignals {
         schema_evidence_by_value_path: BTreeMap<String, ContractPathSchemaEvidence>,
         terminal_clauses: Vec<Vec<ConditionalGuard>>,
     ) -> Self {
-        let referenced_value_paths = schema_evidence_by_value_path
+        let referenced_value_paths: BTreeSet<String> = schema_evidence_by_value_path
             .iter()
             .filter(|(_, evidence)| evidence.is_referenced_value_path)
             .map(|(path, _)| path.clone())
@@ -719,6 +736,43 @@ impl ContractSchemaSignals {
             })
             .map(|(path, _)| path.clone())
             .collect();
+        let unconditionally_omitted_value_paths = schema_evidence_by_value_path
+            .iter()
+            .flat_map(|(path, evidence)| {
+                let mut provider_uses = evidence.provider_schema_uses.iter().chain(
+                    evidence
+                        .conditional_overlays
+                        .iter()
+                        .flat_map(|overlay| overlay.evidence.provider_schema_uses.iter()),
+                );
+                let Some(first_use) = provider_uses.next() else {
+                    return BTreeSet::new();
+                };
+                let mut omitted_members = first_use
+                    .omitted_members
+                    .iter()
+                    .filter(|(_, retain_guards)| retain_guards.is_empty())
+                    .map(|(member, _)| member.clone())
+                    .collect::<BTreeSet<_>>();
+                for provider_use in provider_uses {
+                    omitted_members.retain(|member| {
+                        provider_use
+                            .omitted_members
+                            .get(member)
+                            .is_some_and(Vec::is_empty)
+                    });
+                }
+                omitted_members
+                    .into_iter()
+                    .map(|member| {
+                        let mut segments = crate::split_value_path(path);
+                        segments.push(member);
+                        crate::join_value_path(segments)
+                    })
+                    .filter(|member_path| referenced_value_paths.contains(member_path))
+                    .collect()
+            })
+            .collect();
         let direct_ranged_value_paths = schema_evidence_by_value_path
             .iter()
             .filter(|(_, evidence)| evidence.facts.is_direct_ranged_source)
@@ -728,6 +782,7 @@ impl ContractSchemaSignals {
             schema_evidence_by_value_path,
             referenced_value_paths,
             pruned_parent_value_paths,
+            unconditionally_omitted_value_paths,
             direct_ranged_value_paths,
             values_default_sources: BTreeSet::new(),
             values_program_wrappers: BTreeSet::new(),
@@ -892,6 +947,12 @@ impl ContractSchemaSignals {
         &self.pruned_parent_value_paths
     }
 
+    /// Referenced members removed before every provider sink of their parent.
+    #[must_use]
+    pub fn unconditionally_omitted_value_paths(&self) -> &BTreeSet<String> {
+        &self.unconditionally_omitted_value_paths
+    }
+
     /// Returns schema evidence for one canonical values path.
     #[must_use]
     pub fn evidence_for(&self, value_path: &str) -> Option<&ContractPathSchemaEvidence> {
@@ -931,6 +992,11 @@ pub struct ContractValuePathFacts {
     /// path: rendering fails for non-string values, so this typing survives
     /// even when another use stringifies the path.
     pub has_string_contract: bool,
+    /// Whether a runtime string contract can consume the raw value without
+    /// first passing through that value's own truthiness guard. Such a
+    /// contract still rejects Helm-falsy non-strings even when every placed
+    /// render row is self-guarded.
+    pub has_non_self_guarded_string_contract: bool,
     /// Some `path.*` member row carries a runtime string contract (`tpl`
     /// over each ranged member): integer iteration yields int members the
     /// contract rejects, so the integer lane closes.
@@ -960,6 +1026,10 @@ pub struct ContractValuePathFacts {
     /// Whether any use consumes the value rather than merely testing it in a
     /// positive control-flow header.
     pub has_non_control_use: bool,
+    /// Whether a non-control consumer observes the value outside an ordered
+    /// merge layer. Such a consumer keeps the resolved base beside synthesized
+    /// merge-layer arms.
+    pub has_unlayered_non_control_use: bool,
     /// Whether a rendering sink consumes the path without a branch guard.
     pub has_unconditional_render_use: bool,
     /// Whether any rendering sink is guarded by this path's own truthiness.
@@ -972,6 +1042,10 @@ pub struct ContractValuePathFacts {
     /// classification (a declared `{}` default stays an open map — the
     /// merged sink renders any user-supplied members).
     pub has_merge_layered_use: bool,
+    /// A merge layer passes through Helm's map-only YAML decoder. Provider
+    /// typing applies to mapping inputs, while non-mapping source shapes are
+    /// discarded and therefore must remain open in the base schema.
+    pub has_parsed_map_layered_use: bool,
     /// Every render use either sits behind the path's own truthy selection or
     /// cannot reject a Helm-falsy value at all: a `merge` operand's strict
     /// map contract rides its fail implication (which keys on the call's live
@@ -1022,6 +1096,7 @@ impl ContractValuePathFacts {
         self.has_unconditional_render_use |= other.has_unconditional_render_use;
         self.has_self_guarded_render_use |= other.has_self_guarded_render_use;
         self.has_merge_layered_use |= other.has_merge_layered_use;
+        self.has_parsed_map_layered_use |= other.has_parsed_map_layered_use;
         self.has_self_range_guard_render_use |= other.has_self_range_guard_render_use;
         self.all_render_uses_self_guarded &= other.all_render_uses_self_guarded;
         self.all_render_uses_falsy_tolerant &= other.all_render_uses_falsy_tolerant;

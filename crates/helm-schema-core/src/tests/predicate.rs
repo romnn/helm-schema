@@ -211,3 +211,36 @@ fn boolean_normalization_keeps_approximate_formulas_opaque() {
         want: predicate
     );
 }
+
+#[test]
+fn boolean_normalization_drops_an_approximation_implied_by_its_sound_subset() {
+    let selected = Predicate::truthy_path("selected");
+    let approximate = Predicate::approximate_with_sound_predicate(
+        "partial",
+        ["fallback".to_string(), "selected".to_string()]
+            .into_iter()
+            .collect(),
+        Predicate::Or(vec![Predicate::truthy_path("fallback"), selected.clone()]),
+    );
+
+    sim_assert_eq!(
+        have: Predicate::And(vec![approximate, selected.clone()]).normalize_boolean(),
+        want: selected
+    );
+}
+
+#[test]
+fn boolean_normalization_keeps_an_unproven_approximate_conjunct() {
+    let selected = Predicate::truthy_path("selected");
+    let approximate = Predicate::approximate_with_sound_predicate(
+        "partial",
+        ["fallback".to_string()].into_iter().collect(),
+        Predicate::truthy_path("fallback"),
+    );
+    let predicate = Predicate::And(vec![approximate, selected]);
+
+    sim_assert_eq!(
+        have: predicate.clone().normalize_boolean(),
+        want: predicate
+    );
+}

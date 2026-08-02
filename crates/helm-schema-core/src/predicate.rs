@@ -1,6 +1,17 @@
 use std::collections::BTreeSet;
 
-use crate::Guard;
+use crate::{Guard, GuardValue};
+
+/// How an inexact predicate participates in later semantic projection.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ApproximationRole {
+    /// Ordinary control flow whose exact relation is unavailable.
+    #[default]
+    Control,
+    /// A sound subset identifies when one candidate supplies an expression's
+    /// returned value.
+    OutputSelection,
+}
 
 /// Typed Boolean formula recovered from template control flow.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -18,6 +29,9 @@ pub enum Predicate {
         marker: String,
         /// Values paths mentioned by the unlowerable expression.
         paths: BTreeSet<String>,
+        /// Whether the subset describes ordinary execution or returned-value
+        /// selection.
+        role: ApproximationRole,
         /// A predicate that IMPLIES the real condition (a sound subset).
         /// Usable only in POSITIVE polarity where firing less often is safe
         /// — a fail-arm's outer condition — never through a negation, which
@@ -59,11 +73,24 @@ impl Predicate {
         Self::Guard(Guard::Truthy { path: path.into() })
     }
 
+    /// Creates the exact predicate for Sprig's `kindIs "invalid"` over a values path.
+    pub fn invalid_kind_path(path: impl Into<String>) -> Self {
+        let path = path.into();
+        Self::Or(vec![
+            Self::from(Guard::Absent { path: path.clone() }),
+            Self::from(Guard::Eq {
+                path,
+                value: GuardValue::Null,
+            }),
+        ])
+    }
+
     /// Marks an unlowerable condition without inventing a relation between its paths.
     pub fn approximate(marker: impl Into<String>, paths: BTreeSet<String>) -> Self {
         Self::Approximate {
             marker: marker.into(),
             paths,
+            role: ApproximationRole::Control,
             sound_subset: None,
         }
     }
@@ -85,6 +112,7 @@ impl Predicate {
         Self::Approximate {
             marker: marker.into(),
             paths,
+            role: ApproximationRole::Control,
             sound_subset,
         }
     }
@@ -102,6 +130,26 @@ impl Predicate {
         Self::Approximate {
             marker: marker.into(),
             paths,
+            role: ApproximationRole::Control,
+            sound_subset,
+        }
+    }
+
+    /// Marks an inexact returned-value selection with a typed predicate that
+    /// proves when the candidate supplies the result.
+    #[must_use]
+    pub fn approximate_output_selection(
+        marker: impl Into<String>,
+        paths: BTreeSet<String>,
+        sound_subset: Self,
+    ) -> Self {
+        let sound_subset = (!matches!(sound_subset, Self::False)
+            && !sound_subset.contains_approximation())
+        .then(|| Box::new(sound_subset.normalize_boolean()));
+        Self::Approximate {
+            marker: marker.into(),
+            paths,
+            role: ApproximationRole::OutputSelection,
             sound_subset,
         }
     }
@@ -188,6 +236,7 @@ impl Predicate {
                 | Guard::AtMostOneMember { .. }
                 | Guard::MinMembers { .. }
                 | Guard::HasKey { .. }
+                | Guard::NotHasKey { .. }
                 | Guard::ContainsEquals { .. }
                 | Guard::ContainsMemberEquals { .. }
                 | Guard::ContainsTruthyMember { .. },
@@ -237,6 +286,10 @@ impl Predicate {
                     pattern,
                     templated,
                 }),
+            ],
+            Self::Guard(Guard::NotMatchesPattern { path, pattern }) => vec![
+                Self::from(Guard::With { path: path.clone() }),
+                Self::from(Guard::NotMatchesPattern { path, pattern }),
             ],
             Self::Guard(Guard::NotEq { path, value }) => vec![
                 Self::from(Guard::With { path: path.clone() }),
@@ -330,6 +383,7 @@ impl Predicate {
                 Guard::Truthy { .. }
                 | Guard::Eq { .. }
                 | Guard::MatchesPattern { .. }
+                | Guard::NotMatchesPattern { .. }
                 | Guard::RangeKeyPrefix { .. }
                 | Guard::RangeKeyEquals { .. }
                 | Guard::RangeKeyMatches { .. }
@@ -346,6 +400,7 @@ impl Predicate {
                 | Guard::AtMostOneMember { .. }
                 | Guard::MinMembers { .. }
                 | Guard::HasKey { .. }
+                | Guard::NotHasKey { .. }
                 | Guard::ContainsEquals { .. }
                 | Guard::ContainsMemberEquals { .. }
                 | Guard::ContainsTruthyMember { .. },
@@ -379,10 +434,12 @@ impl Predicate {
             Self::Approximate {
                 marker,
                 paths,
+                role,
                 sound_subset,
             } => Self::Approximate {
                 marker,
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
+                role,
                 sound_subset: sound_subset
                     .map(|predicate| Box::new(predicate.map_value_paths(map))),
             },
@@ -417,7 +474,9 @@ fn negation_flattens_exactly(inner: &Predicate) -> bool {
             | Guard::Eq { .. }
             | Guard::NotEq { .. }
             | Guard::TypeIs { .. }
-            | Guard::NotTypeIs { .. },
+            | Guard::NotTypeIs { .. }
+            | Guard::HasKey { .. }
+            | Guard::NotHasKey { .. },
         ) => true,
         Predicate::Not(inner) => inner.contract_guards_are_exact(),
         Predicate::And(predicates) | Predicate::Or(predicates) => {
@@ -452,6 +511,14 @@ fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
         Predicate::Guard(Guard::NotTypeIs { path, schema_type }) => vec![Guard::TypeIs {
             path: path.clone(),
             schema_type: schema_type.clone(),
+        }],
+        Predicate::Guard(Guard::HasKey { path, key }) => vec![Guard::NotHasKey {
+            path: path.clone(),
+            key: key.clone(),
+        }],
+        Predicate::Guard(Guard::NotHasKey { path, key }) => vec![Guard::HasKey {
+            path: path.clone(),
+            key: key.clone(),
         }],
         Predicate::Not(inner) => inner.contract_guards(),
         // ¬(p₁ ∨ … ∨ pₙ) = ¬p₁ ∧ … ∧ ¬pₙ: a plain conjunction, exact only
