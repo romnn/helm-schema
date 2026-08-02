@@ -8,6 +8,7 @@ use sha2::{Digest, Sha256};
 use crate::overlay_lowering::LoweredConjunct;
 use crate::path_resolver::ResolvedPathSchema;
 use crate::provider_schema::{ProviderSchemaCandidate, rewrite_internal_refs_for_root_definition};
+use crate::schema_tree::SchemaDocument;
 
 const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
@@ -104,6 +105,64 @@ pub(crate) fn insert_definitions_into_root(
     for (name, definition) in definitions_by_name {
         definitions.insert(name, definition);
     }
+}
+
+pub(crate) fn prune_unreachable_provider_definitions(
+    document: &SchemaDocument,
+    definitions_by_name: &mut BTreeMap<String, Value>,
+) -> usize {
+    let mut reachable = BTreeSet::new();
+    document.visit_embedded_values(&mut |value| {
+        collect_referenced_definitions(value, definitions_by_name, &mut reachable);
+    });
+
+    let mut pending = reachable.iter().cloned().collect::<Vec<_>>();
+    while let Some(name) = pending.pop() {
+        let Some(definition) = definitions_by_name.get(&name) else {
+            continue;
+        };
+        let mut referenced = BTreeSet::new();
+        collect_referenced_definitions(definition, definitions_by_name, &mut referenced);
+        for referenced_name in referenced {
+            if reachable.insert(referenced_name.clone()) {
+                pending.push(referenced_name);
+            }
+        }
+    }
+
+    let before = definitions_by_name.len();
+    definitions_by_name.retain(|name, _| reachable.contains(name));
+    before - definitions_by_name.len()
+}
+
+fn collect_referenced_definitions(
+    value: &Value,
+    definitions_by_name: &BTreeMap<String, Value>,
+    referenced: &mut BTreeSet<String>,
+) {
+    match value {
+        Value::Object(object) => {
+            if let Some(reference) = object.get("$ref").and_then(Value::as_str)
+                && let Some(name) = root_definition_name(reference)
+                && definitions_by_name.contains_key(name)
+            {
+                referenced.insert(name.to_string());
+            }
+            for child in object.values() {
+                collect_referenced_definitions(child, definitions_by_name, referenced);
+            }
+        }
+        Value::Array(items) => {
+            for item in items {
+                collect_referenced_definitions(item, definitions_by_name, referenced);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn root_definition_name(reference: &str) -> Option<&str> {
+    reference.strip_prefix("#/$defs/")?.split('/').next()
 }
 
 #[derive(Debug)]

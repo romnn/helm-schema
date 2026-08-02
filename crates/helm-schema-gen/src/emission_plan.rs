@@ -17,6 +17,7 @@ use crate::overlay_lowering::{
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
 use crate::provider_definitions::{
     extract_provider_definitions, extract_repeated_provider_payloads, insert_definitions_into_root,
+    prune_unreachable_provider_definitions,
 };
 use crate::schema_tree::{SchemaDocument, draft07_root_document};
 use crate::{ValuesSchemaInput, split_value_path};
@@ -234,7 +235,7 @@ impl LoweredEmissionPlan {
         // Candidate metadata is consumed only after selection. The shared
         // plan stays immutable, and each projection receives fresh payloads.
         let mut resolved_paths = self.resolved_paths.clone();
-        let provider_definitions = extract_provider_definitions(
+        let mut provider_definitions = extract_provider_definitions(
             &mut resolved_paths,
             &mut selected_conditionals,
             &self.values_descriptions,
@@ -284,6 +285,7 @@ impl LoweredEmissionPlan {
                 absence,
             );
         }
+        prune_unreachable_provider_definitions(&document, &mut provider_definitions);
 
         ProjectedTree {
             document,

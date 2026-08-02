@@ -479,6 +479,82 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts checked.
   - `task tokei:core`: exit 0; production Rust is 59,029 LOC (`+176` from
     Step 1a.1).
+- Commit: `5cebd97` (`refactor(schema): add immutable emission plan`).
+
+## Step 1b VE — early provider-definition pruning
+
+- Status: landed.
+- Measured results:
+  - The plan's Step 1b failure branch is implemented as a separate
+    validation-equivalence round. Reachability starts from `$ref` sites in the
+    projected typed tree and closes transitively through source-aware provider
+    definition bodies; only the generator-owned definition map is eligible for
+    removal.
+  - The clean dump changes 15 fixtures: 14 chart-corpus schemas and the
+    `signoz_zookeeper_statefulset` generator fixture. It removes 68 unreachable
+    provider definitions and 933,939 serialized bytes. Every candidate's
+    non-`$defs` document equals its baseline, its `$defs` keys are a strict
+    subset, and every retained definition is equal.
+  - The compiled Rust differential prober checked 114,208 coalesced documents
+    across all 56 chart-corpus schemas at the required top-level deletion,
+    second-level deletion, and empty member/item granularities. It found zero
+    acceptance flips.
+  - The public override-loading and CLI documentation now state the ownership
+    boundary: caller overrides must carry their own definitions and may not
+    reference generator-private `$defs` names.
+- Deviations:
+  - The Step 1b preflight counted 66 unreachable definitions in the final
+    chart-corpus schemas. Applying the same early-prune boundary also removes
+    two definitions from one lower-level generator fixture, so the complete VE
+    round records 68 removals across 15 fixtures.
+- Adjudication evidence:
+  - The compiled old/new battery has zero verdict changes, so there is no
+    TIGHTEN or LOOSEN fixture flip to adjudicate individually. The live lane
+    replays the semantic controls under Helm 4.2.3 and the pinned provider
+    boundary with no disagreement.
+  - The graph audit independently proves the serialized churn consists only
+    of unreachable generator-owned definition deletion; no validation keyword
+    or reachable definition changes.
+- Review dossier:
+  - Transitive reachability unit control: `cargo nextest run -p
+    helm-schema-gen -E
+    'test(unreachable_provider_definitions_are_pruned_transitively)'`.
+  - Exact old/new acceptance battery: `SCHEMA_ACCEPTANCE_BASELINE_REF=5cebd97
+    cargo nextest run -P integration -p helm-schema --test
+    schema_emission_profiles -E
+    'test(early_provider_definition_pruning_is_acceptance_equivalent)'
+    --run-ignored ignored-only --no-capture`; it reports `charts_checked=56
+    probes_checked=114208 flips=0`.
+  - Hermetic monotonicity and three-category controls: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profiles`.
+  - Live Helm/provider replay: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profile_live --run-ignored
+    ignored-only`.
+  - Clean generator dump: `SCHEMA_DUMP=1
+    TMPDIR=/tmp/helm-schema-prune-dump-5cebd97 cargo nextest run -P
+    integration -p helm-schema-gen --test corpus -E
+    'test(schema_fixtures_match)'`.
+  - Clean corpus dump: `SCHEMA_DUMP=1
+    TMPDIR=/tmp/helm-schema-prune-dump-5cebd97 cargo nextest run -P
+    integration -p helm-schema-cli --no-fail-fast -E
+    'binary(chart_corpus)'`; before adoption it writes all 56 candidates and
+    exits 100 on the 14 expected equality mismatches.
+  - Adopted fixture equality: `cargo nextest run -P integration -p
+    helm-schema-gen --test corpus -E 'test(schema_fixtures_match)'`, then
+    `cargo nextest run -P integration -p helm-schema-cli --no-fail-fast -E
+    'binary(chart_corpus)'`.
+- Gates on the final Step 1b VE tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations checked.
+  - `cargo nextest run --workspace`: exit 0; 1,146 passed.
+  - `task test:integration`: exit 0; 541 passed, 4 skipped.
+  - `task test:all`: exit 0; 1,691 passed, 4 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked.
+  - `task tokei:core`: exit 0; production Rust is 59,115 LOC (`+86` from
+    Step 1b).
 - Commit: pending.
 
 ## Step 2 — lean policy and annotations

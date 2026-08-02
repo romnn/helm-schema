@@ -22,6 +22,10 @@ impl SchemaDocument {
         }
     }
 
+    pub(crate) fn visit_embedded_values(&self, visit: &mut impl FnMut(&Value)) {
+        self.root.visit_foreign_values(visit);
+    }
+
     pub(crate) fn insert_path_schema(&mut self, path_segments: &[String], schema: SchemaNode) {
         insert_schema_at_parts(&mut self.root, path_segments, schema);
     }

@@ -553,3 +553,35 @@ fn repeated_large_structural_payloads_keep_local_annotations() {
         }))
     );
 }
+
+#[test]
+fn unreachable_provider_definitions_are_pruned_transitively() {
+    let mut document = crate::schema_tree::SchemaDocument::new_root_object();
+    document.insert_path_schema(
+        &["selected".to_string()],
+        crate::schema_node::SchemaNode::foreign(json!({
+            "$ref": "#/$defs/providerSchema1"
+        })),
+    );
+    let mut definitions = BTreeMap::from([
+        (
+            "providerSchema1".to_string(),
+            json!({
+                "allOf": [{"$ref": "#/$defs/providerSchema2/properties/name"}]
+            }),
+        ),
+        ("providerSchema2".to_string(), json!({"type": "object"})),
+        ("providerSchema3".to_string(), json!({"type": "string"})),
+    ]);
+
+    let removed = prune_unreachable_provider_definitions(&document, &mut definitions);
+
+    sim_assert_eq!(have: removed, want: 1);
+    sim_assert_eq!(
+        have: definitions.keys().cloned().collect::<Vec<_>>(),
+        want: vec![
+            "providerSchema1".to_string(),
+            "providerSchema2".to_string(),
+        ]
+    );
+}

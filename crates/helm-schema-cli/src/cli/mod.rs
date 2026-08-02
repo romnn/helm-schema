@@ -69,8 +69,9 @@ pub struct Cli {
 
     /// Schema files to merge on top of the inferred output, applied in
     /// the order given. Repeatable: pass multiple `--override-schema`
-    /// flags to layer (e.g. a shared cross-chart top-level schema
-    /// followed by a chart-specific override).
+    /// flags to layer (e.g. a shared cross-chart top-level schema followed by
+    /// a chart-specific override). Overrides must carry their own definitions
+    /// rather than reference helm-schema's private `$defs` names.
     #[arg(long)]
     pub override_schema: Vec<PathBuf>,
 }

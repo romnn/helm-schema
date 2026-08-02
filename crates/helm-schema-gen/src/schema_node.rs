@@ -76,6 +76,34 @@ pub(crate) fn is_placeholder_fragment_object_schema(schema: &Value) -> bool {
 }
 
 impl SchemaNode {
+    pub(crate) fn visit_foreign_values(&self, visit: &mut impl FnMut(&Value)) {
+        match self {
+            Self::Empty => {}
+            Self::Object {
+                properties,
+                all_of,
+                additional_properties,
+                ..
+            } => {
+                for child in properties.values() {
+                    child.visit_foreign_values(visit);
+                }
+                for child in all_of {
+                    child.visit_foreign_values(visit);
+                }
+                if let Some(child) = additional_properties {
+                    child.visit_foreign_values(visit);
+                }
+            }
+            Self::Array { items, .. } => {
+                if let Some(items) = items {
+                    items.visit_foreign_values(visit);
+                }
+            }
+            Self::Foreign(value) => visit(value),
+        }
+    }
+
     pub(crate) fn empty() -> Self {
         Self::Empty
     }

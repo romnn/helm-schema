@@ -34,6 +34,10 @@ impl PolicyInputs {
 
 /// Loads and prepares override schemas according to reference and fetch policy.
 ///
+/// Overrides must not reference generator-owned definitions in the inferred
+/// document's `$defs`; their names and presence are private implementation
+/// details. An override that needs a definition must carry that definition.
+///
 /// # Errors
 ///
 /// Returns an error when an override exceeds its load budget, cannot be read

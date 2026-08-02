@@ -1,6 +1,6 @@
 //! Monotonicity and semantic-oracle harness for schema emission profiles.
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
@@ -457,5 +457,68 @@ fn local_kind_partition_is_a_local_policy_fact() -> eyre::Result<()> {
             .iter()
             .map(|control| (control.name, &control.instance)),
     )?;
+    Ok(())
+}
+
+#[test]
+#[ignore = "maintenance: requires SCHEMA_ACCEPTANCE_BASELINE_REF"]
+fn early_provider_definition_pruning_is_acceptance_equivalent() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
+        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the pre-prune commit")?;
+    let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
+    let mut fixture_paths = std::fs::read_dir(&fixture_dir)
+        .wrap_err_with(|| format!("read {}", fixture_dir.display()))?
+        .map(|entry| entry.map(|entry| entry.path()))
+        .collect::<std::io::Result<Vec<_>>>()?;
+    fixture_paths.sort();
+
+    let mut probes_checked = 0;
+    let mut flips = Vec::new();
+    let mut charts_checked = 0;
+    for fixture_path in fixture_paths {
+        let Some(filename) = fixture_path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+        let Some(chart) = filename.strip_suffix(".schema.json") else {
+            continue;
+        };
+        let relative_path = format!("testdata/chart-corpus-schemas/{filename}");
+        let output = std::process::Command::new("git")
+            .args(["show", &format!("{baseline_ref}:{relative_path}")])
+            .output()
+            .wrap_err_with(|| format!("read {relative_path} from {baseline_ref}"))?;
+        eyre::ensure!(
+            output.status.success(),
+            "git show failed for {baseline_ref}:{relative_path}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let baseline: serde_json::Value = serde_json::from_slice(&output.stdout)
+            .wrap_err_with(|| format!("parse {baseline_ref}:{relative_path}"))?;
+        let current: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(&fixture_path)
+                .wrap_err_with(|| format!("read {}", fixture_path.display()))?,
+        )
+        .wrap_err_with(|| format!("parse {}", fixture_path.display()))?;
+        let defaults = read_root_defaults(chart)?;
+        let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
+        for (probe_name, probe) in structural_probe_battery(&defaults) {
+            probes_checked += 1;
+            let (before, after) = profiles.verdicts(&probe);
+            if before != after {
+                flips.push(format!(
+                    "{chart}: {probe_name}: before={before}, after={after}"
+                ));
+            }
+        }
+        charts_checked += 1;
+    }
+
+    eyre::ensure!(
+        flips.is_empty(),
+        "early provider-definition pruning changed acceptance:\n{}",
+        flips.join("\n")
+    );
+    eprintln!("charts_checked={charts_checked} probes_checked={probes_checked} flips=0");
     Ok(())
 }

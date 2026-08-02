@@ -12170,3 +12170,25 @@ provider definitions across 14 full corpus schemas. Removing them would change
 full bytes, so the plan's failure branch is taken: pruning and its caller-owned
 override contract are deferred to a separate VE round with zero-flip proof and
 fixture adjudication rather than folded into this representation round.
+
+## Early provider-definition pruning (2026-08-02, sixty-third round)
+
+The Step 1b failure branch now removes source-aware provider definitions that
+are unreachable after projection. Reachability begins at `$ref` sites in the
+projected typed schema and closes transitively through definition bodies. The
+operation owns only the generator's private definition map; caller override
+documentation now requires overrides to carry their own definitions instead
+of referencing generated `$defs` names.
+
+The one clean dump changes 14 chart-corpus schemas and one generator fixture.
+It removes 68 unreachable definitions and 933,939 serialized bytes. A
+structural audit confirms that each candidate keeps the entire non-`$defs`
+document and every reachable definition unchanged. A compiled Rust prober
+compares the pre-prune commit with the adopted corpus fixtures over 114,208
+coalesced documents at top-level deletion, second-level deletion, and empty
+member/item granularities. It reports zero acceptance flips.
+
+Because there is no TIGHTEN or LOOSEN verdict, no per-flip Helm adjudication is
+needed. The full live semantic-control lane still passes under Helm 4.2.3 and
+the pinned provider boundary, and both fixture suites match the clean-dump
+candidates exactly.
