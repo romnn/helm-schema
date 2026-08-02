@@ -65,6 +65,13 @@ pub(super) fn eval_printf(
                 .cloned(),
         );
         effects.merge(result.effects);
+        for path in &plain_slot_format_paths {
+            effects
+                .local_output_meta
+                .entry(path.clone())
+                .or_default()
+                .plain_slot_string_format = true;
+        }
         effects
             .plain_slot_string_format_paths
             .extend(plain_slot_format_paths);
@@ -127,19 +134,7 @@ pub(super) fn eval_printf(
 /// an earlier string-consuming stage (`b64enc | quote`) keeps its contract
 /// on the raw path.
 pub(super) fn record_total_conversion_effects(paths: BTreeSet<String>, effects: &mut Effects) {
-    effects
-        .plain_slot_string_format_paths
-        .retain(|path| !paths.contains(path));
-    for path in &paths {
-        if let Some(meta) = effects.local_output_meta.get_mut(path) {
-            meta.plain_slot_string_format = false;
-        }
-    }
-    for row in &mut effects.helper_rendered {
-        if paths.contains(&row.path) {
-            row.meta.plain_slot_string_format = false;
-        }
-    }
+    effects.clear_plain_slot_string_format_paths(&paths);
     effects.add_shape_erased_paths(paths.clone());
     effects.derived_text_paths.extend(paths);
 }

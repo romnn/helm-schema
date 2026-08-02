@@ -365,7 +365,7 @@
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                         }
                       },
                       {
@@ -515,7 +515,7 @@
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                         }
                       },
                       {
@@ -672,7 +672,7 @@
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                         }
                       },
                       {
@@ -838,7 +838,7 @@
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                         }
                       },
                       {
@@ -892,6 +892,61 @@
       }
     },
     "1F": {
+      "additionalProperties": false,
+      "description": "ca defines the Certificate authority used when verifying server certificates.",
+      "properties": {
+        "configMap": {
+          "additionalProperties": false,
+          "description": "configMap defines the ConfigMap containing data to use for the targets.",
+          "properties": {
+            "key": {
+              "description": "The key to select.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the ConfigMap or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        "secret": {
+          "additionalProperties": false,
+          "description": "secret defines the Secret containing data to use for the targets.",
+          "properties": {
+            "key": {
+              "description": "The key of the secret to select from.  Must be a valid secret key.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the Secret or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        }
+      },
+      "type": "object"
+    },
+    "1G": {
       "if": {
         "allOf": [
           {
@@ -989,7 +1044,7 @@
                 "type": "string"
               },
               {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                 "type": "string"
               },
               {
@@ -1005,7 +1060,7 @@
         }
       }
     },
-    "1G": {
+    "1H": {
       "anyOf": [
         {
           "properties": {
@@ -1123,7 +1178,7 @@
         }
       ]
     },
-    "1H": {
+    "1I": {
       "anyOf": [
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
@@ -1160,7 +1215,7 @@
       ],
       "description": "contents of pod imagePullSecret in form 'name=[secretName]'; applied to all controllers"
     },
-    "1I": {
+    "1J": {
       "additionalProperties": {
         "items": {
           "additionalProperties": false,
@@ -1192,7 +1247,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "1J": {
+    "1K": {
       "additionalProperties": {},
       "properties": {
         "container": {
@@ -1233,7 +1288,7 @@
         }
       }
     },
-    "1K": {
+    "1L": {
       "if": {
         "allOf": [
           {
@@ -1311,7 +1366,7 @@
         }
       }
     },
-    "1L": {
+    "1M": {
       "additionalProperties": {},
       "properties": {
         "extraEnv": {
@@ -1498,7 +1553,7 @@
         }
       }
     },
-    "1M": {
+    "1N": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -1614,7 +1669,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -1664,7 +1719,7 @@
         }
       }
     },
-    "1N": {
+    "1O": {
       "additionalProperties": {},
       "properties": {
         "imagePullPolicy": {
@@ -1780,7 +1835,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -1835,7 +1890,7 @@
         }
       }
     },
-    "1O": {
+    "1P": {
       "additionalProperties": false,
       "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
       "properties": {
@@ -1900,7 +1955,7 @@
       },
       "type": "object"
     },
-    "1P": {
+    "1Q": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -2016,7 +2071,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -2049,177 +2104,6 @@
             {
               "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
               "type": "null"
-            },
-            {
-              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-              "type": "string"
-            },
-            {
-              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-              "type": "string"
-            },
-            {
-              "pattern": "^[ \\t]*(#.*)?$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "1Q": {
-      "additionalProperties": {},
-      "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "maxItems": 0,
-                    "type": "array"
-                  },
-                  {
-                    "maxProperties": 0,
-                    "type": "object"
-                  }
-                ]
-              },
-              "propertyNames": {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              "type": "object"
-            },
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                  }
-                }
-              ],
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(null|Null|NULL)[ \\t]+#"
-                  }
-                }
-              ],
-              "type": "string"
-            },
-            {
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "null"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
             },
             {
               "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
@@ -2353,7 +2237,178 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
+              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "null"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            {
+              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^[ \\t]*(#.*)?$",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "1S": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -2387,64 +2442,9 @@
         }
       }
     },
-    "1S": {
-      "additionalProperties": false,
-      "description": "cert defines the Client certificate to present when doing client-authentication.",
-      "properties": {
-        "configMap": {
-          "additionalProperties": false,
-          "description": "configMap defines the ConfigMap containing data to use for the targets.",
-          "properties": {
-            "key": {
-              "description": "The key to select.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the ConfigMap or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        "secret": {
-          "additionalProperties": false,
-          "description": "secret defines the Secret containing data to use for the targets.",
-          "properties": {
-            "key": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the Secret or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        }
-      },
-      "type": "object"
-    },
     "1T": {
       "additionalProperties": false,
-      "description": "ca defines the Certificate authority used when verifying server certificates.",
+      "description": "cert defines the Client certificate to present when doing client-authentication.",
       "properties": {
         "configMap": {
           "additionalProperties": false,
@@ -3245,6 +3245,15 @@
     },
     "24": {
       "properties": {
+        "serviceAccount": {}
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "25": {
+      "properties": {
         "serviceAccount": {
           "enum": [
             null
@@ -3256,7 +3265,7 @@
       ],
       "type": "object"
     },
-    "25": {
+    "26": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/t"
@@ -3264,15 +3273,6 @@
       },
       "required": [
         "enabled"
-      ],
-      "type": "object"
-    },
-    "26": {
-      "properties": {
-        "serviceAccount": {}
-      },
-      "required": [
-        "serviceAccount"
       ],
       "type": "object"
     },
@@ -5039,23 +5039,9 @@
       "type": "object"
     },
     "p": {
-      "properties": {
-        "helmController": {
-          "properties": {
-            "create": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "helmController"
-      ],
-      "type": "object"
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
     },
     "providerSchema1": {
       "anyOf": [
@@ -5170,7 +5156,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -12457,7 +12443,7 @@
                           },
                           {
                             "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                             }
                           },
                           {
@@ -19470,7 +19456,7 @@
                           },
                           {
                             "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                             }
                           },
                           {
@@ -24572,7 +24558,7 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                     "type": "string"
                   },
                   {
@@ -27795,9 +27781,23 @@
       }
     },
     "q": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
+      "properties": {
+        "helmController": {
+          "properties": {
+            "create": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "helmController"
+      ],
+      "type": "object"
     },
     "r": {
       "properties": {
@@ -27819,32 +27819,9 @@
       "type": "object"
     },
     "s": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "cli": {}
-            },
-            "required": [
-              "cli"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "cli": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "cli"
-          ],
-          "type": "object"
-        }
-      ]
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
     },
     "t": {
       "anyOf": [
@@ -27872,6 +27849,34 @@
       ]
     },
     "u": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "cli": {}
+            },
+            "required": [
+              "cli"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "cli": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "cli"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "v": {
       "additionalProperties": {},
       "properties": {
         "securityContext": {
@@ -28090,13 +28095,13 @@
         }
       }
     },
-    "v": {
+    "w": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "w": {
+    "x": {
       "properties": {
         "secret": {
           "enum": [
@@ -28109,7 +28114,7 @@
       ],
       "type": "object"
     },
-    "x": {
+    "y": {
       "properties": {
         "secret": {}
       },
@@ -28117,11 +28122,6 @@
         "secret"
       ],
       "type": "object"
-    },
-    "y": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
     },
     "z": {
       "not": {
@@ -28146,7 +28146,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/q"
               },
               {
                 "$ref": "#/$defs/5"
@@ -28306,7 +28306,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/p"
+        "$ref": "#/$defs/q"
       },
       "then": {
         "allOf": [
@@ -28390,7 +28390,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "$ref": "#/$defs/k"
@@ -28416,7 +28416,7 @@
         "additionalProperties": {},
         "properties": {
           "imagePullSecrets": {
-            "$ref": "#/$defs/1H"
+            "$ref": "#/$defs/1I"
           }
         }
       }
@@ -28735,7 +28735,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1G"
+        "$ref": "#/$defs/1H"
       },
       "then": {
         "additionalProperties": {},
@@ -29210,13 +29210,13 @@
                                 "$ref": "#/$defs/F"
                               },
                               {
-                                "$ref": "#/$defs/q"
+                                "$ref": "#/$defs/p"
                               },
                               {
                                 "$ref": "#/$defs/n"
                               },
                               {
-                                "$ref": "#/$defs/y"
+                                "$ref": "#/$defs/s"
                               },
                               {
                                 "$ref": "#/$defs/z"
@@ -29458,7 +29458,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/s"
+        "$ref": "#/$defs/u"
       },
       "then": false
     },
@@ -29471,7 +29471,7 @@
                 "not": {
                   "properties": {
                     "cli": {
-                      "$ref": "#/$defs/26"
+                      "$ref": "#/$defs/24"
                     }
                   },
                   "required": [
@@ -29483,7 +29483,7 @@
               {
                 "properties": {
                   "cli": {
-                    "$ref": "#/$defs/24"
+                    "$ref": "#/$defs/25"
                   }
                 },
                 "required": [
@@ -29494,7 +29494,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -29507,7 +29507,7 @@
             "$ref": "#/$defs/1e"
           },
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -29696,7 +29696,7 @@
                 "not": {
                   "properties": {
                     "kustomizeController": {
-                      "$ref": "#/$defs/x"
+                      "$ref": "#/$defs/y"
                     }
                   },
                   "required": [
@@ -29708,7 +29708,7 @@
               {
                 "properties": {
                   "kustomizeController": {
-                    "$ref": "#/$defs/w"
+                    "$ref": "#/$defs/x"
                   }
                 },
                 "required": [
@@ -29757,7 +29757,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1G"
+            "$ref": "#/$defs/1H"
           }
         ]
       },
@@ -29992,7 +29992,7 @@
               "description": "Affinity is a group of affinity scheduling rules."
             },
             {
-              "$ref": "#/$defs/v"
+              "$ref": "#/$defs/w"
             },
             {
               "$ref": "#/$defs/3"
@@ -30005,7 +30005,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/v"
+              "$ref": "#/$defs/w"
             },
             {
               "$ref": "#/$defs/W"
@@ -30019,7 +30019,7 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/v"
+              "$ref": "#/$defs/w"
             },
             {
               "$ref": "#/$defs/1Y"
@@ -30107,7 +30107,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/25"
+                    "$ref": "#/$defs/26"
                   },
                   "then": {
                     "allOf": [
@@ -30124,7 +30124,7 @@
                         "$ref": "#/$defs/L"
                       },
                       {
-                        "$ref": "#/$defs/u"
+                        "$ref": "#/$defs/v"
                       },
                       {
                         "$ref": "#/$defs/M"
@@ -30220,7 +30220,7 @@
       "$ref": "#/$defs/C"
     },
     "imagePullSecrets": {
-      "$ref": "#/$defs/1H"
+      "$ref": "#/$defs/1I"
     },
     "imageReflectionController": {
       "$ref": "#/$defs/C"
@@ -30245,7 +30245,7 @@
                 "$ref": "#/$defs/10"
               },
               {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1K"
               },
               {
                 "additionalProperties": {},
@@ -30255,7 +30255,7 @@
                     "description": "Defines envFrom using a configmap and/or secret.",
                     "properties": {
                       "map": {
-                        "$ref": "#/$defs/1Q"
+                        "$ref": "#/$defs/1R"
                       }
                     }
                   }
@@ -30269,25 +30269,25 @@
                     "description": "Defines envFrom using a configmap and/or secret.",
                     "properties": {
                       "secret": {
-                        "$ref": "#/$defs/1Q"
+                        "$ref": "#/$defs/1R"
                       }
                     }
                   }
                 }
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1M"
               },
               {
                 "additionalProperties": {},
                 "properties": {
                   "extraSecretMounts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1R"
+                      "$ref": "#/$defs/1S"
                     },
                     "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true",
                     "items": {
-                      "$ref": "#/$defs/1R"
+                      "$ref": "#/$defs/1S"
                     }
                   }
                 }
@@ -30297,17 +30297,17 @@
                 "properties": {
                   "extraSecretMounts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1P"
+                      "$ref": "#/$defs/1Q"
                     },
                     "description": "Defines additional mounts with secrets.\nSecrets must be manually created in the namespace or with kustomizeController.secret\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: secret-files\nreadOnly: true",
                     "items": {
-                      "$ref": "#/$defs/1P"
+                      "$ref": "#/$defs/1Q"
                     }
                   }
                 }
               },
               {
-                "$ref": "#/$defs/1N"
+                "$ref": "#/$defs/1O"
               },
               {
                 "allOf": [
@@ -30329,7 +30329,7 @@
                 "$ref": "#/$defs/L"
               },
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/v"
               },
               {
                 "$ref": "#/$defs/P"
@@ -30350,10 +30350,10 @@
           }
         },
         {
-          "$ref": "#/$defs/1F"
+          "$ref": "#/$defs/1G"
         },
         {
-          "$ref": "#/$defs/1K"
+          "$ref": "#/$defs/1L"
         },
         {
           "additionalProperties": {},
@@ -30418,13 +30418,13 @@
                                         "$ref": "#/$defs/F"
                                       },
                                       {
-                                        "$ref": "#/$defs/q"
+                                        "$ref": "#/$defs/p"
                                       },
                                       {
                                         "$ref": "#/$defs/n"
                                       },
                                       {
-                                        "$ref": "#/$defs/y"
+                                        "$ref": "#/$defs/s"
                                       },
                                       {
                                         "$ref": "#/$defs/z"
@@ -30575,7 +30575,7 @@
                     "not": {
                       "properties": {
                         "envFrom": {
-                          "$ref": "#/$defs/x"
+                          "$ref": "#/$defs/y"
                         }
                       },
                       "required": [
@@ -30587,7 +30587,7 @@
                   {
                     "properties": {
                       "envFrom": {
-                        "$ref": "#/$defs/w"
+                        "$ref": "#/$defs/x"
                       }
                     },
                     "required": [
@@ -30649,11 +30649,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/x"
+                  "$ref": "#/$defs/y"
                 }
               },
               {
-                "$ref": "#/$defs/w"
+                "$ref": "#/$defs/x"
               }
             ]
           },
@@ -30753,13 +30753,13 @@
                 "$ref": "#/$defs/10"
               },
               {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1K"
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1M"
               },
               {
-                "$ref": "#/$defs/1N"
+                "$ref": "#/$defs/1O"
               },
               {
                 "allOf": [
@@ -30781,7 +30781,7 @@
                 "$ref": "#/$defs/L"
               },
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/v"
               },
               {
                 "$ref": "#/$defs/R"
@@ -30915,10 +30915,10 @@
           }
         },
         {
-          "$ref": "#/$defs/1F"
+          "$ref": "#/$defs/1G"
         },
         {
-          "$ref": "#/$defs/1K"
+          "$ref": "#/$defs/1L"
         },
         {
           "if": {
@@ -31111,13 +31111,13 @@
                                     "$ref": "#/$defs/F"
                                   },
                                   {
-                                    "$ref": "#/$defs/q"
+                                    "$ref": "#/$defs/p"
                                   },
                                   {
                                     "$ref": "#/$defs/n"
                                   },
                                   {
-                                    "$ref": "#/$defs/y"
+                                    "$ref": "#/$defs/s"
                                   },
                                   {
                                     "$ref": "#/$defs/z"
@@ -31236,11 +31236,11 @@
                         "properties": {
                           "tls": {
                             "additionalProperties": {
-                              "$ref": "#/$defs/1M"
+                              "$ref": "#/$defs/1N"
                             },
                             "description": "- secretName: flux-webhook-tls\nhosts:\n- flux-webhook.example.com",
                             "items": {
-                              "$ref": "#/$defs/1M"
+                              "$ref": "#/$defs/1N"
                             }
                           }
                         }
@@ -31664,7 +31664,7 @@
                                 "metricRelabelings": {
                                   "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
                                   "items": {
-                                    "$ref": "#/$defs/1O"
+                                    "$ref": "#/$defs/1P"
                                   },
                                   "type": "array"
                                 },
@@ -31719,7 +31719,7 @@
                                       "$ref": "#/$defs/19"
                                     },
                                     "proxyConnectHeader": {
-                                      "$ref": "#/$defs/1I"
+                                      "$ref": "#/$defs/1J"
                                     },
                                     "proxyFromEnvironment": {
                                       "$ref": "#/$defs/1g"
@@ -31739,10 +31739,10 @@
                                       "description": "tlsConfig defines the TLS configuration to use when connecting to the OAuth2 server.\nIt requires Prometheus >= v2.43.0.",
                                       "properties": {
                                         "ca": {
-                                          "$ref": "#/$defs/1T"
+                                          "$ref": "#/$defs/1F"
                                         },
                                         "cert": {
-                                          "$ref": "#/$defs/1S"
+                                          "$ref": "#/$defs/1T"
                                         },
                                         "insecureSkipVerify": {
                                           "$ref": "#/$defs/1n"
@@ -31801,7 +31801,7 @@
                                   "type": "integer"
                                 },
                                 "proxyConnectHeader": {
-                                  "$ref": "#/$defs/1I"
+                                  "$ref": "#/$defs/1J"
                                 },
                                 "proxyFromEnvironment": {
                                   "$ref": "#/$defs/1g"
@@ -31812,7 +31812,7 @@
                                 "relabelings": {
                                   "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
                                   "items": {
-                                    "$ref": "#/$defs/1O"
+                                    "$ref": "#/$defs/1P"
                                   },
                                   "type": "array"
                                 },
@@ -31848,10 +31848,10 @@
                                   "description": "tlsConfig defines the TLS configuration used by the client.",
                                   "properties": {
                                     "ca": {
-                                      "$ref": "#/$defs/1T"
+                                      "$ref": "#/$defs/1F"
                                     },
                                     "cert": {
-                                      "$ref": "#/$defs/1S"
+                                      "$ref": "#/$defs/1T"
                                     },
                                     "insecureSkipVerify": {
                                       "$ref": "#/$defs/1n"

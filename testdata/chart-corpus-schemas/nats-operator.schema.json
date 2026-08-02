@@ -136,59 +136,20 @@
       "type": "string"
     },
     "A": {
-      "allOf": [
+      "oneOf": [
         {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
+          "type": [
+            "string",
+            "null"
+          ]
         },
         {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
+          "type": [
+            "number",
+            "null"
+          ]
         }
-      ],
-      "type": "string"
+      ]
     },
     "B": {
       "properties": {
@@ -306,7 +267,7 @@
       "type": "object"
     },
     "a": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "b": {
@@ -376,12 +337,12 @@
     },
     "i": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "j": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "k": {
@@ -455,7 +416,7 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                     "type": "string"
                   },
                   {
@@ -490,7 +451,7 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                     "type": "string"
                   },
                   {
@@ -525,7 +486,7 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                     "type": "string"
                   },
                   {
@@ -560,7 +521,7 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                     "type": "string"
                   },
                   {
@@ -595,7 +556,7 @@
                     "type": "string"
                   },
                   {
-                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                     "type": "string"
                   },
                   {
@@ -731,7 +692,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -880,7 +841,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -1026,7 +987,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -1079,7 +1040,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -1101,6 +1062,61 @@
       ]
     },
     "q": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "r": {
       "properties": {
         "metrics": {
           "properties": {
@@ -1119,7 +1135,7 @@
       ],
       "type": "object"
     },
-    "r": {
+    "s": {
       "anyOf": [
         {
           "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
@@ -1129,25 +1145,6 @@
           "type": "boolean"
         }
       ]
-    },
-    "s": {
-      "properties": {
-        "tls": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -1176,6 +1173,25 @@
     },
     "u": {
       "properties": {
+        "tls": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "v": {
+      "properties": {
         "password": {
           "$ref": "#/$defs/helm-double-quoted-safe"
         }
@@ -1185,7 +1201,7 @@
       ],
       "type": "object"
     },
-    "v": {
+    "w": {
       "properties": {
         "username": {
           "$ref": "#/$defs/helm-double-quoted-safe"
@@ -1196,7 +1212,7 @@
       ],
       "type": "object"
     },
-    "w": {
+    "x": {
       "additionalProperties": {},
       "properties": {
         "password": {},
@@ -1205,7 +1221,7 @@
       },
       "type": "object"
     },
-    "x": {
+    "y": {
       "properties": {
         "clusterScoped": {
           "$ref": "#/$defs/t"
@@ -1216,27 +1232,11 @@
       ],
       "type": "object"
     },
-    "y": {
+    "z": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
-    },
-    "z": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1445,49 +1445,13 @@
                         "anyOf": [
                           {
                             "items": {
-                              "$ref": "#/$defs/w"
+                              "$ref": "#/$defs/x"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/w"
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "cluster": {
-                "additionalProperties": {},
-                "properties": {
-                  "auth": {
-                    "additionalProperties": {},
-                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                    "properties": {
-                      "users": {
-                        "anyOf": [
-                          {
-                            "items": {
-                              "$ref": "#/$defs/u"
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "additionalProperties": {
-                              "$ref": "#/$defs/u"
+                              "$ref": "#/$defs/x"
                             },
                             "type": "object"
                           },
@@ -1524,6 +1488,42 @@
                           {
                             "additionalProperties": {
                               "$ref": "#/$defs/v"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "$ref": "#/$defs/w"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/$defs/w"
                             },
                             "type": "object"
                           },
@@ -2187,7 +2187,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/x"
+        "$ref": "#/$defs/y"
       },
       "then": {
         "additionalProperties": {},
@@ -2225,13 +2225,13 @@
                                 "$ref": "#/$defs/c"
                               },
                               {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/j"
                               },
                               {
                                 "$ref": "#/$defs/l"
                               },
                               {
-                                "$ref": "#/$defs/j"
+                                "$ref": "#/$defs/i"
                               },
                               {
                                 "$ref": "#/$defs/k"
@@ -2281,7 +2281,7 @@
             "$ref": "#/$defs/4"
           },
           {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/y"
           }
         ]
       },
@@ -2316,7 +2316,7 @@
           {
             "properties": {
               "cluster": {
-                "$ref": "#/$defs/s"
+                "$ref": "#/$defs/u"
               }
             },
             "required": [
@@ -2730,7 +2730,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "enabled": {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/s"
                       }
                     }
                   }
@@ -2808,7 +2808,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "enabled": {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/s"
                       }
                     }
                   }
@@ -2905,7 +2905,7 @@
                         "$ref": "#/$defs/8"
                       },
                       {
-                        "$ref": "#/$defs/A"
+                        "$ref": "#/$defs/q"
                       },
                       {
                         "$ref": "#/$defs/9"
@@ -2959,7 +2959,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/r"
               },
               {
                 "$ref": "#/$defs/B"
@@ -2994,7 +2994,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/s"
+                "$ref": "#/$defs/u"
               }
             ]
           },
@@ -3036,7 +3036,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/r"
               },
               {
                 "anyOf": [
@@ -3356,13 +3356,13 @@
                   "$ref": "#/$defs/c"
                 },
                 {
-                  "$ref": "#/$defs/i"
+                  "$ref": "#/$defs/j"
                 },
                 {
                   "$ref": "#/$defs/l"
                 },
                 {
-                  "$ref": "#/$defs/j"
+                  "$ref": "#/$defs/i"
                 },
                 {
                   "$ref": "#/$defs/k"
@@ -3442,7 +3442,7 @@
           "$ref": "#/$defs/8"
         },
         {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/q"
         },
         {
           "$ref": "#/$defs/9"
@@ -3488,7 +3488,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/y"
+          "$ref": "#/$defs/z"
         },
         {
           "allOf": [
@@ -3522,7 +3522,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/y"
+          "$ref": "#/$defs/z"
         },
         {
           "allOf": [
@@ -3634,7 +3634,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/A"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -3644,7 +3644,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/A"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -3830,13 +3830,13 @@
               "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/i"
+              "$ref": "#/$defs/j"
             },
             {
               "$ref": "#/$defs/l"
             },
             {
-              "$ref": "#/$defs/j"
+              "$ref": "#/$defs/i"
             },
             {
               "$ref": "#/$defs/k"

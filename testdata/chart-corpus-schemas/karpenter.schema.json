@@ -241,7 +241,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -1220,6 +1220,19 @@
     },
     "1j": {
       "properties": {
+        "repository": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
+    "1k": {
+      "properties": {
         "image": {
           "enum": [
             null
@@ -1231,7 +1244,7 @@
       ],
       "type": "object"
     },
-    "1k": {
+    "1l": {
       "properties": {
         "repository": {}
       },
@@ -1240,7 +1253,7 @@
       ],
       "type": "object"
     },
-    "1l": {
+    "1m": {
       "properties": {
         "affinity": {
           "anyOf": [
@@ -1258,7 +1271,7 @@
       ],
       "type": "object"
     },
-    "1m": {
+    "1n": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -1268,7 +1281,7 @@
       },
       "type": "object"
     },
-    "1n": {
+    "1o": {
       "items": {
         "additionalProperties": {},
         "properties": {
@@ -1277,19 +1290,6 @@
         "type": "object"
       },
       "type": "array"
-    },
-    "1o": {
-      "properties": {
-        "repository": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
     },
     "1p": {
       "oneOf": [
@@ -1411,7 +1411,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -1913,13 +1913,6 @@
       "type": "integer"
     },
     "E": {
-      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "F": {
       "additionalProperties": {
         "oneOf": [
           {
@@ -1942,14 +1935,14 @@
         "null"
       ]
     },
-    "G": {
+    "F": {
       "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
       "type": [
         "string",
         "null"
       ]
     },
-    "H": {
+    "G": {
       "anyOf": [
         {
           "not": {
@@ -1977,7 +1970,7 @@
         }
       ]
     },
-    "I": {
+    "H": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -2090,7 +2083,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -2142,7 +2135,27 @@
       ],
       "description": "Overrides the chart's name."
     },
+    "I": {
+      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
     "J": {
+      "properties": {
+        "clusterName": {
+          "enum": [
+            ""
+          ]
+        }
+      },
+      "required": [
+        "clusterName"
+      ],
+      "type": "object"
+    },
+    "K": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -2153,7 +2166,7 @@
       ],
       "type": "object"
     },
-    "K": {
+    "L": {
       "properties": {
         "metrics": {
           "enum": [
@@ -2166,15 +2179,15 @@
       ],
       "type": "object"
     },
-    "L": {
+    "M": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "M": {
+    "N": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "N": {
+    "O": {
       "properties": {
         "featureGates": {}
       },
@@ -2183,7 +2196,7 @@
       ],
       "type": "object"
     },
-    "O": {
+    "P": {
       "properties": {
         "healthProbe": {}
       },
@@ -2192,42 +2205,42 @@
       ],
       "type": "object"
     },
-    "P": {
+    "Q": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "Q": {
+    "R": {
       "description": "Level is SELinux level label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "R": {
+    "S": {
       "description": "Role is a SELinux role label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "S": {
+    "T": {
       "description": "Type is a SELinux type label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "T": {
+    "U": {
       "description": "User is a SELinux user label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "U": {
+    "V": {
       "properties": {
         "featureGates": {
           "enum": [
@@ -2240,7 +2253,7 @@
       ],
       "type": "object"
     },
-    "V": {
+    "W": {
       "properties": {
         "healthProbe": {
           "enum": [
@@ -2250,19 +2263,6 @@
       },
       "required": [
         "healthProbe"
-      ],
-      "type": "object"
-    },
-    "W": {
-      "properties": {
-        "clusterName": {
-          "enum": [
-            ""
-          ]
-        }
-      },
-      "required": [
-        "clusterName"
       ],
       "type": "object"
     },
@@ -2445,17 +2445,17 @@
       ]
     },
     "i": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "j": {
       "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "k": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
     "l": {
@@ -6452,7 +6452,7 @@
       "if": {
         "properties": {
           "serviceAccount": {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/K"
           }
         },
         "required": [
@@ -6498,7 +6498,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/H"
               }
             }
           }
@@ -6824,7 +6824,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1l"
+        "$ref": "#/$defs/1m"
       },
       "then": {
         "additionalProperties": {},
@@ -7957,10 +7957,10 @@
           "topologySpreadConstraints": {
             "anyOf": [
               {
-                "$ref": "#/$defs/1n"
+                "$ref": "#/$defs/1o"
               },
               {
-                "$ref": "#/$defs/1m"
+                "$ref": "#/$defs/1n"
               },
               {
                 "maximum": 0,
@@ -7990,7 +7990,7 @@
                 "not": {
                   "properties": {
                     "controller": {
-                      "$ref": "#/$defs/O"
+                      "$ref": "#/$defs/P"
                     }
                   },
                   "required": [
@@ -8002,7 +8002,7 @@
               {
                 "properties": {
                   "controller": {
-                    "$ref": "#/$defs/V"
+                    "$ref": "#/$defs/W"
                   }
                 },
                 "required": [
@@ -8043,7 +8043,7 @@
                     "controller": {
                       "properties": {
                         "image": {
-                          "$ref": "#/$defs/1k"
+                          "$ref": "#/$defs/1l"
                         }
                       },
                       "required": [
@@ -8063,7 +8063,7 @@
                   "controller": {
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/1o"
+                        "$ref": "#/$defs/1j"
                       }
                     },
                     "required": [
@@ -8128,7 +8128,7 @@
               {
                 "properties": {
                   "controller": {
-                    "$ref": "#/$defs/K"
+                    "$ref": "#/$defs/L"
                   }
                 },
                 "required": [
@@ -8304,7 +8304,7 @@
                 "not": {
                   "properties": {
                     "settings": {
-                      "$ref": "#/$defs/N"
+                      "$ref": "#/$defs/O"
                     }
                   },
                   "required": [
@@ -8316,7 +8316,7 @@
               {
                 "properties": {
                   "settings": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/V"
                   }
                 },
                 "required": [
@@ -8341,7 +8341,7 @@
               {
                 "properties": {
                   "settings": {
-                    "$ref": "#/$defs/W"
+                    "$ref": "#/$defs/J"
                   }
                 },
                 "required": [
@@ -8505,16 +8505,16 @@
                                 "description": "SELinuxOptions are the labels to be applied to the container",
                                 "properties": {
                                   "level": {
-                                    "$ref": "#/$defs/Q"
-                                  },
-                                  "role": {
                                     "$ref": "#/$defs/R"
                                   },
-                                  "type": {
+                                  "role": {
                                     "$ref": "#/$defs/S"
                                   },
-                                  "user": {
+                                  "type": {
                                     "$ref": "#/$defs/T"
+                                  },
+                                  "user": {
+                                    "$ref": "#/$defs/U"
                                   }
                                 },
                                 "type": "object"
@@ -8568,7 +8568,7 @@
                         "$ref": "#/$defs/w"
                       },
                       {
-                        "$ref": "#/$defs/H"
+                        "$ref": "#/$defs/G"
                       }
                     ]
                   },
@@ -8583,11 +8583,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/P"
                 }
               },
               {
-                "$ref": "#/$defs/V"
+                "$ref": "#/$defs/W"
               }
             ]
           },
@@ -8602,7 +8602,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1j"
+                "$ref": "#/$defs/1k"
               }
             ]
           },
@@ -8617,7 +8617,7 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/H"
+                        "$ref": "#/$defs/G"
                       },
                       {
                         "not": {
@@ -8641,7 +8641,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/K"
+                "$ref": "#/$defs/L"
               }
             ]
           },
@@ -8683,10 +8683,10 @@
                           "$ref": "#/$defs/l"
                         },
                         {
-                          "$ref": "#/$defs/j"
+                          "$ref": "#/$defs/k"
                         },
                         {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/j"
                         },
                         {
                           "$ref": "#/$defs/m"
@@ -8742,10 +8742,10 @@
                           "$ref": "#/$defs/l"
                         },
                         {
-                          "$ref": "#/$defs/j"
+                          "$ref": "#/$defs/k"
                         },
                         {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/j"
                         },
                         {
                           "$ref": "#/$defs/m"
@@ -9103,7 +9103,7 @@
                   "x-kubernetes-list-type": "map"
                 },
                 "limits": {
-                  "$ref": "#/$defs/F"
+                  "$ref": "#/$defs/E"
                 },
                 "requests": {
                   "$ref": "#/$defs/1h"
@@ -9278,10 +9278,10 @@
               "$ref": "#/$defs/l"
             },
             {
-              "$ref": "#/$defs/j"
+              "$ref": "#/$defs/k"
             },
             {
-              "$ref": "#/$defs/k"
+              "$ref": "#/$defs/j"
             },
             {
               "$ref": "#/$defs/m"
@@ -9393,7 +9393,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/E"
+                    "$ref": "#/$defs/I"
                   }
                 },
                 "required": [
@@ -9534,7 +9534,7 @@
                     "$ref": "#/$defs/a"
                   },
                   "optional": {
-                    "$ref": "#/$defs/P"
+                    "$ref": "#/$defs/Q"
                   }
                 },
                 "type": [
@@ -9870,13 +9870,13 @@
                             "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/G"
+                                "$ref": "#/$defs/F"
                               },
                               "kind": {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/M"
                               },
                               "name": {
-                                "$ref": "#/$defs/M"
+                                "$ref": "#/$defs/N"
                               }
                             },
                             "required": [
@@ -9893,13 +9893,13 @@
                             "additionalProperties": false,
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/G"
+                                "$ref": "#/$defs/F"
                               },
                               "kind": {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/M"
                               },
                               "name": {
-                                "$ref": "#/$defs/M"
+                                "$ref": "#/$defs/N"
                               },
                               "namespace": {
                                 "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -9923,7 +9923,7 @@
                             "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                             "properties": {
                               "limits": {
-                                "$ref": "#/$defs/F"
+                                "$ref": "#/$defs/E"
                               },
                               "requests": {
                                 "$ref": "#/$defs/1h"
@@ -10479,7 +10479,7 @@
                               "$ref": "#/$defs/a"
                             },
                             "optional": {
-                              "$ref": "#/$defs/P"
+                              "$ref": "#/$defs/Q"
                             }
                           },
                           "type": [
@@ -10722,7 +10722,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/E"
+                    "$ref": "#/$defs/I"
                   },
                   "secretRef": {
                     "additionalProperties": false,
@@ -10948,10 +10948,10 @@
               "$ref": "#/$defs/l"
             },
             {
-              "$ref": "#/$defs/j"
+              "$ref": "#/$defs/k"
             },
             {
-              "$ref": "#/$defs/k"
+              "$ref": "#/$defs/j"
             },
             {
               "$ref": "#/$defs/m"
@@ -11033,7 +11033,7 @@
       "description": "Log outputPaths - defaults to stdout only"
     },
     "nameOverride": {
-      "$ref": "#/$defs/I"
+      "$ref": "#/$defs/H"
     },
     "nodeSelector": {
       "anyOf": [
@@ -11229,16 +11229,16 @@
               "description": "SELinuxOptions are the labels to be applied to the container",
               "properties": {
                 "level": {
-                  "$ref": "#/$defs/Q"
-                },
-                "role": {
                   "$ref": "#/$defs/R"
                 },
-                "type": {
+                "role": {
                   "$ref": "#/$defs/S"
                 },
-                "user": {
+                "type": {
                   "$ref": "#/$defs/T"
+                },
+                "user": {
+                  "$ref": "#/$defs/U"
                 }
               },
               "type": [
@@ -11433,7 +11433,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/K"
           },
           "then": {
             "allOf": [
@@ -11531,10 +11531,10 @@
                           "$ref": "#/$defs/l"
                         },
                         {
-                          "$ref": "#/$defs/j"
+                          "$ref": "#/$defs/k"
                         },
                         {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/j"
                         },
                         {
                           "$ref": "#/$defs/m"
@@ -11577,10 +11577,10 @@
                           "$ref": "#/$defs/l"
                         },
                         {
-                          "$ref": "#/$defs/j"
+                          "$ref": "#/$defs/k"
                         },
                         {
-                          "$ref": "#/$defs/k"
+                          "$ref": "#/$defs/j"
                         },
                         {
                           "$ref": "#/$defs/m"
@@ -11667,11 +11667,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/N"
+                  "$ref": "#/$defs/O"
                 }
               },
               {
-                "$ref": "#/$defs/U"
+                "$ref": "#/$defs/V"
               }
             ]
           },
@@ -11681,7 +11681,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/J"
               },
               {
                 "$ref": "#/$defs/v"

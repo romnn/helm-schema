@@ -1289,7 +1289,10 @@ fn scalar_pattern_condition(
     }
 }
 
-fn escape_regex_literal(value: &str) -> String {
+/// Quotes literal text for every regular-expression dialect emitted by helm-schema.
+#[doc(hidden)]
+#[must_use]
+pub fn escape_regex_literal(value: &str) -> String {
     let mut escaped = String::with_capacity(value.len());
     for character in value.chars() {
         if matches!(
@@ -1347,6 +1350,7 @@ fn direct_quoted_falsy_pattern_condition(
         "",
         r#""""#,
         r#""0""#,
+        r#""-0""#,
         r#""false""#,
         r#""<nil>""#,
         r#""[]""#,

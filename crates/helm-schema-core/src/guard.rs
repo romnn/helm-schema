@@ -308,6 +308,8 @@ pub enum Guard {
         key: String,
     },
     /// The mapping at `path` does not contain `key`.
+    ///
+    /// This is the exact logical complement of [`Guard::HasKey`].
     NotHasKey {
         /// Values path expected to hold a mapping.
         path: String,

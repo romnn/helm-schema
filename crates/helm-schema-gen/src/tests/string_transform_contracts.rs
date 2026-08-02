@@ -791,6 +791,82 @@ fn token_initial_printf_string_argument_uses_the_plain_slot_language() {
     );
 }
 
+/// A later encoder consumes the complete formatter result, so the raw `%s` operands no longer
+/// reach the YAML slot and remain open to every value Helm's `printf` accepts.
+#[test]
+fn encoded_printf_result_clears_plain_slot_operand_contracts() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          token: {{ printf "%s:%s" .Values.user .Values.pass | b64enc }}
+    "#};
+    let values_yaml = indoc! {"
+        user: alice
+        pass: secret
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for overrides in [
+        serde_json::json!({ "user": null }),
+        serde_json::json!({ "pass": null }),
+        serde_json::json!({ "user": { "name": "alice" }, "pass": ["secret"] }),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the encoded formatter result is safe for every raw operand: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A token-opening formatter constrains only the operand selected by `default`.
+/// A dormant fallback may therefore be absent even though the same absence corrupts YAML when the
+/// fallback is selected.
+#[test]
+fn printf_plain_slot_contract_follows_default_operand_selection() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          token: {{ printf "%s-x" (.Values.primary | default .Values.fallback) }}
+    "#};
+    let values_yaml = indoc! {"
+        primary: primary
+        fallback: fallback
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (overrides, want, label) in [
+        (
+            serde_json::json!({ "fallback": null }),
+            true,
+            "a live primary leaves the deleted fallback dormant",
+        ),
+        (
+            serde_json::json!({ "primary": null, "fallback": "fallback" }),
+            true,
+            "the selected fallback supplies safe text",
+        ),
+        (
+            serde_json::json!({ "primary": null, "fallback": null }),
+            false,
+            "a missing selected fallback emits an invalid leading diagnostic",
+        ),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "formatter selection ({label}): instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
 /// A helper-local fallback keeps the formatter contract on the arm that
 /// actually supplies its token-opening `%s`. A dormant fallback remains
 /// open even though the same helper rejects it when selected (Airflow's

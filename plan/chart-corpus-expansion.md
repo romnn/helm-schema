@@ -11977,3 +11977,71 @@ all 1,658 `task test:all` tests, and `task tokei:core`. The exact final
 `cargo install --path ./crates/helm-schema-cli/ && task -t
 /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml check:local`
 gate passes all 32 luup2 charts, including Qdrant and the schema-size checks.
+
+## Confirmed review-findings closure (2026-08-02, fifty-eighth round)
+
+The post-round-57 review identified seven bounded defects or watch items.
+They were closed before schema-emission work so the corpus needed one
+regeneration around both the analyzer fixes and the scalar spelling repair.
+
+### Formatter selection and post-format conversion
+
+Token-opening `printf` facts now retain the predicates of the operand that
+actually supplies the `%s` text. Formatter metadata is written after an
+operand's effects merge and is cleared consistently by total conversions and
+encoders. The plain-slot consumer rejects the operand only while that
+formatter text still reaches the slot; a later `b64enc` or YAML serializer
+blocks the claim.
+
+The minimal controls cover `printf "%s:%s" user pass | b64enc` with either
+operand deleted and `printf "%s-x" (primary | default fallback)` with the
+dormant and selected fallback states. The real Jenkins flip confirms the
+selection boundary: deleting `controller.jenkinsRef` renders because the
+declared sidecar folder makes the eagerly evaluated `printf` result dormant.
+
+### Exact identity, control flow, and global projection
+
+Both `kindIs "invalid"` decoders now require an exact structural identity.
+A ternary carrying one values identity beside a literal no longer claims that
+one path is absent. The Go-template `else with` shorthand is live when it
+continues a `with` chain; its arm now supplies unknown truth instead of the
+invented exact-true condition that could poison a later exact join.
+
+Whole-global dependency ranges no longer disappear during projection. Their
+range modes are copied to root, intermediate, and dependency-local `global`
+sources. Sole-path absence/fail captures stay dependency-local: copying them
+as independent requirements falsely rejected the luup2 cert-manager wrapper
+when its parent `global` was absent but the dependency's declared default
+supplied the operand. A three-chart Helm control renders a member supplied at
+each source level and pins the child-default case.
+
+### Literal regex and scalar spelling partitions
+
+Every literal-quoting site now calls the single Go-compatible escaper. It
+quotes real metacharacters but leaves `-` bare outside character classes, so
+emitted patterns remain valid in Go RE2. The scalar string exclusion and
+integer provider arm now use the same token grammar. Signed underscored
+spellings such as `+_0x1f` and `+_08` therefore occupy exactly one
+`IntOrString` arm. The direct quoted-falsy table also includes `"-0"`, and
+the `NotHasKey` documentation states its exact-complement contract.
+
+### Fixture and probe adjudication
+
+One clean integration-profile dump produced all 55 schemas. The shared
+regex/radix definitions re-encoded 54 fixtures; `common` remained identical.
+A compiled Rust prober compared the preceding fixtures with those exact
+dumps across 17,401 documents: top-level key deletions, second-level key
+deletions, and empty object members or array items, always composed over the
+chart defaults with null-deletion semantics. It reported two flips.
+
+- Jenkins `controller.jenkinsRef` deletion loosens from reject to accept.
+  `helm template --skip-schema-validation` renders the composed document.
+- NATS `container.image: {}` tightens from accept to reject. Deleting every
+  declared image member makes the nested YAML conversion emit an error
+  object at the container slot; Helm renders that evidence, and strict
+  provider validation rejects the item for missing `name` and carrying an
+  unexpected `Error` member.
+
+Both states are pinned in `chart_reaudit`. The eight finding-specific Helm
+microchart tests also pass under Helm 4.2.3, and every adopted fixture is
+byte-identical to the dump used by the prober.

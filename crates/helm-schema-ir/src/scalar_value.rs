@@ -545,7 +545,7 @@ impl ScalarValue {
                                 };
                                 Predicate::from(Guard::MatchesPattern {
                                     path: path.clone(),
-                                    pattern: regex::escape(token),
+                                    pattern: crate::escape_regex_literal(token),
                                     templated: false,
                                 })
                                 .negated()
@@ -611,8 +611,11 @@ fn split_length_pattern(separator: &str, length: usize) -> Option<String> {
     if characters.next().is_some() {
         return None;
     }
-    let separator = regex::escape(separator);
-    let segment = format!("[^{}]*", regex::escape(&character.to_string()));
+    let separator = crate::escape_regex_literal(separator);
+    let segment = format!(
+        "[^{}]*",
+        crate::escape_regex_literal(&character.to_string())
+    );
     Some(format!(
         "^{segment}(?:{separator}{segment}){{{}}}$",
         length - 1
@@ -629,7 +632,7 @@ fn rendered_identity_equals(
     use helm_schema_core::{Guard, GuardValue, Predicate};
 
     let string_pattern = crate::helper_meta::pattern_with_lexical_escapes(
-        &format!("^{}$", regex::escape(target)),
+        &format!("^{}$", crate::escape_regex_literal(target)),
         lexical_escapes,
     );
     let mut matches = vec![Predicate::from(Guard::MatchesPattern {

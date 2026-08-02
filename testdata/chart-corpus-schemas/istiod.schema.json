@@ -4693,23 +4693,6 @@
     },
     "3A": {
       "properties": {
-        "global": {
-          "properties": {
-            "policyCheckFailOpen": {}
-          },
-          "required": [
-            "policyCheckFailOpen"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "3B": {
-      "properties": {
         "meshConfig": {
           "properties": {
             "defaultConfig": {
@@ -4729,7 +4712,7 @@
       ],
       "type": "object"
     },
-    "3C": {
+    "3B": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -4749,7 +4732,7 @@
         }
       }
     },
-    "3D": {
+    "3C": {
       "properties": {
         "global": {
           "properties": {
@@ -4768,7 +4751,7 @@
       ],
       "type": "object"
     },
-    "3E": {
+    "3D": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -4788,7 +4771,7 @@
         }
       }
     },
-    "3F": {
+    "3E": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -4808,7 +4791,7 @@
         }
       }
     },
-    "3G": {
+    "3F": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -4828,7 +4811,7 @@
         }
       }
     },
-    "3H": {
+    "3G": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -4848,7 +4831,7 @@
         }
       }
     },
-    "3I": {
+    "3H": {
       "properties": {
         "global": {
           "properties": {
@@ -4865,7 +4848,7 @@
       ],
       "type": "object"
     },
-    "3J": {
+    "3I": {
       "additionalProperties": {},
       "properties": {
         "istiodRemote": {
@@ -4877,6 +4860,23 @@
           }
         }
       }
+    },
+    "3J": {
+      "properties": {
+        "global": {
+          "properties": {
+            "policyCheckFailOpen": {}
+          },
+          "required": [
+            "policyCheckFailOpen"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "3K": {
       "additionalProperties": {},
@@ -5015,23 +5015,6 @@
       }
     },
     "3T": {
-      "properties": {
-        "global": {
-          "properties": {
-            "enableTracing": {}
-          },
-          "required": [
-            "enableTracing"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "3U": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -5048,7 +5031,7 @@
         }
       }
     },
-    "3V": {
+    "3U": {
       "properties": {
         "env": {
           "properties": {
@@ -5067,7 +5050,7 @@
       ],
       "type": "object"
     },
-    "3W": {
+    "3V": {
       "properties": {
         "global": {
           "properties": {
@@ -5084,7 +5067,7 @@
       ],
       "type": "object"
     },
-    "3X": {
+    "3W": {
       "properties": {
         "meshConfig": {
           "properties": {
@@ -5101,7 +5084,7 @@
       ],
       "type": "object"
     },
-    "3Y": {
+    "3X": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -5125,7 +5108,7 @@
         }
       ]
     },
-    "3Z": {
+    "3Y": {
       "additionalProperties": false,
       "description": "HPAScalingRules configures the scaling behavior for one direction. These Rules are applied after calculating DesiredReplicas from metrics for the HPA. They can limit the scaling velocity by specifying scaling policies. They can prevent flapping by specifying the stabilization window, so that the number of replicas is not set instantly, instead, the safest value from the stabilization window is chosen.",
       "properties": {
@@ -5186,6 +5169,23 @@
         "object",
         "null"
       ]
+    },
+    "3Z": {
+      "properties": {
+        "global": {
+          "properties": {
+            "enableTracing": {}
+          },
+          "required": [
+            "enableTracing"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "3a": {
       "additionalProperties": {},
@@ -5508,7 +5508,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -5602,27 +5602,6 @@
       "type": "object"
     },
     "3m": {
-      "properties": {
-        "global": {
-          "properties": {
-            "localityLbSetting": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "localityLbSetting"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "3n": {
       "additionalProperties": {},
       "properties": {
         "ipFamilies": {
@@ -5635,7 +5614,7 @@
         }
       }
     },
-    "3o": {
+    "3n": {
       "additionalProperties": {},
       "properties": {
         "istiodRemote": {
@@ -5648,7 +5627,7 @@
         }
       }
     },
-    "3p": {
+    "3o": {
       "allOf": [
         {
           "anyOf": [
@@ -5677,7 +5656,7 @@
         }
       ]
     },
-    "3q": {
+    "3p": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -5690,7 +5669,7 @@
         }
       }
     },
-    "3r": {
+    "3q": {
       "properties": {
         "global": {
           "properties": {
@@ -5711,7 +5690,7 @@
       ],
       "type": "object"
     },
-    "3s": {
+    "3r": {
       "properties": {
         "global": {
           "properties": {
@@ -5732,7 +5711,7 @@
       ],
       "type": "object"
     },
-    "3t": {
+    "3s": {
       "properties": {
         "global": {
           "properties": {
@@ -5753,7 +5732,7 @@
       ],
       "type": "object"
     },
-    "3u": {
+    "3t": {
       "properties": {
         "istiocoredns": {
           "properties": {
@@ -5774,7 +5753,7 @@
       ],
       "type": "object"
     },
-    "3v": {
+    "3u": {
       "additionalProperties": {},
       "properties": {
         "base": {
@@ -5787,7 +5766,7 @@
         }
       }
     },
-    "3w": {
+    "3v": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -5807,7 +5786,7 @@
         }
       }
     },
-    "3x": {
+    "3w": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -5827,7 +5806,7 @@
         }
       }
     },
-    "3y": {
+    "3x": {
       "additionalProperties": {},
       "properties": {
         "istiocoredns": {
@@ -5847,7 +5826,7 @@
         }
       }
     },
-    "3z": {
+    "3y": {
       "properties": {
         "global": {
           "properties": {
@@ -5857,6 +5836,27 @@
           },
           "required": [
             "ipFamilies"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "3z": {
+      "properties": {
+        "global": {
+          "properties": {
+            "localityLbSetting": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "localityLbSetting"
           ],
           "type": "object"
         }
@@ -6088,10 +6088,17 @@
       "type": "object"
     },
     "4E": {
+      "description": "Specify whether the ConfigMap or its key must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "4F": {
       "description": "The key of the secret to select from.  Must be a valid secret key.",
       "type": "string"
     },
-    "4F": {
+    "4G": {
       "additionalProperties": {},
       "properties": {
         "revision": {
@@ -6106,7 +6113,7 @@
         }
       }
     },
-    "4G": {
+    "4H": {
       "properties": {
         "istiodRemote": {
           "not": {
@@ -6121,7 +6128,7 @@
       ],
       "type": "object"
     },
-    "4H": {
+    "4I": {
       "additionalProperties": {},
       "properties": {
         "profile": {
@@ -6136,7 +6143,7 @@
         }
       }
     },
-    "4I": {
+    "4J": {
       "properties": {
         "traceSampling": {
           "$ref": "#/$defs/t"
@@ -6147,7 +6154,7 @@
       ],
       "type": "object"
     },
-    "4J": {
+    "4K": {
       "additionalProperties": {},
       "properties": {
         "global": {
@@ -6162,7 +6169,7 @@
         }
       }
     },
-    "4K": {
+    "4L": {
       "additionalProperties": {},
       "properties": {
         "sidecarInjectorWebhook": {
@@ -6174,14 +6181,14 @@
         }
       }
     },
-    "4L": {
+    "4M": {
       "description": "Specify whether the Secret or its key must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "4M": {
+    "4N": {
       "properties": {
         "profile": {
           "enum": [
@@ -6194,7 +6201,125 @@
       ],
       "type": "object"
     },
-    "4N": {
+    "4O": {
+      "additionalProperties": {},
+      "properties": {
+        "crlConfigMapName": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
+        }
+      }
+    },
+    "4P": {
+      "properties": {
+        "crlConfigMapName": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "crlConfigMapName"
+      ],
+      "type": "object"
+    },
+    "4Q": {
+      "additionalProperties": {},
+      "properties": {
+        "traceSampling": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
+        }
+      }
+    },
+    "4R": {
+      "additionalProperties": false,
+      "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
+      "properties": {
+        "fieldRef": {
+          "additionalProperties": false,
+          "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
+          "properties": {
+            "apiVersion": {
+              "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "fieldPath": {
+              "description": "Path of the field to select in the specified API version.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "fieldPath"
+          ],
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "mode": {
+          "description": "Optional: mode bits used to set permissions on this file, must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
+          "format": "int32",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "description": "Required: Path is  the relative path name of the file to be created. Must not be absolute or contain the '..' path. Must be utf-8 encoded. The first item of the relative path must not start with '..'",
+          "type": "string"
+        },
+        "resourceFieldRef": {
+          "additionalProperties": false,
+          "description": "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
+          "properties": {
+            "containerName": {
+              "description": "Container name: required for volumes, optional for env vars",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "divisor": {
+              "oneOf": [
+                {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              ]
+            },
+            "resource": {
+              "description": "Required: resource to select",
+              "type": "string"
+            }
+          },
+          "required": [
+            "resource"
+          ],
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "4S": {
       "additionalProperties": {},
       "properties": {
         "image": {
@@ -6209,208 +6334,13 @@
         }
       }
     },
-    "4O": {
+    "4T": {
       "additionalProperties": {},
       "properties": {
         "revision": {
           "$ref": "#/$defs/helm-double-quoted-safe"
         }
       }
-    },
-    "4P": {
-      "additionalProperties": {},
-      "properties": {
-        "crlConfigMapName": {
-          "$ref": "#/$defs/helm-double-quoted-safe"
-        }
-      }
-    },
-    "4Q": {
-      "properties": {
-        "crlConfigMapName": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "crlConfigMapName"
-      ],
-      "type": "object"
-    },
-    "4R": {
-      "additionalProperties": {},
-      "properties": {
-        "traceSampling": {
-          "$ref": "#/$defs/helm-double-quoted-safe"
-        }
-      }
-    },
-    "4S": {
-      "description": "Specify whether the ConfigMap or its key must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "4T": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            }
-          ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "allOf": [
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        }
-      ]
     },
     "4U": {
       "properties": {
@@ -6439,6 +6369,17 @@
       "type": "object"
     },
     "4W": {
+      "not": {
+        "properties": {
+          "configOverride": {}
+        },
+        "required": [
+          "configOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "4X": {
       "properties": {
         "platform": {
           "enum": [
@@ -6451,7 +6392,7 @@
       ],
       "type": "object"
     },
-    "4X": {
+    "4Y": {
       "properties": {
         "platform": {
           "enum": [
@@ -6464,23 +6405,12 @@
       ],
       "type": "object"
     },
-    "4Y": {
+    "4Z": {
       "properties": {
         "platform": {
           "enum": [
             "minikube"
           ]
-        }
-      },
-      "required": [
-        "platform"
-      ],
-      "type": "object"
-    },
-    "4Z": {
-      "properties": {
-        "platform": {
-          "$ref": "#/$defs/t"
         }
       },
       "required": [
@@ -6664,13 +6594,21 @@
       }
     },
     "4k": {
+      "additionalProperties": {},
+      "properties": {
+        "trustedZtunnelNamespace": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
+        }
+      }
+    },
+    "4l": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "4l": {
+    "4m": {
       "additionalProperties": {},
       "properties": {
         "cpu": {
@@ -6682,11 +6620,11 @@
       },
       "type": "object"
     },
-    "4m": {
+    "4n": {
       "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
     },
-    "4n": {
+    "4o": {
       "additionalProperties": {},
       "properties": {
         "keepaliveMaxServerConnectionAge": {
@@ -6694,7 +6632,7 @@
         }
       }
     },
-    "4o": {
+    "4p": {
       "properties": {
         "sidecarInjectorWebhook": {
           "not": {
@@ -6709,7 +6647,7 @@
       ],
       "type": "object"
     },
-    "4p": {
+    "4q": {
       "additionalProperties": {},
       "properties": {
         "podLabels": {
@@ -6727,43 +6665,7 @@
         }
       }
     },
-    "4q": {
-      "additionalProperties": {},
-      "properties": {
-        "trustedZtunnelNamespace": {
-          "$ref": "#/$defs/helm-double-quoted-safe"
-        }
-      }
-    },
     "4r": {
-      "additionalProperties": {
-        "additionalProperties": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "items": {
-        "additionalProperties": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
-        "type": [
-          "object",
-          "null"
-        ]
-      }
-    },
-    "4s": {
       "allOf": [
         {
           "not": {
@@ -6807,7 +6709,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -6817,6 +6719,34 @@
         }
       ],
       "type": "string"
+    },
+    "4s": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "items": {
+        "additionalProperties": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+        "type": [
+          "object",
+          "null"
+        ]
+      }
     },
     "4t": {
       "allOf": [
@@ -7149,94 +7079,164 @@
       "then": false
     },
     "4y": {
-      "additionalProperties": false,
-      "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
-      "properties": {
-        "fieldRef": {
-          "additionalProperties": false,
-          "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
-          "properties": {
-            "apiVersion": {
-              "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "fieldPath": {
-              "description": "Path of the field to select in the specified API version.",
-              "type": "string"
-            }
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
           },
-          "required": [
-            "fieldPath"
-          ],
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
         },
-        "mode": {
-          "description": "Optional: mode bits used to set permissions on this file, must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "path": {
-          "description": "Required: Path is  the relative path name of the file to be created. Must not be absolute or contain the '..' path. Must be utf-8 encoded. The first item of the relative path must not start with '..'",
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            }
+          ],
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
           "type": "string"
         },
-        "resourceFieldRef": {
-          "additionalProperties": false,
-          "description": "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
-          "properties": {
-            "containerName": {
-              "description": "Container name: required for volumes, optional for env vars",
-              "type": [
-                "string",
-                "null"
-              ]
+        {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
             },
-            "divisor": {
-              "oneOf": [
-                {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                }
-              ]
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
             },
-            "resource": {
-              "description": "Required: resource to select",
-              "type": "string"
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
             }
-          },
-          "required": [
-            "resource"
           ],
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
+          "type": "string"
+        },
+        {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
         }
-      },
-      "required": [
-        "path"
-      ],
-      "type": [
-        "object",
-        "null"
       ]
     },
     "4z": {
@@ -7316,6 +7316,17 @@
       ]
     },
     "50": {
+      "properties": {
+        "platform": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "51": {
       "additionalProperties": {},
       "properties": {
         "experimental": {
@@ -7327,7 +7338,7 @@
         }
       }
     },
-    "51": {
+    "52": {
       "additionalProperties": {},
       "properties": {
         "istiocoredns": {
@@ -7339,7 +7350,7 @@
         }
       }
     },
-    "52": {
+    "53": {
       "additionalProperties": {},
       "properties": {
         "istiodRemote": {
@@ -7351,7 +7362,7 @@
         }
       }
     },
-    "53": {
+    "54": {
       "properties": {
         "global": {
           "not": {
@@ -7366,7 +7377,7 @@
       ],
       "type": "object"
     },
-    "54": {
+    "55": {
       "additionalProperties": {},
       "properties": {
         "image": {
@@ -7374,7 +7385,7 @@
         }
       }
     },
-    "55": {
+    "56": {
       "properties": {
         "ipFamilies": {
           "$ref": "#/$defs/t"
@@ -7385,7 +7396,7 @@
       ],
       "type": "object"
     },
-    "56": {
+    "57": {
       "not": {
         "properties": {
           "disableOutbound": {}
@@ -7396,7 +7407,7 @@
         "type": "object"
       }
     },
-    "57": {
+    "58": {
       "anyOf": [
         {
           "not": {
@@ -7414,22 +7425,9 @@
         }
       ]
     },
-    "58": {
+    "59": {
       "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
       "type": "string"
-    },
-    "59": {
-      "properties": {
-        "istiocoredns": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "istiocoredns"
-      ],
-      "type": "object"
     },
     "5A": {
       "anyOf": [
@@ -7840,7 +7838,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -8541,14 +8539,14 @@
     },
     "5a": {
       "properties": {
-        "profile": {
+        "istiocoredns": {
           "enum": [
-            "platform-gke"
+            null
           ]
         }
       },
       "required": [
-        "profile"
+        "istiocoredns"
       ],
       "type": "object"
     },
@@ -8556,7 +8554,7 @@
       "properties": {
         "profile": {
           "enum": [
-            "platform-k3d"
+            "platform-gke"
           ]
         }
       },
@@ -8569,7 +8567,7 @@
       "properties": {
         "profile": {
           "enum": [
-            "platform-k3s"
+            "platform-k3d"
           ]
         }
       },
@@ -8579,15 +8577,17 @@
       "type": "object"
     },
     "5d": {
-      "not": {
-        "properties": {
-          "configOverride": {}
-        },
-        "required": [
-          "configOverride"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-k3s"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
     },
     "5e": {
       "properties": {
@@ -8618,7 +8618,7 @@
     "5g": {
       "additionalProperties": {},
       "properties": {
-        "meshConfig": {
+        "global": {
           "anyOf": [
             {
               "type": "object"
@@ -8630,7 +8630,7 @@
     "5h": {
       "additionalProperties": {},
       "properties": {
-        "global": {
+        "memory": {
           "anyOf": [
             {
               "type": "object"
@@ -8642,7 +8642,7 @@
     "5i": {
       "additionalProperties": {},
       "properties": {
-        "memory": {
+        "taint": {
           "anyOf": [
             {
               "type": "object"
@@ -8654,18 +8654,6 @@
     "5j": {
       "additionalProperties": {},
       "properties": {
-        "taint": {
-          "anyOf": [
-            {
-              "type": "object"
-            }
-          ]
-        }
-      }
-    },
-    "5k": {
-      "additionalProperties": {},
-      "properties": {
         "base": {
           "anyOf": [
             {
@@ -8675,13 +8663,25 @@
         }
       }
     },
-    "5l": {
+    "5k": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "5m": {
+    "5l": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
+    },
+    "5m": {
+      "additionalProperties": {},
+      "properties": {
+        "meshConfig": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
     },
     "5n": {
       "properties": {
@@ -9584,6 +9584,133 @@
     "F": {
       "allOf": [
         {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "configMap": {}
+                },
+                "required": [
+                  "configMap"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "configMap": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "configMap"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "meshConfig": {}
+                  },
+                  "required": [
+                    "meshConfig"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "meshConfig": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "meshConfig"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        },
+        {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {}
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "resourceScope": {
+                          "enum": [
+                            "all"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "resourceScope"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "resourceScope": {
+                      "enum": [
+                        "namespace"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "resourceScope"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "G": {
+      "allOf": [
+        {
           "not": {
             "properties": {
               "global": {
@@ -9675,7 +9802,7 @@
         }
       ]
     },
-    "G": {
+    "H": {
       "anyOf": [
         {
           "not": {
@@ -9733,7 +9860,7 @@
         }
       ]
     },
-    "H": {
+    "I": {
       "allOf": [
         {
           "anyOf": [
@@ -9981,7 +10108,7 @@
         }
       ]
     },
-    "I": {
+    "J": {
       "properties": {
         "profile": {
           "$ref": "#/$defs/t"
@@ -9992,7 +10119,7 @@
       ],
       "type": "object"
     },
-    "J": {
+    "K": {
       "anyOf": [
         {
           "pattern": "\\{\\{",
@@ -10006,7 +10133,7 @@
         }
       ]
     },
-    "K": {
+    "L": {
       "allOf": [
         {
           "anyOf": [
@@ -10193,7 +10320,7 @@
         }
       ]
     },
-    "L": {
+    "M": {
       "allOf": [
         {
           "anyOf": [
@@ -10238,133 +10365,6 @@
               }
             }
           ]
-        },
-        {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "resourceScope": {}
-                        },
-                        "required": [
-                          "resourceScope"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "resourceScope": {
-                          "enum": [
-                            "all"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "resourceScope"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              ]
-            },
-            {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "resourceScope": {
-                      "enum": [
-                        "namespace"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "resourceScope"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "M": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "configMap": {}
-                },
-                "required": [
-                  "configMap"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "configMap": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "configMap"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "meshConfig": {}
-                  },
-                  "required": [
-                    "meshConfig"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "meshConfig": {
-                    "$ref": "#/$defs/t"
-                  }
-                },
-                "required": [
-                  "meshConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          }
         },
         {
           "anyOf": [
@@ -11221,7 +11221,7 @@
     },
     "h": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "helm-double-quoted-safe": {
@@ -11257,7 +11257,7 @@
     },
     "i": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "j": {
@@ -11408,7 +11408,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -11569,7 +11569,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -11622,7 +11622,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -11766,7 +11766,7 @@
       }
     },
     "x": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "y": {
@@ -11838,7 +11838,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/L"
+        "$ref": "#/$defs/M"
       },
       "then": {
         "allOf": [
@@ -12029,7 +12029,7 @@
             "additionalProperties": {},
             "properties": {
               "deploymentLabels": {
-                "$ref": "#/$defs/3Y"
+                "$ref": "#/$defs/3X"
               }
             }
           },
@@ -12078,7 +12078,7 @@
                       "description": "EnvVar represents an environment variable present in a Container.",
                       "properties": {
                         "name": {
-                          "$ref": "#/$defs/58"
+                          "$ref": "#/$defs/59"
                         },
                         "value": {
                           "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -12103,7 +12103,7 @@
                                   "$ref": "#/$defs/u"
                                 },
                                 "optional": {
-                                  "$ref": "#/$defs/4S"
+                                  "$ref": "#/$defs/4E"
                                 }
                               },
                               "required": [
@@ -12126,13 +12126,13 @@
                               "description": "SecretKeySelector selects a key of a Secret.",
                               "properties": {
                                 "key": {
-                                  "$ref": "#/$defs/4E"
+                                  "$ref": "#/$defs/4F"
                                 },
                                 "name": {
                                   "$ref": "#/$defs/u"
                                 },
                                 "optional": {
-                                  "$ref": "#/$defs/4L"
+                                  "$ref": "#/$defs/4M"
                                 }
                               },
                               "required": [
@@ -12196,7 +12196,7 @@
             }
           },
           {
-            "$ref": "#/$defs/3U"
+            "$ref": "#/$defs/3T"
           },
           {
             "additionalProperties": {},
@@ -12230,13 +12230,13 @@
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/i"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/h"
                           },
                           {
                             "$ref": "#/$defs/j"
@@ -12311,13 +12311,13 @@
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/i"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/h"
                           },
                           {
                             "$ref": "#/$defs/j"
@@ -12404,13 +12404,13 @@
                                     "$ref": "#/$defs/l"
                                   },
                                   {
-                                    "$ref": "#/$defs/h"
+                                    "$ref": "#/$defs/i"
                                   },
                                   {
                                     "$ref": "#/$defs/f"
                                   },
                                   {
-                                    "$ref": "#/$defs/i"
+                                    "$ref": "#/$defs/h"
                                   },
                                   {
                                     "$ref": "#/$defs/j"
@@ -12465,7 +12465,7 @@
                         "args": {
                           "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
                           "items": {
-                            "$ref": "#/$defs/J"
+                            "$ref": "#/$defs/K"
                           },
                           "type": [
                             "array",
@@ -12475,7 +12475,7 @@
                         "command": {
                           "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
                           "items": {
-                            "$ref": "#/$defs/J"
+                            "$ref": "#/$defs/K"
                           },
                           "type": [
                             "array",
@@ -12491,7 +12491,7 @@
                               "name": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/58"
+                                    "$ref": "#/$defs/59"
                                   },
                                   {
                                     "$ref": "#/$defs/2"
@@ -12535,7 +12535,7 @@
                                         "$ref": "#/$defs/z"
                                       },
                                       "optional": {
-                                        "$ref": "#/$defs/4S"
+                                        "$ref": "#/$defs/4E"
                                       }
                                     },
                                     "required": [
@@ -12633,7 +12633,7 @@
                                       "key": {
                                         "anyOf": [
                                           {
-                                            "$ref": "#/$defs/4E"
+                                            "$ref": "#/$defs/4F"
                                           },
                                           {
                                             "$ref": "#/$defs/2"
@@ -12644,7 +12644,7 @@
                                         "$ref": "#/$defs/z"
                                       },
                                       "optional": {
-                                        "$ref": "#/$defs/4L"
+                                        "$ref": "#/$defs/4M"
                                       }
                                     },
                                     "required": [
@@ -13033,7 +13033,7 @@
                                 "add": {
                                   "description": "Added capabilities",
                                   "items": {
-                                    "$ref": "#/$defs/J"
+                                    "$ref": "#/$defs/K"
                                   },
                                   "type": [
                                     "array",
@@ -13043,7 +13043,7 @@
                                 "drop": {
                                   "description": "Removed capabilities",
                                   "items": {
-                                    "$ref": "#/$defs/J"
+                                    "$ref": "#/$defs/K"
                                   },
                                   "type": [
                                     "array",
@@ -13389,7 +13389,7 @@
                               "mountPath": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/4m"
+                                    "$ref": "#/$defs/4n"
                                   },
                                   {
                                     "$ref": "#/$defs/2"
@@ -13512,7 +13512,7 @@
             "$ref": "#/$defs/3j"
           },
           {
-            "$ref": "#/$defs/4n"
+            "$ref": "#/$defs/4o"
           },
           {
             "additionalProperties": {},
@@ -13557,7 +13557,7 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/3U"
+                "$ref": "#/$defs/3T"
               }
             }
           },
@@ -13605,7 +13605,7 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/4n"
+                "$ref": "#/$defs/4o"
               }
             }
           },
@@ -13621,7 +13621,7 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/4p"
+                "$ref": "#/$defs/4q"
               }
             }
           },
@@ -13645,7 +13645,7 @@
             "additionalProperties": {},
             "properties": {
               "podLabels": {
-                "$ref": "#/$defs/3Y"
+                "$ref": "#/$defs/3X"
               }
             }
           },
@@ -13653,7 +13653,7 @@
             "$ref": "#/$defs/1h"
           },
           {
-            "$ref": "#/$defs/4p"
+            "$ref": "#/$defs/4q"
           },
           {
             "additionalProperties": {},
@@ -13889,7 +13889,7 @@
                       "description": "VolumeMount describes a mounting of a Volume within a container.",
                       "properties": {
                         "mountPath": {
-                          "$ref": "#/$defs/4m"
+                          "$ref": "#/$defs/4n"
                         },
                         "mountPropagation": {
                           "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
@@ -14167,7 +14167,7 @@
                               "$ref": "#/$defs/u"
                             },
                             "optional": {
-                              "$ref": "#/$defs/4k"
+                              "$ref": "#/$defs/4l"
                             }
                           },
                           "type": [
@@ -14234,7 +14234,7 @@
                             "items": {
                               "description": "Items is a list of downward API volume file",
                               "items": {
-                                "$ref": "#/$defs/4y"
+                                "$ref": "#/$defs/4R"
                               },
                               "type": [
                                 "array",
@@ -14513,10 +14513,10 @@
                                           "$ref": "#/$defs/2t"
                                         },
                                         "kind": {
-                                          "$ref": "#/$defs/5l"
+                                          "$ref": "#/$defs/5k"
                                         },
                                         "name": {
-                                          "$ref": "#/$defs/5m"
+                                          "$ref": "#/$defs/5l"
                                         }
                                       },
                                       "required": [
@@ -14536,10 +14536,10 @@
                                           "$ref": "#/$defs/2t"
                                         },
                                         "kind": {
-                                          "$ref": "#/$defs/5l"
+                                          "$ref": "#/$defs/5k"
                                         },
                                         "name": {
-                                          "$ref": "#/$defs/5m"
+                                          "$ref": "#/$defs/5l"
                                         },
                                         "namespace": {
                                           "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -15133,7 +15133,7 @@
                                         "$ref": "#/$defs/u"
                                       },
                                       "optional": {
-                                        "$ref": "#/$defs/4k"
+                                        "$ref": "#/$defs/4l"
                                       }
                                     },
                                     "type": [
@@ -15148,7 +15148,7 @@
                                       "items": {
                                         "description": "Items is a list of DownwardAPIVolume file",
                                         "items": {
-                                          "$ref": "#/$defs/4y"
+                                          "$ref": "#/$defs/4R"
                                         },
                                         "type": [
                                           "array",
@@ -15603,10 +15603,10 @@
                     "description": "HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).",
                     "properties": {
                       "scaleDown": {
-                        "$ref": "#/$defs/3Z"
+                        "$ref": "#/$defs/3Y"
                       },
                       "scaleUp": {
-                        "$ref": "#/$defs/3Z"
+                        "$ref": "#/$defs/3Y"
                       }
                     },
                     "type": "object"
@@ -15692,7 +15692,7 @@
             }
           },
           {
-            "$ref": "#/$defs/5i"
+            "$ref": "#/$defs/5h"
           },
           {
             "additionalProperties": {},
@@ -15706,7 +15706,7 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/5i"
+                "$ref": "#/$defs/5h"
               }
             }
           }
@@ -15821,7 +15821,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/3v"
+        "$ref": "#/$defs/3u"
       }
     },
     {
@@ -15875,13 +15875,13 @@
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/i"
                       },
                       {
                         "$ref": "#/$defs/f"
                       },
                       {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/h"
                       },
                       {
                         "$ref": "#/$defs/j"
@@ -15964,13 +15964,13 @@
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/h"
+                            "$ref": "#/$defs/i"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/h"
                           },
                           {
                             "$ref": "#/$defs/j"
@@ -16005,13 +16005,13 @@
             }
           },
           {
-            "$ref": "#/$defs/5k"
+            "$ref": "#/$defs/5j"
           },
           {
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/5k"
+                "$ref": "#/$defs/5j"
               }
             }
           }
@@ -16022,7 +16022,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/4Q"
+            "$ref": "#/$defs/4P"
           },
           {
             "$ref": "#/$defs/3"
@@ -16033,7 +16033,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/4P"
+        "$ref": "#/$defs/4O"
       }
     },
     {
@@ -16079,12 +16079,12 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/5j"
+                "$ref": "#/$defs/5i"
               }
             }
           },
           {
-            "$ref": "#/$defs/5j"
+            "$ref": "#/$defs/5i"
           }
         ]
       }
@@ -16128,7 +16128,7 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/$defs/50"
+            "$ref": "#/$defs/51"
           },
           {
             "additionalProperties": {},
@@ -16164,13 +16164,13 @@
                                 "$ref": "#/$defs/l"
                               },
                               {
-                                "$ref": "#/$defs/h"
+                                "$ref": "#/$defs/i"
                               },
                               {
                                 "$ref": "#/$defs/f"
                               },
                               {
-                                "$ref": "#/$defs/i"
+                                "$ref": "#/$defs/h"
                               },
                               {
                                 "$ref": "#/$defs/j"
@@ -16210,7 +16210,7 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/50"
+                "$ref": "#/$defs/51"
               }
             }
           },
@@ -16236,10 +16236,10 @@
             "properties": {
               "gatewayClasses": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4r"
+                  "$ref": "#/$defs/4s"
                 },
                 "items": {
-                  "$ref": "#/$defs/4r"
+                  "$ref": "#/$defs/4s"
                 }
               }
             }
@@ -16249,10 +16249,10 @@
             "properties": {
               "gatewayClasses": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/57"
+                  "$ref": "#/$defs/58"
                 },
                 "items": {
-                  "$ref": "#/$defs/57"
+                  "$ref": "#/$defs/58"
                 }
               }
             }
@@ -16264,13 +16264,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/3p"
+                      "$ref": "#/$defs/3o"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/3p"
+                      "$ref": "#/$defs/3o"
                     },
                     "type": "object"
                   },
@@ -16326,7 +16326,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/F"
+        "$ref": "#/$defs/G"
       },
       "then": {
         "allOf": [
@@ -16383,7 +16383,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/3V"
+                "$ref": "#/$defs/3U"
               },
               {
                 "not": {
@@ -16514,7 +16514,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/3V"
+                "$ref": "#/$defs/3U"
               },
               {
                 "allOf": [
@@ -16654,24 +16654,24 @@
           "anyOf": [
             {
               "not": {
-                "$ref": "#/$defs/3T"
+                "$ref": "#/$defs/3Z"
               }
             },
             {
-              "$ref": "#/$defs/3r"
+              "$ref": "#/$defs/3q"
             }
           ]
         }
       },
       "then": {
-        "$ref": "#/$defs/3w"
+        "$ref": "#/$defs/3v"
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/3D"
+            "$ref": "#/$defs/3C"
           },
           {
             "$ref": "#/$defs/3"
@@ -16712,10 +16712,10 @@
                 "properties": {
                   "imagePullSecrets": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/4T"
+                      "$ref": "#/$defs/4y"
                     },
                     "items": {
-                      "$ref": "#/$defs/4T"
+                      "$ref": "#/$defs/4y"
                     }
                   }
                 }
@@ -16732,7 +16732,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/3z"
+            "$ref": "#/$defs/3y"
           },
           {
             "$ref": "#/$defs/C"
@@ -16751,7 +16751,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "$ref": "#/$defs/3n"
+                "$ref": "#/$defs/3m"
               }
             }
           },
@@ -16794,7 +16794,7 @@
             }
           },
           {
-            "$ref": "#/$defs/3F"
+            "$ref": "#/$defs/3E"
           }
         ]
       }
@@ -16865,13 +16865,13 @@
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/i"
                       },
                       {
                         "$ref": "#/$defs/f"
                       },
                       {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/h"
                       },
                       {
                         "$ref": "#/$defs/j"
@@ -16970,13 +16970,13 @@
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/i"
                       },
                       {
                         "$ref": "#/$defs/f"
                       },
                       {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/h"
                       },
                       {
                         "$ref": "#/$defs/j"
@@ -17119,17 +17119,17 @@
           "anyOf": [
             {
               "not": {
-                "$ref": "#/$defs/3W"
+                "$ref": "#/$defs/3V"
               }
             },
             {
-              "$ref": "#/$defs/3m"
+              "$ref": "#/$defs/3z"
             }
           ]
         }
       },
       "then": {
-        "$ref": "#/$defs/3G"
+        "$ref": "#/$defs/3F"
       }
     },
     {
@@ -17161,7 +17161,7 @@
               }
             },
             {
-              "$ref": "#/$defs/3s"
+              "$ref": "#/$defs/3r"
             }
           ]
         }
@@ -17253,7 +17253,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/3t"
+              "$ref": "#/$defs/3s"
             }
           },
           {
@@ -17271,7 +17271,7 @@
           "anyOf": [
             {
               "not": {
-                "$ref": "#/$defs/3I"
+                "$ref": "#/$defs/3H"
               }
             },
             {
@@ -17281,11 +17281,11 @@
         }
       },
       "then": {
-        "$ref": "#/$defs/3C"
+        "$ref": "#/$defs/3B"
       }
     },
     {
-      "$ref": "#/$defs/3H"
+      "$ref": "#/$defs/3G"
     },
     {
       "if": {
@@ -17293,7 +17293,7 @@
           "anyOf": [
             {
               "not": {
-                "$ref": "#/$defs/3A"
+                "$ref": "#/$defs/3J"
               }
             },
             {
@@ -17303,7 +17303,7 @@
         }
       },
       "then": {
-        "$ref": "#/$defs/3E"
+        "$ref": "#/$defs/3D"
       }
     },
     {
@@ -17321,7 +17321,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/3q"
+        "$ref": "#/$defs/3p"
       }
     },
     {
@@ -17485,7 +17485,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/M"
+        "$ref": "#/$defs/F"
       },
       "then": {
         "allOf": [
@@ -17507,10 +17507,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/F"
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/G"
           },
           {
             "not": {
@@ -17518,7 +17518,7 @@
             }
           },
           {
-            "$ref": "#/$defs/L"
+            "$ref": "#/$defs/M"
           }
         ]
       },
@@ -17559,7 +17559,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/4s"
+                    "$ref": "#/$defs/4r"
                   },
                   {
                     "description": "externalName is the external reference that discovery mechanisms will return as an alias for this service (e.g. a DNS CNAME record). No proxying will be involved.  Must be a lowercase RFC-1123 hostname (https://tools.ietf.org/html/rfc1123) and requires `type` to be \"ExternalName\".",
@@ -17616,7 +17616,7 @@
       }
     },
     {
-      "$ref": "#/$defs/3x"
+      "$ref": "#/$defs/3w"
     },
     {
       "if": {
@@ -17698,7 +17698,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/L"
           },
           {
             "not": {
@@ -17848,7 +17848,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/L"
           },
           {
             "not": {
@@ -17925,7 +17925,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/4s"
+                    "$ref": "#/$defs/4r"
                   },
                   {
                     "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -17959,11 +17959,11 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/4J"
+        "$ref": "#/$defs/4K"
       }
     },
     {
-      "$ref": "#/$defs/5h"
+      "$ref": "#/$defs/5g"
     },
     {
       "if": {
@@ -17980,7 +17980,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/54"
+        "$ref": "#/$defs/55"
       }
     },
     {
@@ -18045,14 +18045,14 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/4N"
+        "$ref": "#/$defs/4S"
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/55"
+            "$ref": "#/$defs/56"
           },
           {
             "$ref": "#/$defs/3"
@@ -18065,7 +18065,7 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/$defs/3n"
+            "$ref": "#/$defs/3m"
           },
           {
             "$ref": "#/$defs/42"
@@ -18083,13 +18083,13 @@
               }
             },
             {
-              "$ref": "#/$defs/3u"
+              "$ref": "#/$defs/3t"
             }
           ]
         }
       },
       "then": {
-        "$ref": "#/$defs/3y"
+        "$ref": "#/$defs/3x"
       }
     },
     {
@@ -18102,13 +18102,13 @@
               }
             },
             {
-              "$ref": "#/$defs/59"
+              "$ref": "#/$defs/5a"
             }
           ]
         }
       },
       "then": {
-        "$ref": "#/$defs/51"
+        "$ref": "#/$defs/52"
       }
     },
     {
@@ -18130,13 +18130,13 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/$defs/3J"
+            "$ref": "#/$defs/3I"
           },
           {
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/3J"
+                "$ref": "#/$defs/3I"
               }
             }
           }
@@ -18158,11 +18158,11 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/3o"
+        "$ref": "#/$defs/3n"
       }
     },
     {
-      "$ref": "#/$defs/52"
+      "$ref": "#/$defs/53"
     },
     {
       "if": {
@@ -18284,11 +18284,11 @@
           "anyOf": [
             {
               "not": {
-                "$ref": "#/$defs/3X"
+                "$ref": "#/$defs/3W"
               }
             },
             {
-              "$ref": "#/$defs/3B"
+              "$ref": "#/$defs/3A"
             }
           ]
         }
@@ -18301,7 +18301,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/F"
           },
           {
             "not": {
@@ -18311,7 +18311,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/5g"
+        "$ref": "#/$defs/5m"
       }
     },
     {
@@ -18350,7 +18350,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/4v"
@@ -18386,7 +18386,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/1m"
@@ -18453,7 +18453,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3v"
+            "$ref": "#/$defs/3u"
           }
         }
       }
@@ -18464,7 +18464,7 @@
           {
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/4Q"
+                "$ref": "#/$defs/4P"
               }
             },
             "required": [
@@ -18484,7 +18484,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/4P"
+            "$ref": "#/$defs/4O"
           }
         }
       }
@@ -18580,7 +18580,7 @@
               "not": {
                 "properties": {
                   "pilot": {
-                    "$ref": "#/$defs/3T"
+                    "$ref": "#/$defs/3Z"
                   }
                 },
                 "required": [
@@ -18592,7 +18592,7 @@
             {
               "properties": {
                 "pilot": {
-                  "$ref": "#/$defs/3r"
+                  "$ref": "#/$defs/3q"
                 }
               },
               "required": [
@@ -18607,7 +18607,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3w"
+            "$ref": "#/$defs/3v"
           }
         }
       }
@@ -18618,7 +18618,7 @@
           {
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/3D"
+                "$ref": "#/$defs/3C"
               }
             },
             "required": [
@@ -18689,7 +18689,7 @@
           {
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/3z"
+                "$ref": "#/$defs/3y"
               }
             },
             "required": [
@@ -18719,7 +18719,7 @@
               "not": {
                 "properties": {
                   "pilot": {
-                    "$ref": "#/$defs/3W"
+                    "$ref": "#/$defs/3V"
                   }
                 },
                 "required": [
@@ -18731,7 +18731,7 @@
             {
               "properties": {
                 "pilot": {
-                  "$ref": "#/$defs/3m"
+                  "$ref": "#/$defs/3z"
                 }
               },
               "required": [
@@ -18746,7 +18746,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3G"
+            "$ref": "#/$defs/3F"
           }
         }
       }
@@ -18811,7 +18811,7 @@
             {
               "properties": {
                 "pilot": {
-                  "$ref": "#/$defs/3s"
+                  "$ref": "#/$defs/3r"
                 }
               },
               "required": [
@@ -19021,7 +19021,7 @@
                 {
                   "properties": {
                     "pilot": {
-                      "$ref": "#/$defs/3t"
+                      "$ref": "#/$defs/3s"
                     }
                   },
                   "required": [
@@ -19054,7 +19054,7 @@
               "not": {
                 "properties": {
                   "pilot": {
-                    "$ref": "#/$defs/3I"
+                    "$ref": "#/$defs/3H"
                   }
                 },
                 "required": [
@@ -19081,7 +19081,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3C"
+            "$ref": "#/$defs/3B"
           }
         }
       }
@@ -19090,7 +19090,7 @@
       "additionalProperties": {},
       "properties": {
         "pilot": {
-          "$ref": "#/$defs/3H"
+          "$ref": "#/$defs/3G"
         }
       }
     },
@@ -19102,7 +19102,7 @@
               "not": {
                 "properties": {
                   "pilot": {
-                    "$ref": "#/$defs/3A"
+                    "$ref": "#/$defs/3J"
                   }
                 },
                 "required": [
@@ -19129,7 +19129,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3E"
+            "$ref": "#/$defs/3D"
           }
         }
       }
@@ -19160,7 +19160,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3q"
+            "$ref": "#/$defs/3p"
           }
         }
       }
@@ -19501,10 +19501,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/M"
+            "$ref": "#/$defs/F"
           },
           {
-            "$ref": "#/$defs/F"
+            "$ref": "#/$defs/G"
           },
           {
             "not": {
@@ -19551,7 +19551,7 @@
             }
           },
           {
-            "$ref": "#/$defs/L"
+            "$ref": "#/$defs/M"
           }
         ]
       },
@@ -19590,7 +19590,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3F"
+            "$ref": "#/$defs/3E"
           }
         }
       }
@@ -19599,7 +19599,7 @@
       "additionalProperties": {},
       "properties": {
         "pilot": {
-          "$ref": "#/$defs/3x"
+          "$ref": "#/$defs/3w"
         }
       }
     },
@@ -19767,7 +19767,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/L"
           },
           {
             "not": {
@@ -20094,7 +20094,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/K"
+            "$ref": "#/$defs/L"
           },
           {
             "not": {
@@ -20239,7 +20239,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/4J"
+            "$ref": "#/$defs/4K"
           }
         }
       }
@@ -20248,7 +20248,7 @@
       "additionalProperties": {},
       "properties": {
         "pilot": {
-          "$ref": "#/$defs/5h"
+          "$ref": "#/$defs/5g"
         }
       }
     },
@@ -20278,7 +20278,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/54"
+            "$ref": "#/$defs/55"
           }
         }
       }
@@ -20309,7 +20309,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/4N"
+            "$ref": "#/$defs/4S"
           }
         }
       }
@@ -20381,7 +20381,7 @@
           {
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/55"
+                "$ref": "#/$defs/56"
               }
             },
             "required": [
@@ -20426,7 +20426,7 @@
             {
               "properties": {
                 "pilot": {
-                  "$ref": "#/$defs/3u"
+                  "$ref": "#/$defs/3t"
                 }
               },
               "required": [
@@ -20441,7 +20441,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3y"
+            "$ref": "#/$defs/3x"
           }
         }
       }
@@ -20466,7 +20466,7 @@
             {
               "properties": {
                 "pilot": {
-                  "$ref": "#/$defs/59"
+                  "$ref": "#/$defs/5a"
                 }
               },
               "required": [
@@ -20481,7 +20481,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/51"
+            "$ref": "#/$defs/52"
           }
         }
       }
@@ -20512,7 +20512,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/3o"
+            "$ref": "#/$defs/3n"
           }
         }
       }
@@ -20521,7 +20521,7 @@
       "additionalProperties": {},
       "properties": {
         "pilot": {
-          "$ref": "#/$defs/52"
+          "$ref": "#/$defs/53"
         }
       }
     },
@@ -20773,7 +20773,7 @@
               "not": {
                 "properties": {
                   "pilot": {
-                    "$ref": "#/$defs/3X"
+                    "$ref": "#/$defs/3W"
                   }
                 },
                 "required": [
@@ -20785,7 +20785,7 @@
             {
               "properties": {
                 "pilot": {
-                  "$ref": "#/$defs/3B"
+                  "$ref": "#/$defs/3A"
                 }
               },
               "required": [
@@ -20867,7 +20867,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/5g"
+            "$ref": "#/$defs/5m"
           }
         }
       }
@@ -20876,7 +20876,7 @@
       "if": {
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/J"
           }
         },
         "required": [
@@ -20888,7 +20888,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/4H"
+            "$ref": "#/$defs/4I"
           }
         }
       }
@@ -20947,7 +20947,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/4O"
+            "$ref": "#/$defs/4T"
           }
         }
       }
@@ -20956,7 +20956,7 @@
       "additionalProperties": {},
       "properties": {
         "pilot": {
-          "$ref": "#/$defs/4F"
+          "$ref": "#/$defs/4G"
         }
       }
     },
@@ -21014,7 +21014,7 @@
       "additionalProperties": {},
       "properties": {
         "pilot": {
-          "$ref": "#/$defs/4K"
+          "$ref": "#/$defs/4L"
         }
       }
     },
@@ -21062,7 +21062,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "not": {
@@ -21171,7 +21171,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "not": {
@@ -21350,7 +21350,7 @@
           {
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/4I"
+                "$ref": "#/$defs/4J"
               }
             },
             "required": [
@@ -21370,7 +21370,7 @@
         "additionalProperties": {},
         "properties": {
           "pilot": {
-            "$ref": "#/$defs/4R"
+            "$ref": "#/$defs/4Q"
           }
         }
       }
@@ -21413,12 +21413,12 @@
             "additionalProperties": {},
             "properties": {
               "pilot": {
-                "$ref": "#/$defs/4q"
+                "$ref": "#/$defs/4k"
               }
             }
           },
           {
-            "$ref": "#/$defs/4q"
+            "$ref": "#/$defs/4k"
           }
         ]
       }
@@ -21473,10 +21473,10 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/I"
+        "$ref": "#/$defs/J"
       },
       "then": {
-        "$ref": "#/$defs/4H"
+        "$ref": "#/$defs/4I"
       }
     },
     {
@@ -21579,14 +21579,14 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/4O"
+        "$ref": "#/$defs/4T"
       }
     },
     {
-      "$ref": "#/$defs/4F"
+      "$ref": "#/$defs/4G"
     },
     {
-      "$ref": "#/$defs/4K"
+      "$ref": "#/$defs/4L"
     },
     {
       "if": {
@@ -21611,7 +21611,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "not": {
@@ -21647,7 +21647,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "not": {
@@ -21711,7 +21711,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/4I"
+                "$ref": "#/$defs/4J"
               }
             ]
           },
@@ -21724,7 +21724,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/4R"
+        "$ref": "#/$defs/4Q"
       }
     },
     {
@@ -21732,14 +21732,14 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/53"
+              "$ref": "#/$defs/54"
             }
           },
           {
             "not": {
               "properties": {
                 "_internal_defaults_do_not_set": {
-                  "$ref": "#/$defs/53"
+                  "$ref": "#/$defs/54"
                 }
               },
               "required": [
@@ -21757,14 +21757,14 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/4G"
+              "$ref": "#/$defs/4H"
             }
           },
           {
             "not": {
               "properties": {
                 "_internal_defaults_do_not_set": {
-                  "$ref": "#/$defs/4G"
+                  "$ref": "#/$defs/4H"
                 }
               },
               "required": [
@@ -21782,14 +21782,14 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/4o"
+              "$ref": "#/$defs/4p"
             }
           },
           {
             "not": {
               "properties": {
                 "_internal_defaults_do_not_set": {
-                  "$ref": "#/$defs/4o"
+                  "$ref": "#/$defs/4p"
                 }
               },
               "required": [
@@ -22180,7 +22180,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/1m"
@@ -22205,7 +22205,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/5D"
@@ -22462,10 +22462,10 @@
                 ]
               },
               {
-                "$ref": "#/$defs/F"
+                "$ref": "#/$defs/G"
               },
               {
-                "$ref": "#/$defs/L"
+                "$ref": "#/$defs/M"
               }
             ]
           }
@@ -22706,17 +22706,6 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/4X"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "global": {
                       "$ref": "#/$defs/4Y"
                     }
                   },
@@ -22728,7 +22717,18 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/4W"
+                      "$ref": "#/$defs/4Z"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/4X"
                     }
                   },
                   "required": [
@@ -22746,13 +22746,13 @@
                   "$ref": "#/$defs/5s"
                 },
                 {
-                  "$ref": "#/$defs/4X"
-                },
-                {
                   "$ref": "#/$defs/4Y"
                 },
                 {
-                  "$ref": "#/$defs/4W"
+                  "$ref": "#/$defs/4Z"
+                },
+                {
+                  "$ref": "#/$defs/4X"
                 }
               ]
             }
@@ -22762,7 +22762,7 @@
               {
                 "properties": {
                   "global": {
-                    "$ref": "#/$defs/4Z"
+                    "$ref": "#/$defs/50"
                   }
                 },
                 "required": [
@@ -22771,7 +22771,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/4Z"
+                "$ref": "#/$defs/50"
               }
             ]
           }
@@ -22865,17 +22865,6 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/5a"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "global": {
                       "$ref": "#/$defs/5b"
                     }
                   },
@@ -22888,6 +22877,17 @@
                   "properties": {
                     "global": {
                       "$ref": "#/$defs/5c"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/5d"
                     }
                   },
                   "required": [
@@ -22920,7 +22920,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/4M"
+                      "$ref": "#/$defs/4N"
                     }
                   },
                   "required": [
@@ -22983,13 +22983,13 @@
                   "$ref": "#/$defs/5t"
                 },
                 {
-                  "$ref": "#/$defs/5a"
-                },
-                {
                   "$ref": "#/$defs/5b"
                 },
                 {
                   "$ref": "#/$defs/5c"
+                },
+                {
+                  "$ref": "#/$defs/5d"
                 },
                 {
                   "$ref": "#/$defs/4U"
@@ -22998,7 +22998,7 @@
                   "$ref": "#/$defs/4V"
                 },
                 {
-                  "$ref": "#/$defs/4M"
+                  "$ref": "#/$defs/4N"
                 },
                 {
                   "$ref": "#/$defs/5f"
@@ -23017,7 +23017,7 @@
               {
                 "properties": {
                   "global": {
-                    "$ref": "#/$defs/I"
+                    "$ref": "#/$defs/J"
                   }
                 },
                 "required": [
@@ -23026,7 +23026,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/J"
               }
             ]
           }
@@ -23408,10 +23408,10 @@
                   "additionalProperties": {},
                   "properties": {
                     "limits": {
-                      "$ref": "#/$defs/4l"
+                      "$ref": "#/$defs/4m"
                     },
                     "requests": {
-                      "$ref": "#/$defs/4l"
+                      "$ref": "#/$defs/4m"
                     }
                   },
                   "type": "object"
@@ -23760,7 +23760,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/5d"
+                            "$ref": "#/$defs/4W"
                           },
                           {
                             "properties": {
@@ -23783,7 +23783,7 @@
                         "not": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/5d"
+                              "$ref": "#/$defs/4W"
                             },
                             {
                               "$ref": "#/$defs/65"
@@ -23810,7 +23810,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/56"
+                            "$ref": "#/$defs/57"
                           },
                           {
                             "properties": {
@@ -23833,7 +23833,7 @@
                         "not": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/56"
+                              "$ref": "#/$defs/57"
                             },
                             {
                               "$ref": "#/$defs/63"

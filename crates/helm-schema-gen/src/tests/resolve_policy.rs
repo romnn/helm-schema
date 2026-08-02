@@ -116,6 +116,14 @@ fn int_or_string_preimage_partitions_numeric_string_spellings() -> eyre::Result<
 
     for (value, label) in [
         (serde_json::json!("4317"), "an integer-token string"),
+        (
+            serde_json::json!("+_0x1f"),
+            "a sign-and-underscore radix integer",
+        ),
+        (
+            serde_json::json!("+_08"),
+            "a sign-and-underscore integral float fallback",
+        ),
         (serde_json::json!("http"), "an ordinary string"),
         (serde_json::json!(4317), "an integer"),
         (
@@ -267,7 +275,7 @@ fn plain_probe_port_expected_schema() -> Value {
                                         },
                                         {
                                             "not": {
-                                                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                                                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                                             }
                                         },
                                         {
@@ -301,7 +309,7 @@ fn plain_probe_port_expected_schema() -> Value {
                         {
                             "anyOf": [
                                 {
-                                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                                     "type": "string"
                                 },
                                 { "type": "integer" }

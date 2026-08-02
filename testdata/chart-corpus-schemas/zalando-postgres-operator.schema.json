@@ -5,12 +5,24 @@
       "type": "string"
     },
     "10": {
+      "anyOf": [
+        {
+          "default": "20m",
+          "type": "string"
+        },
+        {
+          "pattern": "\\{\\{",
+          "type": "string"
+        }
+      ]
+    },
+    "11": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "11": {
+    "12": {
       "default": "ordered_ready",
       "enum": [
         "ordered_ready",
@@ -18,7 +30,7 @@
       ],
       "type": "string"
     },
-    "12": {
+    "13": {
       "default": "transaction",
       "enum": [
         "session",
@@ -26,11 +38,11 @@
       ],
       "type": "string"
     },
-    "13": {
+    "14": {
       "default": "{cluster}-repl.{namespace}.{hostedzone}",
       "type": "string"
     },
-    "14": {
+    "15": {
       "default": "pvc",
       "enum": [
         "ebs",
@@ -40,7 +52,7 @@
       ],
       "type": "string"
     },
-    "15": {
+    "16": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
@@ -230,10 +242,10 @@
         "null"
       ]
     },
-    "16": {
+    "17": {
       "additionalProperties": {}
     },
-    "17": {
+    "18": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -346,7 +358,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -397,7 +409,7 @@
         }
       ]
     },
-    "18": {
+    "19": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
         "additionalProperties": false,
@@ -439,7 +451,7 @@
         "null"
       ]
     },
-    "19": {
+    "1a": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
         "additionalProperties": false,
@@ -481,7 +493,7 @@
         "null"
       ]
     },
-    "1a": {
+    "1b": {
       "anyOf": [
         {
           "default": "https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
@@ -493,7 +505,7 @@
         }
       ]
     },
-    "1b": {
+    "1c": {
       "anyOf": [
         {
           "default": "https://teams.example.com/api/",
@@ -505,7 +517,7 @@
         }
       ]
     },
-    "1c": {
+    "1d": {
       "items": {
         "anyOf": [
           {
@@ -519,11 +531,6 @@
       },
       "nullable": true,
       "type": "array"
-    },
-    "1d": {
-      "default": "30 00 * * *",
-      "pattern": "^(\\d+|\\*)(/\\d+)?(\\s+(\\d+|\\*)(/\\d+)?){4}$",
-      "type": "string"
     },
     "1e": {
       "items": {
@@ -840,21 +847,6 @@
     },
     "4": {
       "if": {
-        "type": "array"
-      },
-      "then": {
-        "anyOf": [
-          {
-            "additionalProperties": {}
-          },
-          {
-            "type": "array"
-          }
-        ]
-      }
-    },
-    "5": {
-      "if": {
         "allOf": [
           {
             "not": {
@@ -870,6 +862,21 @@
       },
       "then": {
         "additionalProperties": {}
+      }
+    },
+    "5": {
+      "if": {
+        "type": "array"
+      },
+      "then": {
+        "anyOf": [
+          {
+            "additionalProperties": {}
+          },
+          {
+            "type": "array"
+          }
+        ]
       }
     },
     "6": {
@@ -970,7 +977,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -983,7 +990,7 @@
       "type": "string"
     },
     "E": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "F": {
@@ -1307,6 +1314,11 @@
       ]
     },
     "R": {
+      "default": "30 00 * * *",
+      "pattern": "^(\\d+|\\*)(/\\d+)?(\\s+(\\d+|\\*)(/\\d+)?){4}$",
+      "type": "string"
+    },
+    "S": {
       "anyOf": [
         {
           "default": "postgresql-operator",
@@ -1318,7 +1330,7 @@
         }
       ]
     },
-    "S": {
+    "T": {
       "anyOf": [
         {
           "default": "postgres-pod",
@@ -1330,7 +1342,7 @@
         }
       ]
     },
-    "T": {
+    "U": {
       "anyOf": [
         {
           "enum": [
@@ -1345,15 +1357,15 @@
         }
       ]
     },
-    "U": {
-      "default": "ghcr.io/zalando/postgres-operator/logical-backup:v1.15.1",
-      "type": "string"
-    },
     "V": {
       "default": "pooler",
       "type": "string"
     },
     "W": {
+      "default": "ghcr.io/zalando/postgres-operator/logical-backup:v1.15.1",
+      "type": "string"
+    },
+    "X": {
       "anyOf": [
         {
           "default": "pooler",
@@ -1365,25 +1377,13 @@
         }
       ]
     },
-    "X": {
+    "Y": {
       "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
       "type": "string"
     },
-    "Y": {
+    "Z": {
       "default": "{username}.{cluster}.credentials.{tprkind}.{tprgroup}",
       "type": "string"
-    },
-    "Z": {
-      "anyOf": [
-        {
-          "default": "20m",
-          "type": "string"
-        },
-        {
-          "pattern": "\\{\\{",
-          "type": "string"
-        }
-      ]
     },
     "a": {
       "additionalProperties": {
@@ -1589,42 +1589,42 @@
     },
     "j": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "k": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "l": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^[-?:]([ \\t]|$)"
       }
     },
     "m": {
       "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
+        "pattern": ":[ \\t]|:$"
       }
     },
     "n": {
       "not": {
-        "pattern": ":[ \\t]|:$"
+        "pattern": "[\\r\\n]"
       }
     },
     "o": {
       "not": {
-        "pattern": "[\\r\\n]"
+        "pattern": "[ \\t]#"
       }
     },
     "p": {
       "not": {
-        "pattern": "[ \\t]#"
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
     "q": {
       "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "r": {
@@ -1768,7 +1768,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -1876,7 +1876,7 @@
                   "connection_pooler_image": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/X"
+                        "$ref": "#/$defs/Y"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -1892,7 +1892,7 @@
                   "connection_pooler_mode": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/12"
+                        "$ref": "#/$defs/13"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -2028,7 +2028,7 @@
                       "connection_pooler_image": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/X"
+                            "$ref": "#/$defs/Y"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2042,7 +2042,7 @@
                       "connection_pooler_mode": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/12"
+                            "$ref": "#/$defs/13"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2055,10 +2055,10 @@
                         "type": "integer"
                       },
                       "connection_pooler_schema": {
-                        "$ref": "#/$defs/W"
+                        "$ref": "#/$defs/X"
                       },
                       "connection_pooler_user": {
-                        "$ref": "#/$defs/W"
+                        "$ref": "#/$defs/X"
                       }
                     },
                     "type": "object"
@@ -2243,16 +2243,16 @@
                         "$ref": "#/$defs/c"
                       },
                       "master_pod_move_timeout": {
-                        "$ref": "#/$defs/Z"
+                        "$ref": "#/$defs/10"
                       },
                       "node_readiness_label": {
                         "$ref": "#/$defs/g"
                       },
                       "node_readiness_label_merge": {
-                        "$ref": "#/$defs/T"
+                        "$ref": "#/$defs/U"
                       },
                       "oauth_token_secret_name": {
-                        "$ref": "#/$defs/R"
+                        "$ref": "#/$defs/S"
                       },
                       "pdb_master_label_selector": {
                         "$ref": "#/$defs/d"
@@ -2303,7 +2303,7 @@
                       "pod_management_policy": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/11"
+                            "$ref": "#/$defs/12"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2328,7 +2328,7 @@
                         "$ref": "#/$defs/C"
                       },
                       "pod_service_account_name": {
-                        "$ref": "#/$defs/S"
+                        "$ref": "#/$defs/T"
                       },
                       "pod_service_account_role_binding_definition": {
                         "$ref": "#/$defs/C"
@@ -2347,7 +2347,7 @@
                       "secret_name_template": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/Y"
+                            "$ref": "#/$defs/Z"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2375,7 +2375,7 @@
                       "storage_resize_mode": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/14"
+                            "$ref": "#/$defs/15"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2463,7 +2463,7 @@
                       "replica_dns_name_format": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/13"
+                            "$ref": "#/$defs/14"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2526,7 +2526,7 @@
                       "logical_backup_docker_image": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/U"
+                            "$ref": "#/$defs/W"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2596,7 +2596,7 @@
                       "logical_backup_schedule": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/1d"
+                            "$ref": "#/$defs/R"
                           },
                           {
                             "$ref": "#/$defs/1"
@@ -2844,7 +2844,7 @@
                         "$ref": "#/$defs/d"
                       },
                       "pam_configuration": {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/1b"
                       },
                       "pam_role_name": {
                         "anyOf": [
@@ -2902,7 +2902,7 @@
                         "type": "object"
                       },
                       "teams_api_url": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/1c"
                       }
                     },
                     "type": "object"
@@ -2981,7 +2981,7 @@
                     "additionalProperties": false,
                     "properties": {
                       "additional_owner_roles": {
-                        "$ref": "#/$defs/1c"
+                        "$ref": "#/$defs/1d"
                       },
                       "enable_password_rotation": {
                         "$ref": "#/$defs/6"
@@ -3152,16 +3152,16 @@
                     "$ref": "#/$defs/c"
                   },
                   "master_pod_move_timeout": {
-                    "$ref": "#/$defs/Z"
+                    "$ref": "#/$defs/10"
                   },
                   "node_readiness_label": {
                     "$ref": "#/$defs/g"
                   },
                   "node_readiness_label_merge": {
-                    "$ref": "#/$defs/T"
+                    "$ref": "#/$defs/U"
                   },
                   "oauth_token_secret_name": {
-                    "$ref": "#/$defs/R"
+                    "$ref": "#/$defs/S"
                   },
                   "pdb_master_label_selector": {
                     "default": true,
@@ -3219,7 +3219,7 @@
                   "pod_management_policy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/11"
+                        "$ref": "#/$defs/12"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3246,7 +3246,7 @@
                     "$ref": "#/$defs/C"
                   },
                   "pod_service_account_name": {
-                    "$ref": "#/$defs/S"
+                    "$ref": "#/$defs/T"
                   },
                   "pod_service_account_role_binding_definition": {
                     "$ref": "#/$defs/C"
@@ -3266,7 +3266,7 @@
                   "secret_name_template": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/Y"
+                        "$ref": "#/$defs/Z"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3301,7 +3301,7 @@
                   "storage_resize_mode": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/14"
+                        "$ref": "#/$defs/15"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3413,7 +3413,7 @@
                   "replica_dns_name_format": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/13"
+                        "$ref": "#/$defs/14"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3501,7 +3501,7 @@
                   "logical_backup_docker_image": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/U"
+                        "$ref": "#/$defs/W"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3638,7 +3638,7 @@
                   "logical_backup_schedule": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1d"
+                        "$ref": "#/$defs/R"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -3839,7 +3839,7 @@
                     "type": "boolean"
                   },
                   "pam_configuration": {
-                    "$ref": "#/$defs/1a"
+                    "$ref": "#/$defs/1b"
                   },
                   "pam_role_name": {
                     "anyOf": [
@@ -3906,7 +3906,7 @@
                     "type": "object"
                   },
                   "teams_api_url": {
-                    "$ref": "#/$defs/1b"
+                    "$ref": "#/$defs/1c"
                   }
                 },
                 "type": "object"
@@ -4026,7 +4026,7 @@
                 "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
                 "properties": {
                   "additional_owner_roles": {
-                    "$ref": "#/$defs/1c"
+                    "$ref": "#/$defs/1d"
                   },
                   "enable_password_rotation": {
                     "default": false,
@@ -4135,22 +4135,22 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/k"
+                          },
+                          {
                             "$ref": "#/$defs/l"
                           },
                           {
                             "$ref": "#/$defs/m"
                           },
                           {
-                            "$ref": "#/$defs/n"
-                          },
-                          {
-                            "$ref": "#/$defs/p"
-                          },
-                          {
                             "$ref": "#/$defs/o"
                           },
                           {
-                            "$ref": "#/$defs/k"
+                            "$ref": "#/$defs/n"
+                          },
+                          {
+                            "$ref": "#/$defs/j"
                           },
                           {
                             "$ref": "#/$defs/s"
@@ -4159,10 +4159,10 @@
                             "$ref": "#/$defs/u"
                           },
                           {
-                            "$ref": "#/$defs/j"
+                            "$ref": "#/$defs/q"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/p"
                           }
                         ],
                         "default": "postgres-pod",
@@ -4195,11 +4195,11 @@
             "properties": {
               "configAwsOrGcp": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\"",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4209,11 +4209,11 @@
             "properties": {
               "configAwsOrGcp": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\"",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4264,11 +4264,11 @@
             "properties": {
               "configConnectionPooler": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "configure connection pooler deployment created by the operator",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4278,11 +4278,11 @@
             "properties": {
               "configConnectionPooler": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "configure connection pooler deployment created by the operator",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4333,11 +4333,11 @@
             "properties": {
               "configDebug": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "options to aid debugging of the operator itself",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4347,11 +4347,11 @@
             "properties": {
               "configDebug": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "options to aid debugging of the operator itself",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4402,11 +4402,11 @@
             "properties": {
               "configGeneral": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "general configuration parameters",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4416,11 +4416,11 @@
             "properties": {
               "configGeneral": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "general configuration parameters",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4471,11 +4471,11 @@
             "properties": {
               "configKubernetes": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4485,11 +4485,11 @@
             "properties": {
               "configKubernetes": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4540,11 +4540,11 @@
             "properties": {
               "configLoadBalancer": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "configure behavior of load balancers",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4554,11 +4554,11 @@
             "properties": {
               "configLoadBalancer": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "configure behavior of load balancers",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4609,11 +4609,11 @@
             "properties": {
               "configLoggingRestApi": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "parameters affecting logging and REST API listener",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4623,11 +4623,11 @@
             "properties": {
               "configLoggingRestApi": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "parameters affecting logging and REST API listener",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4678,11 +4678,11 @@
             "properties": {
               "configLogicalBackup": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4692,11 +4692,11 @@
             "properties": {
               "configLogicalBackup": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4831,11 +4831,11 @@
             "properties": {
               "configTeamsApi": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "automate creation of human users with teams API service",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4845,11 +4845,11 @@
             "properties": {
               "configTeamsApi": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "automate creation of human users with teams API service",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4900,11 +4900,11 @@
             "properties": {
               "configTimeouts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "timeouts related to some operator actions",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4914,11 +4914,11 @@
             "properties": {
               "configTimeouts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "timeouts related to some operator actions",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -4969,11 +4969,11 @@
             "properties": {
               "configUsers": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 },
                 "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
                 "items": {
-                  "$ref": "#/$defs/5"
+                  "$ref": "#/$defs/4"
                 }
               }
             }
@@ -4983,11 +4983,11 @@
             "properties": {
               "configUsers": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 },
                 "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
                 "items": {
-                  "$ref": "#/$defs/4"
+                  "$ref": "#/$defs/5"
                 }
               }
             }
@@ -5206,7 +5206,7 @@
             "additionalProperties": {},
             "properties": {
               "configMajorVersionUpgrade": {
-                "$ref": "#/$defs/16"
+                "$ref": "#/$defs/17"
               }
             }
           },
@@ -5214,7 +5214,7 @@
             "additionalProperties": {},
             "properties": {
               "configPatroni": {
-                "$ref": "#/$defs/16"
+                "$ref": "#/$defs/17"
               }
             }
           },
@@ -5337,22 +5337,22 @@
                               {
                                 "allOf": [
                                   {
+                                    "$ref": "#/$defs/k"
+                                  },
+                                  {
                                     "$ref": "#/$defs/l"
                                   },
                                   {
                                     "$ref": "#/$defs/m"
                                   },
                                   {
-                                    "$ref": "#/$defs/n"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/p"
-                                  },
-                                  {
                                     "$ref": "#/$defs/o"
                                   },
                                   {
-                                    "$ref": "#/$defs/k"
+                                    "$ref": "#/$defs/n"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/j"
                                   },
                                   {
                                     "$ref": "#/$defs/s"
@@ -5361,10 +5361,10 @@
                                     "$ref": "#/$defs/u"
                                   },
                                   {
-                                    "$ref": "#/$defs/j"
+                                    "$ref": "#/$defs/q"
                                   },
                                   {
-                                    "$ref": "#/$defs/q"
+                                    "$ref": "#/$defs/p"
                                   }
                                 ],
                                 "description": "Name is the name of resource being referenced",
@@ -5757,7 +5757,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/17"
+            "$ref": "#/$defs/18"
           }
         }
       }
@@ -6136,10 +6136,10 @@
                     "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1a"
                       },
                       "matchFields": {
-                        "$ref": "#/$defs/18"
+                        "$ref": "#/$defs/19"
                       }
                     },
                     "type": "object",
@@ -6176,10 +6176,10 @@
                     "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1a"
                       },
                       "matchFields": {
-                        "$ref": "#/$defs/18"
+                        "$ref": "#/$defs/19"
                       }
                     },
                     "type": [
@@ -6223,7 +6223,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/15"
+                "$ref": "#/$defs/16"
               },
               "type": [
                 "array",
@@ -6253,7 +6253,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/15"
+                "$ref": "#/$defs/16"
               },
               "type": [
                 "array",
@@ -6484,22 +6484,22 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/k"
+                      },
+                      {
                         "$ref": "#/$defs/l"
                       },
                       {
                         "$ref": "#/$defs/m"
                       },
                       {
-                        "$ref": "#/$defs/n"
-                      },
-                      {
-                        "$ref": "#/$defs/p"
-                      },
-                      {
                         "$ref": "#/$defs/o"
                       },
                       {
-                        "$ref": "#/$defs/k"
+                        "$ref": "#/$defs/n"
+                      },
+                      {
+                        "$ref": "#/$defs/j"
                       },
                       {
                         "$ref": "#/$defs/s"
@@ -6508,10 +6508,10 @@
                         "$ref": "#/$defs/u"
                       },
                       {
-                        "$ref": "#/$defs/j"
+                        "$ref": "#/$defs/q"
                       },
                       {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/p"
                       }
                     ],
                     "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -6731,22 +6731,22 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/k"
+                },
+                {
                   "$ref": "#/$defs/l"
                 },
                 {
                   "$ref": "#/$defs/m"
                 },
                 {
-                  "$ref": "#/$defs/n"
-                },
-                {
-                  "$ref": "#/$defs/p"
-                },
-                {
                   "$ref": "#/$defs/o"
                 },
                 {
-                  "$ref": "#/$defs/k"
+                  "$ref": "#/$defs/n"
+                },
+                {
+                  "$ref": "#/$defs/j"
                 },
                 {
                   "$ref": "#/$defs/s"
@@ -6755,10 +6755,10 @@
                   "$ref": "#/$defs/u"
                 },
                 {
-                  "$ref": "#/$defs/j"
+                  "$ref": "#/$defs/q"
                 },
                 {
-                  "$ref": "#/$defs/q"
+                  "$ref": "#/$defs/p"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6819,7 +6819,7 @@
       ]
     },
     "nameOverride": {
-      "$ref": "#/$defs/17"
+      "$ref": "#/$defs/18"
     },
     "nodeSelector": {
       "additionalProperties": {
@@ -6835,7 +6835,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/10"
+          "$ref": "#/$defs/11"
         },
         {
           "allOf": [
@@ -6865,7 +6865,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/10"
+          "$ref": "#/$defs/11"
         },
         {
           "allOf": [
@@ -6998,22 +6998,22 @@
         {
           "allOf": [
             {
+              "$ref": "#/$defs/k"
+            },
+            {
               "$ref": "#/$defs/l"
             },
             {
               "$ref": "#/$defs/m"
             },
             {
-              "$ref": "#/$defs/n"
-            },
-            {
-              "$ref": "#/$defs/p"
-            },
-            {
               "$ref": "#/$defs/o"
             },
             {
-              "$ref": "#/$defs/k"
+              "$ref": "#/$defs/n"
+            },
+            {
+              "$ref": "#/$defs/j"
             },
             {
               "$ref": "#/$defs/s"
@@ -7022,10 +7022,10 @@
               "$ref": "#/$defs/u"
             },
             {
-              "$ref": "#/$defs/j"
+              "$ref": "#/$defs/q"
             },
             {
-              "$ref": "#/$defs/q"
+              "$ref": "#/$defs/p"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -7513,22 +7513,22 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/k"
+                },
+                {
                   "$ref": "#/$defs/l"
                 },
                 {
                   "$ref": "#/$defs/m"
                 },
                 {
-                  "$ref": "#/$defs/n"
-                },
-                {
-                  "$ref": "#/$defs/p"
-                },
-                {
                   "$ref": "#/$defs/o"
                 },
                 {
-                  "$ref": "#/$defs/k"
+                  "$ref": "#/$defs/n"
+                },
+                {
+                  "$ref": "#/$defs/j"
                 },
                 {
                   "$ref": "#/$defs/s"
@@ -7537,10 +7537,10 @@
                   "$ref": "#/$defs/u"
                 },
                 {
-                  "$ref": "#/$defs/j"
+                  "$ref": "#/$defs/q"
                 },
                 {
-                  "$ref": "#/$defs/q"
+                  "$ref": "#/$defs/p"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

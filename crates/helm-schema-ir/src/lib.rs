@@ -26,6 +26,8 @@ mod value_path_context;
 
 pub use analysis_db::define_bodies_in_source;
 pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};
+#[doc(hidden)]
+pub use expr_call_eval::escape_regex_literal;
 pub use helm_schema_core::{
     CapabilityGuard, ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractProvenance, ContractSchemaSignals, ContractValuePathFacts, Guard, GuardValue,

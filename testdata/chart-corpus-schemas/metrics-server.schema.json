@@ -262,32 +262,6 @@
       ]
     },
     "14": {
-      "description": "Added capabilities",
-      "items": {
-        "type": [
-          "string",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "15": {
-      "properties": {
-        "type": {
-          "enum": [
-            "metrics-server"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "16": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -301,6 +275,32 @@
           }
         }
       ]
+    },
+    "15": {
+      "description": "Added capabilities",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "16": {
+      "properties": {
+        "type": {
+          "enum": [
+            "metrics-server"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     },
     "17": {
       "additionalProperties": false,
@@ -649,6 +649,147 @@
       ]
     },
     "1D": {
+      "additionalProperties": false,
+      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+      "properties": {
+        "name": {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "1E": {
+      "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "1F": {
+      "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+      "type": "string"
+    },
+    "1G": {
+      "properties": {
+        "certManager": {
+          "properties": {
+            "existingIssuer": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "existingIssuer"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "certManager"
+      ],
+      "type": "object"
+    },
+    "1H": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "1I": {
+      "not": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "type": {}
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      }
+    },
+    "1J": {
+      "properties": {
+        "type": {
+          "enum": [
+            "existingSecret"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "1K": {
+      "properties": {
+        "repository": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
+    "1L": {
+      "properties": {
+        "type": {
+          "enum": [
+            "helm"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "1M": {
+      "enum": [
+        "existingSecret"
+      ]
+    },
+    "1N": {
+      "properties": {
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
+    "1O": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "1P": {
       "allOf": [
         {
           "not": {
@@ -692,7 +833,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -702,147 +843,6 @@
         }
       ],
       "type": "string"
-    },
-    "1E": {
-      "additionalProperties": false,
-      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-      "properties": {
-        "name": {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
-    },
-    "1F": {
-      "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "1G": {
-      "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-      "type": "string"
-    },
-    "1H": {
-      "properties": {
-        "certManager": {
-          "properties": {
-            "existingIssuer": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "existingIssuer"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "certManager"
-      ],
-      "type": "object"
-    },
-    "1I": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "1J": {
-      "not": {
-        "properties": {
-          "tls": {
-            "properties": {
-              "type": {}
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tls"
-        ],
-        "type": "object"
-      }
-    },
-    "1K": {
-      "properties": {
-        "type": {
-          "enum": [
-            "existingSecret"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "1L": {
-      "properties": {
-        "repository": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "1M": {
-      "properties": {
-        "type": {
-          "enum": [
-            "helm"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "1N": {
-      "enum": [
-        "existingSecret"
-      ]
-    },
-    "1O": {
-      "properties": {
-        "repository": {}
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "1P": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
     },
     "1Q": {
       "additionalProperties": false,
@@ -2292,87 +2292,6 @@
       "type": "object"
     },
     "1v": {
-      "additionalProperties": false,
-      "description": "Represents a Rados Block Device mount that lasts the lifetime of a pod. RBD volumes support ownership management and SELinux relabeling.",
-      "properties": {
-        "fsType": {
-          "description": "fsType is the filesystem type of the volume that you want to mount. Tip: Ensure that the filesystem type is supported by the host operating system. Examples: \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified. More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "image": {
-          "description": "image is the rados image name. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
-          "type": "string"
-        },
-        "keyring": {
-          "description": "keyring is the path to key ring for RBDUser. Default is /etc/ceph/keyring. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "monitors": {
-          "description": "monitors is a collection of Ceph monitors. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": "array"
-        },
-        "pool": {
-          "description": "pool is the rados pool name. Default is rbd. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "readOnly": {
-          "description": "readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "secretRef": {
-          "additionalProperties": false,
-          "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-          "properties": {
-            "name": {
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
-        },
-        "user": {
-          "description": "user is the rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "monitors",
-        "image"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "1w": {
       "anyOf": [
         {
           "not": {
@@ -2494,7 +2413,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -2547,7 +2466,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -2568,6 +2487,87 @@
             }
           ]
         }
+      ]
+    },
+    "1w": {
+      "additionalProperties": false,
+      "description": "Represents a Rados Block Device mount that lasts the lifetime of a pod. RBD volumes support ownership management and SELinux relabeling.",
+      "properties": {
+        "fsType": {
+          "description": "fsType is the filesystem type of the volume that you want to mount. Tip: Ensure that the filesystem type is supported by the host operating system. Examples: \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified. More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "description": "image is the rados image name. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
+          "type": "string"
+        },
+        "keyring": {
+          "description": "keyring is the path to key ring for RBDUser. Default is /etc/ceph/keyring. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "monitors": {
+          "description": "monitors is a collection of Ceph monitors. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        "pool": {
+          "description": "pool is the rados pool name. Default is rbd. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "readOnly": {
+          "description": "readOnly here will force the ReadOnly setting in VolumeMounts. Defaults to false. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "secretRef": {
+          "additionalProperties": false,
+          "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+          "properties": {
+            "name": {
+              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "user": {
+          "description": "user is the rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "monitors",
+        "image"
+      ],
+      "type": [
+        "object",
+        "null"
       ]
     },
     "1x": {
@@ -2658,75 +2658,6 @@
       ]
     },
     "1y": {
-      "additionalProperties": false,
-      "description": "Represents a Ceph Filesystem mount that lasts the lifetime of a pod Cephfs volumes do not support ownership management or SELinux relabeling.",
-      "properties": {
-        "monitors": {
-          "description": "monitors is Required: Monitors is a collection of Ceph monitors More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
-          "items": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": "array"
-        },
-        "path": {
-          "description": "path is Optional: Used as the mounted root, rather than the full Ceph tree, default is /",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "readOnly": {
-          "description": "readOnly is Optional: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts. More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "secretFile": {
-          "description": "secretFile is Optional: SecretFile is the path to key ring for User, default is /etc/ceph/user.secret More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "secretRef": {
-          "additionalProperties": false,
-          "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-          "properties": {
-            "name": {
-              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "type": [
-            "object",
-            "null"
-          ],
-          "x-kubernetes-map-type": "atomic"
-        },
-        "user": {
-          "description": "user is optional: User is the rados user name, default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "monitors"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "1z": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -2839,7 +2770,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -2890,6 +2821,75 @@
         }
       ]
     },
+    "1z": {
+      "additionalProperties": false,
+      "description": "Represents a Ceph Filesystem mount that lasts the lifetime of a pod Cephfs volumes do not support ownership management or SELinux relabeling.",
+      "properties": {
+        "monitors": {
+          "description": "monitors is Required: Monitors is a collection of Ceph monitors More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        "path": {
+          "description": "path is Optional: Used as the mounted root, rather than the full Ceph tree, default is /",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "readOnly": {
+          "description": "readOnly is Optional: Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts. More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "secretFile": {
+          "description": "secretFile is Optional: SecretFile is the path to key ring for User, default is /etc/ceph/user.secret More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secretRef": {
+          "additionalProperties": false,
+          "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+          "properties": {
+            "name": {
+              "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "user": {
+          "description": "user is optional: User is the rados user name, default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "monitors"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
     "2": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
@@ -2897,7 +2897,7 @@
     },
     "3": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "4": {
@@ -4221,7 +4221,7 @@
       "type": "object"
     },
     "m": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "n": {
@@ -4402,7 +4402,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -4563,7 +4563,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -4616,7 +4616,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -5380,7 +5380,7 @@
         "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
-            "$ref": "#/$defs/1P"
+            "$ref": "#/$defs/1O"
           }
         }
       }
@@ -5494,7 +5494,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1I"
               },
               {
                 "properties": {
@@ -5566,7 +5566,7 @@
             "additionalProperties": {},
             "properties": {
               "commonLabels": {
-                "$ref": "#/$defs/16"
+                "$ref": "#/$defs/14"
               }
             }
           },
@@ -5579,7 +5579,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/1D"
+                    "$ref": "#/$defs/1P"
                   },
                   {
                     "$ref": "#/$defs/d"
@@ -5598,7 +5598,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "additionalLabels": {
-                    "$ref": "#/$defs/16"
+                    "$ref": "#/$defs/14"
                   }
                 }
               }
@@ -5815,7 +5815,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/1z"
+                "$ref": "#/$defs/1y"
               }
             }
           }
@@ -5870,7 +5870,7 @@
                 "not": {
                   "properties": {
                     "tls": {
-                      "$ref": "#/$defs/15"
+                      "$ref": "#/$defs/16"
                     }
                   },
                   "required": [
@@ -7008,7 +7008,7 @@
                             "description": "Adds and removes POSIX capabilities from running containers.",
                             "properties": {
                               "add": {
-                                "$ref": "#/$defs/14"
+                                "$ref": "#/$defs/15"
                               },
                               "drop": {
                                 "description": "Removed capabilities",
@@ -7652,7 +7652,7 @@
                 "$ref": "#/$defs/P"
               },
               "cephfs": {
-                "$ref": "#/$defs/1y"
+                "$ref": "#/$defs/1z"
               },
               "cinder": {
                 "$ref": "#/$defs/1e"
@@ -7731,7 +7731,7 @@
                 "$ref": "#/$defs/1i"
               },
               "rbd": {
-                "$ref": "#/$defs/1v"
+                "$ref": "#/$defs/1w"
               },
               "scaleIO": {
                 "$ref": "#/$defs/1x"
@@ -7784,11 +7784,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1O"
+                  "$ref": "#/$defs/1N"
                 }
               },
               {
-                "$ref": "#/$defs/1L"
+                "$ref": "#/$defs/1K"
               }
             ]
           },
@@ -7867,7 +7867,7 @@
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/1E"
+            "$ref": "#/$defs/1D"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
@@ -7893,7 +7893,7 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/1z"
+      "$ref": "#/$defs/1y"
     },
     "nodeSelector": {
       "anyOf": [
@@ -7932,7 +7932,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "maxUnavailable": {
-                    "$ref": "#/$defs/1w"
+                    "$ref": "#/$defs/1v"
                   }
                 }
               },
@@ -7940,7 +7940,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "minAvailable": {
-                    "$ref": "#/$defs/1w"
+                    "$ref": "#/$defs/1v"
                   }
                 }
               },
@@ -8361,7 +8361,7 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/14"
+                      "$ref": "#/$defs/15"
                     },
                     "drop": {
                       "anyOf": [
@@ -8445,10 +8445,10 @@
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
-                      "$ref": "#/$defs/1F"
+                      "$ref": "#/$defs/1E"
                     },
                     "type": {
-                      "$ref": "#/$defs/1G"
+                      "$ref": "#/$defs/1F"
                     }
                   },
                   "required": [
@@ -8703,7 +8703,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/1I"
+                              "$ref": "#/$defs/1H"
                             },
                             "namespace": {
                               "description": "Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
@@ -8979,7 +8979,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/1H"
+                "$ref": "#/$defs/1G"
               },
               {
                 "$ref": "#/$defs/x"
@@ -9119,11 +9119,11 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/1K"
+                "$ref": "#/$defs/1J"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/15"
+                  "$ref": "#/$defs/16"
                 }
               }
             ]
@@ -9260,7 +9260,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/1M"
+                "$ref": "#/$defs/1L"
               },
               {
                 "anyOf": [
@@ -9358,7 +9358,7 @@
               ]
             },
             {
-              "$ref": "#/$defs/1N"
+              "$ref": "#/$defs/1M"
             },
             {
               "enum": [
@@ -9393,7 +9393,7 @@
               "$ref": "#/$defs/P"
             },
             "cephfs": {
-              "$ref": "#/$defs/1y"
+              "$ref": "#/$defs/1z"
             },
             "cinder": {
               "$ref": "#/$defs/1e"
@@ -9476,7 +9476,7 @@
               "$ref": "#/$defs/1i"
             },
             "rbd": {
-              "$ref": "#/$defs/1v"
+              "$ref": "#/$defs/1w"
             },
             "scaleIO": {
               "$ref": "#/$defs/1x"

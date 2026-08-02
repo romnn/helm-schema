@@ -1,10 +1,16 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-31 after the fifty-seventh round, which emptied
-`In progress`: quoted `tpl` inputs retain their action-free placement
-language, chart-authored default programs retain their exact dependencies,
-and arbitrary runtime programs are recorded as an explicit Draft-07 model
-boundary rather than approximated with source-text heuristics. The preceding
+Last reconciled 2026-08-02 after the fifty-eighth round closed the seven
+confirmed review findings without reopening `In progress`: formatter
+operands now follow selection and later encoding, `kindIs "invalid"` requires
+an exact identity, `else with` abstains from an invented truth, literal regex
+quoting is Go-compatible, scalar token partitions share one grammar, and the
+cheap scalar/global guard watch items are closed. The preceding
+fifty-seventh round emptied `In progress`: quoted `tpl` inputs retain their
+action-free placement language, chart-authored default programs retain their
+exact dependencies, and arbitrary runtime programs are recorded as an
+explicit Draft-07 model boundary rather than approximated with source-text
+heuristics. The preceding
 fifty-sixth round closed Istiod's effective-root source-presence residual
 without requiring its hidden defaults source when the user-facing root
 supplies the same host. The preceding fifty-fifth round re-audited the
@@ -106,6 +112,32 @@ part and a separately listed residual. Detailed round history remains in
 
 Fixed on the current tree and pinned by tests (corpus fixtures,
 `chart_reaudit` cases, or focused gen/IR reproducers):
+
+- **Round-58 confirmed review findings (fifty-eighth round).** Token-opening
+  `printf` captures now retain their operand-selection predicates, stop at a
+  later encoder or serializer, and clear every formatter metadata channel.
+  The `kindIs "invalid"` exact fast path and its legacy condition decoder now
+  require one structural values identity instead of flattening a ternary or
+  choice. An `else with` arm contributes unknown truth until its own subject
+  can be decoded, preventing the semantic join from treating it as
+  unconditional.
+
+  All literal regex quoting uses the shared Go-compatible escaper, whose
+  output never invents RE2-invalid `\-`. The integer provider arm and string
+  exclusion share one token grammar, including `+_0x1f` and `+_08`; quoted
+  `"-0"` is included in the falsy-spelling table. `NotHasKey` now documents
+  its exact complement contract, and whole-global dependency ranges project
+  their range modes to every live global source. Whole-global absence/fail
+  captures stay dependency-local so declared child defaults remain effective
+  when the parent `global` is absent.
+
+  Eight Helm 4.2.3 microchart adjudications and focused IR/generator tests
+  pin the findings. One clean 55-chart dump changes 54 fixtures because the
+  shared radix and regex definitions are interned broadly. A compiled Rust
+  prober checked 17,401 coalesced top-level deletion, second-level deletion,
+  and empty member/item documents. Its only flips are Jenkins' valid dormant
+  `printf`-fallback loosening and NATS' provider-invalid empty-image
+  tightening; both have whole-chart pins and real Helm render evidence.
 
 - **Provider rendered-preimage boundary (fifty-fifth round).** Provider
   schemas constrain the YAML node produced by a template hole, not

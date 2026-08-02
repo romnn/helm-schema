@@ -778,6 +778,46 @@ fn jenkins_range_body_requires_string_plugins() -> eyre::Result<()> {
     )
 }
 
+/// The `printf` fallback for the sidecar folder is dormant when Helm's
+/// hard-coded folder default wins. Deleting `jenkinsRef` therefore remains a
+/// valid composed document even though the same operand is strict elsewhere.
+#[test]
+fn jenkins_dormant_printf_fallback_allows_a_deleted_operand() -> eyre::Result<()> {
+    assert_chart_cases(
+        "jenkins",
+        vec![SemanticCase::accepted(
+            "deleted jenkinsRef with the sidecar folder default",
+            json!({ "controller": { "jenkinsRef": null } }),
+        )],
+    )
+}
+
+/// Deleting every NATS image spelling selects the token-opening `printf`
+/// operands with no text. The chart's nested YAML conversion emits an error
+/// object in the container slot, which violates the provider-required shape.
+#[test]
+fn nats_selected_printf_operands_require_an_image_spelling() -> eyre::Result<()> {
+    assert_chart_cases(
+        "nats",
+        vec![SemanticCase::rejected(
+            "all image spellings deleted",
+            "",
+            json!({
+                "container": {
+                    "image": {
+                        "repository": null,
+                        "tag": null,
+                        "pullPolicy": null,
+                        "registry": null,
+                        "digest": null,
+                        "fullImageName": null,
+                    }
+                }
+            }),
+        )],
+    )
+}
+
 #[test]
 fn velero_range_values_and_merge_operands_keep_their_domains() -> eyre::Result<()> {
     assert_chart_cases(

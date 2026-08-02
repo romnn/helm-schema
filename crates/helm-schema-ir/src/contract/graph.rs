@@ -780,6 +780,32 @@ fn project_global_fail_captures(
             projected.push(dependency_capture);
             continue;
         };
+        if relative.is_empty() {
+            if matches!(
+                dependency_capture.kind,
+                crate::eval_effect::CaptureKind::RangeInput { .. }
+            ) {
+                for global_source in global_sources {
+                    let mut selected_capture = dependency_capture.clone();
+                    selected_capture.conjunction = selected_capture
+                        .conjunction
+                        .into_iter()
+                        .map(|predicate| {
+                            predicate.map_value_paths(&mut |path| {
+                                replace_value_path_prefix(path, dependency_global, global_source)
+                            })
+                        })
+                        .collect();
+                    selected_capture.kind.map_value_paths(&mut |path| {
+                        replace_value_path_prefix(path, dependency_global, global_source)
+                    });
+                    projected.push(selected_capture);
+                }
+            } else {
+                projected.push(dependency_capture);
+            }
+            continue;
+        }
         let Some((selection_relative, key)) = global_selection_path(relative) else {
             projected.push(dependency_capture);
             continue;
@@ -834,12 +860,18 @@ fn project_global_range_modes(
         .filter_map(|(path, mode)| {
             let segments = helm_schema_core::split_value_path(path);
             let relative = segments.strip_prefix(dependency_segments.as_slice())?;
-            (!relative.is_empty()).then(|| (path.to_string(), relative.to_vec(), mode))
+            Some((path.to_string(), relative.to_vec(), mode))
         })
         .collect::<Vec<_>>();
 
     for (path, relative, mode) in projected_paths {
         range_modes.remove(&path);
+        if relative.is_empty() {
+            for global_source in global_sources {
+                range_modes.merge_mode(global_source.clone(), mode);
+            }
+            continue;
+        }
         if global_selection_path(&relative).is_none() {
             continue;
         }

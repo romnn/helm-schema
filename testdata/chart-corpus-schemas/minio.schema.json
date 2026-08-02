@@ -191,7 +191,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -1128,7 +1128,7 @@
                           },
                           {
                             "not": {
-                              "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                             }
                           },
                           {
@@ -1698,7 +1698,7 @@
           "type": "integer"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         }
       ]
@@ -1904,6 +1904,10 @@
       "type": "null"
     },
     "1d": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "1e": {
       "additionalProperties": {
         "if": {
           "properties": {
@@ -1925,7 +1929,7 @@
       },
       "type": "object"
     },
-    "1e": {
+    "1f": {
       "anyOf": [
         {
           "not": {
@@ -1953,7 +1957,7 @@
         }
       ]
     },
-    "1f": {
+    "1g": {
       "items": {
         "if": {
           "properties": {
@@ -1974,10 +1978,6 @@
         }
       },
       "type": "array"
-    },
-    "1g": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
     },
     "1h": {
       "properties": {
@@ -2358,7 +2358,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2483,7 +2483,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -2854,30 +2854,6 @@
       "type": "object"
     },
     "1q": {
-      "additionalProperties": false,
-      "description": "keySecret defines the Secret containing the client key file for the targets.",
-      "properties": {
-        "key": {
-          "description": "The key of the secret to select from.  Must be a valid secret key.",
-          "type": "string"
-        },
-        "name": {
-          "default": "",
-          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        "optional": {
-          "description": "Specify whether the Secret or its key must be defined",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "key"
-      ],
-      "type": "object",
-      "x-kubernetes-map-type": "atomic"
-    },
-    "1r": {
       "allOf": [
         {
           "not": {
@@ -2921,7 +2897,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2931,6 +2907,30 @@
         }
       ],
       "type": "string"
+    },
+    "1r": {
+      "additionalProperties": false,
+      "description": "keySecret defines the Secret containing the client key file for the targets.",
+      "properties": {
+        "key": {
+          "description": "The key of the secret to select from.  Must be a valid secret key.",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        "optional": {
+          "description": "Specify whether the Secret or its key must be defined",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
     },
     "1s": {
       "additionalProperties": {},
@@ -3847,6 +3847,62 @@
       "type": "object"
     },
     "2U": {
+      "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
+      "items": {
+        "additionalProperties": false,
+        "description": "VolumeMount describes a mounting of a Volume within a container.",
+        "properties": {
+          "mountPath": {
+            "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+            "type": "string"
+          },
+          "mountPropagation": {
+            "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "This must match the Name of a Volume.",
+            "type": "string"
+          },
+          "readOnly": {
+            "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "subPath": {
+            "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subPathExpr": {
+            "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "mountPath"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": "array",
+      "x-kubernetes-patch-merge-key": "mountPath",
+      "x-kubernetes-patch-strategy": "merge"
+    },
+    "2V": {
       "additionalProperties": false,
       "description": "authorization configures the Authorization header credentials used by\nthe client.\n\nCannot be set at the same time as `basicAuth`, `bearerTokenSecret` or `oauth2`.",
       "properties": {
@@ -3881,7 +3937,7 @@
       },
       "type": "object"
     },
-    "2V": {
+    "2W": {
       "allOf": [
         {
           "anyOf": [
@@ -4032,7 +4088,7 @@
         }
       ]
     },
-    "2W": {
+    "2X": {
       "allOf": [
         {
           "not": {
@@ -4076,7 +4132,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -4101,7 +4157,7 @@
       ],
       "type": "string"
     },
-    "2X": {
+    "2Y": {
       "additionalProperties": false,
       "description": "bearerTokenSecret defines a key of a Secret containing the bearer token\nused by the client for authentication. The secret needs to be in the\nsame namespace as the custom resource and readable by the Prometheus\nOperator.\n\nCannot be set at the same time as `authorization`, `basicAuth` or `oauth2`.\n\nDeprecated: use `authorization` instead.",
       "properties": {
@@ -4125,7 +4181,7 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "2Y": {
+    "2Z": {
       "additionalProperties": {
         "items": {
           "additionalProperties": false,
@@ -4156,136 +4212,6 @@
       "description": "proxyConnectHeader optionally specifies headers to send to\nproxies during CONNECT requests.\n\nIt requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.",
       "type": "object",
       "x-kubernetes-map-type": "atomic"
-    },
-    "2Z": {
-      "allOf": [
-        {
-          "required": [
-            "accessKey"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "accessKey": {},
-            "existingSecret": {},
-            "existingSecretKey": {},
-            "policy": {
-              "additionalProperties": {},
-              "properties": {
-                "statements": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "actions": {},
-                          "conditions": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "object"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                }
-                              },
-                              {
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "items": {},
-                                      "type": "array"
-                                    },
-                                    {
-                                      "additionalProperties": {},
-                                      "type": "object"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                },
-                                "type": "array"
-                              }
-                            ]
-                          },
-                          "effect": {},
-                          "resources": {}
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "additionalProperties": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "actions": {},
-                          "conditions": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {
-                                  "anyOf": [
-                                    {
-                                      "type": "array"
-                                    },
-                                    {
-                                      "type": "object"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                }
-                              },
-                              {
-                                "items": {
-                                  "anyOf": [
-                                    {
-                                      "items": {},
-                                      "type": "array"
-                                    },
-                                    {
-                                      "additionalProperties": {},
-                                      "type": "object"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                },
-                                "type": "array"
-                              }
-                            ]
-                          },
-                          "effect": {},
-                          "resources": {}
-                        },
-                        "type": "object"
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
-            },
-            "secretKey": {},
-            "user": {}
-          }
-        }
-      ]
     },
     "2a": {
       "properties": {
@@ -4494,6 +4420,10 @@
       ]
     },
     "2k": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "null"
+    },
+    "2l": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -4514,7 +4444,7 @@
         }
       }
     },
-    "2l": {
+    "2m": {
       "additionalProperties": {
         "properties": {
           "accessKey": {
@@ -4528,7 +4458,7 @@
       },
       "type": "object"
     },
-    "2m": {
+    "2n": {
       "additionalProperties": {},
       "properties": {
         "name": {},
@@ -4539,7 +4469,7 @@
       },
       "type": "object"
     },
-    "2n": {
+    "2o": {
       "not": {
         "properties": {
           "ignoreChartChecksums": {
@@ -4552,12 +4482,12 @@
         "type": "object"
       }
     },
-    "2o": {
+    "2p": {
       "description": "proxyUrl defines the HTTP proxy server to use.",
       "pattern": "^(http|https|socks5)://.+$",
       "type": "string"
     },
-    "2p": {
+    "2q": {
       "additionalProperties": {},
       "properties": {
         "statements": {
@@ -4575,7 +4505,7 @@
         }
       }
     },
-    "2q": {
+    "2r": {
       "additionalProperties": {},
       "properties": {
         "statements": {
@@ -4595,7 +4525,7 @@
         }
       }
     },
-    "2r": {
+    "2s": {
       "anyOf": [
         {
           "not": {
@@ -4623,7 +4553,7 @@
         }
       ]
     },
-    "2s": {
+    "2t": {
       "not": {
         "properties": {
           "tls": {
@@ -4644,7 +4574,7 @@
         "type": "object"
       }
     },
-    "2t": {
+    "2u": {
       "properties": {
         "tls": {
           "properties": {
@@ -4663,7 +4593,7 @@
       ],
       "type": "object"
     },
-    "2u": {
+    "2v": {
       "not": {
         "properties": {
           "tls": {
@@ -4686,7 +4616,7 @@
         "type": "object"
       }
     },
-    "2v": {
+    "2w": {
       "additionalProperties": {},
       "properties": {
         "accessKey": {},
@@ -4696,10 +4626,6 @@
         "secretKey": {}
       },
       "type": "object"
-    },
-    "2w": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "null"
     },
     "2x": {
       "description": "followRedirects defines whether the client should follow HTTP 3xx\nredirects.",
@@ -4794,125 +4720,134 @@
       ]
     },
     "30": {
-      "additionalProperties": {},
-      "properties": {
-        "accessKey": {},
-        "existingSecret": {},
-        "existingSecretKey": {},
-        "policy": {
+      "allOf": [
+        {
+          "required": [
+            "accessKey"
+          ],
+          "type": "object"
+        },
+        {
           "additionalProperties": {},
           "properties": {
-            "statements": {
-              "anyOf": [
-                {
-                  "items": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "actions": {},
-                      "conditions": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "array"
-                                },
-                                {
-                                  "type": "object"
-                                },
-                                {
-                                  "type": "null"
+            "accessKey": {},
+            "existingSecret": {},
+            "existingSecretKey": {},
+            "policy": {
+              "additionalProperties": {},
+              "properties": {
+                "statements": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "actions": {},
+                          "conditions": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "array"
+                                    },
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
                                 }
-                              ]
-                            }
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "items": {},
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalProperties": {},
+                                      "type": "object"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "type": "array"
+                              }
+                            ]
                           },
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "items": {},
-                                  "type": "array"
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "type": "object"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          }
-                        ]
+                          "effect": {},
+                          "resources": {}
+                        },
+                        "type": "object"
                       },
-                      "effect": {},
-                      "resources": {}
+                      "type": "array"
                     },
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                {
-                  "additionalProperties": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "actions": {},
-                      "conditions": {
-                        "anyOf": [
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "array"
-                                },
-                                {
-                                  "type": "object"
-                                },
-                                {
-                                  "type": "null"
+                    {
+                      "additionalProperties": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "actions": {},
+                          "conditions": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "array"
+                                    },
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
                                 }
-                              ]
-                            }
+                              },
+                              {
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "items": {},
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalProperties": {},
+                                      "type": "object"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "type": "array"
+                              }
+                            ]
                           },
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "items": {},
-                                  "type": "array"
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "type": "object"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          }
-                        ]
+                          "effect": {},
+                          "resources": {}
+                        },
+                        "type": "object"
                       },
-                      "effect": {},
-                      "resources": {}
+                      "type": "object"
                     },
-                    "type": "object"
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "null"
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
-              ]
-            }
+              }
+            },
+            "secretKey": {},
+            "user": {}
           }
-        },
-        "secretKey": {},
-        "user": {}
-      },
-      "type": "object"
+        }
+      ]
     },
     "31": {
       "additionalProperties": {},
@@ -5032,9 +4967,242 @@
         },
         "secretKey": {},
         "user": {}
-      }
+      },
+      "type": "object"
     },
     "32": {
+      "additionalProperties": {},
+      "properties": {
+        "accessKey": {},
+        "existingSecret": {},
+        "existingSecretKey": {},
+        "policy": {
+          "additionalProperties": {},
+          "properties": {
+            "statements": {
+              "anyOf": [
+                {
+                  "items": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "actions": {},
+                      "conditions": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "items": {},
+                                  "type": "array"
+                                },
+                                {
+                                  "additionalProperties": {},
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "effect": {},
+                      "resources": {}
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "actions": {},
+                      "conditions": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "items": {},
+                                  "type": "array"
+                                },
+                                {
+                                  "additionalProperties": {},
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "effect": {},
+                      "resources": {}
+                    },
+                    "type": "object"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "secretKey": {},
+        "user": {}
+      }
+    },
+    "33": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "string"
+    },
+    "34": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+      "type": "string"
+    },
+    "35": {
       "allOf": [
         {
           "required": [
@@ -5155,7 +5323,7 @@
         }
       ]
     },
-    "33": {
+    "36": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -5269,63 +5437,7 @@
       },
       "type": "object"
     },
-    "34": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "string"
-    },
-    "35": {
+    "37": {
       "items": {
         "additionalProperties": {},
         "properties": {
@@ -5439,7 +5551,7 @@
       },
       "type": "array"
     },
-    "36": {
+    "38": {
       "additionalProperties": {},
       "properties": {
         "name": {},
@@ -5551,63 +5663,7 @@
       },
       "type": "object"
     },
-    "37": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-      "type": "string"
-    },
-    "38": {
+    "39": {
       "if": {
         "properties": {
           "type": {
@@ -5737,7 +5793,7 @@
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                     }
                   },
                   {
@@ -5793,7 +5849,136 @@
         }
       }
     },
-    "39": {
+    "3A": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "3B": {
+      "maxItems": 0,
+      "type": "array"
+    },
+    "3C": {
+      "enum": [
+        "distributed"
+      ]
+    },
+    "3D": {
+      "enum": [
+        "standalone"
+      ]
+    },
+    "3E": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "3F": {
+      "additionalProperties": false,
+      "description": "VolumeMount describes a mounting of a Volume within a container.",
+      "properties": {
+        "mountPath": {
+          "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+          "type": "string"
+        },
+        "mountPropagation": {
+          "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "This must match the Name of a Volume.",
+          "type": "string"
+        },
+        "readOnly": {
+          "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "subPath": {
+          "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "subPathExpr": {
+          "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "mountPath"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "3a": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -5906,7 +6091,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -5959,136 +6144,7 @@
         }
       ]
     },
-    "3A": {
-      "properties": {
-        "enabled": {}
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "3B": {
-      "maxItems": 0,
-      "type": "array"
-    },
-    "3C": {
-      "enum": [
-        "distributed"
-      ]
-    },
-    "3D": {
-      "enum": [
-        "standalone"
-      ]
-    },
-    "3E": {
-      "additionalProperties": false,
-      "description": "VolumeMount describes a mounting of a Volume within a container.",
-      "properties": {
-        "mountPath": {
-          "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-          "type": "string"
-        },
-        "mountPropagation": {
-          "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "name": {
-          "description": "This must match the Name of a Volume.",
-          "type": "string"
-        },
-        "readOnly": {
-          "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "subPath": {
-          "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "subPathExpr": {
-          "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "name",
-        "mountPath"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "3F": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
-    },
-    "3a": {
+    "3b": {
       "additionalProperties": false,
       "description": "LifecycleHandler defines a specific action that should be taken in a lifecycle hook. One and only one of the fields, except TCPSocket must be specified.",
       "properties": {
@@ -6254,7 +6310,7 @@
         "null"
       ]
     },
-    "3b": {
+    "3c": {
       "if": {
         "properties": {
           "type": {
@@ -6293,7 +6349,7 @@
                 "type": "string"
               },
               {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                 "type": "string"
               },
               {
@@ -6308,61 +6364,6 @@
           }
         }
       }
-    },
-    "3c": {
-      "additionalProperties": false,
-      "description": "basicAuth defines the Basic Authentication credentials used by the\nclient.\n\nCannot be set at the same time as `authorization`, `bearerTokenSecret` or `oauth2`.",
-      "properties": {
-        "password": {
-          "additionalProperties": false,
-          "description": "password defines a key of a Secret containing the password for\nauthentication.",
-          "properties": {
-            "key": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the Secret or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        "username": {
-          "additionalProperties": false,
-          "description": "username defines a key of a Secret containing the username for\nauthentication.",
-          "properties": {
-            "key": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the Secret or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        }
-      },
-      "type": "object"
     },
     "3d": {
       "anyOf": [
@@ -6477,7 +6478,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -6530,6 +6531,61 @@
       "description": "Provide a name in place of minio for `app:` labels"
     },
     "3e": {
+      "additionalProperties": false,
+      "description": "basicAuth defines the Basic Authentication credentials used by the\nclient.\n\nCannot be set at the same time as `authorization`, `bearerTokenSecret` or `oauth2`.",
+      "properties": {
+        "password": {
+          "additionalProperties": false,
+          "description": "password defines a key of a Secret containing the password for\nauthentication.",
+          "properties": {
+            "key": {
+              "description": "The key of the secret to select from.  Must be a valid secret key.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the Secret or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        "username": {
+          "additionalProperties": false,
+          "description": "username defines a key of a Secret containing the username for\nauthentication.",
+          "properties": {
+            "key": {
+              "description": "The key of the secret to select from.  Must be a valid secret key.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the Secret or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        }
+      },
+      "type": "object"
+    },
+    "3f": {
       "anyOf": [
         {
           "description": "If specified, the pod's tolerations.",
@@ -6591,117 +6647,7 @@
         }
       ]
     },
-    "3f": {
-      "additionalProperties": false,
-      "description": "cert defines the Client certificate to present when doing client-authentication.",
-      "properties": {
-        "configMap": {
-          "additionalProperties": false,
-          "description": "configMap defines the ConfigMap containing data to use for the targets.",
-          "properties": {
-            "key": {
-              "description": "The key to select.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the ConfigMap or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        "secret": {
-          "additionalProperties": false,
-          "description": "secret defines the Secret containing data to use for the targets.",
-          "properties": {
-            "key": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the Secret or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        }
-      },
-      "type": "object"
-    },
     "3g": {
-      "additionalProperties": false,
-      "description": "ca defines the Certificate authority used when verifying server certificates.",
-      "properties": {
-        "configMap": {
-          "additionalProperties": false,
-          "description": "configMap defines the ConfigMap containing data to use for the targets.",
-          "properties": {
-            "key": {
-              "description": "The key to select.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the ConfigMap or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        "secret": {
-          "additionalProperties": false,
-          "description": "secret defines the Secret containing data to use for the targets.",
-          "properties": {
-            "key": {
-              "description": "The key of the secret to select from.  Must be a valid secret key.",
-              "type": "string"
-            },
-            "name": {
-              "default": "",
-              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-              "type": "string"
-            },
-            "optional": {
-              "description": "Specify whether the Secret or its key must be defined",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        }
-      },
-      "type": "object"
-    },
-    "3h": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -6814,7 +6760,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -6851,61 +6797,115 @@
         }
       ]
     },
-    "3i": {
-      "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
-      "items": {
-        "additionalProperties": false,
-        "description": "VolumeMount describes a mounting of a Volume within a container.",
-        "properties": {
-          "mountPath": {
-            "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-            "type": "string"
+    "3h": {
+      "additionalProperties": false,
+      "description": "cert defines the Client certificate to present when doing client-authentication.",
+      "properties": {
+        "configMap": {
+          "additionalProperties": false,
+          "description": "configMap defines the ConfigMap containing data to use for the targets.",
+          "properties": {
+            "key": {
+              "description": "The key to select.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the ConfigMap or its key must be defined",
+              "type": "boolean"
+            }
           },
-          "mountPropagation": {
-            "description": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "name": {
-            "description": "This must match the Name of a Volume.",
-            "type": "string"
-          },
-          "readOnly": {
-            "description": "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "subPath": {
-            "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "subPathExpr": {
-            "description": "Expanded path within the volume from which the container's volume should be mounted. Behaves similarly to SubPath but environment variable references $(VAR_NAME) are expanded using the container's environment. Defaults to \"\" (volume's root). SubPathExpr and SubPath are mutually exclusive.",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
         },
-        "required": [
-          "name",
-          "mountPath"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
+        "secret": {
+          "additionalProperties": false,
+          "description": "secret defines the Secret containing data to use for the targets.",
+          "properties": {
+            "key": {
+              "description": "The key of the secret to select from.  Must be a valid secret key.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the Secret or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        }
       },
-      "type": "array",
-      "x-kubernetes-patch-merge-key": "mountPath",
-      "x-kubernetes-patch-strategy": "merge"
+      "type": "object"
+    },
+    "3i": {
+      "additionalProperties": false,
+      "description": "ca defines the Certificate authority used when verifying server certificates.",
+      "properties": {
+        "configMap": {
+          "additionalProperties": false,
+          "description": "configMap defines the ConfigMap containing data to use for the targets.",
+          "properties": {
+            "key": {
+              "description": "The key to select.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the ConfigMap or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        "secret": {
+          "additionalProperties": false,
+          "description": "secret defines the Secret containing data to use for the targets.",
+          "properties": {
+            "key": {
+              "description": "The key of the secret to select from.  Must be a valid secret key.",
+              "type": "string"
+            },
+            "name": {
+              "default": "",
+              "description": "Name of the referent.\nThis field is effectively required, but due to backwards compatibility is\nallowed to be empty. Instances of this type with an empty value here are\nalmost certainly wrong.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+              "type": "string"
+            },
+            "optional": {
+              "description": "Specify whether the Secret or its key must be defined",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        }
+      },
+      "type": "object"
     },
     "3j": {
       "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
@@ -7022,19 +7022,6 @@
       "type": "string"
     },
     "3u": {
-      "properties": {
-        "flavor": {
-          "enum": [
-            "cilium"
-          ]
-        }
-      },
-      "required": [
-        "flavor"
-      ],
-      "type": "object"
-    },
-    "3v": {
       "oneOf": [
         {
           "type": [
@@ -7050,15 +7037,28 @@
         }
       ]
     },
-    "3w": {
+    "3v": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "3x": {
+    "3w": {
       "description": "The key to select.",
       "type": "string"
+    },
+    "3x": {
+      "properties": {
+        "flavor": {
+          "enum": [
+            "cilium"
+          ]
+        }
+      },
+      "required": [
+        "flavor"
+      ],
+      "type": "object"
     },
     "3y": {
       "anyOf": [
@@ -8112,7 +8112,7 @@
     },
     "m": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "n": {
@@ -8138,15 +8138,9 @@
       "type": "object"
     },
     "p": {
-      "properties": {
-        "buckets": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "buckets"
-      ],
-      "type": "object"
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
     },
     "providerSchema1": {
       "additionalProperties": false,
@@ -8347,7 +8341,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -8400,7 +8394,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -8534,7 +8528,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -8695,7 +8689,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -8856,7 +8850,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -9001,7 +8995,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -9162,7 +9156,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -9307,7 +9301,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -9468,7 +9462,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -9629,7 +9623,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -13100,9 +13094,15 @@
       }
     },
     "q": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
+      "properties": {
+        "buckets": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "buckets"
+      ],
+      "type": "object"
     },
     "r": {
       "not": {
@@ -13309,7 +13309,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/3w"
+                    "$ref": "#/$defs/3v"
                   },
                   {
                     "type": "null"
@@ -13438,7 +13438,7 @@
               "extraVolumeMounts": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/3i"
+                    "$ref": "#/$defs/2U"
                   },
                   {
                     "$ref": "#/$defs/4"
@@ -13494,7 +13494,7 @@
                     "$ref": "#/$defs/V"
                   },
                   {
-                    "$ref": "#/$defs/1g"
+                    "$ref": "#/$defs/1d"
                   }
                 ],
                 "description": "Internal port number for MinIO Browser Console container\nChange consoleService.port to change external port number"
@@ -13582,7 +13582,7 @@
             "additionalProperties": {},
             "properties": {
               "tolerations": {
-                "$ref": "#/$defs/3e"
+                "$ref": "#/$defs/3f"
               }
             }
           }
@@ -13591,7 +13591,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/p"
+        "$ref": "#/$defs/q"
       },
       "then": {
         "allOf": [
@@ -13602,13 +13602,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/2m"
+                      "$ref": "#/$defs/2n"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2m"
+                      "$ref": "#/$defs/2n"
                     },
                     "type": "object"
                   },
@@ -13771,13 +13771,13 @@
                             "$ref": "#/$defs/u"
                           },
                           {
-                            "$ref": "#/$defs/m"
+                            "$ref": "#/$defs/p"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/m"
                           },
                           {
                             "$ref": "#/$defs/r"
@@ -13872,7 +13872,7 @@
                     "$ref": "#/$defs/V"
                   },
                   {
-                    "$ref": "#/$defs/1g"
+                    "$ref": "#/$defs/1d"
                   }
                 ],
                 "description": "Internal port number for MinIO S3 API container\nChange service.port to change external port number"
@@ -13888,7 +13888,7 @@
                     "$ref": "#/$defs/5"
                   },
                   {
-                    "$ref": "#/$defs/37"
+                    "$ref": "#/$defs/34"
                   },
                   {
                     "$ref": "#/$defs/6"
@@ -13940,7 +13940,7 @@
                     "$ref": "#/$defs/5"
                   },
                   {
-                    "$ref": "#/$defs/37"
+                    "$ref": "#/$defs/34"
                   },
                   {
                     "$ref": "#/$defs/6"
@@ -14099,7 +14099,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/q"
               },
               {
                 "$ref": "#/$defs/j"
@@ -14184,7 +14184,7 @@
             "additionalProperties": {},
             "properties": {
               "consoleIngress": {
-                "$ref": "#/$defs/2k"
+                "$ref": "#/$defs/2l"
               }
             }
           },
@@ -14474,7 +14474,7 @@
                   "extraVolumeMounts": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/3i"
+                        "$ref": "#/$defs/2U"
                       },
                       {
                         "$ref": "#/$defs/4"
@@ -14657,7 +14657,7 @@
                 "description": "Merge jobs",
                 "properties": {
                   "tolerations": {
-                    "$ref": "#/$defs/3e"
+                    "$ref": "#/$defs/3f"
                   }
                 }
               }
@@ -14826,10 +14826,10 @@
               "users": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1f"
+                    "$ref": "#/$defs/1g"
                   },
                   {
-                    "$ref": "#/$defs/1d"
+                    "$ref": "#/$defs/1e"
                   },
                   {
                     "type": "null"
@@ -15043,7 +15043,7 @@
                 "description": "ETCD settings: https://github.com/minio/minio/blob/master/docs/sts/etcd.md\nDefine endpoints to enable this section.",
                 "properties": {
                   "corednsPathPrefix": {
-                    "$ref": "#/$defs/39"
+                    "$ref": "#/$defs/3a"
                   }
                 }
               }
@@ -15057,7 +15057,7 @@
                 "description": "ETCD settings: https://github.com/minio/minio/blob/master/docs/sts/etcd.md\nDefine endpoints to enable this section.",
                 "properties": {
                   "pathPrefix": {
-                    "$ref": "#/$defs/39"
+                    "$ref": "#/$defs/3a"
                   }
                 }
               }
@@ -15109,13 +15109,13 @@
                     "$ref": "#/$defs/5"
                   },
                   {
-                    "$ref": "#/$defs/34"
+                    "$ref": "#/$defs/33"
                   },
                   {
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/2w"
+                    "$ref": "#/$defs/2k"
                   },
                   {
                     "$ref": "#/$defs/4"
@@ -15235,7 +15235,7 @@
                                 "description": "Selects a key from a ConfigMap.",
                                 "properties": {
                                   "key": {
-                                    "$ref": "#/$defs/3x"
+                                    "$ref": "#/$defs/3w"
                                   },
                                   "name": {
                                     "$ref": "#/$defs/D"
@@ -15294,7 +15294,7 @@
                                     ]
                                   },
                                   "divisor": {
-                                    "$ref": "#/$defs/3v"
+                                    "$ref": "#/$defs/3u"
                                   },
                                   "resource": {
                                     "description": "Required: resource to select",
@@ -15442,10 +15442,10 @@
                       "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
                       "properties": {
                         "postStart": {
-                          "$ref": "#/$defs/3a"
+                          "$ref": "#/$defs/3b"
                         },
                         "preStop": {
-                          "$ref": "#/$defs/3a"
+                          "$ref": "#/$defs/3b"
                         }
                       },
                       "type": [
@@ -15693,7 +15693,7 @@
                     "volumeMounts": {
                       "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
                       "items": {
-                        "$ref": "#/$defs/3E"
+                        "$ref": "#/$defs/3F"
                       },
                       "type": [
                         "array",
@@ -15825,7 +15825,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "$ref": "#/$defs/O"
@@ -16114,7 +16114,7 @@
                         "$ref": "#/$defs/V"
                       },
                       {
-                        "$ref": "#/$defs/1g"
+                        "$ref": "#/$defs/1d"
                       }
                     ]
                   },
@@ -16166,13 +16166,13 @@
                             "$ref": "#/$defs/u"
                           },
                           {
-                            "$ref": "#/$defs/m"
+                            "$ref": "#/$defs/p"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/m"
                           },
                           {
                             "$ref": "#/$defs/r"
@@ -16340,7 +16340,7 @@
             "additionalProperties": {},
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/2k"
+                "$ref": "#/$defs/2l"
               }
             }
           },
@@ -16387,7 +16387,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "properties": {
@@ -16421,7 +16421,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "properties": {
@@ -16686,13 +16686,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/2V"
+                      "$ref": "#/$defs/2W"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2V"
+                      "$ref": "#/$defs/2W"
                     },
                     "type": "object"
                   },
@@ -16714,13 +16714,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/2Z"
+                      "$ref": "#/$defs/30"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2Z"
+                      "$ref": "#/$defs/30"
                     },
                     "type": "object"
                   },
@@ -16738,10 +16738,10 @@
               "svcaccts": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1f"
+                    "$ref": "#/$defs/1g"
                   },
                   {
-                    "$ref": "#/$defs/1d"
+                    "$ref": "#/$defs/1e"
                   },
                   {
                     "type": "null"
@@ -16760,7 +16760,7 @@
                     "$ref": "#/$defs/2y"
                   },
                   {
-                    "$ref": "#/$defs/2l"
+                    "$ref": "#/$defs/2m"
                   },
                   {
                     "type": "null"
@@ -16898,13 +16898,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/2v"
+                      "$ref": "#/$defs/2w"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2v"
+                      "$ref": "#/$defs/2w"
                     },
                     "type": "object"
                   },
@@ -16975,10 +16975,10 @@
               "users": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1f"
+                    "$ref": "#/$defs/1g"
                   },
                   {
-                    "$ref": "#/$defs/1d"
+                    "$ref": "#/$defs/1e"
                   },
                   {
                     "$ref": "#/$defs/8"
@@ -17000,7 +17000,7 @@
                     "$ref": "#/$defs/2y"
                   },
                   {
-                    "$ref": "#/$defs/2l"
+                    "$ref": "#/$defs/2m"
                   },
                   {
                     "$ref": "#/$defs/8"
@@ -17044,7 +17044,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/q"
               },
               {
                 "$ref": "#/$defs/3"
@@ -17358,7 +17358,7 @@
                 "$ref": "#/$defs/5"
               },
               {
-                "$ref": "#/$defs/1r"
+                "$ref": "#/$defs/1q"
               },
               {
                 "$ref": "#/$defs/6"
@@ -17494,7 +17494,7 @@
                         "$ref": "#/$defs/5"
                       },
                       {
-                        "$ref": "#/$defs/3F"
+                        "$ref": "#/$defs/3E"
                       },
                       {
                         "$ref": "#/$defs/6"
@@ -17724,7 +17724,7 @@
                 "description": "OpenID Identity Management\nThe following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.\nSee https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.",
                 "properties": {
                   "existingClientIdKey": {
-                    "$ref": "#/$defs/3h"
+                    "$ref": "#/$defs/3g"
                   }
                 }
               }
@@ -17738,7 +17738,7 @@
                 "description": "OpenID Identity Management\nThe following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.\nSee https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.",
                 "properties": {
                   "existingClientSecretKey": {
-                    "$ref": "#/$defs/3h"
+                    "$ref": "#/$defs/3g"
                   }
                 }
               }
@@ -17817,13 +17817,13 @@
                     "$ref": "#/$defs/5"
                   },
                   {
-                    "$ref": "#/$defs/34"
+                    "$ref": "#/$defs/33"
                   },
                   {
                     "$ref": "#/$defs/6"
                   },
                   {
-                    "$ref": "#/$defs/2w"
+                    "$ref": "#/$defs/2k"
                   },
                   {
                     "$ref": "#/$defs/4"
@@ -17918,13 +17918,13 @@
                         "$ref": "#/$defs/u"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/p"
                       },
                       {
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/m"
                       },
                       {
                         "$ref": "#/$defs/r"
@@ -18201,7 +18201,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/2n"
+                "$ref": "#/$defs/2o"
               }
             ]
           },
@@ -18211,7 +18211,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/2n"
+                "$ref": "#/$defs/2o"
               }
             ]
           }
@@ -18238,11 +18238,11 @@
             "properties": {
               "policies": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/2q"
+                  "$ref": "#/$defs/2r"
                 },
                 "description": "List of policies to be created after minio install\nIn addition to default policies [readonly|readwrite|writeonly|consoleAdmin|diagnostics]\nyou can define additional policies with custom supported actions and resources",
                 "items": {
-                  "$ref": "#/$defs/2q"
+                  "$ref": "#/$defs/2r"
                 }
               }
             }
@@ -18253,10 +18253,10 @@
               "policies": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/35"
+                    "$ref": "#/$defs/37"
                   },
                   {
-                    "$ref": "#/$defs/33"
+                    "$ref": "#/$defs/36"
                   },
                   {
                     "type": "null"
@@ -18301,13 +18301,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/31"
+                      "$ref": "#/$defs/32"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/31"
+                      "$ref": "#/$defs/32"
                     },
                     "type": "object"
                   },
@@ -18341,11 +18341,11 @@
       "properties": {
         "policies": {
           "additionalProperties": {
-            "$ref": "#/$defs/2p"
+            "$ref": "#/$defs/2q"
           },
           "description": "List of policies to be created after minio install\nIn addition to default policies [readonly|readwrite|writeonly|consoleAdmin|diagnostics]\nyou can define additional policies with custom supported actions and resources",
           "items": {
-            "$ref": "#/$defs/2p"
+            "$ref": "#/$defs/2q"
           }
         }
       }
@@ -18357,13 +18357,13 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/36"
+                "$ref": "#/$defs/38"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/36"
+                "$ref": "#/$defs/38"
               },
               "type": "object"
             },
@@ -18382,13 +18382,13 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/32"
+                "$ref": "#/$defs/35"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/32"
+                "$ref": "#/$defs/35"
               },
               "type": "object"
             },
@@ -18832,13 +18832,13 @@
                         "$ref": "#/$defs/u"
                       },
                       {
-                        "$ref": "#/$defs/m"
+                        "$ref": "#/$defs/p"
                       },
                       {
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/m"
                       },
                       {
                         "$ref": "#/$defs/r"
@@ -18906,13 +18906,13 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/30"
+                "$ref": "#/$defs/31"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/30"
+                "$ref": "#/$defs/31"
               },
               "type": "object"
             },
@@ -19057,13 +19057,13 @@
                             "$ref": "#/$defs/u"
                           },
                           {
-                            "$ref": "#/$defs/m"
+                            "$ref": "#/$defs/p"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/m"
                           },
                           {
                             "$ref": "#/$defs/r"
@@ -19210,7 +19210,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/2t"
+                "$ref": "#/$defs/2u"
               },
               {
                 "$ref": "#/$defs/j"
@@ -19223,7 +19223,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/2t"
+                "$ref": "#/$defs/2u"
               },
               {
                 "$ref": "#/$defs/j"
@@ -19293,7 +19293,7 @@
                 "$ref": "#/$defs/A"
               },
               {
-                "$ref": "#/$defs/2u"
+                "$ref": "#/$defs/2v"
               },
               {
                 "$ref": "#/$defs/L"
@@ -19309,7 +19309,7 @@
                 "$ref": "#/$defs/A"
               },
               {
-                "$ref": "#/$defs/2u"
+                "$ref": "#/$defs/2v"
               },
               {
                 "$ref": "#/$defs/L"
@@ -19495,7 +19495,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/2s"
+                "$ref": "#/$defs/2t"
               }
             ]
           },
@@ -19515,7 +19515,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/2s"
+                "$ref": "#/$defs/2t"
               }
             ]
           },
@@ -19552,7 +19552,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "anyOf": [
@@ -19590,7 +19590,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/q"
           },
           {
             "anyOf": [
@@ -19675,7 +19675,7 @@
             "$ref": "#/$defs/2"
           },
           {
-            "$ref": "#/$defs/1e"
+            "$ref": "#/$defs/1f"
           }
         ]
       },
@@ -19694,7 +19694,7 @@
             "$ref": "#/$defs/1"
           },
           {
-            "$ref": "#/$defs/1e"
+            "$ref": "#/$defs/1f"
           }
         ]
       },
@@ -20558,7 +20558,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1e"
+        "$ref": "#/$defs/1f"
       },
       "then": false
     },
@@ -20626,7 +20626,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2r"
+        "$ref": "#/$defs/2s"
       },
       "then": false
     },
@@ -20637,7 +20637,7 @@
             "$ref": "#/$defs/17"
           },
           {
-            "$ref": "#/$defs/2r"
+            "$ref": "#/$defs/2s"
           }
         ]
       },
@@ -20672,7 +20672,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "$ref": "#/$defs/38"
+          "$ref": "#/$defs/39"
         },
         {
           "if": {
@@ -20709,13 +20709,13 @@
                             "$ref": "#/$defs/u"
                           },
                           {
-                            "$ref": "#/$defs/m"
+                            "$ref": "#/$defs/p"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/m"
                           },
                           {
                             "$ref": "#/$defs/r"
@@ -20767,7 +20767,7 @@
           }
         },
         {
-          "$ref": "#/$defs/3b"
+          "$ref": "#/$defs/3c"
         },
         {
           "$ref": "#/$defs/1R"
@@ -21004,7 +21004,7 @@
                                         "$ref": "#/$defs/5"
                                       },
                                       {
-                                        "$ref": "#/$defs/1r"
+                                        "$ref": "#/$defs/1q"
                                       },
                                       {
                                         "$ref": "#/$defs/6"
@@ -21034,13 +21034,13 @@
                                 "description": "spec defines the specification of desired Ingress selection for target discovery by Prometheus.",
                                 "properties": {
                                   "authorization": {
-                                    "$ref": "#/$defs/2U"
+                                    "$ref": "#/$defs/2V"
                                   },
                                   "basicAuth": {
-                                    "$ref": "#/$defs/3c"
+                                    "$ref": "#/$defs/3e"
                                   },
                                   "bearerTokenSecret": {
-                                    "$ref": "#/$defs/2X"
+                                    "$ref": "#/$defs/2Y"
                                   },
                                   "convertClassicHistogramsToNHCB": {
                                     "description": "convertClassicHistogramsToNHCB defines whether to convert all scraped classic histograms into a native histogram with custom buckets.\nIt requires Prometheus >= v3.0.0.",
@@ -21170,13 +21170,13 @@
                                         "type": "string"
                                       },
                                       "proxyConnectHeader": {
-                                        "$ref": "#/$defs/2Y"
+                                        "$ref": "#/$defs/2Z"
                                       },
                                       "proxyFromEnvironment": {
                                         "$ref": "#/$defs/1W"
                                       },
                                       "proxyUrl": {
-                                        "$ref": "#/$defs/2o"
+                                        "$ref": "#/$defs/2p"
                                       },
                                       "scheme": {
                                         "description": "scheme defines the HTTP scheme to use when scraping the prober.",
@@ -21362,16 +21362,16 @@
                                     "description": "tlsConfig defines the TLS configuration used by the client.",
                                     "properties": {
                                       "ca": {
-                                        "$ref": "#/$defs/3g"
+                                        "$ref": "#/$defs/3i"
                                       },
                                       "cert": {
-                                        "$ref": "#/$defs/3f"
+                                        "$ref": "#/$defs/3h"
                                       },
                                       "insecureSkipVerify": {
                                         "$ref": "#/$defs/2E"
                                       },
                                       "keySecret": {
-                                        "$ref": "#/$defs/1q"
+                                        "$ref": "#/$defs/1r"
                                       },
                                       "maxVersion": {
                                         "$ref": "#/$defs/2g"
@@ -21463,13 +21463,13 @@
                                     "$ref": "#/$defs/u"
                                   },
                                   {
-                                    "$ref": "#/$defs/m"
+                                    "$ref": "#/$defs/p"
                                   },
                                   {
                                     "$ref": "#/$defs/l"
                                   },
                                   {
-                                    "$ref": "#/$defs/q"
+                                    "$ref": "#/$defs/m"
                                   },
                                   {
                                     "$ref": "#/$defs/r"
@@ -21497,17 +21497,17 @@
                                 "description": "Endpoint defines an endpoint serving Prometheus metrics to be scraped by\nPrometheus.",
                                 "properties": {
                                   "authorization": {
-                                    "$ref": "#/$defs/2U"
+                                    "$ref": "#/$defs/2V"
                                   },
                                   "basicAuth": {
-                                    "$ref": "#/$defs/3c"
+                                    "$ref": "#/$defs/3e"
                                   },
                                   "bearerTokenFile": {
                                     "description": "bearerTokenFile defines the file to read bearer token for scraping the target.\n\nDeprecated: use `authorization` instead.",
                                     "type": "string"
                                   },
                                   "bearerTokenSecret": {
-                                    "$ref": "#/$defs/2X"
+                                    "$ref": "#/$defs/2Y"
                                   },
                                   "enableHttp2": {
                                     "$ref": "#/$defs/2P"
@@ -21564,13 +21564,13 @@
                                     "type": "string"
                                   },
                                   "proxyConnectHeader": {
-                                    "$ref": "#/$defs/2Y"
+                                    "$ref": "#/$defs/2Z"
                                   },
                                   "proxyFromEnvironment": {
                                     "$ref": "#/$defs/1W"
                                   },
                                   "proxyUrl": {
-                                    "$ref": "#/$defs/2o"
+                                    "$ref": "#/$defs/2p"
                                   },
                                   "relabelings": {
                                     "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
@@ -21611,14 +21611,14 @@
                                     "description": "tlsConfig defines TLS configuration used by the client.",
                                     "properties": {
                                       "ca": {
-                                        "$ref": "#/$defs/3g"
+                                        "$ref": "#/$defs/3i"
                                       },
                                       "caFile": {
                                         "description": "caFile defines the path to the CA cert in the Prometheus container to use for the targets.",
                                         "type": "string"
                                       },
                                       "cert": {
-                                        "$ref": "#/$defs/3f"
+                                        "$ref": "#/$defs/3h"
                                       },
                                       "certFile": {
                                         "description": "certFile defines the path to the client cert file in the Prometheus container for the targets.",
@@ -21632,7 +21632,7 @@
                                         "type": "string"
                                       },
                                       "keySecret": {
-                                        "$ref": "#/$defs/1q"
+                                        "$ref": "#/$defs/1r"
                                       },
                                       "maxVersion": {
                                         "$ref": "#/$defs/2g"
@@ -21687,13 +21687,13 @@
                                     "$ref": "#/$defs/u"
                                   },
                                   {
-                                    "$ref": "#/$defs/m"
+                                    "$ref": "#/$defs/p"
                                   },
                                   {
                                     "$ref": "#/$defs/l"
                                   },
                                   {
-                                    "$ref": "#/$defs/q"
+                                    "$ref": "#/$defs/m"
                                   },
                                   {
                                     "$ref": "#/$defs/r"
@@ -21805,7 +21805,7 @@
                 "$ref": "#/$defs/Z"
               },
               {
-                "$ref": "#/$defs/3u"
+                "$ref": "#/$defs/3x"
               }
             ]
           },
@@ -21816,11 +21816,11 @@
                 "properties": {
                   "egressEntities": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2W"
+                      "$ref": "#/$defs/2X"
                     },
                     "description": "only when using flavor: cilium",
                     "items": {
-                      "$ref": "#/$defs/2W"
+                      "$ref": "#/$defs/2X"
                     }
                   }
                 }
@@ -21948,10 +21948,10 @@
           "then": {
             "anyOf": [
               {
-                "$ref": "#/$defs/35"
+                "$ref": "#/$defs/37"
               },
               {
-                "$ref": "#/$defs/33"
+                "$ref": "#/$defs/36"
               },
               {
                 "type": "null"
@@ -22033,7 +22033,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "$ref": "#/$defs/38"
+          "$ref": "#/$defs/39"
         },
         {
           "if": {
@@ -22057,7 +22057,7 @@
           }
         },
         {
-          "$ref": "#/$defs/3b"
+          "$ref": "#/$defs/3c"
         },
         {
           "$ref": "#/$defs/1R"

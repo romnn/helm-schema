@@ -420,7 +420,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -620,6 +620,62 @@
     "1G": {
       "allOf": [
         {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "name is the name of resource being referenced.",
+      "type": "string"
+    },
+    "1H": {
+      "allOf": [
+        {
           "properties": {
             "createIngressClassResource": {
               "$ref": "#/$defs/t"
@@ -718,7 +774,7 @@
         }
       ]
     },
-    "1H": {
+    "1I": {
       "anyOf": [
         {
           "properties": {
@@ -828,69 +884,13 @@
         }
       ]
     },
-    "1I": {
+    "1J": {
       "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
       "format": "int64",
       "type": [
         "integer",
         "null"
       ]
-    },
-    "1J": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "name is the name of resource being referenced.",
-      "type": "string"
     },
     "1K": {
       "additionalProperties": false,
@@ -1188,14 +1188,6 @@
       "type": "object"
     },
     "1c": {
-      "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-      "format": "int32",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "1d": {
       "properties": {
         "objectSelector": {
           "enum": [
@@ -1208,7 +1200,7 @@
       ],
       "type": "object"
     },
-    "1e": {
+    "1d": {
       "properties": {
         "featureGates": {
           "enum": [
@@ -1220,6 +1212,14 @@
         "featureGates"
       ],
       "type": "object"
+    },
+    "1e": {
+      "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+      "format": "int32",
+      "type": [
+        "integer",
+        "null"
+      ]
     },
     "1f": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
@@ -1603,7 +1603,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -2227,7 +2227,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2396,7 +2396,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2934,12 +2934,12 @@
     },
     "f": {
       "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "g": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
     "h": {
@@ -2995,7 +2995,7 @@
       }
     },
     "l": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "m": {
@@ -3510,7 +3510,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1H"
+        "$ref": "#/$defs/1I"
       },
       "then": {
         "additionalProperties": {},
@@ -3609,10 +3609,10 @@
                             "$ref": "#/$defs/h"
                           },
                           {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/g"
                           },
                           {
-                            "$ref": "#/$defs/g"
+                            "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/k"
@@ -4008,7 +4008,7 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/1J"
+                        "$ref": "#/$defs/1G"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -4041,7 +4041,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1G"
+        "$ref": "#/$defs/1H"
       },
       "then": {
         "additionalProperties": {},
@@ -4052,7 +4052,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1G"
               },
               {
                 "$ref": "#/$defs/2"
@@ -4094,7 +4094,7 @@
             "$ref": "#/$defs/1t"
           },
           {
-            "$ref": "#/$defs/1G"
+            "$ref": "#/$defs/1H"
           }
         ]
       },
@@ -5340,7 +5340,7 @@
               {
                 "properties": {
                   "serviceMutatorWebhookConfig": {
-                    "$ref": "#/$defs/1d"
+                    "$ref": "#/$defs/1c"
                   }
                 },
                 "required": [
@@ -5517,7 +5517,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1H"
+            "$ref": "#/$defs/1I"
           }
         ]
       },
@@ -5550,7 +5550,7 @@
               {
                 "properties": {
                   "controllerConfig": {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/1d"
                   }
                 },
                 "required": [
@@ -5626,7 +5626,7 @@
             }
           },
           {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/1c"
           }
         ]
       },
@@ -6326,7 +6326,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1e"
+                "$ref": "#/$defs/1d"
               }
             ]
           },
@@ -6434,10 +6434,10 @@
               "$ref": "#/$defs/h"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/g"
+              "$ref": "#/$defs/f"
             },
             {
               "$ref": "#/$defs/k"
@@ -6636,10 +6636,10 @@
               "$ref": "#/$defs/h"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/g"
+              "$ref": "#/$defs/f"
             },
             {
               "$ref": "#/$defs/k"
@@ -8382,10 +8382,10 @@
                   "$ref": "#/$defs/h"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/g"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/k"
@@ -8490,7 +8490,7 @@
               "$ref": "#/$defs/16"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/1c"
+              "$ref": "#/$defs/1e"
             },
             "successThreshold": {
               "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -8504,7 +8504,7 @@
               "$ref": "#/$defs/N"
             },
             "terminationGracePeriodSeconds": {
-              "$ref": "#/$defs/1I"
+              "$ref": "#/$defs/1J"
             },
             "timeoutSeconds": {
               "$ref": "#/$defs/15"
@@ -8789,7 +8789,7 @@
               "$ref": "#/$defs/16"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/1c"
+              "$ref": "#/$defs/1e"
             },
             "successThreshold": {
               "anyOf": [
@@ -8807,7 +8807,7 @@
               "$ref": "#/$defs/N"
             },
             "terminationGracePeriodSeconds": {
-              "$ref": "#/$defs/1I"
+              "$ref": "#/$defs/1J"
             },
             "timeoutSeconds": {
               "$ref": "#/$defs/15"
@@ -8927,10 +8927,10 @@
               "$ref": "#/$defs/h"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/g"
+              "$ref": "#/$defs/f"
             },
             {
               "$ref": "#/$defs/k"
@@ -9261,10 +9261,10 @@
                   "$ref": "#/$defs/h"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/g"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/k"
@@ -9375,10 +9375,10 @@
                             "$ref": "#/$defs/h"
                           },
                           {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/g"
                           },
                           {
-                            "$ref": "#/$defs/g"
+                            "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/k"
@@ -9498,10 +9498,10 @@
                             "$ref": "#/$defs/h"
                           },
                           {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/g"
                           },
                           {
-                            "$ref": "#/$defs/g"
+                            "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/k"

@@ -500,6 +500,28 @@ fn dependency_global_projection_moves_range_members_to_live_sources() {
 }
 
 #[test]
+fn dependency_global_projection_keeps_whole_global_range_modes() {
+    let defines = DefineIndex::new();
+    let mut contract = SymbolicIrContext::new(&defines).generate_contract_ir(indoc! {"
+        {{- range .Values.global }}
+        {{ . }}
+        {{- end }}
+    "});
+    contract.map_value_paths(|path| format!("metrics.agent.{path}"));
+    contract.project_dependency_global_contracts(&["metrics".to_string(), "agent".to_string()]);
+
+    let signals = contract.finalize().into_schema_signals();
+    sim_assert_eq!(
+        have: signals.direct_ranged_value_paths().clone(),
+        want: std::collections::BTreeSet::from([
+            "global".to_string(),
+            "metrics.global".to_string(),
+            "metrics.agent.global".to_string(),
+        ])
+    );
+}
+
+#[test]
 fn with_header_candidates_do_not_inherit_the_body_sink() {
     let defines = DefineIndex::new();
     let finalized = SymbolicIrContext::new(&defines)

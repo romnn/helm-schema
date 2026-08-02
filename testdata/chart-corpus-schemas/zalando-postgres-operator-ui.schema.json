@@ -118,6 +118,25 @@
       }
     },
     "A": {
+      "additionalProperties": {},
+      "properties": {
+        "host": {},
+        "paths": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "B": {
       "anyOf": [
         {
           "not": {
@@ -145,7 +164,7 @@
         }
       ]
     },
-    "B": {
+    "C": {
       "properties": {
         "rbac": {
           "properties": {
@@ -161,17 +180,6 @@
       },
       "required": [
         "rbac"
-      ],
-      "type": "object"
-    },
-    "C": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
       ],
       "type": "object"
     },
@@ -219,7 +227,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -450,12 +458,12 @@
     },
     "f": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "g": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "h": {
@@ -516,7 +524,7 @@
       ]
     },
     "j": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "k": {
@@ -776,6 +784,17 @@
     },
     "o": {
       "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "p": {
+      "properties": {
         "create": {
           "$ref": "#/$defs/t"
         }
@@ -785,13 +804,13 @@
       ],
       "type": "object"
     },
-    "p": {
+    "q": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "q": {
+    "r": {
       "properties": {
         "tls": {
           "$ref": "#/$defs/t"
@@ -802,7 +821,7 @@
       ],
       "type": "object"
     },
-    "r": {
+    "s": {
       "properties": {
         "teams": {
           "enum": [
@@ -815,7 +834,32 @@
       ],
       "type": "object"
     },
-    "s": {
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    },
+    "u": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
@@ -1005,32 +1049,7 @@
         "null"
       ]
     },
-    "t": {
-      "anyOf": [
-        {
-          "const": true
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "minProperties": 1,
-          "type": "object"
-        }
-      ]
-    },
-    "u": {
+    "v": {
       "additionalProperties": {},
       "properties": {
         "paths": {
@@ -1147,7 +1166,7 @@
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                     }
                   },
                   {
@@ -1308,7 +1327,7 @@
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                     }
                   },
                   {
@@ -1359,7 +1378,7 @@
         }
       }
     },
-    "v": {
+    "w": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -1475,7 +1494,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -1525,7 +1544,7 @@
         }
       }
     },
-    "w": {
+    "x": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -1638,7 +1657,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -1689,7 +1708,7 @@
         }
       ]
     },
-    "x": {
+    "y": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -1733,7 +1752,7 @@
         }
       }
     },
-    "y": {
+    "z": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -1749,25 +1768,6 @@
           ]
         },
         "secretName": {}
-      },
-      "type": "object"
-    },
-    "z": {
-      "additionalProperties": {},
-      "properties": {
-        "host": {},
-        "paths": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          ]
-        }
       },
       "type": "object"
     }
@@ -1832,7 +1832,7 @@
                 "description": "configure UI ingress. If needed: \"enabled: true\"",
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/y"
                   }
                 }
               }
@@ -1849,13 +1849,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/z"
+                          "$ref": "#/$defs/A"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/z"
+                          "$ref": "#/$defs/A"
                         },
                         "type": "object"
                       },
@@ -1961,7 +1961,7 @@
           {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/r"
               }
             },
             "required": [
@@ -1982,13 +1982,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/y"
+                      "$ref": "#/$defs/z"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/y"
+                      "$ref": "#/$defs/z"
                     },
                     "type": "object"
                   },
@@ -2014,12 +2014,12 @@
             "$ref": "#/$defs/l"
           },
           {
-            "$ref": "#/$defs/B"
+            "$ref": "#/$defs/C"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               }
             },
             "required": [
@@ -2033,7 +2033,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/w"
+            "$ref": "#/$defs/x"
           }
         }
       }
@@ -2103,7 +2103,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/B"
+        "$ref": "#/$defs/C"
       },
       "then": {
         "additionalProperties": {},
@@ -2141,13 +2141,13 @@
                                 "$ref": "#/$defs/8"
                               },
                               {
-                                "$ref": "#/$defs/f"
+                                "$ref": "#/$defs/g"
                               },
                               {
                                 "$ref": "#/$defs/e"
                               },
                               {
-                                "$ref": "#/$defs/g"
+                                "$ref": "#/$defs/f"
                               },
                               {
                                 "$ref": "#/$defs/7"
@@ -2201,7 +2201,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/A"
+        "$ref": "#/$defs/B"
       },
       "then": false
     },
@@ -2232,7 +2232,7 @@
               {
                 "properties": {
                   "envs": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/s"
                   }
                 },
                 "required": [
@@ -2243,7 +2243,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/B"
           }
         ]
       },
@@ -2512,7 +2512,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/s"
+                "$ref": "#/$defs/u"
               },
               "type": [
                 "array",
@@ -2542,7 +2542,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/s"
+                "$ref": "#/$defs/u"
               },
               "type": [
                 "array",
@@ -2579,7 +2579,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/s"
               }
             ]
           },
@@ -2614,13 +2614,13 @@
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"
@@ -2868,13 +2868,13 @@
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"
@@ -2942,7 +2942,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/C"
+            "$ref": "#/$defs/o"
           },
           "then": {
             "allOf": [
@@ -2966,10 +2966,10 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/u"
+                      "$ref": "#/$defs/v"
                     },
                     "items": {
-                      "$ref": "#/$defs/u"
+                      "$ref": "#/$defs/v"
                     }
                   }
                 }
@@ -2978,7 +2978,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/y"
                   }
                 }
               },
@@ -3011,13 +3011,13 @@
                             "$ref": "#/$defs/8"
                           },
                           {
-                            "$ref": "#/$defs/f"
+                            "$ref": "#/$defs/g"
                           },
                           {
                             "$ref": "#/$defs/e"
                           },
                           {
-                            "$ref": "#/$defs/g"
+                            "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/7"
@@ -3065,10 +3065,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/C"
+                "$ref": "#/$defs/o"
               },
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/r"
               }
             ]
           },
@@ -3093,11 +3093,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/v"
+                      "$ref": "#/$defs/w"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/v"
+                      "$ref": "#/$defs/w"
                     }
                   }
                 }
@@ -3121,7 +3121,7 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/w"
+      "$ref": "#/$defs/x"
     },
     "nodeSelector": {
       "additionalProperties": {
@@ -3137,7 +3137,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/p"
+          "$ref": "#/$defs/q"
         },
         {
           "$ref": "#/$defs/m"
@@ -3174,13 +3174,13 @@
               "$ref": "#/$defs/8"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/g"
             },
             {
               "$ref": "#/$defs/e"
             },
             {
-              "$ref": "#/$defs/g"
+              "$ref": "#/$defs/f"
             },
             {
               "$ref": "#/$defs/7"
@@ -3391,7 +3391,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/p"
+              "$ref": "#/$defs/q"
             },
             {
               "$ref": "#/$defs/m"
@@ -3441,13 +3441,13 @@
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"
@@ -3482,7 +3482,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/o"
+            "$ref": "#/$defs/p"
           },
           "then": {
             "additionalProperties": {},
@@ -3550,13 +3550,13 @@
                   "$ref": "#/$defs/8"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/g"
                 },
                 {
                   "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"

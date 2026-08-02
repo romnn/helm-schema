@@ -749,7 +749,7 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
     )?;
     test_util::write(
         &chart_dir.join("charts/child/templates/configmap.yaml")?,
-        indoc! {"
+        indoc! {r#"
             apiVersion: v1
             kind: ConfigMap
             metadata:
@@ -757,7 +757,8 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
             data:
               foo: {{ .Values.foo | quote }}
               bar: {{ .Values.global.bar | quote }}
-        "},
+              has-bar: {{ hasKey .Values.global "bar" | quote }}
+        "#},
     )?;
 
     let opts = GenerateOptions {
@@ -784,11 +785,6 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
 
     let child_global_defaults_schema = serde_json::json!({
       "additionalProperties": {},
-      "properties": {
-        // `quote` accepts every value kind. The Boolean declaration supplies
-        // the default but does not narrow supported overrides.
-        "bar": {}
-      },
       "type": "object"
     });
 
@@ -800,6 +796,15 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
       // global reaches the member read as nil, while a scalar ROOT global
       // merely skips injection.
       "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "kid": {
+              "additionalProperties": {},
+              "properties": { "global": { "type": "object" } }
+            }
+          }
+        },
         {
           "additionalProperties": {},
           "properties": { "kid": { "anyOf": [{ "type": "object" }, { "type": "null" }] } }
@@ -851,6 +856,10 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
 
     sim_assert_eq!(have: actual, want: expected);
     let validator = jsonschema::validator_for(&actual)?;
+    assert!(
+        validator.is_valid(&serde_json::json!({})),
+        "the child global default satisfies whole-global map operands when the parent global is absent"
+    );
     assert!(
         validator.is_valid(&serde_json::json!({ "global": "disabled" })),
         "a scalar source global skips Helm injection"

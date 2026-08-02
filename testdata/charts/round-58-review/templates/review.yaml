@@ -1,0 +1,64 @@
+{{- if eq .Values.case "printf-encoded" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: printf-encoded
+data:
+  token: {{ printf "%s:%s" .Values.user .Values.pass | b64enc }}
+{{- else if eq .Values.case "printf-default" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: printf-default
+data:
+  token: {{ printf "%s-x" (.Values.primary | default .Values.fallback) }}
+{{- else if eq .Values.case "kind-invalid" }}
+{{- if kindIs "invalid" (ternary .Values.value "fallback" .Values.enabled) }}
+{{- fail "invalid selected value" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kind-invalid
+{{- else if eq .Values.case "else-with" }}
+{{- $selected := "none" }}
+{{- with .Values.first }}
+  {{- $selected = "first" }}
+{{- else with .Values.second }}
+  {{- $selected = "second" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: else-with
+data:
+  {{- if eq $selected "second" }}
+  payload: {{ .Values.payload | b64enc }}
+  {{- else }}
+  payload: dormant
+  {{- end }}
+{{- else if eq .Values.case "hyphen-regex" }}
+{{- if ne (len (splitList "-" .Values.payload)) 2 }}
+{{- fail "payload must have two hyphen-separated segments" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hyphen-regex
+{{- else if eq .Values.case "radix" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: radix
+spec:
+  ports:
+    - port: 80
+      targetPort: {{ .Values.radix }}
+{{- else if eq .Values.case "negative-zero" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: negative-zero
+data:
+  contains-hyphen: {{ contains "-" (quote .Values.zero) | quote }}
+{{- end }}

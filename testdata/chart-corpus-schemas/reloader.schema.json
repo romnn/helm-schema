@@ -175,6 +175,10 @@
       ]
     },
     "1A": {
+      "description": "separator defines the string between concatenated SourceLabels.",
+      "type": "string"
+    },
+    "1B": {
       "properties": {
         "readinessProbe": {
           "enum": [
@@ -187,7 +191,7 @@
       ],
       "type": "object"
     },
-    "1B": {
+    "1C": {
       "properties": {
         "livenessProbe": {
           "enum": [
@@ -200,7 +204,7 @@
       ],
       "type": "object"
     },
-    "1C": {
+    "1D": {
       "properties": {
         "podDisruptionBudget": {}
       },
@@ -209,7 +213,7 @@
       ],
       "type": "object"
     },
-    "1D": {
+    "1E": {
       "properties": {
         "custom_annotations": {}
       },
@@ -218,7 +222,7 @@
       ],
       "type": "object"
     },
-    "1E": {
+    "1F": {
       "properties": {
         "podMonitor": {
           "enum": [
@@ -228,17 +232,6 @@
       },
       "required": [
         "podMonitor"
-      ],
-      "type": "object"
-    },
-    "1F": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
       ],
       "type": "object"
     },
@@ -535,7 +528,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -717,7 +710,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -770,7 +763,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -1168,7 +1161,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -1452,7 +1445,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -1918,6 +1911,17 @@
     },
     "1p": {
       "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "1q": {
+      "properties": {
         "readinessProbe": {}
       },
       "required": [
@@ -1925,7 +1929,7 @@
       ],
       "type": "object"
     },
-    "1q": {
+    "1r": {
       "properties": {
         "livenessProbe": {}
       },
@@ -1934,15 +1938,15 @@
       ],
       "type": "object"
     },
-    "1r": {
+    "1s": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "1s": {
+    "1t": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "1t": {
+    "1u": {
       "properties": {
         "netpol": {
           "enum": [
@@ -1955,7 +1959,7 @@
       ],
       "type": "object"
     },
-    "1u": {
+    "1v": {
       "properties": {
         "rbac": {
           "enum": [
@@ -1968,7 +1972,7 @@
       ],
       "type": "object"
     },
-    "1v": {
+    "1w": {
       "properties": {
         "podMonitor": {}
       },
@@ -1977,7 +1981,7 @@
       ],
       "type": "object"
     },
-    "1w": {
+    "1x": {
       "properties": {
         "env": {
           "enum": [
@@ -1990,7 +1994,7 @@
       ],
       "type": "object"
     },
-    "1x": {
+    "1y": {
       "properties": {
         "pod": {
           "enum": [
@@ -2003,7 +2007,7 @@
       ],
       "type": "object"
     },
-    "1y": {
+    "1z": {
       "properties": {
         "netpol": {}
       },
@@ -2011,10 +2015,6 @@
         "netpol"
       ],
       "type": "object"
-    },
-    "1z": {
-      "description": "separator defines the string between concatenated SourceLabels.",
-      "type": "string"
     },
     "2": {
       "anyOf": [
@@ -3177,7 +3177,7 @@
       ]
     },
     "R": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "S": {
@@ -3536,12 +3536,12 @@
     },
     "d": {
       "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "e": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
     "f": {
@@ -3897,7 +3897,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -4060,7 +4060,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -4113,7 +4113,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -4773,10 +4773,10 @@
                     "$ref": "#/$defs/b"
                   },
                   {
-                    "$ref": "#/$defs/e"
+                    "$ref": "#/$defs/d"
                   },
                   {
-                    "$ref": "#/$defs/d"
+                    "$ref": "#/$defs/e"
                   }
                 ],
                 "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -7145,7 +7145,7 @@
                 "not": {
                   "properties": {
                     "reloader": {
-                      "$ref": "#/$defs/1D"
+                      "$ref": "#/$defs/1E"
                     }
                   },
                   "required": [
@@ -7224,7 +7224,121 @@
                   "reloader": {
                     "properties": {
                       "deployment": {
-                        "$ref": "#/$defs/1w"
+                        "$ref": "#/$defs/1x"
+                      }
+                    },
+                    "required": [
+                      "deployment"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "reloader"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/s"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "reloader": {
+                      "properties": {
+                        "deployment": {
+                          "$ref": "#/$defs/1r"
+                        }
+                      },
+                      "required": [
+                        "deployment"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "reloader"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "reloader": {
+                    "properties": {
+                      "deployment": {
+                        "$ref": "#/$defs/1C"
+                      }
+                    },
+                    "required": [
+                      "deployment"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "reloader"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/s"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "reloader": {
+                      "properties": {
+                        "deployment": {
+                          "properties": {
+                            "pod": {}
+                          },
+                          "required": [
+                            "pod"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "deployment"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "reloader"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "reloader": {
+                    "properties": {
+                      "deployment": {
+                        "$ref": "#/$defs/1y"
                       }
                     },
                     "required": [
@@ -7310,21 +7424,7 @@
                 "not": {
                   "properties": {
                     "reloader": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "pod": {}
-                          },
-                          "required": [
-                            "pod"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/1z"
                     }
                   },
                   "required": [
@@ -7336,107 +7436,7 @@
               {
                 "properties": {
                   "reloader": {
-                    "properties": {
-                      "deployment": {
-                        "$ref": "#/$defs/1x"
-                      }
-                    },
-                    "required": [
-                      "deployment"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "reloader"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/s"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "reloader": {
-                      "properties": {
-                        "deployment": {
-                          "$ref": "#/$defs/1p"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "reloader"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "reloader": {
-                    "properties": {
-                      "deployment": {
-                        "$ref": "#/$defs/1A"
-                      }
-                    },
-                    "required": [
-                      "deployment"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "reloader"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/s"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "reloader": {
-                      "$ref": "#/$defs/1y"
-                    }
-                  },
-                  "required": [
-                    "reloader"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "reloader": {
-                    "$ref": "#/$defs/1t"
+                    "$ref": "#/$defs/1u"
                   }
                 },
                 "required": [
@@ -7462,7 +7462,7 @@
                 "not": {
                   "properties": {
                     "reloader": {
-                      "$ref": "#/$defs/1C"
+                      "$ref": "#/$defs/1D"
                     }
                   },
                   "required": [
@@ -7500,7 +7500,7 @@
                 "not": {
                   "properties": {
                     "reloader": {
-                      "$ref": "#/$defs/1v"
+                      "$ref": "#/$defs/1w"
                     }
                   },
                   "required": [
@@ -7512,7 +7512,7 @@
               {
                 "properties": {
                   "reloader": {
-                    "$ref": "#/$defs/1E"
+                    "$ref": "#/$defs/1F"
                   }
                 },
                 "required": [
@@ -7556,7 +7556,7 @@
               {
                 "properties": {
                   "reloader": {
-                    "$ref": "#/$defs/1u"
+                    "$ref": "#/$defs/1v"
                   }
                 },
                 "required": [
@@ -7717,10 +7717,10 @@
                   "$ref": "#/$defs/b"
                 },
                 {
-                  "$ref": "#/$defs/e"
+                  "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/d"
+                  "$ref": "#/$defs/e"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -7908,10 +7908,10 @@
                                 "$ref": "#/$defs/b"
                               },
                               {
-                                "$ref": "#/$defs/e"
+                                "$ref": "#/$defs/d"
                               },
                               {
-                                "$ref": "#/$defs/d"
+                                "$ref": "#/$defs/e"
                               }
                             ],
                             "description": "Name of the object being referenced.",
@@ -8223,10 +8223,10 @@
                                     "$ref": "#/$defs/b"
                                   },
                                   {
-                                    "$ref": "#/$defs/e"
+                                    "$ref": "#/$defs/d"
                                   },
                                   {
-                                    "$ref": "#/$defs/d"
+                                    "$ref": "#/$defs/e"
                                   }
                                 ],
                                 "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -8303,7 +8303,7 @@
                                     "separator": {
                                       "anyOf": [
                                         {
-                                          "$ref": "#/$defs/1z"
+                                          "$ref": "#/$defs/1A"
                                         },
                                         {
                                           "$ref": "#/$defs/p"
@@ -8398,7 +8398,7 @@
                                       "$ref": "#/$defs/15"
                                     },
                                     "separator": {
-                                      "$ref": "#/$defs/1z"
+                                      "$ref": "#/$defs/1A"
                                     },
                                     "sourceLabels": {
                                       "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
@@ -8455,10 +8455,10 @@
                                     "$ref": "#/$defs/b"
                                   },
                                   {
-                                    "$ref": "#/$defs/e"
+                                    "$ref": "#/$defs/d"
                                   },
                                   {
-                                    "$ref": "#/$defs/d"
+                                    "$ref": "#/$defs/e"
                                   }
                                 ],
                                 "description": "scheme defines the HTTP scheme to use for scraping.",
@@ -8509,10 +8509,10 @@
                                     "$ref": "#/$defs/b"
                                   },
                                   {
-                                    "$ref": "#/$defs/e"
+                                    "$ref": "#/$defs/d"
                                   },
                                   {
-                                    "$ref": "#/$defs/d"
+                                    "$ref": "#/$defs/e"
                                   }
                                 ],
                                 "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -8606,7 +8606,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/1F"
+                    "$ref": "#/$defs/1p"
                   },
                   "then": {
                     "allOf": [
@@ -8651,10 +8651,10 @@
                                     "$ref": "#/$defs/b"
                                   },
                                   {
-                                    "$ref": "#/$defs/e"
+                                    "$ref": "#/$defs/d"
                                   },
                                   {
-                                    "$ref": "#/$defs/d"
+                                    "$ref": "#/$defs/e"
                                   }
                                 ],
                                 "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -8701,7 +8701,7 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/1F"
+                        "$ref": "#/$defs/1p"
                       },
                       {
                         "not": {
@@ -8788,7 +8788,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1D"
+                  "$ref": "#/$defs/1E"
                 }
               },
               {
@@ -8833,7 +8833,61 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/1w"
+                        "$ref": "#/$defs/1x"
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "deployment": {
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/1r"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/1C"
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "deployment": {
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "pod": {}
+                          },
+                          "required": [
+                            "pod"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/1y"
                       }
                     ]
                   },
@@ -8868,69 +8922,15 @@
           }
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "deployment": {
-              "allOf": [
-                {
-                  "if": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "pod": {}
-                          },
-                          "required": [
-                            "pod"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/1x"
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "deployment": {
-              "allOf": [
-                {
-                  "if": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/1p"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/1A"
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1y"
+                  "$ref": "#/$defs/1z"
                 }
               },
               {
-                "$ref": "#/$defs/1t"
+                "$ref": "#/$defs/1u"
               }
             ]
           },
@@ -8941,7 +8941,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1C"
+                  "$ref": "#/$defs/1D"
                 }
               },
               {
@@ -8956,11 +8956,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1v"
+                  "$ref": "#/$defs/1w"
                 }
               },
               {
-                "$ref": "#/$defs/1E"
+                "$ref": "#/$defs/1F"
               }
             ]
           },
@@ -8981,7 +8981,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/1u"
+                "$ref": "#/$defs/1v"
               }
             ]
           },
@@ -9573,10 +9573,10 @@
                       "$ref": "#/$defs/b"
                     },
                     {
-                      "$ref": "#/$defs/e"
+                      "$ref": "#/$defs/d"
                     },
                     {
-                      "$ref": "#/$defs/d"
+                      "$ref": "#/$defs/e"
                     }
                   ],
                   "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -10641,10 +10641,10 @@
                                         "$ref": "#/$defs/19"
                                       },
                                       "kind": {
-                                        "$ref": "#/$defs/1r"
+                                        "$ref": "#/$defs/1s"
                                       },
                                       "name": {
-                                        "$ref": "#/$defs/1s"
+                                        "$ref": "#/$defs/1t"
                                       }
                                     },
                                     "required": [
@@ -10664,10 +10664,10 @@
                                         "$ref": "#/$defs/19"
                                       },
                                       "kind": {
-                                        "$ref": "#/$defs/1r"
+                                        "$ref": "#/$defs/1s"
                                       },
                                       "name": {
-                                        "$ref": "#/$defs/1s"
+                                        "$ref": "#/$defs/1t"
                                       },
                                       "namespace": {
                                         "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -11877,10 +11877,10 @@
                       "$ref": "#/$defs/b"
                     },
                     {
-                      "$ref": "#/$defs/e"
+                      "$ref": "#/$defs/d"
                     },
                     {
-                      "$ref": "#/$defs/d"
+                      "$ref": "#/$defs/e"
                     }
                   ],
                   "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

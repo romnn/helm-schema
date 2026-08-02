@@ -786,17 +786,6 @@
       "type": "object"
     },
     "1F": {
-      "additionalProperties": {},
-      "properties": {
-        "instanceType": {},
-        "maxSize": {},
-        "minSize": {},
-        "name": {},
-        "region": {}
-      },
-      "type": "object"
-    },
-    "1G": {
       "items": {
         "additionalProperties": {},
         "properties": {
@@ -807,7 +796,7 @@
       },
       "type": "array"
     },
-    "1H": {
+    "1G": {
       "properties": {
         "cloudProvider": {
           "enum": [
@@ -820,7 +809,7 @@
       ],
       "type": "object"
     },
-    "1I": {
+    "1H": {
       "properties": {
         "minAvailable": {
           "$ref": "#/$defs/t"
@@ -831,20 +820,18 @@
       ],
       "type": "object"
     },
-    "1J": {
+    "1I": {
+      "additionalProperties": {},
       "properties": {
-        "cloudProvider": {
-          "enum": [
-            "gce"
-          ]
-        }
+        "instanceType": {},
+        "maxSize": {},
+        "minSize": {},
+        "name": {},
+        "region": {}
       },
-      "required": [
-        "cloudProvider"
-      ],
       "type": "object"
     },
-    "1K": {
+    "1J": {
       "allOf": [
         {
           "not": {
@@ -864,7 +851,7 @@
       ],
       "type": "string"
     },
-    "1L": {
+    "1K": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -875,18 +862,18 @@
       },
       "type": "object"
     },
-    "1M": {
+    "1L": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "1N": {
+    "1M": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "1O": {
+    "1N": {
       "additionalProperties": {},
       "properties": {
         "instanceType": {},
@@ -895,6 +882,19 @@
         "name": {},
         "region": {}
       }
+    },
+    "1O": {
+      "properties": {
+        "cloudProvider": {
+          "enum": [
+            "gce"
+          ]
+        }
+      },
+      "required": [
+        "cloudProvider"
+      ],
+      "type": "object"
     },
     "1P": {
       "properties": {
@@ -2093,7 +2093,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -2359,34 +2359,60 @@
       ]
     },
     "27": {
-      "additionalProperties": false,
-      "description": "Maps a string key to a path within a volume.",
-      "properties": {
-        "key": {
-          "description": "key is the key to project.",
-          "type": "string"
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
         },
-        "mode": {
-          "description": "mode is Optional: mode bits used to set permissions on this file. Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
-          "format": "int32",
-          "type": [
-            "integer",
-            "null"
-          ]
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
         },
-        "path": {
-          "description": "path is the relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.",
-          "type": "string"
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
         }
-      },
-      "required": [
-        "key",
-        "path"
       ],
-      "type": [
-        "object",
-        "null"
-      ]
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "string"
     },
     "28": {
       "allOf": [
@@ -2432,63 +2458,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "string"
-    },
-    "29": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2499,6 +2469,36 @@
       ],
       "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
+    },
+    "29": {
+      "additionalProperties": false,
+      "description": "Maps a string key to a path within a volume.",
+      "properties": {
+        "key": {
+          "description": "key is the key to project.",
+          "type": "string"
+        },
+        "mode": {
+          "description": "mode is Optional: mode bits used to set permissions on this file. Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
+          "format": "int32",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "description": "path is the relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "path"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "2A": {
       "properties": {
@@ -2608,7 +2608,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2828,6 +2828,167 @@
       ]
     },
     "2d": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            }
+          ],
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ]
+    },
+    "2e": {
       "additionalProperties": false,
       "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
       "properties": {
@@ -2918,7 +3079,7 @@
         "null"
       ]
     },
-    "2e": {
+    "2f": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -3031,7 +3192,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -3040,7 +3201,6 @@
               }
             }
           ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
           "type": "string"
         },
         {
@@ -3062,10 +3222,6 @@
           "type": "string"
         },
         {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
           "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
           "type": "string"
         },
@@ -3076,10 +3232,13 @@
         {
           "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
+        },
+        {
+          "type": "null"
         }
       ]
     },
-    "2f": {
+    "2g": {
       "additionalProperties": false,
       "description": "PolicyRule holds information that describes a policy rule, but does not contain information about who the rule applies to or which namespace the rule applies to.",
       "properties": {
@@ -3152,165 +3311,6 @@
       "type": [
         "object",
         "null"
-      ]
-    },
-    "2g": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "allOf": [
-              {
-                "not": {
-                  "pattern": ":[ \\t]|:$"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[ \\t]#"
-                }
-              },
-              {
-                "not": {
-                  "pattern": "[\\r\\n]"
-                }
-              }
-            ],
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "allOf": [
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
       ]
     },
     "2h": {
@@ -3429,7 +3429,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -3579,7 +3579,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -3614,57 +3614,6 @@
       }
     },
     "2j": {
-      "additionalProperties": {},
-      "properties": {
-        "items": {
-          "anyOf": [
-            {
-              "description": "items If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
-              "items": {
-                "additionalProperties": false,
-                "description": "Maps a string key to a path within a volume.",
-                "properties": {
-                  "key": {
-                    "description": "key is the key to project.",
-                    "type": "string"
-                  },
-                  "mode": {
-                    "description": "mode is Optional: mode bits used to set permissions on this file. Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
-                    "format": "int32",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "path": {
-                    "description": "path is the relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "key",
-                  "path"
-                ],
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "2k": {
       "additionalProperties": {},
       "properties": {
         "key": {
@@ -3780,7 +3729,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -3814,7 +3763,7 @@
         }
       }
     },
-    "2l": {
+    "2k": {
       "allOf": [
         {
           "anyOf": [
@@ -3929,7 +3878,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -3964,6 +3913,57 @@
           "type": "string"
         }
       ]
+    },
+    "2l": {
+      "additionalProperties": {},
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "description": "items If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
+              "items": {
+                "additionalProperties": false,
+                "description": "Maps a string key to a path within a volume.",
+                "properties": {
+                  "key": {
+                    "description": "key is the key to project.",
+                    "type": "string"
+                  },
+                  "mode": {
+                    "description": "mode is Optional: mode bits used to set permissions on this file. Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511. YAML accepts both octal and decimal values, JSON requires decimal values for mode bits. If not specified, the volume defaultMode will be used. This might be in conflict with other options that affect the file mode, like fsGroup, and the result can be other mode bits set.",
+                    "format": "int32",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "path": {
+                    "description": "path is the relative path of the file to map the key to. May not be an absolute path. May not contain the path element '..'. May not start with the string '..'.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key",
+                  "path"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
     },
     "2m": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
@@ -4264,7 +4264,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -5047,6 +5047,19 @@
       "type": "object"
     },
     "G": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "H": {
       "properties": {
         "cloudProvider": {
           "enum": [
@@ -5059,7 +5072,7 @@
       ],
       "type": "object"
     },
-    "H": {
+    "I": {
       "properties": {
         "cloudProvider": {
           "enum": [
@@ -5071,19 +5084,6 @@
         "cloudProvider"
       ],
       "type": "object"
-    },
-    "I": {
-      "not": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      }
     },
     "J": {
       "properties": {
@@ -5259,7 +5259,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -5484,7 +5484,7 @@
       "type": "object"
     },
     "Y": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "Z": {
@@ -5633,6 +5633,11 @@
       }
     },
     "m": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "n": {
       "properties": {
         "cloudProvider": {
           "enum": [
@@ -5645,12 +5650,12 @@
       ],
       "type": "object"
     },
-    "n": {
+    "o": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "o": {
+    "p": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/$defs/t"
@@ -5661,19 +5666,14 @@
       ],
       "type": "object"
     },
-    "p": {
+    "q": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "q": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
     "r": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "s": {
@@ -6116,11 +6116,11 @@
             "properties": {
               "customArgs": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/2g"
+                  "$ref": "#/$defs/2f"
                 },
                 "description": "customArgs -- Additional custom container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nList of arguments as strings.",
                 "items": {
-                  "$ref": "#/$defs/2g"
+                  "$ref": "#/$defs/2f"
                 }
               }
             }
@@ -6311,7 +6311,7 @@
                     "$ref": "#/$defs/9"
                   },
                   {
-                    "$ref": "#/$defs/28"
+                    "$ref": "#/$defs/27"
                   },
                   {
                     "$ref": "#/$defs/8"
@@ -6345,7 +6345,7 @@
                     "$ref": "#/$defs/9"
                   },
                   {
-                    "$ref": "#/$defs/28"
+                    "$ref": "#/$defs/27"
                   },
                   {
                     "$ref": "#/$defs/8"
@@ -6482,11 +6482,11 @@
             "properties": {
               "extraEnvConfigMaps": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/2k"
+                  "$ref": "#/$defs/2j"
                 },
                 "description": "extraEnvConfigMaps -- Additional container environment variables from ConfigMaps.",
                 "items": {
-                  "$ref": "#/$defs/2k"
+                  "$ref": "#/$defs/2j"
                 }
               }
             }
@@ -6511,10 +6511,10 @@
               "extraEnvConfigMaps": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1G"
+                    "$ref": "#/$defs/1F"
                   },
                   {
-                    "$ref": "#/$defs/1L"
+                    "$ref": "#/$defs/1K"
                   },
                   {
                     "type": "null"
@@ -6637,10 +6637,10 @@
               "extraEnvSecrets": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1G"
+                    "$ref": "#/$defs/1F"
                   },
                   {
-                    "$ref": "#/$defs/1L"
+                    "$ref": "#/$defs/1K"
                   },
                   {
                     "type": "null"
@@ -6979,7 +6979,7 @@
                               "$ref": "#/$defs/u"
                             },
                             "optional": {
-                              "$ref": "#/$defs/1N"
+                              "$ref": "#/$defs/1M"
                             }
                           },
                           "type": [
@@ -7046,7 +7046,7 @@
                             "items": {
                               "description": "Items is a list of downward API volume file",
                               "items": {
-                                "$ref": "#/$defs/2d"
+                                "$ref": "#/$defs/2e"
                               },
                               "type": [
                                 "array",
@@ -7924,7 +7924,7 @@
                                         "$ref": "#/$defs/u"
                                       },
                                       "optional": {
-                                        "$ref": "#/$defs/1N"
+                                        "$ref": "#/$defs/1M"
                                       }
                                     },
                                     "type": [
@@ -7939,7 +7939,7 @@
                                       "items": {
                                         "description": "Items is a list of DownwardAPIVolume file",
                                         "items": {
-                                          "$ref": "#/$defs/2d"
+                                          "$ref": "#/$defs/2e"
                                         },
                                         "type": [
                                           "array",
@@ -7959,7 +7959,7 @@
                                       "items": {
                                         "description": "items if unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                                         "items": {
-                                          "$ref": "#/$defs/27"
+                                          "$ref": "#/$defs/29"
                                         },
                                         "type": [
                                           "array",
@@ -8238,7 +8238,7 @@
                             "items": {
                               "description": "items If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                               "items": {
-                                "$ref": "#/$defs/27"
+                                "$ref": "#/$defs/29"
                               },
                               "type": [
                                 "array",
@@ -8380,7 +8380,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/1M"
+                    "$ref": "#/$defs/1L"
                   },
                   {
                     "$ref": "#/$defs/b"
@@ -8985,19 +8985,19 @@
                         "$ref": "#/$defs/j"
                       },
                       {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/r"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/o"
                       },
                       {
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/m"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/q"
                       }
                     ],
                     "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -9102,19 +9102,19 @@
                                 "$ref": "#/$defs/j"
                               },
                               {
-                                "$ref": "#/$defs/q"
+                                "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/o"
                               },
                               {
                                 "$ref": "#/$defs/l"
                               },
                               {
-                                "$ref": "#/$defs/r"
+                                "$ref": "#/$defs/m"
                               },
                               {
-                                "$ref": "#/$defs/p"
+                                "$ref": "#/$defs/q"
                               }
                             ],
                             "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -9568,7 +9568,7 @@
               "clusterName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1K"
+                    "$ref": "#/$defs/1J"
                   },
                   {
                     "not": {
@@ -9611,7 +9611,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/H"
               },
               {
                 "$ref": "#/$defs/5"
@@ -9627,7 +9627,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/I"
               },
               {
                 "$ref": "#/$defs/5"
@@ -9674,7 +9674,7 @@
                 "$ref": "#/$defs/2x"
               },
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/H"
               },
               {
                 "$ref": "#/$defs/5"
@@ -9728,7 +9728,7 @@
             "$ref": "#/$defs/2z"
           },
           {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           {
             "$ref": "#/$defs/5"
@@ -9823,7 +9823,7 @@
                 "$ref": "#/$defs/10"
               },
               {
-                "$ref": "#/$defs/1H"
+                "$ref": "#/$defs/1G"
               },
               {
                 "$ref": "#/$defs/2"
@@ -9837,7 +9837,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1H"
+                  "$ref": "#/$defs/1G"
                 }
               },
               {
@@ -9854,13 +9854,13 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/$defs/1F"
+                  "$ref": "#/$defs/1I"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "$ref": "#/$defs/1F"
+                  "$ref": "#/$defs/1I"
                 },
                 "type": "object"
               },
@@ -9896,13 +9896,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/1O"
+                      "$ref": "#/$defs/1N"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/1O"
+                      "$ref": "#/$defs/1N"
                     },
                     "type": "object"
                   },
@@ -9954,7 +9954,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/1J"
+            "$ref": "#/$defs/1O"
           },
           {
             "$ref": "#/$defs/5"
@@ -10099,7 +10099,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1J"
+            "$ref": "#/$defs/1O"
           },
           {
             "$ref": "#/$defs/5"
@@ -10711,7 +10711,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "$ref": "#/$defs/3"
@@ -10748,7 +10748,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "$ref": "#/$defs/3"
@@ -10817,7 +10817,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "$ref": "#/$defs/3"
@@ -10865,7 +10865,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "$ref": "#/$defs/3"
@@ -10913,7 +10913,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "$ref": "#/$defs/3"
@@ -10950,7 +10950,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "$ref": "#/$defs/2"
@@ -10968,7 +10968,7 @@
                     "$ref": "#/$defs/9"
                   },
                   {
-                    "$ref": "#/$defs/29"
+                    "$ref": "#/$defs/28"
                   },
                   {
                     "$ref": "#/$defs/8"
@@ -11001,7 +11001,7 @@
                     "$ref": "#/$defs/9"
                   },
                   {
-                    "$ref": "#/$defs/29"
+                    "$ref": "#/$defs/28"
                   },
                   {
                     "$ref": "#/$defs/8"
@@ -11032,14 +11032,14 @@
                 "$ref": "#/$defs/f"
               },
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/G"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/G"
               },
               {
                 "$ref": "#/$defs/2"
@@ -11118,14 +11118,14 @@
                 "$ref": "#/$defs/e"
               },
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/H"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/H"
               },
               {
                 "$ref": "#/$defs/2"
@@ -11422,11 +11422,11 @@
             "properties": {
               "extraVolumeSecrets": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/2j"
+                  "$ref": "#/$defs/2l"
                 },
                 "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath",
                 "items": {
-                  "$ref": "#/$defs/2j"
+                  "$ref": "#/$defs/2l"
                 }
               }
             }
@@ -11665,7 +11665,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/C"
@@ -11675,7 +11675,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/X"
@@ -11685,7 +11685,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/e"
@@ -11695,7 +11695,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/B"
@@ -11705,7 +11705,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/y"
@@ -11715,7 +11715,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/J"
@@ -11725,7 +11725,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/f"
@@ -11735,7 +11735,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/3"
@@ -11748,7 +11748,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/p"
               },
               {
                 "$ref": "#/$defs/2"
@@ -11825,11 +11825,11 @@
                 "properties": {
                   "pullSecrets": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2e"
+                      "$ref": "#/$defs/2d"
                     },
                     "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\nimage.pullSecrets -- Image pull secrets\n- myRegistrKeySecretName",
                     "items": {
-                      "$ref": "#/$defs/2e"
+                      "$ref": "#/$defs/2d"
                     }
                   }
                 }
@@ -12009,7 +12009,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "$ref": "#/$defs/V"
@@ -12033,7 +12033,7 @@
               "magnumClusterName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1K"
+                    "$ref": "#/$defs/1J"
                   },
                   {
                     "not": {
@@ -12075,7 +12075,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "$ref": "#/$defs/V"
@@ -12138,19 +12138,19 @@
                     "$ref": "#/$defs/j"
                   },
                   {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/r"
                   },
                   {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/o"
                   },
                   {
                     "$ref": "#/$defs/l"
                   },
                   {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/m"
                   },
                   {
-                    "$ref": "#/$defs/p"
+                    "$ref": "#/$defs/q"
                   }
                 ],
                 "description": "Name of the container or DefaultContainerResourcePolicy, in which case the policy is used by the containers that don't have their own policy specified.",
@@ -12698,19 +12698,19 @@
                             "$ref": "#/$defs/j"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/n"
+                            "$ref": "#/$defs/o"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/r"
+                            "$ref": "#/$defs/m"
                           },
                           {
-                            "$ref": "#/$defs/p"
+                            "$ref": "#/$defs/q"
                           }
                         ],
                         "description": "port defines the name of the Service port which this endpoint refers to.\n\nIt takes precedence over `targetPort`.",
@@ -12966,7 +12966,7 @@
           {
             "properties": {
               "podDisruptionBudget": {
-                "$ref": "#/$defs/1I"
+                "$ref": "#/$defs/1H"
               }
             },
             "required": [
@@ -13001,7 +13001,7 @@
             "$ref": "#/$defs/1w"
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -13017,7 +13017,7 @@
             "$ref": "#/$defs/1b"
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -13335,7 +13335,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "anyOf": [
@@ -13385,7 +13385,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "anyOf": [
@@ -13435,7 +13435,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "anyOf": [
@@ -13485,7 +13485,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/m"
+            "$ref": "#/$defs/n"
           },
           {
             "anyOf": [
@@ -13535,7 +13535,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/I"
           },
           {
             "anyOf": [
@@ -13619,7 +13619,7 @@
             "$ref": "#/$defs/1w"
           },
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/G"
           },
           {
             "$ref": "#/$defs/2"
@@ -14243,7 +14243,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1I"
+                  "$ref": "#/$defs/1H"
                 }
               },
               {
@@ -14336,19 +14336,19 @@
                         "$ref": "#/$defs/j"
                       },
                       {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/r"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/o"
                       },
                       {
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/m"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/q"
                       }
                     ],
                     "description": "prometheusRule.interval -- How often rules in the group are evaluated (falls back to `global.evaluation_interval` if not set).",
@@ -14363,7 +14363,7 @@
                   "namespace": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/2l"
+                        "$ref": "#/$defs/2k"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -14520,7 +14520,7 @@
                   {
                     "description": "Rules holds all the PolicyRules for this ClusterRole",
                     "items": {
-                      "$ref": "#/$defs/2f"
+                      "$ref": "#/$defs/2g"
                     },
                     "type": "array"
                   },
@@ -14550,7 +14550,7 @@
                       {
                         "description": "Rules holds all the PolicyRules for this Role",
                         "items": {
-                          "$ref": "#/$defs/2f"
+                          "$ref": "#/$defs/2g"
                         },
                         "type": "array"
                       },
@@ -14594,19 +14594,19 @@
                                 "$ref": "#/$defs/j"
                               },
                               {
-                                "$ref": "#/$defs/q"
+                                "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/n"
+                                "$ref": "#/$defs/o"
                               },
                               {
                                 "$ref": "#/$defs/l"
                               },
                               {
-                                "$ref": "#/$defs/r"
+                                "$ref": "#/$defs/m"
                               },
                               {
-                                "$ref": "#/$defs/p"
+                                "$ref": "#/$defs/q"
                               }
                             ],
                             "description": "Name of the object being referenced.",
@@ -14721,7 +14721,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/1M"
+                            "$ref": "#/$defs/1L"
                           },
                           {
                             "$ref": "#/$defs/b"
@@ -14943,19 +14943,19 @@
                             "$ref": "#/$defs/j"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/n"
+                            "$ref": "#/$defs/o"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/r"
+                            "$ref": "#/$defs/m"
                           },
                           {
-                            "$ref": "#/$defs/p"
+                            "$ref": "#/$defs/q"
                           }
                         ],
                         "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
@@ -15111,19 +15111,19 @@
                         "$ref": "#/$defs/j"
                       },
                       {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/r"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/o"
                       },
                       {
                         "$ref": "#/$defs/l"
                       },
                       {
-                        "$ref": "#/$defs/r"
+                        "$ref": "#/$defs/m"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/q"
                       }
                     ],
                     "description": "serviceMonitor.interval -- Interval that Prometheus scrapes Cluster Autoscaler metrics.",
@@ -15158,7 +15158,7 @@
                   "namespace": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/2l"
+                        "$ref": "#/$defs/2k"
                       },
                       {
                         "$ref": "#/$defs/1"
@@ -15194,19 +15194,19 @@
                             "$ref": "#/$defs/j"
                           },
                           {
-                            "$ref": "#/$defs/q"
+                            "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/n"
+                            "$ref": "#/$defs/o"
                           },
                           {
                             "$ref": "#/$defs/l"
                           },
                           {
-                            "$ref": "#/$defs/r"
+                            "$ref": "#/$defs/m"
                           },
                           {
-                            "$ref": "#/$defs/p"
+                            "$ref": "#/$defs/q"
                           }
                         ],
                         "description": "path defines the HTTP path from which to scrape for metrics.\n\nIf empty, Prometheus uses the default value (e.g. `/metrics`).",

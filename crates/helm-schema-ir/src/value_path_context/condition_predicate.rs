@@ -1105,9 +1105,9 @@ impl ValuePathContext<'_> {
             .filter(|path| !path.is_empty())?;
         let templated = self.subject_is_derived_text(subject, &path);
         let pattern = if suffix {
-            format!("{}$", escape_regex_literal(affix))
+            format!("{}$", crate::escape_regex_literal(affix))
         } else {
-            format!("^{}", escape_regex_literal(affix))
+            format!("^{}", crate::escape_regex_literal(affix))
         };
         Some(Predicate::from(Guard::MatchesPattern {
             path,
@@ -1130,7 +1130,7 @@ impl ValuePathContext<'_> {
             .filter(|path| !path.is_empty())?;
         Some(Predicate::from(Guard::MatchesPattern {
             path,
-            pattern: escape_regex_literal(needle),
+            pattern: crate::escape_regex_literal(needle),
             templated: false,
         }))
     }
@@ -1213,7 +1213,15 @@ impl ValuePathContext<'_> {
         let predicates = args
             .iter()
             .skip(1)
-            .map(|arg| self.single_resolved_values_path_expr(arg))
+            .map(|arg| {
+                if schema_type.is_some() {
+                    self.single_resolved_values_path_expr(arg)
+                } else {
+                    eval_expr(arg, &self.expression_eval_env())
+                        .value
+                        .and_then(|value| value.direct_values_identity())
+                }
+            })
             .collect::<Option<Vec<_>>>()?
             .into_iter()
             .map(|path| match &schema_type {
@@ -3019,20 +3027,6 @@ fn literal_is_truthy(literal: &Literal) -> bool {
         Literal::String(value) | Literal::RawString(value) => !value.is_empty(),
         Literal::Nil => false,
     }
-}
-
-fn escape_regex_literal(value: &str) -> String {
-    let mut escaped = String::with_capacity(value.len());
-    for character in value.chars() {
-        if matches!(
-            character,
-            '.' | '+' | '*' | '?' | '(' | ')' | '|' | '[' | ']' | '{' | '}' | '^' | '$' | '\\'
-        ) {
-            escaped.push('\\');
-        }
-        escaped.push(character);
-    }
-    escaped
 }
 
 /// Helm truthiness of an ordered merge: nonempty exactly when some layer

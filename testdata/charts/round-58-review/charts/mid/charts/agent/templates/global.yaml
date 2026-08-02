@@ -1,0 +1,16 @@
+{{- range $key, $value := .Values.global }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-{{ $key }}
+data:
+  value: {{ $value | quote }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-default-host
+data:
+  has-agent: {{ hasKey .Values.global "agent" | quote }}

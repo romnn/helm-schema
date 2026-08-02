@@ -519,7 +519,7 @@
                         "standalone": {
                           "properties": {
                             "enabled": {
-                              "pattern": "^\\-$",
+                              "pattern": "^-$",
                               "type": "string"
                             }
                           },
@@ -942,7 +942,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -959,12 +959,12 @@
     "19": {
       "anyOf": [
         {
-          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
           "format": "int32",
           "type": "integer"
         },
         {
-          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
           "format": "int32",
           "type": "null"
         },
@@ -973,7 +973,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -985,7 +985,7 @@
           "type": "string"
         }
       ],
-      "description": "Number of seconds after which the probe times out."
+      "description": "How often (in seconds) to perform the probe"
     },
     "1A": {
       "properties": {
@@ -1223,7 +1223,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -1778,62 +1778,6 @@
     "1E": {
       "allOf": [
         {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-      "type": "string"
-    },
-    "1F": {
-      "allOf": [
-        {
           "anyOf": [
             {
               "properties": {
@@ -1985,7 +1929,7 @@
         }
       ]
     },
-    "1G": {
+    "1F": {
       "allOf": [
         {
           "properties": {
@@ -2108,6 +2052,62 @@
         }
       ]
     },
+    "1G": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
     "1H": {
       "allOf": [
         {
@@ -2152,7 +2152,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2161,7 +2161,7 @@
           }
         }
       ],
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
       "type": "string"
     },
     "1I": {
@@ -3134,7 +3134,7 @@
                                   "standalone": {
                                     "properties": {
                                       "enabled": {
-                                        "pattern": "^\\-$",
+                                        "pattern": "^-$",
                                         "type": "string"
                                       }
                                     },
@@ -3773,68 +3773,6 @@
     "1a": {
       "anyOf": [
         {
-          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        }
-      ],
-      "description": "Minimum consecutive successes for the probe to be considered successful after having failed"
-    },
-    "1b": {
-      "anyOf": [
-        {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        },
-        {
-          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-          "type": "string"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        }
-      ],
-      "description": "How often (in seconds) to perform the probe"
-    },
-    "1c": {
-      "anyOf": [
-        {
           "properties": {
             "global": {
               "properties": {
@@ -3920,6 +3858,68 @@
         }
       ]
     },
+    "1b": {
+      "anyOf": [
+        {
+          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ],
+      "description": "Number of seconds after which the probe times out."
+    },
+    "1c": {
+      "anyOf": [
+        {
+          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        },
+        {
+          "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+          "type": "string"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        }
+      ],
+      "description": "Minimum consecutive successes for the probe to be considered successful after having failed"
+    },
     "1d": {
       "anyOf": [
         {
@@ -3937,7 +3937,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -3962,7 +3962,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -4523,7 +4523,7 @@
       ]
     },
     "1p": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "1q": {
@@ -5640,7 +5640,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -5725,33 +5725,6 @@
       }
     },
     "20": {
-      "properties": {
-        "injector": {
-          "properties": {
-            "securityContext": {
-              "properties": {
-                "container": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "container"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "securityContext"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "injector"
-      ],
-      "type": "object"
-    },
-    "21": {
       "not": {
         "properties": {
           "injector": {
@@ -5780,7 +5753,7 @@
         "type": "object"
       }
     },
-    "22": {
+    "21": {
       "properties": {
         "server": {
           "properties": {
@@ -5807,7 +5780,7 @@
       ],
       "type": "object"
     },
-    "23": {
+    "22": {
       "properties": {
         "server": {
           "properties": {
@@ -5834,7 +5807,7 @@
       ],
       "type": "object"
     },
-    "24": {
+    "23": {
       "properties": {
         "server": {
           "properties": {
@@ -5862,7 +5835,7 @@
       ],
       "type": "object"
     },
-    "25": {
+    "24": {
       "properties": {
         "csi": {
           "properties": {
@@ -5889,7 +5862,7 @@
       ],
       "type": "object"
     },
-    "26": {
+    "25": {
       "properties": {
         "server": {
           "properties": {
@@ -5916,7 +5889,7 @@
       ],
       "type": "object"
     },
-    "27": {
+    "26": {
       "properties": {
         "server": {
           "properties": {
@@ -5943,7 +5916,7 @@
       ],
       "type": "object"
     },
-    "28": {
+    "27": {
       "properties": {
         "injector": {
           "properties": {
@@ -5970,7 +5943,7 @@
       ],
       "type": "object"
     },
-    "29": {
+    "28": {
       "properties": {
         "injector": {
           "properties": {
@@ -5997,26 +5970,34 @@
       ],
       "type": "object"
     },
-    "2A": {
+    "29": {
       "properties": {
-        "global": {
+        "injector": {
           "properties": {
-            "openshift": {
-              "$ref": "#/$defs/t"
+            "securityContext": {
+              "properties": {
+                "container": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "container"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "openshift"
+            "securityContext"
           ],
           "type": "object"
         }
       },
       "required": [
-        "global"
+        "injector"
       ],
       "type": "object"
     },
-    "2B": {
+    "2A": {
       "properties": {
         "injector": {
           "properties": {
@@ -6032,6 +6013,25 @@
       },
       "required": [
         "injector"
+      ],
+      "type": "object"
+    },
+    "2B": {
+      "properties": {
+        "global": {
+          "properties": {
+            "openshift": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "openshift"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
       ],
       "type": "object"
     },
@@ -6075,6 +6075,25 @@
     },
     "2E": {
       "properties": {
+        "ui": {
+          "properties": {
+            "annotations": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ui"
+      ],
+      "type": "object"
+    },
+    "2F": {
+      "properties": {
         "global": {
           "properties": {
             "enabled": {
@@ -6092,7 +6111,7 @@
       ],
       "type": "object"
     },
-    "2F": {
+    "2G": {
       "properties": {
         "server": {
           "properties": {
@@ -6111,7 +6130,7 @@
       ],
       "type": "object"
     },
-    "2G": {
+    "2H": {
       "properties": {
         "server": {
           "properties": {
@@ -6127,25 +6146,6 @@
       },
       "required": [
         "server"
-      ],
-      "type": "object"
-    },
-    "2H": {
-      "properties": {
-        "ui": {
-          "properties": {
-            "annotations": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ui"
       ],
       "type": "object"
     },
@@ -7642,7 +7642,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -8652,7 +8652,7 @@
                                 "standalone": {
                                   "properties": {
                                     "enabled": {
-                                      "pattern": "^\\-$",
+                                      "pattern": "^-$",
                                       "type": "string"
                                     }
                                   },
@@ -9569,7 +9569,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -9744,150 +9744,6 @@
       ]
     },
     "2V": {
-      "additionalProperties": false,
-      "description": "ResourceRequirements describes the compute resource requirements.",
-      "properties": {
-        "claims": {
-          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-          "items": {
-            "additionalProperties": false,
-            "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-            "properties": {
-              "name": {
-                "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-map-keys": [
-            "name"
-          ],
-          "x-kubernetes-list-type": "map"
-        },
-        "limits": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "number",
-                  "null"
-                ]
-              }
-            ]
-          },
-          "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "requests": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "number",
-                  "null"
-                ]
-              }
-            ]
-          },
-          "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "2W": {
-      "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-      "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "description": "key is the label key that the selector applies to.",
-                "type": "string"
-              },
-              "operator": {
-                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                "type": "string"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "matchLabels": {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": "object",
-      "x-kubernetes-map-type": "atomic"
-    },
-    "2X": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -10000,7 +9856,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -10033,7 +9889,88 @@
       ],
       "description": "Location where the PVC will be mounted."
     },
-    "2Y": {
+    "2W": {
+      "additionalProperties": false,
+      "description": "ResourceRequirements describes the compute resource requirements.",
+      "properties": {
+        "claims": {
+          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+          "items": {
+            "additionalProperties": false,
+            "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+            "properties": {
+              "name": {
+                "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
+        },
+        "limits": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "requests": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "2X": {
       "additionalProperties": {},
       "properties": {
         "secretKey": {
@@ -10149,7 +10086,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -10183,61 +10120,218 @@
         }
       }
     },
-    "2Z": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
+    "2Y": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
         },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
+        "matchLabels": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
+      },
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
+    },
+    "2Z": {
+      "additionalProperties": {},
+      "properties": {
+        "envName": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            }
+          ]
+        }
+      }
     },
     "2a": {
       "anyOf": [
@@ -11061,7 +11155,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -11103,7 +11197,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -11145,7 +11239,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -11198,7 +11292,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -11222,6 +11316,62 @@
       "type": "string"
     },
     "38": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+      "type": "string"
+    },
+    "39": {
       "allOf": [
         {
           "properties": {
@@ -11356,134 +11506,6 @@
                   ]
                 }
               ]
-            }
-          ]
-        }
-      ]
-    },
-    "39": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "server": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {
-                          "enum": [
-                            "true"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "server"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "server": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {
-                          "enum": [
-                            true
-                          ]
-                        }
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "server"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "server": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "createSecret": {
-                          "enum": [
-                            "true"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "createSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "server"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "server": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "createSecret": {
-                          "enum": [
-                            true
-                          ]
-                        }
-                      },
-                      "required": [
-                        "createSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "server"
-              ],
-              "type": "object"
             }
           ]
         }
@@ -12085,154 +12107,132 @@
       "description": "The externalTrafficPolicy can be set to either Cluster or Local\nand is only valid for LoadBalancer and NodePort service types.\nThe default value is Cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/#external-traffic-policy"
     },
     "3a": {
-      "additionalProperties": {},
-      "properties": {
-        "envName": {
+      "allOf": [
+        {
           "anyOf": [
             {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
+              "properties": {
+                "server": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {
+                          "enum": [
+                            "true"
+                          ]
                         }
                       },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      }
-                    ],
-                    "type": "string"
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
                   },
-                  {
-                    "maxItems": 0,
-                    "type": "array"
-                  },
-                  {
-                    "maxProperties": 0,
-                    "type": "object"
-                  }
-                ]
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
               },
-              "propertyNames": {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  }
-                ],
-                "type": "string"
-              },
+              "required": [
+                "server"
+              ],
               "type": "object"
             },
             {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                  }
+              "properties": {
+                "server": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
                 }
+              },
+              "required": [
+                "server"
               ],
-              "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
-              "type": "string"
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "server": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "createSecret": {
+                          "enum": [
+                            "true"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "createSecret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "server"
+              ],
+              "type": "object"
             },
             {
-              "allOf": [
-                {
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(null|Null|NULL)[ \\t]+#"
-                  }
+              "properties": {
+                "server": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "createSecret": {
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "createSecret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
                 }
+              },
+              "required": [
+                "server"
               ],
-              "type": "string"
+              "type": "object"
             }
           ]
         }
-      }
+      ]
     },
     "3b": {
       "additionalProperties": {},
@@ -12259,7 +12259,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -12442,7 +12442,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -12455,6 +12455,62 @@
       "type": "string"
     },
     "3g": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": "string"
+    },
+    "3h": {
       "allOf": [
         {
           "anyOf": [
@@ -12636,7 +12692,7 @@
         }
       ]
     },
-    "3h": {
+    "3i": {
       "additionalProperties": {},
       "properties": {
         "uid": {
@@ -12661,7 +12717,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -12676,7 +12732,7 @@
         }
       }
     },
-    "3i": {
+    "3j": {
       "allOf": [
         {
           "not": {
@@ -12720,7 +12776,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -12729,10 +12785,10 @@
           }
         }
       ],
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "3j": {
+    "3k": {
       "description": "TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. All topologySpreadConstraints are ANDed.",
       "items": {
         "additionalProperties": false,
@@ -12873,7 +12929,7 @@
       "x-kubernetes-patch-merge-key": "topologyKey",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "3k": {
+    "3l": {
       "anyOf": [
         {
           "allOf": [
@@ -12986,62 +13042,6 @@
           ]
         }
       ]
-    },
-    "3l": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-      "type": "string"
     },
     "3m": {
       "anyOf": [
@@ -13526,7 +13526,7 @@
                   "type": "string"
                 },
                 {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                   "type": "string"
                 },
                 {
@@ -14071,7 +14071,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -14237,7 +14237,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -14424,7 +14424,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -14600,7 +14600,7 @@
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                     }
                   },
                   {
@@ -14772,7 +14772,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -14965,7 +14965,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -15090,7 +15090,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -16092,24 +16092,30 @@
       "description": "resources:\nrequests:\nmemory: 256Mi\ncpu: 250m\nlimits:\nmemory: 256Mi\ncpu: 250m"
     },
     "4Y": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/t"
-          }
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
-      ]
+      }
     },
     "4Z": {
       "additionalProperties": {},
       "properties": {
-        "hosts": {
+        "paths": {
           "anyOf": [
             {
               "type": "array"
@@ -16863,33 +16869,12 @@
       ]
     },
     "50": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "51": {
       "description": "Value is the value of HTTP query param to be matched.",
       "maxLength": 1024,
       "minLength": 1,
       "type": "string"
     },
-    "52": {
+    "51": {
       "not": {
         "properties": {
           "fullnameOverride": {
@@ -16902,7 +16887,7 @@
         "type": "object"
       }
     },
-    "53": {
+    "52": {
       "properties": {
         "extraEnvironmentVars": {
           "$ref": "#/$defs/t"
@@ -16913,8 +16898,23 @@
       ],
       "type": "object"
     },
-    "54": {
+    "53": {
       "description": "Name of the storage class to use.  If null it will use the\nconfigured default Storage Class."
+    },
+    "54": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/t"
+          }
+        }
+      ]
     },
     "55": {
       "additionalProperties": {},
@@ -16932,38 +16932,29 @@
     "57": {
       "additionalProperties": {},
       "properties": {
-        "config": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "58": {
-      "properties": {
-        "prometheusRules": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "prometheusRules"
-      ],
-      "type": "object"
-    },
-    "59": {
-      "additionalProperties": {},
-      "properties": {
         "pullPolicy": {
           "$ref": "#/$defs/providerSchema1"
         }
       }
+    },
+    "58": {
+      "if": {
+        "type": "string"
+      },
+      "then": {
+        "anyOf": [
+          {
+            "additionalProperties": {}
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "59": {
+      "description": "Specify whether the Secret or its key must be defined",
+      "type": "boolean"
     },
     "5A": {
       "additionalProperties": false,
@@ -17250,7 +17241,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -18640,7 +18631,7 @@
                     "standalone": {
                       "properties": {
                         "enabled": {
-                          "pattern": "^\\-$",
+                          "pattern": "^-$",
                           "type": "string"
                         }
                       },
@@ -19833,25 +19824,6 @@
       "type": "object"
     },
     "5a": {
-      "if": {
-        "type": "string"
-      },
-      "then": {
-        "anyOf": [
-          {
-            "additionalProperties": {}
-          },
-          {
-            "type": "string"
-          }
-        ]
-      }
-    },
-    "5b": {
-      "description": "Specify whether the Secret or its key must be defined",
-      "type": "boolean"
-    },
-    "5c": {
       "anyOf": [
         {
           "type": "string"
@@ -19862,7 +19834,7 @@
       ],
       "description": "Labels to apply to the PVC"
     },
-    "5d": {
+    "5b": {
       "properties": {
         "type": {
           "anyOf": [
@@ -19877,18 +19849,35 @@
       },
       "type": "object"
     },
-    "5e": {
+    "5c": {
+      "additionalProperties": {},
       "properties": {
-        "labels": {
-          "$ref": "#/$defs/t"
+        "config": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "5d": {
+      "properties": {
+        "prometheusRules": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "labels"
+        "prometheusRules"
       ],
       "type": "object"
     },
-    "5f": {
+    "5e": {
       "properties": {
         "redundancyZones": {
           "enum": [
@@ -19901,7 +19890,7 @@
       ],
       "type": "object"
     },
-    "5g": {
+    "5f": {
       "anyOf": [
         {
           "type": "string"
@@ -19912,7 +19901,7 @@
       ],
       "description": "Annotations to apply to the PVC"
     },
-    "5h": {
+    "5g": {
       "properties": {
         "authDelegator": {
           "enum": [
@@ -19925,7 +19914,7 @@
       ],
       "type": "object"
     },
-    "5i": {
+    "5h": {
       "properties": {
         "networkPolicy": {
           "enum": [
@@ -19938,7 +19927,7 @@
       ],
       "type": "object"
     },
-    "5j": {
+    "5i": {
       "additionalProperties": {},
       "properties": {
         "tag": {
@@ -19946,7 +19935,7 @@
         }
       }
     },
-    "5k": {
+    "5j": {
       "allOf": [
         {
           "properties": {
@@ -20179,7 +20168,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -20681,6 +20670,17 @@
         }
       ]
     },
+    "5k": {
+      "properties": {
+        "labels": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "labels"
+      ],
+      "type": "object"
+    },
     "5l": {
       "properties": {
         "prometheusRules": {}
@@ -20709,6 +20709,21 @@
     },
     "5o": {
       "properties": {
+        "service": {}
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "5p": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "5q": {
+      "properties": {
         "enabled": {
           "enum": [
             true
@@ -20718,21 +20733,6 @@
       "required": [
         "enabled"
       ],
-      "type": "object"
-    },
-    "5p": {
-      "properties": {
-        "service": {}
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
-    },
-    "5q": {
-      "additionalProperties": {
-        "type": "string"
-      },
       "type": "object"
     },
     "5r": {
@@ -21608,7 +21608,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -21769,7 +21769,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -22715,7 +22715,7 @@
                     "standalone": {
                       "properties": {
                         "enabled": {
-                          "pattern": "^\\-$",
+                          "pattern": "^-$",
                           "type": "string"
                         }
                       },
@@ -23564,7 +23564,7 @@
                                 "standalone": {
                                   "properties": {
                                     "enabled": {
-                                      "pattern": "^\\-$",
+                                      "pattern": "^-$",
                                       "type": "string"
                                     }
                                   },
@@ -24193,7 +24193,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -24357,6 +24357,152 @@
     "Q": {
       "anyOf": [
         {
+          "properties": {
+            "csi": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "enabled": {
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "csi"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "csi": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "enabled": {
+                      "pattern": "^true$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "csi"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "R": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      ]
+    },
+    "S": {
+      "anyOf": [
+        {
+          "properties": {
+            "server": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "create": {
+                      "enum": [
+                        "true"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "server"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "server": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "create": {
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "server"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "T": {
+      "anyOf": [
+        {
           "additionalProperties": {
             "anyOf": [
               {
@@ -24467,7 +24613,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -24510,152 +24656,6 @@
         },
         {
           "type": "null"
-        }
-      ]
-    },
-    "R": {
-      "anyOf": [
-        {
-          "properties": {
-            "csi": {
-              "properties": {
-                "agent": {
-                  "properties": {
-                    "enabled": {
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "agent"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "csi": {
-              "properties": {
-                "agent": {
-                  "properties": {
-                    "enabled": {
-                      "pattern": "^true$",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "agent"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "S": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      ]
-    },
-    "T": {
-      "anyOf": [
-        {
-          "properties": {
-            "server": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "create": {
-                      "enum": [
-                        "true"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "server"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "server": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "create": {
-                      "enum": [
-                        true
-                      ]
-                    }
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "server"
-          ],
-          "type": "object"
         }
       ]
     },
@@ -24890,7 +24890,7 @@
                         "standalone": {
                           "properties": {
                             "enabled": {
-                              "pattern": "^\\-$",
+                              "pattern": "^-$",
                               "type": "string"
                             }
                           },
@@ -25948,7 +25948,7 @@
                         "standalone": {
                           "properties": {
                             "enabled": {
-                              "pattern": "^\\-$",
+                              "pattern": "^-$",
                               "type": "string"
                             }
                           },
@@ -26447,7 +26447,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -26610,7 +26610,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -26663,7 +26663,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -34447,7 +34447,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -35109,7 +35109,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -35491,7 +35491,7 @@
                                 "standalone": {
                                   "properties": {
                                     "enabled": {
-                                      "pattern": "^\\-$",
+                                      "pattern": "^-$",
                                       "type": "string"
                                     }
                                   },
@@ -36540,7 +36540,7 @@
                             "standalone": {
                               "properties": {
                                 "enabled": {
-                                  "pattern": "^\\-$",
+                                  "pattern": "^-$",
                                   "type": "string"
                                 }
                               },
@@ -40661,7 +40661,7 @@
     },
     "s": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "t": {
@@ -40691,7 +40691,7 @@
     },
     "u": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "v": {
@@ -40725,7 +40725,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/9"
@@ -40774,7 +40774,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/59"
+                        "$ref": "#/$defs/57"
                       }
                     }
                   }
@@ -40812,7 +40812,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/5j"
+                        "$ref": "#/$defs/5i"
                       }
                     }
                   }
@@ -40922,7 +40922,7 @@
             }
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/9"
@@ -40962,7 +40962,7 @@
             "$ref": "#/$defs/1T"
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/9"
@@ -41044,7 +41044,7 @@
             "$ref": "#/$defs/1T"
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/9"
@@ -41111,7 +41111,7 @@
                       "extraLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/S"
+                            "$ref": "#/$defs/R"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -41162,13 +41162,13 @@
                                 "$ref": "#/$defs/w"
                               },
                               {
-                                "$ref": "#/$defs/s"
+                                "$ref": "#/$defs/u"
                               },
                               {
                                 "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/u"
+                                "$ref": "#/$defs/s"
                               },
                               {
                                 "$ref": "#/$defs/v"
@@ -41259,7 +41259,7 @@
                               {
                                 "oneOf": [
                                   {
-                                    "$ref": "#/$defs/Q"
+                                    "$ref": "#/$defs/T"
                                   },
                                   {
                                     "$ref": "#/$defs/1f"
@@ -41316,13 +41316,13 @@
                                     "$ref": "#/$defs/w"
                                   },
                                   {
-                                    "$ref": "#/$defs/s"
+                                    "$ref": "#/$defs/u"
                                   },
                                   {
                                     "$ref": "#/$defs/r"
                                   },
                                   {
-                                    "$ref": "#/$defs/u"
+                                    "$ref": "#/$defs/s"
                                   },
                                   {
                                     "$ref": "#/$defs/v"
@@ -41521,7 +41521,7 @@
                 "description": "secrets-store-csi-driver-provider-vault",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/59"
+                    "$ref": "#/$defs/57"
                   }
                 }
               }
@@ -41549,7 +41549,7 @@
                 "description": "secrets-store-csi-driver-provider-vault",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/5j"
+                    "$ref": "#/$defs/5i"
                   }
                 }
               }
@@ -41621,7 +41621,7 @@
                     "description": "Used to configure livenessProbe for the pods.",
                     "properties": {
                       "periodSeconds": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/19"
                       }
                     }
                   }
@@ -41641,7 +41641,7 @@
                     "description": "Used to configure livenessProbe for the pods.",
                     "properties": {
                       "successThreshold": {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/1c"
                       }
                     }
                   }
@@ -41661,7 +41661,7 @@
                     "description": "Used to configure livenessProbe for the pods.",
                     "properties": {
                       "timeoutSeconds": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1b"
                       }
                     }
                   }
@@ -41701,7 +41701,7 @@
                       "extraLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/S"
+                            "$ref": "#/$defs/R"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -41742,7 +41742,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/1E"
+                        "$ref": "#/$defs/1H"
                       },
                       {
                         "$ref": "#/$defs/g"
@@ -41821,7 +41821,7 @@
                     "description": "Used to configure readinessProbe for the pods.",
                     "properties": {
                       "periodSeconds": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/19"
                       }
                     }
                   }
@@ -41841,7 +41841,7 @@
                     "description": "Used to configure readinessProbe for the pods.",
                     "properties": {
                       "successThreshold": {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/1c"
                       }
                     }
                   }
@@ -41861,7 +41861,7 @@
                     "description": "Used to configure readinessProbe for the pods.",
                     "properties": {
                       "timeoutSeconds": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1b"
                       }
                     }
                   }
@@ -41898,7 +41898,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/2V"
+                        "$ref": "#/$defs/2W"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -41926,7 +41926,7 @@
                       "extraLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/S"
+                            "$ref": "#/$defs/R"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -42956,7 +42956,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/25"
+              "$ref": "#/$defs/24"
             }
           },
           {
@@ -42988,7 +42988,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/25"
+            "$ref": "#/$defs/24"
           },
           {
             "$ref": "#/$defs/9"
@@ -43030,7 +43030,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/25"
+            "$ref": "#/$defs/24"
           },
           {
             "$ref": "#/$defs/9"
@@ -43061,7 +43061,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1G"
+            "$ref": "#/$defs/1F"
           },
           {
             "$ref": "#/$defs/1n"
@@ -43122,13 +43122,13 @@
                 "$ref": "#/$defs/o"
               },
               {
-                "$ref": "#/$defs/2E"
+                "$ref": "#/$defs/2F"
               },
               {
                 "$ref": "#/$defs/2b"
               },
               {
-                "$ref": "#/$defs/2F"
+                "$ref": "#/$defs/2G"
               },
               {
                 "$ref": "#/$defs/1h"
@@ -43201,10 +43201,10 @@
                 "$ref": "#/$defs/1h"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1a"
               },
               {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/S"
               }
             ]
           },
@@ -43217,7 +43217,7 @@
                 "$ref": "#/$defs/1h"
               },
               {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/S"
               },
               {
                 "$ref": "#/$defs/3O"
@@ -43455,7 +43455,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/R"
+                  "$ref": "#/$defs/Q"
                 }
               },
               {
@@ -43494,7 +43494,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/5k"
+            "$ref": "#/$defs/5j"
           },
           {
             "$ref": "#/$defs/1I"
@@ -43525,13 +43525,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/5k"
+            "$ref": "#/$defs/5j"
           },
           {
             "$ref": "#/$defs/1I"
           },
           {
-            "$ref": "#/$defs/38"
+            "$ref": "#/$defs/39"
           }
         ]
       },
@@ -43543,11 +43543,11 @@
             "properties": {
               "imagePullSecrets": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/5a"
+                  "$ref": "#/$defs/58"
                 },
                 "description": "Image pull secret to use for registry authentication.\nAlternatively, the value may be specified as an array of strings.\nimagePullSecrets:\n- name: image-pull-secret",
                 "items": {
-                  "$ref": "#/$defs/5a"
+                  "$ref": "#/$defs/58"
                 }
               }
             }
@@ -43584,7 +43584,7 @@
             "$ref": "#/$defs/1I"
           },
           {
-            "$ref": "#/$defs/38"
+            "$ref": "#/$defs/39"
           }
         ]
       },
@@ -43690,16 +43690,16 @@
             "$ref": "#/$defs/9"
           },
           {
-            "$ref": "#/$defs/1F"
+            "$ref": "#/$defs/1E"
           },
           {
-            "$ref": "#/$defs/3g"
+            "$ref": "#/$defs/3h"
           },
           {
             "$ref": "#/$defs/1g"
           },
           {
-            "$ref": "#/$defs/39"
+            "$ref": "#/$defs/3a"
           }
         ]
       },
@@ -43715,7 +43715,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/3i"
+                    "$ref": "#/$defs/3g"
                   },
                   {
                     "$ref": "#/$defs/g"
@@ -43745,7 +43745,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1G"
+        "$ref": "#/$defs/1F"
       },
       "then": {
         "additionalProperties": {},
@@ -43779,13 +43779,13 @@
                         "$ref": "#/$defs/w"
                       },
                       {
-                        "$ref": "#/$defs/s"
+                        "$ref": "#/$defs/u"
                       },
                       {
                         "$ref": "#/$defs/r"
                       },
                       {
-                        "$ref": "#/$defs/u"
+                        "$ref": "#/$defs/s"
                       },
                       {
                         "$ref": "#/$defs/v"
@@ -43882,7 +43882,7 @@
                                 "$ref": "#/$defs/c"
                               },
                               {
-                                "$ref": "#/$defs/3i"
+                                "$ref": "#/$defs/3g"
                               },
                               {
                                 "$ref": "#/$defs/g"
@@ -43927,13 +43927,13 @@
                                     "$ref": "#/$defs/w"
                                   },
                                   {
-                                    "$ref": "#/$defs/s"
+                                    "$ref": "#/$defs/u"
                                   },
                                   {
                                     "$ref": "#/$defs/r"
                                   },
                                   {
-                                    "$ref": "#/$defs/u"
+                                    "$ref": "#/$defs/s"
                                   },
                                   {
                                     "$ref": "#/$defs/v"
@@ -44192,7 +44192,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/1H"
+                        "$ref": "#/$defs/1G"
                       },
                       {
                         "$ref": "#/$defs/g"
@@ -44238,7 +44238,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/S"
+                        "$ref": "#/$defs/R"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -44392,7 +44392,7 @@
                     "description": "Used to define custom livenessProbe settings",
                     "properties": {
                       "periodSeconds": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/19"
                       }
                     }
                   }
@@ -44411,7 +44411,7 @@
                     "description": "Used to define custom livenessProbe settings",
                     "properties": {
                       "successThreshold": {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/1c"
                       }
                     }
                   }
@@ -44430,7 +44430,7 @@
                     "description": "Used to define custom livenessProbe settings",
                     "properties": {
                       "timeoutSeconds": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1b"
                       }
                     }
                   }
@@ -44560,7 +44560,7 @@
                     "description": "Configures the port the injector should listen on",
                     "oneOf": [
                       {
-                        "$ref": "#/$defs/Q"
+                        "$ref": "#/$defs/T"
                       },
                       {
                         "$ref": "#/$defs/1f"
@@ -44583,7 +44583,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/1E"
+                        "$ref": "#/$defs/1H"
                       },
                       {
                         "$ref": "#/$defs/g"
@@ -44787,7 +44787,7 @@
                     "description": "Used to define custom startupProbe settings",
                     "properties": {
                       "periodSeconds": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/19"
                       }
                     }
                   }
@@ -44806,7 +44806,7 @@
                     "description": "Used to define custom startupProbe settings",
                     "properties": {
                       "successThreshold": {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/1c"
                       }
                     }
                   }
@@ -44825,7 +44825,7 @@
                     "description": "Used to define custom startupProbe settings",
                     "properties": {
                       "timeoutSeconds": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1b"
                       }
                     }
                   }
@@ -44866,7 +44866,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/3l"
+                            "$ref": "#/$defs/38"
                           },
                           {
                             "$ref": "#/$defs/g"
@@ -44945,7 +44945,7 @@
                       "namespaceSelector": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/2W"
+                            "$ref": "#/$defs/2Y"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -45694,7 +45694,7 @@
           {
             "properties": {
               "injector": {
-                "$ref": "#/$defs/53"
+                "$ref": "#/$defs/52"
               }
             },
             "required": [
@@ -45781,7 +45781,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/3l"
+                    "$ref": "#/$defs/38"
                   },
                   {
                     "$ref": "#/$defs/g"
@@ -45836,7 +45836,7 @@
             "additionalProperties": {},
             "properties": {
               "injector": {
-                "$ref": "#/$defs/3h"
+                "$ref": "#/$defs/3i"
               }
             }
           }
@@ -45934,7 +45934,7 @@
               "namespaceSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/2W"
+                    "$ref": "#/$defs/2Y"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -45955,7 +45955,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/2B"
+              "$ref": "#/$defs/2A"
             }
           },
           {
@@ -45976,7 +45976,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2B"
+            "$ref": "#/$defs/2A"
           },
           {
             "$ref": "#/$defs/6"
@@ -46007,7 +46007,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/2B"
+            "$ref": "#/$defs/2A"
           },
           {
             "$ref": "#/$defs/6"
@@ -46072,7 +46072,7 @@
             "$ref": "#/$defs/6"
           },
           {
-            "$ref": "#/$defs/3k"
+            "$ref": "#/$defs/3l"
           }
         ]
       },
@@ -46103,7 +46103,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/20"
+              "$ref": "#/$defs/29"
             }
           },
           {
@@ -46135,7 +46135,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/20"
+            "$ref": "#/$defs/29"
           },
           {
             "$ref": "#/$defs/6"
@@ -46177,7 +46177,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/20"
+            "$ref": "#/$defs/29"
           },
           {
             "$ref": "#/$defs/6"
@@ -46437,7 +46437,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/29"
+              "$ref": "#/$defs/28"
             }
           },
           {
@@ -46477,7 +46477,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/29"
+            "$ref": "#/$defs/28"
           },
           {
             "$ref": "#/$defs/6"
@@ -46516,10 +46516,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/28"
+            "$ref": "#/$defs/27"
           },
           {
-            "$ref": "#/$defs/29"
+            "$ref": "#/$defs/28"
           },
           {
             "$ref": "#/$defs/6"
@@ -46558,7 +46558,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/28"
+            "$ref": "#/$defs/27"
           },
           {
             "$ref": "#/$defs/6"
@@ -46871,7 +46871,7 @@
               "topologySpreadConstraints": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/3j"
+                    "$ref": "#/$defs/3k"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -47137,7 +47137,7 @@
             "$ref": "#/$defs/6"
           },
           {
-            "$ref": "#/$defs/3k"
+            "$ref": "#/$defs/3l"
           }
         ]
       },
@@ -47240,7 +47240,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/21"
+            "$ref": "#/$defs/20"
           },
           {
             "not": {
@@ -47281,7 +47281,7 @@
             "$ref": "#/$defs/4p"
           },
           {
-            "$ref": "#/$defs/21"
+            "$ref": "#/$defs/20"
           },
           {
             "$ref": "#/$defs/6"
@@ -47314,7 +47314,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/21"
+            "$ref": "#/$defs/20"
           },
           {
             "$ref": "#/$defs/3G"
@@ -47361,7 +47361,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1G"
+            "$ref": "#/$defs/1F"
           },
           {
             "$ref": "#/$defs/1O"
@@ -47388,16 +47388,16 @@
             "$ref": "#/$defs/1s"
           },
           {
-            "$ref": "#/$defs/1F"
+            "$ref": "#/$defs/1E"
           },
           {
-            "$ref": "#/$defs/3g"
+            "$ref": "#/$defs/3h"
           },
           {
             "$ref": "#/$defs/1g"
           },
           {
-            "$ref": "#/$defs/39"
+            "$ref": "#/$defs/3a"
           }
         ]
       },
@@ -47477,7 +47477,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/2E"
+                "$ref": "#/$defs/2F"
               },
               {
                 "$ref": "#/$defs/l"
@@ -47486,7 +47486,7 @@
                 "$ref": "#/$defs/2b"
               },
               {
-                "$ref": "#/$defs/2F"
+                "$ref": "#/$defs/2G"
               },
               {
                 "$ref": "#/$defs/1h"
@@ -47499,7 +47499,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/2A"
+                "$ref": "#/$defs/2B"
               },
               {
                 "$ref": "#/$defs/l"
@@ -47528,7 +47528,7 @@
                 "$ref": "#/$defs/17"
               },
               {
-                "$ref": "#/$defs/52"
+                "$ref": "#/$defs/51"
               },
               {
                 "$ref": "#/$defs/3"
@@ -47553,7 +47553,7 @@
                 "$ref": "#/$defs/K"
               },
               {
-                "$ref": "#/$defs/52"
+                "$ref": "#/$defs/51"
               },
               {
                 "$ref": "#/$defs/3"
@@ -47764,10 +47764,10 @@
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/1c"
+                "$ref": "#/$defs/1a"
               },
               {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/S"
               }
             ]
           },
@@ -47813,7 +47813,7 @@
                 "$ref": "#/$defs/l"
               },
               {
-                "$ref": "#/$defs/T"
+                "$ref": "#/$defs/S"
               },
               {
                 "$ref": "#/$defs/3O"
@@ -47836,7 +47836,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/2G"
+              "$ref": "#/$defs/2H"
             }
           },
           {
@@ -47866,7 +47866,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2G"
+            "$ref": "#/$defs/2H"
           },
           {
             "$ref": "#/$defs/a"
@@ -47919,7 +47919,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/2G"
+            "$ref": "#/$defs/2H"
           },
           {
             "$ref": "#/$defs/3"
@@ -48231,7 +48231,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/23"
+              "$ref": "#/$defs/22"
             }
           },
           {
@@ -48278,7 +48278,7 @@
             "$ref": "#/$defs/15"
           },
           {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/22"
           },
           {
             "$ref": "#/$defs/a"
@@ -48343,7 +48343,7 @@
             "$ref": "#/$defs/15"
           },
           {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/22"
           },
           {
             "$ref": "#/$defs/3"
@@ -48382,7 +48382,7 @@
                 "description": "This configures the Vault Statefulset to create a PVC for audit\nlogs.  Once Vault is deployed, initialized, and unsealed, Vault must\nbe configured to use this for audit logs.  This will be mounted to\n/vault/audit\nSee https://developer.hashicorp.com/vault/docs/audit to know more",
                 "properties": {
                   "annotations": {
-                    "$ref": "#/$defs/5g"
+                    "$ref": "#/$defs/5f"
                   }
                 }
               }
@@ -48496,7 +48496,7 @@
               "server": {
                 "properties": {
                   "auditStorage": {
-                    "$ref": "#/$defs/5e"
+                    "$ref": "#/$defs/5k"
                   }
                 },
                 "required": [
@@ -48550,7 +48550,7 @@
                 "description": "This configures the Vault Statefulset to create a PVC for audit\nlogs.  Once Vault is deployed, initialized, and unsealed, Vault must\nbe configured to use this for audit logs.  This will be mounted to\n/vault/audit\nSee https://developer.hashicorp.com/vault/docs/audit to know more",
                 "properties": {
                   "labels": {
-                    "$ref": "#/$defs/5c"
+                    "$ref": "#/$defs/5a"
                   }
                 }
               }
@@ -48589,7 +48589,7 @@
                     "description": "This configures the Vault Statefulset to create a PVC for audit\nlogs.  Once Vault is deployed, initialized, and unsealed, Vault must\nbe configured to use this for audit logs.  This will be mounted to\n/vault/audit\nSee https://developer.hashicorp.com/vault/docs/audit to know more",
                     "properties": {
                       "mountPath": {
-                        "$ref": "#/$defs/2X"
+                        "$ref": "#/$defs/2V"
                       }
                     }
                   }
@@ -48841,7 +48841,7 @@
         "additionalProperties": {},
         "properties": {
           "server": {
-            "$ref": "#/$defs/57"
+            "$ref": "#/$defs/5c"
           }
         }
       }
@@ -48981,7 +48981,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/26"
+              "$ref": "#/$defs/25"
             }
           },
           {
@@ -49031,7 +49031,7 @@
             "$ref": "#/$defs/16"
           },
           {
-            "$ref": "#/$defs/26"
+            "$ref": "#/$defs/25"
           },
           {
             "$ref": "#/$defs/a"
@@ -49099,7 +49099,7 @@
             "$ref": "#/$defs/16"
           },
           {
-            "$ref": "#/$defs/26"
+            "$ref": "#/$defs/25"
           },
           {
             "$ref": "#/$defs/3"
@@ -49141,7 +49141,7 @@
                 "description": "This configures the Vault Statefulset to create a PVC for data\nstorage when using the file or raft backend storage engines.\nSee https://developer.hashicorp.com/vault/docs/configuration/storage to know more",
                 "properties": {
                   "annotations": {
-                    "$ref": "#/$defs/5g"
+                    "$ref": "#/$defs/5f"
                   }
                 }
               }
@@ -49261,7 +49261,7 @@
               "server": {
                 "properties": {
                   "dataStorage": {
-                    "$ref": "#/$defs/5e"
+                    "$ref": "#/$defs/5k"
                   }
                 },
                 "required": [
@@ -49318,7 +49318,7 @@
                 "description": "This configures the Vault Statefulset to create a PVC for data\nstorage when using the file or raft backend storage engines.\nSee https://developer.hashicorp.com/vault/docs/configuration/storage to know more",
                 "properties": {
                   "labels": {
-                    "$ref": "#/$defs/5c"
+                    "$ref": "#/$defs/5a"
                   }
                 }
               }
@@ -49383,7 +49383,7 @@
                     "description": "This configures the Vault Statefulset to create a PVC for data\nstorage when using the file or raft backend storage engines.\nSee https://developer.hashicorp.com/vault/docs/configuration/storage to know more",
                     "properties": {
                       "mountPath": {
-                        "$ref": "#/$defs/2X"
+                        "$ref": "#/$defs/2V"
                       }
                     }
                   }
@@ -49580,7 +49580,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/1H"
+                        "$ref": "#/$defs/1G"
                       },
                       {
                         "$ref": "#/$defs/g"
@@ -49707,13 +49707,13 @@
                             "$ref": "#/$defs/w"
                           },
                           {
-                            "$ref": "#/$defs/s"
+                            "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/s"
                           },
                           {
                             "$ref": "#/$defs/v"
@@ -49825,7 +49825,7 @@
             "additionalProperties": {},
             "properties": {
               "external": {
-                "$ref": "#/$defs/57"
+                "$ref": "#/$defs/5c"
               }
             }
           }
@@ -49906,7 +49906,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/S"
+                        "$ref": "#/$defs/R"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -50040,7 +50040,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/1H"
+                            "$ref": "#/$defs/1G"
                           },
                           {
                             "$ref": "#/$defs/g"
@@ -50158,13 +50158,13 @@
                                 "$ref": "#/$defs/w"
                               },
                               {
-                                "$ref": "#/$defs/s"
+                                "$ref": "#/$defs/u"
                               },
                               {
                                 "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/u"
+                                "$ref": "#/$defs/s"
                               },
                               {
                                 "$ref": "#/$defs/v"
@@ -50285,7 +50285,7 @@
                         "$ref": "#/$defs/c"
                       },
                       {
-                        "$ref": "#/$defs/1E"
+                        "$ref": "#/$defs/1H"
                       },
                       {
                         "$ref": "#/$defs/g"
@@ -50321,7 +50321,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/2V"
+                        "$ref": "#/$defs/2W"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -50372,13 +50372,13 @@
                                 "$ref": "#/$defs/w"
                               },
                               {
-                                "$ref": "#/$defs/s"
+                                "$ref": "#/$defs/u"
                               },
                               {
                                 "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/u"
+                                "$ref": "#/$defs/s"
                               },
                               {
                                 "$ref": "#/$defs/v"
@@ -50484,13 +50484,13 @@
                             "$ref": "#/$defs/w"
                           },
                           {
-                            "$ref": "#/$defs/s"
+                            "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/s"
                           },
                           {
                             "$ref": "#/$defs/v"
@@ -50567,7 +50567,7 @@
           {
             "properties": {
               "server": {
-                "$ref": "#/$defs/53"
+                "$ref": "#/$defs/52"
               }
             },
             "required": [
@@ -50644,11 +50644,11 @@
                 "properties": {
                   "extraSecretEnvironmentVars": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/3a"
+                      "$ref": "#/$defs/2Z"
                     },
                     "description": "extraSecretEnvironmentVars is a list of extra environment variables to set with the stateful set.\nThese variables take value from existing Secret objects.\n- envName: AWS_SECRET_ACCESS_KEY\nsecretName: vault\nsecretKey: AWS_SECRET_ACCESS_KEY",
                     "items": {
-                      "$ref": "#/$defs/3a"
+                      "$ref": "#/$defs/2Z"
                     }
                   }
                 }
@@ -50663,11 +50663,11 @@
                 "properties": {
                   "extraSecretEnvironmentVars": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/2Y"
+                      "$ref": "#/$defs/2X"
                     },
                     "description": "extraSecretEnvironmentVars is a list of extra environment variables to set with the stateful set.\nThese variables take value from existing Secret objects.\n- envName: AWS_SECRET_ACCESS_KEY\nsecretName: vault\nsecretKey: AWS_SECRET_ACCESS_KEY",
                     "items": {
-                      "$ref": "#/$defs/2Y"
+                      "$ref": "#/$defs/2X"
                     }
                   }
                 }
@@ -50884,13 +50884,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/5d"
+                          "$ref": "#/$defs/5b"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/5d"
+                          "$ref": "#/$defs/5b"
                         },
                         "type": "object"
                       },
@@ -50966,7 +50966,7 @@
             "additionalProperties": {},
             "properties": {
               "server": {
-                "$ref": "#/$defs/3h"
+                "$ref": "#/$defs/3i"
               }
             }
           }
@@ -51898,7 +51898,7 @@
                                             "value": {
                                               "anyOf": [
                                                 {
-                                                  "$ref": "#/$defs/51"
+                                                  "$ref": "#/$defs/50"
                                                 },
                                                 {
                                                   "$ref": "#/$defs/i"
@@ -52837,7 +52837,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "labels": {
-                        "$ref": "#/$defs/4Y"
+                        "$ref": "#/$defs/54"
                       }
                     }
                   }
@@ -52978,7 +52978,7 @@
                                         "$ref": "#/$defs/3L"
                                       },
                                       "value": {
-                                        "$ref": "#/$defs/51"
+                                        "$ref": "#/$defs/50"
                                       }
                                     },
                                     "required": [
@@ -53164,7 +53164,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "annotations": {
-                    "$ref": "#/$defs/4Y"
+                    "$ref": "#/$defs/54"
                   }
                 }
               }
@@ -53520,10 +53520,10 @@
                     "properties": {
                       "hosts": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/50"
+                          "$ref": "#/$defs/4Z"
                         },
                         "items": {
-                          "$ref": "#/$defs/50"
+                          "$ref": "#/$defs/4Z"
                         }
                       }
                     }
@@ -53582,11 +53582,11 @@
                     "properties": {
                       "tls": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/4Z"
+                          "$ref": "#/$defs/4Y"
                         },
                         "description": "- path: /*\nbackend:\nservice:\nname: ssl-redirect\nport:\nnumber: use-annotation\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
                         "items": {
-                          "$ref": "#/$defs/4Z"
+                          "$ref": "#/$defs/4Y"
                         }
                       }
                     }
@@ -53680,13 +53680,13 @@
                                 "$ref": "#/$defs/w"
                               },
                               {
-                                "$ref": "#/$defs/s"
+                                "$ref": "#/$defs/u"
                               },
                               {
                                 "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/u"
+                                "$ref": "#/$defs/s"
                               },
                               {
                                 "$ref": "#/$defs/v"
@@ -53736,7 +53736,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/S"
+                            "$ref": "#/$defs/R"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -54029,7 +54029,7 @@
                     "description": "Used to enable a livenessProbe for the pods",
                     "properties": {
                       "periodSeconds": {
-                        "$ref": "#/$defs/1b"
+                        "$ref": "#/$defs/19"
                       }
                     }
                   }
@@ -54048,7 +54048,7 @@
                     "description": "Used to enable a livenessProbe for the pods",
                     "properties": {
                       "successThreshold": {
-                        "$ref": "#/$defs/1a"
+                        "$ref": "#/$defs/1c"
                       }
                     }
                   }
@@ -54067,7 +54067,7 @@
                     "description": "Used to enable a livenessProbe for the pods",
                     "properties": {
                       "timeoutSeconds": {
-                        "$ref": "#/$defs/19"
+                        "$ref": "#/$defs/1b"
                       }
                     }
                   }
@@ -54198,7 +54198,7 @@
                         "description": "Port number on which livenessProbe will be checked if httpGet is used as the livenessProbe handler",
                         "oneOf": [
                           {
-                            "$ref": "#/$defs/Q"
+                            "$ref": "#/$defs/T"
                           },
                           {
                             "$ref": "#/$defs/1f"
@@ -54747,7 +54747,7 @@
                         "description": "Port number on which readinessProbe will be checked.",
                         "oneOf": [
                           {
-                            "$ref": "#/$defs/Q"
+                            "$ref": "#/$defs/T"
                           },
                           {
                             "$ref": "#/$defs/1f"
@@ -55081,7 +55081,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/23"
           },
           {
             "$ref": "#/$defs/H"
@@ -55322,13 +55322,13 @@
                                 "$ref": "#/$defs/w"
                               },
                               {
-                                "$ref": "#/$defs/s"
+                                "$ref": "#/$defs/u"
                               },
                               {
                                 "$ref": "#/$defs/r"
                               },
                               {
-                                "$ref": "#/$defs/u"
+                                "$ref": "#/$defs/s"
                               },
                               {
                                 "$ref": "#/$defs/v"
@@ -55582,7 +55582,7 @@
                         "description": "Target port to which the service should be mapped to",
                         "oneOf": [
                           {
-                            "$ref": "#/$defs/Q"
+                            "$ref": "#/$defs/T"
                           },
                           {
                             "$ref": "#/$defs/1f"
@@ -55709,7 +55709,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/23"
           },
           {
             "$ref": "#/$defs/7"
@@ -56013,7 +56013,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/24"
+            "$ref": "#/$defs/23"
           },
           {
             "$ref": "#/$defs/H"
@@ -56145,14 +56145,14 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/22"
+              "$ref": "#/$defs/21"
             }
           },
           {
-            "$ref": "#/$defs/1c"
+            "$ref": "#/$defs/1a"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           }
         ]
       },
@@ -56180,13 +56180,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/22"
+            "$ref": "#/$defs/21"
           },
           {
-            "$ref": "#/$defs/1c"
+            "$ref": "#/$defs/1a"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           }
         ]
       },
@@ -56225,13 +56225,13 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/22"
+            "$ref": "#/$defs/21"
           },
           {
-            "$ref": "#/$defs/1c"
+            "$ref": "#/$defs/1a"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           }
         ]
       },
@@ -56257,7 +56257,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1F"
+        "$ref": "#/$defs/1E"
       },
       "then": {
         "allOf": [
@@ -56274,7 +56274,7 @@
                       "extraLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/S"
+                            "$ref": "#/$defs/R"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -56304,7 +56304,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/2Z"
+                            "$ref": "#/$defs/3j"
                           },
                           {
                             "$ref": "#/$defs/g"
@@ -56342,13 +56342,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/2E"
+                "$ref": "#/$defs/2F"
               },
               {
                 "$ref": "#/$defs/2b"
               },
               {
-                "$ref": "#/$defs/2F"
+                "$ref": "#/$defs/2G"
               },
               {
                 "$ref": "#/$defs/1h"
@@ -56396,13 +56396,13 @@
                             "$ref": "#/$defs/w"
                           },
                           {
-                            "$ref": "#/$defs/s"
+                            "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/s"
                           },
                           {
                             "$ref": "#/$defs/v"
@@ -56473,7 +56473,7 @@
                   "server": {
                     "properties": {
                       "authDelegator": {
-                        "$ref": "#/$defs/5o"
+                        "$ref": "#/$defs/5q"
                       }
                     },
                     "required": [
@@ -56623,7 +56623,7 @@
                             "$ref": "#/$defs/c"
                           },
                           {
-                            "$ref": "#/$defs/2Z"
+                            "$ref": "#/$defs/3j"
                           },
                           {
                             "$ref": "#/$defs/g"
@@ -56657,7 +56657,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/2A"
+        "$ref": "#/$defs/2B"
       },
       "then": {
         "additionalProperties": {},
@@ -56793,7 +56793,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/27"
+              "$ref": "#/$defs/26"
             }
           },
           {
@@ -56839,7 +56839,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/27"
+            "$ref": "#/$defs/26"
           },
           {
             "$ref": "#/$defs/a"
@@ -56903,7 +56903,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/27"
+            "$ref": "#/$defs/26"
           },
           {
             "$ref": "#/$defs/3"
@@ -57425,7 +57425,7 @@
               "topologySpreadConstraints": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/3j"
+                    "$ref": "#/$defs/3k"
                   },
                   {
                     "$ref": "#/$defs/2"
@@ -57649,7 +57649,7 @@
                   "selectors": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/5q"
+                        "$ref": "#/$defs/5p"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -57698,7 +57698,7 @@
                                     "$ref": "#/$defs/3Y"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/5b"
+                                    "$ref": "#/$defs/59"
                                   }
                                 },
                                 "required": [
@@ -57758,13 +57758,13 @@
                             "$ref": "#/$defs/w"
                           },
                           {
-                            "$ref": "#/$defs/s"
+                            "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/s"
                           },
                           {
                             "$ref": "#/$defs/v"
@@ -57961,13 +57961,13 @@
                             "$ref": "#/$defs/w"
                           },
                           {
-                            "$ref": "#/$defs/s"
+                            "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/s"
                           },
                           {
                             "$ref": "#/$defs/v"
@@ -58020,7 +58020,7 @@
                       "selectors": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/5q"
+                            "$ref": "#/$defs/5p"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -58104,7 +58104,7 @@
                                     "$ref": "#/$defs/3Y"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/5b"
+                                    "$ref": "#/$defs/59"
                                   }
                                 },
                                 "required": [
@@ -58220,7 +58220,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/2H"
+              "$ref": "#/$defs/2E"
             }
           },
           {
@@ -58258,7 +58258,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2H"
+            "$ref": "#/$defs/2E"
           },
           {
             "$ref": "#/$defs/7"
@@ -58306,7 +58306,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/2H"
+            "$ref": "#/$defs/2E"
           },
           {
             "$ref": "#/$defs/3"
@@ -58656,13 +58656,13 @@
                             "$ref": "#/$defs/w"
                           },
                           {
-                            "$ref": "#/$defs/s"
+                            "$ref": "#/$defs/u"
                           },
                           {
                             "$ref": "#/$defs/r"
                           },
                           {
-                            "$ref": "#/$defs/u"
+                            "$ref": "#/$defs/s"
                           },
                           {
                             "$ref": "#/$defs/v"
@@ -58762,10 +58762,10 @@
             "properties": {
               "loadBalancerSourceRanges": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/Q"
+                  "$ref": "#/$defs/T"
                 },
                 "items": {
-                  "$ref": "#/$defs/Q"
+                  "$ref": "#/$defs/T"
                 }
               }
             }
@@ -58932,7 +58932,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/2A"
+            "$ref": "#/$defs/2B"
           },
           {
             "anyOf": [
@@ -58986,7 +58986,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/28"
+            "$ref": "#/$defs/27"
           },
           {
             "anyOf": [
@@ -59337,7 +59337,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/9"
@@ -59394,7 +59394,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/Q"
           },
           {
             "$ref": "#/$defs/9"
@@ -60417,7 +60417,7 @@
                 "not": {
                   "properties": {
                     "injector": {
-                      "$ref": "#/$defs/5p"
+                      "$ref": "#/$defs/5o"
                     }
                   },
                   "required": [
@@ -60621,7 +60621,7 @@
               {
                 "properties": {
                   "server": {
-                    "$ref": "#/$defs/5h"
+                    "$ref": "#/$defs/5g"
                   }
                 },
                 "required": [
@@ -60965,7 +60965,7 @@
                       "ha": {
                         "properties": {
                           "raft": {
-                            "$ref": "#/$defs/5f"
+                            "$ref": "#/$defs/5e"
                           }
                         },
                         "required": [
@@ -61217,7 +61217,7 @@
               {
                 "properties": {
                   "server": {
-                    "$ref": "#/$defs/5i"
+                    "$ref": "#/$defs/5h"
                   }
                 },
                 "required": [
@@ -61290,7 +61290,7 @@
                 "not": {
                   "properties": {
                     "server": {
-                      "$ref": "#/$defs/5p"
+                      "$ref": "#/$defs/5o"
                     }
                   },
                   "required": [
@@ -61892,7 +61892,7 @@
               {
                 "properties": {
                   "serverTelemetry": {
-                    "$ref": "#/$defs/58"
+                    "$ref": "#/$defs/5d"
                   }
                 },
                 "required": [
@@ -62766,7 +62766,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/5o"
+                        "$ref": "#/$defs/5q"
                       },
                       {
                         "$ref": "#/$defs/4T"
@@ -62953,7 +62953,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/5h"
+                "$ref": "#/$defs/5g"
               }
             ]
           },
@@ -63017,7 +63017,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/5f"
+                            "$ref": "#/$defs/5e"
                           }
                         ]
                       },
@@ -63039,7 +63039,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/5i"
+                "$ref": "#/$defs/5h"
               }
             ]
           },
@@ -63089,7 +63089,7 @@
               "description": "Size of the PVC created"
             },
             "storageClass": {
-              "$ref": "#/$defs/54"
+              "$ref": "#/$defs/53"
             }
           }
         },
@@ -63123,7 +63123,7 @@
               "description": "Size of the PVC created"
             },
             "storageClass": {
-              "$ref": "#/$defs/54"
+              "$ref": "#/$defs/53"
             }
           }
         },
@@ -63540,7 +63540,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/58"
+                "$ref": "#/$defs/5d"
               }
             ]
           },

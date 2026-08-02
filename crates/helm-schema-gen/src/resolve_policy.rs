@@ -57,10 +57,6 @@ pub(crate) const PLAIN_SCALAR_BOOL_TOKEN_PATTERN: &str =
 /// claim), and sign-led leading-dot floats ("-.5"). An unsigned leading
 /// underscore stays a string (the resolver never enters its numeric path).
 const PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN: &str = r"^([0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$";
-/// Radix-prefixed tokens the resolver provably reads as integers, with digit
-/// counts bounded to stay within `int64` for signed spellings.
-const PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN: &str =
-    r"^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$";
 /// The exact special-float table entries: signed infinities and UNSIGNED
 /// NaNs only — "+.nan" is absent from the resolver table and stays a string.
 pub(crate) const PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN: &str =
@@ -75,7 +71,7 @@ pub(crate) const PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN: &str =
 /// downstream ("08" reaches an int32 slot as 8). Digit counts stay far
 /// below float64's exact-integer cliff; dot/exponent spellings and
 /// underscored octal-fallback forms stay out.
-const PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$";
+const PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$";
 /// Tokens the resolver provably reads as any numeric tag with a
 /// JSON-representable value: the integer lane plus the decimal float lanes.
 /// Infinities and NaNs are excluded — they have no JSON encoding, so a
@@ -804,7 +800,7 @@ pub(crate) fn split_segment_pattern(
     if schema_type(schema) != Some("integer") {
         return None;
     }
-    let separator = regex::escape(&segment.separator);
+    let separator = helm_schema_ir::escape_regex_literal(&segment.separator);
     Some(if segment.last {
         format!("^([\\s\\S]*{separator})?[+-]?[0-9]+$")
     } else {
@@ -936,7 +932,7 @@ pub(crate) fn strict_plain_scalar_string_schema() -> Value {
         "not": { "pattern": PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN }
     }));
     exclusions.push(serde_json::json!({
-        "not": { "pattern": PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN }
+        "not": { "pattern": PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN }
     }));
     exclusions.push(serde_json::json!({
         "not": { "pattern": PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN }
@@ -1052,11 +1048,10 @@ fn scalar_plain_string_preimage(schema: Value) -> Value {
     exclusions.push(serde_json::json!({
         "not": { "pattern": PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN }
     }));
-    // Helm's YAML 1.1 resolver also reads hex, explicit octal, and binary
-    // spellings as integers, so a bare token in any of those forms belongs
-    // to the numeric provider arm rather than the string arm.
+    // The integer arm and string exclusion share one token grammar so a
+    // resolver integer cannot match both `oneOf` arms or fall between them.
     exclusions.push(serde_json::json!({
-        "not": { "pattern": PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN }
+        "not": { "pattern": PLAIN_SCALAR_INTEGER_SLOT_TOKEN_PATTERN }
     }));
     exclusions.push(serde_json::json!({
         "not": { "pattern": PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN }

@@ -468,7 +468,7 @@ pub(crate) fn fail_requirement_schema<'a>(
                 parts.push(serde_json::json!({ "anyOf": arms }));
             }
             helm_schema_core::ContractRequirementTarget::MembersMatchingPrefix { prefix } => {
-                let pattern = format!("^{}", regex::escape(prefix));
+                let pattern = format!("^{}", helm_schema_ir::escape_regex_literal(prefix));
                 parts.push(serde_json::json!({
                     "anyOf": [
                         {
@@ -1040,7 +1040,7 @@ fn fail_value_requirement_schema(
                 let occurrences = segments.saturating_sub(1);
                 let pattern = format!(
                     "^(?:[\\s\\S]*{}){{{occurrences}}}",
-                    regex::escape(separator)
+                    helm_schema_ir::escape_regex_literal(separator)
                 );
                 let string = serde_json::json!({ "type": "string", "pattern": pattern });
                 if *allow_non_string {

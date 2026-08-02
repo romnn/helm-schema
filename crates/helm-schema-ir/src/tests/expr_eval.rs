@@ -647,6 +647,34 @@ fn type_test_uses_the_structural_value_instead_of_its_influences() {
 }
 
 #[test]
+fn invalid_kind_requires_one_exact_subject_identity() {
+    let result = eval_expr(
+        &expr(r#"kindIs "invalid" (ternary .Values.value "fallback" .Values.enabled)"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+}
+
+#[test]
+fn go_regex_literal_escaping_leaves_re2_hyphens_bare() {
+    sim_assert_eq!(
+        have: crate::escape_regex_literal("prefix-with.+symbols"),
+        want: r"prefix-with\.\+symbols"
+    );
+}
+
+#[test]
+fn quoted_negative_zero_keeps_falsy_pattern_truth_unknown() {
+    let result = eval_expr(
+        &expr(r#"contains "-" (quote .Values.value)"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+}
+
+#[test]
 fn values_numeric_type_spellings_remain_provenance_dependent() {
     let int64 = eval_expr(
         &expr(r#"typeIs "int64" .Values.value"#),

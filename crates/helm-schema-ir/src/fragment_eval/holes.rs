@@ -536,6 +536,12 @@ impl Interpreter<'_> {
                 formatted_paths.insert(path.clone());
             }
         }
+        // `printf` itself erases the operand's structural shape, but a token-
+        // opening `%s` still renders that operand's characters. Later encoders
+        // and YAML serializers clear or block the formatter channel.
+        formatted_paths.retain(|path| {
+            !effects.encoded_paths.contains(path) && !effects.yaml_serialized_paths.contains(path)
+        });
         for path in formatted_paths {
             let mut shared = BTreeSet::new();
             if effects.defaults.contains(&path) || effects.local_default_paths.contains(&path) {

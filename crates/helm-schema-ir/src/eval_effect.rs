@@ -723,8 +723,24 @@ impl Effects {
     }
 
     pub(crate) fn add_encoded_paths(&mut self, paths: BTreeSet<String>) {
+        self.clear_plain_slot_string_format_paths(&paths);
         self.encoded_paths
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn clear_plain_slot_string_format_paths(&mut self, paths: &BTreeSet<String>) {
+        self.plain_slot_string_format_paths
+            .retain(|path| !paths.contains(path));
+        for path in paths {
+            if let Some(meta) = self.local_output_meta.get_mut(path) {
+                meta.plain_slot_string_format = false;
+            }
+        }
+        for row in &mut self.helper_rendered {
+            if paths.contains(&row.path) {
+                row.meta.plain_slot_string_format = false;
+            }
+        }
     }
 
     pub(crate) fn add_shape_erased_paths(&mut self, paths: BTreeSet<String>) {

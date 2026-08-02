@@ -104,17 +104,17 @@
     },
     "7": {
       "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
     "8": {
       "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "9": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "A": {
@@ -193,7 +193,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -309,23 +309,6 @@
     },
     "G": {
       "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "H": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "I": {
-      "properties": {
         "mountOptions": {
           "$ref": "#/$defs/t"
         }
@@ -335,34 +318,51 @@
       ],
       "type": "object"
     },
-    "a": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
+    "H": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
-    "b": {
+    "I": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "a": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "c": {
+    "b": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "d": {
+    "c": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "e": {
+    "d": {
       "not": {
         "pattern": "[ \\t]#"
       }
     },
-    "f": {
+    "e": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "f": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "g": {
@@ -831,7 +831,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -992,7 +992,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -1137,7 +1137,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -1486,7 +1486,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -1644,7 +1644,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -1779,7 +1779,7 @@
       "type": "object"
     },
     "z": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     }
   },
@@ -1883,7 +1883,7 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/I"
               },
               {
                 "$ref": "#/$defs/1"
@@ -2221,34 +2221,34 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
                             "$ref": "#/$defs/a"
                           },
                           {
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/9"
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
                           }
                         ],
                         "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -2365,34 +2365,34 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/9"
+                      },
+                      {
                         "$ref": "#/$defs/a"
                       },
                       {
                         "$ref": "#/$defs/b"
                       },
                       {
-                        "$ref": "#/$defs/c"
-                      },
-                      {
-                        "$ref": "#/$defs/e"
-                      },
-                      {
                         "$ref": "#/$defs/d"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/c"
+                      },
+                      {
+                        "$ref": "#/$defs/8"
                       },
                       {
                         "$ref": "#/$defs/g"
+                      },
+                      {
+                        "$ref": "#/$defs/e"
                       },
                       {
                         "$ref": "#/$defs/f"
                       },
                       {
                         "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/8"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -2926,34 +2926,34 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/9"
+                },
+                {
                   "$ref": "#/$defs/a"
                 },
                 {
                   "$ref": "#/$defs/b"
                 },
                 {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
                   "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/9"
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/8"
                 },
                 {
                   "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/e"
                 },
                 {
                   "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"
-                },
-                {
-                  "$ref": "#/$defs/8"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -3060,7 +3060,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/G"
           },
           "then": {
             "allOf": [
@@ -3078,34 +3078,34 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
                             "$ref": "#/$defs/a"
                           },
                           {
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/9"
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
                           }
                         ],
                         "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
@@ -3143,34 +3143,34 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
                             "$ref": "#/$defs/a"
                           },
                           {
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/9"
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
                           }
                         ],
                         "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
@@ -3240,34 +3240,34 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/9"
+                },
+                {
                   "$ref": "#/$defs/a"
                 },
                 {
                   "$ref": "#/$defs/b"
                 },
                 {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
                   "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/9"
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/8"
                 },
                 {
                   "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/e"
                 },
                 {
                   "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"
-                },
-                {
-                  "$ref": "#/$defs/8"
                 }
               ],
               "description": "This must match the Name of a Volume.",
@@ -3321,7 +3321,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/G"
+            "$ref": "#/$defs/H"
           },
           "then": {
             "additionalProperties": {},
@@ -3806,34 +3806,34 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/9"
+                },
+                {
                   "$ref": "#/$defs/a"
                 },
                 {
                   "$ref": "#/$defs/b"
                 },
                 {
-                  "$ref": "#/$defs/c"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
                   "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/9"
+                  "$ref": "#/$defs/c"
+                },
+                {
+                  "$ref": "#/$defs/8"
                 },
                 {
                   "$ref": "#/$defs/g"
+                },
+                {
+                  "$ref": "#/$defs/e"
                 },
                 {
                   "$ref": "#/$defs/f"
                 },
                 {
                   "$ref": "#/$defs/7"
-                },
-                {
-                  "$ref": "#/$defs/8"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -3990,34 +3990,34 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
                             "$ref": "#/$defs/a"
                           },
                           {
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/9"
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
                           }
                         ],
                         "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
@@ -4055,34 +4055,34 @@
                       {
                         "allOf": [
                           {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
                             "$ref": "#/$defs/a"
                           },
                           {
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
                             "$ref": "#/$defs/d"
                           },
                           {
-                            "$ref": "#/$defs/9"
+                            "$ref": "#/$defs/c"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
                           },
                           {
                             "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
                           },
                           {
                             "$ref": "#/$defs/f"
                           },
                           {
                             "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
                           }
                         ],
                         "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
@@ -4158,34 +4158,34 @@
         {
           "allOf": [
             {
+              "$ref": "#/$defs/9"
+            },
+            {
               "$ref": "#/$defs/a"
             },
             {
               "$ref": "#/$defs/b"
             },
             {
-              "$ref": "#/$defs/c"
-            },
-            {
-              "$ref": "#/$defs/e"
-            },
-            {
               "$ref": "#/$defs/d"
             },
             {
-              "$ref": "#/$defs/9"
+              "$ref": "#/$defs/c"
+            },
+            {
+              "$ref": "#/$defs/8"
             },
             {
               "$ref": "#/$defs/g"
+            },
+            {
+              "$ref": "#/$defs/e"
             },
             {
               "$ref": "#/$defs/f"
             },
             {
               "$ref": "#/$defs/7"
-            },
-            {
-              "$ref": "#/$defs/8"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

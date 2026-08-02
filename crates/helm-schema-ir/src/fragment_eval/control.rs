@@ -525,7 +525,7 @@ impl Interpreter<'_> {
                 self.activate_with(header.as_ref(), region_start, branch_index),
                 Contributions::default(),
                 None,
-                None,
+                Some(TruthCondition::Unknown),
             ),
             ArmSpec::Range {
                 header,

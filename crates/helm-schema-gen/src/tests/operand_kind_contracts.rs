@@ -482,6 +482,74 @@ fn invalid_kind_ternary_scopes_each_provider_operand() {
     }
 }
 
+/// `kindIs "invalid"` over a ternary result cannot be projected onto the one values path carried
+/// by only one result arm.
+#[test]
+fn invalid_kind_over_ternary_does_not_claim_one_arm_is_absent() {
+    let src = indoc! {r#"
+        {{- if kindIs "invalid" (ternary .Values.value "fallback" .Values.enabled) }}
+        {{- fail "invalid selected value" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let values_yaml = indoc! {"
+        enabled: false
+        value: present
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let inactive_identity = composed_instance(
+        values_yaml,
+        serde_json::json!({ "enabled": false, "value": null }),
+    );
+
+    assert!(
+        schema_accepts_instance(&schema, &inactive_identity),
+        "the literal ternary arm is valid regardless of the inactive path: {schema}"
+    );
+}
+
+/// An `else with` arm has its own truthiness test.
+/// A later local-dependent consumer must stay dormant when that subject is Helm-empty.
+#[test]
+fn else_with_local_join_does_not_treat_the_arm_as_unconditional() {
+    let src = indoc! {r#"
+        {{- $selected := "none" -}}
+        {{- with .Values.first -}}
+          {{- $selected = "first" -}}
+        {{- else with .Values.second -}}
+          {{- $selected = "second" -}}
+        {{- else -}}
+          {{- $selected = "none" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if eq $selected "second" }}
+          payload: {{ .Values.payload | b64enc }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        first: false
+        second: ''
+        payload: text
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let dormant = composed_instance(
+        values_yaml,
+        serde_json::json!({ "second": "", "payload": { "ignored": true } }),
+    );
+
+    assert!(
+        schema_accepts_instance(&schema, &dormant),
+        "an empty else-with subject skips the strict consumer: {schema}"
+    );
+}
+
 /// Go-template `or` returns the first truthy operand or its final operand;
 /// downstream runtime contracts apply only to the value that was selected.
 #[test]

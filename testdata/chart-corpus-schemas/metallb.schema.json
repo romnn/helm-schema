@@ -468,7 +468,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -508,7 +508,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -548,7 +548,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -601,7 +601,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -641,7 +641,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -842,32 +842,14 @@
       "type": "object"
     },
     "1X": {
-      "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
+      "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
     },
     "1Y": {
-      "$ref": "#/$defs/helm-double-quoted-safe",
-      "description": "Exclude the pools matching the regular expression from triggering the alert."
+      "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
     },
     "1Z": {
-      "properties": {
-        "frr": {
-          "properties": {
-            "image": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "image"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "frr"
-      ],
-      "type": "object"
+      "$ref": "#/$defs/helm-double-quoted-safe",
+      "description": "Exclude the pools matching the regular expression from triggering the alert."
     },
     "1a": {
       "anyOf": [
@@ -982,7 +964,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -2136,7 +2118,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -2176,7 +2158,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -2216,7 +2198,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -2269,7 +2251,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -2309,7 +2291,7 @@
                         "type": "string"
                       },
                       {
-                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
                         "type": "string"
                       },
                       {
@@ -2336,7 +2318,7 @@
           "type": "string"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
@@ -2371,7 +2353,7 @@
           "type": "integer"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         }
       ]
@@ -2431,6 +2413,27 @@
     },
     "20": {
       "properties": {
+        "frr": {
+          "properties": {
+            "image": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "frr"
+      ],
+      "type": "object"
+    },
+    "21": {
+      "properties": {
         "readinessProbe": {
           "properties": {
             "enabled": {
@@ -2448,7 +2451,7 @@
       ],
       "type": "object"
     },
-    "21": {
+    "22": {
       "properties": {
         "controller": {
           "properties": {
@@ -2467,7 +2470,7 @@
       ],
       "type": "object"
     },
-    "22": {
+    "23": {
       "properties": {
         "serviceAccount": {
           "properties": {
@@ -2486,7 +2489,7 @@
       ],
       "type": "object"
     },
-    "23": {
+    "24": {
       "properties": {
         "frr-k8s": {
           "properties": {
@@ -2505,7 +2508,7 @@
       ],
       "type": "object"
     },
-    "24": {
+    "25": {
       "properties": {
         "serviceAccount": {
           "properties": {
@@ -2524,7 +2527,7 @@
       ],
       "type": "object"
     },
-    "25": {
+    "26": {
       "properties": {
         "memberlist": {
           "properties": {
@@ -2543,7 +2546,7 @@
       ],
       "type": "object"
     },
-    "26": {
+    "27": {
       "properties": {
         "speaker": {
           "properties": {
@@ -2562,7 +2565,7 @@
       ],
       "type": "object"
     },
-    "27": {
+    "28": {
       "properties": {
         "frrk8s": {
           "properties": {
@@ -2581,51 +2584,10 @@
       ],
       "type": "object"
     },
-    "28": {
-      "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
-    },
     "29": {
       "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
     },
     "2A": {
-      "additionalProperties": false,
-      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
-      "properties": {
-        "gmsaCredentialSpec": {
-          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "gmsaCredentialSpecName": {
-          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "hostProcess": {
-          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUserName": {
-          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "2B": {
       "allOf": [
         {
           "not": {
@@ -2669,7 +2631,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2681,7 +2643,7 @@
       "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
       "type": "string"
     },
-    "2C": {
+    "2B": {
       "additionalProperties": {},
       "properties": {
         "interval": {
@@ -2730,7 +2692,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -2753,39 +2715,7 @@
         }
       }
     },
-    "2D": {
-      "additionalProperties": false,
-      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-      "properties": {
-        "localhostProfile": {
-          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-unions": [
-        {
-          "discriminator": "type",
-          "fields-to-discriminateBy": {
-            "localhostProfile": "LocalhostProfile"
-          }
-        }
-      ]
-    },
-    "2E": {
+    "2C": {
       "allOf": [
         {
           "not": {
@@ -2829,7 +2759,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -2840,6 +2770,94 @@
       ],
       "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
       "type": "string"
+    },
+    "2D": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
+      "type": "string"
+    },
+    "2E": {
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
     },
     "2F": {
       "anyOf": [
@@ -2990,7 +3008,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -3136,62 +3154,6 @@
       ]
     },
     "2I": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-          }
-        }
-      ],
-      "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
-      "type": "string"
-    },
-    "2J": {
       "additionalProperties": {},
       "properties": {
         "successThreshold": {
@@ -3211,7 +3173,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -3227,7 +3189,7 @@
         }
       }
     },
-    "2K": {
+    "2J": {
       "anyOf": [
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
@@ -3263,7 +3225,7 @@
         }
       ]
     },
-    "2L": {
+    "2K": {
       "allOf": [
         {
           "anyOf": [
@@ -3385,7 +3347,7 @@
         }
       ]
     },
-    "2M": {
+    "2L": {
       "allOf": [
         {
           "anyOf": [
@@ -3507,6 +3469,90 @@
         }
       ]
     },
+    "2M": {
+      "additionalProperties": {},
+      "properties": {
+        "metricRelabelings": {
+          "anyOf": [
+            {
+              "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
+              "items": {
+                "additionalProperties": false,
+                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+                "properties": {
+                  "action": {
+                    "default": "replace",
+                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
+                    "enum": [
+                      "replace",
+                      "Replace",
+                      "keep",
+                      "Keep",
+                      "drop",
+                      "Drop",
+                      "hashmod",
+                      "HashMod",
+                      "labelmap",
+                      "LabelMap",
+                      "labeldrop",
+                      "LabelDrop",
+                      "labelkeep",
+                      "LabelKeep",
+                      "lowercase",
+                      "Lowercase",
+                      "uppercase",
+                      "Uppercase",
+                      "keepequal",
+                      "KeepEqual",
+                      "dropequal",
+                      "DropEqual"
+                    ],
+                    "type": "string"
+                  },
+                  "modulus": {
+                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "regex": {
+                    "description": "regex defines the regular expression against which the extracted value is matched.",
+                    "type": "string"
+                  },
+                  "replacement": {
+                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
+                    "type": "string"
+                  },
+                  "separator": {
+                    "description": "separator defines the string between concatenated SourceLabels.",
+                    "type": "string"
+                  },
+                  "sourceLabels": {
+                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
+                    "items": {
+                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "targetLabel": {
+                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            }
+          ],
+          "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+        }
+      }
+    },
     "2N": {
       "additionalProperties": {},
       "properties": {
@@ -3626,7 +3672,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -3803,7 +3849,7 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                       }
                     },
                     {
@@ -3861,73 +3907,6 @@
       }
     },
     "2P": {
-      "additionalProperties": {},
-      "properties": {
-        "tolerations": {
-          "anyOf": [
-            {
-              "description": "If specified, the pod's tolerations.",
-              "items": {
-                "additionalProperties": false,
-                "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
-                "properties": {
-                  "effect": {
-                    "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "key": {
-                    "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "operator": {
-                    "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "tolerationSeconds": {
-                    "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
-                    "format": "int64",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "value": {
-                    "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": [
-                  "object",
-                  "null"
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "2Q": {
       "additionalProperties": {},
       "properties": {
         "command": {
@@ -4043,7 +4022,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -4096,7 +4075,7 @@
         }
       }
     },
-    "2R": {
+    "2Q": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -4212,7 +4191,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -4252,7 +4231,7 @@
         }
       }
     },
-    "2S": {
+    "2R": {
       "anyOf": [
         {
           "additionalProperties": {
@@ -4365,7 +4344,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -4416,6 +4395,73 @@
         }
       ]
     },
+    "2S": {
+      "additionalProperties": {},
+      "properties": {
+        "tolerations": {
+          "anyOf": [
+            {
+              "description": "If specified, the pod's tolerations.",
+              "items": {
+                "additionalProperties": false,
+                "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+                "properties": {
+                  "effect": {
+                    "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "key": {
+                    "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "operator": {
+                    "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "tolerationSeconds": {
+                    "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+                    "format": "int64",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "value": {
+                    "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
     "2T": {
       "allOf": [
         {
@@ -4463,7 +4509,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -4522,7 +4568,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -4560,17 +4606,6 @@
     },
     "2a": {
       "properties": {
-        "percent": {
-          "$ref": "#/$defs/helm-single-quoted-safe"
-        }
-      },
-      "required": [
-        "percent"
-      ],
-      "type": "object"
-    },
-    "2b": {
-      "properties": {
         "startupProbe": {
           "enum": [
             null
@@ -4582,10 +4617,10 @@
       ],
       "type": "object"
     },
-    "2c": {
+    "2b": {
       "description": "Minimum consecutive successes for the probe to be considered successful."
     },
-    "2d": {
+    "2c": {
       "properties": {
         "frrMetrics": {
           "enum": [
@@ -4598,7 +4633,7 @@
       ],
       "type": "object"
     },
-    "2e": {
+    "2d": {
       "properties": {
         "memberlist": {
           "enum": [
@@ -4611,7 +4646,7 @@
       ],
       "type": "object"
     },
-    "2f": {
+    "2e": {
       "properties": {
         "podMonitor": {
           "enum": [
@@ -4624,7 +4659,7 @@
       ],
       "type": "object"
     },
-    "2g": {
+    "2f": {
       "additionalProperties": {},
       "properties": {
         "labels": {},
@@ -4632,20 +4667,18 @@
       },
       "type": "object"
     },
-    "2h": {
+    "2g": {
       "properties": {
-        "reloader": {
-          "enum": [
-            null
-          ]
+        "percent": {
+          "$ref": "#/$defs/helm-single-quoted-safe"
         }
       },
       "required": [
-        "reloader"
+        "percent"
       ],
       "type": "object"
     },
-    "2i": {
+    "2h": {
       "properties": {
         "podAnnotations": {
           "$ref": "#/$defs/t"
@@ -4656,7 +4689,7 @@
       ],
       "type": "object"
     },
-    "2j": {
+    "2i": {
       "properties": {
         "serviceAccount": {
           "enum": [
@@ -4669,10 +4702,10 @@
       ],
       "type": "object"
     },
-    "2k": {
+    "2j": {
       "description": "Minimum TLS version (VersionTLS12 or VersionTLS13). Defaults to VersionTLS13."
     },
-    "2l": {
+    "2k": {
       "properties": {
         "prometheusRule": {
           "enum": [
@@ -4685,10 +4718,10 @@
       ],
       "type": "object"
     },
-    "2m": {
+    "2l": {
       "description": "Exclude the pools matching the regular expression from triggering the alert."
     },
-    "2n": {
+    "2m": {
       "additionalProperties": {},
       "properties": {
         "relabelings": {
@@ -4771,6 +4804,19 @@
           "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
         }
       }
+    },
+    "2n": {
+      "properties": {
+        "reloader": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "reloader"
+      ],
+      "type": "object"
     },
     "2o": {
       "properties": {
@@ -4870,90 +4916,6 @@
       ]
     },
     "2y": {
-      "additionalProperties": {},
-      "properties": {
-        "metricRelabelings": {
-          "anyOf": [
-            {
-              "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
-              "items": {
-                "additionalProperties": false,
-                "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "properties": {
-                  "action": {
-                    "default": "replace",
-                    "description": "action to perform based on the regex matching.\n\n`Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.\n`DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.\n\nDefault: \"Replace\"",
-                    "enum": [
-                      "replace",
-                      "Replace",
-                      "keep",
-                      "Keep",
-                      "drop",
-                      "Drop",
-                      "hashmod",
-                      "HashMod",
-                      "labelmap",
-                      "LabelMap",
-                      "labeldrop",
-                      "LabelDrop",
-                      "labelkeep",
-                      "LabelKeep",
-                      "lowercase",
-                      "Lowercase",
-                      "uppercase",
-                      "Uppercase",
-                      "keepequal",
-                      "KeepEqual",
-                      "dropequal",
-                      "DropEqual"
-                    ],
-                    "type": "string"
-                  },
-                  "modulus": {
-                    "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
-                    "format": "int64",
-                    "type": "integer"
-                  },
-                  "regex": {
-                    "description": "regex defines the regular expression against which the extracted value is matched.",
-                    "type": "string"
-                  },
-                  "replacement": {
-                    "description": "replacement value against which a Replace action is performed if the\nregular expression matches.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  },
-                  "separator": {
-                    "description": "separator defines the string between concatenated SourceLabels.",
-                    "type": "string"
-                  },
-                  "sourceLabels": {
-                    "description": "sourceLabels defines the source labels select values from existing labels. Their content is\nconcatenated using the configured Separator and matched against the\nconfigured regular expression.",
-                    "items": {
-                      "description": "LabelName is a valid Prometheus label name.\nFor Prometheus 3.x, a label name is valid if it contains UTF-8 characters.\nFor Prometheus 2.x, a label name is only valid if it contains ASCII characters, letters, numbers, as well as underscores.",
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "targetLabel": {
-                    "description": "targetLabel defines the label to which the resulting string is written in a replacement.\n\nIt is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,\n`KeepEqual` and `DropEqual` actions.\n\nRegex capture groups are available.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "type": "array"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/t"
-              }
-            }
-          ],
-          "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
-        }
-      }
-    },
-    "2z": {
       "additionalProperties": {},
       "properties": {
         "name": {
@@ -5069,7 +5031,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -5124,6 +5086,44 @@
           "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
         }
       }
+    },
+    "2z": {
+      "additionalProperties": false,
+      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+      "properties": {
+        "gmsaCredentialSpec": {
+          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gmsaCredentialSpecName": {
+          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostProcess": {
+          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "runAsUserName": {
+          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "3": {
       "anyOf": [
@@ -5418,7 +5418,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -5476,7 +5476,7 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
               }
             },
             {
@@ -5541,7 +5541,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -5807,7 +5807,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -6429,7 +6429,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -6556,7 +6556,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -6609,7 +6609,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -6631,75 +6631,6 @@
       ]
     },
     "K": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {
-          "anyOf": [
-            {
-              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-              "format": "int32",
-              "type": "integer"
-            },
-            {
-              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-              "type": "string"
-            },
-            {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-              "type": "string"
-            },
-            {
-              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-              "type": "string"
-            },
-            {
-              "pattern": "^[ \\t]*(#.*)?$",
-              "type": "string"
-            }
-          ],
-          "description": "Number of failures before the probe is considered failed."
-        }
-      }
-    },
-    "L": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            {
-              "additionalProperties": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-              "type": [
-                "object",
-                "null"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "M": {
       "allOf": [
         {
           "not": {
@@ -6743,7 +6674,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -6754,6 +6685,75 @@
       ],
       "description": "Name of the object being referenced.",
       "type": "string"
+    },
+    "L": {
+      "additionalProperties": {},
+      "properties": {
+        "failureThreshold": {
+          "anyOf": [
+            {
+              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+              "format": "int32",
+              "type": "null"
+            },
+            {
+              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+              "type": "string"
+            },
+            {
+              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^[ \\t]*(#.*)?$",
+              "type": "string"
+            }
+          ],
+          "description": "Number of failures before the probe is considered failed."
+        }
+      }
+    },
+    "M": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          ]
+        }
+      ]
     },
     "N": {
       "allOf": [
@@ -6799,7 +6799,7 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
           }
         },
         {
@@ -6830,7 +6830,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -6947,20 +6947,20 @@
     },
     "U": {
       "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
     "V": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
-    },
-    "W": {
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {},
         "repository": {},
         "tag": {}
+      }
+    },
+    "W": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "X": {
@@ -7307,7 +7307,7 @@
       "type": "object"
     },
     "m": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
     "n": {
@@ -9444,7 +9444,7 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
                   }
                 },
                 {
@@ -9497,7 +9497,7 @@
               "type": "string"
             },
             {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
@@ -12651,7 +12651,7 @@
           "type": "integer"
         },
         {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         }
       ]
@@ -12945,7 +12945,7 @@
           {
             "properties": {
               "controller": {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/21"
               }
             },
             "required": [
@@ -13000,7 +13000,7 @@
             "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/2R"
+                "$ref": "#/$defs/2Q"
               }
             }
           }
@@ -13016,14 +13016,14 @@
                 "$ref": "#/$defs/f"
               },
               {
-                "$ref": "#/$defs/21"
+                "$ref": "#/$defs/22"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/21"
+                "$ref": "#/$defs/22"
               },
               {
                 "$ref": "#/$defs/S"
@@ -13112,13 +13112,13 @@
                                 "$ref": "#/$defs/11"
                               },
                               {
-                                "$ref": "#/$defs/U"
+                                "$ref": "#/$defs/W"
                               },
                               {
                                 "$ref": "#/$defs/P"
                               },
                               {
-                                "$ref": "#/$defs/V"
+                                "$ref": "#/$defs/U"
                               },
                               {
                                 "$ref": "#/$defs/19"
@@ -13208,7 +13208,7 @@
                                     "$ref": "#/$defs/4"
                                   },
                                   {
-                                    "$ref": "#/$defs/2E"
+                                    "$ref": "#/$defs/2C"
                                   },
                                   {
                                     "$ref": "#/$defs/5"
@@ -13529,7 +13529,7 @@
                                 "$ref": "#/$defs/4"
                               },
                               {
-                                "$ref": "#/$defs/2E"
+                                "$ref": "#/$defs/2C"
                               },
                               {
                                 "$ref": "#/$defs/5"
@@ -13882,7 +13882,7 @@
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/2B"
+                            "$ref": "#/$defs/2A"
                           },
                           {
                             "$ref": "#/$defs/5"
@@ -14155,7 +14155,7 @@
                 "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
                 "properties": {
                   "imagePullSecrets": {
-                    "$ref": "#/$defs/2K"
+                    "$ref": "#/$defs/2J"
                   }
                 }
               }
@@ -14550,7 +14550,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/M"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -14670,13 +14670,13 @@
             "$ref": "#/$defs/1o"
           },
           {
-            "$ref": "#/$defs/2L"
+            "$ref": "#/$defs/2K"
           },
           {
             "$ref": "#/$defs/1p"
           },
           {
-            "$ref": "#/$defs/2M"
+            "$ref": "#/$defs/2L"
           }
         ]
       },
@@ -14722,7 +14722,7 @@
             "$ref": "#/$defs/1o"
           },
           {
-            "$ref": "#/$defs/2L"
+            "$ref": "#/$defs/2K"
           }
         ]
       },
@@ -14740,7 +14740,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "livenessProbe": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/L"
                       }
                     }
                   }
@@ -14825,7 +14825,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "livenessProbe": {
-                        "$ref": "#/$defs/2J"
+                        "$ref": "#/$defs/2I"
                       }
                     }
                   }
@@ -14895,7 +14895,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "readinessProbe": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/L"
                       }
                     }
                   }
@@ -14980,7 +14980,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "readinessProbe": {
-                        "$ref": "#/$defs/2J"
+                        "$ref": "#/$defs/2I"
                       }
                     }
                   }
@@ -15170,7 +15170,7 @@
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/M"
+                            "$ref": "#/$defs/K"
                           },
                           {
                             "$ref": "#/$defs/5"
@@ -15197,7 +15197,7 @@
             "$ref": "#/$defs/1p"
           },
           {
-            "$ref": "#/$defs/2M"
+            "$ref": "#/$defs/2L"
           }
         ]
       },
@@ -15215,7 +15215,7 @@
                     "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                     "properties": {
                       "startupProbe": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/L"
                       }
                     }
                   }
@@ -15347,7 +15347,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/23"
+                "$ref": "#/$defs/24"
               },
               {
                 "$ref": "#/$defs/b"
@@ -15357,7 +15357,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/23"
+                "$ref": "#/$defs/24"
               },
               {
                 "$ref": "#/$defs/d"
@@ -15439,7 +15439,7 @@
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/2I"
+                            "$ref": "#/$defs/2D"
                           },
                           {
                             "$ref": "#/$defs/5"
@@ -15482,7 +15482,7 @@
                             "$ref": "#/$defs/4"
                           },
                           {
-                            "$ref": "#/$defs/M"
+                            "$ref": "#/$defs/K"
                           },
                           {
                             "$ref": "#/$defs/5"
@@ -15796,7 +15796,7 @@
                 "not": {
                   "properties": {
                     "controller": {
-                      "$ref": "#/$defs/24"
+                      "$ref": "#/$defs/25"
                     }
                   },
                   "required": [
@@ -15817,7 +15817,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/26"
+                  "$ref": "#/$defs/27"
                 }
               }
             ]
@@ -15830,7 +15830,7 @@
               {
                 "properties": {
                   "speaker": {
-                    "$ref": "#/$defs/22"
+                    "$ref": "#/$defs/23"
                   }
                 },
                 "required": [
@@ -15842,7 +15842,7 @@
                 "not": {
                   "properties": {
                     "speaker": {
-                      "$ref": "#/$defs/24"
+                      "$ref": "#/$defs/25"
                     }
                   },
                   "required": [
@@ -15874,7 +15874,7 @@
             "additionalProperties": {},
             "properties": {
               "imagePullSecrets": {
-                "$ref": "#/$defs/2K"
+                "$ref": "#/$defs/2J"
               }
             }
           },
@@ -15937,7 +15937,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/2S"
+            "$ref": "#/$defs/2R"
           }
         }
       }
@@ -16045,7 +16045,7 @@
                   {
                     "properties": {
                       "controller": {
-                        "$ref": "#/$defs/2i"
+                        "$ref": "#/$defs/2h"
                       }
                     },
                     "required": [
@@ -16081,7 +16081,7 @@
                   {
                     "properties": {
                       "speaker": {
-                        "$ref": "#/$defs/2i"
+                        "$ref": "#/$defs/2h"
                       }
                     },
                     "required": [
@@ -16198,7 +16198,7 @@
                     "description": "MetalLBAddressPoolExhausted",
                     "properties": {
                       "excludePools": {
-                        "$ref": "#/$defs/1Y"
+                        "$ref": "#/$defs/1Z"
                       }
                     }
                   }
@@ -16393,7 +16393,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "excludePools": {
-                        "$ref": "#/$defs/1Y"
+                        "$ref": "#/$defs/1Z"
                       }
                     }
                   }
@@ -16434,13 +16434,13 @@
                             "anyOf": [
                               {
                                 "items": {
-                                  "$ref": "#/$defs/2g"
+                                  "$ref": "#/$defs/2f"
                                 },
                                 "type": "array"
                               },
                               {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2g"
+                                  "$ref": "#/$defs/2f"
                                 },
                                 "type": "object"
                               },
@@ -16478,13 +16478,13 @@
                             "anyOf": [
                               {
                                 "items": {
-                                  "$ref": "#/$defs/2a"
+                                  "$ref": "#/$defs/2g"
                                 },
                                 "type": "array"
                               },
                               {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/2a"
+                                  "$ref": "#/$defs/2g"
                                 },
                                 "type": "object"
                               },
@@ -16650,7 +16650,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/M"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -17390,7 +17390,7 @@
           {
             "properties": {
               "speaker": {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/21"
               }
             },
             "required": [
@@ -17480,13 +17480,13 @@
                         "$ref": "#/$defs/11"
                       },
                       {
-                        "$ref": "#/$defs/U"
+                        "$ref": "#/$defs/W"
                       },
                       {
                         "$ref": "#/$defs/P"
                       },
                       {
-                        "$ref": "#/$defs/V"
+                        "$ref": "#/$defs/U"
                       },
                       {
                         "$ref": "#/$defs/19"
@@ -17531,7 +17531,7 @@
             "$ref": "#/$defs/q"
           },
           {
-            "$ref": "#/$defs/26"
+            "$ref": "#/$defs/27"
           }
         ]
       },
@@ -17569,7 +17569,7 @@
             "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/2R"
+                "$ref": "#/$defs/2Q"
               }
             }
           }
@@ -17670,7 +17670,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/27"
+            "$ref": "#/$defs/28"
           },
           {
             "$ref": "#/$defs/6"
@@ -17769,7 +17769,7 @@
                 "$ref": "#/$defs/b"
               },
               {
-                "$ref": "#/$defs/27"
+                "$ref": "#/$defs/28"
               }
             ]
           }
@@ -17804,7 +17804,7 @@
               {
                 "properties": {
                   "controller": {
-                    "$ref": "#/$defs/2j"
+                    "$ref": "#/$defs/2i"
                   }
                 },
                 "required": [
@@ -17936,7 +17936,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/1Z"
+                        "$ref": "#/$defs/20"
                       }
                     },
                     "required": [
@@ -17972,7 +17972,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2d"
+                        "$ref": "#/$defs/2c"
                       }
                     },
                     "required": [
@@ -18162,7 +18162,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2h"
+                        "$ref": "#/$defs/2n"
                       }
                     },
                     "required": [
@@ -18198,7 +18198,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2j"
+                        "$ref": "#/$defs/2i"
                       }
                     },
                     "required": [
@@ -18234,7 +18234,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/2b"
+                        "$ref": "#/$defs/2a"
                       }
                     },
                     "required": [
@@ -18448,7 +18448,7 @@
               {
                 "properties": {
                   "prometheus": {
-                    "$ref": "#/$defs/2f"
+                    "$ref": "#/$defs/2e"
                   }
                 },
                 "required": [
@@ -18486,7 +18486,7 @@
               {
                 "properties": {
                   "prometheus": {
-                    "$ref": "#/$defs/2l"
+                    "$ref": "#/$defs/2k"
                   }
                 },
                 "required": [
@@ -18625,7 +18625,7 @@
               {
                 "properties": {
                   "speaker": {
-                    "$ref": "#/$defs/2e"
+                    "$ref": "#/$defs/2d"
                   }
                 },
                 "required": [
@@ -18690,7 +18690,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/2Q"
+                "$ref": "#/$defs/2P"
               },
               {
                 "allOf": [
@@ -18747,7 +18747,7 @@
                             "$ref": "#/$defs/1t"
                           },
                           "seccompProfile": {
-                            "$ref": "#/$defs/2D"
+                            "$ref": "#/$defs/2E"
                           },
                           "supplementalGroups": {
                             "$ref": "#/$defs/1q"
@@ -18756,7 +18756,7 @@
                             "$ref": "#/$defs/1e"
                           },
                           "windowsOptions": {
-                            "$ref": "#/$defs/2A"
+                            "$ref": "#/$defs/2z"
                           }
                         },
                         "type": "object"
@@ -18821,7 +18821,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/2P"
+                "$ref": "#/$defs/2S"
               }
             ]
           }
@@ -18847,7 +18847,7 @@
                         "$ref": "#/$defs/1c"
                       },
                       {
-                        "$ref": "#/$defs/2z"
+                        "$ref": "#/$defs/2y"
                       }
                     ]
                   }
@@ -18879,7 +18879,7 @@
         "enabled": {},
         "extraContainers": {},
         "image": {
-          "$ref": "#/$defs/W"
+          "$ref": "#/$defs/V"
         },
         "labels": {},
         "livenessProbe": {
@@ -18907,7 +18907,7 @@
               "$ref": "#/$defs/2v"
             },
             "name": {
-              "$ref": "#/$defs/1X"
+              "$ref": "#/$defs/1Y"
             }
           },
           "type": "object"
@@ -19069,7 +19069,7 @@
                   "$ref": "#/$defs/Y"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/2c"
+                  "$ref": "#/$defs/2b"
                 },
                 "timeoutSeconds": {
                   "$ref": "#/$defs/2w"
@@ -19101,7 +19101,7 @@
                   "$ref": "#/$defs/Y"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/2c"
+                  "$ref": "#/$defs/2b"
                 },
                 "timeoutSeconds": {
                   "$ref": "#/$defs/2w"
@@ -19241,13 +19241,13 @@
               "$ref": "#/$defs/29"
             },
             "curvePreferences": {
-              "$ref": "#/$defs/28"
+              "$ref": "#/$defs/1X"
             },
             "metricsTLSSecret": {
               "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
             },
             "minVersion": {
-              "$ref": "#/$defs/2k"
+              "$ref": "#/$defs/2j"
             }
           }
         }
@@ -19291,7 +19291,7 @@
     "imagePullSecrets": {},
     "loadBalancerClass": {},
     "nameOverride": {
-      "$ref": "#/$defs/2S"
+      "$ref": "#/$defs/2R"
     },
     "networkpolicies": {
       "additionalProperties": {},
@@ -19392,7 +19392,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/2I"
+                        "$ref": "#/$defs/2D"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -19423,7 +19423,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/M"
+                        "$ref": "#/$defs/K"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -19525,7 +19525,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/2f"
+                "$ref": "#/$defs/2e"
               }
             ]
           },
@@ -19540,7 +19540,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/2l"
+                "$ref": "#/$defs/2k"
               }
             ]
           },
@@ -19611,13 +19611,13 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2C"
+                    "$ref": "#/$defs/2B"
                   },
                   {
-                    "$ref": "#/$defs/2y"
+                    "$ref": "#/$defs/2M"
                   },
                   {
-                    "$ref": "#/$defs/2n"
+                    "$ref": "#/$defs/2m"
                   }
                 ]
               }
@@ -20120,7 +20120,7 @@
               "properties": {
                 "enabled": {},
                 "excludePools": {
-                  "$ref": "#/$defs/2m"
+                  "$ref": "#/$defs/2l"
                 },
                 "labels": {}
               }
@@ -20130,7 +20130,7 @@
               "properties": {
                 "enabled": {},
                 "excludePools": {
-                  "$ref": "#/$defs/2m"
+                  "$ref": "#/$defs/2l"
                 },
                 "thresholds": {}
               }
@@ -20217,7 +20217,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/L"
+                                "$ref": "#/$defs/M"
                               },
                               {
                                 "$ref": "#/$defs/1"
@@ -20251,13 +20251,13 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2C"
+                    "$ref": "#/$defs/2B"
                   },
                   {
-                    "$ref": "#/$defs/2y"
+                    "$ref": "#/$defs/2M"
                   },
                   {
-                    "$ref": "#/$defs/2n"
+                    "$ref": "#/$defs/2m"
                   }
                 ]
               }
@@ -20353,7 +20353,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/2Q"
+                "$ref": "#/$defs/2P"
               },
               {
                 "allOf": [
@@ -20402,7 +20402,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/2B"
+                        "$ref": "#/$defs/2A"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -20460,7 +20460,7 @@
                             "$ref": "#/$defs/1t"
                           },
                           "seccompProfile": {
-                            "$ref": "#/$defs/2D"
+                            "$ref": "#/$defs/2E"
                           },
                           "supplementalGroups": {
                             "$ref": "#/$defs/1q"
@@ -20469,7 +20469,7 @@
                             "$ref": "#/$defs/1e"
                           },
                           "windowsOptions": {
-                            "$ref": "#/$defs/2A"
+                            "$ref": "#/$defs/2z"
                           }
                         },
                         "type": "object"
@@ -20488,7 +20488,7 @@
                 "$ref": "#/$defs/2N"
               },
               {
-                "$ref": "#/$defs/2P"
+                "$ref": "#/$defs/2S"
               },
               {
                 "additionalProperties": {},
@@ -20685,7 +20685,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/25"
+                "$ref": "#/$defs/26"
               }
             ]
           },
@@ -20736,13 +20736,13 @@
                                 "$ref": "#/$defs/11"
                               },
                               {
-                                "$ref": "#/$defs/U"
+                                "$ref": "#/$defs/W"
                               },
                               {
                                 "$ref": "#/$defs/P"
                               },
                               {
-                                "$ref": "#/$defs/V"
+                                "$ref": "#/$defs/U"
                               },
                               {
                                 "$ref": "#/$defs/19"
@@ -20806,7 +20806,7 @@
                 "$ref": "#/$defs/2"
               },
               {
-                "$ref": "#/$defs/22"
+                "$ref": "#/$defs/23"
               }
             ]
           },
@@ -20824,7 +20824,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "serviceAccount": {
-                    "$ref": "#/$defs/2z"
+                    "$ref": "#/$defs/2y"
                   }
                 }
               }
@@ -20881,7 +20881,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/1Z"
+                    "$ref": "#/$defs/20"
                   }
                 ]
               }
@@ -20912,7 +20912,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2d"
+                    "$ref": "#/$defs/2c"
                   }
                 ]
               }
@@ -21155,7 +21155,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2h"
+                    "$ref": "#/$defs/2n"
                   }
                 ]
               }
@@ -21186,7 +21186,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/2b"
+                    "$ref": "#/$defs/2a"
                   }
                 ]
               }
@@ -21270,7 +21270,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/25"
+                  "$ref": "#/$defs/26"
                 }
               }
             ]
@@ -21307,7 +21307,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/2e"
+                "$ref": "#/$defs/2d"
               }
             ]
           },
@@ -21337,7 +21337,7 @@
           "properties": {
             "enabled": {},
             "image": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/V"
             },
             "metricsPort": {},
             "resources": {}
@@ -21351,7 +21351,7 @@
           "description": "ignore the exclude-from-external-loadbalancer label"
         },
         "image": {
-          "$ref": "#/$defs/W"
+          "$ref": "#/$defs/V"
         },
         "initContainers": {
           "additionalProperties": {},
@@ -21413,7 +21413,7 @@
               "$ref": "#/$defs/2v"
             },
             "name": {
-              "$ref": "#/$defs/1X"
+              "$ref": "#/$defs/1Y"
             }
           }
         },
@@ -21444,10 +21444,10 @@
           "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
         },
         "curvePreferences": {
-          "$ref": "#/$defs/28"
+          "$ref": "#/$defs/1X"
         },
         "minVersion": {
-          "$ref": "#/$defs/2k"
+          "$ref": "#/$defs/2j"
         },
         "speakerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
