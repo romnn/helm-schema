@@ -79,6 +79,7 @@ pub fn is_string_transform_function(function: &str) -> bool {
             | "urlquery"
             | "toString"
             | "lower"
+            | "upper"
             | "indent"
             | "nindent"
             | "trunc"
@@ -145,6 +146,7 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
         | "urlParse"
         | "splitList"
         | "split"
+        | "lookup"
         // Both the user and the password are bcrypt inputs; a non-string
         // aborts rendering with `expected string`.
         | "htpasswd" => (0..argument_count).collect(),
@@ -153,8 +155,8 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
         // The string subject is final; `trunc`'s preceding width and
         // `substr`'s start/end offsets are numeric. The checksum family is
         // unary, so subject-last covers both call and pipeline forms.
-        "trunc" | "substr" | "trim" | "lower" | "indent" | "nindent" | "repeat" | "sha1sum"
-        | "sha256sum" | "sha512sum" | "adler32sum" => {
+        "trunc" | "substr" | "trim" | "lower" | "upper" | "indent" | "nindent" | "repeat"
+        | "sha1sum" | "sha256sum" | "sha512sum" | "adler32sum" => {
             vec![argument_count - 1]
         }
         // `splitn separator count subject` has a non-string middle argument.
@@ -206,10 +208,11 @@ pub fn strict_operand_nil_aborts(function: &str, direct_access: bool) -> bool {
         // Nil aborts either way here, by three routes: sprig's
         // reflection-backed list helpers and `deepCopy` fault on the raw
         // operand, Go's own `index` and `len` reject an untyped nil
-        // subject, and `ternary`'s `bool` parameter cannot hold nil.
+        // subject, `ternary`'s `bool` parameter cannot hold nil, and
+        // `unset` cannot mutate the substituted nil map.
         "first" | "last" | "initial" | "rest" | "compact" | "uniq" | "mustUniq" | "append"
         | "push" | "prepend" | "concat" | "slice" | "mustSlice" | "reverse" | "deepCopy"
-        | "mustDeepCopy" | "index" | "len" | "ternary" => true,
+        | "mustDeepCopy" | "index" | "len" | "ternary" | "unset" => true,
         // The rest of the map-parameter class survives an invalid operand.
         "hasKey" | "pick" | "omit" | "keys" | "values" | "pluck" | "get" | "merge"
         | "mergeOverwrite" | "mustMerge" | "mustMergeOverwrite" => direct_access,

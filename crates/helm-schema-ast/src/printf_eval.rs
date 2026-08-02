@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 
 use crate::{Literal, TemplateExpr};
+use helm_schema_core::GuardValue;
 
 /// Returns the first argument when it is a literal `printf` format string.
 #[must_use]
@@ -22,7 +23,7 @@ pub fn render_printf_string_sets(
     let parts = parse_supported_printf_format(format)?;
     let substitutions = parts
         .iter()
-        .filter(|part| matches!(part, PrintfPart::Substitution))
+        .filter(|part| matches!(part, PrintfPart::Substitution(_)))
         .count();
     if substitutions != arg_strings.len() {
         return None;
@@ -41,7 +42,7 @@ pub fn render_printf_string_sets(
                     })
                     .collect();
             }
-            PrintfPart::Substitution => {
+            PrintfPart::Substitution(PrintfVerb::String) => {
                 let strings = arg_strings.get(arg_index)?;
                 if strings.is_empty() {
                     return None;
@@ -57,15 +58,76 @@ pub fn render_printf_string_sets(
                 rendered = next;
                 arg_index += 1;
             }
+            PrintfPart::Substitution(PrintfVerb::Decimal) => return None,
         }
     }
     Some(rendered)
 }
 
+/// Evaluates a supported literal `printf` format over exact typed scalars.
+#[must_use]
+pub fn render_printf_scalar_values(format: &str, args: &[GuardValue]) -> Option<String> {
+    let parts = parse_supported_printf_format(format)?;
+    let substitutions = parts
+        .iter()
+        .filter(|part| matches!(part, PrintfPart::Substitution(_)))
+        .count();
+    if substitutions != args.len() {
+        return None;
+    }
+
+    let mut rendered = String::new();
+    let mut arg_index = 0usize;
+    for part in parts {
+        match part {
+            PrintfPart::Literal(literal) => rendered.push_str(literal),
+            PrintfPart::Substitution(verb) => {
+                let value = args.get(arg_index)?;
+                match (verb, value) {
+                    (PrintfVerb::String, GuardValue::String(value)) => rendered.push_str(value),
+                    (PrintfVerb::Decimal, GuardValue::Int(value)) => {
+                        rendered.push_str(&value.to_string());
+                    }
+                    _ => return None,
+                }
+                arg_index += 1;
+            }
+        }
+    }
+    Some(rendered)
+}
+
+/// Returns the data-argument index whose `%s` substitution opens the
+/// rendered token, for a complete supported literal format.
+#[must_use]
+pub fn token_initial_printf_string_argument(args: &[TemplateExpr]) -> Option<usize> {
+    let format = literal_printf_format(args)?;
+    let parts = parse_supported_printf_format(format)?;
+    let substitutions = parts
+        .iter()
+        .filter(|part| matches!(part, PrintfPart::Substitution(_)))
+        .count();
+    if substitutions != args.len().checked_sub(1)?
+        || !matches!(
+            parts.first(),
+            Some(PrintfPart::Substitution(PrintfVerb::String))
+        )
+    {
+        return None;
+    }
+    Some(1)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PrintfPart<'a> {
     Literal(&'a str),
-    Substitution,
+    Substitution(PrintfVerb),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PrintfVerb {
+    String,
+    Decimal,
 }
 
 #[expect(
@@ -93,8 +155,13 @@ fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>> {
                 index += 2;
                 literal_start = index;
             }
-            b's' => {
-                parts.push(PrintfPart::Substitution);
+            b's' | b'd' => {
+                let verb = if bytes[index + 1] == b's' {
+                    PrintfVerb::String
+                } else {
+                    PrintfVerb::Decimal
+                };
+                parts.push(PrintfPart::Substitution(verb));
                 index += 2;
                 literal_start = index;
             }

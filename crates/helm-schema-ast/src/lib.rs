@@ -27,7 +27,10 @@ pub use expr_function_catalog::{
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
 pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};
 pub use literal_schema_type::expression_schema_type;
-pub use printf_eval::{literal_printf_format, render_printf_string_sets};
+pub use printf_eval::{
+    literal_printf_format, render_printf_scalar_values, render_printf_string_sets,
+    token_initial_printf_string_argument,
+};
 pub use range_structure::{
     range_destructured_key_variable, range_destructured_value_variable,
     range_has_destructured_variable_definition, range_header_from_source, range_variable_name_expr,
