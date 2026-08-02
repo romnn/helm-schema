@@ -386,16 +386,99 @@ Reference: `plan/schema-emission-profiles.md` v2.6 (frozen).
     check:local`: exit 0; 32 charts checked.
   - `task tokei:core`: exit 0; production Rust is 58,853 LOC (`+3` from Step
     1a).
-- Commit: pending.
+- Commit: `6f207a2` (`feat(schema): emit unconditional terminals`).
 
 ## Step 1b — immutable lowering plan and multi-policy projection
 
-- Status: pending.
-- Measured results: pending.
-- Deviations: none.
-- Adjudication evidence: pending.
-- Review dossier: pending.
-- Gates: pending.
+- Status: landed.
+- Measured results:
+  - `LoweredEmissionPlan` now owns the cloned contract signals, composed and
+    refill documents, descriptions, provider-resolved base paths, immutable
+    tagged conjuncts, and the support plan. `ProjectedTree` retains the schema
+    tree and fact accounting until the policy-free completion tail crosses to
+    `CompletedGeneratedSchema`.
+  - Full and standard-policy projections reuse one plan. Projection-order
+    equality and the fact floors pass; a counting provider confirms that plan
+    construction performs all provider access and neither projection re-enters
+    it.
+  - Host preparation, conditional base ownership, accepted-root refill, and
+    default-fill exclusions are computed from all facts before projection.
+    Every projection applies the same immutable support plan to fresh mutable
+    state. Source-aware provider extraction now sees only selected cloned
+    candidate facts and runs after the selection boundary.
+  - Full remains byte-identical across all 20 generator fixtures and all 56
+    chart-corpus fixtures. An old-vs-new replay of compact lean output across
+    all 56 corpus charts also found zero byte differences. Equality satisfies
+    the widening law; the existing dedicated nil-safe-host control remains
+    accepted by full and lean and renders under Helm.
+  - The unreachable-definition preflight found 66 generator-owned provider
+    definitions with no incoming `$ref` in 14 committed full schemas. Pruning
+    therefore cannot be byte-identical and is deferred to the plan's separate
+    VE branch after this Step 1b commit; no pruning or fixture churn is hidden
+    here.
+- Deviations:
+  - The plan anticipated lean changing where selected-only support mutations
+    had vanished. The Step 0a preflight already showed the known host case was
+    open under legacy lean, and the complete 56-chart old/new replay found no
+    serialized delta. Step 1b still removes the architectural hazard by
+    computing support from all facts; it does not manufacture a fixture flip.
+  - Because the early reachability prune changes 14 full fixtures, the
+    plan-prescribed separate VE branch is taken. The caller-private `$defs`
+    ownership contract will land with that prune rather than preceding an
+    implementation that does not yet remove definitions.
+- Adjudication evidence:
+  - There are no semantic fixture flips to adopt. The hermetic monotonicity
+    battery and all three semantic-control categories pass, including the
+    nil-safe host deletion. The live lane replays all controls under Helm
+    4.2.3 and the pinned provider boundary with no disagreement.
+  - The clean final-build dumps are exact: 20 generator candidates and 56
+    chart-corpus candidates match their committed full fixtures.
+- Review dossier:
+  - One-artifact projection, order independence, hard fact floors, completion
+    monotonicity, and provider-access boundary: `cargo nextest run -p
+    helm-schema-gen -E
+    'test(/(one_plan_projections_obey_floors_and_ignore_projection_order|completion_passes_preserve_profile_monotonicity|projections_never_reenter_the_provider)/)'`.
+  - Hermetic monotonicity and three-category controls: `cargo nextest run -P
+    integration -p helm-schema --test schema_emission_profiles`.
+  - Live Helm/provider replay: `cargo nextest run -P integration -p
+    helm-schema --test schema_emission_profile_live --run-ignored
+    ignored-only`.
+  - Clean generator dump: `SCHEMA_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-gen --test corpus -E 'test(schema_fixtures_match)'`.
+  - Clean 56-chart dump: `SCHEMA_DUMP=1 cargo nextest run -P integration -p
+    helm-schema-cli --no-fail-fast -E 'binary(chart_corpus)'`.
+  - Full-fixture equality after the clean dump: `cargo nextest run -P
+    integration -p helm-schema-gen --test corpus -E
+    'test(schema_fixtures_match)'`, then `cargo nextest run -P integration -p
+    helm-schema-cli --test chart_corpus`.
+  - Old/new lean corpus replay: build `6f207a2` and the working tree's
+    `helm-schema` binaries, emit `--offline --exclude-tests --profile lean
+    --compact` for every basename in `testdata/chart-corpus-schemas`, then
+    `bash -c 'for old in /tmp/schema-emission-step1b/lean-old/*.json; do
+    name=${old##*/}; cmp -s "$old"
+    "/tmp/schema-emission-step1b/lean-new/$name" || exit 1; done'`.
+  - Early-prune failure branch: `bash -c 'unused=0; files=0; for schema in
+    testdata/chart-corpus-schemas/*.schema.json; do count=$(jq -r '\''def
+    refs: [.. | objects | .["$ref"]? | select(type == "string" and
+    startswith("#/$defs/")) | sub("^#/\\$defs/"; "") | split("/")[0]];
+    (."$defs" // {}) as $defs | (refs) as $refs | [$defs | keys[] |
+    select(startswith("provider")) | select(. as $name | ($refs |
+    index($name) | not))] | length'\'' "$schema"); unused=$((unused +
+    count)); if [ "$count" -gt 0 ]; then files=$((files + 1)); fi; done;
+    echo "schemas_with_unreferenced_provider_defs=$files
+    unreferenced_provider_defs=$unused"'`; it reports `14` and `66`.
+- Gates on the final Step 1b tree:
+  - `cargo fmt --check`: exit 0.
+  - `task lint`: exit 0.
+  - `task lint:fc`: exit 0; 42 feature combinations checked.
+  - `cargo nextest run --workspace`: exit 0; 1,145 passed.
+  - `task test:integration`: exit 0; 541 passed, 3 skipped.
+  - `task test:all`: exit 0; 1,690 passed, 3 skipped.
+  - `cargo install --path ./crates/helm-schema-cli/`: exit 0.
+  - `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml
+    check:local`: exit 0; 32 charts checked.
+  - `task tokei:core`: exit 0; production Rust is 59,029 LOC (`+176` from
+    Step 1a.1).
 - Commit: pending.
 
 ## Step 2 — lean policy and annotations

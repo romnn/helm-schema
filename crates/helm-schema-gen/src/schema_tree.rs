@@ -10,6 +10,7 @@ use crate::values_yaml::{
     child_value_path, schema_node_from_yaml_value_with_skips, yaml_value_at_segments,
 };
 
+#[derive(Clone)]
 pub(crate) struct SchemaDocument {
     root: SchemaNode,
 }

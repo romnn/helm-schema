@@ -16,6 +16,7 @@ use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchema
 use crate::schema_model::{empty_schema, guard_value_to_json, is_empty_schema, type_schema};
 use crate::values_yaml::{ValuesYamlPathFacts, ValuesYamlPathInfo, build_values_yaml_path_info};
 
+#[derive(Clone)]
 pub(crate) struct ResolvedPathSchema {
     pub(crate) value_path: String,
     pub(crate) path_segments: Vec<String>,

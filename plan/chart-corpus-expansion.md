@@ -12139,3 +12139,34 @@ fixtures remain byte-identical; the only new corpus artifact is the
 adjudicated unconditional-fail fixture. The hermetic profile suite retains its
 monotonicity and three-category controls, and the new control also passes its
 separate live Helm replay.
+
+## Immutable emission plan (2026-08-02, sixty-second round)
+
+Step 1b moves provider resolution and policy-free preparation into one owned
+`LoweredEmissionPlan`. Conditional base ownership, host preparation, accepted
+root refill, and default-fill exclusions are derived from all facts. Full and
+comparison policies project fresh mutable trees from the same immutable plan;
+selection cannot re-enter the provider, mutate shared candidates, or make
+projection order observable. The public session remains single-policy, and the
+multi-policy projection surface stays crate-private.
+
+Source-aware provider-definition extraction now runs after selection and sees
+only the selected candidate-bearing fact clones. The completion tail crosses a
+typed `ProjectedTree` to `CompletedGeneratedSchema` boundary, so pre-completion
+fact accounting cannot be confused with the final emission report. The
+decision-table fact floors, projection-order equality, and all eight
+completion-stage widening checks are hard tests.
+
+One clean final-build dump produced all 20 generator candidates and all 56
+chart-corpus schemas byte-identically. A separate pre-step-binary comparison
+also found all 56 compact lean outputs byte-identical. The existing nil-safe
+host control continues to accept host deletion under both profiles and renders
+with Helm; support is now policy-free by construction without an artificial
+fixture flip. The hermetic monotonicity and three-category controls and the
+live Helm/provider replay remain green.
+
+The early reachability-prune preflight found 66 unreferenced generator-owned
+provider definitions across 14 full corpus schemas. Removing them would change
+full bytes, so the plan's failure branch is taken: pruning and its caller-owned
+override contract are deferred to a separate VE round with zero-flip proof and
+fixture adjudication rather than folded into this representation round.

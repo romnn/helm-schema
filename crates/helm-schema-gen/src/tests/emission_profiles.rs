@@ -1,9 +1,12 @@
 use super::*;
 use crate::{
-    CompletionPass, SchemaProfile, generate_values_schema_through,
+    CompletionPass, SchemaProfile,
+    emission_plan::LoweredEmissionPlan,
+    emission_policy::{EmissionClassKind, EmissionPolicy},
     generate_values_schema_with_report,
 };
 use color_eyre::eyre;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -240,6 +243,9 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
         payload: 1
     "};
     let signals = schema_signals_for(parse_ir_with_helpers(source, helpers));
+    let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_yaml(Some(values_yaml));
+    let plan = LoweredEmissionPlan::build(&input);
+    let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
     let passes = [
         CompletionPass::Projected,
         CompletionPass::ValuesDefaultBackfill,
@@ -265,18 +271,10 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
     ];
 
     for pass in passes {
-        let (full, _) = generate_values_schema_through(
-            &ValuesSchemaInput::new(&signals, &NoopProvider)
-                .with_values_yaml(Some(values_yaml))
-                .with_profile(SchemaProfile::Full),
-            pass,
-        );
-        let (lean, _) = generate_values_schema_through(
-            &ValuesSchemaInput::new(&signals, &NoopProvider)
-                .with_values_yaml(Some(values_yaml))
-                .with_profile(SchemaProfile::Lean),
-            pass,
-        );
+        let full = plan.complete(plan.project(full_policy), pass).schema;
+        let lean = plan
+            .complete(plan.project_legacy(SchemaProfile::Lean), pass)
+            .schema;
         let full = jsonschema::validator_for(&full)
             .map_err(|error| eyre::eyre!("compile full schema after {pass:?}: {error}"))?;
         let lean = jsonschema::validator_for(&lean)
@@ -293,4 +291,120 @@ fn completion_passes_preserve_profile_monotonicity() -> eyre::Result<()> {
     }
 
     Ok(())
+}
+
+#[test]
+fn one_plan_projections_obey_floors_and_ignore_projection_order() {
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          member: {{ .Values.host.member }}
+        {{- if .Values.enabled }}
+          guarded: {{ .Values.guarded }}
+        {{- end }}
+        {{- if .Values.forbidden }}
+        {{- fail "forbidden" }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: false
+        forbidden: false
+        guarded: value
+        host:
+          member: value
+    "};
+    let signals = schema_signals_for(parse_ir(source));
+    let input = ValuesSchemaInput::new(&signals, &NoopProvider).with_values_yaml(Some(values_yaml));
+    let plan = LoweredEmissionPlan::build(&input);
+    let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
+    let lean_policy = EmissionPolicy::for_profile(SchemaProfile::Lean);
+
+    let full_first = plan.complete(plan.project(full_policy), CompletionPass::Descriptions);
+    let lean_second = plan.complete(plan.project(lean_policy), CompletionPass::Descriptions);
+    let lean_first = plan.complete(plan.project(lean_policy), CompletionPass::Descriptions);
+    let full_second = plan.complete(plan.project(full_policy), CompletionPass::Descriptions);
+
+    sim_assert_eq!(have: full_first.schema, want: full_second.schema);
+    sim_assert_eq!(
+        have: full_first.emission_report,
+        want: full_second.emission_report
+    );
+    sim_assert_eq!(have: lean_first.schema, want: lean_second.schema);
+    sim_assert_eq!(
+        have: lean_first.emission_report,
+        want: lean_second.emission_report
+    );
+
+    for report in [&full_first.emission_report, &lean_first.emission_report] {
+        sim_assert_eq!(
+            have: report.facts.lowered,
+            want: report.facts.selected + report.facts.dropped
+        );
+        sim_assert_eq!(
+            have: report.counts_for_class(EmissionClassKind::Mandatory).dropped,
+            want: 0
+        );
+    }
+    for class in [
+        EmissionClassKind::OrdinaryRoot,
+        EmissionClassKind::KindPartitionRoot,
+        EmissionClassKind::KindPartitionLocal,
+        EmissionClassKind::TerminalAlways,
+        EmissionClassKind::TerminalGuarded,
+    ] {
+        sim_assert_eq!(
+            have: lean_first
+                .emission_report
+                .counts_for_class(class)
+                .selected,
+            want: 0
+        );
+    }
+}
+
+#[test]
+fn projections_never_reenter_the_provider() {
+    #[derive(Debug, Default)]
+    struct CountingProvider {
+        calls: AtomicUsize,
+    }
+
+    impl ResourceSchemaOracle for CountingProvider {
+        fn schema_fragment_for_use(
+            &self,
+            _use_: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+            None
+        }
+    }
+
+    let source = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          replicas: {{ .Values.replicas }}
+    "};
+    let values_yaml = "replicas: 1\n";
+    let signals = schema_signals_for(parse_ir(source));
+    let provider = CountingProvider::default();
+    let input = ValuesSchemaInput::new(&signals, &provider).with_values_yaml(Some(values_yaml));
+    let plan = LoweredEmissionPlan::build(&input);
+    let calls_after_lowering = provider.calls.load(Ordering::Relaxed);
+    assert!(calls_after_lowering > 0);
+
+    let full_policy = EmissionPolicy::for_profile(SchemaProfile::Full);
+    let lean_policy = EmissionPolicy::for_profile(SchemaProfile::Lean);
+    let _ = plan.complete(plan.project(full_policy), CompletionPass::Descriptions);
+    let _ = plan.complete(plan.project(lean_policy), CompletionPass::Descriptions);
+
+    sim_assert_eq!(
+        have: provider.calls.load(Ordering::Relaxed),
+        want: calls_after_lowering
+    );
 }

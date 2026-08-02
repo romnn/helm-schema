@@ -19,7 +19,6 @@ const MIN_SHARED_PROVIDER_PAYLOAD_BYTES: usize = 16 * 1024;
 /// definitions, rewriting each extracted `resolved_path.schema` to an
 /// internal `$ref`. Returns the definitions keyed by definition name.
 #[tracing::instrument(skip_all)]
-#[tracing::instrument(skip_all)]
 pub(crate) fn extract_provider_definitions(
     resolved_paths: &mut [ResolvedPathSchema],
     conditional_schemas: &mut [LoweredConjunct],

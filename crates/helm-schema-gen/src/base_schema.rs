@@ -172,6 +172,7 @@ struct ConditionalTargetSummary {
     preserve_base_schema: bool,
 }
 
+#[derive(Clone)]
 pub(crate) struct ConditionalTargetIndex {
     targets: BTreeMap<String, ConditionalTargetSummary>,
     /// Targets whose base is wholly owned by guarded overlays. Declared

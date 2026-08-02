@@ -1992,13 +1992,35 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
     shared.unwrap_or_default()
 }
 
+#[derive(Debug, Clone, Default)]
+pub(crate) struct ConditionalHostPreparation {
+    folded_hosts: Vec<(usize, Vec<String>)>,
+    relaxed_host_paths: BTreeSet<Vec<String>>,
+}
+
+impl ConditionalHostPreparation {
+    pub(crate) fn apply(&self, root_schema: &mut SchemaDocument) -> BTreeSet<usize> {
+        let mut folded_fact_indices = BTreeSet::new();
+        for (fact_index, target_path) in &self.folded_hosts {
+            if root_schema.constrain_existing_path_to_object(target_path) {
+                folded_fact_indices.insert(*fact_index);
+            }
+        }
+        for path in &self.relaxed_host_paths {
+            root_schema.relax_host_object_type(path);
+        }
+        folded_fact_indices
+    }
+}
+
 #[tracing::instrument(skip_all)]
 pub(crate) fn prepare_conditional_hosts(
     root_schema: &mut SchemaDocument,
-    conditionals: &mut Vec<LoweredConjunct>,
-    report: &mut EmissionReport,
-) {
-    conditionals.retain(|conditional| {
+    conditionals: &[LoweredConjunct],
+) -> ConditionalHostPreparation {
+    let mut preparation = ConditionalHostPreparation::default();
+    let mut folded_fact_indices = BTreeSet::new();
+    for (fact_index, conditional) in conditionals.iter().enumerate() {
         let folds_into_base = conditional.carrier.fold_unconditional_object_host_into_base
             && conditional.carrier.arm_only
             && conditional.outer_guards().is_empty()
@@ -2006,25 +2028,32 @@ pub(crate) fn prepare_conditional_hosts(
             && is_object_domain_only(&conditional.schema)
             && root_schema
                 .constrain_existing_path_to_object(&conditional.carrier.relative_target_segments);
-        if folds_into_base && matches!(conditional.class, EmissionClass::Mandatory) {
-            report.mandatory_outcomes.equivalent += 1;
+        if folds_into_base {
+            folded_fact_indices.insert(fact_index);
+            preparation.folded_hosts.push((
+                fact_index,
+                conditional.carrier.relative_target_segments.clone(),
+            ));
         }
-        !folds_into_base
-    });
+    }
     // Nil-safe member hosts drop the structural `type: object` their
-    // descendants materialized: the presence-guarded arm emitted below is
-    // the exact contract (grouped reads render at absent/null receivers).
-    // Only arms that actually emit may relax — a dropped arm would turn
-    // the relaxation into a plain widening.
-    for conditional in conditionals {
+    // descendants materialized. This is policy-free support: every
+    // projection starts from the same relaxed base, whether or not it keeps
+    // the presence-guarded arm carrying the exact contract.
+    for (fact_index, conditional) in conditionals.iter().enumerate() {
+        if folded_fact_indices.contains(&fact_index) {
+            continue;
+        }
         if conditional.carrier.relax_untyped_host
             && !crate::schema_model::is_empty_schema(&conditional.schema)
         {
             let mut segments = conditional.carrier.ancestor_segments.clone();
             segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
             root_schema.relax_host_object_type(&segments);
+            preparation.relaxed_host_paths.insert(segments);
         }
     }
+    preparation
 }
 
 #[tracing::instrument(skip_all)]
