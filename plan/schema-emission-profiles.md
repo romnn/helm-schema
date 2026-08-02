@@ -1,8 +1,9 @@
-# Schema emission policy: passes, profiles, and configuration — v2.4 (2026-08-02)
+# Schema emission policy: passes, profiles, and configuration — v2.5 (2026-08-02)
 
 Goal unchanged from v1 (2026-07-17): during live validation, helm-schema
-*generation* is not the slow part — `helm lint` is, because Helm 4
-recompiles our large generated `values.schema.json` on every invocation.
+*generation* is not the dominant cost — `helm lint` is, because Helm 4
+recompiles our large generated `values.schema.json` on every invocation
+(generation itself is a separate, recorded performance follow-up).
 v2 replaces v1's one opaque `full|lean` switch with **named,
 individually reasoned emission policies**; the built-in profiles remain
 exactly two — `full` and `lean` — as preset policy-sets, overridable per
@@ -24,9 +25,17 @@ override-digest merge-intent identity, config policy-vocabulary
 pinning, fact-vs-carrier accounting with conservation invariants,
 fixture-lane relocation, representable unconditional termination,
 Boolean-root annotation, single `ReferencePolicy`, hermetic/live oracle
-lanes, scoped lint floor, and plan-artifact cost metrics. **v2.4 is
-intended as the final paper revision; further review happens against
-the implementation (step 0a onward), not this document.**
+lanes, scoped lint floor, and plan-artifact cost metrics. v2.5 —
+implementation-boundary contracts: the `Terminal::Always`
+representation/producer split, the `ProjectedTree` /
+`CompletedGeneratedSchema` stage types, fact-based policy floors,
+`PreparedOverride` as the runtime source of merge intent, the public
+`EmissionSelection` type, mismatch-free reference-policy ownership,
+benchmark visibility, config-version support policy and source
+eligibility, complete Boolean-root handling, tri-state transport-aware
+oracle verdicts, definition-pruning churn isolation, and two wording
+corrections. **v2.5 is the final paper revision; further review happens
+against the implementation (step 0a onward), not this document.**
 
 This plan is written with the architecture-review-v3 target in mind
 (compiler-style phases, one typed schema tree): the fact model here is
@@ -142,10 +151,14 @@ Origin = Overlay | FailImplication | MergeShadow | OmittedMember
 
 - **`Terminal::Always` is deliberately representable**: an unguarded
   Helm `fail` is meaningful — full emits an always-false constraint;
-  `terminal-clauses: off` may soundly drop it. An unconditional-fail
-  microchart pins both sides. (Current signal construction happens to
-  avoid empty terminal clauses; the vocabulary must not make an
-  analyzable Helm behavior impossible.)
+  `terminal-clauses: off` may soundly drop it. The vocabulary must not
+  make an analyzable Helm behavior impossible — but the current signal
+  builder discards empty fail conjunctions
+  (`contract_signal_builder/builder.rs:1766` area), so *emitting* this
+  is an analyzer behavior change: step 1a adds only the variant and
+  constructors (no producer, fixture-identical), and step 1a.1 teaches
+  the analyzer to produce it, with its own behavior-changing fixture
+  and oracle adjudication via the unconditional-fail microchart.
 - The `Conditional` variant **owns the guard scopes** — it replaces,
   not duplicates, the current `guards`/`nested_guard_scopes` fields.
 - **`anchor` is semantic**: the *minimum safe anchor* computed during
@@ -181,8 +194,8 @@ and `KindPartition` gets an intrinsically-Root constructor, making
 diagnosed-invalid combination, or (b) arbitrary anchors are retained
 and the only universally invalid combination is `kind-partitions: on`
 with **both** anchor knobs off. Configuration validity must never be
-chart-dependent. Both anchor knobs off — as lean uses — is valid either
-way.
+chart-dependent. (Lean itself — root-anchored and kind-partitions off,
+local-conditionals ON — is valid under either resolution.)
 
 ### Policy classes and the laws
 
@@ -207,11 +220,17 @@ Laws:
    *regression evidence*; VE passes additionally carry a narrow
    algebraic rewrite specification with exhaustive small-domain
    property tests per recognized shape.
-2. **Lint floor** (a release acceptance criterion, not a general law):
-   composed chart defaults and CI values validate under the built-in
-   profiles and every committed configuration the harness exercises.
-   Arbitrary caller overrides and explicit X policies are excluded —
-   a root override of `false` trivially fails any floor.
+2. **Lint floor** (a release acceptance criterion, not a general law),
+   **conditioned on the oracle**: composed chart defaults and CI values
+   validate under the built-in profiles and every committed
+   configuration the harness exercises *when Helm successfully renders
+   them*. Charts whose shipped defaults genuinely abort — the corpus
+   already tracks three (`KNOWN_VALUES_REJECTIONS` in
+   `chart_corpus.rs:53`: aws-load-balancer-controller, karpenter,
+   loki) and an unconditional-fail chart is another — must instead
+   REJECT under full. Arbitrary caller overrides and explicit X
+   policies are excluded — a root override of `false` trivially fails
+   any floor.
 
 ### The public knob matrix
 
@@ -279,10 +298,15 @@ LoweredEmissionPlan
   + immutable tagged conjuncts (LoweredConjunct values)
 
 impl LoweredEmissionPlan {
-    fn project(&self, policy: &EmissionPolicy) -> ProjectedSchema
+    fn project(&self, policy: &EmissionPolicy) -> ProjectedTree
 }
 
-ProjectedSchema { document: SchemaDocument, report: EmissionReport }
+// Two stages, because completion crosses into `Value` at into_value()
+// (gen/src/lib.rs:429) and rewrites whole documents afterward — a
+// pre-completion report must not be mistaken for the final one, and
+// this boundary is exactly the v3 step-11 migration seam:
+ProjectedTree            { document: SchemaDocument, fact_accounting: FactAccounting }
+CompletedGeneratedSchema { schema: Value, emission_report: EmissionReport }
 ```
 
 Invariants:
@@ -299,7 +323,12 @@ Invariants:
   resolution, base ownership, host preparation, default refill, or
   analysis.
 - The public session stays single-policy; the multi-policy API is
-  crate-private for the harness and the benchmark command.
+  crate-private. The benchmark therefore runs as an **ignored in-crate
+  benchmark test invoked by the script** (a workspace binary crate
+  could not call a `pub(crate)` API); a feature-gated `bench-support`
+  module is the fallback only if the in-crate test cannot cover
+  temporal end to end. No permanently public unstable analysis API for
+  benchmarking.
 - **Cost accounting**: the plan retains provider payloads and clones
   per projection — the benchmark records plan construction time,
   per-policy projection time, peak RSS, retained plan/candidate bytes,
@@ -380,13 +409,21 @@ emission:
 ```
 
 - **The `version` field pins the complete interpretation**: config
-  syntax AND policy vocabulary AND preset membership. A binary that
-  cannot honor that version's semantics fails clearly — it never
-  silently reinterprets a packaged chart's policy (the original
-  profile-drift problem, closed at the config layer too). Evolving
-  lean's definition or a knob's meaning therefore bumps the config
-  version; that is the deliberate price of drift-proof packaged
+  syntax AND policy vocabulary AND preset membership (the mapping
+  `version 1 → vocabulary 1 → lean/full definitions` is permanently
+  frozen). The **support policy**: a binary honors every config version
+  it ships support for, exactly; for versions it does not support
+  (older or newer) it fails with a diagnostic naming the config's
+  version, the supported range, and the remediation (update the config
+  or the binary). It never silently reinterprets a packaged chart's
+  policy. Evolving lean's definition or a knob's meaning bumps the
+  config version; that is the deliberate price of drift-proof packaged
   configs.
+- **Source eligibility**: discovered config controls **presets and
+  W-class emission knobs only**. X policies, override paths, and
+  reference-transport settings stay CLI/library-only unless chart-author
+  demand is demonstrated — a chart on disk must not be able to enroll
+  the caller in narrowing or I/O behavior.
 - **Precedence**: explicit CLI > config file > profile preset >
   built-in default. CLI overrides are tri-state (`Option<_>`-backed;
   today's always-populated `--profile`, `cli/mod.rs:62`, cannot express
@@ -409,15 +446,31 @@ emission:
 - **Visibility**: one aggregated diagnostic when discovered config
   weakens relative to full; `--print-effective-config` shows each
   field's source (built-in / profile / file path / CLI).
-- **Library boundary**: the library takes explicit typed policy only;
-  discovery belongs to the CLI composition root.
-- **Reference policy is one typed source of truth**: a single resolved
-  `ReferencePolicy` drives both override preparation and final
-  transforms (today `ReferenceMode` appears independently in
+- **Library boundary — the public policy type is specified before step
+  4** (avoiding parallel `profile + overrides` fields that recreate
+  invalid combinations; today's public `GenerateOptions.profile`
+  migrates onto it):
+
+  ```text
+  EmissionSelection = Preset(SchemaProfile) | Explicit(EmissionPolicy)
+  ResolvedEmissionPolicy {
+      requested_profile: Option<SchemaProfile>,   // the annotation's
+      policy: EmissionPolicy,                     // single source
+  }
+  ```
+
+  `EmissionPolicy` fields stay private behind exhaustive checked
+  constructors. Discovery belongs to the CLI composition root; the
+  library takes `EmissionSelection` explicitly.
+- **Reference policy has no mismatch state**: one request owns it —
+  `EmitRequest { reference_policy: ReferencePolicy, output:
+  OutputOptionsWithoutReferenceMode }` — and prepared overrides carry
+  that same policy, so final transforms read it from the request rather
+  than a second field (today `ReferenceMode` appears independently in
   `PolicyInputOptions` and `OutputPipelineOptions`,
-  `output_pipeline/options.rs:9` — a prepare-inlined/emit-preserved
-  mismatch would make the annotation lie). Mismatches are typed errors
-  with a test.
+  `output_pipeline/options.rs:9`; a prepare-inlined/emit-preserved
+  mismatch would make the annotation lie). Structuring the duplicate
+  away beats diagnosing it.
 - **Cache law** (unchanged): policy changes emission only; emission
   stages are keyed by resolved policy.
 
@@ -446,24 +499,44 @@ any caller-provided key:
 
 - `policy-vocabulary-version` is inside the fingerprint: identical
   boolean objects must change identity when knob meanings change.
-- **The overrides digest hashes merge intent, not just content**: one
-  canonical, application-ordered array of
-  `PreparedOverrideIdentity { marker-free prepared schema (post
-  reference-resolution), sorted replacement JSON pointers }`. The
-  `$ref-replace` markers change deep-merge into subtree replacement
-  (`output_pipeline/overrides.rs:55`, `schema_override.rs:43`), so two
-  marker-free-identical schemas can merge differently — the pointer
-  list captures that while letting the private marker spelling change
-  without churn. An inline-vs-ref-resolved collision test pins it.
+- **Merge intent has one runtime representation**: after reference
+  preparation, the transient `$ref-replace` markers are extracted and
+  removed ONCE into
+
+  ```text
+  PreparedOverride {
+      schema: marker-free Value,
+      replace_at: sorted JSON pointers,
+  }
+  impl PreparedOverride { fn identity(&self) -> PreparedOverrideIdentity }
+  ```
+
+  and **both merging and hashing consume `replace_at`** — never two
+  representations to keep synchronized, and a caller-authored
+  `$ref-replace` key can no longer collide with internal control
+  metadata. The digest is over the canonical application-ordered
+  identity array. Rationale: the markers change deep-merge into subtree
+  replacement (`output_pipeline/overrides.rs:55`,
+  `schema_override.rs:43`), so two marker-free-identical schemas can
+  merge differently. An inline-vs-ref-resolved collision test pins it.
 - `reference-mode` identifies configuration, not validation semantics
   under every external resolver.
 - **Boolean roots**: a root replacement override can produce `true` or
   `false`, and today's pipeline inserts markers only into object roots
   (`transforms.rs:39-41`). Final documents self-identify without
-  exception, so Boolean roots are VE-wrapped:
-  `{ "allOf": [false], "x-helm-schema-generated": true,
-  "x-helm-schema-policy": { … } }` — tested for both Boolean values and
-  root-replacement overrides.
+  exception, so Boolean roots are VE-wrapped **including the dialect
+  declaration**:
+
+  ```json
+  { "$schema": "http://json-schema.org/draft-07/schema#",
+    "allOf": [false],
+    "x-helm-schema-generated": true, "x-helm-schema-policy": { } }
+  ```
+
+  Override loading REJECTS root `null`/number/string/array values (a
+  JSON Schema root is an object or a Boolean), so no root shape escapes
+  the annotation promise. Helm-validator compatibility controls cover
+  both Boolean wrappers.
 - The generator release version is deliberately not embedded.
 
 **Fixture placement (verified)**: the corpus roundtrip helper calls
@@ -496,10 +569,26 @@ canonicalization: applied / redundant / fallback
 Conservation invariants: `lowered = selected + dropped`;
 `mandatory_dropped = 0`; **every Mandatory fact is selected and reaches
 an emitted, equivalent, redundant, or fallback outcome** (this replaces
-the vague "Mandatory facts present in output"). The report drives the
-structural floors and benchmark accounting; the shell benchmark obtains
-it through a dedicated workspace benchmark command, not tracing
-scraping or a half-stable public API.
+the vague "Mandatory facts present in output"). **Policy floors are
+fact-based, never carrier-based** — Mandatory root carriers and
+generator-owned nested `if` schemas inside payloads
+(`path_resolver.rs:524` area) legitimately exist independent of W-class
+policy carriers, so "zero emitter-owned conditionals" would be wrong:
+
+```text
+all-conditionals-off recipe: selected Conditional = 0, selected Terminal = 0
+lean:                        selected Ordinary/Root = 0,
+                             selected KindPartition = 0,
+                             selected Terminal = 0
+every policy:                mandatory_dropped = 0
+```
+
+Carrier counts remain for grouping/performance accounting, and the
+report separately records **total final serialized conditional-keyword
+counts** — those, not provenance, are what Helm compiles after
+references and minification. The report reaches the shell benchmark
+through the in-crate benchmark test (see plan invariants), not tracing
+scraping.
 
 ## Verification design
 
@@ -519,14 +608,25 @@ scraping or a half-stable public API.
    `(instance, adjudicated contract verdict, full verdict, policy
    verdict, rationale)` — distinguishing chart-render failures,
    provider-backed invalid manifests, and deliberate profile widening.
-   **Hermetic lane**: ordinary tests consume committed adjudicated
-   verdicts; no Helm executable required. **Live lane**: a pinned
-   integration/maintenance command replays the cases against actual
-   Helm and rendered-sink validation, recording Helm version,
-   provider/Kubernetes schema version, chart digest, and
-   rendered-manifest verdict — refreshable, auditable evidence.
-   Controls encode only intended behavior; no contract test enshrines a
-   known violation.
+   Verdicts are **tri-state** per the fidelity charter (unknown beats a
+   false answer): `ContractVerdict = Accept | Reject(reason) |
+   Unresolved(reason)` — an unresolved provider kind/schema never
+   becomes a positive or negative control. Each instance records its
+   **transport** (`ValuesFileJson | Set | SetString`): a JSON values
+   file preserves the validator instance's exact JSON types, while
+   `--set`/`--set-string` have distinct coercion behavior and are
+   separate controls. **Hermetic lane**: ordinary tests consume
+   committed adjudicated verdicts; no Helm executable required. **Live
+   lane**: a pinned integration/maintenance command replays the cases
+   against actual Helm and rendered-sink validation, recording Helm
+   version, provider/Kubernetes schema version, chart digest, and
+   rendered-manifest verdict. A small **validator-parity suite** checks
+   the constructs this plan touches — Boolean schemas, `if/then`, type
+   arrays, internal refs, extension annotations — against the pinned
+   Helm 4 embedded validator: the Rust `jsonschema` harness passing
+   does not prove Helm interprets every construct identically. Controls
+   encode only intended behavior; no contract test enshrines a known
+   violation.
 3. **Three-category semantic controls** per profile promise: retained
    tooth / intentionally removed tooth / positive control. Coverage:
    unconditional provider typing, scalar spellings, presence, not-null,
@@ -540,13 +640,12 @@ scraping or a half-stable public API.
    artifact); chart version, source checksum, and dependency lock in
    corpus-integrity metadata. Vendoring upstream alone would change the
    values prefix and possibly the anchoring under test.
-5. **Structural CI floors**, read from the `EmissionReport`: zero
-   emitter-owned conditionals under the all-conditionals-off recipe;
-   zero root-anchored carriers under lean; the Mandatory conservation
-   invariant; per-anchor size budgets measured on the actual shipped
-   bytes (`write_schema_json` including trailing newline,
-   `output_pipeline/format.rs:8`) — e.g. standard-lean temporal under
-   4.5 MiB. Wall-clock non-gating.
+5. **Structural CI floors**, read from the `EmissionReport`'s
+   fact-based invariants (see the report section — selected-fact
+   counts, never carrier counts); plus per-anchor size budgets measured
+   on the actual shipped bytes (`write_schema_json` including trailing
+   newline, `output_pipeline/format.rs:8`) — e.g. standard-lean
+   temporal under 4.5 MiB. Wall-clock non-gating.
 6. **Benchmark** (dedicated workspace command + script under
    `plan/chart-corpus-scripts/`), per release: report-derived root vs
    local carrier counts, condition AST nodes, unique conditions/`then`
@@ -574,26 +673,42 @@ subsumes the patch; rides the round-58 closure if the rounds align).
 
 ### Step 1a — fact model, decision table, `EmissionReport`, phase split (fixture-identical)
 
-Introduce `LoweredConjunct`/`EmissionClass`, the decision-table
-selection, and the report; split `append_conditional_schemas` into
-"prepare hosts" / "append selected constraints" while exactly emulating
-current behavior. **Audit kind-partition anchoring** (local
-kind-partition microchart; resolve the constructor-vs-both-knobs
-question) and add the unconditional-fail microchart. `EmissionPolicy`
-(internal) replaces the bare enum. Floors begin reporting, not gating.
-Gate: both profiles byte-identical on every fixture.
+Introduce `LoweredConjunct`/`EmissionClass` (including the
+`Terminal::Always` variant and constructors — **no producer yet**), the
+decision-table selection, and the report; split
+`append_conditional_schemas` into "prepare hosts" / "append selected
+constraints" while exactly emulating current behavior. **Audit
+kind-partition anchoring** (local kind-partition microchart; resolve
+the constructor-vs-both-knobs question). `EmissionPolicy` (internal)
+replaces the bare enum. Floors begin reporting, not gating. Gate: both
+profiles byte-identical on every fixture.
+
+### Step 1a.1 — unconditional termination producer (behavior-changing)
+
+Teach the signal builder to emit `Terminal::Always` for unguarded
+`fail` conjunctions (today discarded,
+`contract_signal_builder/builder.rs:1766` area), with the
+unconditional-fail microchart, its own fixture, and oracle adjudication
+(full rejects everything; `terminal-clauses: off` soundly accepts; the
+chart joins the oracle-conditioned floor's reject list).
 
 ### Step 1b — `LoweredEmissionPlan`, full-fact support, extraction move
 
-Introduce the plan artifact with its ownership invariants; enable
-support preparation from ALL facts under every policy; **move
-source-aware provider extraction and unreachable-definition pruning
-after projection** (so multi-projection and all subsequent measurements
-observe the intended architecture). Full output unchanged; lean changes
-exactly where support mutations previously vanished — dedicated
-controls pin the delta; harness shows lean's acceptance only grows.
-Switch the harness to mandatory one-artifact multi-projection; floors
-become hard gates.
+Introduce the plan artifact with its ownership invariants and the
+`ProjectedTree`/`CompletedGeneratedSchema` stage types; enable support
+preparation from ALL facts under every policy; **move source-aware
+provider extraction after projection** (so multi-projection and all
+subsequent measurements observe the intended architecture). Full output
+unchanged; lean changes exactly where support mutations previously
+vanished — dedicated controls pin the delta; harness shows lean's
+acceptance only grows. **Unreachable-definition pruning is preflighted
+against full**: if full stays byte-identical it lands here; if not, it
+becomes its own VE step with a zero-flip proof and fixture adjudication
+rather than hiding output churn inside the support bug fix. Either way,
+state that caller overrides may not reference generator-private `$defs`
+names (or defer pruning until such references are considered). Switch
+the harness to mandatory one-artifact multi-projection; floors become
+hard gates.
 
 ### Step 2 — lean per the decided contract (private policy)
 
