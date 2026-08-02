@@ -11289,8 +11289,9 @@ The staged patches under `<scratchpad>/r49` are NOT landable and should not
 be treated as a starting point: `operand-decode.patch` carries a leaked
 `panic!("scratch")`, and the saved `operand_condition.rs` predates the
 dispatch wiring, so it cannot have produced the datadog `fips` result the
-previous handoff quoted. The `cargo-fc` tooling changes in `Cargo.toml` and
-`taskfile.yaml` are sound and independent of all of this.
+previous handoff quoted. Routing the task through `cargo-fc` is sound and
+independent of all of this; its first version also placed the cargo-udeps
+`maximal_features` option in cargo-fc metadata, which cargo-fc does not accept.
 
 Still 18 of the audit's 70 root deletions open; this round moves none.
 
@@ -11386,3 +11387,593 @@ either direction, and every chart's shipped values.yaml still validates.
   full-profile base widening that lean skips without a guarding test.
 - Truthy-reduction joins outside ranges still over-claim for kill-switch
   seeds (entry-truthy reductions leak unstamped through joins).
+
+## Round-50 residual closure (2026-07-30, fifty-first round)
+
+**Outcome: all four bounded correctness residuals from the fiftieth round
+are closed.** This is a semantic extension of the typed truth-condition
+model, not another decoder or an emission-policy change. The legacy
+condition-predicate cleanup and emission-profile work remain deliberately
+out of scope until the mismatch ledger is empty.
+
+### Stringified pattern false arms are representable
+
+`regexMatch p (toString .Values.x)` is partial at the raw input boundary:
+its true subset is the existing rendered-pattern preimage, while its false
+subset is exactly "the raw value is a string and does not match `p`."
+Previously that second statement was held as `TypeIs(string) AND
+NOT(MatchesPattern)`, but no guard could carry it through projection and
+encoding. `NotMatchesPattern` now carries that narrow atom and lowers to:
+
+```text
+type: string AND NOT pattern
+```
+
+It is intentionally not the logical complement of `MatchesPattern`;
+non-strings are outside the subset. The same typed scalar-dispatch path now
+handles literal `contains`, `hasPrefix`, and `hasSuffix` predicates, with
+the prefix/suffix anchors applied after literal quoting. Their legacy
+decoder abstains on total stringification so it cannot reintroduce an exact
+raw-path claim beside the typed partial result.
+
+The first corpus dump exposed a dialect bug before adoption:
+`regex::escape("velero-restic")` emits `velero\-restic`, but Go RE2 rejects
+that escape outside a character class. Literal quoting now uses the
+existing Go-compatible metacharacter set and a focused hyphen test pins it.
+Helm 4.2.3 controls confirmed that a matching numeric rendering passes and
+raw-string mismatches for `regexMatch`, `contains`, `hasPrefix`, and
+`hasSuffix` all abort.
+
+### Numeric type names retain transport provenance
+
+The same Draft-07 integer instance has two Helm runtime types: values-file
+loading passes through JSON and produces `float64`, while `--set x=1`
+produces `int64`. Helm 4.2.3 confirmed both spellings on the same probe
+chart. A direct values path therefore cannot turn either numeric spelling
+into exact, negatable schema truth:
+
+- `int64`: no schema-only true subset; non-integers are definitely false;
+- `float64`: non-integral numbers are definitely true, non-numbers are
+  definitely false, and integers remain unknown.
+
+`fromJson` numbers have fixed JSON-decoder provenance, so their `float64`
+test stays exact and `int64` stays exactly false. The legacy decoder
+abstains for both numeric spellings instead of emitting a conflicting exact
+predicate.
+
+### Exact kill-switch joins keep their branch condition
+
+The ordinary truthy-reduction join unions branch facts. For
+`$continue := CONDITION` followed by `$continue = false` in one `if` arm,
+that union let the untouched entry fact absorb the false arm, so later
+short-circuit consumers ran unconditionally in the schema. Exact `if`
+partitions now retain their raw per-arm local states and reconstruct only
+entry-bound reductions with a literal-false kill arm:
+
+```text
+(arm₁ AND reduction₁) OR ... OR (fallthrough AND entry reduction)
+```
+
+Approximate partitions keep the established join, as do ordinary
+provider/merge locals. This narrow eligibility rule was added after the
+first broad run showed that replacing every joined truth reduction
+disturbed four existing provider/merge contracts; all four preservation
+tests and the new kill-switch test pass together.
+
+### Fixture and probe adjudication
+
+One clean final dump regenerated all 55 charts. Eight fixtures re-encode:
+airflow, cilium, datadog, jenkins, sealed-secrets, tempo, traefik, and
+vault. A compiled old/new Rust `jsonschema` battery over their composed
+defaults tested every top-level null deletion, every second-level null
+deletion, and every top-level foreign-member insertion. It reports **zero
+acceptance flips in either direction**; every chart's shipped defaults
+still validate. The changed schemas are therefore condition
+re-encodings, not unadjudicated tightenings or widenings.
+
+Focused pins:
+
+- `stringified_pattern_fail_arms_keep_the_raw_string_mismatch_subset`
+- `stringified_contains_uses_go_compatible_literal_pattern_syntax`
+- `values_numeric_type_spellings_remain_provenance_dependent`
+- `numeric_type_is_spelling_does_not_claim_transport_provenance`
+- `exact_if_join_conditions_an_untouched_entry_truthy_reduction`
+- `kill_switch_reassignment_scopes_later_short_circuit_operands`
+
+The final gate also exposed that stale metadata spelling before any
+feature-combination lint ran. The `unused` task already passes
+`--maximal-features` to cargo-udeps directly, so removing the invalid metadata
+table preserves the intended udeps coverage. Cargo-fc then resolves 39
+package-target rows: all 13 workspace packages across each of the three
+configured targets.
+
+## Root/F53 residual reconciliation (2026-07-30, fifty-second round)
+
+**Outcome: the umbrella root-deletion entry is closed.** The fiftieth
+round's structural rewrite already fixed the operand/helper-dispatch cases
+and supplied the shared typed range subject. This round chart-pins those
+semantics, fixes the one remaining local receiver defect, and assigns every
+surviving root witness to its narrower semantic lane.
+
+### Airflow confirms the typed range boundary
+
+The real configmap performs two nested ranges inside a block scalar:
+
+```text
+$config := deepCopy .Values.config | merge …
+range $section, $settings := $config
+range $key, $val := $settings
+tpl ($val | toString) $Global
+```
+
+Helm 4.2.3 confirms the exact boundary:
+
+- `config.traces: 7` aborts because the inner range cannot iterate it;
+- `config.traces: []` and a deleted/null section render;
+- array and object `config.traces.otel_on` values render because
+  `toString` is total before `tpl`;
+- deleting `multiNamespaceMode` aborts in the default closed `tpl` program.
+
+The whole-chart semantic pin covers all five controls. The focused
+`RangeSubject` equality tests additionally keep a `splitList` result's
+string source out of the iterable-identity lane, so influence cannot become
+shape evidence.
+
+### Sprig `get` has a distinct missing-key receiver
+
+Grafana reads `(get .Values "grafana.ini").paths.data`. The literal dotted
+key was already preserved as one path segment, but grouped receiver
+lowering treated its absence as nil-safe. Sprig `get` instead returns `""`
+for a missing map key, and field selection from that string aborts.
+Grouped-call lowering now carries that exact distinction: ordinary grouped
+receivers keep the nil-safe guard, while a grouped `get` result requires
+its identified host to be map-shaped even in the missing state.
+
+Real chart controls confirm deletion and a scalar abort, while an empty map
+and the shipped map render. The single clean 55-chart dump re-encodes
+Grafana and Kube Prometheus Stack. A freshly rebuilt exhaustive old/new
+Rust battery reports exactly one acceptance flip:
+
+```text
+TIGHTEN  grafana  grafana.ini  deleted
+```
+
+Helm rejects that document with `can't evaluate field paths in type
+string`; Kube Prometheus Stack has zero flips, and no other path or probe
+kind moves.
+
+### Historical 18-root inventory
+
+Five witnesses are now fixed: Airflow `multiNamespaceMode`, Datadog
+`fips`, SigNoz `global`, Traefik `log`, and Grafana `grafana.ini`. Twelve
+survivors already have narrower owners: three test-template roots plus
+Metrics Server `tmpVolume` in the provider lane; two `upper` roots plus
+four serialized/YAML roots in the text-placement lane; Istiod's rewritten
+root in F65; and Grafana `route` in the closed-`tpl` lane.
+
+The last witness, Bitnami Redis `architecture`, is not another root or
+truth-condition defect. Its validator appends helper-returned text to a
+list, removes empty strings, joins the result, and fails on the joined
+text's truthiness. Fresh corpus evidence finds six copies of that exact
+append/include/without/join/fail program across the Bitnami PostgreSQL,
+Redis, Airflow, Kyverno, and SigNoz trees. A local enum inference would be
+heuristic; the structural solution needs a finite helper-text and
+list-reduction semantic extension. Per the ledger-clearing rule, that
+extension is recorded under Rejected and deferred.
+
+## Provider contract closure (2026-07-31, fifty-third round)
+
+**Outcome: the provider-contract lane is closed.** Required provider
+leaves, nested item/field identities, helper-spliced fragments, and
+rerooted ordered-merge candidates now reach their original values paths.
+The fixes cover the Airflow worker reroot, Bitnami Redis Services, direct
+required leaves across the corpus, Vault helper splices, and unconditional
+fragment-presence failures.
+
+### Conditional base ownership belongs to the emitted arm
+
+The final blocker was not another resolve-policy exception. A source used
+as one candidate in an ordered merge needs its provider contract only when
+that candidate wins. The generated whole-candidate arm therefore owns the
+resolved base. If the same source also has an independent non-control
+consumer, that consumer's base must remain beside the arm.
+
+`ContractValuePathFacts::has_unlayered_non_control_use` carries that
+distinction from contract analysis to lowering. A synthetic merge arm uses
+`ConditionalBaseEffect::Own` when it is the source's only real consumer and
+`ConditionalBaseEffect::Preserve` otherwise. This replaces the rejected
+path-wide resolve-policy suppression, which could not see arm ownership and
+globally erased valid values/provider typing.
+
+The minimal paired reproducers are:
+
+- `dormant_merge_layer_does_not_project_declared_default_type`
+- `merge_layer_preserves_an_independent_direct_consumer`
+
+The first admits an arbitrary dormant source while retaining provider
+typing when the merged Service is live. The second adds an unconditional
+Service consumer and proves its port contract remains active while the
+merge arm is dormant.
+
+### Provider corpus controls
+
+Eleven focused `chart_reaudit` tests pass:
+
+- Airflow rerooted worker PDB/HPA payloads;
+- Bitnami Redis master/headless Service fields and Sentinel dormancy;
+- required provider leaves across Sealed Secrets, SigNoz, Surveyor,
+  Traefik, Trivy Operator, Vault, Velero, and Zalando;
+- Vault helper-spliced metadata and required storage/service fields;
+- Metrics Server and Traefik unconditional fragment presence;
+- serialized/helper splices, own-line slots, member/root presence, and
+  dependency-owned deletion backprojection.
+
+The full focused IR/generator run is 841 of 841 passing. One clean final
+dump regenerated all 55 corpus fixtures and produced a 32,675-row
+old/new sparse-override battery. Exact direction/chart/path/probe keys let
+32,669 rows reuse the preceding full Helm/strict adjudication; every
+provider-owned flip is justified by a Helm abort or strict Kubernetes
+rejection. The six genuinely new rows were rendered separately: Cilium's
+two lookup-name fallbacks each reject empty map, empty list, and null even
+though Helm renders them through `default`. They are not provider
+regressions and are now explicit witnesses in the transformed-text lane.
+
+### Named dependency members retain deeper-layer leaves
+
+The downstream luup2 gate found a layered-map case absent from the
+standalone corpus fixture. Its SigNoz parent repeats
+`otelCollector.ports.otlp` and `otlp-http` configuration without repeating
+`containerPort`; the dependency declares those leaves, and Helm's recursive
+values coalescing fills them before the ranged provider sink renders. The
+ranged required-source projection instead applied one wildcard presence rule
+to every map member, rejecting the valid sparse parent values.
+
+A blanket dependency-default abstention would be wrong: a newly added enabled
+port has no deeper `containerPort` and renders a provider-invalid null. The
+typed member target therefore carries the exact dependency-defaulted map keys.
+Its object lane leaves only those named entries out of the presence
+requirement, while its `additionalProperties` and array-item lanes retain the
+strict rule. `dependency_defaults_refill_named_ranged_provider_sources` pins
+the three-way boundary: sparse built-in member accepted, sparse custom member
+rejected, complete custom member accepted.
+
+The final clean dump changes only the `signoz-signoz` fixture relative to the
+preceding final tree, and the exhaustive old/new sparse-override battery finds
+zero acceptance flips. The exact downstream command passes all 32 luup2
+charts; SigNoz validates and renders, Qdrant remains green, and the configured
+compact/lean schema-size gates remain below their limits.
+
+## Placement-language closure (2026-07-31, fifty-fourth round)
+
+**Outcome: the transformed/file-backed text lane and the case-mapped slot
+residual are closed.** YAML lexical language now belongs to the rendered
+result. It is backprojected through a formatter, helper, file-backed
+template, or serializer only when the analyzer has a typed preimage for that
+operation; it no longer overwrites the independent runtime domain of the
+input.
+
+### Formatter operands retain their own provenance
+
+Go's `%s` is not total stringification. A non-string operand produces a
+`%!s(...)` diagnostic which can corrupt an unquoted YAML token, while `%v`
+and an operand selected away by a live prefix do not imply that restriction.
+`CaptureKind::PrintfStringOperand` and
+`FailValueRequirement::PrintfStringOperand` carry this fact independently of
+ordinary string transforms. The formatter evaluator retains which operand
+opens the resulting token through helper branches and `default` selection.
+A caller-side `quote` clears the plain-token claim because the formatted
+result is then YAML-safe.
+
+This closes Sealed Secrets' image formatter and Airflow's formatted scalar
+sites without copying an output kind indiscriminately onto every argument.
+Focused equality reproducers pin a direct token-opening argument, a
+helper-selected fallback, a branch-selected registry/repository pair, and the
+quoted-helper control.
+
+### Placement and runtime contracts coexist
+
+Case mappings are strict string consumers, but their result still occupies
+the caller's YAML slot. The schema now conjoins both facts, so `upper` and
+`lower` regain their presence/string contract without losing the plain-token
+exclusions that reject YAML booleans, comments, anchors, mappings, and line
+breaks. Plain-scalar comment safety is expressed against the parsed prefix:
+`a # comment` remains a string, while `true # comment` does not.
+
+The same placement association is retained through selected file-backed
+template programs and serialized member sources. This closes Cilium's Envoy
+file program and Fluent Bit's volume serialization. Conversely, a
+downstream string consumer reached only after `default` does not constrain
+the dormant falsy inputs. Cilium's empty-map, empty-list, and null lookup-name
+controls therefore remain admitted.
+
+### Dependency globals follow Helm's key-level coalescing
+
+The first corpus regeneration revealed an independent ownership defect:
+namespacing a dependency's `global.*` contracts under the dependency made
+Airflow ignore its parent-global consumer, while mapping every such contract
+to the parent made Kube Prometheus Stack lose the child fallback. Helm
+coalesces these values at key granularity: parent `global.x` wins when the key
+exists, otherwise the dependency's `global.x` remains effective.
+
+The IR now performs ordinary dependency namespacing and then projects each
+identifiable global leaf into two exact arms:
+
+```text
+hasKey(parent global container, key)     -> parent global leaf
+notHasKey(parent global container, key)  -> dependency global leaf
+```
+
+`NotHasKey` is a first-class guard with an exact `HasKey` negation, and both
+ordinary uses and single-target fail captures follow the same projection.
+Path-wide string facts are materialized as guarded semantic rows before the
+projection so they cannot type a dormant base.
+
+The minimal full-schema regression compares the complete emitted schema and
+pins all three meaningful precedence controls: a valid parent shadows a bad
+child, an absent parent exposes a bad child, and a bad parent is not rescued
+by a valid child. Fresh Airflow and Kube Prometheus Stack Helm runs agree,
+including explicit null and deleted parent-key controls.
+
+### Fixture and probe adjudication
+
+One clean final dump regenerated all 55 chart schemas. Every dump is present
+and non-empty, and the dependency-global repair leaves no new shipped-default
+validation failure. The sparse old/new battery against the already
+Helm/strict-adjudicated candidate fixtures contains zero acceptance flips.
+The clean dump was adopted in one mechanical fixture copy, so every fixture
+comes from the same code state.
+
+Primary minimal pins:
+
+- `case_mapping_keeps_the_plain_slot_language_beside_its_string_contract`
+- `token_initial_printf_string_argument_uses_the_plain_slot_language`
+- `helper_printf_keeps_its_selected_token_initial_argument`
+- `helper_prefix_branch_scopes_the_token_opening_formatter_argument`
+- `quoting_helper_printf_output_clears_its_plain_slot_contract`
+- `lookup_argument_contract_preserves_a_literal_defaults_falsy_escape`
+- `file_template_member_access_keeps_its_caller_activation`
+- `dependency_global_projection_keeps_parent_override_and_child_fallback_arms`
+- `dependency_global_render_uses_follow_the_parent_key_with_a_child_fallback`
+
+## Provider rendered-preimage audit (2026-07-31, fifty-fifth round)
+
+**Outcome: the provider lane remains closed after its raw/rendered boundary
+was exercised against the full chart suite.** A provider schema describes the
+YAML node after Go-template formatting and YAML parsing. Treating it as the
+raw values schema works only when that rendering step is the identity.
+
+### Provider union arms partition the source language
+
+Plain scalar projection now computes the preimage of each provider union arm
+independently. The string arm excludes every implicit YAML spelling owned by
+the null, Boolean, decimal, radix, and special-float arms. The null arm admits
+the raw null value plus the bounded empty/null/comment/anchor spellings that
+parse as null. Each arm carries its own JSON type so flattening a union cannot
+turn a string pattern into a vacuous match on numeric instances.
+
+This is required for Kubernetes `IntOrString`: Datadog's numeric-string
+`containerPort` values previously matched both halves of `oneOf` after the
+provider preimage was widened. The partition now accepts them through exactly
+the integer half. Conversely, an unconstrained string slot admits the bounded
+mapping subset whose Go `map[k:v]` spelling remains one YAML scalar; a
+Go-formatted sequence still parses as a flow sequence and is rejected by the
+string provider slot.
+
+Minimal pins:
+
+- `int_or_string_preimage_partitions_numeric_string_spellings`
+- `overlapping_nullable_one_of_rejects_plain_null_spellings`
+- `plain_probe_port_preserves_provider_one_of_semantics`
+- `plain_scalar_slots_accept_go_formatted_mappings`
+- `scalar_range_wrapped_into_object_items_keeps_scalar_preimage`
+- `wildcard_source_path_types_both_collection_lanes_without_empty_variant`
+
+### Conditional branches own only the defaults they can observe
+
+The Bitnami common annotations helper parses a candidate map and merges it
+only when the candidate is Helm-truthy. Its unconditional render occurrence
+does not erase that falsy bypass: `[]`, `false`, and `0` all skip the parsed
+map layer and Helm renders them, while a truthy map still receives its member
+provider contract. `unconditionally_evaluated_parsed_map_layer_keeps_helm_falsy_shapes`
+pins that boundary; the Bitnami Redis whole-chart test checks the three falsy
+forms beside a live sibling and rejects a bad annotation member.
+
+Vault exposed the dual ownership error. Its declared default is a scalar, but
+the `not typeIs "string"` arm is the exact complement that selects structured
+inputs before a serialized provider sink. Merging the scalar default into
+that arm erased its object provider branch. Conditional lowering now asks
+whether the branch's self-guards exclude the declared default; if so, the arm
+owns its branch schema and foreign guards cannot reintroduce the excluded
+default. `type_of_dispatch_keeps_serialized_arm_structured` pins the minimal
+case and the Vault object-selector chart control pins the composed chart.
+
+### Clean dump and adjudication
+
+The final integration gate exposed two independent abstention bugs before
+the corpus was accepted. First, an unknown condition arm cannot form a
+scalar-dispatch partition. The join now retains useful partial arms but
+leaves the ordinary abstract-value choice in place when any arm is wholly
+unknown. Second, `printf`/`print` may render an exact string set only when
+every abstract alternative is static text; a literal member beside a values
+path is not exhaustive. The minimal helper-local password reproducer pins
+the preserved source, while Datadog's partially decoded `latest` sentinel
+test pins the useful-partial control.
+
+The gate also disproved declared dependency defaults as a source-selection
+oracle. Helm permits an explicit null to delete a parent default, exposing
+the next dependency-global source. Global projection therefore always emits
+every ancestor source under exact presence/null selection guards. A minimal
+three-chart fixture retains root, child, and grandchild range-member
+contracts; the SigNoz whole-chart test sets both ancestor pull-secret values
+to null and Helm-confirms that a scalar grandchild fallback aborts.
+
+The final focused verification is 957 of 957 IR/generator tests and 128 of
+128 chart-level adjudication tests. A single clean dump produced all 55
+schemas and was adopted mechanically; seven fixtures re-encoded after the
+null-fallback correction. The old/new prober compared the candidate with the
+HEAD fixture baseline across all 1,848 cells and reported zero acceptance
+flips. The Redis, Datadog, Vault, and SigNoz whole-chart controls were
+additionally rendered with Helm 4.2.3 in both live and dormant states.
+
+## Istiod effective-root source presence (2026-07-31, fifty-sixth round)
+
+**Outcome: F65 is closed without blanket-requiring Istiod's hidden defaults
+subtree.** `zzz_profile.yaml` binds
+`_internal_defaults_do_not_set`, removes that member from `.Values`, and
+replaces the root with `mustMergeOverwrite $defaults $.Values`. A downstream
+host can therefore come from either the user-facing root or the corresponding
+path under the pre-rewrite source.
+
+### Absence backprojects through the unique source
+
+The IR already carried both necessary structural facts:
+
+- `ValuesDefaultSource { target_path: "", source_path:
+  "_internal_defaults_do_not_set" }`;
+- an abort-grade `Absent { path: "global" }` terminal from the strict member
+  access after the rewrite.
+
+Generation had treated the fallback subtree as an unconditional hidden
+default, so deleting the source still appeared to supply `global`. A
+single-absence terminal now maps its effective path through a unique default
+source and emits the exact raw-input preimage:
+
+```text
+effective host absent
+  = target spelling absent AND source spelling absent
+```
+
+This deliberately does not require the source itself. Promoting the complete
+source subtree to the user-facing root and deleting the hidden member renders
+successfully with Helm, so an unconditional requirement would be a false
+rejection. Multiple source candidates still abstain because the IR does not
+carry mutation order.
+
+`root_values_merge_keeps_the_pre_rewrite_source_presence_alternative` is the
+minimal full-schema equality pin. It covers the source fallback, both
+spellings absent, a surviving source without the host, explicit target
+replacement, and an object host whose optional leaf is absent. The real
+`istiod_pilot_overlay_carries_root_contracts` test adds the hidden-source
+deletion while retaining every prior `pilot` overlay control.
+
+### Fixture and probe adjudication
+
+All 565 generator tests pass. One clean run produced all 55 non-empty corpus
+dumps; only Istiod differs from the preceding fixture boundary. The corrected
+old/new battery invocation reports eight rows: four unique documents, each
+duplicated by the equivalent `deleted` and `literal-null` probes.
+
+- deleting `_internal_defaults_do_not_set` aborts at
+  `global.resourceScope`;
+- deleting its `global` child aborts at the same read;
+- deleting `istiodRemote` aborts at `istiodRemote.enabled`;
+- deleting `sidecarInjectorWebhook` aborts at
+  `sidecarInjectorWebhook.reinvocationPolicy`.
+
+Helm 4.2.3 rejects all four. The shipped defaults and the promoted-root
+control render, and the corpus schema accepts that compensating spelling.
+
+## Tpl placement and static-program boundary (2026-07-31, fifty-seventh round)
+
+**Outcome: the last `In progress` entry is empty.** The representable halves
+of F30/F76/F82/F89 are completed with structural pins. F30/F82/F89/F100's
+arbitrary runtime-program half is rejected with a fresh language-boundary
+finding rather than approximated.
+
+### Action-free input keeps the caller's quote language
+
+`tpl` does not make every source string opaque. If the raw input contains no
+template action, its render is the same text, so a caller that places it
+inside literal YAML quotes must retain that quote style's serialization
+preimage. The IR now records whether a quoted capture crossed `tpl`.
+Generation emits the ordinary recursive quote-safe definition for
+action-free values and a conservative string alternative for values carrying
+the Go-template action delimiter. Collections reached through `toString`
+retain the same recursive preimage; this avoids reintroducing the
+shape-provenance bug from the rejected forty-ninth round.
+
+Three minimal full-schema equality tests pin direct input, total conversion,
+and conditional placement:
+
+- `double_quoted_tpl_constrains_only_action_free_input`;
+- `double_quoted_tpl_of_to_string_keeps_its_serialization_preimage`;
+- `conditionally_rendered_double_quoted_tpl_keeps_its_placement_language`.
+
+The conditional case required one additional exact fact. For a direct
+`quote` subject, every Helm-falsy value has one of a finite set of quote
+spellings. When none can satisfy a literal `contains`, `hasPrefix`, or
+`hasSuffix` pattern, the false subset includes the subject's falsy states.
+That parser-backed subset scopes Jenkins' PVC fields without claiming the
+unknown truthy complement.
+
+Fresh Helm probes reject unescaped quotes at Karpenter's cluster name,
+endpoint, and CA bundle; KEDA's cluster name; Prometheus' image repository
+and tag; Jenkins' storage class; Kube Prometheus Stack's Prometheus and
+Alertmanager external URLs; and OAuth2 Proxy's registry. Safe literals and
+runtime programs render. Jenkins' disabled-PVC and caller-side
+`tpl ... | quote` controls remain open.
+
+### Chart-authored programs are generation inputs
+
+Grafana selects the chart-authored
+`grafana.ini.server.domain` program through a nested mapping range and string
+kind dispatch. The program is already available to the parser at generation
+time. When a concrete selected default proves the call site's ancestor
+range, presence, and kind predicates, the nested evaluation now discharges
+those predicates before structurally evaluating the program. Its emitted
+terminal clauses retain exactly three alternatives: missing `ingress`,
+missing `route`, and missing `route.main`, with the latter two guarded by the
+ingress branch falling through.
+
+`ranged_tpl_executes_a_selected_nested_default_program` pins those exact
+clauses. `chart_authored_tpl_programs_keep_their_selected_dependencies` pins
+the real chart: deleting `route` aborts only while the default program and
+route fallback are selected; a literal program override or a live ingress
+branch keeps the route root optional. Airflow's existing selected-program,
+array/null, `splitList`, and total-`toString` controls remain green.
+
+### Why arbitrary runtime programs stay open
+
+A program supplied later through a values file is not available while the
+schema is generated. Ordinary Draft-07 validation can inspect its source
+string, but it cannot invoke Helm's Go-template parser, evaluate the program
+against the coalesced values context, or constrain the rendered result with a
+provider schema, regex, or requiredness rule. A corpus-program allowlist
+would be a heuristic; a schema regex that tries to recognize Go-template
+syntax would be a second parser and still could not model context-dependent
+output.
+
+The representable action-free identity and chart-authored-program cases are
+completed above. Runtime programs remain explicitly open, as pinned by
+`post_tpl_regex_admits_template_programs` and
+`tpl_rendered_slots_keep_the_raw_program_open`. Reopening this boundary
+requires a model extension, such as a custom validation vocabulary or an
+explicit caller-side precompile phase.
+
+### Fixture and probe adjudication
+
+One clean integration dump produced all 55 schemas. Nine fixtures changed:
+Airflow, Grafana, Jaeger, Jenkins, Karpenter, KEDA, Kube Prometheus Stack,
+Loki, and Prometheus. The exhaustive sparse battery reports 133 flips: 18
+tightenings and 115 loosenings. The existing Helm-plus-strict adjudicator
+classified every row with zero mismatches:
+
+- 14 tightenings abort `helm template`;
+- four Jenkins provider tightenings render but fail strict Kubernetes
+  validation;
+- all 115 loosenings render and validate because the affected Grafana route
+  or Jenkins PVC fields are dormant.
+
+The separate root sweep contains exactly 1,848 cells and moves one:
+Grafana's deleted `route` changes from valid to invalid. Helm aborts while
+evaluating the selected default program at `.Values.route.main.enabled`.
+All 55 mechanically adopted fixtures regenerate exactly from the same dump.
+The CI-values sweep remains at its established four rejections out of 116
+files.
+
+Final verification is green: formatting, `task lint`, all 42 `task lint:fc`
+combinations, 1,130 debug workspace tests, 524 integration-profile tests,
+all 1,658 `task test:all` tests, and `task tokei:core`. The exact final
+`cargo install --path ./crates/helm-schema-cli/ && task -t
+/home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml check:local`
+gate passes all 32 luup2 charts, including Qdrant and the schema-size checks.
