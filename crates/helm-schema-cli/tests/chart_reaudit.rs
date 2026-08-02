@@ -136,6 +136,33 @@ fn fluent_bit_extra_containers_rejects_scalar_complement() -> eyre::Result<()> {
 }
 
 #[test]
+fn fluent_bit_fixed_volume_lists_require_their_serialized_inputs() -> eyre::Result<()> {
+    assert_chart_cases(
+        "fluent-bit",
+        vec![
+            SemanticCase::rejected(
+                "the DaemonSet volume payload cannot be deleted",
+                "",
+                json!({ "daemonSetVolumes": null }),
+            ),
+            SemanticCase::rejected(
+                "the DaemonSet volume-mount payload cannot be deleted",
+                "",
+                json!({ "daemonSetVolumeMounts": null }),
+            ),
+            SemanticCase::accepted(
+                "a Deployment does not serialize the DaemonSet payloads",
+                json!({
+                    "kind": "Deployment",
+                    "daemonSetVolumes": null,
+                    "daemonSetVolumeMounts": null,
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
 fn minio_extra_containers_rejects_scalar_complement() -> eyre::Result<()> {
     assert_chart_cases(
         "minio",
@@ -668,6 +695,29 @@ fn grafana_leaked_secret_walk_requires_map_hosts() -> eyre::Result<()> {
     )
 }
 
+/// Sprig `get` returns an empty string for a missing key, so the grouped
+/// selectors in `grafana.pod` require the literal dotted root to be present
+/// and map-shaped.
+#[test]
+fn grafana_dotted_config_root_hosts_grouped_get_selectors() -> eyre::Result<()> {
+    assert_chart_cases(
+        "grafana",
+        vec![
+            SemanticCase::rejected(
+                "deleted dotted config root",
+                "",
+                json!({ "grafana.ini": null }),
+            ),
+            SemanticCase::rejected(
+                "scalar dotted config root",
+                "/grafana.ini",
+                json!({ "grafana.ini": "audit" }),
+            ),
+            SemanticCase::accepted("empty dotted config root", json!({ "grafana.ini": {} })),
+        ],
+    )
+}
+
 #[test]
 fn sealed_secrets_liveness_probe_keeps_its_object_type() -> eyre::Result<()> {
     assert_chart_cases(
@@ -1188,6 +1238,474 @@ fn bitnami_redis_ternary_selector_requires_boolean() -> eyre::Result<()> {
             SemanticCase::accepted(
                 "Boolean auth enabled",
                 json!({ "auth": { "enabled": true } }),
+            ),
+        ],
+    )
+}
+
+/// Bitnami's annotation merge decodes every layer with `fromYaml`; falsy
+/// non-mappings contribute no members even when another layer activates the
+/// helper. Helper-returned `ServiceAccount` names cross a Go text boundary, so
+/// a safely formatted map reparses as a string while numeric and list tokens
+/// retain provider-invalid YAML kinds.
+#[test]
+fn bitnami_redis_helper_preimages_follow_the_rendered_yaml_kinds() -> eyre::Result<()> {
+    assert_chart_cases(
+        "bitnami-redis",
+        vec![
+            SemanticCase::accepted(
+                "an empty common-annotation array leaves no merged members",
+                json!({ "commonAnnotations": [] }),
+            ),
+            SemanticCase::accepted(
+                "false common annotations leave no merged members",
+                json!({ "commonAnnotations": false }),
+            ),
+            SemanticCase::accepted(
+                "zero common annotations leave no merged members",
+                json!({ "commonAnnotations": 0 }),
+            ),
+            SemanticCase::accepted(
+                "a falsy layer remains harmless beside a live merge sibling",
+                json!({
+                    "commonAnnotations": [],
+                    "serviceAccount": { "annotations": { "owner": "audit" } },
+                }),
+            ),
+            SemanticCase::rejected(
+                "a numeric common-annotation member reaches ObjectMeta",
+                "/commonAnnotations/audit",
+                json!({ "commonAnnotations": { "audit": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "a safely formatted map becomes a scalar ServiceAccount name",
+                json!({ "master": { "serviceAccount": { "name": { "audit": 1 } } } }),
+            ),
+            SemanticCase::rejected(
+                "a numeric ServiceAccount name reparses as a number",
+                "/master/serviceAccount/name",
+                json!({ "master": { "serviceAccount": { "name": 7 } } }),
+            ),
+            SemanticCase::rejected(
+                "a list ServiceAccount name reparses as a sequence",
+                "/master/serviceAccount/name",
+                json!({ "master": { "serviceAccount": { "name": ["audit"] } } }),
+            ),
+        ],
+    )
+}
+
+/// The master and headless Services consume the master service settings
+/// through the Bitnami helper layer. Provider typing must survive that
+/// projection, while a zero master count and Sentinel's alternate headless
+/// port keep the corresponding payloads dormant.
+#[test]
+fn bitnami_redis_master_services_keep_provider_contracts() -> eyre::Result<()> {
+    assert_chart_cases(
+        "bitnami-redis",
+        vec![
+            SemanticCase::rejected(
+                "a malformed session-affinity config reaches the Service",
+                "/master/service/sessionAffinityConfig",
+                json!({ "master": { "service": {
+                    "sessionAffinity": "ClientIP",
+                    "sessionAffinityConfig": { "bogus": 7 },
+                } } }),
+            ),
+            SemanticCase::rejected(
+                "Service external IP members are strings",
+                "/master/service/externalIPs/0",
+                json!({ "master": { "service": { "externalIPs": [7] } } }),
+            ),
+            SemanticCase::rejected(
+                "the master Service port is an integer",
+                "/master/service/ports/redis",
+                json!({ "master": { "service": { "ports": { "redis": "oops" } } } }),
+            ),
+            SemanticCase::accepted(
+                "valid master Service settings render",
+                json!({ "master": { "service": {
+                    "ports": { "redis": 6379 },
+                    "externalIPs": ["10.10.10.1"],
+                    "sessionAffinity": "ClientIP",
+                    "sessionAffinityConfig": { "clientIP": { "timeoutSeconds": 300 } },
+                } } }),
+            ),
+            SemanticCase::accepted(
+                "a zero master count keeps malformed Service payloads dormant",
+                json!({ "master": {
+                    "count": 0,
+                    "service": {
+                        "ports": { "redis": "oops" },
+                        "externalIPs": [7],
+                        "sessionAffinity": "ClientIP",
+                        "sessionAffinityConfig": { "bogus": 7 },
+                    },
+                } }),
+            ),
+            SemanticCase::accepted(
+                "Sentinel selects its own headless port",
+                json!({
+                    "sentinel": { "enabled": true },
+                    "master": { "service": { "ports": { "redis": "oops" } } },
+                }),
+            ),
+            SemanticCase::accepted(
+                "the labels merge discards a non-mapping layer",
+                json!({ "master": { "podLabels": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "the annotations merge discards a non-mapping layer",
+                json!({ "master": { "service": { "annotations": [] } } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn direct_provider_required_leaves_survive_default_deletion() -> eyre::Result<()> {
+    assert_chart_cases(
+        "sealed-secrets",
+        vec![
+            SemanticCase::rejected(
+                "the controller Service port cannot be deleted",
+                "/service",
+                json!({ "service": { "port": null } }),
+            ),
+            SemanticCase::rejected(
+                "the metrics Service port cannot be deleted",
+                "/metrics/service",
+                json!({ "metrics": { "service": { "port": null } } }),
+            ),
+            SemanticCase::rejected(
+                "the ClusterRoleBinding role name cannot be deleted",
+                "/rbac",
+                json!({ "rbac": { "clusterRoleName": null } }),
+            ),
+            SemanticCase::accepted(
+                "valid required Service and RBAC leaves render",
+                json!({
+                    "service": { "port": 8080 },
+                    "metrics": { "service": { "port": 8081 } },
+                    "rbac": { "clusterRoleName": "secrets-unsealer" },
+                }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "surveyor",
+        vec![
+            SemanticCase::rejected(
+                "the Service port cannot be deleted",
+                "/service",
+                json!({ "service": { "port": null } }),
+            ),
+            SemanticCase::accepted(
+                "a valid Service port renders",
+                json!({ "service": { "port": 7777 } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "trivy-operator",
+        vec![
+            SemanticCase::rejected(
+                "the metrics Service port cannot be deleted",
+                "/service",
+                json!({ "service": { "metricsPort": null } }),
+            ),
+            SemanticCase::accepted(
+                "a valid metrics Service port renders",
+                json!({ "service": { "metricsPort": 80 } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "velero",
+        vec![
+            SemanticCase::rejected(
+                "the administrator ClusterRole name cannot be deleted",
+                "/rbac",
+                json!({ "rbac": { "clusterAdministratorName": null } }),
+            ),
+            SemanticCase::accepted(
+                "a valid administrator ClusterRole name renders",
+                json!({ "rbac": { "clusterAdministratorName": "cluster-admin" } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "zalando-postgres-operator",
+        vec![
+            SemanticCase::rejected(
+                "the REST API probe port cannot be deleted",
+                "/configLoggingRestApi",
+                json!({ "configLoggingRestApi": { "api_port": null } }),
+            ),
+            SemanticCase::accepted(
+                "a valid REST API probe port renders",
+                json!({ "configLoggingRestApi": { "api_port": 8080 } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn direct_provider_required_storage_and_service_leaves_survive_deletion() -> eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::rejected(
+                "an enabled persistent volume requires its name",
+                "/persistence",
+                json!({ "persistence": { "enabled": true, "name": null } }),
+            ),
+            SemanticCase::rejected(
+                "an enabled persistent volume requires its mount path",
+                "/persistence",
+                json!({ "persistence": { "enabled": true, "path": null } }),
+            ),
+            SemanticCase::rejected(
+                "the metrics entrypoint requires its port",
+                "/ports/metrics",
+                json!({
+                    "metrics": { "prometheus": { "service": { "enabled": true } } },
+                    "ports": { "metrics": { "port": null } },
+                }),
+            ),
+            SemanticCase::accepted(
+                "valid persistent-volume and metrics-port leaves render",
+                json!({
+                    "persistence": { "enabled": true, "name": "data", "path": "/data" },
+                    "metrics": { "prometheus": { "service": { "enabled": true } } },
+                    "ports": { "metrics": { "port": 9100 } },
+                }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "vault",
+        vec![
+            SemanticCase::rejected(
+                "the injector container port cannot be deleted",
+                "/injector",
+                json!({ "injector": { "port": null } }),
+            ),
+            SemanticCase::rejected(
+                "enabled data storage requires its mount path",
+                "/server/dataStorage",
+                json!({ "server": { "dataStorage": { "mountPath": null } } }),
+            ),
+            SemanticCase::rejected(
+                "enabled data storage requires its requested size",
+                "/server/dataStorage",
+                json!({ "server": { "dataStorage": { "size": null } } }),
+            ),
+            SemanticCase::rejected(
+                "enabled audit storage requires its mount path",
+                "/server/auditStorage",
+                json!({ "server": { "auditStorage": { "enabled": true, "mountPath": null } } }),
+            ),
+            SemanticCase::rejected(
+                "enabled audit storage requires its requested size",
+                "/server/auditStorage",
+                json!({ "server": { "auditStorage": { "enabled": true, "size": null } } }),
+            ),
+            SemanticCase::rejected(
+                "the server Service requires its target port",
+                "/server/service",
+                json!({ "server": { "service": { "targetPort": null } } }),
+            ),
+            SemanticCase::accepted(
+                "valid injector, storage, and Service leaves render",
+                json!({
+                    "injector": { "port": 8080 },
+                    "server": {
+                        "dataStorage": { "mountPath": "/vault/data", "size": "10Gi" },
+                        "auditStorage": {
+                            "enabled": true,
+                            "mountPath": "/vault/audit",
+                            "size": "10Gi",
+                        },
+                        "service": { "targetPort": 8200 },
+                    },
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn signoz_direct_provider_required_leaves_survive_deletion() -> eyre::Result<()> {
+    assert_chart_cases(
+        "signoz-signoz",
+        vec![
+            SemanticCase::rejected(
+                "the SigNoz liveness probe requires its port",
+                "/signoz/livenessProbe",
+                json!({ "signoz": { "livenessProbe": { "port": null } } }),
+            ),
+            SemanticCase::rejected(
+                "the collector readiness probe requires its port",
+                "/otelCollector/readinessProbe",
+                json!({ "otelCollector": { "readinessProbe": { "port": null } } }),
+            ),
+            SemanticCase::rejected(
+                "enabled SigNoz persistence requires its size",
+                "/signoz/persistence",
+                json!({ "signoz": { "persistence": { "size": null } } }),
+            ),
+            SemanticCase::rejected(
+                "enabled Alertmanager persistence requires its size",
+                "/alertmanager/persistence",
+                json!({
+                    "alertmanager": {
+                        "enabled": true,
+                        "persistence": { "size": null },
+                    },
+                }),
+            ),
+            SemanticCase::rejected(
+                "the SigNoz Service requires its public port",
+                "/signoz/service",
+                json!({ "signoz": { "service": { "port": null } } }),
+            ),
+            SemanticCase::rejected(
+                "the Alertmanager Service requires its port",
+                "/alertmanager/service",
+                json!({
+                    "alertmanager": {
+                        "enabled": true,
+                        "service": { "port": null },
+                    },
+                }),
+            ),
+            SemanticCase::rejected(
+                "an enabled collector port requires its container port",
+                "/otelCollector/ports/otlp",
+                json!({ "otelCollector": { "ports": { "otlp": { "containerPort": null } } } }),
+            ),
+            SemanticCase::rejected(
+                "an enabled collector port requires its Service port",
+                "/otelCollector/ports/otlp",
+                json!({ "otelCollector": { "ports": { "otlp": { "servicePort": null } } } }),
+            ),
+            SemanticCase::accepted(
+                "valid probe, persistence, and Service leaves render",
+                json!({
+                    "signoz": {
+                        "livenessProbe": { "port": "http" },
+                        "persistence": { "size": "1Gi" },
+                        "service": { "port": 8080 },
+                    },
+                    "alertmanager": {
+                        "enabled": true,
+                        "persistence": { "size": "100Mi" },
+                        "service": { "port": 9093 },
+                    },
+                    "otelCollector": {
+                        "readinessProbe": { "port": 13133 },
+                        "ports": {
+                            "otlp": { "containerPort": 4317, "servicePort": 4317 },
+                        },
+                    },
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn vault_helper_splices_keep_metadata_member_types() -> eyre::Result<()> {
+    assert_chart_cases(
+        "vault",
+        vec![
+            SemanticCase::rejected(
+                "injector pod annotation values are strings",
+                "/injector/annotations/audit",
+                json!({ "injector": { "annotations": { "audit": 7 } } }),
+            ),
+            SemanticCase::rejected(
+                "webhook annotation values are strings",
+                "/injector/webhook/annotations/audit",
+                json!({ "injector": { "webhook": { "annotations": { "audit": 7 } } } }),
+            ),
+            SemanticCase::rejected(
+                "injector ServiceAccount annotation values are strings",
+                "/injector/serviceAccount/annotations/audit",
+                json!({ "injector": { "serviceAccount": { "annotations": { "audit": 7 } } } }),
+            ),
+            SemanticCase::rejected(
+                "server ServiceAccount annotation values are strings",
+                "/server/serviceAccount/annotations/audit",
+                json!({ "server": { "serviceAccount": { "annotations": { "audit": 7 } } } }),
+            ),
+            SemanticCase::rejected(
+                "data-volume annotation values are strings",
+                "/server/dataStorage/annotations/audit",
+                json!({ "server": { "dataStorage": { "annotations": { "audit": 7 } } } }),
+            ),
+            SemanticCase::rejected(
+                "data-volume label values are strings",
+                "/server/dataStorage/labels/audit",
+                json!({ "server": { "dataStorage": { "labels": { "audit": 7 } } } }),
+            ),
+            SemanticCase::accepted(
+                "string metadata values survive every helper splice",
+                json!({
+                    "injector": {
+                        "annotations": { "audit": "ok" },
+                        "webhook": { "annotations": { "audit": "ok" } },
+                        "serviceAccount": { "annotations": { "audit": "ok" } },
+                    },
+                    "server": {
+                        "serviceAccount": { "annotations": { "audit": "ok" } },
+                        "dataStorage": {
+                            "annotations": { "audit": "ok" },
+                            "labels": { "audit": "ok" },
+                        },
+                    },
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn unconditional_yaml_fragments_keep_required_source_presence() -> eyre::Result<()> {
+    assert_chart_cases(
+        "metrics-server",
+        vec![
+            SemanticCase::rejected(
+                "the fixed tmp volume requires its payload",
+                "",
+                json!({ "tmpVolume": null }),
+            ),
+            SemanticCase::accepted(
+                "a valid tmp volume payload renders",
+                json!({ "tmpVolume": { "emptyDir": {} } }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::rejected(
+                "the readiness probe extension cannot be deleted",
+                "",
+                json!({ "readinessProbe": null }),
+            ),
+            SemanticCase::rejected(
+                "the liveness probe extension cannot be deleted",
+                "",
+                json!({ "livenessProbe": null }),
+            ),
+            SemanticCase::accepted(
+                "valid probe extensions render",
+                json!({
+                    "readinessProbe": { "failureThreshold": 1 },
+                    "livenessProbe": { "failureThreshold": 3 },
+                }),
             ),
         ],
     )
@@ -3461,6 +3979,43 @@ fn airflow_falsy_root_labels_render_while_live_merge_gates_bind() -> eyre::Resul
     )
 }
 
+/// The configmap iterates each merged Airflow config section, but converts
+/// every inner value through total `toString` before `tpl`.
+#[test]
+fn airflow_config_range_requires_only_iterable_sections() -> eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "scalar config section",
+                "/config/traces",
+                json!({ "config": { "traces": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "array config section",
+                json!({ "config": { "traces": [] } }),
+            ),
+            SemanticCase::accepted(
+                "deleted config section",
+                json!({ "config": { "traces": null } }),
+            ),
+            SemanticCase::accepted(
+                "array config value",
+                json!({ "config": { "traces": { "otel_on": [] } } }),
+            ),
+            SemanticCase::accepted(
+                "object config value",
+                json!({ "config": { "traces": { "otel_on": { "probe-member": {} } } } }),
+            ),
+            SemanticCase::rejected(
+                "deleted templated bool dependency",
+                "",
+                json!({ "multiNamespaceMode": null }),
+            ),
+        ],
+    )
+}
+
 /// airflow's worker templates rebuild `.Values.workers` per worker set:
 /// `workersMergeValues` merges each `workers.celery.sets[]` entry over the
 /// celery-merged workers map, and `set $globals.Values "workers" $workers`
@@ -3500,6 +4055,16 @@ fn airflow_worker_set_overrides_bind_strict_member_kinds() -> eyre::Result<()> {
                     { "name": "highcpu", "replicas": 2, "queue": "highcpu",
                       "persistence": { "enabled": true },
                       "resources": { "requests": { "cpu": "1" } } }
+                ] } } }),
+            ),
+            SemanticCase::accepted(
+                "an empty worker-set overlay inherits the provider leaves",
+                json!({ "workers": { "celery": { "sets": [{}] } } }),
+            ),
+            SemanticCase::accepted(
+                "an open worker-set overlay inherits the provider leaves",
+                json!({ "workers": { "celery": { "sets": [
+                    { "extension": {} }
                 ] } } }),
             ),
         ],
@@ -3543,6 +4108,62 @@ fn airflow_rerooted_worker_lanes_bind_layered_provider_payloads() -> eyre::Resul
                 json!({ "workers": {
                     "securityContexts": { "pod": { "runAsUser": "oops" } },
                     "celery": { "securityContexts": { "pod": { "runAsUser": 50000 } } },
+                } }),
+            ),
+            SemanticCase::rejected(
+                "a live worker PDB keeps the provider field type",
+                "/workers/podDisruptionBudget/config/maxUnavailable",
+                json!({ "workers": {
+                    "podDisruptionBudget": {
+                        "enabled": true,
+                        "config": { "maxUnavailable": { "bad": 7 } },
+                    },
+                } }),
+            ),
+            SemanticCase::accepted(
+                "a valid worker PDB payload renders",
+                json!({ "workers": {
+                    "podDisruptionBudget": {
+                        "enabled": true,
+                        "config": { "maxUnavailable": "50%" },
+                    },
+                } }),
+            ),
+            SemanticCase::rejected(
+                "a live worker HPA keeps the provider item shape",
+                "/workers/hpa/metrics/0",
+                json!({ "workers": {
+                    "hpa": {
+                        "enabled": true,
+                        "metrics": [{ "bogus": 7 }],
+                    },
+                } }),
+            ),
+            SemanticCase::accepted(
+                "a valid worker HPA metric renders",
+                json!({ "workers": {
+                    "hpa": {
+                        "enabled": true,
+                        "metrics": [{
+                            "type": "Resource",
+                            "resource": {
+                                "name": "cpu",
+                                "target": {
+                                    "type": "Utilization",
+                                    "averageUtilization": 80,
+                                },
+                            },
+                        }],
+                    },
+                } }),
+            ),
+            SemanticCase::accepted(
+                "a disabled worker HPA ignores its max replica spelling",
+                json!({ "workers": {
+                    "hpa": {
+                        "enabled": false,
+                        "maxReplicaCount": true,
+                    },
                 } }),
             ),
         ],
@@ -4207,5 +4828,117 @@ fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> 
             "/clickhouse",
             json!({ "clickhouse": { "image": null } }),
         )],
+    )
+}
+
+/// An action-free `tpl` input is the rendered text itself, so a manually
+/// double-quoted placement must reject content that closes the YAML scalar.
+/// A real template program stays open because its output depends on runtime
+/// evaluation rather than on the program's source characters.
+#[test]
+fn quoted_tpl_inputs_keep_their_placement_language() -> eyre::Result<()> {
+    assert_chart_cases(
+        "karpenter",
+        vec![
+            SemanticCase::rejected(
+                "an action-free cluster name cannot close its quoted env value",
+                "/settings/clusterName",
+                json!({ "settings": { "clusterName": "bad\"name" } }),
+            ),
+            SemanticCase::rejected(
+                "toString retains the recursive quote preimage",
+                "/settings/clusterEndpoint",
+                json!({
+                    "settings": {
+                        "clusterName": "audit",
+                        "clusterEndpoint": { "host": "bad\"endpoint" },
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "a template program has an independently rendered result",
+                json!({
+                    "settings": {
+                        "clusterName": r#"{{ "audit" }}"#,
+                        "clusterEndpoint": r#"{{ "https://example.com" }}"#,
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "safe action-free values still render",
+                json!({
+                    "settings": {
+                        "clusterName": "audit",
+                        "clusterEndpoint": "https://example.com",
+                    }
+                }),
+            ),
+        ],
+    )?;
+    assert_chart_cases(
+        "jenkins",
+        vec![
+            SemanticCase::rejected(
+                "an enabled PVC cannot embed an unescaped quote",
+                "/persistence/storageClass",
+                json!({ "persistence": { "enabled": true, "storageClass": "bad\"class" } }),
+            ),
+            SemanticCase::accepted(
+                "the PVC-disabled branch does not render the storage class",
+                json!({ "persistence": { "enabled": false, "storageClass": "bad\"class" } }),
+            ),
+            SemanticCase::accepted(
+                "a safe storage class still renders",
+                json!({ "persistence": { "enabled": true, "storageClass": "standard" } }),
+            ),
+            SemanticCase::accepted(
+                "a storage-class program has an independently rendered result",
+                json!({
+                    "persistence": {
+                        "enabled": true,
+                        "storageClass": r#"{{ "standard" }}"#,
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+/// Chart-authored default programs are generation-time inputs, so their
+/// value dependencies can be lowered structurally before `tpl` evaluates
+/// them. Grafana's default server-domain program reads `route.main` only
+/// after the ingress branch falls through.
+#[test]
+fn chart_authored_tpl_programs_keep_their_selected_dependencies() -> eyre::Result<()> {
+    assert_chart_cases(
+        "grafana",
+        vec![
+            SemanticCase::rejected(
+                "deleting the selected route root aborts the default program",
+                "",
+                json!({ "route": null }),
+            ),
+            SemanticCase::accepted(
+                "the declared disabled route keeps the fallback branch valid",
+                json!({ "route": { "main": { "enabled": false } } }),
+            ),
+            SemanticCase::accepted(
+                "an override replaces the chart-authored program",
+                json!({
+                    "grafana.ini": { "server": { "domain": "fixed.example.com" } },
+                    "route": null,
+                }),
+            ),
+            SemanticCase::accepted(
+                "the ingress branch short-circuits the route dependency",
+                json!({
+                    "ingress": {
+                        "enabled": true,
+                        "hosts": ["grafana.example.com"],
+                    },
+                    "route": null,
+                }),
+            ),
+        ],
     )
 }

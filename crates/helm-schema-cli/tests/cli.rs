@@ -806,9 +806,13 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
         }
       ],
       "properties": {
-        // This is a Helm propagation input, not the child template's
-        // effective values object. Non-map sources are valid and skip.
-        "global": {},
+        // The child's `global.bar` consumer projects to the propagation
+        // input too. Omitting `type: object` preserves Helm's rule that a
+        // non-map root global simply skips injection.
+        "global": {
+          "additionalProperties": {},
+          "properties": { "bar": {} }
+        },
         "kid": {
           "additionalProperties": {},
           "allOf": [
@@ -1891,7 +1895,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$defs": {
-            "helm-truthy": {
+            "t": {
                 "anyOf": [
                     { "const": true },
                     { "not": { "const": 0 }, "type": "number" },
@@ -1906,7 +1910,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
             {
                 "if": {
                     "properties": {
-                        "fullnameOverride": { "$ref": "#/$defs/helm-truthy" }
+                        "fullnameOverride": { "$ref": "#/$defs/t" }
                     },
                     "required": ["fullnameOverride"],
                     "type": "object"
@@ -1925,7 +1929,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
                     "allOf": [
                         {
                             "properties": {
-                                "nameOverride": { "$ref": "#/$defs/helm-truthy" }
+                                "nameOverride": { "$ref": "#/$defs/t" }
                             },
                             "required": ["nameOverride"],
                             "type": "object"
@@ -1933,7 +1937,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
                         {
                             "not": {
                                 "properties": {
-                                    "fullnameOverride": { "$ref": "#/$defs/helm-truthy" }
+                                    "fullnameOverride": { "$ref": "#/$defs/t" }
                                 },
                                 "required": ["fullnameOverride"],
                                 "type": "object"

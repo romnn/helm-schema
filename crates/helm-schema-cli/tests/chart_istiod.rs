@@ -1,11 +1,9 @@
-//! Semantic assertions for the istiod chart: `zzy_descope_legacy.yaml`
-//! merges the `pilot` subtree IN PLACE over the values root
-//! (`mustMergeOverwrite $.Values (index $.Values "pilot")`), so members
-//! written under `pilot` overwrite their effective-root twins before any
-//! template reads them. Root abort-grade contracts project back onto the
-//! `pilot.*` spellings — `.Values.env.MCS_API_GROUP` aborts on a scalar
-//! `env` however the user spells it. Values validation and the
-//! full-schema pin live in `chart_corpus.rs`.
+//! Semantic assertions for the istiod chart's effective-values rewrites.
+//! `zzz_profile.yaml` rebuilds `.Values` from the hidden defaults source and
+//! user-facing root, while `zzy_descope_legacy.yaml` merges `pilot` in place
+//! over that effective root. The accepted input contract must therefore keep
+//! both the pre-rewrite defaults source and the prefixed `pilot.*` spellings.
+//! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
 
@@ -46,6 +44,11 @@ fn istiod_pilot_overlay_carries_root_contracts() -> eyre::Result<()> {
             "a map root env renders",
             serde_json::json!({ "env": { "MCS_API_GROUP": "custom.group" } }),
             true,
+        ),
+        (
+            "removing the effective-root defaults source aborts",
+            serde_json::json!({ "_internal_defaults_do_not_set": null }),
+            false,
         ),
     ] {
         let instance =

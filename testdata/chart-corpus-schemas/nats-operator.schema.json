@@ -1,186 +1,141 @@
 {
   "$defs": {
-    "helm-double-quoted-safe": {
-      "anyOf": [
-        {
-          "type": [
-            "boolean",
-            "integer",
-            "null",
-            "number"
-          ]
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
+    "1": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "2": {
+      "$ref": "#/$defs/providerSchema1"
+    },
+    "3": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "4": {
+      "properties": {
+        "cluster": {
+          "properties": {
+            "create": {
+              "$ref": "#/$defs/t"
+            }
           },
-          "type": "array"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
-          },
-          "propertyNames": {
-            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
-          },
+          "required": [
+            "create"
+          ],
           "type": "object"
         }
-      ]
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
     },
-    "helm-truthy": {
-      "anyOf": [
+    "5": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "6": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "7": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "8": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "allOf": [
+          {
+            "not": {
+              "pattern": ":[ \\t]|:$"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[ \\t]#"
+            }
+          },
+          {
+            "not": {
+              "pattern": "[\\r\\n]"
+            }
+          }
+        ],
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "9": {
+      "allOf": [
         {
-          "const": true
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
         },
         {
           "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "minProperties": 1,
-          "type": "object"
-        }
-      ]
-    },
-    "schema1": {
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "failureThreshold": {
-              "anyOf": [
-                {
-                  "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-                  "format": "int32",
-                  "type": "null"
-                },
-                {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-                  "type": "string"
-                }
-              ]
-            }
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
           }
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "initialDelaySeconds": {
-              "anyOf": [
-                {
-                  "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-                  "format": "int32",
-                  "type": "null"
-                },
-                {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "periodSeconds": {
-              "anyOf": [
-                {
-                  "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-                  "format": "int32",
-                  "type": "null"
-                },
-                {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "successThreshold": {
-              "anyOf": [
-                {
-                  "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
-                  "format": "int32",
-                  "type": "null"
-                },
-                {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "timeoutSeconds": {
-              "anyOf": [
-                {
-                  "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-                  "format": "int32",
-                  "type": "integer"
-                },
-                {
-                  "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-                  "format": "int32",
-                  "type": "null"
-                },
-                {
-                  "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-                  "type": "string"
-                }
-              ]
-            }
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
           }
         }
-      ]
+      ],
+      "type": "string"
     },
-    "schema17": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "schema2": {
+    "A": {
       "allOf": [
         {
           "not": {
@@ -235,77 +190,503 @@
       ],
       "type": "string"
     },
-    "schema27": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "schema28": {
-      "anyOf": [
-        {
-          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-          "type": "string"
-        },
-        {
-          "type": "boolean"
+    "B": {
+      "properties": {
+        "metrics": {
+          "properties": {
+            "servicemonitor": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "servicemonitor"
+          ],
+          "type": "object"
         }
-      ]
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
     },
-    "schema31": {
+    "C": {
+      "properties": {
+        "cluster": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
+    "D": {
+      "properties": {
+        "cluster": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "users": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "users"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
+    "E": {
+      "properties": {
+        "auth": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "F": {
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "schema32": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "schema33": {
-      "additionalProperties": {},
+    "G": {
       "properties": {
-        "password": {},
-        "permissions": {},
-        "username": {}
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
       },
+      "required": [
+        "enabled"
+      ],
       "type": "object"
     },
-    "schema35": {
-      "not": {
-        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
-      }
+    "a": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
     },
-    "schema37": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "schema38": {
+    "b": {
       "type": "object",
       "x-kubernetes-preserve-unknown-fields": true
     },
-    "schema40": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema41": {
+    "c": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema42": {
+    "d": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "e": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema45": {
+    "f": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema8": {
-      "oneOf": [
+    "g": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "h": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "i": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "j": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "k": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "l": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "m": {
+      "properties": {
+        "cluster": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
+    "n": {
+      "if": {
+        "properties": {
+          "enabled": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "failureThreshold": {
+                "anyOf": [
+                  {
+                    "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "initialDelaySeconds": {
+                "anyOf": [
+                  {
+                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "periodSeconds": {
+                "anyOf": [
+                  {
+                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "successThreshold": {
+                "anyOf": [
+                  {
+                    "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "timeoutSeconds": {
+                "anyOf": [
+                  {
+                    "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "o": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
+    },
+    "p": {
+      "allOf": [
         {
           "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
             {
               "allOf": [
                 {
@@ -335,7 +716,22 @@
                 },
                 {
                   "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
                     "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                   }
                 },
                 {
@@ -347,6 +743,331 @@
               "type": "string"
             },
             {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "providerSchema1": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "maxProperties": 0,
+                "type": "object"
+              }
+            ]
+          },
+          "propertyNames": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
+          "allOf": [
+            {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(null|Null|NULL)[ \\t]+#"
+              }
+            }
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "providerSchema2": {
+      "oneOf": [
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "maxProperties": 0,
+                    "type": "object"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(null|Null|NULL)[ \\t]+#"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
+              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
               "type": "null"
             }
           ]
@@ -354,7 +1075,19 @@
         {
           "anyOf": [
             {
+              "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
               "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]?0[0-7]{0,8}[89][0-9]{0,8})$",
+              "type": "string"
+            },
+            {
+              "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+              "type": "string"
+            },
+            {
+              "pattern": "^[ \\t]*(#.*)?$",
               "type": "string"
             },
             {
@@ -363,6 +1096,144 @@
             {
               "type": "null"
             }
+          ]
+        }
+      ]
+    },
+    "q": {
+      "properties": {
+        "metrics": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "r": {
+      "anyOf": [
+        {
+          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "s": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    },
+    "u": {
+      "properties": {
+        "password": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
+        }
+      },
+      "required": [
+        "password"
+      ],
+      "type": "object"
+    },
+    "v": {
+      "properties": {
+        "username": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
+        }
+      },
+      "required": [
+        "username"
+      ],
+      "type": "object"
+    },
+    "w": {
+      "additionalProperties": {},
+      "properties": {
+        "password": {},
+        "permissions": {},
+        "username": {}
+      },
+      "type": "object"
+    },
+    "x": {
+      "properties": {
+        "clusterScoped": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "clusterScoped"
+      ],
+      "type": "object"
+    },
+    "y": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "z": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
           ]
         }
       ]
@@ -391,31 +1262,77 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/m"
+          },
+          {
+            "$ref": "#/$defs/4"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
             "properties": {
               "cluster": {
+                "additionalProperties": {},
                 "properties": {
                   "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "enableServiceAccounts": {
+                        "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled.",
+                        "not": {
+                          "type": "null"
+                        }
                       }
-                    },
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                     "required": [
-                      "enabled"
+                      "enableServiceAccounts"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
+                }
               }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "not": {
+                      "type": "array"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/m"
           },
           {
             "properties": {
@@ -424,7 +1341,7 @@
                   "auth": {
                     "properties": {
                       "username": {
-                        "$ref": "#/$defs/helm-truthy"
+                        "$ref": "#/$defs/t"
                       }
                     },
                     "required": [
@@ -445,51 +1362,11 @@
             "type": "object"
           },
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/4"
           },
           {
             "not": {
-              "properties": {
-                "cluster": {
-                  "properties": {
-                    "auth": {
-                      "properties": {
-                        "users": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "auth"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "cluster"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/D"
             }
           }
         ]
@@ -507,7 +1384,7 @@
                     "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                     "properties": {
                       "password": {
-                        "$ref": "#/$defs/helm-double-quoted-safe"
+                        "$ref": "#/$defs/o"
                       }
                     }
                   }
@@ -542,77 +1419,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/m"
           },
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/D"
           },
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/4"
           }
         ]
       },
@@ -632,13 +1445,13 @@
                         "anyOf": [
                           {
                             "items": {
-                              "$ref": "#/$defs/schema33"
+                              "$ref": "#/$defs/w"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/schema33"
+                              "$ref": "#/$defs/w"
                             },
                             "type": "object"
                           },
@@ -668,29 +1481,13 @@
                         "anyOf": [
                           {
                             "items": {
-                              "properties": {
-                                "password": {
-                                  "$ref": "#/$defs/helm-double-quoted-safe"
-                                }
-                              },
-                              "required": [
-                                "password"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/u"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "properties": {
-                                "password": {
-                                  "$ref": "#/$defs/helm-double-quoted-safe"
-                                }
-                              },
-                              "required": [
-                                "password"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/u"
                             },
                             "type": "object"
                           },
@@ -720,29 +1517,13 @@
                         "anyOf": [
                           {
                             "items": {
-                              "properties": {
-                                "username": {
-                                  "$ref": "#/$defs/helm-double-quoted-safe"
-                                }
-                              },
-                              "required": [
-                                "username"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/v"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "properties": {
-                                "username": {
-                                  "$ref": "#/$defs/helm-double-quoted-safe"
-                                }
-                              },
-                              "required": [
-                                "username"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/v"
                             },
                             "type": "object"
                           },
@@ -829,23 +1610,7 @@
     },
     {
       "if": {
-        "properties": {
-          "cluster": {
-            "properties": {
-              "create": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "cluster"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/4"
       },
       "then": {
         "allOf": [
@@ -862,6 +1627,90 @@
                       }
                     ],
                     "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "enabled": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "pullPolicy": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "repository": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "additionalProperties": {},
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "properties": {
+                      "tag": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -891,6 +1740,158 @@
               "cluster": {
                 "additionalProperties": {},
                 "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "pullPolicy"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "repository"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "configReload": {
+                    "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "enabled": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "pullPolicy": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "repository": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "tag": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
                   "metrics": {
                     "anyOf": [
                       {
@@ -898,6 +1899,105 @@
                       }
                     ],
                     "description": "Prometheus Metrics Exporter"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "pullPolicy"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "repository"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "description": "Prometheus Metrics Exporter",
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "size": {
+                    "description": "Cluster Size",
+                    "not": {
+                      "type": "null"
+                    }
                   }
                 }
               }
@@ -919,6 +2019,55 @@
                 }
               }
             }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "version": {
+                    "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "required": [
+                  "size"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "required": [
+                  "version"
+                ],
+                "type": "object"
+              }
+            }
           }
         ]
       }
@@ -927,50 +2076,87 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/4"
+          },
+          {
+            "$ref": "#/$defs/C"
           },
           {
             "properties": {
               "cluster": {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/B"
               }
             },
             "required": [
               "cluster"
             ],
             "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "servicemonitor": {
+                        "additionalProperties": {},
+                        "description": "Prometheus Operator ServiceMonitor config",
+                        "properties": {
+                          "prometheusInstance": {
+                            "not": {
+                              "type": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "metrics": {
+                    "additionalProperties": {},
+                    "description": "Prometheus Metrics Exporter",
+                    "properties": {
+                      "servicemonitor": {
+                        "description": "Prometheus Operator ServiceMonitor config",
+                        "required": [
+                          "prometheusInstance"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/4"
+          },
+          {
+            "$ref": "#/$defs/C"
           }
         ]
       },
@@ -1001,82 +2187,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "not": {
-                  "type": "array"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "clusterScoped": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "clusterScoped"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/x"
       },
       "then": {
         "additionalProperties": {},
@@ -1089,48 +2200,71 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema40"
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/d"
+                              },
+                              {
+                                "$ref": "#/$defs/e"
+                              },
+                              {
+                                "$ref": "#/$defs/f"
+                              },
+                              {
+                                "$ref": "#/$defs/h"
+                              },
+                              {
+                                "$ref": "#/$defs/g"
+                              },
+                              {
+                                "$ref": "#/$defs/c"
+                              },
+                              {
+                                "$ref": "#/$defs/i"
+                              },
+                              {
+                                "$ref": "#/$defs/l"
+                              },
+                              {
+                                "$ref": "#/$defs/j"
+                              },
+                              {
+                                "$ref": "#/$defs/k"
+                              }
+                            ],
+                            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+                            "type": "null"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          }
+                        ]
                       },
                       {
-                        "$ref": "#/$defs/schema42"
-                      },
-                      {
-                        "$ref": "#/$defs/schema45"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema32"
-                      },
-                      {
-                        "$ref": "#/$defs/schema17"
-                      },
-                      {
-                        "$ref": "#/$defs/schema35"
-                      },
-                      {
-                        "$ref": "#/$defs/schema37"
+                        "type": "string"
                       }
-                    ],
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-                    "type": "string"
+                    ]
                   },
                   {
-                    "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-                    "type": "null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "$ref": "#/$defs/1"
                   }
                 ],
                 "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
@@ -1144,34 +2278,10 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/4"
           },
           {
-            "properties": {
-              "clusterScoped": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "clusterScoped"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/x"
           }
         ]
       },
@@ -1184,12 +2294,10 @@
               "namespace": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/p"
                   },
                   {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "$ref": "#/$defs/1"
                   }
                 ],
                 "description": "Choose namespace for cluster deployment if clusterScoped is set to true"
@@ -1197,6 +2305,102 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/4"
+          },
+          {
+            "properties": {
+              "cluster": {
+                "$ref": "#/$defs/s"
+              }
+            },
+            "required": [
+              "cluster"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "routesSecret": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serverSecret": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "required": [
+                      "routesSecret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "required": [
+                      "serverSecret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -1219,7 +2423,7 @@
       "if": {
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -1263,7 +2467,7 @@
             "additionalProperties": {},
             "properties": {
               "rollingUpdateMaxSurge": {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/providerSchema2"
               }
             }
           },
@@ -1271,7 +2475,7 @@
             "additionalProperties": {},
             "properties": {
               "rollingUpdateMaxUnavailable": {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/providerSchema2"
               }
             }
           }
@@ -1282,7 +2486,7 @@
       "if": {
         "properties": {
           "schedulerName": {
-            "$ref": "#/$defs/helm-truthy"
+            "$ref": "#/$defs/t"
           }
         },
         "required": [
@@ -1294,7 +2498,7 @@
         "additionalProperties": {},
         "properties": {
           "schedulerName": {
-            "$ref": "#/$defs/helm-double-quoted-safe"
+            "$ref": "#/$defs/o"
           }
         }
       }
@@ -1485,9 +2689,7 @@
           ]
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
+          "type": "null"
         },
         {
           "type": "string"
@@ -1500,15 +2702,7 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "create": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/3"
           },
           "then": {
             "allOf": [
@@ -1518,12 +2712,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
+                        "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/schema38"
+                        "$ref": "#/$defs/b"
                       }
                     ],
                     "description": "Optional custom annotations to add to Pods in the cluster"
@@ -1538,7 +2730,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "enabled": {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/r"
                       }
                     }
                   }
@@ -1552,7 +2744,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "pullPolicy": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1566,7 +2758,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "repository": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1582,12 +2774,10 @@
                       "resources": {
                         "anyOf": [
                           {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
+                            "$ref": "#/$defs/1"
                           },
                           {
-                            "$ref": "#/$defs/schema38"
+                            "$ref": "#/$defs/b"
                           }
                         ],
                         "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
@@ -1604,7 +2794,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1618,7 +2808,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "enabled": {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/r"
                       }
                     }
                   }
@@ -1632,7 +2822,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "pullPolicy": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1646,7 +2836,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "repository": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1660,7 +2850,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1670,7 +2860,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/p"
                   }
                 }
               },
@@ -1680,12 +2870,10 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
+                        "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/schema38"
+                        "$ref": "#/$defs/b"
                       }
                     ],
                     "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
@@ -1698,7 +2886,7 @@
                   "size": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema27"
+                        "$ref": "#/$defs/a"
                       },
                       {
                         "type": "integer"
@@ -1712,44 +2900,18 @@
                 "additionalProperties": {},
                 "properties": {
                   "version": {
-                    "allOf": [
+                    "anyOf": [
                       {
-                        "$ref": "#/$defs/schema40"
+                        "$ref": "#/$defs/8"
                       },
                       {
-                        "$ref": "#/$defs/schema42"
+                        "$ref": "#/$defs/A"
                       },
                       {
-                        "$ref": "#/$defs/schema45"
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema41"
-                      },
-                      {
-                        "$ref": "#/$defs/schema32"
-                      },
-                      {
-                        "$ref": "#/$defs/schema17"
-                      },
-                      {
-                        "$ref": "#/$defs/schema35"
-                      },
-                      {
-                        "$ref": "#/$defs/schema37"
+                        "$ref": "#/$defs/9"
                       }
                     ],
-                    "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
-                    "type": "string"
+                    "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags"
                   }
                 }
               }
@@ -1760,34 +2922,10 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/E"
               },
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               }
             ]
           },
@@ -1801,7 +2939,7 @@
                   "enableServiceAccounts": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema31"
+                        "$ref": "#/$defs/F"
                       },
                       {
                         "type": "boolean"
@@ -1818,61 +2956,13 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/q"
               },
               {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "servicemonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "servicemonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/B"
               }
             ]
           },
@@ -1888,7 +2978,7 @@
                     "description": "Prometheus Operator ServiceMonitor config",
                     "properties": {
                       "prometheusInstance": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1901,34 +2991,10 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/s"
               }
             ]
           },
@@ -1941,7 +3007,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "routesSecret": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1954,7 +3020,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "serverSecret": {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/2"
                       }
                     }
                   }
@@ -1967,34 +3033,10 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/q"
               },
               {
                 "anyOf": [
@@ -2048,15 +3090,7 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
                 "anyOf": [
@@ -2094,15 +3128,7 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
                 "anyOf": [
@@ -2140,15 +3166,7 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
                 "anyOf": [
@@ -2186,15 +3204,7 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/3"
               },
               {
                 "anyOf": [
@@ -2243,18 +3253,7 @@
             "enableServiceAccounts": {
               "description": "NOTE: Only supported in Kubernetes v1.12+ clusters having the \"TokenRequest\" API enabled."
             },
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
+            "enabled": {},
             "password": {},
             "username": {
               "description": "This is where you enter a username/password for 1 user"
@@ -2279,16 +3278,6 @@
           }
         },
         "create": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ],
           "description": "Create a NATS Cluster when installing the operator"
         },
         "metrics": {
@@ -2302,18 +3291,7 @@
               "additionalProperties": {},
               "description": "Prometheus Operator ServiceMonitor config",
               "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
+                "enabled": {},
                 "prometheusInstance": {}
               }
             },
@@ -2334,16 +3312,6 @@
           "additionalProperties": {},
           "properties": {
             "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ],
               "description": "serverSecret:\nroutesSecret:"
             },
             "routesSecret": {},
@@ -2365,45 +3333,59 @@
         "pullPolicy": {
           "anyOf": [
             {
+              "$ref": "#/$defs/8"
+            },
+            {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema40"
+                  "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/schema42"
+                  "$ref": "#/$defs/e"
                 },
                 {
-                  "$ref": "#/$defs/schema45"
+                  "$ref": "#/$defs/f"
                 },
                 {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
+                  "$ref": "#/$defs/h"
                 },
                 {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
+                  "$ref": "#/$defs/g"
                 },
                 {
-                  "$ref": "#/$defs/schema32"
+                  "$ref": "#/$defs/c"
                 },
                 {
-                  "$ref": "#/$defs/schema17"
+                  "$ref": "#/$defs/i"
                 },
                 {
-                  "$ref": "#/$defs/schema35"
+                  "$ref": "#/$defs/l"
                 },
                 {
-                  "$ref": "#/$defs/schema37"
+                  "$ref": "#/$defs/j"
+                },
+                {
+                  "$ref": "#/$defs/k"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "string"
             },
             {
+              "$ref": "#/$defs/9"
+            },
+            {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
+            },
+            {
+              "$ref": "#/$defs/6"
+            },
+            {
+              "$ref": "#/$defs/5"
+            },
+            {
+              "$ref": "#/$defs/7"
             }
           ],
           "description": "Specify an imagePullPolicy\nDefaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images\nOptionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistrKeySecretName"
@@ -2424,9 +3406,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
+              "$ref": "#/$defs/1"
             }
           ]
         },
@@ -2442,20 +3422,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema1"
-          }
+          "$ref": "#/$defs/n"
         }
       ],
       "description": "Configure extra options for liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
@@ -2472,45 +3439,25 @@
     "nameOverride": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/$defs/schema40"
-            },
-            {
-              "$ref": "#/$defs/schema42"
-            },
-            {
-              "$ref": "#/$defs/schema45"
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "$ref": "#/$defs/schema32"
-            },
-            {
-              "$ref": "#/$defs/schema17"
-            },
-            {
-              "$ref": "#/$defs/schema35"
-            },
-            {
-              "$ref": "#/$defs/schema37"
-            }
-          ],
-          "type": "string"
+          "$ref": "#/$defs/8"
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
+          "$ref": "#/$defs/A"
+        },
+        {
+          "$ref": "#/$defs/9"
+        },
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/7"
         },
         {
           "type": "null"
@@ -2531,9 +3478,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
+          "$ref": "#/$defs/1"
         },
         {
           "type": "null"
@@ -2543,33 +3488,33 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/y"
         },
         {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
+          "allOf": [
+            {
+              "additionalProperties": {
                 "type": "string"
-              }
-            ]
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "properties": {},
-          "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          ]
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "null"
+          "$ref": "#/$defs/1"
         }
       ],
       "description": "Pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
@@ -2577,68 +3522,45 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/y"
         },
         {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
+          "allOf": [
+            {
+              "additionalProperties": {
                 "type": "string"
-              }
-            ]
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "properties": {},
-          "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          ]
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "null"
+          "$ref": "#/$defs/1"
         }
       ],
       "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
     },
     "rbacEnabled": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        }
-      ],
       "description": "Specify if RBAC authorization is enabled.\nref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/"
     },
     "readinessProbe": {
       "additionalProperties": {},
       "allOf": [
         {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema1"
-          }
+          "$ref": "#/$defs/n"
         }
       ],
       "properties": {
@@ -2664,7 +3586,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/a"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/7"
         }
       ],
       "description": "Set default Replica Count for the Operator"
@@ -2703,20 +3634,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "oneOf": [
-              {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "number",
-                  "null"
-                ]
-              }
-            ]
+            "$ref": "#/$defs/z"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -2726,20 +3644,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "oneOf": [
-              {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              {
-                "type": [
-                  "number",
-                  "null"
-                ]
-              }
-            ]
+            "$ref": "#/$defs/z"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -2761,15 +3666,7 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/G"
           },
           "then": {
             "allOf": [
@@ -2789,7 +3686,16 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema27"
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/a"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
                       }
                     ]
                   }
@@ -2811,7 +3717,16 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/schema27"
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/a"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/7"
                       }
                     ]
                   }
@@ -2882,9 +3797,7 @@
           "type": "array"
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
+          "$ref": "#/$defs/1"
         },
         {
           "type": "null"
@@ -2894,45 +3807,59 @@
     "updateStrategy": {
       "anyOf": [
         {
+          "$ref": "#/$defs/8"
+        },
+        {
           "allOf": [
             {
-              "$ref": "#/$defs/schema40"
+              "$ref": "#/$defs/d"
             },
             {
-              "$ref": "#/$defs/schema42"
+              "$ref": "#/$defs/e"
             },
             {
-              "$ref": "#/$defs/schema45"
+              "$ref": "#/$defs/f"
             },
             {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
+              "$ref": "#/$defs/h"
             },
             {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
+              "$ref": "#/$defs/g"
             },
             {
-              "$ref": "#/$defs/schema32"
+              "$ref": "#/$defs/c"
             },
             {
-              "$ref": "#/$defs/schema17"
+              "$ref": "#/$defs/i"
             },
             {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/l"
             },
             {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/j"
+            },
+            {
+              "$ref": "#/$defs/k"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "string"
         },
         {
+          "$ref": "#/$defs/9"
+        },
+        {
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "null"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/7"
         }
       ],
       "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%"

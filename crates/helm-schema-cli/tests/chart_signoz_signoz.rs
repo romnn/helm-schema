@@ -333,46 +333,9 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
         ),
         "disabled otelCollector ingress annotations should not be constrained by guarded-only metadata evidence: {schema}"
     );
-    // The root `global` object is a propagation input, not the zookeeper
-    // chart's effective values object. Its own helper ranges pull secrets
-    // only behind a truthiness test, so falsy scalar members skip while a
-    // truthy scalar reaches the range and aborts.
-    for (value, label) in [
-        (serde_json::json!(""), "the empty string"),
-        (serde_json::json!(false), "a raw false"),
-    ] {
-        assert!(
-            schema_validates_instance(
-                &schema,
-                &serde_json::json!({ "global": { "imagePullSecrets": value } })
-            ),
-            "global.imagePullSecrets: {label} skips the root helper: {schema}"
-        );
-    }
-    assert!(
-        !schema_validates_instance(
-            &schema,
-            &serde_json::json!({ "global": { "imagePullSecrets": "oops" } })
-        ),
-        "a truthy root pull-secret scalar reaches the root helper's range: {schema}"
-    );
-    for (value, label) in [
-        (serde_json::json!(["regcred"]), "an array"),
-        (serde_json::json!({ "a": "b" }), "a map"),
-        (serde_json::json!(null), "a null deletion"),
-    ] {
-        assert!(
-            schema_validates_instance(
-                &schema,
-                &serde_json::json!({ "global": { "imagePullSecrets": value } })
-            ),
-            "global.imagePullSecrets: {label} renders: {schema}"
-        );
-    }
-    // The zookeeper subchart's effective child view is distinct. Its
-    // `common.images.pullSecrets` helper ranges this path without a
-    // truthiness guard, so every scalar spelling aborts while the nested
-    // dependency is active; collections and null deletion render.
+    // The root `global` object propagates into the active zookeeper chart.
+    // Its own helper guards the range by truthiness, but zookeeper's helper
+    // ranges the coalesced value unconditionally, so every scalar aborts.
     for (value, label) in [
         (serde_json::json!("oops"), "a truthy scalar"),
         (serde_json::json!(""), "the empty string"),
@@ -381,6 +344,35 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
         assert!(
             !schema_validates_instance(
                 &schema,
+                &serde_json::json!({ "global": { "imagePullSecrets": value } })
+            ),
+            "global.imagePullSecrets: {label} reaches zookeeper's range"
+        );
+    }
+    for (value, label) in [
+        (serde_json::json!(["regcred"]), "an array"),
+        (serde_json::json!({ "a": "b" }), "a map"),
+        (serde_json::json!(null), "a null deletion"),
+    ] {
+        assert!(
+            schema_validates_instance(
+                &schema,
+                &serde_json::json!({ "global": { "imagePullSecrets": value } })
+            ),
+            "global.imagePullSecrets: {label} renders"
+        );
+    }
+    // Helm coalesces the root and clickhouse globals into zookeeper before
+    // the child override. The root default therefore wins over a child
+    // scalar unless both higher-priority sources are deleted with null.
+    for (value, label) in [
+        (serde_json::json!("oops"), "a truthy scalar"),
+        (serde_json::json!(""), "the empty string"),
+        (serde_json::json!(false), "a raw false"),
+    ] {
+        assert!(
+            schema_validates_instance(
+                &schema,
                 &serde_json::json!({
                     "clickhouse": {
                         "zookeeper": {
@@ -389,7 +381,22 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
                     }
                 })
             ),
-            "clickhouse.zookeeper.global.imagePullSecrets: {label} cannot be ranged: {schema}"
+            "the root global wins over clickhouse.zookeeper.global.imagePullSecrets: {label}"
+        );
+        assert!(
+            !schema_validates_instance(
+                &schema,
+                &serde_json::json!({
+                    "global": { "imagePullSecrets": null },
+                    "clickhouse": {
+                        "global": { "imagePullSecrets": null },
+                        "zookeeper": {
+                            "global": { "imagePullSecrets": value }
+                        }
+                    }
+                })
+            ),
+            "clickhouse.zookeeper.global.imagePullSecrets: {label} cannot be ranged after both ancestor sources fall through"
         );
     }
     for (value, label) in [
@@ -408,7 +415,7 @@ fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
                     }
                 })
             ),
-            "clickhouse.zookeeper.global.imagePullSecrets: {label} renders: {schema}"
+            "clickhouse.zookeeper.global.imagePullSecrets: {label} renders"
         );
     }
     assert!(
